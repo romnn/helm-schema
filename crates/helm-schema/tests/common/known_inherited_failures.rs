@@ -463,6 +463,231 @@ pub(crate) const KNOWN_INHERITED_FAILURES: &[KnownInheritedFailure] = &[
         observed_on: "landing10a/d7ab4078",
     },
     KnownInheritedFailure {
+        chart: "eck-stack",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"eck-kibana":{"annotations":{},"enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "01db5456cbd416dae4674fa69473161a5bafed2aefbe09289c4d0b75fb8c1d38",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "0dbc57332eb74a47dc189a691cd3410e8d4a942a2530fba0c30ae9c613c9a57f",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "eck-stack",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"eck-logstash":{"annotations":{},"enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "028b153d3a087662a05765c4640792dbbc93c0c48ad6385f996f70f4f68385dd",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "0dbc57332eb74a47dc189a691cd3410e8d4a942a2530fba0c30ae9c613c9a57f",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "eck-stack",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"eck-elasticsearch":{"annotations":{},"enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "24b6c15de467c906eaa942422c6ff2016883b5b946336d66e0d950495e0f5f22",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "0dbc57332eb74a47dc189a691cd3410e8d4a942a2530fba0c30ae9c613c9a57f",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "eck-stack",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"eck-package-registry":{"annotations":{},"enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "bc8b389751c341a0a3da7b640a83293c529e46f0f30c435f3c4122b644f60164",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "0dbc57332eb74a47dc189a691cd3410e8d4a942a2530fba0c30ae9c613c9a57f",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "eck-stack",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"eck-apm-server":{"annotations":{},"enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "e05a8ef36f6d97931a582851856ec4f5c9c509926ef420d220c8d37b73671dd1",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "0dbc57332eb74a47dc189a691cd3410e8d4a942a2530fba0c30ae9c613c9a57f",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "gitea",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"postgresql-ha":{"common":{"exampleValue":"common-chart"},"enabled":true},"tags":{"bitnami-common":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "0c9f830c6ee5a0dc8e1854e342f5ce231a7a09456ae455559ef27592d95648b5",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "712aaf039dd721b1d4f7070aad0b25f3897c6f4d7b2ac39fde66a0907d6a0b48",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "gitea",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"valkey-cluster":{"cluster":{"externalAccess":{"enabled":false}},"enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "3d410e15198de15ff6a2b198b67d7ab8cab51343abf552b8fb403ca7e8185cb1",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "712aaf039dd721b1d4f7070aad0b25f3897c6f4d7b2ac39fde66a0907d6a0b48",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "gitea",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"postgresql-ha":{"backup":{"cronjob":{"affinity":{}}},"enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "c9a7ab5e6620be7899538db5710195c933d600ade09bd59d229969084cf7f8ec",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "712aaf039dd721b1d4f7070aad0b25f3897c6f4d7b2ac39fde66a0907d6a0b48",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "gitea",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"tags":{"bitnami-common":true},"valkey-cluster":{"common":{"exampleValue":"common-chart"},"enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "cadae6e41113874ea412b5b8e494d8a9a2a01b4c61f359a8b5a660c2502b9ed1",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "712aaf039dd721b1d4f7070aad0b25f3897c6f4d7b2ac39fde66a0907d6a0b48",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
         chart: "goldilocks",
         selector: FailureSelector::Context(ContextSelector {
             document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
@@ -855,6 +1080,156 @@ pub(crate) const KNOWN_INHERITED_FAILURES: &[KnownInheritedFailure] = &[
         )),
         owner: "oracle: kube-version v3 CRD not-found (21)",
         observed_on: "landing10a/d7ab4078",
+    },
+    KnownInheritedFailure {
+        chart: "headscale",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"postgresql":{"architecture":"standalone","enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "6acc2a6d0485a78705005ff0187ef06aa0e8e0e0c5a45ee6bed2b7948b4c716d",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "737f82e6f6fde652046745b6c6ae371e897ad6888fd48cc6425903541a879f25",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "headscale",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"postgresql":{"common":{"exampleValue":"common-chart"},"enabled":true},"tags":{"bitnami-common":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "b3ec24a982b9bd1b7d5ab09e923e7f29264bbcb13cd78f2334a6434aef9cdfed",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "737f82e6f6fde652046745b6c6ae371e897ad6888fd48cc6425903541a879f25",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "headscale",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"common":{"addons":{"codeserver":{"args":["--auth","none"]}}}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "be8a0cd69b7ec7f63e3b47ce93a28da2b69b9cfacf649635c91c01eadbd45bf6",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "737f82e6f6fde652046745b6c6ae371e897ad6888fd48cc6425903541a879f25",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "kube-starrocks",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"operator":{"global":{"rbac":{"create":true}}}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "unusable defaults Kubernetes control: uncertainty: document 9: starrocks.com/v1/StarRocksCluster kube-starrocks: pinned CRD schema not found",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "ebc052f47bc2a4f75459048bab6969ffbb54e3b5152220f78f56fa636a915a0a",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "a446858176b0aba5cb869f7296c7915b2a7f043674ca784361b44adacdf31f8a",
+        )),
+        owner: "oracle: chart CRDs / crdcheck (C/D)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "kube-starrocks",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"starrocks":{"configMaps":[]}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "unusable defaults Kubernetes control: uncertainty: document 9: starrocks.com/v1/StarRocksCluster kube-starrocks: pinned CRD schema not found",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "f05ba401503d82a6c21325cc1f2656e69a782a6434910104a53d099a5654223f",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "a446858176b0aba5cb869f7296c7915b2a7f043674ca784361b44adacdf31f8a",
+        )),
+        owner: "oracle: chart CRDs / crdcheck (C/D)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "kyverno",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"grafana":{"annotations":{},"enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "0c2c2ff538ff027a8f17370d525f58cb7eaeb4b6f9efc12d847c21743852e851",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "b5be2dcb15f809c43e99e0de6fc96e3c7c0d978b69af92de92f47b28719911e9",
+        )),
+        owner: "generator: tpl name yaml-fragment false rejection (kyverno grafana.configMapName)",
+        observed_on: "lint10c/d3cf7a2f",
     },
     KnownInheritedFailure {
         chart: "lean/schema-emission-temporal-wrapper",
@@ -1082,6 +1457,81 @@ pub(crate) const KNOWN_INHERITED_FAILURES: &[KnownInheritedFailure] = &[
         observed_on: "landing10a/d7ab4078",
     },
     KnownInheritedFailure {
+        chart: "loki",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"grafana-agent-operator":{"affinity":{}},"monitoring":{"selfMonitoring":{"grafanaAgent":{"installOperator":true}}}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "unusable defaults/context render control; template abort cannot establish an attributable rejection",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "690456f495583cddf90632dd843bbe053e08695bdd935773a9916c8098255492",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "83db049ac1de818e6808a634360605a79a7ae03b8467b02519d4968cf82bea3f",
+        )),
+        owner: "chart: loki defaults abort (chart_corpus KNOWN_VALUES_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "loki",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"rollout_operator":{"affinity":{},"enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "unusable defaults/context render control; template abort cannot establish an attributable rejection",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "ae9098c096715f1d93650f212efa650dae5171e387e62d9ff7a3a039389ddbfd",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "83db049ac1de818e6808a634360605a79a7ae03b8467b02519d4968cf82bea3f",
+        )),
+        owner: "chart: loki defaults abort (chart_corpus KNOWN_VALUES_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "loki",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"minio":{"additionalAnnotations":{},"enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "unusable defaults/context render control; template abort cannot establish an attributable rejection",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "f7e7a64560dd8d7398a8f07dd087f5acfc63a88d8f962ff35af09c232d5a8d9f",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "83db049ac1de818e6808a634360605a79a7ae03b8467b02519d4968cf82bea3f",
+        )),
+        owner: "chart: loki defaults abort (chart_corpus KNOWN_VALUES_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
         chart: "metallb",
         selector: FailureSelector::Context(ContextSelector {
             document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
@@ -1180,6 +1630,206 @@ pub(crate) const KNOWN_INHERITED_FAILURES: &[KnownInheritedFailure] = &[
         )),
         owner: "generator: lint-floor null deletion (A)",
         observed_on: "landing10a/d7ab4078",
+    },
+    KnownInheritedFailure {
+        chart: "nacos",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"common":{"exampleValue":"common-chart"},"tags":{"bitnami-common":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "28f90dd6b60110aed9681f7cc4932401c41569b1f6125ffd66ea49ef65868f29",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "d8df17c2260902843c092083f40f23611c9b8177da93c73d7c83a40146c514b4",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "nacos",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"mysql":{"common":{"exampleValue":"common-chart"},"enabled":true},"tags":{"bitnami-common":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "b4b334e0237b3f9bb2e38935e53b22e61c29068a0c8c33538e7e582784a9a164",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "d8df17c2260902843c092083f40f23611c9b8177da93c73d7c83a40146c514b4",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "nacos",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"mysql":{"architecture":"standalone","enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "e62da100c18fbc90e2422b565dfb74335d524ee668e0b42cbf2133a968a5a79a",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "d8df17c2260902843c092083f40f23611c9b8177da93c73d7c83a40146c514b4",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "netbox",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"common":{"exampleValue":"common-chart"},"tags":{"bitnami-common":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "28f90dd6b60110aed9681f7cc4932401c41569b1f6125ffd66ea49ef65868f29",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "ef633989337042ee28dcdeea6478a83f058852f26a2e395196f8a777a5c53c5e",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "netbox",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"valkey":{"apiVersions":[],"enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "53be8c9021d8069764f2f0ae17171ed5e3bbbfc58f0ca0822c6c578791ae8649",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "ef633989337042ee28dcdeea6478a83f058852f26a2e395196f8a777a5c53c5e",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "netbox",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"tags":{"bitnami-common":true},"valkey":{"common":{"exampleValue":"common-chart"},"enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "6a83f214ee91af327363bca5be583a5f5102f7d060995827c2fbd5a5eced12b4",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "ef633989337042ee28dcdeea6478a83f058852f26a2e395196f8a777a5c53c5e",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "netbox",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"postgresql":{"architecture":"standalone","enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "6acc2a6d0485a78705005ff0187ef06aa0e8e0e0c5a45ee6bed2b7948b4c716d",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "ef633989337042ee28dcdeea6478a83f058852f26a2e395196f8a777a5c53c5e",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "netbox",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"postgresql":{"common":{"exampleValue":"common-chart"},"enabled":true},"tags":{"bitnami-common":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "b3ec24a982b9bd1b7d5ab09e923e7f29264bbcb13cd78f2334a6434aef9cdfed",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "ef633989337042ee28dcdeea6478a83f058852f26a2e395196f8a777a5c53c5e",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
     },
     KnownInheritedFailure {
         chart: "oncall",
@@ -13257,6 +13907,806 @@ pub(crate) const KNOWN_INHERITED_FAILURES: &[KnownInheritedFailure] = &[
         observed_on: "landing10a/d7ab4078",
     },
     KnownInheritedFailure {
+        chart: "oncall",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"cert-manager":{"affinity":{},"enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "Rust screening disagrees with the corresponding real lint rule",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "0be176d67333b4b80bef9e14ae687e967013fff88d94d8bed630f0d887eaadb8",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "105533f02cde4f737fca6eb9eee708e8bed0f7e9380b6db62606eb4344a0938f",
+        )),
+        owner: "W4 regexp \\u (B)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "oncall",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"cert-manager":{"affinity":{},"enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "Rust screening disagrees with the corresponding real lint rule",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "0be176d67333b4b80bef9e14ae687e967013fff88d94d8bed630f0d887eaadb8",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "105533f02cde4f737fca6eb9eee708e8bed0f7e9380b6db62606eb4344a0938f",
+        )),
+        owner: "W4 regexp \\u (B)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "oncall",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"grafana":{"admin":{"existingSecret":""},"enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "Rust screening disagrees with the corresponding real lint rule",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "15d8d1eb006b30ad0d57fa04e9e57e448ea411216e15c3dbb4dc0318bbfb0baa",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "105533f02cde4f737fca6eb9eee708e8bed0f7e9380b6db62606eb4344a0938f",
+        )),
+        owner: "W4 regexp \\u (B)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "oncall",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"grafana":{"admin":{"existingSecret":""},"enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "Rust screening disagrees with the corresponding real lint rule",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "15d8d1eb006b30ad0d57fa04e9e57e448ea411216e15c3dbb4dc0318bbfb0baa",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "105533f02cde4f737fca6eb9eee708e8bed0f7e9380b6db62606eb4344a0938f",
+        )),
+        owner: "W4 regexp \\u (B)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "oncall",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"prometheus":{"enabled":true,"prometheus-pushgateway":{"affinity":{},"enabled":true}}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "Rust screening disagrees with the corresponding real lint rule",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "1ac43f97481286cc8b34bdc3bdee7c406a389ab4c7a0e6d64dce00095929418c",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "105533f02cde4f737fca6eb9eee708e8bed0f7e9380b6db62606eb4344a0938f",
+        )),
+        owner: "W4 regexp \\u (B)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "oncall",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"prometheus":{"enabled":true,"prometheus-pushgateway":{"affinity":{},"enabled":true}}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "Rust screening disagrees with the corresponding real lint rule",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "1ac43f97481286cc8b34bdc3bdee7c406a389ab4c7a0e6d64dce00095929418c",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "105533f02cde4f737fca6eb9eee708e8bed0f7e9380b6db62606eb4344a0938f",
+        )),
+        owner: "W4 regexp \\u (B)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "oncall",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"redis":{"architecture":"replication","enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "Rust screening disagrees with the corresponding real lint rule",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "24daa834bae01310d0e6e8c9422db24fee9b208bef6d75d176bf859b7032fe53",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "105533f02cde4f737fca6eb9eee708e8bed0f7e9380b6db62606eb4344a0938f",
+        )),
+        owner: "W4 regexp \\u (B)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "oncall",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"redis":{"architecture":"replication","enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "Rust screening disagrees with the corresponding real lint rule",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "24daa834bae01310d0e6e8c9422db24fee9b208bef6d75d176bf859b7032fe53",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "105533f02cde4f737fca6eb9eee708e8bed0f7e9380b6db62606eb4344a0938f",
+        )),
+        owner: "W4 regexp \\u (B)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "oncall",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"rabbitmq":{"advancedConfiguration":"","enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "Rust screening disagrees with the corresponding real lint rule",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "34d6200caec8d469456a519de96040f7aa5b660eae3bb4a1ef839688bb271c0a",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "105533f02cde4f737fca6eb9eee708e8bed0f7e9380b6db62606eb4344a0938f",
+        )),
+        owner: "W4 regexp \\u (B)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "oncall",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"rabbitmq":{"advancedConfiguration":"","enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "Rust screening disagrees with the corresponding real lint rule",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "34d6200caec8d469456a519de96040f7aa5b660eae3bb4a1ef839688bb271c0a",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "105533f02cde4f737fca6eb9eee708e8bed0f7e9380b6db62606eb4344a0938f",
+        )),
+        owner: "W4 regexp \\u (B)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "oncall",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"prometheus":{"enabled":true,"kube-state-metrics":{"affinity":{},"enabled":true}}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "Rust screening disagrees with the corresponding real lint rule",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "39e207a3f4098c22963c0cd0d62f42a7ba8d94f0edcaa71b67a8e1cbaad4065a",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "105533f02cde4f737fca6eb9eee708e8bed0f7e9380b6db62606eb4344a0938f",
+        )),
+        owner: "W4 regexp \\u (B)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "oncall",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"prometheus":{"enabled":true,"kube-state-metrics":{"affinity":{},"enabled":true}}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "Rust screening disagrees with the corresponding real lint rule",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "39e207a3f4098c22963c0cd0d62f42a7ba8d94f0edcaa71b67a8e1cbaad4065a",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "105533f02cde4f737fca6eb9eee708e8bed0f7e9380b6db62606eb4344a0938f",
+        )),
+        owner: "W4 regexp \\u (B)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "oncall",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"postgresql":{"architecture":"standalone","enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "Rust screening disagrees with the corresponding real lint rule",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "6acc2a6d0485a78705005ff0187ef06aa0e8e0e0c5a45ee6bed2b7948b4c716d",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "105533f02cde4f737fca6eb9eee708e8bed0f7e9380b6db62606eb4344a0938f",
+        )),
+        owner: "W4 regexp \\u (B)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "oncall",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"postgresql":{"architecture":"standalone","enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "Rust screening disagrees with the corresponding real lint rule",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "6acc2a6d0485a78705005ff0187ef06aa0e8e0e0c5a45ee6bed2b7948b4c716d",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "105533f02cde4f737fca6eb9eee708e8bed0f7e9380b6db62606eb4344a0938f",
+        )),
+        owner: "W4 regexp \\u (B)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "oncall",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"mariadb":{"common":{"exampleValue":"common-chart"},"enabled":true},"tags":{"bitnami-common":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "Rust screening disagrees with the corresponding real lint rule",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "9e24bb9a7178ee82e58583753f33664e0cc0ece50f4f6fee32e50e71a6fbc700",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "105533f02cde4f737fca6eb9eee708e8bed0f7e9380b6db62606eb4344a0938f",
+        )),
+        owner: "W4 regexp \\u (B)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "oncall",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"mariadb":{"common":{"exampleValue":"common-chart"},"enabled":true},"tags":{"bitnami-common":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "Rust screening disagrees with the corresponding real lint rule",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "9e24bb9a7178ee82e58583753f33664e0cc0ece50f4f6fee32e50e71a6fbc700",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "105533f02cde4f737fca6eb9eee708e8bed0f7e9380b6db62606eb4344a0938f",
+        )),
+        owner: "W4 regexp \\u (B)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "oncall",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"prometheus":{"alertRelabelConfigs":{},"enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "Rust screening disagrees with the corresponding real lint rule",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "9fee834d81a10c1ce8b8255473348984695ffd22a78f1744c8c4defeedfe2272",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "105533f02cde4f737fca6eb9eee708e8bed0f7e9380b6db62606eb4344a0938f",
+        )),
+        owner: "W4 regexp \\u (B)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "oncall",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"prometheus":{"alertRelabelConfigs":{},"enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "Rust screening disagrees with the corresponding real lint rule",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "9fee834d81a10c1ce8b8255473348984695ffd22a78f1744c8c4defeedfe2272",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "105533f02cde4f737fca6eb9eee708e8bed0f7e9380b6db62606eb4344a0938f",
+        )),
+        owner: "W4 regexp \\u (B)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "oncall",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"prometheus":{"enabled":true,"prometheus-node-exporter":{"affinity":{},"enabled":true}}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "a54da96925c8815af5f26f993ff3a23466f73f5608ce3d30b617c3b77eb98847",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "51da31307bc908154ee902fdb1dabead51f2a74686a40118aeb9fb24a2dec3dc",
+        )),
+        owner: "W4 regexp \\u (B)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "oncall",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"prometheus":{"enabled":true,"prometheus-node-exporter":{"affinity":{},"enabled":true}}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "Rust screening disagrees with the corresponding real lint rule",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "a54da96925c8815af5f26f993ff3a23466f73f5608ce3d30b617c3b77eb98847",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "105533f02cde4f737fca6eb9eee708e8bed0f7e9380b6db62606eb4344a0938f",
+        )),
+        owner: "W4 regexp \\u (B)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "oncall",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"prometheus":{"alertmanager":{"additionalPeers":[],"enabled":true},"enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "Rust screening disagrees with the corresponding real lint rule",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "a6952d7377b8e6b97103ce0536ee11c61f2cc3ab9ccf4dbebb4e5b411025909d",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "105533f02cde4f737fca6eb9eee708e8bed0f7e9380b6db62606eb4344a0938f",
+        )),
+        owner: "W4 regexp \\u (B)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "oncall",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"prometheus":{"alertmanager":{"additionalPeers":[],"enabled":true},"enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "Rust screening disagrees with the corresponding real lint rule",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "a6952d7377b8e6b97103ce0536ee11c61f2cc3ab9ccf4dbebb4e5b411025909d",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "105533f02cde4f737fca6eb9eee708e8bed0f7e9380b6db62606eb4344a0938f",
+        )),
+        owner: "W4 regexp \\u (B)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "oncall",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"redis":{"common":{"exampleValue":"common-chart"},"enabled":true},"tags":{"bitnami-common":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "Rust screening disagrees with the corresponding real lint rule",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "a8f4d1f79eb404f0c2d0f39c5ace1f838be6a031a7710e3ec3c384a310c0fcfb",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "105533f02cde4f737fca6eb9eee708e8bed0f7e9380b6db62606eb4344a0938f",
+        )),
+        owner: "W4 regexp \\u (B)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "oncall",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"redis":{"common":{"exampleValue":"common-chart"},"enabled":true},"tags":{"bitnami-common":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "Rust screening disagrees with the corresponding real lint rule",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "a8f4d1f79eb404f0c2d0f39c5ace1f838be6a031a7710e3ec3c384a310c0fcfb",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "105533f02cde4f737fca6eb9eee708e8bed0f7e9380b6db62606eb4344a0938f",
+        )),
+        owner: "W4 regexp \\u (B)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "oncall",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"ingress-nginx":{"commonLabels":{},"enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "Rust screening disagrees with the corresponding real lint rule",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "ae0e35461c5149fa1b7db7d64b6326848a2047546bf421e5c31152757dd1b25d",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "105533f02cde4f737fca6eb9eee708e8bed0f7e9380b6db62606eb4344a0938f",
+        )),
+        owner: "W4 regexp \\u (B)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "oncall",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"ingress-nginx":{"commonLabels":{},"enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "Rust screening disagrees with the corresponding real lint rule",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "ae0e35461c5149fa1b7db7d64b6326848a2047546bf421e5c31152757dd1b25d",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "105533f02cde4f737fca6eb9eee708e8bed0f7e9380b6db62606eb4344a0938f",
+        )),
+        owner: "W4 regexp \\u (B)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "oncall",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"postgresql":{"common":{"exampleValue":"common-chart"},"enabled":true},"tags":{"bitnami-common":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "Rust screening disagrees with the corresponding real lint rule",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "b3ec24a982b9bd1b7d5ab09e923e7f29264bbcb13cd78f2334a6434aef9cdfed",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "105533f02cde4f737fca6eb9eee708e8bed0f7e9380b6db62606eb4344a0938f",
+        )),
+        owner: "W4 regexp \\u (B)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "oncall",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"postgresql":{"common":{"exampleValue":"common-chart"},"enabled":true},"tags":{"bitnami-common":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "Rust screening disagrees with the corresponding real lint rule",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "b3ec24a982b9bd1b7d5ab09e923e7f29264bbcb13cd78f2334a6434aef9cdfed",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "105533f02cde4f737fca6eb9eee708e8bed0f7e9380b6db62606eb4344a0938f",
+        )),
+        owner: "W4 regexp \\u (B)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "oncall",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"mariadb":{"architecture":"standalone","enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "Rust screening disagrees with the corresponding real lint rule",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "d4834ec535538983864b34c0b94cfc0f72bcb9e48ff5fc5b47650b401c6d8334",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "105533f02cde4f737fca6eb9eee708e8bed0f7e9380b6db62606eb4344a0938f",
+        )),
+        owner: "W4 regexp \\u (B)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "oncall",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"mariadb":{"architecture":"standalone","enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "Rust screening disagrees with the corresponding real lint rule",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "d4834ec535538983864b34c0b94cfc0f72bcb9e48ff5fc5b47650b401c6d8334",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "105533f02cde4f737fca6eb9eee708e8bed0f7e9380b6db62606eb4344a0938f",
+        )),
+        owner: "W4 regexp \\u (B)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "oncall",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"rabbitmq":{"common":{"exampleValue":"common-chart"},"enabled":true},"tags":{"bitnami-common":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "Rust screening disagrees with the corresponding real lint rule",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "f266033473cf3907a98f373c0aef6f362b115c855c5b8d2f68f3bf50e2e066f8",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "105533f02cde4f737fca6eb9eee708e8bed0f7e9380b6db62606eb4344a0938f",
+        )),
+        owner: "W4 regexp \\u (B)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "oncall",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"rabbitmq":{"common":{"exampleValue":"common-chart"},"enabled":true},"tags":{"bitnami-common":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "Rust screening disagrees with the corresponding real lint rule",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "f266033473cf3907a98f373c0aef6f362b115c855c5b8d2f68f3bf50e2e066f8",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "105533f02cde4f737fca6eb9eee708e8bed0f7e9380b6db62606eb4344a0938f",
+        )),
+        owner: "W4 regexp \\u (B)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
         chart: "openebs",
         selector: FailureSelector::Context(ContextSelector {
             document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
@@ -14042,6 +15492,174 @@ pub(crate) const KNOWN_INHERITED_FAILURES: &[KnownInheritedFailure] = &[
         observed_on: "landing10a/d7ab4078",
     },
     KnownInheritedFailure {
+        chart: "openebs",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"engines":{"local":{"lvm":{"enabled":true}}},"lvm-localpv":{"crds":{"csi":{"volumeSnapshots":{"enabled":true}},"enabled":true}}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::OracleFalseAcceptance {
+            rejection: Rejection::KubernetesRejects,
+            baseline: Baseline::RejectsItsDefaults,
+            kubernetes_errors: &[
+                "document 44: apiextensions.k8s.io/v1/CustomResourceDefinition zfsrestores.zfs.openebs.io: /apiVersion: apiextensions.k8s.io/v1/CustomResourceDefinition is not served by the pinned Kubernetes version",
+                "document 45: apiextensions.k8s.io/v1/CustomResourceDefinition zfssnapshots.zfs.openebs.io: /apiVersion: apiextensions.k8s.io/v1/CustomResourceDefinition is not served by the pinned Kubernetes version",
+                "document 46: apiextensions.k8s.io/v1/CustomResourceDefinition zfsvolumes.zfs.openebs.io: /apiVersion: apiextensions.k8s.io/v1/CustomResourceDefinition is not served by the pinned Kubernetes version",
+            ],
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "0f746c121bbd69f165241386f36401ba6440d9a49a5950865087bd0c016028f9",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "b52d55f25d56121eaf4123f0a731945d1eb5380c93d993cfd0b008d9aef723d4",
+        )),
+        owner: "oracle: kube-version v3 CRD not-found (21)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "openebs",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"engines":{"replicated":{"mayastor":{"enabled":true}}},"mayastor":{"crds":{"csi":{"volumeSnapshots":{"annotations":{}}},"enabled":true}}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::OracleFalseAcceptance {
+            rejection: Rejection::KubernetesRejects,
+            baseline: Baseline::RejectsItsDefaults,
+            kubernetes_errors: &[
+                "document 44: apiextensions.k8s.io/v1/CustomResourceDefinition zfsrestores.zfs.openebs.io: /apiVersion: apiextensions.k8s.io/v1/CustomResourceDefinition is not served by the pinned Kubernetes version",
+                "document 45: apiextensions.k8s.io/v1/CustomResourceDefinition zfssnapshots.zfs.openebs.io: /apiVersion: apiextensions.k8s.io/v1/CustomResourceDefinition is not served by the pinned Kubernetes version",
+                "document 46: apiextensions.k8s.io/v1/CustomResourceDefinition zfsvolumes.zfs.openebs.io: /apiVersion: apiextensions.k8s.io/v1/CustomResourceDefinition is not served by the pinned Kubernetes version",
+            ],
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "3539f0ec823d442394e82089c0964581f9fa7a3f48c45c70aca9e099b551c69f",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "b52d55f25d56121eaf4123f0a731945d1eb5380c93d993cfd0b008d9aef723d4",
+        )),
+        owner: "oracle: kube-version v3 CRD not-found (21)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "openebs",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"engines":{"local":{"zfs":{"enabled":true}}},"zfs-localpv":{"crds":{"csi":{"volumeSnapshots":{"enabled":true}},"enabled":true}}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::OracleFalseAcceptance {
+            rejection: Rejection::KubernetesRejects,
+            baseline: Baseline::RejectsItsDefaults,
+            kubernetes_errors: &[
+                "document 44: apiextensions.k8s.io/v1/CustomResourceDefinition zfsrestores.zfs.openebs.io: /apiVersion: apiextensions.k8s.io/v1/CustomResourceDefinition is not served by the pinned Kubernetes version",
+                "document 45: apiextensions.k8s.io/v1/CustomResourceDefinition zfssnapshots.zfs.openebs.io: /apiVersion: apiextensions.k8s.io/v1/CustomResourceDefinition is not served by the pinned Kubernetes version",
+                "document 46: apiextensions.k8s.io/v1/CustomResourceDefinition zfsvolumes.zfs.openebs.io: /apiVersion: apiextensions.k8s.io/v1/CustomResourceDefinition is not served by the pinned Kubernetes version",
+            ],
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "6b47c8e126cfd2ddd12b14d30216bf76f5e35b1f85db1d156562b24ab88b7e1d",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "b52d55f25d56121eaf4123f0a731945d1eb5380c93d993cfd0b008d9aef723d4",
+        )),
+        owner: "oracle: kube-version v3 CRD not-found (21)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "openldap-stack-ha",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"common":{"exampleValue":"common-chart"},"tags":{"bitnami-common":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "28f90dd6b60110aed9681f7cc4932401c41569b1f6125ffd66ea49ef65868f29",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "e58455b88f9cc405e8a0914c696fc4af528cdfbc0d02e507641803354bc05012",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "openldap-stack-ha",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"phpldapadmin":{"affinity":{},"enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "7a997ee4a707ce8a61ef80da59c2c2fea6afb98ce5d317ee024f07fa1e2fd6ec",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "e58455b88f9cc405e8a0914c696fc4af528cdfbc0d02e507641803354bc05012",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "openldap-stack-ha",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"ltb-passwd":{"affinity":{},"enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "cf8bf03632a37f8934d4307de0ce5f65a1e2434aedab039c2a9340a41e3928cd",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "e58455b88f9cc405e8a0914c696fc4af528cdfbc0d02e507641803354bc05012",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
         chart: "redmine",
         selector: FailureSelector::Context(ContextSelector {
             document: test_util::helm_values::AcceptanceDocument::LintRaw,
@@ -14509,6 +16127,56 @@ pub(crate) const KNOWN_INHERITED_FAILURES: &[KnownInheritedFailure] = &[
         observed_on: "landing10a/d7ab4078",
     },
     KnownInheritedFailure {
+        chart: "signoz-signoz",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"signoz-otel-gateway":{"enabled":true,"postgresql":{"common":{"exampleValue":"common-chart"},"enabled":true}},"tags":{"bitnami-common":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "unusable defaults Kubernetes control: uncertainty: document 34: clickhouse.altinity.com/v1/ClickHouseInstallation adjudication-clickhouse: pinned CRD schema not found",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "2c815f3622d2010530114cff6b20afa5c85c98c92338213e25256179e6ce3ea3",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "e97366805db0b78ba093813ce6beee1806b961ebb1741f00536b1241a644fd89",
+        )),
+        owner: "oracle: chart CRDs / crdcheck (C/D)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "signoz-signoz",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"signoz-otel-gateway":{"enabled":true,"postgresql":{"architecture":"standalone","enabled":true}}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "unusable defaults Kubernetes control: uncertainty: document 34: clickhouse.altinity.com/v1/ClickHouseInstallation adjudication-clickhouse: pinned CRD schema not found",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "bc2180a1961e58acbeddd0802481fb6ec0ba79f5dc3207df6c05d1cdd61a6eeb",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "e97366805db0b78ba093813ce6beee1806b961ebb1741f00536b1241a644fd89",
+        )),
+        owner: "oracle: chart CRDs / crdcheck (C/D)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
         chart: "stacks-blockchain-api",
         selector: FailureSelector::Context(ContextSelector {
             document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
@@ -14607,5 +16275,355 @@ pub(crate) const KNOWN_INHERITED_FAILURES: &[KnownInheritedFailure] = &[
         )),
         owner: "generator: lint-floor null deletion (A)",
         observed_on: "landing10a/d7ab4078",
+    },
+    KnownInheritedFailure {
+        chart: "stacks-blockchain-api",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"postgresql":{"architecture":"standalone","enabled":true},"tags":{"bitnami-postgresql":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "0133eb500fb4311d56cd4022b23ac12cfdf5283d580af4df188fe3fe4012faba",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "5ef3085d2918a183837f2787cc31e442226a4cdcecb6286ba9b7ddf37df6bc62",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "stacks-blockchain-api",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"common":{"exampleValue":"common-chart"},"tags":{"bitnami-common":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "28f90dd6b60110aed9681f7cc4932401c41569b1f6125ffd66ea49ef65868f29",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "5ef3085d2918a183837f2787cc31e442226a4cdcecb6286ba9b7ddf37df6bc62",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "stacks-blockchain-api",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"stacks-blockchain":{"bitcoin-core":{"affinity":{},"enabled":true},"enabled":true},"tags":{"hirosystems-bitcoin-core":true,"hirosystems-stacks-blockchain":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "6cd5e5d601abeb7ffecb5730733e2635d3fed0e561e00dc78b97cb4c0975e0e7",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "5ef3085d2918a183837f2787cc31e442226a4cdcecb6286ba9b7ddf37df6bc62",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "stacks-blockchain-api",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"stacks-blockchain":{"affinity":{},"enabled":true},"tags":{"hirosystems-stacks-blockchain":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "7f5394acb710f9ada7d91cba872291c7ce2ede59f4b96dc447f059dfe5820ae7",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "5ef3085d2918a183837f2787cc31e442226a4cdcecb6286ba9b7ddf37df6bc62",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "stacks-blockchain-api",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"postgresql":{"common":{"exampleValue":"common-chart"},"enabled":true},"tags":{"bitnami-common":true,"bitnami-postgresql":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "809ca614a21a1d3ff3b9ac3661bc288fa813af1046ae18510b1484c0d70a5e6f",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "5ef3085d2918a183837f2787cc31e442226a4cdcecb6286ba9b7ddf37df6bc62",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "stacks-blockchain-api",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"stacks-blockchain":{"common":{"exampleValue":"common-chart"},"enabled":true},"tags":{"bitnami-common":true,"hirosystems-stacks-blockchain":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "896b6a3f5bcafefcb5c3d755c5fd16d7068e080b1040ff91fce2e71fae6d89c2",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "5ef3085d2918a183837f2787cc31e442226a4cdcecb6286ba9b7ddf37df6bc62",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "stacks-blockchain-api",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"stacks-blockchain":{"bitcoin-core":{"common":{"exampleValue":"common-chart"},"enabled":true},"enabled":true},"tags":{"bitnami-common":true,"hirosystems-bitcoin-core":true,"hirosystems-stacks-blockchain":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "a88e57ca6308e34f84de89d8c15f02063c4f9e14f03bdaed99a8d68f2e3d0477",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "5ef3085d2918a183837f2787cc31e442226a4cdcecb6286ba9b7ddf37df6bc62",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "synapse",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"redis":{"architecture":"replication","enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "24daa834bae01310d0e6e8c9422db24fee9b208bef6d75d176bf859b7032fe53",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "009b1a66352e493e0664c09464280860e970bda40dc3e970925802aea4a80587",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "synapse",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"postgresql":{"architecture":"standalone","enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "6acc2a6d0485a78705005ff0187ef06aa0e8e0e0c5a45ee6bed2b7948b4c716d",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "009b1a66352e493e0664c09464280860e970bda40dc3e970925802aea4a80587",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "synapse",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"redis":{"common":{"exampleValue":"common-chart"},"enabled":true},"tags":{"bitnami-common":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "a8f4d1f79eb404f0c2d0f39c5ace1f838be6a031a7710e3ec3c384a310c0fcfb",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "009b1a66352e493e0664c09464280860e970bda40dc3e970925802aea4a80587",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "synapse",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"postgresql":{"common":{"exampleValue":"common-chart"},"enabled":true},"tags":{"bitnami-common":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "b3ec24a982b9bd1b7d5ab09e923e7f29264bbcb13cd78f2334a6434aef9cdfed",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "009b1a66352e493e0664c09464280860e970bda40dc3e970925802aea4a80587",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "yourls",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"common":{"exampleValue":"common-chart"},"tags":{"bitnami-common":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "28f90dd6b60110aed9681f7cc4932401c41569b1f6125ffd66ea49ef65868f29",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "473a3bea01918d63deb653d8870ee436c911eeec87cd9302ff678c035db1bce5",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "yourls",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"mariadb":{"architecture":"standalone","enabled":true},"tags":{"yourls-database":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "43239b366ff9a275fa59175306e8bd1534781e16aa2b8f1ab220278d614c1547",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "473a3bea01918d63deb653d8870ee436c911eeec87cd9302ff678c035db1bce5",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
+    },
+    KnownInheritedFailure {
+        chart: "yourls",
+        selector: FailureSelector::Context(ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"mariadb":{"common":{"exampleValue":"common-chart"},"enabled":true},"tags":{"bitnami-common":true,"yourls-database":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        }),
+        failure: FailureClass::Adjudication {
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
+        },
+        input: FailureInput {
+            values_file_sha256: Cow::Borrowed(
+                "8043aa804fba70e50a05766fa9d45f5b20991ac7d69766ad216097303cbff931",
+            ),
+            controls_sha256: Cow::Borrowed(
+                "215a8e7cbf3875fe1df5af1a59bf79533548a4a20efbc61455f13ad58ffcd70e",
+            ),
+        },
+        lint_diagnostics_sha256: Some(Cow::Borrowed(
+            "473a3bea01918d63deb653d8870ee436c911eeec87cd9302ff678c035db1bce5",
+        )),
+        owner: "generator: quarantined defaults false rejection (chart_corpus QUARANTINED_FALSE_REJECTIONS)",
+        observed_on: "lint10c/d3cf7a2f",
     },
 ];

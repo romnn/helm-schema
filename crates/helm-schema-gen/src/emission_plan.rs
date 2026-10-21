@@ -9,7 +9,7 @@ use crate::base_schema::{BaseOwner, ConditionalTargetIndex, classify_base};
 use crate::condition_encoding::{
     HELM_TRUTHY_DEFINITION_NAME, helm_truthy_definition_schema, value_references_helm_truthy,
 };
-use crate::emission_policy::{EmissionClass, EmissionOrigin, EmissionPolicy};
+use crate::emission_policy::EmissionPolicy;
 use crate::emission_report::{EmissionReport, FactRecord, InsertionAbstentionCounts};
 use crate::generation_decisions::{BaseOwnerDecision, GenerationDecisions};
 use crate::overlay_lowering::{
@@ -21,10 +21,7 @@ use crate::provider_definitions::{
     extract_provider_definitions, extract_repeated_provider_payloads, insert_definitions_into_root,
     prune_unreachable_provider_definitions,
 };
-use crate::schema_tree::{
-    CanonicalConstraintApplication, CanonicalConstraintOutcome, SchemaDocument,
-    draft07_root_document,
-};
+use crate::schema_tree::{SchemaDocument, draft07_root_document};
 use crate::uncoalesced_root::UncoalescedRootGate;
 use crate::{AuthoringPolicy, ValuesSchemaInput};
 
@@ -408,11 +405,6 @@ impl LoweredEmissionPlan {
         );
         emission_report.insertion_abstentions.base_document += base_document_abstentions;
         self.support.conditional_hosts.apply(&mut document);
-        let fallback_conditionals = canonicalize_mandatory_constraints(
-            &mut document,
-            selected_conditionals,
-            &mut emission_report,
-        );
         let mut uncoalesced_root_gate = UncoalescedRootGate::new(
             self.documents.uncoalesced_root.as_ref(),
             &self.documents.coalesced_defaults,
@@ -420,7 +412,7 @@ impl LoweredEmissionPlan {
         );
         append_selected_constraints(
             &mut document,
-            fallback_conditionals,
+            selected_conditionals,
             &self.documents,
             &self.support.dependency_roots,
             &mut emission_report,
@@ -653,49 +645,6 @@ impl LoweredEmissionPlan {
         }
         payloads.iter().map(String::len).sum()
     }
-}
-
-fn canonicalize_mandatory_constraints(
-    document: &mut SchemaDocument,
-    conditionals: Vec<LoweredConjunct>,
-    report: &mut EmissionReport,
-) -> Vec<LoweredConjunct> {
-    let mut fallback = Vec::new();
-    for conjunct in conditionals {
-        if !matches!(conjunct.class, EmissionClass::Mandatory) {
-            fallback.push(conjunct);
-            continue;
-        }
-        let mut target_segments = conjunct.carrier.ancestor_segments.clone();
-        target_segments.extend(conjunct.carrier.relative_target_segments.iter().cloned());
-        let is_object_host = conjunct.schema.is_exact_object_type_schema();
-        let canonical_object_host = is_object_host
-            && conjunct.carrier.ancestor_segments.is_empty()
-            && matches!(
-                conjunct.origin,
-                EmissionOrigin::RequirementImplication | EmissionOrigin::Backprojection
-            );
-        let outcome = if !is_object_host || canonical_object_host {
-            document.canonicalize_constraint_at_path(&target_segments, &conjunct.schema)
-        } else {
-            CanonicalConstraintOutcome::NotApplicable
-        };
-        match outcome {
-            CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Emitted) => {
-                report.canonicalization.applied += 1;
-                report.mandatory_outcomes.emitted += 1;
-            }
-            CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Redundant) => {
-                report.canonicalization.redundant += 1;
-                report.mandatory_outcomes.redundant += 1;
-            }
-            CanonicalConstraintOutcome::NotApplicable => {
-                report.canonicalization.fallback += 1;
-                fallback.push(conjunct);
-            }
-        }
-    }
-    fallback
 }
 
 impl EmissionSupportPlan {

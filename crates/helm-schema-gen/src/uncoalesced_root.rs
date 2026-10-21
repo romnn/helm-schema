@@ -31,7 +31,7 @@ struct LintConstraint {
     validator: OnceCell<Option<jsonschema::Validator>>,
 }
 
-/// Relaxes conditional constraints that `helm lint` documents fail.
+/// Relaxes constraints that `helm lint` documents fail.
 ///
 /// `helm template` validates the coalesced values document, but `helm lint`
 /// validates `CoalesceTables(overrides, values.yaml)`: the root values with
