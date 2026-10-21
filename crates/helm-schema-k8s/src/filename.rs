@@ -6,6 +6,8 @@
 
 use helm_schema_core::ResourceRef;
 
+use crate::group_version::GroupVersion;
+
 /// Lower is better — drives `ordered_api_versions_for_resource`.
 ///
 ///   - 0 = stable, 1 = beta, 2 = alpha, 3 = unknown.
@@ -81,13 +83,15 @@ pub fn ordered_api_versions_for_resource(r: &ResourceRef) -> Vec<&str> {
     versions
 }
 
+/// Upstream schema filenames for `resource`, best first; empty when its
+/// apiVersion is not syntactically valid, so nothing is ever looked up or
+/// cached under a malformed name.
 #[must_use]
 pub(crate) fn candidate_filenames_for_resource(resource: &ResourceRef) -> Vec<String> {
-    let kind = resource.kind.to_ascii_lowercase();
-    let (group, version) = match resource.api_version.split_once('/') {
-        Some((g, v)) => (g.to_ascii_lowercase(), v.to_ascii_lowercase()),
-        None => (String::new(), resource.api_version.to_ascii_lowercase()),
+    let Some(GroupVersion { group, version }) = GroupVersion::parse(&resource.api_version) else {
+        return Vec::new();
     };
+    let kind = resource.kind.to_ascii_lowercase();
 
     let mut out = Vec::new();
     if group.is_empty() {
@@ -96,7 +100,7 @@ pub(crate) fn candidate_filenames_for_resource(resource: &ResourceRef) -> Vec<St
     }
 
     let dashed_full_group = group.replace('.', "-");
-    let group_prefix = group.split('.').next().unwrap_or(&group).to_string();
+    let group_prefix = group.split('.').next().unwrap_or(group);
 
     if group.ends_with(".k8s.io") {
         out.push(format!("{kind}-{group_prefix}-{version}.json"));
@@ -113,19 +117,13 @@ pub(crate) fn candidate_filenames_for_resource(resource: &ResourceRef) -> Vec<St
 }
 
 /// Compute the catalog-relative path `<group>/<kind_lc>_<version>.json` for a
-/// grouped resource. Returns `None` for resources without a `group/version`
-/// apiVersion. Callers that only serve custom resources filter built-in K8s
-/// groups on top of this.
+/// grouped resource. Returns `None` for resources without a syntactically
+/// valid `group/version` apiVersion. Callers that only serve custom resources
+/// filter built-in K8s groups on top of this.
 pub(crate) fn group_relative_path_for_resource(resource: &ResourceRef) -> Option<String> {
-    let api_version = resource.api_version.trim();
+    let GroupVersion { group, version } = GroupVersion::parse(&resource.api_version)?;
     let kind = resource.kind.trim();
-    if api_version.is_empty() || kind.is_empty() {
-        return None;
-    }
-    let (group, version) = api_version.split_once('/')?;
-    let group = group.trim();
-    let version = version.trim();
-    if group.is_empty() || version.is_empty() {
+    if group.is_empty() || kind.is_empty() {
         return None;
     }
     let kind = kind.to_ascii_lowercase();

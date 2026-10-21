@@ -43,7 +43,7 @@ tasks:
       MISE_ENV: bench
     cmds:
       - mise install rust python
-      - mise exec -- cargo build --release --package helm-schema-cli
+      - mise exec -- cargo build --release --package helm-schema-dev
       - mise exec -- python3 tools/bench/bench.py {{.CLI_ARGS}}
 
   goreleaser:
@@ -317,14 +317,14 @@ tasks:
         {{.CLI_ARGS}}
 
   trace:chart:
-    desc: "run release helm-schema on one chart and write a perfetto trace"
+    desc: "run release helm-schema-dev on one chart and write a perfetto trace"
     vars:
-      HELM_SCHEMA_BIN: "{{.ROOT_DIR}}/target/release/helm-schema"
+      HELM_SCHEMA_BIN: "{{.ROOT_DIR}}/target/release/helm-schema-dev"
       CHART: '{{.CHART | default "./testdata/charts/cert-manager"}}'
       OUTPUT: '{{.OUTPUT | default "./target/bench/helm-schema-trace.schema.json"}}'
       TRACE: '{{.TRACE | default "./target/bench/helm-schema-trace.pftrace"}}'
     cmds:
-      - cargo build -p helm-schema-cli --release
+      - cargo build -p helm-schema-dev --release
       - >-
         /usr/bin/time -v
         {{.HELM_SCHEMA_BIN}}

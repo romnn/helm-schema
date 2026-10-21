@@ -15,7 +15,7 @@ fn catalog_lookup_attaches_provider_source() {
     let scratch = ScratchDir::new("crd-source").expect("create CRD cache scratch");
     let cache_dir = scratch.path().to_path_buf();
     let relative_path = "example.com/widget_v1.json";
-    let schema_path = crd_cache_path(&cache_dir, default_source_id(), relative_path);
+    let schema_path = cache_dir.join(default_source_id()).join(relative_path);
     std::fs::create_dir_all(
         schema_path
             .parent()

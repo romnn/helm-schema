@@ -587,3 +587,68 @@ fn unresolved_competing_kind_arm_leaves_the_kind_unknown() -> eyre::Result<()> {
     sim_assert_eq!(have: detect(&competing, &DefineIndex::new()), want: None);
     Ok(())
 }
+
+/// A double-quoted scalar's quotes delimit it; they render nothing. Pulsar's
+/// `apiVersion: "{{ .Values.certs.internal_issuer.apiVersion }}"` (milvus)
+/// once recovered the lone `"` around the unresolved hole as the apiVersion,
+/// and the provider cache then recorded `certificate-".json.not-found`.
+#[test]
+fn quoted_unresolved_api_version_is_unknown_not_its_quote() -> eyre::Result<()> {
+    let resource = detect(
+        indoc! {r#"
+            apiVersion: "{{ .Values.certs.internal_issuer.apiVersion }}"
+            kind: Issuer
+            metadata:
+              name: example
+        "#},
+        &DefineIndex::new(),
+    )
+    .ok_or_eyre("expected the Issuer resource")?;
+
+    sim_assert_eq!(have: resource.kind, want: "Issuer");
+    sim_assert_eq!(have: resource.api_version, want: "");
+    sim_assert_eq!(have: resource.api_version_candidates, want: [] as [String; 0]);
+    Ok(())
+}
+
+/// The quoted form evaluates exactly as the plain form does, for either
+/// quote style: a resolvable helper keeps its literal and nothing else.
+#[test]
+fn quoted_helper_api_version_resolves_like_the_plain_form() -> eyre::Result<()> {
+    let helpers = indoc! {r#"
+        {{- define "x.apiVersion" -}}
+        {{- print "cert-manager.io/v1" -}}
+        {{- end -}}
+    "#};
+    let mut defines = DefineIndex::new();
+    defines.add_file_source("<inline:0>", helpers);
+    for api_version_line in [
+        r#"apiVersion: "{{ include "x.apiVersion" . }}""#,
+        r#"apiVersion: '{{ include "x.apiVersion" . }}'"#,
+        r#"apiVersion: {{ include "x.apiVersion" . }}"#,
+    ] {
+        let source = format!("{api_version_line}\nkind: Certificate\nmetadata:\n  name: example\n");
+        let resource = detect(&source, &defines).ok_or_eyre("expected the Certificate resource")?;
+
+        sim_assert_eq!(have: resource.api_version, want: "cert-manager.io/v1");
+        sim_assert_eq!(have: resource.api_version_candidates, want: [] as [String; 0]);
+    }
+    Ok(())
+}
+
+/// A quoted templated kind reads its content too: the quotes never become
+/// the kind.
+#[test]
+fn quoted_unresolved_kind_is_unknown_not_its_quote() {
+    let resource = detect(
+        indoc! {r#"
+            apiVersion: cert-manager.io/v1
+            kind: "{{ .Values.kind }}"
+            metadata:
+              name: example
+        "#},
+        &DefineIndex::new(),
+    );
+
+    sim_assert_eq!(have: resource, want: None);
+}

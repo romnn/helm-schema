@@ -3,6 +3,8 @@ use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
+use super::cache_entry::PortableCachePath;
+
 /// Filename of the per-root cache layout marker.
 pub const LAYOUT_MARKER_FILENAME: &str = "CACHE_LAYOUT_VERSION";
 
@@ -13,17 +15,10 @@ pub const CACHE_LAYOUT_VERSION: u32 = 1;
 
 /// Compute the cache path for a single K8s schema file under the
 /// canonical filesystem model: `<root>/<source_id>/<version_dir>/<filename>`.
+/// CRD catalog entries share the shape as `<root>/<source_id>/<group>/<file>`.
 #[must_use]
 pub fn k8s_cache_path(root: &Path, source_id: &str, version_dir: &str, filename: &str) -> PathBuf {
     root.join(source_id).join(version_dir).join(filename)
-}
-
-/// Compute the cache path for a single CRD schema file under the
-/// canonical filesystem model: `<root>/<source_id>/<group>/<kind_lc>_<version>.json`.
-/// The caller passes the already-built relative path `<group>/<file>`.
-#[must_use]
-pub(crate) fn crd_cache_path(root: &Path, source_id: &str, relative_path: &str) -> PathBuf {
-    root.join(source_id).join(relative_path)
 }
 
 /// Compute the sidecar path that records an authoritative HTTP 404 for a
@@ -53,8 +48,8 @@ pub fn not_found_marker_exists(schema_path: &Path) -> bool {
 ///
 /// The marker is best-effort cache state: callers should still keep their
 /// in-process negative cache coherent even if this write fails.
-pub(crate) fn write_not_found_marker(schema_path: &Path) -> io::Result<()> {
-    let marker = not_found_marker_path(schema_path);
+pub(crate) fn write_not_found_marker(schema_path: PortableCachePath<'_>) -> io::Result<()> {
+    let marker = not_found_marker_path(schema_path.path());
     if let Some(parent) = marker.parent() {
         fs::create_dir_all(parent)?;
     }

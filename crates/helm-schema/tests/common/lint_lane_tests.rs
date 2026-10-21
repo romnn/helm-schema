@@ -60,6 +60,7 @@ fn document_group_chart(source: &Path) -> eyre::Result<super::LiveChart> {
             overlay: overlay.clone(),
             document: Some(super::lint_probes::ScreenedDocument {
                 kind,
+                lint_control: false,
                 values: inputs.compose(overlay.clone(), kind)?.root,
                 defaults: Some(inputs.compose(json!({}), kind)?.root),
                 kubernetes_version: "1.29.0".into(),
@@ -2120,5 +2121,275 @@ fn contextual_false_acceptance_row_is_stale_only_after_its_case_is_examined() ->
             .err()
             .ok_or_eyre("examined fixed contextual row was retained")?;
     assert!(error.to_string().contains("no longer fail alike"));
+    Ok(())
+}
+
+fn partial_override_chart() -> eyre::Result<ScratchDir> {
+    let chart = ScratchDir::new("partial-override-lint-control")?;
+    fs::create_dir_all(chart.path().join("charts/child"))?;
+    fs::create_dir(chart.path().join("templates"))?;
+    fs::write(
+        chart.path().join("Chart.yaml"),
+        indoc::indoc! {"
+        apiVersion: v2
+        name: partial-override-control
+        version: 1.0.0
+        dependencies:
+          - name: child
+            version: 1.0.0
+    "},
+    )?;
+    fs::write(chart.path().join("values.yaml"), "{}\n")?;
+    fs::write(
+        chart.path().join("charts/child/Chart.yaml"),
+        indoc::indoc! {"
+        apiVersion: v2
+        name: child
+        version: 1.0.0
+    "},
+    )?;
+    fs::write(
+        chart.path().join("charts/child/values.yaml"),
+        serde_json::to_vec(&json!({"first": 1, "second": 2}))?,
+    )?;
+    Ok(chart)
+}
+
+#[test]
+fn partial_override_audits_unchanged_rejection_and_balances_document_coverage() -> eyre::Result<()>
+{
+    let chart = partial_override_chart()?;
+    let restrictive = json!({"properties": {"child": {"required": ["second"]}}});
+    let schemas = LintSchemas::compile(&restrictive, &restrictive, None)?;
+    let result = screen(&ScreenRequest {
+        chart: chart.path(),
+        schemas: &schemas,
+        kubernetes_version: "1.29.0",
+        imported: &[],
+        roster_sha256: None,
+        available_probes: usize::MAX,
+    })?;
+    result.coverage.validate()?;
+    sim_assert_eq!(have: result.coverage.builtin_rows, want: 3);
+    sim_assert_eq!(have: result.coverage.distinct_overlays, want: 3);
+    sim_assert_eq!(have: result.coverage.rows_screened, want: 3);
+    for (kind, counts) in &result.coverage.documents {
+        let skipped = usize::from(kind != "LintRaw");
+        sim_assert_eq!(have: counts.screened, want: 3 - skipped);
+        sim_assert_eq!(have: counts.not_validated, want: skipped);
+    }
+    sim_assert_eq!(have: result.flips.len(), want: 1);
+    let probe = result.flips.first().ok_or_eyre("partial control absent")?;
+    sim_assert_eq!(have: &probe.overlay, want: &json!({"child": {"first": 1}}));
+    let document = probe
+        .document
+        .as_ref()
+        .ok_or_eyre("partial document absent")?;
+    sim_assert_eq!(have: document.kind, want: AcceptanceDocument::LintRaw);
+    sim_assert_eq!(have: &document.origins, want: &vec!["dependency:[\"child\"]:PartialOverride".to_string()]);
+    sim_assert_eq!(have: &document.control_overlays, want: &vec![json!({})]);
+    sim_assert_eq!(have: schemas.profiles.document_verdicts(&document.values), want: (false, false));
+    assert!(document.lint_control);
+    assert!(
+        raw_flip_error(chart.path(), &schemas, &probe.overlay)?
+            .contains("tightening rejects a lint document")
+    );
+    Ok(())
+}
+
+#[test]
+fn partial_override_restriction_is_matched_only_when_schema_free_lint_rejects() -> eyre::Result<()>
+{
+    let source = partial_override_chart()?;
+    // Keep defaults usable: the tested override changes the rendered discriminator.
+    fs::write(
+        source.path().join("charts/child/values.yaml"),
+        serde_json::to_vec(&json!({"first": true, "second": 2}))?,
+    )?;
+    fs::write(
+        source.path().join("templates/control.yaml"),
+        indoc::indoc! {"
+            {{ if .Values.child.first }}invalid scalar manifest{{ end }}
+    "},
+    )?;
+    fs::write(source.path().join("values.yaml"), "child: {first: false}\n")?;
+    let restrictive = json!({"properties": {"child": {"required": ["second"]}}});
+    let schemas = LintSchemas::compile(&restrictive, &restrictive, None)?;
+    let screened = screen(&ScreenRequest {
+        chart: source.path(),
+        schemas: &schemas,
+        kubernetes_version: "1.29.0",
+        imported: &[],
+        roster_sha256: None,
+        available_probes: usize::MAX,
+    })?;
+    let probe = screened
+        .flips
+        .iter()
+        .find(|probe| probe.overlay == json!({"child": {"first": true}}))
+        .ok_or_eyre("partial control absent")?;
+    let chart = super::PinnedHelmChart::prepare(
+        super::helm_invocation::HelmRunner::shared()?,
+        source.path(),
+    )?;
+    let cache = ScratchDir::new("partial-control-kubernetes")?;
+    let kubernetes = super::OfflineKubernetesValidator::new(
+        cache.path(),
+        super::helm_adjudication::KUBERNETES_RELEASE,
+    )?;
+    let (verdict, _) = super::adjudicate_lint_flip(
+        &chart,
+        probe,
+        probe
+            .document
+            .as_ref()
+            .ok_or_eyre("partial document absent")?,
+        &schemas,
+        &kubernetes,
+    )?;
+    sim_assert_eq!(have: verdict, want: super::HelmFlipVerdict::TighteningMatchedLintRejection);
+    Ok(())
+}
+
+#[test]
+fn partial_override_loosened_schema_matches_live_lint_and_template() -> eyre::Result<()> {
+    let source = partial_override_chart()?;
+    let restrictive = json!({"properties": {"child": {"required": ["second"]}}});
+    let schemas = LintSchemas::compile(&restrictive, &json!({}), None)?;
+    let screened = screen(&ScreenRequest {
+        chart: source.path(),
+        schemas: &schemas,
+        kubernetes_version: "1.29.0",
+        imported: &[],
+        roster_sha256: None,
+        available_probes: usize::MAX,
+    })?;
+    screened.coverage.validate()?;
+    let probe = screened
+        .flips
+        .iter()
+        .find(|probe| probe.overlay == json!({"child": {"first": 1}}))
+        .ok_or_eyre("partial control absent")?;
+    let chart = super::PinnedHelmChart::prepare(
+        super::helm_invocation::HelmRunner::shared()?,
+        source.path(),
+    )?;
+    let cache = ScratchDir::new("partial-loosening-kubernetes")?;
+    let kubernetes = super::OfflineKubernetesValidator::new(
+        cache.path(),
+        super::helm_adjudication::KUBERNETES_RELEASE,
+    )?;
+    let (verdict, _) = super::adjudicate_lint_flip(
+        &chart,
+        probe,
+        probe
+            .document
+            .as_ref()
+            .ok_or_eyre("partial document absent")?,
+        &schemas,
+        &kubernetes,
+    )?;
+    sim_assert_eq!(have: verdict, want: super::HelmFlipVerdict::LooseningMatchedLintValidation);
+    Ok(())
+}
+
+#[test]
+fn partial_override_preserves_origins_on_dedup_and_fails_closed_at_document_budget()
+-> eyre::Result<()> {
+    let source = partial_override_chart()?;
+    let path = source.path().join("Chart.yaml");
+    let mut metadata: Value = serde_yaml::from_str(&fs::read_to_string(&path)?)?;
+    metadata["dependencies"][0]["condition"] = json!("child.first");
+    fs::write(path, serde_json::to_vec(&metadata)?)?;
+    fs::write(
+        source.path().join("charts/child/values.yaml"),
+        serde_json::to_vec(&json!({"first": false, "second": 2}))?,
+    )?;
+    let restrictive = json!({"properties": {"child": {"required": ["second"]}}});
+    let schemas = LintSchemas::compile(&restrictive, &restrictive, None)?;
+    let mut request = ScreenRequest {
+        chart: source.path(),
+        schemas: &schemas,
+        kubernetes_version: "1.29.0",
+        imported: &[],
+        roster_sha256: None,
+        available_probes: usize::MAX,
+    };
+    let screened = screen(&request)?;
+    screened.coverage.validate()?;
+    sim_assert_eq!(have: screened.coverage.builtin_rows, want: 6);
+    sim_assert_eq!(have: screened.coverage.distinct_overlays, want: 5);
+    sim_assert_eq!(have: screened.coverage.rows_screened, want: 6);
+    let document = screened
+        .flips
+        .iter()
+        .find(|probe| probe.overlay == json!({"child": {"first": true}}))
+        .and_then(|probe| probe.document.as_ref())
+        .ok_or_eyre("deduplicated partial row absent")?;
+    sim_assert_eq!(have: document.origins.len(), want: 2);
+    sim_assert_eq!(have: &document.control_overlays, want: &vec![json!({})]);
+    request.available_probes = 14;
+    let capped = screen(&request)?;
+    assert!(capped.coverage.validate().is_err());
+    assert!(
+        capped
+            .coverage
+            .failures
+            .iter()
+            .any(|failure| failure.contains("cap would omit 5 overlays"))
+    );
+    Ok(())
+}
+
+#[test]
+fn partial_override_template_abort_retains_the_existing_lint_oracle() -> eyre::Result<()> {
+    let source = partial_override_chart()?;
+    fs::write(
+        source.path().join("charts/child/values.yaml"),
+        serde_json::to_vec(&json!({"first": true, "second": 2}))?,
+    )?;
+    fs::write(source.path().join("values.yaml"), "child: {first: false}\n")?;
+    // Helm's lint mode ignores fail; template execution still aborts.
+    fs::write(
+        source.path().join("templates/control.yaml"),
+        indoc::indoc! {r#"
+        {{ if .Values.child.first }}{{ fail "template-only failure" }}{{ end }}
+    "#},
+    )?;
+    let restrictive = json!({"properties": {"child": {"required": ["second"]}}});
+    let schemas = LintSchemas::compile(&restrictive, &restrictive, None)?;
+    let screened = screen(&ScreenRequest {
+        chart: source.path(),
+        schemas: &schemas,
+        kubernetes_version: "1.29.0",
+        imported: &[],
+        roster_sha256: None,
+        available_probes: usize::MAX,
+    })?;
+    let probe = screened
+        .flips
+        .iter()
+        .find(|probe| probe.overlay == json!({"child": {"first": true}}))
+        .ok_or_eyre("partial control absent")?;
+    let chart = super::PinnedHelmChart::prepare(
+        super::helm_invocation::HelmRunner::shared()?,
+        source.path(),
+    )?;
+    let cache = ScratchDir::new("partial-template-abort-kubernetes")?;
+    let kubernetes = super::OfflineKubernetesValidator::new(
+        cache.path(),
+        super::helm_adjudication::KUBERNETES_RELEASE,
+    )?;
+    let (verdict, _) = super::adjudicate_lint_flip(
+        &chart,
+        probe,
+        probe
+            .document
+            .as_ref()
+            .ok_or_eyre("partial document absent")?,
+        &schemas,
+        &kubernetes,
+    )?;
+    sim_assert_eq!(have: verdict, want: super::HelmFlipVerdict::TighteningMatchedHelmAbort);
     Ok(())
 }

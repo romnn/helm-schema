@@ -1,0 +1,30 @@
+[package]
+name = "helm-schema-dev"
+publish = false
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+categories.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+clap = { version = "4", features = ["derive", "env"] }
+helm-schema-cli.workspace = true
+tracing.workspace = true
+tracing-perfetto.workspace = true
+tracing-subscriber.workspace = true
+
+[target.'cfg(not(target_os = "windows"))'.dependencies]
+mimalloc = "0.1"
+
+[dev-dependencies]
+color-eyre.workspace = true
+indoc.workspace = true
+serde_json.workspace = true
+test-util.workspace = true

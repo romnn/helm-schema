@@ -476,6 +476,20 @@ For every value, `helm-schema` combines three signals, and the schema is recover
 
 When a value is genuinely ambiguous it stays a union rather than a wrong guess, and anything that can't be resolved is reported as a diagnostic instead of being invented. See the [documentation](https://romnn.github.io/helm-schema/docs/how-it-works/) for the details.
 
+## Development tracing
+
+The unpublished `helm-schema-dev` binary runs the same CLI with an additional
+`--trace-output <FILE>` option for Perfetto traces:
+
+```sh
+cargo build --release -p helm-schema-dev
+./target/release/helm-schema-dev ./path/to/chart --trace-output ./target/chart.pftrace
+```
+
+`task trace:chart` records one chart; `task bench` benchmarks the dev binary. Published
+crates retain tracing spans without depending on the Perfetto layer.
+
+
 ## Status / disclaimer
 
 This project is **useful and works for many charts**, but it is **not yet fully production-ready** or 100% reliable.

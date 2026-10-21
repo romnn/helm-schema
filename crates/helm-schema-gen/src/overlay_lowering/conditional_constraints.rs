@@ -6,6 +6,8 @@ use super::{
 };
 use helm_schema_core::ValuesPath;
 
+use crate::emission_policy::EmissionOrigin;
+use crate::schema_tree::{CanonicalConstraintApplication, CanonicalConstraintOutcome};
 use crate::uncoalesced_root::{GuardEncoding, UncoalescedRootGate};
 use crate::values_yaml::yaml_value_at_values_path;
 
@@ -681,7 +683,7 @@ pub(crate) fn append_selected_constraints(
         for conditional in group {
             let mandatory = usize::from(matches!(conditional.class, EmissionClass::Mandatory));
             let Some(fragment) = build_scoped_target_fragment(
-                conditional,
+                &conditional,
                 values_yaml_doc,
                 absence,
                 values_document,
@@ -708,8 +710,12 @@ pub(crate) fn append_selected_constraints(
             let Some(fragment) =
                 gate.lint_safe_then(&ancestor_segments, &guards, condition, fragment, encoding)
             else {
+                report.mandatory_outcomes.fallback += mandatory;
                 continue;
             };
+            if canonicalize_mandatory_constraint(root_schema, &conditional, &fragment, report) {
+                continue;
+            }
             match &mut merged {
                 None => merged = Some((fragment, 1, mandatory)),
                 Some((target, facts, mandatory_facts)) => {
@@ -831,8 +837,61 @@ pub(crate) fn append_selected_constraints(
     }
 }
 
+/// Folds only the lint-checked constraint into an existing property slot.
+fn canonicalize_mandatory_constraint(
+    document: &mut SchemaDocument,
+    conjunct: &LoweredConjunct,
+    checked: &Value,
+    report: &mut EmissionReport,
+) -> bool {
+    if !matches!(conjunct.class, EmissionClass::Mandatory) {
+        return false;
+    }
+    // A lint-conditioned fragment must retain its presence guard.
+    if checked
+        != &build_target_fragment(
+            &conjunct.carrier.relative_target_segments,
+            conjunct.schema.clone(),
+        )
+        .into_value()
+    {
+        report.canonicalization.fallback += 1;
+        return false;
+    }
+    let mut target_segments = conjunct.carrier.ancestor_segments.clone();
+    target_segments.extend(conjunct.carrier.relative_target_segments.iter().cloned());
+    let is_object_host = conjunct.schema.is_exact_object_type_schema();
+    let canonical_object_host = is_object_host
+        && conjunct.carrier.ancestor_segments.is_empty()
+        && matches!(
+            conjunct.origin,
+            EmissionOrigin::RequirementImplication | EmissionOrigin::Backprojection
+        );
+    let outcome = if !is_object_host || canonical_object_host {
+        document.canonicalize_constraint_at_path(&target_segments, &conjunct.schema)
+    } else {
+        CanonicalConstraintOutcome::NotApplicable
+    };
+    match outcome {
+        CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Emitted) => {
+            report.canonicalization.applied += 1;
+            report.mandatory_outcomes.emitted += 1;
+            true
+        }
+        CanonicalConstraintOutcome::Applied(CanonicalConstraintApplication::Redundant) => {
+            report.canonicalization.redundant += 1;
+            report.mandatory_outcomes.redundant += 1;
+            true
+        }
+        CanonicalConstraintOutcome::NotApplicable => {
+            report.canonicalization.fallback += 1;
+            false
+        }
+    }
+}
+
 fn build_scoped_target_fragment(
-    mut conditional: LoweredConjunct,
+    conditional: &LoweredConjunct,
     values_yaml_doc: &YamlValue,
     absence: crate::condition_encoding::AbsenceDefaults<'_>,
     values_document: Option<usize>,
@@ -841,7 +900,7 @@ fn build_scoped_target_fragment(
     let mut target_segments = conditional.carrier.ancestor_segments.clone();
     target_segments.extend(conditional.carrier.relative_target_segments.iter().cloned());
     let mut current_anchor = target_segments;
-    let mut content = std::mem::replace(&mut conditional.schema, SchemaNode::empty());
+    let mut content = conditional.schema.clone();
 
     for scope in conditional.nested_guard_scopes().iter().rev() {
         let relative = current_anchor.strip_prefix(scope.ancestor_segments.as_slice())?;

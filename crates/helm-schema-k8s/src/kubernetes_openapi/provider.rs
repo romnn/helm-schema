@@ -5,8 +5,8 @@ use helm_schema_core::{ApiPresenceQuery, ResourceRef, YamlPath};
 use serde_json::Value;
 
 use crate::cache::{
-    LayoutCheckOutcome, LayoutChecker, NegativeCache, SourceDocCache, cache_root_has_legacy_layout,
-    default_cache_dir, k8s_cache_path, subdirs,
+    CacheEntry, LayoutCheckOutcome, LayoutChecker, NegativeCache, SourceDocCache,
+    cache_root_has_legacy_layout, default_cache_dir, subdirs,
 };
 use crate::diagnostic::DiagnosticSink;
 use crate::fetch::{HttpFetcher, UreqFetcher};
@@ -156,13 +156,12 @@ impl KubernetesJsonSchemaProvider {
     /// return the first source that owns the resource.
     #[tracing::instrument(skip_all, fields(kind = resource.kind.as_str(), api_version = resource.api_version.as_str()))]
     fn load_resource_doc(&self, resource: &ResourceRef) -> Option<LoadedK8sSchemaDoc> {
-        if resource.api_version.trim().is_empty() {
+        // Empty exactly when the apiVersion is missing or malformed: such a
+        // resource names no upstream file.
+        let candidates = candidate_filenames_for_resource(resource);
+        if candidates.is_empty() {
             return None;
         }
-
-        // `candidate_filenames_for_resource` always yields at least one
-        // filename for a non-empty apiVersion.
-        let candidates = candidate_filenames_for_resource(resource);
 
         let layout = self.run_layout_check();
         if layout == LayoutCheckOutcome::ForwardIncompatible {
@@ -193,7 +192,7 @@ impl KubernetesJsonSchemaProvider {
         filename: &'a str,
     ) -> CachedSchemaDocRequest<'a> {
         CachedSchemaDocRequest {
-            local: k8s_cache_path(&self.cache_dir, &source.source_id, version, filename),
+            entry: CacheEntry::new(&self.cache_dir, &source.source_id, version, filename),
             url: source_url(&source.base_url, &format!("{version}/{filename}")),
             source_id: &source.source_id,
             cache_namespace: version,
@@ -204,6 +203,7 @@ impl KubernetesJsonSchemaProvider {
             },
             fetcher: self.fetcher.as_ref(),
             negative_cache: &self.negative_cache,
+            diagnostic_sink: self.diagnostic_sink.as_ref(),
         }
     }
 

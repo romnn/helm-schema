@@ -41,6 +41,6 @@ pub fn init_perfetto_from_env() -> eyre::Result<()> {
     let path = std::path::PathBuf::from(path);
     let file = std::fs::File::create(&path)
         .wrap_err_with(|| format!("create trace {}", path.display()))?;
-    tracing::dispatcher::set_global_default(helm_schema::trace::perfetto_dispatch(file))
+    tracing::dispatcher::set_global_default(helm_schema_dev::trace::perfetto_dispatch(file))
         .wrap_err("install Perfetto subscriber")
 }

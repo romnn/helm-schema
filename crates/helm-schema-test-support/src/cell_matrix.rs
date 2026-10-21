@@ -50,7 +50,7 @@ pub const KUBERNETES_BUNDLE_SHA256: &str =
     "af56b70fb41ba4af2dee50e64faea36922e9ee2235401ea81fd8bc0f9be3d661";
 /// See [`KUBERNETES_BUNDLE_SHA256`].
 pub const CRD_BUNDLE_SHA256: &str =
-    "73dd3a9ff91d5905162021f6926a6190f88b9798a9ca849d5be2655c29815700";
+    "a56842daba79a1f499d1b4ceb655f74e76a6810685efef78e6cdf33eb5108b6b";
 
 /// The table format; changing columns, header lines or encodings must change it.
 const FORMAT: &str = "cell_matrix v1";

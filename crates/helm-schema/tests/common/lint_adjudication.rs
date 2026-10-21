@@ -260,6 +260,7 @@ fn judge(
     });
     let mut evidence = json!({
         "document_kind": document.kind, "document": values, "origins": document.origins,
+        "lint_control": document.lint_control,
         "baseline_sha256": sha256_hex(&schemas.baseline), "candidate_sha256": sha256_hex(&schemas.candidate),
         "baseline_accepts": before, "candidate_accepts": after, "candidate_rejects_for_a_new_reason": new_rejection,
         "baseline_rejects_it_as_its_defaults": uninformative,
@@ -280,7 +281,7 @@ fn judge(
         Err(eyre::eyre!(
             "Rust screening disagrees with the corresponding real lint rule"
         ))
-    } else if before == after && !new_rejection {
+    } else if before == after && !new_rejection && (!document.lint_control || after) {
         Ok(HelmFlipVerdict::Collapsed)
     } else {
         judge_independent(

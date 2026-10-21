@@ -81,6 +81,13 @@ pub enum DiagnosticKey {
         /// Newer layout marker found on disk.
         on_disk_marker: u32,
     },
+    /// A cache write was skipped because the entry's name is not portable.
+    CacheWriteSkipped {
+        /// Root directory of the cache.
+        cache_root: String,
+        /// The entry below the root, `/`-separated.
+        entry: String,
+    },
     /// Input channels give the same JSON number different Helm range semantics.
     InputChannelNumericRangeAmbiguity {
         /// Values path affected by the ambiguity.
@@ -195,6 +202,16 @@ pub enum Diagnostic {
         on_disk_marker: u32,
         /// Layout marker understood by this binary.
         compiled_marker: u32,
+    },
+    /// A cache write was skipped because the entry's name is not portable to
+    /// every platform; the lookup continued as a cache miss.
+    CacheWriteSkipped {
+        /// Root directory of the cache.
+        cache_root: String,
+        /// The entry below the root, `/`-separated.
+        entry: String,
+        /// Why the name is not portable.
+        reason: String,
     },
     /// A one-variable Helm range can iterate an integer supplied through
     /// `--set`, while the same JSON number supplied by a values file or
@@ -312,6 +329,12 @@ impl Diagnostic {
                 cache_root: cache_root.clone(),
                 on_disk_marker: *on_disk_marker,
             },
+            Diagnostic::CacheWriteSkipped {
+                cache_root, entry, ..
+            } => DiagnosticKey::CacheWriteSkipped {
+                cache_root: cache_root.clone(),
+                entry: entry.clone(),
+            },
             Diagnostic::InputChannelNumericRangeAmbiguity { value_path } => {
                 DiagnosticKey::InputChannelNumericRangeAmbiguity {
                     value_path: value_path.clone(),
@@ -359,6 +382,7 @@ impl Diagnostic {
             | Diagnostic::LocalOverrideUnreadable { .. }
             | Diagnostic::CacheLayoutInvalidated { .. }
             | Diagnostic::CacheLayoutForwardIncompatible { .. }
+            | Diagnostic::CacheWriteSkipped { .. }
             | Diagnostic::InputChannelNumericRangeAmbiguity { .. }
             | Diagnostic::SchemaCompactedForHelm { .. }
             | Diagnostic::SchemaExceedsHelmFileLimit { .. } => {}

@@ -565,11 +565,28 @@ fn scalar_value_body(
     HelperOutputEvaluator::default().collect_span_parts(
         source,
         source.root,
-        value.span,
+        quoted_scalar_content(value.span, source.text),
         &mut parts,
     );
     let kind_branch_sources = inline_kind_branch_sources(&parts.arms);
     (parts.into_body(), kind_branch_sources)
+}
+
+/// The content of a quoted scalar: its quotes delimit the scalar and render
+/// nothing, so `"{{ .Values.apiVersion }}"` evaluates only the action they
+/// enclose. A plain scalar is its own content.
+fn quoted_scalar_content(span: Span, text: &str) -> Span {
+    let Some(raw) = text.get(span.start..span.end) else {
+        return span;
+    };
+    let trimmed = raw.trim();
+    let content = unquote_yaml_scalar(trimmed);
+    if content.len() == trimmed.len() {
+        return span;
+    }
+    // Both delimiters are one-byte quotes.
+    let start = span.start + (raw.len() - raw.trim_start().len()) + 1;
+    Span::new(start, start + content.len())
 }
 
 /// The parsed condition of an `{{ if … }}` / `{{ else if … }}` branch

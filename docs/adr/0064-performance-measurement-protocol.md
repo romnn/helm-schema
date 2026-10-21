@@ -25,8 +25,11 @@ Every performance number is produced this way:
 - **Statistics**: repeated runs, interleaved A/B pairs for final decisions, median and
   min–max of CPU and wall; a gain whose paired range crosses zero is not a gain; load
   is recorded and loaded hosts are marked.
-- **Attribution**: perfetto traces for phase proportions only, never mixed with untraced
-  timings; short sampling windows inside the phase of interest.
+- **Attribution**: Perfetto traces from the unpublished `helm-schema-dev --trace-output <FILE>`
+  binary for phase proportions only, never mixed with untraced timings; short sampling
+  windows inside the phase of interest. The dev crate owns the git-sourced Perfetto layer;
+  published crates retain their spans and have no Perfetto dependency. Verification
+  harnesses share this layer through `helm-schema-dev`.
 - **Byte gate**: every candidate is compared with the baseline on the reference charts
   before it is timed; a candidate that changes one byte leaves the performance track
   for the adjudication track (ADR [0055](0055-fixture-change-contracts.md)).

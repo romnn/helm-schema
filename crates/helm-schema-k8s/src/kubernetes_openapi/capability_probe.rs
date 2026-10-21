@@ -1,17 +1,19 @@
 use helm_schema_core::{ApiPresenceQuery, ResourceRef};
 
 use crate::builtin_groups::is_k8s_builtin_group;
+use crate::group_version::GroupVersion;
 
 /// Builds the [`ResourceRef`] to probe for a built-in Helm capability literal.
 ///
 /// Resource-qualified queries probe the kind directly, while API-version-only queries use the
 /// declarative canonical-kind table.
+/// Malformed apiVersions return `None` (uncertain): they name no probe target.
 /// Third-party API groups return `None` because absence from the Kubernetes bundle says nothing
 /// about CRDs installed in the target cluster.
 pub(super) fn build_capability_probe(query: &ApiPresenceQuery) -> Option<ResourceRef> {
     match query {
         ApiPresenceQuery::Resource { api_version, kind } => {
-            let group = api_version.split_once('/').map_or("", |(group, _)| group);
+            let group = GroupVersion::parse(api_version)?.group;
             is_k8s_builtin_group(group)
                 .then(|| ResourceRef::concrete(api_version.clone(), kind.clone()))
         }
