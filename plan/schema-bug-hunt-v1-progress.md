@@ -9233,4 +9233,6 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   closures vs main). USER: one more scoped try, escalated to three models from first principles + globally cleanest design: Opus
   (round8-w1-opus), Fable xhigh (round8-w1-fable), Astra xhigh (Codex 20261021T145716-d8520084, round8-w1-astra); shared brief
   /Volumes/T7/dev/round8/brief-w1-first-principles.md; an architecture review compares and combines the three. Orchestrator.
+- 17:02 (Oct 21) — **Downstream luup2 gate GREEN on main 7c200618: 0/32 charts fail** (cargo install of main, then `<chart>:check:local`
+  per chart; was 5/32 before landing 10c). luup2 checkout left clean. Orchestrator.
 Next: collect the three W1 first-principles hand-backs and run an architecture review over them; luup2 check:local on main 7c200618; Opus W4 track; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
