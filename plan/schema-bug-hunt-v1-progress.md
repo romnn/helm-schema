@@ -9277,4 +9277,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   admission suite. Opus building w1/stage1-min on 5220c19b. Orchestrator.
 - 07:2x (Oct 22) — **Downstream luup2 gate GREEN on main 73d1fa15 (= 2a76012e + ledger): 0/32 charts fail** (cargo install exit 0,
   then `<chart>:check:local` per chart; every log renders and validates). Orchestrator.
-Next: collect w1/stage1-min, sol review, landing 10e; then R0 of `plan/value-algebra-interpreter.md`.
+- 08:33 (Oct 22) — **R0 design closure merged into main as f1b1cb9e (docs/plan only).** plan/value-algebra-r0.md (post-mortem: the
+  June single-abstract-interpreter result type `{value, effects}` gave truth/content/kind no home, so each corpus fix added a map
+  beside the value; four enforceable anti-recurrence rules), fail-closed owner inventory (plan/value-algebra-r0-inventory/: 509
+  classified declarations, 180 deletion obligations R1a 58 / R2 7 / R3a 20 / R3b 95; checker + 5-case self-test exit 0), refined
+  migration R1a/R1b (byte-identical) → R2 (sealed dispatch, kind leaves under a write-free certificate) → R3a (byte-identical, legacy
+  order) → R3b (heap/single execution, one coupled landing), 92 pinned-Helm probes, ADR 0069 Proposed. Reviews: sol architecture
+  REWORK×3 → ACCEPT; astra Helm semantics REWORK×2 → ACCEPT WITH CHANGES (pre-R2/pre-R3b obligations recorded). USER DECISIONS OPEN:
+  D1 fallback hint after piped required (rec. no), D2 15 selected-* cells to ADR 0042 policy (rec. yes), D3 deletion-only landings
+  via an ADR 0066 consolidation clause (B, rec.) vs folding refactors into semantic landings (A), D4 reject raw numbers at genuine Go
+  int parameters on proven-unchanged paths (rec. yes). W1 stage-1-min builder stalled ~3.5 h without activity; stopped and restarted
+  as a fresh Opus agent on w1/stage1-min (= 5220c19b). Orchestrator.
+Next: user decisions D1–D4; collect w1/stage1-min, sol review, landing 10e; then R0 of `plan/value-algebra-interpreter.md`.
