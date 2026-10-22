@@ -102,7 +102,19 @@ Kind consumers live in one module: `require_kind` (ternary condition, string par
 Every stage obeys ADR 0066: no new failure versus main, strictly fewer known failures, justified LOC, and the
 listed deletions. A stage that does not delete its listed representations does not land.
 
-**Stage 1 — kind contracts (in flight; landing 10d).** Base: Opus `w1/produced-kinds` a2f01c4c. Grafts: Fable's
+**Stage 1 — RESCOPED 2026-10-22 (orchestrator, on the sol pre-landing review).** The combined kind-contract stage below was
+built (`w1/stage1-combined`) and reviewed twice. Each review found more counterexamples where a newly exact kind/emptiness fact
+reads a stale value after a write (merge/alias/helper-summary/direct reads; message constraints over pre-write inputs; synthetic
+coalesce fallbacks; projected constants through alias mutation). A temporary fence grew toward a store; the narrowed version
+closed 76 cells for +310 temporary LOC and still had three traced P1s. Conclusion: exact kind facts are unsound before R3's
+heap/identity, so stage 1 lands only the ternary arity check (and any piece an ablation shows independently sound and
+closing cells), and every witness cell and counterexample (sealed 1,294, Astra 69, Fable controls64, 75 review cells, the
+three latest P1s) is preserved as the admission suite with main's verdicts. The kind vocabulary, required/ternary kind
+consumers and coalesce nil fold move to R2/R3. The deleted AST `required` presence lane is NOT deleted in stage 1: it holds
+correct rejections (ingress-nginx, okteto, trivy-operator, kyverno) until R2 replaces it. References: `w1/stage1-combined`
+6e43fe96 (fence) and 5ae09e77 (narrowing) in /Volumes/T7/dev/round8-w1-opus; reviews in agentmux run 20261022T000808-5dafd530.
+
+The original stage-1 design, superseded as described above: Base: Opus `w1/produced-kinds` a2f01c4c. Grafts: Fable's
 `RuntimeKind`/`KindFact`/`ScalarValue::kind()` replacing `ProducedKind` (no kind-only leaf yet; emptiness back to
 content); Fable's `record_string_result_consumer` for the `required` message; Astra's single-pass `eval_coalesce`;
 exhaustive `Effects::writes_state` (destructure like `execution_only`); a stale-helper-output fence in
