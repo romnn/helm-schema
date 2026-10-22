@@ -43,7 +43,8 @@ backings and namespace cloning (`plan/value-algebra-r0.md` §3).
 
 - Supersedes ADR 0022 at the cut-over: reachability becomes a query.
 - Amends ADR [0016](0016-helpers-are-evaluated-by-call-site-reguarded-summaries.md). Only helpers that are
-  deterministic, transitively read-only, untruncated and allocate nothing escaping are memoized. The key keeps the
+  deterministic (an audited, transitively propagated catalog fact; unproved means ineligible), transitively
+  read-only and untruncated, and that allocate nothing escaping, are memoized. The key keeps the
   recursion `seen` set and adds the heap snapshot identity, and partial cycle results are never cached outside their
   head (ADR [0028](0028-schema-cache-is-fetch-on-miss-never-an-oracle.md)).
 - Refines ADR 0012: "one lattice" means one value algebra with no carriers beside it. Output stays bounded symbolic
@@ -54,7 +55,8 @@ backings and namespace cloning (`plan/value-algebra-r0.md` §3).
   [0019](0019-analysis-bounds-are-structural-and-only-widen.md)). Unknown loops widen every object they touch.
 - Snapshot identities and per-site allocation summaries cost memory and cache hit rate. Performance is measured under
   ADR [0064](0064-performance-measurement-protocol.md) before the cut-over.
-- Until the cut-over, any new kind-based rejection requires a write-free chart. Charts that write therefore close
+- Until the cut-over, any new kind-based rejection requires a conservative write-free certificate for the chart
+  (literal `tpl` programs scanned recursively). Charts that write therefore close
   their cells only at the cut-over.
 - Open: ADR [0066](0066-landing-ratchet.md) clause 2 for byte-identical deletion-only landings (user decision D3;
   without an amendment, refactor stages fold into semantic landings).
