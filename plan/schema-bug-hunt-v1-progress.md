@@ -9266,5 +9266,13 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   alias writes, and drops constant output (new FA); Opus reworking with a cap (narrow instead of growing the fence). Branch
   landing-10d (round8-landing10a) = main 6ac9bb6c + 31088d81 (harness) + 5220c19b (W4); env runner 9611429, E=round8-landing10d-run1.
   Orchestrator.
-Next: watch the 10d chain (`tail /Volumes/T7/dev/round8-landing10d-run1/chain.log`); on green merge into main; W1 stage 1 rebases onto
-it for 10e; then R0 of `plan/value-algebra-interpreter.md`.
+- 06:53 (Oct 22) — **LANDED: landing 10d merged into main as 2a76012e (chain green, run 1).** Components: harness context-roster guard
+  + intake containment (31088d81), W4 comparison-operands slice (5220c19b; 47 matrix cells improved, 0 NEW, F34 closes, +96 LOC).
+  Steps: dump 04:29 (adopted 0 — W4's 31 fixtures were committed on its branch and reproduced byte-identically), unit 04:34, lint
+  04:42, battery 04:45 (161 charts, 10,349 flips adjudicated), integration 05:49, sweep 06:00, finalize 06:38. Receipt
+  /Volumes/T7/dev/round8-landing10d-run1/receipt.json sha256 5bc9d565…. Not run for this landing: `task test:all`, luup2 gate.
+  W1 stage 1 RESCOPED (plan/value-algebra-interpreter.md, 0cd2f718): sol's second review of the narrowed stage (5ae09e77; 1,502 cells
+  0 NEW / 76 closed, +310 LOC) found three more traced stale-read P1s; recommendation accepted — land only the ternary arity check
+  (plus any ablation-proven independent piece) and preserve all ~1,500 witness cells and counterexamples as the rearchitecture's
+  admission suite. Opus building w1/stage1-min on 5220c19b. Orchestrator.
+Next: luup2 gate on main 2a76012e; collect w1/stage1-min, sol review, landing 10e; then R0 of `plan/value-algebra-interpreter.md`.
