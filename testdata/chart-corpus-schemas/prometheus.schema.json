@@ -1384,6 +1384,24 @@
       ],
       "type": "object"
     },
+    "constrains/alertmanager.additionalPeers:t+alertmanager.replicaCount": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t"
+        },
+        {
+          "properties": {
+            "alertmanager": {
+              "$ref": "#/$defs/constrains~1replicaCount@2"
+            }
+          },
+          "required": [
+            "alertmanager"
+          ],
+          "type": "object"
+        }
+      ]
+    },
     "constrains/alertmanager.affinity:t+alertmanager.enabled:t+alertmanager.podAntiAffinity:t+1more": {
       "allOf": [
         {
@@ -7625,10 +7643,10 @@
       "properties": {
         "httpHeaders": {
           "additionalProperties": {
-            "$ref": "#/$defs/constrains~1name@4"
+            "$ref": "#/$defs/constrains~1name@5"
           },
           "items": {
-            "$ref": "#/$defs/constrains~1name@4"
+            "$ref": "#/$defs/constrains~1name@5"
           }
         }
       }
@@ -10408,7 +10426,7 @@
       "additionalProperties": {},
       "properties": {
         "name": {
-          "$ref": "#/$defs/constrains~1name~1anyOf~1object+string+string;the-header-field-name"
+          "$ref": "#/$defs/constrains~1name~1anyOf~1object+string+string;name-of-the-recommender"
         }
       }
     },
@@ -10416,7 +10434,7 @@
       "additionalProperties": {},
       "properties": {
         "name": {
-          "$ref": "#/$defs/constrains~1name~1anyOf~1object+string+string;name-of-the-volume"
+          "$ref": "#/$defs/constrains~1name~1anyOf~1object+string+string;the-header-field-name"
         }
       }
     },
@@ -10424,7 +10442,7 @@
       "additionalProperties": {},
       "properties": {
         "name": {
-          "$ref": "#/$defs/constrains~1name~1anyOf~1object+string+string;name-of-the-recommender"
+          "$ref": "#/$defs/constrains~1name~1anyOf~1object+string+string;name-of-the-volume"
         }
       }
     },
@@ -15437,6 +15455,26 @@
       "description": "replicas is the desired number of replicas of the given Template. These are replicas in the sense that they are instantiations of the same Template, but individual replicas also have a consistent identity. If unspecified, defaults to 1.",
       "format": "int32",
       "type": "null"
+    },
+    "constrains/replicaCount@2": {
+      "properties": {
+        "replicaCount": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 1,
+              "type": "integer"
+            },
+            {
+              "pattern": "^\\+?([1-9][0-9]{1,17}|[2-9]|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{1,14}|0[xX]0*[2-9a-fA-F]|0[bB]0*1[0-1]{1,61}|0[oO]?0*[1-7][0-7]{1,19}|0[oO]?0*[2-7])$",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "required": [
+        "replicaCount"
+      ],
+      "type": "object"
     },
     "constrains/repository": {
       "properties": {
@@ -23657,6 +23695,46 @@
             }
           }
         ]
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1alertmanager+alertmanager.enabled+alertmanager.enabled=null"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1alertmanager.enabled:t"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "alertmanager": {
+            "additionalProperties": {},
+            "description": "alertmanager sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/alertmanager",
+            "properties": {
+              "additionalPeers": {
+                "$ref": "#/$defs/constrains~1extraCommands~1array,integer,null,object"
+              }
+            }
+          }
+        }
       }
     },
     {
@@ -36008,62 +36086,24 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "server": {
-                    "$ref": "#/$defs/constrains~1service=null"
-                  }
-                },
-                "required": [
-                  "server"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "server": {
-                      "$ref": "#/$defs/constrains~1service"
-                    }
-                  },
-                  "required": [
-                    "server"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1server+server=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t"
+                "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t+alertmanager.replicaCount"
               },
               {
-                "$ref": "#/$defs/constrains~1alertmanager+alertmanager.enabled+alertmanager.enabled=null"
+                "$ref": "#/$defs/constrains~1alertmanager.enabled:t"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t"
+                "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t+alertmanager.replicaCount"
               },
               {
-                "$ref": "#/$defs/constrains~1alertmanager.enabled:t"
+                "$ref": "#/$defs/constrains~1alertmanager+alertmanager.enabled+alertmanager.enabled=null"
               }
             ]
           }
@@ -36071,20 +36111,6 @@
       },
       "then": {
         "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "alertmanager": {
-                "additionalProperties": {},
-                "description": "alertmanager sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/alertmanager",
-                "properties": {
-                  "additionalPeers": {
-                    "$ref": "#/$defs/constrains~1extraCommands~1array,integer,null,object"
-                  }
-                }
-              }
-            }
-          },
           {
             "if": {
               "properties": {
@@ -36158,6 +36184,44 @@
           }
         ]
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "server": {
+                    "$ref": "#/$defs/constrains~1service=null"
+                  }
+                },
+                "required": [
+                  "server"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "server": {
+                      "$ref": "#/$defs/constrains~1service"
+                    }
+                  },
+                  "required": [
+                    "server"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1server+server=null"
+          }
+        ]
+      },
+      "then": false
     },
     {
       "additionalProperties": {},
@@ -39978,67 +40042,6 @@
         },
         {
           "if": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/constrains~1additionalPeers:t"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1enabled:t"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/constrains~1additionalPeers:t"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
-                  },
-                  {
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "allOf": [
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "additionalPeers": {
-                    "$ref": "#/$defs/constrains~1extraCommands~1array,integer,null,object"
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "service": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "clusterPort": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/constrains~1containerPort+hostIP+hostPort+name+protocol~1integer:int32;number-of-port-to"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1nodePort:t~1string;pattern-0-1-9"
-                          }
-                        ]
-                      }
-                    }
-                  }
-                }
-              }
-            ]
-          }
-        },
-        {
-          "if": {
             "$ref": "#/$defs/constrains~1enabled+enabled=null+ingress.enabled:t"
           },
           "then": {
@@ -40186,13 +40189,50 @@
                 "properties": {
                   "recommenders": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/constrains~1name@6"
+                      "$ref": "#/$defs/constrains~1name@4"
                     },
                     "items": {
-                      "$ref": "#/$defs/constrains~1name@6"
+                      "$ref": "#/$defs/constrains~1name@4"
                     }
                   }
                 }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1additionalPeers:t"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1enabled:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1additionalPeers:t"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "additionalPeers": {
+                "$ref": "#/$defs/constrains~1extraCommands~1array,integer,null,object"
               }
             }
           }
@@ -40792,6 +40832,69 @@
                 }
               }
             ]
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1additionalPeers:t"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1replicaCount@2"
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1additionalPeers:t"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1replicaCount@2"
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1enabled:t"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "properties": {
+                  "clusterPort": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1containerPort+hostIP+hostPort+name+protocol~1integer:int32;number-of-port-to"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1nodePort:t~1string;pattern-0-1-9"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
           }
         },
         {
@@ -48985,11 +49088,11 @@
                 "properties": {
                   "sidecarHostVolumeMounts": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/constrains~1name@5"
+                      "$ref": "#/$defs/constrains~1name@6"
                     },
                     "description": "Additional mounts from the host to sidecar containers\n- name: <mountName>\nhostPath: <hostPath>\nmountPath: <mountPath>\nreadOnly: true|false\nmountPropagation: None|HostToContainer|Bidirectional",
                     "items": {
-                      "$ref": "#/$defs/constrains~1name@5"
+                      "$ref": "#/$defs/constrains~1name@6"
                     }
                   }
                 }
@@ -58023,11 +58126,11 @@
                 "properties": {
                   "probeHeaders": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/constrains~1name@4"
+                      "$ref": "#/$defs/constrains~1name@5"
                     },
                     "description": "Custom HTTP headers for Liveness/Readiness/Startup Probe\nUseful for providing HTTP Basic Auth to healthchecks\n- name: \"Authorization\"\nvalue: \"Bearer ABCDEabcde12345\"",
                     "items": {
-                      "$ref": "#/$defs/constrains~1name@4"
+                      "$ref": "#/$defs/constrains~1name@5"
                     }
                   }
                 }

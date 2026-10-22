@@ -2225,24 +2225,109 @@ fn round73_fixture_flips_are_adjudicated_and_probe_caps_are_disclosed() -> eyre:
     Ok(())
 }
 
-/// Why a live battery against `baseline` cannot check the rosters: their
-/// rows are flips against [`ROSTER_BASELINE`] and unobservable otherwise.
-fn roster_baseline_problem(baseline: &str) -> Option<String> {
-    (baseline != ROSTER_BASELINE).then(|| {
-        format!(
+/// Why a live battery cannot certify the rosters and the inherited failures.
+///
+/// The false-acceptance rosters' rows are flips against [`ROSTER_BASELINE`]
+/// and unobservable against any other baseline.
+/// Some inherited failures are composed only from the context roster import,
+/// so they cannot recur without it.
+fn live_battery_problems(baseline: &str, context_roster: Option<&std::ffi::OsStr>) -> Vec<String> {
+    let mut problems = Vec::new();
+    if baseline != ROSTER_BASELINE {
+        problems.push(format!(
             "the false-acceptance rosters are adjudicated against {ROSTER_BASELINE}; a live \
              battery against {baseline} observes none of their rows. Run it with \
              SCHEMA_ACCEPTANCE_BASELINE_REF={ROSTER_BASELINE}"
-        )
-    })
+        ));
+    }
+    if context_roster.is_none() {
+        problems.push(format!(
+            "some inherited failures are composed only from the imported context roster, so a \
+             live battery without it reports every one of them stale. Set {} to the sweep's \
+             context-roster.json",
+            lint_probes::CONTEXT_ROSTER_VAR
+        ));
+    }
+    problems
+}
+
+/// Refuses a live battery that cannot certify the rosters and the inherited
+/// failures, before any Helm work can fail first and mask the refusal.
+fn live_battery_preflight() -> eyre::Result<()> {
+    let baseline_ref = baseline_ref()?;
+    let resolved = std::process::Command::new("git")
+        .args([
+            "rev-parse",
+            "--verify",
+            &format!("{baseline_ref}^{{commit}}"),
+        ])
+        .output()
+        .wrap_err_with(|| format!("resolve {baseline_ref}"))?;
+    eyre::ensure!(resolved.status.success(), "cannot resolve {baseline_ref}");
+    let problems = live_battery_problems(
+        String::from_utf8(resolved.stdout)?.trim(),
+        std::env::var_os(lint_probes::CONTEXT_ROSTER_VAR).as_deref(),
+    );
+    eyre::ensure!(problems.is_empty(), "{}", problems.join("\n"));
+    Ok(())
 }
 
 /// A same-code baseline screens no flips, so every roster row would look
-/// fixed; the battery refuses that baseline up front instead.
+/// fixed; without the context roster, every inherited failure composed only
+/// from it would look stale. The battery refuses both up front instead.
 #[test]
-fn a_live_battery_needs_the_roster_baseline() {
-    assert!(roster_baseline_problem(ROSTER_BASELINE).is_none());
-    assert!(roster_baseline_problem("c02c01f8975fe799a0670720df87db3fed94eb7f").is_some());
+fn a_live_battery_needs_the_roster_baseline_and_the_context_roster() {
+    let roster = Some(std::ffi::OsStr::new("/sweep/context-roster.json"));
+    sim_assert_eq!(have: live_battery_problems(ROSTER_BASELINE, roster), want: Vec::<String>::new());
+    let other = "c02c01f8975fe799a0670720df87db3fed94eb7f";
+    sim_assert_eq!(have: live_battery_problems(other, roster).len(), want: 1);
+    let missing = live_battery_problems(ROSTER_BASELINE, None);
+    sim_assert_eq!(have: missing.len(), want: 1);
+    assert!(
+        missing
+            .iter()
+            .all(|problem| problem.contains(lint_probes::CONTEXT_ROSTER_VAR))
+    );
+    sim_assert_eq!(have: live_battery_problems(other, None).len(), want: 2);
+}
+
+/// The live battery itself refuses to start without the context roster, and
+/// refuses before it needs Helm, a candidate dump or any chart.
+#[test]
+fn the_live_battery_entry_point_refuses_a_run_without_the_context_roster() -> eyre::Result<()> {
+    let mut battery = std::process::Command::new(std::env::current_exe()?);
+    battery
+        .args([
+            "round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced",
+            "--exact",
+            "--ignored",
+            "--nocapture",
+        ])
+        .env(ADJUDICATE_WITH_HELM_VAR, "1")
+        .env(BASELINE_REF_VAR, "HEAD")
+        .env_remove(lint_probes::CONTEXT_ROSTER_VAR)
+        .env_remove(CANDIDATE_DUMP_VAR)
+        .env_remove(CHART_VAR)
+        // The child would otherwise open or truncate an inherited trace before its preflight.
+        .env_remove("HELM_SCHEMA_TRACE_OUTPUT");
+    // A preflight regression reaching Helm must not wait out Helm's own timeouts.
+    let output = helm_invocation::output_within(
+        &mut battery,
+        std::time::Duration::from_secs(60),
+        "the live battery entry point",
+    )?;
+    let stdout = String::from_utf8(output.stdout)?;
+    let stderr = String::from_utf8(output.stderr)?;
+    assert!(stdout.contains("running 1 test"), "{stdout}");
+    assert!(!output.status.success(), "{stdout}\n{stderr}");
+    assert!(
+        stderr.contains(&format!(
+            "Set {} to the sweep's context-roster.json",
+            lint_probes::CONTEXT_ROSTER_VAR
+        )),
+        "{stderr}"
+    );
+    Ok(())
 }
 
 #[test]
@@ -2251,21 +2336,9 @@ fn round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced() -> eyre::
     let _guard = test_util::builder().with_tracing(false).build()?;
     helm_schema_test_support::init_perfetto_from_env()?;
     if adjudicates_live() {
+        live_battery_preflight()?;
         // The shared runner checks the pinned Helm release once per process.
         helm_invocation::HelmRunner::shared()?;
-        let baseline_ref = baseline_ref()?;
-        let resolved = std::process::Command::new("git")
-            .args([
-                "rev-parse",
-                "--verify",
-                &format!("{baseline_ref}^{{commit}}"),
-            ])
-            .output()
-            .wrap_err_with(|| format!("resolve {baseline_ref}"))?;
-        eyre::ensure!(resolved.status.success(), "cannot resolve {baseline_ref}");
-        if let Some(problem) = roster_baseline_problem(String::from_utf8(resolved.stdout)?.trim()) {
-            eyre::bail!(problem);
-        }
     }
     let AcceptanceComparison {
         charts_checked,

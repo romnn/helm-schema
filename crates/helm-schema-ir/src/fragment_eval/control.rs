@@ -1398,13 +1398,18 @@ impl Interpreter<'_> {
     /// lowered exactly: its sound subset unions the evaluator's partial
     /// when-true condition with the bounded structural subsets, and an
     /// empty union degrades to a bare approximate marker.
-    fn approximate_arm_predicate(
+    pub(super) fn approximate_arm_predicate(
         &mut self,
         expr: &TemplateExpr,
         marker: String,
         overlay_entry_subset: Vec<Guard>,
         evaluated_subset: Option<Predicate>,
     ) -> Predicate {
+        // A supplied overlay-entry subset REPLACES the ranged wildcard
+        // decode: `set` may have overwritten the input member the wildcard
+        // reads, so the structural decode is no subset of the condition
+        // the overlaid range evaluates.
+        let wildcard_overwritten = !overlay_entry_subset.is_empty();
         let mut sound_subset = overlay_entry_subset;
         if sound_subset.is_empty() {
             sound_subset = self.first_iteration_dedup_sound_subset(expr);
@@ -1414,28 +1419,50 @@ impl Interpreter<'_> {
         }
         let heuristic_subset = (!sound_subset.is_empty())
             .then(|| Predicate::all(sound_subset.into_iter().map(Predicate::from).collect()));
+        let memo = self.db.predicate_memo();
         let positive_subset = any_predicates_with_memo(
             evaluated_subset
                 .into_iter()
                 .chain(heuristic_subset)
                 .collect(),
-            self.db.predicate_memo().as_ref(),
+            memo.as_ref(),
         );
         if positive_subset == Predicate::False {
-            self.value_path_context()
-                .approximate_condition_predicate_expr(expr, &marker)
-        } else {
-            let mut paths = self
+            return self
                 .value_path_context()
-                .resolved_values_paths_from_expr(expr);
-            paths.extend(
-                positive_subset
-                    .value_paths()
-                    .into_iter()
-                    .map(|path| path.encode()),
-            );
-            Predicate::approximate_with_sound_predicate(marker, paths, positive_subset)
+                .approximate_condition_predicate_expr(expr, &marker);
         }
+        // The structural lowering keeps the subset of every decodable
+        // connective operand, which the evaluator's partial truth can lose
+        // (trino's `or …keda.enabled (gt (int …workers) 0)` keeps only the
+        // truthy disjunct there). Both imply the condition, so their union
+        // does too — except over a ranged member wildcard: `set` may have
+        // overwritten the input member it reads, and a wildcard guard makes a
+        // fail capture abandon its sound siblings too.
+        let positive_subset = if wildcard_overwritten {
+            positive_subset
+        } else {
+            let structural = self
+                .value_path_context()
+                .approximate_condition_predicate_expr(expr, &marker);
+            let structural_subset =
+                TruthCondition::from_predicate_with_memo(structural, memo.as_ref()).when_true();
+            if predicate_reads_member_wildcard(&structural_subset) {
+                positive_subset
+            } else {
+                any_predicates_with_memo(vec![positive_subset, structural_subset], memo.as_ref())
+            }
+        };
+        let mut paths = self
+            .value_path_context()
+            .resolved_values_paths_from_expr(expr);
+        paths.extend(
+            positive_subset
+                .value_paths()
+                .into_iter()
+                .map(|path| path.encode()),
+        );
+        Predicate::approximate_with_sound_predicate(marker, paths, positive_subset)
     }
 
     /// A range-body dedup test — `not (hasKey $acc …)` over an accumulator

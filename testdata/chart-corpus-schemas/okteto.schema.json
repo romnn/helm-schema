@@ -1089,16 +1089,7 @@
     "constrains/activeDeadlineSeconds": {
       "properties": {
         "activeDeadlineSeconds": {
-          "anyOf": [
-            {
-              "pattern": "^\\+?([1-9][0-9]{1,17}|[1-9]|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{1,14}|0[xX]0*[1-9a-fA-F]|0[bB]0*1[0-1]{1,61}|0[bB]0*1|0[oO]?0*[1-7][0-7]{1,19}|0[oO]?0*[1-7])$",
-              "type": "string"
-            },
-            {
-              "exclusiveMinimum": 0,
-              "type": "integer"
-            }
-          ]
+          "$ref": "#/$defs/constrains~1activeDeadlineSeconds~1anyOf~1integer+string;pattern-1-9-0-9-1-17"
         }
       },
       "required": [
@@ -1553,6 +1544,18 @@
         },
         {
           "type": "null"
+        }
+      ]
+    },
+    "constrains/activeDeadlineSeconds/anyOf/integer+string;pattern-1-9-0-9-1-17": {
+      "anyOf": [
+        {
+          "pattern": "^\\+?([1-9][0-9]{1,17}|[1-9]|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{1,14}|0[xX]0*[1-9a-fA-F]|0[bB]0*1[0-1]{1,61}|0[bB]0*1|0[oO]?0*[1-7][0-7]{1,19}|0[oO]?0*[1-7])$",
+          "type": "string"
+        },
+        {
+          "exclusiveMinimum": 0,
+          "type": "integer"
         }
       ]
     },
@@ -7020,6 +7023,41 @@
         }
       ]
     },
+    "constrains/controller.admissionWebhooks.certManager.admissionCert.revisionHistoryLimit": {
+      "properties": {
+        "controller": {
+          "properties": {
+            "admissionWebhooks": {
+              "properties": {
+                "certManager": {
+                  "properties": {
+                    "admissionCert": {
+                      "$ref": "#/$defs/constrains~1revisionHistoryLimit"
+                    }
+                  },
+                  "required": [
+                    "admissionCert"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "certManager"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "admissionWebhooks"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "controller"
+      ],
+      "type": "object"
+    },
     "constrains/controller.admissionWebhooks.certManager.enabled:t": {
       "properties": {
         "controller": {
@@ -7061,6 +7099,41 @@
                   },
                   "required": [
                     "issuerRef"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "certManager"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "admissionWebhooks"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "controller"
+      ],
+      "type": "object"
+    },
+    "constrains/controller.admissionWebhooks.certManager.rootCert.revisionHistoryLimit": {
+      "properties": {
+        "controller": {
+          "properties": {
+            "admissionWebhooks": {
+              "properties": {
+                "certManager": {
+                  "properties": {
+                    "rootCert": {
+                      "$ref": "#/$defs/constrains~1revisionHistoryLimit"
+                    }
+                  },
+                  "required": [
+                    "rootCert"
                   ],
                   "type": "object"
                 }
@@ -13730,6 +13803,57 @@
         }
       ]
     },
+    "constrains/ingress-nginx+ingress-nginx.controller.admissionWebhooks+5more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress-nginx+ingress-nginx.enabled+ingress-nginx.enabled:t+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress-nginx.controller.admissionWebhooks.enabled:t"
+        },
+        {
+          "properties": {
+            "ingress-nginx": {
+              "$ref": "#/$defs/constrains~1controller.admissionWebhooks.certManager.admissionCert.revisionHistoryLimit"
+            }
+          },
+          "required": [
+            "ingress-nginx"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress-nginx.controller.admissionWebhooks.certManager.enabled:t@2"
+        }
+      ]
+    },
+    "constrains/ingress-nginx+ingress-nginx.controller.admissionWebhooks+6more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress-nginx+ingress-nginx.enabled+ingress-nginx.enabled:t+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress-nginx.controller.admissionWebhooks.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress-nginx.controller.admissionWebhooks.certManager.issuerRef:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress-nginx.controller.admissionWebhooks.certManager.enabled:t@2"
+        },
+        {
+          "properties": {
+            "ingress-nginx": {
+              "$ref": "#/$defs/constrains~1controller.admissionWebhooks.certManager.rootCert.revisionHistoryLimit"
+            }
+          },
+          "required": [
+            "ingress-nginx"
+          ],
+          "type": "object"
+        }
+      ]
+    },
     "constrains/ingress-nginx+ingress-nginx.controller.kind=DaemonSet+ingress-nginx.enabled+1more": {
       "allOf": [
         {
@@ -14068,6 +14192,19 @@
         "ingress-nginx"
       ],
       "type": "object"
+    },
+    "constrains/ingress-nginx.controller.admissionWebhooks.certManager.issuerRef:t": {
+      "not": {
+        "properties": {
+          "ingress-nginx": {
+            "$ref": "#/$defs/constrains~1controller.admissionWebhooks.certManager.issuerRef:t"
+          }
+        },
+        "required": [
+          "ingress-nginx"
+        ],
+        "type": "object"
+      }
     },
     "constrains/ingress-nginx.controller.admissionWebhooks.enabled:t": {
       "properties": {
@@ -14432,7 +14569,7 @@
     "constrains/ingress-nginx.controller.service.type": {
       "properties": {
         "ingress-nginx": {
-          "$ref": "#/$defs/constrains~1controller.service.type@3"
+          "$ref": "#/$defs/constrains~1controller.service.type@2"
         }
       },
       "required": [
@@ -14469,7 +14606,7 @@
     "constrains/ingress-nginx.controller.service.type@2": {
       "properties": {
         "ingress-nginx": {
-          "$ref": "#/$defs/constrains~1controller.service.type@2"
+          "$ref": "#/$defs/constrains~1controller.service.type"
         }
       },
       "required": [
@@ -14480,7 +14617,7 @@
     "constrains/ingress-nginx.controller.service.type@3": {
       "properties": {
         "ingress-nginx": {
-          "$ref": "#/$defs/constrains~1controller.service.type"
+          "$ref": "#/$defs/constrains~1controller.service.type@3"
         }
       },
       "required": [
@@ -15901,7 +16038,7 @@
           "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more"
         },
         "matchLabelKeys": {
-          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;matchlabelkeys-is-a-set@2"
+          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;matchlabelkeys-is-a-set"
         },
         "mismatchLabelKeys": {
           "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;mismatchlabelkeys-is-a-set@2"
@@ -15927,7 +16064,7 @@
     "constrains/labelSelector.matchExpressions@items.key+8more/array,null;matchlabelkeys-is-a-set": {
       "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
       "items": {
-        "$ref": "#/$defs/constrains~1annotations:t~1anyOf~1null+string+string;pattern-"
+        "$ref": "#/$defs/k8s~1job-batch-v1~1spec.template.spec.affinity.nodeAffinity@ref.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.values@items"
       },
       "type": [
         "array",
@@ -15938,7 +16075,7 @@
     "constrains/labelSelector.matchExpressions@items.key+8more/array,null;matchlabelkeys-is-a-set@2": {
       "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
       "items": {
-        "$ref": "#/$defs/k8s~1job-batch-v1~1spec.template.spec.affinity.nodeAffinity@ref.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.values@items"
+        "$ref": "#/$defs/constrains~1annotations:t~1anyOf~1null+string+string;pattern-"
       },
       "type": [
         "array",
@@ -16000,7 +16137,7 @@
           "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more@2"
         },
         "matchLabelKeys": {
-          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;matchlabelkeys-is-a-set"
+          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;matchlabelkeys-is-a-set@2"
         },
         "mismatchLabelKeys": {
           "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;mismatchlabelkeys-is-a-set"
@@ -17494,7 +17631,7 @@
       "additionalProperties": {},
       "properties": {
         "name": {
-          "$ref": "#/$defs/constrains~1name~1anyOf~1null;secretname-is-the-name+object+string+string;pattern-a-za-z0-9-t+3more"
+          "$ref": "#/$defs/constrains~1name~1anyOf~1object+string+string;name-of-the-container"
         }
       }
     },
@@ -17502,7 +17639,7 @@
       "additionalProperties": {},
       "properties": {
         "name": {
-          "$ref": "#/$defs/constrains~1name~1anyOf~1object+string+string;name-of-the-container"
+          "$ref": "#/$defs/constrains~1name~1anyOf~1null;secretname-is-the-name+object+string+string;pattern-a-za-z0-9-t+3more"
         }
       }
     },
@@ -18136,6 +18273,57 @@
         }
       ]
     },
+    "constrains/okteto-nginx+okteto-nginx.controller.admissionWebhooks.certManager+4more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1okteto-nginx.controller.admissionWebhooks.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1okteto-nginx.controller.admissionWebhooks.certManager.enabled:t@2"
+        },
+        {
+          "properties": {
+            "okteto-nginx": {
+              "$ref": "#/$defs/constrains~1controller.admissionWebhooks.certManager.admissionCert.revisionHistoryLimit"
+            }
+          },
+          "required": [
+            "okteto-nginx"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.enabled+okteto-nginx.enabled:t+1more"
+        }
+      ]
+    },
+    "constrains/okteto-nginx+okteto-nginx.controller.admissionWebhooks.certManager+5more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1okteto-nginx.controller.admissionWebhooks.enabled:t"
+        },
+        {
+          "properties": {
+            "okteto-nginx": {
+              "$ref": "#/$defs/constrains~1controller.admissionWebhooks.certManager.rootCert.revisionHistoryLimit"
+            }
+          },
+          "required": [
+            "okteto-nginx"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1okteto-nginx.controller.admissionWebhooks.certManager.enabled:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1okteto-nginx.controller.admissionWebhooks.certManager.issuerRef:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.enabled+okteto-nginx.enabled:t+1more"
+        }
+      ]
+    },
     "constrains/okteto-nginx+okteto-nginx.controller.kind=DaemonSet+okteto-nginx.enabled+1more": {
       "allOf": [
         {
@@ -18254,10 +18442,10 @@
     "constrains/okteto-nginx+okteto-nginx.controller.service+2more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1okteto-nginx.controller.service.internal.enabled:t"
+          "$ref": "#/$defs/constrains~1okteto-nginx.controller.service.external.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1okteto-nginx.controller.service.internal.annotations:t"
+          "$ref": "#/$defs/constrains~1okteto-nginx.controller.service.enableHttps:t"
         },
         {
           "$ref": "#/$defs/constrains~1okteto-nginx.enabled:t"
@@ -18273,7 +18461,7 @@
           "$ref": "#/$defs/constrains~1okteto-nginx.controller.service.external.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1okteto-nginx.controller.service.enableHttps:t"
+          "$ref": "#/$defs/constrains~1okteto-nginx.controller.service.enableHttp:t"
         },
         {
           "$ref": "#/$defs/constrains~1okteto-nginx.enabled:t"
@@ -18286,10 +18474,10 @@
     "constrains/okteto-nginx+okteto-nginx.controller.service+2more@3": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1okteto-nginx.controller.service.external.enabled:t"
+          "$ref": "#/$defs/constrains~1okteto-nginx.controller.service.internal.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1okteto-nginx.controller.service.enableHttp:t"
+          "$ref": "#/$defs/constrains~1okteto-nginx.controller.service.internal.annotations:t"
         },
         {
           "$ref": "#/$defs/constrains~1okteto-nginx.enabled:t"
@@ -18474,6 +18662,19 @@
         "okteto-nginx"
       ],
       "type": "object"
+    },
+    "constrains/okteto-nginx.controller.admissionWebhooks.certManager.issuerRef:t": {
+      "not": {
+        "properties": {
+          "okteto-nginx": {
+            "$ref": "#/$defs/constrains~1controller.admissionWebhooks.certManager.issuerRef:t"
+          }
+        },
+        "required": [
+          "okteto-nginx"
+        ],
+        "type": "object"
+      }
     },
     "constrains/okteto-nginx.controller.admissionWebhooks.enabled:t": {
       "properties": {
@@ -18838,7 +19039,7 @@
     "constrains/okteto-nginx.controller.service.type": {
       "properties": {
         "okteto-nginx": {
-          "$ref": "#/$defs/constrains~1controller.service.type"
+          "$ref": "#/$defs/constrains~1controller.service.type@2"
         }
       },
       "required": [
@@ -18875,7 +19076,7 @@
     "constrains/okteto-nginx.controller.service.type@2": {
       "properties": {
         "okteto-nginx": {
-          "$ref": "#/$defs/constrains~1controller.service.type@3"
+          "$ref": "#/$defs/constrains~1controller.service.type"
         }
       },
       "required": [
@@ -18886,7 +19087,7 @@
     "constrains/okteto-nginx.controller.service.type@3": {
       "properties": {
         "okteto-nginx": {
-          "$ref": "#/$defs/constrains~1controller.service.type@2"
+          "$ref": "#/$defs/constrains~1controller.service.type@3"
         }
       },
       "required": [
@@ -19248,7 +19449,7 @@
               "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more"
             },
             "matchLabelKeys": {
-              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;matchlabelkeys-is-a-set@2"
+              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;matchlabelkeys-is-a-set"
             },
             "mismatchLabelKeys": {
               "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;mismatchlabelkeys-is-a-set@2"
@@ -19298,7 +19499,7 @@
               "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more@2"
             },
             "matchLabelKeys": {
-              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;matchlabelkeys-is-a-set"
+              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;matchlabelkeys-is-a-set@2"
             },
             "mismatchLabelKeys": {
               "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;mismatchlabelkeys-is-a-set"
@@ -23005,6 +23206,17 @@
       },
       "required": [
         "resources"
+      ],
+      "type": "object"
+    },
+    "constrains/revisionHistoryLimit": {
+      "properties": {
+        "revisionHistoryLimit": {
+          "$ref": "#/$defs/constrains~1activeDeadlineSeconds~1anyOf~1integer+string;pattern-1-9-0-9-1-17"
+        }
+      },
+      "required": [
+        "revisionHistoryLimit"
       ],
       "type": "object"
     },
@@ -30913,10 +31125,10 @@
                 "properties": {
                   "extraModules": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/constrains~1name@5"
+                      "$ref": "#/$defs/constrains~1name@4"
                     },
                     "items": {
-                      "$ref": "#/$defs/constrains~1name@5"
+                      "$ref": "#/$defs/constrains~1name@4"
                     }
                   }
                 }
@@ -42919,15 +43131,15 @@
             "allOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/constrains~1ingress-nginx.controller.service.type@2"
+                  "$ref": "#/$defs/constrains~1ingress-nginx.controller.service.type"
                 }
               },
               {
-                "$ref": "#/$defs/constrains~1ingress-nginx.controller.service.type@3"
+                "$ref": "#/$defs/constrains~1ingress-nginx.controller.service.type@2"
               },
               {
                 "not": {
-                  "$ref": "#/$defs/constrains~1ingress-nginx.controller.service.type"
+                  "$ref": "#/$defs/constrains~1ingress-nginx.controller.service.type@3"
                 }
               },
               {
@@ -42939,18 +43151,18 @@
             "allOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/constrains~1ingress-nginx.controller.service.type@2"
+                  "$ref": "#/$defs/constrains~1ingress-nginx.controller.service.type"
                 }
               },
               {
                 "$ref": "#/$defs/constrains~1ingress-nginx+ingress-nginx.enabled+ingress-nginx.enabled=null"
               },
               {
-                "$ref": "#/$defs/constrains~1ingress-nginx.controller.service.type@3"
+                "$ref": "#/$defs/constrains~1ingress-nginx.controller.service.type@2"
               },
               {
                 "not": {
-                  "$ref": "#/$defs/constrains~1ingress-nginx.controller.service.type"
+                  "$ref": "#/$defs/constrains~1ingress-nginx.controller.service.type@3"
                 }
               }
             ]
@@ -43324,17 +43536,7 @@
             "$ref": "#/$defs/constrains~1ingress-nginx.controller.admissionWebhooks.enabled:t"
           },
           {
-            "not": {
-              "properties": {
-                "ingress-nginx": {
-                  "$ref": "#/$defs/constrains~1controller.admissionWebhooks.certManager.issuerRef:t"
-                }
-              },
-              "required": [
-                "ingress-nginx"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/constrains~1ingress-nginx.controller.admissionWebhooks.certManager.issuerRef:t"
           },
           {
             "$ref": "#/$defs/constrains~1ingress-nginx.controller.admissionWebhooks.certManager.enabled:t@2"
@@ -43457,16 +43659,16 @@
             "allOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/constrains~1okteto-nginx.controller.service.type@2"
-                }
-              },
-              {
-                "not": {
                   "$ref": "#/$defs/constrains~1okteto-nginx.controller.service.type@3"
                 }
               },
               {
-                "$ref": "#/$defs/constrains~1okteto-nginx.controller.service.type"
+                "not": {
+                  "$ref": "#/$defs/constrains~1okteto-nginx.controller.service.type"
+                }
+              },
+              {
+                "$ref": "#/$defs/constrains~1okteto-nginx.controller.service.type@2"
               },
               {
                 "$ref": "#/$defs/constrains~1okteto-nginx.enabled:t"
@@ -43477,7 +43679,7 @@
             "allOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/constrains~1okteto-nginx.controller.service.type@2"
+                  "$ref": "#/$defs/constrains~1okteto-nginx.controller.service.type@3"
                 }
               },
               {
@@ -43485,11 +43687,11 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/constrains~1okteto-nginx.controller.service.type@3"
+                  "$ref": "#/$defs/constrains~1okteto-nginx.controller.service.type"
                 }
               },
               {
-                "$ref": "#/$defs/constrains~1okteto-nginx.controller.service.type"
+                "$ref": "#/$defs/constrains~1okteto-nginx.controller.service.type@2"
               }
             ]
           }
@@ -46353,7 +46555,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.controller.service+2more@2"
+            "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.controller.service+2more"
           },
           {
             "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.controller.service+4more@2"
@@ -46920,7 +47122,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.controller.service+2more@2"
+            "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.controller.service+2more"
           },
           {
             "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.controller.service+4more@2"
@@ -47181,11 +47383,11 @@
                 "$ref": "#/$defs/constrains~1ingress-nginx+ingress-nginx.enabled+ingress-nginx.enabled=null"
               },
               {
-                "$ref": "#/$defs/constrains~1ingress-nginx.controller.service.type@2"
+                "$ref": "#/$defs/constrains~1ingress-nginx.controller.service.type"
               },
               {
                 "not": {
-                  "$ref": "#/$defs/constrains~1ingress-nginx.controller.service.type"
+                  "$ref": "#/$defs/constrains~1ingress-nginx.controller.service.type@3"
                 }
               }
             ]
@@ -47193,11 +47395,11 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1ingress-nginx.controller.service.type@2"
+                "$ref": "#/$defs/constrains~1ingress-nginx.controller.service.type"
               },
               {
                 "not": {
-                  "$ref": "#/$defs/constrains~1ingress-nginx.controller.service.type"
+                  "$ref": "#/$defs/constrains~1ingress-nginx.controller.service.type@3"
                 }
               },
               {
@@ -50311,7 +50513,7 @@
                     "description": "if using a private CA, specify the name of the TLS secret that stores the certificate",
                     "properties": {
                       "secret": {
-                        "$ref": "#/$defs/constrains~1name@4"
+                        "$ref": "#/$defs/constrains~1name@5"
                       }
                     }
                   }
@@ -52929,105 +53131,6 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1okteto-nginx"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1okteto-nginx.controller.admissionWebhooks.enabled:t"
-              },
-              {
-                "properties": {
-                  "okteto-nginx": {
-                    "$ref": "#/$defs/constrains~1controller.admissionWebhooks.createSecretJob.activeDeadlineSeconds"
-                  }
-                },
-                "required": [
-                  "okteto-nginx"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/constrains~1okteto-nginx.controller.admissionWebhooks.certManager.enabled:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.enabled+okteto-nginx.enabled:t+1more"
-              },
-              {
-                "$ref": "#/$defs/constrains~1okteto-nginx.controller.admissionWebhooks.patch.enabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1okteto-nginx.controller.admissionWebhooks.enabled:t"
-              },
-              {
-                "properties": {
-                  "okteto-nginx": {
-                    "$ref": "#/$defs/constrains~1controller.admissionWebhooks.patchWebhookJob.activeDeadlineSeconds"
-                  }
-                },
-                "required": [
-                  "okteto-nginx"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/constrains~1okteto-nginx.controller.admissionWebhooks.certManager.enabled:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.enabled+okteto-nginx.enabled:t+1more"
-              },
-              {
-                "$ref": "#/$defs/constrains~1okteto-nginx.controller.admissionWebhooks.patch.enabled:t"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1okteto-nginx.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1okteto-nginx.enabled+okteto-nginx.enabled=null"
-          }
-        ]
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "okteto-nginx": {
-                "additionalProperties": {},
-                "properties": {
-                  "controller": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "okteto-nginx": {
-                "additionalProperties": {},
-                "properties": {
-                  "controller": {
-                    "$ref": "#/$defs/constrains~1admissionWebhooks"
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
         "$ref": "#/$defs/constrains~1installerChecker.enabled:t"
       },
       "then": {
@@ -53826,7 +53929,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.controller.service+2more@3"
+            "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.controller.service+2more@2"
           }
         ]
       },
@@ -54953,7 +55056,7 @@
             "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.controller.kind=Deployment+okteto-nginx.enabled+1more"
           },
           {
-            "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.controller.service+2more"
+            "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.controller.service+2more@3"
           },
           {
             "$ref": "#/$defs/constrains~1okteto-nginx.controller.kind=DaemonSet+okteto-nginx.enabled:t"
@@ -55047,6 +55150,50 @@
             "$ref": "#/$defs/constrains~1fullnameOverride"
           }
         }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1ingress-nginx+ingress-nginx.enabled+ingress-nginx.enabled:t+1more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress-nginx.controller.admissionWebhooks.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ingress-nginx": {
+                "additionalProperties": {},
+                "description": "Dependencies",
+                "properties": {
+                  "controller": {
+                    "$ref": "#/$defs/constrains~1admissionWebhooks.patch"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ingress-nginx": {
+                "additionalProperties": {},
+                "description": "Dependencies",
+                "properties": {
+                  "controller": {
+                    "$ref": "#/$defs/constrains~1admissionWebhooks.service"
+                  }
+                }
+              }
+            }
+          }
+        ]
       }
     },
     {
@@ -55146,7 +55293,7 @@
                 "$ref": "#/$defs/constrains~1ingress-nginx+ingress-nginx.enabled+ingress-nginx.enabled:t+1more"
               },
               {
-                "$ref": "#/$defs/constrains~1ingress-nginx.controller.service.type"
+                "$ref": "#/$defs/constrains~1ingress-nginx.controller.service.type@3"
               }
             ]
           }
@@ -55487,14 +55634,14 @@
             "allOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/constrains~1okteto-nginx.controller.service.type@2"
+                  "$ref": "#/$defs/constrains~1okteto-nginx.controller.service.type@3"
                 }
               },
               {
                 "$ref": "#/$defs/constrains~1okteto-nginx.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1okteto-nginx.controller.service.type@3"
+                "$ref": "#/$defs/constrains~1okteto-nginx.controller.service.type"
               }
             ]
           },
@@ -55502,14 +55649,14 @@
             "allOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/constrains~1okteto-nginx.controller.service.type@2"
+                  "$ref": "#/$defs/constrains~1okteto-nginx.controller.service.type@3"
                 }
               },
               {
                 "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.enabled+okteto-nginx.enabled=null"
               },
               {
-                "$ref": "#/$defs/constrains~1okteto-nginx.controller.service.type@3"
+                "$ref": "#/$defs/constrains~1okteto-nginx.controller.service.type"
               }
             ]
           }
@@ -57235,7 +57382,7 @@
                 "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.enabled+okteto-nginx.enabled:t+1more"
               },
               {
-                "$ref": "#/$defs/constrains~1okteto-nginx.controller.service.type@2"
+                "$ref": "#/$defs/constrains~1okteto-nginx.controller.service.type@3"
               }
             ]
           },
@@ -57990,6 +58137,48 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1okteto-nginx.controller.admissionWebhooks.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.enabled+okteto-nginx.enabled:t+1more"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "okteto-nginx": {
+                "additionalProperties": {},
+                "properties": {
+                  "controller": {
+                    "$ref": "#/$defs/constrains~1admissionWebhooks.patch"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "okteto-nginx": {
+                "additionalProperties": {},
+                "properties": {
+                  "controller": {
+                    "$ref": "#/$defs/constrains~1admissionWebhooks.service"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
     },
     {
       "if": {
@@ -63013,7 +63202,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.controller.service+2more@3"
+            "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.controller.service+2more@2"
           }
         ]
       },
@@ -63475,6 +63664,111 @@
             }
           }
         }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1okteto-nginx"
+          },
+          {
+            "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.controller.admissionWebhooks.certManager+5more"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1okteto-nginx.controller.admissionWebhooks.enabled:t"
+              },
+              {
+                "properties": {
+                  "okteto-nginx": {
+                    "$ref": "#/$defs/constrains~1controller.admissionWebhooks.createSecretJob.activeDeadlineSeconds"
+                  }
+                },
+                "required": [
+                  "okteto-nginx"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/constrains~1okteto-nginx.controller.admissionWebhooks.certManager.enabled:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.enabled+okteto-nginx.enabled:t+1more"
+              },
+              {
+                "$ref": "#/$defs/constrains~1okteto-nginx.controller.admissionWebhooks.patch.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1okteto-nginx.controller.admissionWebhooks.enabled:t"
+              },
+              {
+                "properties": {
+                  "okteto-nginx": {
+                    "$ref": "#/$defs/constrains~1controller.admissionWebhooks.patchWebhookJob.activeDeadlineSeconds"
+                  }
+                },
+                "required": [
+                  "okteto-nginx"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/constrains~1okteto-nginx.controller.admissionWebhooks.certManager.enabled:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.enabled+okteto-nginx.enabled:t+1more"
+              },
+              {
+                "$ref": "#/$defs/constrains~1okteto-nginx.controller.admissionWebhooks.patch.enabled:t"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1okteto-nginx.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1okteto-nginx.enabled+okteto-nginx.enabled=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.controller.admissionWebhooks.certManager+4more@2"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "okteto-nginx": {
+                "additionalProperties": {},
+                "properties": {
+                  "controller": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "okteto-nginx": {
+                "additionalProperties": {},
+                "properties": {
+                  "controller": {
+                    "$ref": "#/$defs/constrains~1admissionWebhooks"
+                  }
+                }
+              }
+            }
+          }
+        ]
       }
     },
     {
@@ -64541,6 +64835,41 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.controller.admissionWebhooks.certManager+5more"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1okteto-nginx.controller.admissionWebhooks.enabled:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.enabled+okteto-nginx.enabled:t+1more"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.controller.admissionWebhooks.certManager+4more@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "okteto-nginx": {
+            "additionalProperties": {},
+            "properties": {
+              "controller": {
+                "$ref": "#/$defs/constrains~1admissionWebhooks.certManager"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "not": {
@@ -64710,6 +65039,113 @@
             }
           }
         }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1ingress-nginx+ingress-nginx.controller.admissionWebhooks+6more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress-nginx"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress-nginx+ingress-nginx.controller.admissionWebhooks+5more@2"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1ingress-nginx+ingress-nginx.enabled+ingress-nginx.enabled:t+1more"
+              },
+              {
+                "$ref": "#/$defs/constrains~1ingress-nginx.controller.admissionWebhooks.certManager.enabled:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1ingress-nginx.controller.admissionWebhooks.enabled:t"
+              },
+              {
+                "properties": {
+                  "ingress-nginx": {
+                    "$ref": "#/$defs/constrains~1controller.admissionWebhooks.patchWebhookJob.activeDeadlineSeconds"
+                  }
+                },
+                "required": [
+                  "ingress-nginx"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/constrains~1ingress-nginx.controller.admissionWebhooks.patch.enabled:t"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress-nginx.enabled+ingress-nginx.enabled=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress-nginx.enabled:t"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1ingress-nginx+ingress-nginx.enabled+ingress-nginx.enabled:t+1more"
+              },
+              {
+                "$ref": "#/$defs/constrains~1ingress-nginx.controller.admissionWebhooks.certManager.enabled:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1ingress-nginx.controller.admissionWebhooks.enabled:t"
+              },
+              {
+                "properties": {
+                  "ingress-nginx": {
+                    "$ref": "#/$defs/constrains~1controller.admissionWebhooks.createSecretJob.activeDeadlineSeconds"
+                  }
+                },
+                "required": [
+                  "ingress-nginx"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/constrains~1ingress-nginx.controller.admissionWebhooks.patch.enabled:t"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ingress-nginx": {
+                "additionalProperties": {},
+                "description": "Dependencies",
+                "properties": {
+                  "controller": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ingress-nginx": {
+                "additionalProperties": {},
+                "description": "Dependencies",
+                "properties": {
+                  "controller": {
+                    "$ref": "#/$defs/constrains~1admissionWebhooks"
+                  }
+                }
+              }
+            }
+          }
+        ]
       }
     },
     {
@@ -65556,107 +65992,6 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1ingress-nginx"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1ingress-nginx+ingress-nginx.enabled+ingress-nginx.enabled:t+1more"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ingress-nginx.controller.admissionWebhooks.certManager.enabled:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ingress-nginx.controller.admissionWebhooks.enabled:t"
-              },
-              {
-                "properties": {
-                  "ingress-nginx": {
-                    "$ref": "#/$defs/constrains~1controller.admissionWebhooks.patchWebhookJob.activeDeadlineSeconds"
-                  }
-                },
-                "required": [
-                  "ingress-nginx"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ingress-nginx.controller.admissionWebhooks.patch.enabled:t"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress-nginx.enabled+ingress-nginx.enabled=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress-nginx.enabled:t"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1ingress-nginx+ingress-nginx.enabled+ingress-nginx.enabled:t+1more"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ingress-nginx.controller.admissionWebhooks.certManager.enabled:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ingress-nginx.controller.admissionWebhooks.enabled:t"
-              },
-              {
-                "properties": {
-                  "ingress-nginx": {
-                    "$ref": "#/$defs/constrains~1controller.admissionWebhooks.createSecretJob.activeDeadlineSeconds"
-                  }
-                },
-                "required": [
-                  "ingress-nginx"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ingress-nginx.controller.admissionWebhooks.patch.enabled:t"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "ingress-nginx": {
-                "additionalProperties": {},
-                "description": "Dependencies",
-                "properties": {
-                  "controller": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "ingress-nginx": {
-                "additionalProperties": {},
-                "description": "Dependencies",
-                "properties": {
-                  "controller": {
-                    "$ref": "#/$defs/constrains~1admissionWebhooks"
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
             "allOf": [
               {
                 "$ref": "#/$defs/constrains~1buildkit.rootless.image=''"
@@ -65977,7 +66312,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.controller.service+2more"
+            "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.controller.service+2more@3"
           },
           {
             "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.controller.service+4more"
@@ -66404,64 +66739,6 @@
             }
           }
         }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1ingress-nginx+ingress-nginx.enabled+ingress-nginx.enabled:t+1more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress-nginx.controller.admissionWebhooks.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "ingress-nginx": {
-                "additionalProperties": {},
-                "description": "Dependencies",
-                "properties": {
-                  "controller": {
-                    "$ref": "#/$defs/constrains~1admissionWebhooks.patch"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "ingress-nginx": {
-                "additionalProperties": {},
-                "description": "Dependencies",
-                "properties": {
-                  "controller": {
-                    "$ref": "#/$defs/constrains~1admissionWebhooks.certManager"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "ingress-nginx": {
-                "additionalProperties": {},
-                "description": "Dependencies",
-                "properties": {
-                  "controller": {
-                    "$ref": "#/$defs/constrains~1admissionWebhooks.service"
-                  }
-                }
-              }
-            }
-          }
-        ]
       }
     },
     {
@@ -70688,7 +70965,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.controller.service+2more"
+            "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.controller.service+2more@3"
           },
           {
             "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.controller.service+4more"
@@ -70703,6 +70980,42 @@
             "properties": {
               "controller": {
                 "$ref": "#/$defs/constrains~1service.internal"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1ingress-nginx+ingress-nginx.controller.admissionWebhooks+6more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress-nginx+ingress-nginx.controller.admissionWebhooks+5more@2"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1ingress-nginx+ingress-nginx.enabled+ingress-nginx.enabled:t+1more"
+              },
+              {
+                "$ref": "#/$defs/constrains~1ingress-nginx.controller.admissionWebhooks.enabled:t"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress-nginx": {
+            "additionalProperties": {},
+            "description": "Dependencies",
+            "properties": {
+              "controller": {
+                "$ref": "#/$defs/constrains~1admissionWebhooks.certManager"
               }
             }
           }
@@ -71971,17 +72284,7 @@
             "$ref": "#/$defs/constrains~1okteto-nginx.controller.admissionWebhooks.certManager.enabled:t@2"
           },
           {
-            "not": {
-              "properties": {
-                "okteto-nginx": {
-                  "$ref": "#/$defs/constrains~1controller.admissionWebhooks.certManager.issuerRef:t"
-                }
-              },
-              "required": [
-                "okteto-nginx"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/constrains~1okteto-nginx.controller.admissionWebhooks.certManager.issuerRef:t"
           },
           {
             "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.enabled+okteto-nginx.enabled:t+1more"
@@ -72084,61 +72387,6 @@
             }
           }
         }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1okteto-nginx.controller.admissionWebhooks.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1okteto-nginx+okteto-nginx.enabled+okteto-nginx.enabled:t+1more"
-          }
-        ]
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "okteto-nginx": {
-                "additionalProperties": {},
-                "properties": {
-                  "controller": {
-                    "$ref": "#/$defs/constrains~1admissionWebhooks.patch"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "okteto-nginx": {
-                "additionalProperties": {},
-                "properties": {
-                  "controller": {
-                    "$ref": "#/$defs/constrains~1admissionWebhooks.certManager"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "okteto-nginx": {
-                "additionalProperties": {},
-                "properties": {
-                  "controller": {
-                    "$ref": "#/$defs/constrains~1admissionWebhooks.service"
-                  }
-                }
-              }
-            }
-          }
-        ]
       }
     },
     {
@@ -85110,7 +85358,7 @@
                         "additionalProperties": {},
                         "properties": {
                           "secret": {
-                            "$ref": "#/$defs/constrains~1name@4"
+                            "$ref": "#/$defs/constrains~1name@5"
                           }
                         }
                       },

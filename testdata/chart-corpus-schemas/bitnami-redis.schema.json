@@ -1804,7 +1804,7 @@
           "$ref": "#/$defs/constrains~1diagnosticMode.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@2"
+          "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@3"
         }
       ]
     },
@@ -1886,6 +1886,60 @@
         }
       ]
     },
+    "constrains/architecture=replication+master+master.containerSecurityContext+3more": {
+      "allOf": [
+        {
+          "properties": {
+            "master": {
+              "$ref": "#/$defs/constrains~1containerSecurityContext.runAsUser:t"
+            }
+          },
+          "required": [
+            "master"
+          ],
+          "type": "object"
+        },
+        {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1master.containerSecurityContext.runAsUser"
+            },
+            {
+              "properties": {
+                "master": {
+                  "$ref": "#/$defs/constrains~1containerSecurityContext.runAsUser@2"
+                }
+              },
+              "required": [
+                "master"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@5"
+        },
+        {
+          "anyOf": [
+            {
+              "properties": {
+                "master": {
+                  "$ref": "#/$defs/constrains~1containerSecurityContext.runAsUser"
+                }
+              },
+              "required": [
+                "master"
+              ],
+              "type": "object"
+            },
+            {
+              "$ref": "#/$defs/constrains~1master.containerSecurityContext.runAsUser"
+            }
+          ]
+        }
+      ]
+    },
     "constrains/architecture=replication+master+master.count+pdb.create:t+sentinel.enabled:t": {
       "allOf": [
         {
@@ -1928,6 +1982,44 @@
         },
         {
           "$ref": "#/$defs/constrains~1sentinel.enabled:t"
+        }
+      ]
+    },
+    "constrains/architecture=replication+replica+replica.containerSecurityContext+3more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1architecture=replication"
+        },
+        {
+          "$ref": "#/$defs/constrains~1replica.containerSecurityContext+replica.containerSecurityContext.runAsUser@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1sentinel.enabled:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1replica.containerSecurityContext.runAsUser:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1replica.containerSecurityContext+replica.containerSecurityContext.runAsUser"
+        }
+      ]
+    },
+    "constrains/architecture=replication+replica+replica.containerSecurityContext+3more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1architecture=replication"
+        },
+        {
+          "$ref": "#/$defs/constrains~1replica.containerSecurityContext+replica.containerSecurityContext.runAsUser@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1replica.containerSecurityContext.runAsUser:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1replica.containerSecurityContext+replica.containerSecurityContext.runAsUser"
         }
       ]
     },
@@ -2269,7 +2361,7 @@
     "constrains/architecture=replication+sentinel.enabled:t+sentinel.service.nodePorts.redis:t+1more@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@2"
+          "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@3"
         },
         {
           "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t+sentinel.service.nodePorts.redis:t+1more"
@@ -2341,7 +2433,7 @@
           "$ref": "#/$defs/constrains~1architecture=replication"
         },
         {
-          "$ref": "#/$defs/constrains~1sentinel.enabled:t"
+          "$ref": "#/$defs/constrains~1sentinel.enabled:t@2"
         }
       ]
     },
@@ -2351,7 +2443,7 @@
           "$ref": "#/$defs/constrains~1architecture=replication"
         },
         {
-          "$ref": "#/$defs/constrains~1sentinel.enabled:t@2"
+          "$ref": "#/$defs/constrains~1sentinel.enabled:t"
         }
       ]
     },
@@ -2369,7 +2461,7 @@
     },
     "constrains/architecture=replication+sentinel.enabled:t@5": {
       "not": {
-        "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@3"
+        "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@2"
       }
     },
     "constrains/architecture=standalone": {
@@ -3836,6 +3928,102 @@
       "properties": {
         "containerSecurityContext": {
           "$ref": "#/$defs/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "containerSecurityContext"
+      ],
+      "type": "object"
+    },
+    "constrains/containerSecurityContext.runAsUser": {
+      "properties": {
+        "containerSecurityContext": {
+          "properties": {
+            "runAsUser": {
+              "anyOf": [
+                {
+                  "not": {
+                    "pattern": "^-([1-9][0-9]{1,17}|[1-9]|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{1,14}|0[xX]0*[1-9a-fA-F]|0[bB]0*1[0-1]{1,61}|0[bB]0*1|0[oO]?0*[1-7][0-7]{1,19}|0[oO]?0*[1-7]|[0-9_]*[1-9][0-9_]*_[0-9_]*|[0-9_]*_[0-9_]*[1-9][0-9_]*|0[xX][0-9a-fA-F_]*[1-9a-fA-F][0-9a-fA-F_]*_[0-9a-fA-F_]*|0[xX][0-9a-fA-F_]*_[0-9a-fA-F_]*[1-9a-fA-F][0-9a-fA-F_]*|0[bB][01_]*1[01_]*_[01_]*|0[bB][01_]*_[01_]*1[01_]*|0[oO]?[0-7_]*[1-7][0-7_]*_[0-7_]*|0[oO]?[0-7_]*_[0-7_]*[1-7][0-7_]*|[1-9][0-9]{18}|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{15}|0[bB]0*1[01]{62}|0[oO]?0*[1-7][0-7]{20})(\\.0*)?$"
+                  },
+                  "type": "string"
+                },
+                {
+                  "exclusiveMinimum": -1,
+                  "type": "integer"
+                }
+              ]
+            }
+          },
+          "required": [
+            "runAsUser"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "containerSecurityContext"
+      ],
+      "type": "object"
+    },
+    "constrains/containerSecurityContext.runAsUser:t": {
+      "properties": {
+        "containerSecurityContext": {
+          "properties": {
+            "runAsUser": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "runAsUser"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "containerSecurityContext"
+      ],
+      "type": "object"
+    },
+    "constrains/containerSecurityContext.runAsUser@2": {
+      "properties": {
+        "containerSecurityContext": {
+          "properties": {
+            "runAsUser": {
+              "anyOf": [
+                {
+                  "not": {
+                    "pattern": "^\\+?([1-9][0-9]{1,17}|[1-9]|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{1,14}|0[xX]0*[1-9a-fA-F]|0[bB]0*1[0-1]{1,61}|0[bB]0*1|0[oO]?0*[1-7][0-7]{1,19}|0[oO]?0*[1-7]|[0-9_]*[1-9][0-9_]*_[0-9_]*|[0-9_]*_[0-9_]*[1-9][0-9_]*|0[xX][0-9a-fA-F_]*[1-9a-fA-F][0-9a-fA-F_]*_[0-9a-fA-F_]*|0[xX][0-9a-fA-F_]*_[0-9a-fA-F_]*[1-9a-fA-F][0-9a-fA-F_]*|0[bB][01_]*1[01_]*_[01_]*|0[bB][01_]*_[01_]*1[01_]*|0[oO]?[0-7_]*[1-7][0-7_]*_[0-7_]*|0[oO]?[0-7_]*_[0-7_]*[1-7][0-7_]*|[1-9][0-9]{18}|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{15}|0[bB]0*1[01]{62}|0[oO]?0*[1-7][0-7]{20})(\\.0*)?$"
+                  },
+                  "type": "string"
+                },
+                {
+                  "exclusiveMaximum": 1,
+                  "type": "integer"
+                }
+              ]
+            }
+          },
+          "required": [
+            "runAsUser"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "containerSecurityContext"
+      ],
+      "type": "object"
+    },
+    "constrains/containerSecurityContext.runAsUser@3": {
+      "properties": {
+        "containerSecurityContext": {
+          "properties": {
+            "runAsUser": {}
+          },
+          "required": [
+            "runAsUser"
+          ],
+          "type": "object"
         }
       },
       "required": [
@@ -7644,6 +7832,19 @@
       ],
       "type": "object"
     },
+    "constrains/master.containerSecurityContext.runAsUser": {
+      "not": {
+        "properties": {
+          "master": {
+            "$ref": "#/$defs/constrains~1containerSecurityContext.runAsUser@3"
+          }
+        },
+        "required": [
+          "master"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/master.count": {
       "properties": {
         "master": {
@@ -10605,6 +10806,42 @@
       ],
       "type": "object"
     },
+    "constrains/replica.containerSecurityContext+replica.containerSecurityContext.runAsUser": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1replica.containerSecurityContext.runAsUser"
+        },
+        {
+          "properties": {
+            "replica": {
+              "$ref": "#/$defs/constrains~1containerSecurityContext.runAsUser@2"
+            }
+          },
+          "required": [
+            "replica"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/replica.containerSecurityContext+replica.containerSecurityContext.runAsUser@2": {
+      "anyOf": [
+        {
+          "properties": {
+            "replica": {
+              "$ref": "#/$defs/constrains~1containerSecurityContext.runAsUser"
+            }
+          },
+          "required": [
+            "replica"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1replica.containerSecurityContext.runAsUser"
+        }
+      ]
+    },
     "constrains/replica.containerSecurityContext+replica.initContainers:t+replica.persistence+3more": {
       "anyOf": [
         {
@@ -10643,6 +10880,30 @@
       "properties": {
         "replica": {
           "$ref": "#/$defs/constrains~1containerSecurityContext.enabled:t"
+        }
+      },
+      "required": [
+        "replica"
+      ],
+      "type": "object"
+    },
+    "constrains/replica.containerSecurityContext.runAsUser": {
+      "not": {
+        "properties": {
+          "replica": {
+            "$ref": "#/$defs/constrains~1containerSecurityContext.runAsUser@3"
+          }
+        },
+        "required": [
+          "replica"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/replica.containerSecurityContext.runAsUser:t": {
+      "properties": {
+        "replica": {
+          "$ref": "#/$defs/constrains~1containerSecurityContext.runAsUser:t"
         }
       },
       "required": [
@@ -15343,6 +15604,67 @@
       "if": {
         "allOf": [
           {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "master": {
+                      "$ref": "#/$defs/constrains~1persistence@2"
+                    }
+                  },
+                  "required": [
+                    "master"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "master": {
+                    "$ref": "#/$defs/constrains~1persistence=null"
+                  }
+                },
+                "required": [
+                  "master"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/constrains~1architecture=replication+master+master.containerSecurityContext+3more"
+              },
+              {
+                "$ref": "#/$defs/constrains~1architecture+architecture!=replication+master.count+sentinel.enabled:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1existingConfigmap:t"
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1master.kind=Deployment"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1architecture=standalone"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/$defs/constrains~1architecture=replication+replica.kind=StatefulSet+replica.persistence.enabled:t+2more"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "$ref": "#/$defs/constrains~1tls.enabled:t"
           },
           {
@@ -15947,7 +16269,7 @@
             "$ref": "#/$defs/constrains~1architecture=replication+configmapChecksumAnnotations:t+sentinel.enabled:t+2more"
           },
           {
-            "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@3"
+            "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@2"
           },
           {
             "$ref": "#/$defs/constrains~1commonAnnotations:t+sentinel.service.headless.annotations:t"
@@ -16586,7 +16908,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@2"
+            "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@3"
           },
           {
             "allOf": [
@@ -17312,6 +17634,44 @@
               }
             ],
             "description": "Annotations to add to all deployed objects"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1architecture+architecture!=replication+configmapChecksumAnnotations:t+3more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1architecture=replication+replica+replica.containerSecurityContext+3more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1architecture=replication+replica+replica.containerSecurityContext+3more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1existingConfigmap:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t+sentinel.service.nodePorts.redis:t+1more"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "replica": {
+            "additionalProperties": {},
+            "properties": {
+              "persistence": {
+                "description": "Persistence Parameters\nref: https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
+                "type": "object"
+              }
+            }
           }
         }
       }
@@ -19081,7 +19441,7 @@
             "$ref": "#/$defs/constrains~1architecture=replication+configmapChecksumAnnotations:t+sentinel.enabled:t+2more"
           },
           {
-            "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@3"
+            "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@2"
           }
         ]
       },
@@ -19743,7 +20103,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@3"
+        "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@2"
       },
       "then": {
         "allOf": [
@@ -25241,42 +25601,6 @@
       }
     },
     {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1architecture=replication+configmapChecksumAnnotations:t+existingConfigmap:t+3more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1architecture+architecture!=replication+master.count+sentinel.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1existingConfigmap:t"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1master.kind=Deployment"
-              },
-              {
-                "$ref": "#/$defs/constrains~1architecture=standalone"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1architecture=replication+replica.kind=StatefulSet+replica.persistence.enabled:t+2more"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "master": {
-            "$ref": "#/$defs/constrains~1persistence"
-          }
-        }
-      }
-    },
-    {
       "additionalProperties": {},
       "properties": {
         "extraDeploy": {
@@ -25509,7 +25833,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@2"
+            "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@3"
           },
           {
             "$ref": "#/$defs/constrains~1architecture+architecture!=replication+master.count+sentinel.enabled:t"
@@ -26139,54 +26463,6 @@
           },
           {
             "$ref": "#/$defs/constrains~1tls.authClients:t"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "replica": {
-                    "$ref": "#/$defs/constrains~1persistence=null"
-                  }
-                },
-                "required": [
-                  "replica"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "replica": {
-                      "$ref": "#/$defs/constrains~1persistence@2"
-                    }
-                  },
-                  "required": [
-                    "replica"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@2"
-              },
-              {
-                "$ref": "#/$defs/constrains~1existingConfigmap:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t+sentinel.service.nodePorts.redis:t+1more"
-              }
-            ]
           }
         ]
       },
@@ -26904,7 +27180,7 @@
                 "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@3"
+                "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@2"
               }
             ]
           },
@@ -27184,7 +27460,7 @@
             "$ref": "#/$defs/constrains~1architecture+architecture!=replication+architecture=replication+3more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@3"
+            "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@2"
           }
         ]
       },
@@ -27352,7 +27628,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@3"
+            "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@2"
           }
         ]
       },
@@ -28580,6 +28856,45 @@
         "properties": {
           "metrics": {
             "$ref": "#/$defs/constrains~1startupProbe"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1architecture=replication+master+master.containerSecurityContext+3more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1architecture=replication+configmapChecksumAnnotations:t+existingConfigmap:t+3more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1architecture+architecture!=replication+master.count+sentinel.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1existingConfigmap:t"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1master.kind=Deployment"
+              },
+              {
+                "$ref": "#/$defs/constrains~1architecture=standalone"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1architecture=replication+replica.kind=StatefulSet+replica.persistence.enabled:t+2more"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "master": {
+            "$ref": "#/$defs/constrains~1persistence"
           }
         }
       }
@@ -34027,38 +34342,6 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1architecture+architecture!=replication+configmapChecksumAnnotations:t+3more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1existingConfigmap:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t+sentinel.service.nodePorts.redis:t+1more"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "replica": {
-            "additionalProperties": {},
-            "properties": {
-              "persistence": {
-                "description": "Persistence Parameters\nref: https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
             "$ref": "#/$defs/constrains~1sentinel.externalAccess.enabled:t"
@@ -34425,7 +34708,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@2"
+        "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@3"
       },
       "then": {
         "allOf": [
@@ -36352,7 +36635,7 @@
                 "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@3"
+                "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@2"
               },
               {
                 "$ref": "#/$defs/constrains~1commonAnnotations:t+sentinel.service.headless.annotations:t"
@@ -36605,6 +36888,60 @@
           },
           {
             "$ref": "#/$defs/constrains~1sentinel.service.nodePorts.redis:t+sentinel.service.type=NodePort"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@3"
+              },
+              {
+                "$ref": "#/$defs/constrains~1architecture=replication+replica+replica.containerSecurityContext+3more"
+              },
+              {
+                "$ref": "#/$defs/constrains~1architecture=replication+replica+replica.containerSecurityContext+3more@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1existingConfigmap:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t+sentinel.service.nodePorts.redis:t+1more"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "replica": {
+                    "$ref": "#/$defs/constrains~1persistence=null"
+                  }
+                },
+                "required": [
+                  "replica"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "replica": {
+                      "$ref": "#/$defs/constrains~1persistence@2"
+                    }
+                  },
+                  "required": [
+                    "replica"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
           }
         ]
       },
@@ -38696,7 +39033,7 @@
                 "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@3"
+                "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@2"
               }
             ]
           }
@@ -39188,64 +39525,6 @@
           }
         }
       }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "master": {
-                      "$ref": "#/$defs/constrains~1persistence@2"
-                    }
-                  },
-                  "required": [
-                    "master"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "master": {
-                    "$ref": "#/$defs/constrains~1persistence=null"
-                  }
-                },
-                "required": [
-                  "master"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/constrains~1architecture+architecture!=replication+master.count+sentinel.enabled:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1existingConfigmap:t"
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/constrains~1master.kind=Deployment"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1architecture=standalone"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/$defs/constrains~1architecture=replication+replica.kind=StatefulSet+replica.persistence.enabled:t+2more"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
     },
     {
       "if": {
@@ -40250,7 +40529,7 @@
             "$ref": "#/$defs/constrains~1metrics.enabled:t+metrics.podMonitor"
           },
           {
-            "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@2"
+            "$ref": "#/$defs/constrains~1architecture=replication+sentinel.enabled:t@3"
           },
           {
             "$ref": "#/$defs/constrains~1metrics.enabled:t+metrics.serviceMonitor"
