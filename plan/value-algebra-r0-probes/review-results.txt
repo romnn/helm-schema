@@ -293,6 +293,123 @@ output:
 ### a10-randint-helper
 template: v: {{ define "r" }}{{ randInt 0 2 }}{{ end }}{{ if eq (include "r" .) (include "r" .) }}{{ fail "same" }}{{ end }}ok
 runs: 30
-exit 0: 16
-exit 1: 14
+exit 0: 11
+exit 1: 19
+
+### b01-tpl-literal-writes
+values.yaml: {} 
+template: v: {{ tpl "{{ $_ := set .Values \"c\" true }}" . }}{{ .Values.c }}
+args: 
+exit: 0
+output:
+  ---
+  v: true
+
+### b02-index-slot-is-live
+values.yaml: {} 
+template: v: {{ $s := splitList "," "b,a" }}{{ $x := index $s 0 }}{{ $_ := sortAlpha $s }}{{ $x }}
+args: 
+exit: 0
+output:
+  ---
+  v: a
+
+### b02b-slice-range-reads-live-slots
+values.yaml: {} 
+template: v: {{ $s := splitList "," "b,a" }}{{ range $i, $v := $s }}{{ if eq $i 0 }}{{ $_ := sortAlpha $s }}{{ end }}{{ $v }}{{ end }}
+args: 
+exit: 0
+output:
+  ---
+  v: ab
+
+### b03-release-is-mutable
+values.yaml: {} 
+template: v: {{ $_ := set .Release "Name" "changed" }}{{ .Release.Name }}
+args: 
+exit: 0
+output:
+  ---
+  v: changed
+
+### b03b-chart-is-mutable
+values.yaml: {} 
+template: v: {{ $_ := set .Chart "Name" "changed" }}{{ .Chart.Name }}
+args: 
+exit: 0
+output:
+  ---
+  v: changed
+
+### b04-round-float-cutoff
+values.yaml: cutoff: 0.5 
+template: v: {{ round 1 0 .Values.cutoff }}
+args: 
+exit: 0
+output:
+  ---
+  v: 1
+
+### b04b-round-int-precision
+values.yaml: p: 0 
+template: v: {{ round 1 .Values.p }}
+args: 
+exit: 1
+output:
+  Error: b04b-round-int-precision/templates/cm.yaml:1:21
+    executing "b04b-round-int-precision/templates/cm.yaml" at <.Values.p>:
+      wrong type for value; expected int; got float64
+
+### b05-unset-nil-map
+values.yaml: {} 
+template: v: {{ eq (unset (fromJson "null") "x") nil }}
+args: 
+exit: 0
+output:
+  ---
+  v: true
+
+### b05b-index-absent-typed-map
+values.yaml: {} 
+template: v: {{ typeOf (index (split "," "a") "missing") | quote }}
+args: 
+exit: 0
+output:
+  ---
+  v: "string"
+
+### b05c-method-precedes-key
+values.yaml: Table: x 
+template: v: {{ .Values.Table }}
+args: 
+exit: 1
+output:
+  Error: b05c-method-precedes-key/templates/cm.yaml:1:13
+    executing "b05c-method-precedes-key/templates/cm.yaml" at <.Values.Table>:
+      wrong number of args for Table: want 1 got 0
+
+### b07-pipeline-value-validated
+values.yaml: {} 
+template: v: {{ 0 | lower }}
+args: 
+exit: 1
+output:
+  Error: b07-pipeline-value-validated/templates/cm.yaml:1:10
+    executing "b07-pipeline-value-validated/templates/cm.yaml" at <lower>:
+      wrong type for value; expected string; got int
+
+### b07b-pipeline-final-variadic
+values.yaml: {} 
+template: v: {{ 1 | printf "%v-%v" 2 }}
+args: 
+exit: 0
+output:
+  ---
+  v: 2-1
+
+### b06-shuffle-helper
+template: v: {{ define "r" }}{{ shuffle "ab" }}{{ end }}{{ eq (include "r" .) (include "r" .) }}
+runs: 30
+v: true: 18
+v: false: 12
 

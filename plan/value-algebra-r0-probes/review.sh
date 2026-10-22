@@ -86,3 +86,23 @@ for _ in $(seq 1 30); do
   if "$HELM" template p "$dir" --show-only templates/cm.yaml > /dev/null 2>&1; then ok=$((ok+1)); else fail=$((fail+1)); fi
 done
 printf '### a10-randint-helper\ntemplate: %s\nruns: 30\nexit 0: %s\nexit 1: %s\n\n' "$(cat "$dir/templates/cm.yaml")" "$ok" "$fail"
+
+# Round 2 of the semantics review (agentmux run 20261022T052741-f8a5b99b, turn 1).
+probe b01-tpl-literal-writes '{}' '{{ tpl "{{ $_ := set .Values \"c\" true }}" . }}{{ .Values.c }}'
+probe b02-index-slot-is-live '{}' '{{ $s := splitList "," "b,a" }}{{ $x := index $s 0 }}{{ $_ := sortAlpha $s }}{{ $x }}'
+probe b02b-slice-range-reads-live-slots '{}' '{{ $s := splitList "," "b,a" }}{{ range $i, $v := $s }}{{ if eq $i 0 }}{{ $_ := sortAlpha $s }}{{ end }}{{ $v }}{{ end }}'
+probe b03-release-is-mutable '{}' '{{ $_ := set .Release "Name" "changed" }}{{ .Release.Name }}'
+probe b03b-chart-is-mutable '{}' '{{ $_ := set .Chart "Name" "changed" }}{{ .Chart.Name }}'
+probe b04-round-float-cutoff 'cutoff: 0.5' '{{ round 1 0 .Values.cutoff }}'
+probe b04b-round-int-precision 'p: 0' '{{ round 1 .Values.p }}'
+probe b05-unset-nil-map '{}' '{{ eq (unset (fromJson "null") "x") nil }}'
+probe b05b-index-absent-typed-map '{}' '{{ typeOf (index (split "," "a") "missing") | quote }}'
+probe b05c-method-precedes-key 'Table: x' '{{ .Values.Table }}'
+probe b07-pipeline-value-validated '{}' '{{ 0 | lower }}'
+probe b07b-pipeline-final-variadic '{}' '{{ 1 | printf "%v-%v" 2 }}'
+dir="$(chart b06-shuffle-helper '{}' '{{ define "r" }}{{ shuffle "ab" }}{{ end }}{{ eq (include "r" .) (include "r" .) }}')"
+t=0; f=0
+for _ in $(seq 1 30); do
+  case "$("$HELM" template p "$dir" --show-only templates/cm.yaml 2>&1)" in *"v: true"*) t=$((t+1));; *"v: false"*) f=$((f+1));; esac
+done
+printf '### b06-shuffle-helper\ntemplate: %s\nruns: 30\nv: true: %s\nv: false: %s\n\n' "$(cat "$dir/templates/cm.yaml")" "$t" "$f"
