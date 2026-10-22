@@ -5,60 +5,64 @@ Date: 2026-10-22 (R0 design closure; plan of 2026-10-21, user decision to rearch
 
 ## Context
 
-ADR [0012](0012-one-abstract-interpreter-owns-helm-semantics.md) made one interpreter own Helm semantics. However,
-its plan gave the value no home for truth, scalar content or Go kind. Corpus fixes therefore added the following
-beside the value, and none was ever deleted:
+ADR [0012](0012-one-abstract-interpreter-owns-helm-semantics.md) made one interpreter own Helm semantics. Its plan
+gave the value no home for truth, scalar content or Go type. Corpus fixes therefore added carriers beside the value,
+and no plan scheduled their deletion:
 - root truth and dispatch maps (58217d68, c6d5b8d5);
 - local truth reductions (18f806ec);
 - `EvalResult.truth` and `scalar_dispatch` (955e7cc1);
-- the selection-reachability carrier (ADR [0022](0022-one-typed-selection-reachability-carrier.md));
+- a reachability carrier (ADR [0022](0022-one-typed-selection-reachability-carrier.md));
 - `proven_operands`;
 - a deferred second interpreter run (c5aafe86).
 
-At main 65a6d6c7 the IR holds 116 semantic owners for about 30 facts.
-
-Masking followed. Four W1 attempts made one fact exact and exposed a stale copy elsewhere; the clearest case is
-Astra's 57 new failures. Stage 1's write fence drew three review rounds of stale-read counterexamples. Pinned Helm
-4.2.3 probes fix the target semantics, including Go `int` being distinct from Sprig `int64`.
+Making one copy exact exposed stale copies elsewhere: four W1 attempts and three stage-1 review rounds each found new
+stale reads. Pinned Helm probes fixed the target semantics; examples are concrete Go types, `int` versus `int64`, slice
+backings and namespace cloning (`plan/value-algebra-r0.md` §3).
 
 ## Decision
 
-- **One semantic model.** Every fact about a template value is a leaf of one guarded alternative algebra, or a field
-  of a heap object, or a query derived from them. A leaf carries a Go kind always, and its content when known.
-  Interpreter structs hold only these:
-  - lexical frames (name → value);
-  - one heap (identity → object), in which root and `.Values` are interned by source identity;
+- **One semantic model.** A fact about a template value lives only in a leaf of one guarded alternative algebra, in a
+  heap object field, or in a query derived from them. The leaf carries a concrete Go type (with explicit unknown
+  coverage) and its content when known. Truth, equality, selection and payload truth are queries.
+- **Interpreter state is limited to:**
+  - lexical frames;
+  - one heap of maps and `[]string` backings, initialized from Helm's constructed values graph;
+  - frozen snapshots at Helm-defined instants (guard tests, emission, serialization, include/tpl returns, range
+    entry);
   - effect observations for `ObservedFacts`;
-  - caches per ADR [0028](0028-schema-cache-is-fetch-on-miss-never-an-oracle.md).
-- **One execution.** Only the evaluator executes syntax, once, in Go's order, threading state left to right. Transfer
-  functions and contract collectors receive owned operands.
-- **Deletion is the landing criterion.** Each stage lands only when its listed owners (`plan/value-algebra-r0.md`
-  §2.7) have zero production occurrences and no adapter remains over their replacement:
-  - R1 transposes the binding maps into slots (−28);
-  - R2 publishes kinds only for identity-stable leaves, behind `content()`/`kinds()` (−7);
-  - R3a is the byte-identical evaluate-once and state seam (−5);
-  - R3b is the coupled cut-over: heap, frozen guards, flow and in-walk output (−76).
-- **The heap and the replay deletion land together.** No landing publishes heap-exact facts while a replayed-output
-  path exists. There is no in-binary dual run; the differential runs main CLI against the candidate.
-- **Recurrence gate.** An ast-grep rule forbids parallel fact maps in `helm-schema-ir`. Its allowlist shrinks per
-  stage and is empty after R3b.
+  - caches.
+- **One execution.** Only the evaluator executes syntax. It follows Go's order: pipeline input first, then per-argument
+  evaluation and validation, with `and`/`or` as special forms. State is threaded through it.
+- **Deletion is the landing criterion.** Each stage lands only when its rows in the declaration inventory are gone and
+  no adapter reads a deleted owner. A lint-enforced inventory gate rejects new independent stores, snapshots or
+  re-execution paths outside the value module.
+- **Newly precise state reads land together with the deletion of every effectful replay path.** There is no in-binary
+  dual run; construction commits are checked against main by a two-binary differential.
 
 ## Consequences
 
-- Supersedes ADR 0022 at R3b: selection reachability becomes a query over guarded alternatives.
-- Amends ADR [0016](0016-helpers-are-evaluated-by-call-site-reguarded-summaries.md) at R3b: summaries are keyed by
-  heap snapshot identity, and only read-only helpers are memoized.
-- Refines ADR 0012: "one lattice" means one value algebra, with no carriers beside it.
-- Reviews count owners per fact. A change that raises any count is REWORK (ADR
-  [0066](0066-landing-ratchet.md) clause 3).
-- Open:
-  - whether byte-identical owner-deletion stages satisfy ADR 0066 clause 2 (user decision D3);
-  - the `default`-after-`required` hint (D1).
+- Supersedes ADR 0022 at the cut-over: reachability becomes a query.
+- Amends ADR [0016](0016-helpers-are-evaluated-by-call-site-reguarded-summaries.md). Only helpers that are
+  deterministic, transitively read-only, untruncated and allocate nothing escaping are memoized. The key keeps the
+  recursion `seen` set and adds the heap snapshot identity, and partial cycle results are never cached outside their
+  head (ADR [0028](0028-schema-cache-is-fetch-on-miss-never-an-oracle.md)).
+- Refines ADR 0012: "one lattice" means one value algebra with no carriers beside it. Output stays bounded symbolic
+  output, not a renderer.
+- Keeps ADR [0014](0014-six-phase-pipeline-with-one-typed-artifact-per-phase.md) and
+  [0015](0015-contract-ir-is-the-semantic-seam.md): `ObservedFacts → ContractIr → FinalizedContract` is unchanged.
+- Bounds widen fields and object remainders to unknown and never drop alternatives (ADR
+  [0019](0019-analysis-bounds-are-structural-and-only-widen.md)). Unknown loops widen every object they touch.
+- Snapshot identities and per-site allocation summaries cost memory and cache hit rate. Performance is measured under
+  ADR [0064](0064-performance-measurement-protocol.md) before the cut-over.
+- Until the cut-over, any new kind-based rejection requires a write-free chart. Charts that write therefore close
+  their cells only at the cut-over.
+- Open: ADR [0066](0066-landing-ratchet.md) clause 2 for byte-identical deletion-only landings (user decision D3;
+  without an amendment, refactor stages fold into semantic landings).
 
 ## References
 
-- `plan/value-algebra-interpreter.md` (§1-§4); `plan/value-algebra-r0.md` (§1 post-mortem, §2 inventory, §4 stages)
-- `plan/value-algebra-r0-probes/` (Q1-Q4, Helm 4.2.3)
-- `plan/single-abstract-interpreter.md` :186-213 (`EvalResult { value, effects }`)
-- Codex reviews of W1 stage 1 (agentmux run 20261022T000808-5dafd530, turns 0-1)
+- `plan/value-algebra-interpreter.md`; `plan/value-algebra-r0.md` (post-mortem, inventory, contracts, stages)
+- `plan/value-algebra-r0-inventory/` and `plan/value-algebra-r0-probes/` (Helm 4.2.3)
+- `plan/single-abstract-interpreter.md` :186-213
+- Reviews: agentmux runs 20261022T000808-5dafd530, 20261022T052728-edb2adc2, 20261022T052741-f8a5b99b
 - Commits 58217d68, c6d5b8d5, 18f806ec, 955e7cc1, 779b64d4, c5aafe86, 0bed35bb, 87034212
