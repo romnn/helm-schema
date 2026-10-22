@@ -1436,7 +1436,9 @@ impl Interpreter<'_> {
         // connective operand, which the evaluator's partial truth can lose
         // (trino's `or …keda.enabled (gt (int …workers) 0)` keeps only the
         // truthy disjunct there). Both imply the condition, so their union
-        // does too — except over an overwritten overlay wildcard.
+        // does too — except over a ranged member wildcard: `set` may have
+        // overwritten the input member it reads, and a wildcard guard makes a
+        // fail capture abandon its sound siblings too.
         let positive_subset = if wildcard_overwritten {
             positive_subset
         } else {
@@ -1445,7 +1447,11 @@ impl Interpreter<'_> {
                 .approximate_condition_predicate_expr(expr, &marker);
             let structural_subset =
                 TruthCondition::from_predicate_with_memo(structural, memo.as_ref()).when_true();
-            any_predicates_with_memo(vec![positive_subset, structural_subset], memo.as_ref())
+            if predicate_reads_member_wildcard(&structural_subset) {
+                positive_subset
+            } else {
+                any_predicates_with_memo(vec![positive_subset, structural_subset], memo.as_ref())
+            }
         };
         let mut paths = self
             .value_path_context()
