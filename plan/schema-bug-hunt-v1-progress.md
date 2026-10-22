@@ -9257,5 +9257,14 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   low priority: oracle/harness/tooling, new findings recorded as witness cells). Harness fix (round8-harness,
   harness/context-roster-guard 02d82b82..68794746) reviewed by sol twice, all findings fixed, ready for landing 10d. Opus W4 slice
   45a3d884 port started (worktree round8-w4-opus, branch w4/comparison-operands). Orchestrator.
-Next: collect the W1 stage-1 and W4-slice hand-backs, Codex-review, then assemble landing 10d (harness, W1 stage 1); then R0 of
-`plan/value-algebra-interpreter.md`; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
+- 04:29 (Oct 22) — **Landing 10d chain STARTED: harness fix + W4 slice (W1 stage 1 deferred to 10e, still in review rework).**
+  W4 (w4/comparison-operands, round8-w4-opus): port of 45a3d884 introduced one openebs LintRaw false rejection (fixed: absent
+  int-cast guard reads as zero, 2a03b510); sol review REWORK (wildcard structural subset poisons a fail capture; confirmed 6 NEW
+  cells with pinned Helm, fixed fdda827e, +4 LOC) then LAND; 205-cell matrix 0 NEW / 47 improved / 22 open on both; 31 fixtures;
+  F34 closes; gates fmt/lint/lint:fc/nextest 1740/integration 1096 exit 0; +96 LOC. W1 stage 1 (w1/stage1-combined, 1,427 cells
+  0 NEW / 104 closed, gates 0, +271 LOC) got sol REWORK: the helper-output fence misses merge writes, helper-summary write history,
+  alias writes, and drops constant output (new FA); Opus reworking with a cap (narrow instead of growing the fence). Branch
+  landing-10d (round8-landing10a) = main 6ac9bb6c + 31088d81 (harness) + 5220c19b (W4); env runner 9611429, E=round8-landing10d-run1.
+  Orchestrator.
+Next: watch the 10d chain (`tail /Volumes/T7/dev/round8-landing10d-run1/chain.log`); on green merge into main; W1 stage 1 rebases onto
+it for 10e; then R0 of `plan/value-algebra-interpreter.md`.
