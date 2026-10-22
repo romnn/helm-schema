@@ -1,13 +1,13 @@
 # helm-schema — value-algebra interpreter, R0 design closure
 
-Status: R0 deliverable, rework 3 (2026-10-22), on branch `r0/value-algebra-design` (base main 65a6d6c7). No production
+Status: R0 deliverable, rework 4 (2026-10-22), on branch `r0/value-algebra-design` (base main 65a6d6c7). No production
 code. Every `file:line` is against 65a6d6c7; IR paths are relative to `crates/helm-schema-ir/src/`.
 
 Artifacts:
 - Helm evidence (scripts with recorded command, output and exit): `plan/value-algebra-r0-probes/`
   - `run.sh`: 42 probes;
   - `selected.sh`: 45 runs;
-  - `review.sh`: 46 probes from the two semantics-review rounds.
+  - `review.sh`: 50 probes from the three semantics-review rounds.
 - Inventory: `plan/value-algebra-r0-inventory/`:
   - `inventory.py`: the fail-closed checker;
   - `classification.tsv`: one reviewed row per declaration;
@@ -19,6 +19,20 @@ Admission cells are referenced as **the admission suite (landing 10e)**, which i
 This document names lanes; it does not duplicate cells.
 
 ## 0. Review disposition
+
+### Round 3 (rework 4)
+
+astra returned ACCEPT WITH CHANGES, sufficient to start the byte-identical R1. sol returned REWORK on the checker
+only. Everything below is accepted.
+
+| Finding | Disposition | Where |
+| --- | --- | --- |
+| sol P1: baseline rows can disappear | Every baseline key must stay classified; disappearance is valid only through a landed delete stage. Self-test case 4 | §1.4 |
+| sol P1: producer targets need not survive (self-mapping passed) | A target must be a scanned candidate or present needle whose delete stage has not landed. Self-test case 5 | §1.4 |
+| sol P2: three classifications | `IterationAlternatives` → R; `ValuePathContext.eval_env` → S; `static_semver_numeric_selector` → E (R3a) | TSV |
+| astra P1 (pre-R2): pipeline value fills a fixed parameter of a variadic function | Recorded as an R2 obligation. c01 `int 1 \| round 1` gives `1`; c02 `1 \| printf` aborts `expected string; got int` | §4.7 |
+| astra P2 (pre-R2): the certificate excludes heap mutation, not legacy guard errors | Recorded. The per-consumer-family no-regression requirement stays binding | §5.3 |
+| astra P2 (pre-R3b): fresh allocation is not a closed remainder | Recorded. c03 (`fromYaml .Values.payload`) and c04 (`dict .Values.key 1`) both reach `fail` | §4.4 |
 
 ### Round 2 (rework 3)
 
@@ -147,7 +161,15 @@ round.
   5. a new F/S/E row without `replaces` naming baseline rows deleted by a landed stage;
   6. a deleted baseline F/S/E row without a reviewed `producers.tsv` mapping to a surviving key.
 
-  `--self-test` shows that an added `Effects.parallel_truths`, a ghost row and an F→V relabel are each rejected.
+  `--self-test` shows that five cases are each rejected:
+  1. an added `Effects.parallel_truths`;
+  2. a ghost row;
+  3. an F→V relabel;
+  4. a declaration removed together with its row before its stage lands;
+  5. a landed deletion mapped to itself.
+
+  Baseline rows are never removed from `classification.tsv`. Producer targets must be surviving, scanned
+  declarations.
   Moving to `tools/` adds positive and negative ast-grep fixtures.
 - **Rule 3, deletion receipt.** Each landing's receipt contains the classification diff, the producer mappings and
   per-class counts. An adapter over a replacement is a row reading a deleted owner. It must either be classified F/S
@@ -188,13 +210,13 @@ through `replaces` and `producers.tsv`.
 
 | Class | Rows | Declaration deleted in (rows) |
 | --- | --- | --- |
-| F | 64 | R1a 27 · R3b 37 |
-| S | 54 | R1a 31 · R3a 7 · R3b 16 |
-| E | 61 | R2 7 · R3a 12 · R3b 42 |
+| F | 63 | R1a 27 · R3b 36 |
+| S | 55 | R1a 31 · R3a 7 · R3b 17 |
+| E | 62 | R2 7 · R3a 13 · R3b 42 |
 | K | 14 | R1a 4 · R3b 4 · keep 6 (incl. `seen`) |
-| R | 42 | R3b 31 (`AbstractValue` variants, `ProvenOperand`, selection states, provenance types) · keep 11 |
-| D 50 · G 7 · O 117 · V 69 · X 31 | 274 | keep, except D 1 and V 1 (R3b, R1a) |
-| **F/S/E deletion obligations** | **179** | R1a 58 · R2 7 · R3a 19 · R3b 95 |
+| R | 43 | R3b 32 (`AbstractValue` variants, `ProvenOperand`, selection states, iteration aliases, provenance types) · keep 11 |
+| D 48 · G 7 · O 117 · V 69 · X 31 | 272 | keep, except D 1 and V 1 (R3b, R1a) |
+| **F/S/E deletion obligations** | **180** | R1a 58 · R2 7 · R3a 20 · R3b 95 |
 | **Seals (privacy, not deletion)** | 4 | R2: `ScalarValueDispatch.arms`, `EvalResult.scalar_dispatch`, `FragmentSummary.scalar_dispatch`, `HelperArgBindings.scalar_dispatches` |
 
 Owners that rework 1 missed:
@@ -386,7 +408,9 @@ These contracts refine `plan/value-algebra-interpreter.md` §3. They live in one
 ### 4.4 Heap objects and sequences
 
 - Heap objects are maps and `[]string` backings. A map has known fields (`Present` or a deletion tombstone) plus a
-  remainder (`Unknown`, or `Closed` when constructed). Setting a key proves non-emptiness. Deleting a key from an open
+  remainder (`Unknown`, or `Closed`). A fresh allocation is `Closed` only when every key and the whole content are
+  statically known. **R3b obligation (astra round 3):** `fromYaml .Values.payload` and `dict .Values.key 1` allocate
+  fresh maps with unknown keys (c03, c04 both reach `fail`). An unknown shape never becomes an empty closed map. Setting a key proves non-emptiness. Deleting a key from an open
   map does not prove emptiness.
 - `[]interface{}` sequences are immutable values whose elements may reference maps (a02b, a02c).
 - `[]string` values (from `splitList`, `regexSplit` and similar) carry a backing identity:
@@ -437,8 +461,14 @@ Selectors test emptiness *after* every eager argument has run (a05).
 3. For each explicit argument, left to right: evaluate, then validate against the parameter `GoType`. A direct
    literal resolves against the parameter type (a06d); a grouped literal already has its type (a06e). A validation
    failure aborts before later arguments run (a06c).
-4. Then validate the already-evaluated pipeline value against the final parameter position. For a variadic function
-   that is the variadic element type (b07: `0 | lower` aborts; b07b: `printf` accepts it).
+4. Then validate the already-evaluated pipeline value against the final *argument position*. That position is
+   determined by the explicit argument count, not by the signature's last parameter:
+   - with enough explicit arguments, it is the variadic element (b07b: `1 | printf "%v-%v" 2` accepts it);
+   - otherwise it fills the next fixed parameter, even for a variadic function (c01: `int 1 | round 1` fills `round`'s
+     `int` precision; c02: `1 | printf` fills the `string` format and aborts);
+   - for a non-variadic function it is the last parameter (b07: `0 | lower` aborts).
+
+   **R2 obligation (astra round 3):** type consumers apply this positional rule.
 5. `and`/`or` are special forms: they short-circuit explicit arguments only. The piped input has already run (a06,
    a06b).
 6. State threads through each argument.
@@ -592,6 +622,10 @@ deleted in R3b.
 
    Exact semantic write-freedom is not attempted.
 
+   **R2 obligation (astra round 3):** the certificate excludes heap mutation only. It does not prove that legacy
+   guard or binding computations are correct. So the per-consumer-family no-regression requirement below stays
+   binding: each family is attributed separately and moves whole to R3b if it cannot hold 0 new failures.
+
 Write-freedom makes every guard and binding resolution fresh, so a stale projection cannot gate the consumer. Without
 it, the consumer keeps main's verdict exactly:
 - main's state-blind raw-path `required` presence (ingress-nginx, okteto, trivy-operator and kyverno are kept);
@@ -640,7 +674,9 @@ before arm effects, comparisons.rs:39), the *resolver and env* each evaluation s
 `constrained_env` refinement, expr_call_eval/mod.rs:1357), and today's operand order. Go order and threaded state are
 R3b.
 
-**Deletes.** 19 rows: 12 E and 7 S.
+**Deletes.** 20 rows: 13 E and 7 S.
+- `static_semver_numeric_selector` (expr_eval.rs:386), which can evaluate, return `None` and force re-evaluation at
+  :309.
 - 10 condition re-evaluating functions in condition_predicate.rs. Each consumes the hole's existing `EvalResult` only
   where the env and resolver are identical; otherwise the row is re-tagged R3b.
 - The double header execution (hole_effects.rs:339).
@@ -663,7 +699,7 @@ R3b.
 - The caching contract (§4.9).
 - Truth, selection, payload truth and dispatch as queries.
 
-**Deletes.** Every remaining row whose delete stage is R3b. At 65a6d6c7 that is 95 F/S/E rows, 31 R, 4 K and 1 D,
+**Deletes.** Every remaining row whose delete stage is R3b. At 65a6d6c7 that is 95 F/S/E rows, 32 R, 4 K and 1 D,
 plus the slot rows added in R1a and the R1b residuals. These include:
 - the 19 `AbstractValue` variants;
 - `proven_operands`;

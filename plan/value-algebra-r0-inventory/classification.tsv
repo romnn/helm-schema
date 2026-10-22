@@ -1,6 +1,6 @@
 key	class	fact	destination	delete	seal	review	replaces
 alias:contract_normalization.rs:RenderSite	O	render site	O buffer	keep		rework3	
-alias:fragment_eval/control.rs:IterationAlternatives	F	range iteration alternatives	guarded alternatives	R3b		rework3	
+alias:fragment_eval/control.rs:IterationAlternatives	R	range iteration alternatives representation	guarded alternatives	R3b		rework4	
 alias:fragment_eval/control.rs:IterationEntries	F	range iteration entries	guarded alternatives	R3b		rework3	
 alias:fragment_eval/domain.rs:PathCondition	G	output condition	frozen guard	keep		rework3	
 alias:observed_facts.rs:TypeHints	X	contract hints	-	keep		rework3	
@@ -331,7 +331,7 @@ field:value_path_context/mod.rs:RangeValueAlternative.condition	F	range alternat
 field:value_path_context/mod.rs:RangeValueAlternative.value	F	range alternative	guarded alternative	R3b		rework2	
 field:value_path_context/mod.rs:RangeValueAlternatives.known	F	range alternatives	guarded alternatives	R3b		rework3	
 field:value_path_context/mod.rs:ValuePathContext.current_dot_fragment	S	owned snapshot of the current dot fragment	frame	R3b		rework2	
-field:value_path_context/mod.rs:ValuePathContext.eval_env	D	borrowed env	-	keep		rework3	
+field:value_path_context/mod.rs:ValuePathContext.eval_env	S	owned EvalEnv snapshot	frame view	R3b		rework4	
 field:value_path_context/mod.rs:ValuePathContext.fragment_context	D	borrowed context	-	keep		rework3	
 field:value_path_context/mod.rs:ValuePathContext.int_cast_bindings	D	borrowed view of local state	follows R1 slot	keep		rework2	
 field:value_path_context/mod.rs:ValuePathContext.template_truthiness_abstentions	D	borrowed view of local state	follows R1 slot	keep		rework2	
@@ -398,7 +398,7 @@ fn:expr_eval.rs:direct_values_path	D	delegates to the evaluator once	-	keep		rew
 fn:expr_eval.rs:eval_expr	V	the evaluator	evaluator	keep		rework3	
 fn:expr_eval.rs:eval_expr_with_helper_calls	V	the evaluator	evaluator	keep		rework3	
 fn:expr_eval.rs:eval_exprs_effects	V	the evaluator	evaluator	keep		rework3	
-fn:expr_eval.rs:static_semver_numeric_selector	D	delegates to the evaluator once	-	keep		rework3	
+fn:expr_eval.rs:static_semver_numeric_selector	E	may evaluate, return None and force re-evaluation (expr_eval.rs:309)	one evaluation	R3a		rework4	
 fn:fragment_eval/assignments.rs:apply_context_copy_value_mutations	E	context-copy re-evaluation (:434)	H write	R3b		rework2	
 fn:fragment_eval/eval.rs:eval_document	V	the evaluator	evaluator	keep		rework3	
 fn:fragment_eval/files.rs:eval_static_template_program	E	nested file/tpl interpreter	tpl with cloned namespace + State	R3b		rework3	

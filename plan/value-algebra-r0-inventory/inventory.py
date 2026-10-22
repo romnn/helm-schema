@@ -22,9 +22,11 @@ Checks (exit 1 on any failure):
   1. every candidate has a classification row (no defaults);
   2. every row is consumed: present unless its delete stage has landed, then absent;
   3. a row whose seal stage has landed is no longer `pub`;
-  4. classes are frozen: a key in the baseline keeps its class;
+  4. the baseline is frozen: every baseline key stays in classification.tsv with its class (rows are never
+     removed; a declaration disappears only through a landed delete stage, see check 2);
   5. a row not in the baseline with class F, S or E names in `replaces` baseline rows deleted by a landed stage;
-  6. every deleted baseline F/S/E row has a producers.tsv mapping to a key that still exists.
+  6. every deleted baseline F/S/E row has a producers.tsv mapping to a surviving producer: a key that is
+     present in the scanned candidates (or a present needle) and whose delete stage has not landed.
 
 Usage: python3 -I plan/value-algebra-r0-inventory/inventory.py [--self-test]
 """
@@ -138,6 +140,9 @@ def check(found, rows, baseline, landed, producers):
             if re.match(r"\s*pub\b", found[key]):
                 errors.append(f"{key} should be sealed by landed stage {row['seal']}")
     base = {row["key"]: row for row in baseline}
+    for key in base:
+        if key not in by_key:
+            errors.append(f"baseline row removed from classification: {key}")
     for key, row in by_key.items():
         if key in base and base[key]["class"] != row["class"]:
             errors.append(f"frozen class changed for {key}: {base[key]['class']} -> {row['class']}")
@@ -145,14 +150,20 @@ def check(found, rows, baseline, landed, producers):
             replaced = [k for k in row["replaces"].split(",") if k]
             if not replaced or any(k not in base or base[k]["delete"] not in landed for k in replaced):
                 errors.append(f"new {row['class']} row {key} must replace baseline rows deleted by a landed stage")
+    def surviving(key):
+        row = by_key.get(key)
+        if row is None or row["delete"] in landed:
+            return False
+        return needle_count(key) == 1 if key.startswith("needle:") else key in found
+
     mapped = {p["old"]: p["new"] for p in producers}
     for key, row in base.items():
         if row["class"] in "FSE" and row["delete"] in landed:
             new = mapped.get(key)
             if new is None:
                 errors.append(f"deleted baseline row {key} has no producers.tsv mapping")
-            elif new != "-" and new not in by_key:
-                errors.append(f"producers.tsv maps {key} to unknown {new}")
+            elif not surviving(new):
+                errors.append(f"producers.tsv maps {key} to {new}, which is not a surviving producer")
     return errors
 
 
@@ -165,7 +176,15 @@ def self_test(found, rows, baseline):
     relabel = [dict(r, **{"class": "V"}) if r["key"] == "field:eval_env.rs:EvalEnv.root_truthy_predicates" else r
                for r in rows]
     assert any("frozen class" in e for e in check(found, relabel, baseline, set(), [])), "relabel passed"
-    print("self-test: 3 fail-closed cases rejected", file=sys.stderr)
+    # A declaration and its row both removed while the delete stage has not landed.
+    victim = next(r["key"] for r in rows if r["class"] == "F" and r["delete"] == "R1a")
+    gone = {k: v for k, v in found.items() if k != victim}
+    unrowed = [r for r in rows if r["key"] != victim]
+    assert any("baseline row removed" in e for e in check(gone, unrowed, baseline, set(), [])), "silent removal passed"
+    # A landed deletion whose producer mapping points at the deleted declaration itself.
+    errors = check(gone, rows, baseline, {"R1a"}, [{"old": victim, "new": victim}])
+    assert any(f"maps {victim} to {victim}" in e for e in errors), "self-mapping passed"
+    print("self-test: 5 fail-closed cases rejected", file=sys.stderr)
 
 
 def main():
