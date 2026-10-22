@@ -57,7 +57,8 @@ must say why, so this plan does not repeat it.
   final output strip `<no value>`. Rune literals are integer code points. Sprig `int64` is distinct from Go
   `int`; YAML `2` is float64 while `--set` yields int64 — JSON Schema cannot distinguish them, so runtime-kind
   alternatives stay alternatives when the loading path is unknown.
-- Capturing a scalar freezes it; capturing a map keeps reference identity. `set`/`unset`/merge mutate; `pick`
+- Capturing a non-addressable scalar freezes it, but an `index` slot or a slice-range variable stays a live slot
+  reference; capturing a map keeps reference identity. `set`/`unset`/merge mutate; `pick`
   copies the outer map and aliases nested maps; `deepCopy` copies per occurrence, breaking internal sharing. A
   tested guard and emitted bytes are snapshots. Map range iterates a sorted entry snapshot; nested maps stay live.
   Helm parses all definitions first, then renders deeper paths first with reverse-lexical ties.
@@ -73,6 +74,7 @@ must say why, so this plan does not repeat it.
   - Selectors test emptiness after eager arguments ran.
   - `tpl` clones the template namespace.
   - `.Subcharts.<c>.Values` is the parent's `.Values.<c>` object.
+  - `.Release` and `.Chart` are mutable maps, and literal `tpl` programs can write.
   - Helpers can be nondeterministic (`randInt`).
   - A values number never satisfies a Go `int` parameter unless the template wrote an `int` there first.
   - Details and the contracts that encode them: `plan/value-algebra-r0.md` §3-§4.
@@ -157,24 +159,25 @@ fences.
 - An ADR recording the value algebra as the interpreter's single semantic model.
 - Cross-vendor design review (architecture + Helm-semantics lenses) before R1.
 
-**R1 — binding ownership, byte-identical.** Consolidate binding facts without changing evaluation order:
-truth derived from the binding leaf. Delete `local_truthy_reductions`, `root_truthy_predicates` and
-`Effects.local_set_truths`. Gate: every fixture byte-identical, schema-only battery 0 flips (a refactor).
+**R1-R3: refined by R0.** The authoritative stage contracts are in `plan/value-algebra-r0.md` §5. Their deletion
+lists are the `delete`/`seal` columns of `plan/value-algebra-r0-inventory/classification.tsv`, checked fail-closed
+by `inventory.py`. In summary:
+- **R1a** transposes binding and root containers into `LocalSlot`/`RootSlot`, byte-identically.
+- **R1b** moves slot facts onto binding leaves where a derivation contract is proven byte-identical. Residuals are
+  re-tagged R3b.
+- **R2** seals `ScalarValueDispatch` on every carrier, adds the concrete-type leaf and catalog facets, and deletes
+  the AST `required` lane, the negated-truth `required` arm and the syntactic ternary list. New rejections need an
+  identity-stable operand *and* a write-free certificate for the chart. It closes the write-free collection, rune,
+  message and string/int-parameter cells; `helper-maybe-dict` and `tpl-maybe-text` move to R3b.
+- **R3a** removes only proven-equivalent re-executions and carrier copies, preserving evaluation demand, effect
+  order and env/resolver, and adds the `State` seam. It is byte-identical.
+- **R3b** is the coupled cut-over: heap, Go-order invocation, frozen snapshots, flow, frames and namespaces, in-walk
+  output, and the caching contract. It deletes every remaining R3b row and closes the stateful classes.
 
-**R2 — kind leaf behind the access discipline.** Add `ScalarValue::Kind`, make the dispatch private behind
-`content()`/`kinds()`, stamp catalog return kinds once in `eval_invocation`. Delete the syntactic ternary list,
-`selection_dispatch`, `selects_truthy` and the `¬truth` fallback. Closes collection/include cells (required ×7
-dict/list, ternary condition-10/11/17/18, helper-maybe-dict, tpl-maybe-text).
-
-**R3 — one execution (the coupled stage).** Single evaluation of calls and headers, the heap, frozen guards and
-flow joins, in-walk output, together: an intermediate precise heap with legacy output replay is not a safe
-boundary (Astra's measurements). Remove scalar replay before publishing newly exact return or abort facts;
-migrate every writer or invalidate its targets. Delete `DeferredScalarProjection`, scalar projection replay,
-the fragment-to-output fallback, the mutation maps and replay/apply rescans, the `writes_state` fences,
-`proven_operands`' second selection tree, and the runtime-shaped `AbstractValue` variants (`Dict`, `List`,
-`Overlay`, selection/layer variants) replaced by the algebra. Closes the stateful classes (store24,
-guarded-writes, header10, reviewer42, Opus attempt-2 local-truth/values-root blockers). R3 may be split further
-by R0 only if each split point is shown safe.
+R3 splits exactly once, R3a | R3b (R0 §5.6). The landing sequence (refactors folded into semantic landings, or an
+ADR 0066 consolidation-only clause) is user decision D3 (R0 §6). Corrections against this plan's earlier text:
+`Effects.local_set_truths`, `selection_dispatch`, `selects_truthy` and the `writes_state` fences never existed on
+main.
 
 ## 5. Admission suite (kept for every stage)
 

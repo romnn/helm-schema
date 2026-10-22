@@ -1,20 +1,46 @@
 # helm-schema — value-algebra interpreter, R0 design closure
 
-Status: R0 deliverable, rework 2 (2026-10-22), on branch `r0/value-algebra-design` (base main 65a6d6c7). No production
+Status: R0 deliverable, rework 3 (2026-10-22), on branch `r0/value-algebra-design` (base main 65a6d6c7). No production
 code. Every `file:line` is against 65a6d6c7; IR paths are relative to `crates/helm-schema-ir/src/`.
 
 Artifacts:
 - Helm evidence (scripts with recorded command, output and exit): `plan/value-algebra-r0-probes/`
   - `run.sh`: 42 probes;
   - `selected.sh`: 45 runs;
-  - `review.sh`: 33 probes from the semantics review.
-- Inventory: `plan/value-algebra-r0-inventory/` (`inventory.py` plus its output `inventory.tsv`).
+  - `review.sh`: 46 probes from the two semantics-review rounds.
+- Inventory: `plan/value-algebra-r0-inventory/`:
+  - `inventory.py`: the fail-closed checker;
+  - `classification.tsv`: one reviewed row per declaration;
+  - `baseline-65a6d6c7.tsv`: the frozen R0 classification;
+  - `landed.txt` and `producers.tsv`.
 - ADR draft: `docs/adr/0069-value-algebra-is-the-interpreter-semantic-model.md`.
 
 Admission cells are referenced as **the admission suite (landing 10e)**, which is being assembled on `w1/stage1-min`.
 This document names lanes; it does not duplicate cells.
 
-## 0. Review disposition (rework 2)
+## 0. Review disposition
+
+### Round 2 (rework 3)
+
+Both reviews returned REWORK again, with fewer findings. Every finding was accepted, and every astra template
+reproduces under pinned Helm (b01-b07b).
+
+| Finding | Disposition | Where |
+| --- | --- | --- |
+| sol P1: inventory fails open (struct defaults, unused entries) | Accepted. Defaults removed; one explicit row per declaration; consumed-row, frozen-class, producer-mapping and seal checks; the semantic-type closure enumerates wrappers, aliases and variants; `--self-test` proves 3 fail-closed cases | §1.4, §2 |
+| sol P1: D3-B allows relabeling and blocks consolidation | Accepted. Frozen baseline classes, reviewed producer mappings, `replaces` for new F/S/E rows, all ADR 0066 gates kept | §6 |
+| sol P2: sealing is not deletion | Accepted. `seal` column checked separately; R2 deletes 7 rows and seals 4 | §2, §5.3 |
+| sol P2: three misclassifications | Accepted. `FragmentSummary.scalar_dispatch` → K; `ValuePathContext.current_dot_fragment` → S; `document_result_from_expr` → D | TSV |
+| sol P3: parent stages, budget arithmetic | Accepted. Parent §4 now points to the refined sequence; R1a −460…−130; R2 −40…+330 | §5 |
+| astra P1: literal `tpl` writes (b01) | Accepted. Write-free certificate parses literal `tpl` programs recursively | §5.3 |
+| astra P1: `index` returns live slots (b02, b02b) | Accepted. Slot references; only map range snapshots | §4.3-§4.4 |
+| astra P1: `.Release`/`.Chart` mutable (b03, b03b) | Accepted | §4.10 |
+| astra P1: D4 names round's float parameter (b04, b04b) | Accepted. It is the integer precision parameter | §7 |
+| astra P1: nil-map `unset`, absent `index` on typed map, methods before keys (b05-b05c) | Accepted | §4.1-§4.2 |
+| astra P1: determinism blacklist (b06: 18 true, 12 false) | Accepted. Audited catalog facet, propagated, default ineligible | §4.6, §4.9 |
+| astra P1: pipeline value validated (b07, b07b) | Accepted | §4.7 |
+
+### Round 1 (rework 2)
 
 Two cross-vendor reviews of rework 1 both returned REWORK and both endorsed the direction:
 - sol, architecture: agentmux run 20261022T052728-edb2adc2;
@@ -106,36 +132,43 @@ round.
   A fact stored outside `value/` therefore cannot be built from a value without going through a view, and adding a
   stored fact means editing `value/`, which is a reviewable diff. Every match over leaves and slots is exhaustive
   (CLAUDE.md), so the compiler lists all consumers.
-- **Rule 2, declaration-level inventory gate.** `plan/value-algebra-r0-inventory/inventory.py` becomes a lint step
-  (`task lint`) in R1a, moved to `tools/`. It enumerates field declarations with ast-grep and fails on:
-  - any unclassified candidate;
-  - any new declaration of class F (independent fact), S (snapshot copy) or E (re-execution) outside `value/`;
-  - any row whose deleting stage has landed but whose declaration still exists.
+- **Rule 2, fail-closed inventory gate.** `inventory.py` becomes a `task lint` step in R1a and moves to `tools/`.
+  It keys every candidate by qualified declaration, never by identifier grep:
+  - `field:<file>:<Struct>.<field>`, `variant:<file>:<Enum>::<V>`, `alias:<file>:<Name>`, `fn:<file>:<name>`;
+  - `needle:<file>:<text>` for the few re-derivation sites that are not structurally enumerable.
 
-  Matching is by qualified declaration (`Struct.field`, `fn` name plus file), not by identifier grep, so successor
-  fields named `value` or `truth` inside `value/` do not collide. The candidate regexes carry positive and negative
-  fixtures under `.ast-grep/tests/`. Type aliases and wrappers are caught because the class is decided per declaration
-  and the script fails on unknown wrappers in the scanned structs.
-- **Rule 3, deletion receipt.** Each landing's receipt contains the inventory diff: rows removed, rows added (only V,
-  O, D or G classes are allowed), and the per-class counts. A stage whose listed rows are not all gone does not land.
-  An adapter over a replacement is an S or D row that reads a deleted owner, so the gate rejects it.
+  The candidate set is the closure of the base carriers under "a struct, enum or alias whose body names a semantic
+  type", so a new wrapper, alias or variant is enumerated, never skipped. It fails on any of:
+  1. a candidate with no explicit row (there are no struct defaults);
+  2. a row whose declaration is absent (unused or stale entry) while its delete stage has not landed, or present
+     after its delete stage has landed;
+  3. a `pub` declaration whose seal stage has landed;
+  4. a class that differs from the frozen `baseline-65a6d6c7.tsv`;
+  5. a new F/S/E row without `replaces` naming baseline rows deleted by a landed stage;
+  6. a deleted baseline F/S/E row without a reviewed `producers.tsv` mapping to a surviving key.
+
+  `--self-test` shows that an added `Effects.parallel_truths`, a ghost row and an F→V relabel are each rejected.
+  Moving to `tools/` adds positive and negative ast-grep fixtures.
+- **Rule 3, deletion receipt.** Each landing's receipt contains the classification diff, the producer mappings and
+  per-class counts. An adapter over a replacement is a row reading a deleted owner. It must either be classified F/S
+  (which needs `replaces`) or not exist.
 - **Rule 4, review question.** Reviewers ask how many *independently maintained producers* each fact has after the
   change. Immutable snapshots taken at a Helm-defined instant (§4.3) and derived views are allowed. A second producer
   is REWORK (ADR 0066 clause 3).
 
 ## 2. Inventory of semantic owners at 65a6d6c7
 
-`inventory.py` (run with `python3 -I`) emits 320 classified rows to `inventory.tsv` and exits 1 if any candidate is
-unclassified or any listed entry point is missing.
+`python3 -I -B plan/value-algebra-r0-inventory/inventory.py --self-test` exits 0 at 65a6d6c7. It reports 488
+enumerated candidates plus 21 needles, giving 509 rows.
 
-Its scope:
-- every struct field in `crates/helm-schema-ir/src` (non-test) whose type names a semantic carrier, or that is a
-  name-keyed map or set;
-- the `AbstractValue` variants;
-- 37 named re-execution entry points and the 12 condition re-evaluations.
+Scope:
+- struct fields whose type names a closure type or is a String-keyed map or set;
+- variants whose payload names one, plus every `AbstractValue`/`ScalarValue` variant;
+- aliases;
+- the 86 functions that evaluate syntax or helper bodies.
 
-Plain flags and `Vec<String>` fields inside listed structs, such as `VariableLocalState.truthiness_abstained`, are
-covered by their struct row, not separately.
+Plain `bool` fields of listed structs, such as `VariableLocalState.truthiness_abstained`, are not candidates; they go
+with their struct's rows.
 
 Classes:
 - **F** — independently maintained fact store;
@@ -149,15 +182,20 @@ Classes:
 - **V** — surviving owner;
 - **X** — outside the interpreter.
 
-| Class | Rows | Deleted or merged by stage (rows) |
+The `delete` column records the stage in which the *declaration* disappears. For example, `EvalEnv.root_truthy_predicates`
+is deleted in R1a when its fact moves into the new `RootSlot` row; the new row carries the fact onward to R3b
+through `replaces` and `producers.tsv`.
+
+| Class | Rows | Declaration deleted in (rows) |
 | --- | --- | --- |
-| F | 58 | R1a 12 · R1a→R1b 4 · R1a→R3b 12 (merged into slots in R1a, deleted in R3b) · R2→R3b 1 · R3b 29 |
-| S | 45 | R1a 20 · R1a→R3b 10 · R3a 7 · R3b 8 |
-| E | 52 | R2 7 · R3a 14 · R3b 31 |
-| R | 27 | R2 1 (`ScalarValueDispatch.arms` sealed) · R3b 24 (`AbstractValue` 19 variants, `ProvenOperand`, provenance types) · keep 2 |
-| K | 15 | R1a→R3b 4 (summary key fields) · R3b 3 · keep 8 (incl. `seen`) |
-| D 37 · G 6 · O 47 · V 15 · X 18 | 123 | keep |
-| **Deletion obligations** | **187** | R1a 32 deleted + 30 merged into slots (4 deleted in R1b, 26 in R3b) · R2 8 (+1 sealed, deleted in R3b) · R3a 21 · R3b 122 |
+| F | 64 | R1a 27 · R3b 37 |
+| S | 54 | R1a 31 · R3a 7 · R3b 16 |
+| E | 61 | R2 7 · R3a 12 · R3b 42 |
+| K | 14 | R1a 4 · R3b 4 · keep 6 (incl. `seen`) |
+| R | 42 | R3b 31 (`AbstractValue` variants, `ProvenOperand`, selection states, provenance types) · keep 11 |
+| D 50 · G 7 · O 117 · V 69 · X 31 | 274 | keep, except D 1 and V 1 (R3b, R1a) |
+| **F/S/E deletion obligations** | **179** | R1a 58 · R2 7 · R3a 19 · R3b 95 |
+| **Seals (privacy, not deletion)** | 4 | R2: `ScalarValueDispatch.arms`, `EvalResult.scalar_dispatch`, `FragmentSummary.scalar_dispatch`, `HelperArgBindings.scalar_dispatches` |
 
 Owners that rework 1 missed:
 - `BoundValueContext.range_domains`/`get_bindings` (bound_value_analysis.rs:23-24): clones of the local maps.
@@ -176,7 +214,7 @@ Owners that rework 1 missed:
 - A correction: the replay at fragment_eval/assignments.rs:434 belongs to `apply_context_copy_value_mutations`
   (:395), not to `apply_helper_scope_set_mutations` (:360).
 
-Independent facts behind the 58 F rows are grouped in the TSV's `fact` column:
+Independent facts behind the F rows are grouped in the TSV's `fact` column:
 - 13 local facts. Each lives in `SymbolicLocalState`, a `VariableLocalState` mirror and `BoundValueContext`, and four
   of them also live in `EvalEnv`.
 - 3 root facts (value, truth, dispatch). Each lives in 8 containers: EvalEnv, Interpreter, `*_observed`, Effects,
@@ -239,7 +277,7 @@ The cells are `selected-{0,2,3}-{4..8}`. Each override adds `condition`, a key t
 
 These are F73-class POLICY-EXCEPTION rows under ADR 0042. W1 ternary falls from 53 to 38.
 
-### 3.5 Review probes (review.sh, 33 probes, all reproduce the reviewer's prediction)
+### 3.5 Review probes (review.sh, 46 probes, all reproduce the reviewer's prediction)
 
 | Id | Template (abridged) | Helm result | Model consequence |
 | --- | --- | --- | --- |
@@ -273,6 +311,16 @@ These are F73-class POLICY-EXCEPTION rows under ADR 0042. W1 ternary falls from 
 | a09c | `range` over `$d` with `unset $d "b"` inside | `ab` | sorted entry snapshot |
 | a10 | random helper compared with itself, 30 runs | 16 exit 0, 14 exit 1 | no memoization of nondeterminism |
 | a11 | `set .Subcharts.child.Values "x" true`; `.Values.child.x` | `true` | subchart view shares the child map |
+| b01 | `tpl "{{ $_ := set .Values \"c\" true }}" .`; `.Values.c` | `true` | literal `tpl` programs write |
+| b02 | `$x := index $s 0`; `sortAlpha $s`; `$x` | `a` | `index` binds a live slot, not a frozen scalar |
+| b02b | `range $i, $v := $s` with `sortAlpha $s` at `i = 0` | `ab` | slice range variables are live slots, even the current one |
+| b03 / b03b | `set .Release "Name" "changed"` / `set .Chart …`, then read | `changed` / `changed` | `.Release` and `.Chart` are mutable maps |
+| b04 / b04b | `round 1 0 .Values.cutoff` (`0.5`) / `round 1 .Values.p` (`0`) | `1` / exit 1 `expected int; got float64` | values numbers satisfy float params, not round's int precision |
+| b05 | `eq (unset (fromJson "null") "x") nil` | `true` | `unset` on a typed nil map succeeds |
+| b05b | `typeOf (index (split "," "a") "missing")` | `"string"` | absent `index` yields the element type's zero value |
+| b05c | `.Values.Table` with a `Table: x` key | exit 1 `wrong number of args for Table: want 1 got 0` | every method precedes keys |
+| b06 | `shuffle` helper compared with itself, 30 runs | 18 `true`, 12 `false` | determinism must be audited |
+| b07 / b07b | `0 \| lower` / `1 \| printf "%v-%v" 2` | exit 1 `expected string; got int` / `2-1` | the pipeline value is validated as the final (variadic) argument |
 
 ## 4. Target contracts (concrete types and temporal boundaries)
 
@@ -293,11 +341,11 @@ These contracts refine `plan/value-algebra-interpreter.md` §3. They live in one
   unknown alternative with its possible kinds, never a guessed type.
 - Assignability to a parameter is decided on `GoType` (a03: `map[string]string` is not assignable to
   `map[string]interface{}`). Kind consumers (`required`, truth) read the kind.
-- Field selection on `Values` first resolves zero-argument methods (`YAML`, `AsMap`), then keys (a03c). Nested maps
-  are plain maps.
+- Field selection on `Values` resolves *every* method before keys. A zero-argument method returns (a03c: `YAML`). A
+  method with parameters aborts on arity even if a same-named key exists (b05c: `Table`). Nested maps are plain maps.
 - Typed nil: a `Map` or `Slice` leaf carries `nil: bool`. A typed-nil map:
   - passes `required` and `eq … nil` (a04);
-  - aborts on write (a04b);
+  - aborts on `set` (a04b), while `unset` succeeds and returns it (b05);
   - is falsy.
 
 ### 4.2 Presence and lookup
@@ -310,7 +358,9 @@ These contracts refine `plan/value-algebra-interpreter.md` §3. They live in one
     mode.
 - Chained field access through an absent or nil intermediate aborts (a04c). After grouping, the intermediate is a
   pipeline value and field access on nil yields nil (a04d).
-- `get` on an absent key yields `""`. `index` yields a nil interface and bypasses `missingkey=error` (a04e).
+- `get` on an absent key yields `""`. `index` on an absent key yields the *element type's* zero value: a nil
+  interface for `map[string]interface{}` (a04e), `""` for `map[string]string` (b05b). It bypasses
+  `missingkey=error`.
 - Coalesced input: null overrides delete keys that have defaults; nulls of undeclared keys stay present (Q4).
 
 ### 4.3 Values and snapshots (temporal boundaries)
@@ -325,8 +375,11 @@ These contracts refine `plan/value-algebra-interpreter.md` §3. They live in one
   - a serialization (`toYaml`/`toJson`/`toString`): the payload is captured in the term, and payload truth is a query
     on that capture, never on the later object;
   - `include` and `tpl` returns (strings);
-  - range entry: the sorted entry list (a09c);
-  - capturing a scalar into a variable.
+  - map range entry: the sorted entry list (a09c). Slice range reads live slots (b02b);
+  - capturing a *non-addressable* scalar into a variable.
+
+  `index` on a slice returns an addressable slot. A variable bound to it, and a slice-range variable, is a live
+  `SlotRef(backing, i)`, not a frozen scalar (b02).
 
   Iterable identity and member identity stay distinct facts (value_path_context/mod.rs:29-42).
 
@@ -337,7 +390,7 @@ These contracts refine `plan/value-algebra-interpreter.md` §3. They live in one
   map does not prove emptiness.
 - `[]interface{}` sequences are immutable values whose elements may reference maps (a02b, a02c).
 - `[]string` values (from `splitList`, `regexSplit` and similar) carry a backing identity:
-  - `slice` returns a view of that backing;
+  - `slice` returns a view of that backing, and `index` and range return slot references into it (§4.3);
   - `sortAlpha` on a `[]string` writes through it (a02);
   - any unmodelled function receiving a `[]string` invalidates its backing.
 - Allocation identity is `(site, helper-call context, loop-iteration class)`. Allocations inside a loop with unknown
@@ -367,8 +420,13 @@ Each catalog entry declares three outcomes separately:
    - Selected/projected: `default`, `coalesce`, `first`, `get`, `index`, `ternary`, `and`/`or`, `pluck`'s elements.
    - A fixed type implies neither success nor fresh content. Sprig `mustFromJson` is selected, not fixed (a05c).
 2. Abort conditions: the parameter types (`GoType`) and value conditions such as `required` on nil or `""`.
-3. A mutation facet: `set`, `unset`, `merge*` and `sortAlpha` on `[]string` write; `tpl` with a non-literal program
-   and unresolved helpers count as unknown writers. R2's write-free test (§5.3) reads this facet.
+3. A mutation facet: `set`, `unset`, `merge*` and `sortAlpha` on `[]string` write. A literal `tpl` program is
+   scanned recursively (b01). Non-literal programs and unresolved helpers are unknown writers. R2's write-free
+   certificate (§5.3) reads this facet.
+4. A determinism facet, audited per function. It defaults to *nondeterministic*. Known nondeterministic functions
+   include `rand*`, `shuffle` (b06), `uuidv4`, `now`, `date*`/`ago`, `bcrypt`, `htpasswd`, `encryptAES`,
+   `gen*`/`derive*`, `lookup`, `getHostByName`, and unsorted `keys`/`values`. A helper is deterministic only if every
+   callee transitively is.
 
 Selectors test emptiness *after* every eager argument has run (a05).
 
@@ -379,8 +437,11 @@ Selectors test emptiness *after* every eager argument has run (a05).
 3. For each explicit argument, left to right: evaluate, then validate against the parameter `GoType`. A direct
    literal resolves against the parameter type (a06d); a grouped literal already has its type (a06e). A validation
    failure aborts before later arguments run (a06c).
-4. `and`/`or` are special forms: they short-circuit explicit arguments only (a06, a06b).
-5. State threads through each argument.
+4. Then validate the already-evaluated pipeline value against the final parameter position. For a variadic function
+   that is the variadic element type (b07: `0 | lower` aborts; b07b: `printf` accepts it).
+5. `and`/`or` are special forms: they short-circuit explicit arguments only. The piped input has already run (a06,
+   a06b).
+6. State threads through each argument.
 
 ### 4.8 Frames, namespaces and output boundaries
 
@@ -398,8 +459,8 @@ Selectors test emptiness *after* every eager argument has run (a05).
 ### 4.9 Caching contract (amends ADR 0016)
 
 - A helper result is memoized only if all of these hold:
-  1. the helper is deterministic, i.e. it calls no `rand*`, `uuid*`, `now`/`date`, `lookup`, `gen*`/`derive*` or
-     unordered `keys`/`values`, and contains no `tpl` over an unknown program (a10);
+  1. the helper is deterministic by the audited, transitively propagated catalog facet (§4.6). Unproved means
+     ineligible (a10, b06);
   2. it is transitively read-only;
   3. its execution was not truncated by a bound (ADR 0019);
   4. no allocation escapes.
@@ -414,7 +475,9 @@ Selectors test emptiness *after* every eager argument has run (a05).
   - coalesced chart values, with dependency values nested under `.Values.<child>`;
   - `global` copied at Helm's levels (shallow copies, not universal sharing);
   - `.Subcharts.<c>.Values` aliasing `.Values.<c>` (a11);
-  - `Release`, `Chart`, `Capabilities` and `Files` as read-only objects;
+  - `.Release` and `.Chart` as *mutable* `map[string]interface{}` heap objects (b03, b03b). The release map is
+    shared across chart contexts.
+  - `Capabilities` and `Files` are not `map[string]interface{}`, so `set` cannot target them; they are read-only;
   - `.Template` replaced per file (`recAllTpls`).
 - Unknown inputs are open objects.
 - Objects are interned by Helm's graph identity, not by textual path or structural equality.
@@ -442,17 +505,20 @@ Where the deleted region is uncertain, the budget is a ceiling on additions, not
   - `LocalSlot`: today's `VariableLocalState`, made the stored record, with an `Option` per former map plus the two
     flags.
   - `RootSlot { value, truth, dispatch }`.
-- **Deletes.** The 32 rows whose stage is `R1a`:
+- **Deletes.** 58 F/S declarations whose delete stage is R1a, plus 4 K and 1 V:
   - 12 of the 13 `SymbolicLocalState` per-name maps (`fragment_values` becomes the slot's binding);
-  - the `VariableLocalState` mirrors;
-  - `LocalScopeFrame` copies;
+  - the `VariableLocalState` mirrors and `LocalScopeFrame` copies;
   - `BoundValueContext`'s clones, which become a view of the slots;
-  - `RootSetState`'s six maps, which become two `RootSlot` maps.
-- **Merges into slot maps.** 30 rows (4 deleted in R1b, 26 in R3b):
+  - `RootSetState`'s six maps;
   - the four EvalEnv local maps;
   - the root triples in EvalEnv, Interpreter, `*_observed`, Effects, FragmentSummary and BoundHelperCallResolution;
   - the `HelperArgBindings` dispatch map;
   - the cache-key triple.
+
+  Their facts survive in the new slot rows: `LocalSlot` fields and `RootSlot` maps, classified F or S, each with
+  `replaces` naming the deleted rows. `producers.tsv` maps every deleted row to its slot field, for example the
+  three `EvalEnv.root_*` maps to `EvalEnv.root: RootSlot` map. Consolidation is demonstrated: about 27 F
+  declarations become about 14 slot fields, so the producer count falls.
 - **Invariant.** A struct-of-maps and a map-of-`Option`-structs are isomorphic. Per-field join and merge code moves
   unchanged:
   - branch_join.rs;
@@ -471,13 +537,13 @@ Where the deleted region is uncertain, the budget is a ceiling on additions, not
   | control.rs RootSetState | — | −30…−60 |
   | eval_env.rs root/local fields | 566 | −20…−60 |
   | slot types | — | +80…+120 |
-  | **Net** | | −170…−420 |
+  | **Net** | | −460…−130 |
 
 ### 5.2 R1b — binding facts owned by the leaf, per fact (byte-identical or residual)
 
 For each slot field, R1b states a derivation contract. The field moves only when the contract is proven
-byte-identical. Otherwise it stays a slot field: its row is re-tagged `R3b`, an allowlist entry is added (R3b is its
-named owner), and it does **not** count as an R1b deletion.
+byte-identical. Otherwise it stays a slot field: its `delete` stage is re-tagged R3b (classes are frozen; stages
+may move later, never earlier), and it does **not** count as an R1b deletion.
 
 | Slot field | Derivation contract | Expected |
 | --- | --- | --- |
@@ -496,12 +562,15 @@ named owner), and it does **not** count as an R1b deletion.
 - `GoType` with `KindSet` (§4.1, R2 subset: `Nil`, `Bool`, `String`, `Int`, `Int64`, `Float64`, `Map{…}`, `Slice{…}`,
   `Unknown`).
 - `ScalarValue::Typed(GoType)`: a known-type, unknown-content leaf.
-- Catalog success, abort and mutation facets (§4.6), stamped once at the invocation return.
+- Catalog success, abort, mutation and determinism facets (§4.6), stamped once at the invocation return.
 - `Literal::Rune` as an `Int` code point (helm-schema-ast).
 - `value/kinds.rs` with `require_type` (ternary condition, Go `string`/`int`/`float64` parameters, `required` message)
   and `required_subject`.
 
-**Seal (sol P1).**
+**Seal (privacy transitions, not deletions).** Four rows carry `seal = R2`:
+`ScalarValueDispatch.arms`, `EvalResult.scalar_dispatch`, `FragmentSummary.scalar_dispatch` and
+`HelperArgBindings.scalar_dispatches`. The gate checks that none of them is `pub` after R2. Their declarations are
+deleted in R3b.
 - `ScalarValueDispatch.arms` (scalar_value.rs:62) becomes private. The type exposes:
   - `content()`, which drops `Typed` arms and sets `complete = false`;
   - `kinds()`.
@@ -513,8 +582,15 @@ named owner), and it does **not** count as an R1b deletion.
 
 **Write-free soundness rule (astra P1-1, a01).** A new rejection from a kind fact is published only if:
 1. the operand is *identity-stable*: a literal, a fresh construction, or a fixed success type (§4.6); and
-2. the chart is *write-free*: no catalog writer and no unknown writer occurs in any template, helper or dependency of
-   the chart.
+2. the chart has a *write-free certificate*, a finite and conservative syntactic proof. Every template, helper and
+   library dependency of the chart is parsed. The certificate fails when it finds any of:
+   - a call whose catalog mutation facet writes;
+   - a `tpl` whose program is not a literal;
+   - a literal `tpl` program that fails the same scan when parsed recursively (b01);
+   - an unresolved or dynamic `include`/`template`;
+   - an exhausted parse or recursion bound.
+
+   Exact semantic write-freedom is not attempted.
 
 Write-freedom makes every guard and binding resolution fresh, so a stale projection cannot gate the consumer. Without
 it, the consumer keeps main's verdict exactly:
@@ -526,11 +602,12 @@ Content facts do not change: no coalesce nil fold, no helper-output bytes.
 
 The 7 Codex counterexamples and a01 all contain writes, so main's verdict holds. This is checked as admission cells.
 
-**Deletes.**
-- E/R2 rows: the AST `required` lane (5 functions and 5 call sites), the negated-truth arm (expr_call_eval/mod.rs:860),
-  and the syntactic ternary list (comparisons.rs:139).
-- R/R2: the raw `arms`.
-- The F `EvalResult.scalar_dispatch` field stays as a sealed field and is deleted in R3b.
+**Deletes.** The 7 E/R2 rows:
+- the AST `required` lane: 5 functions and their call sites;
+- the negated-truth arm (expr_call_eval/mod.rs:860);
+- the syntactic ternary list (comparisons.rs:139).
+
+Seals are not counted as deletions.
 
 **Admission.** 0 new failures on the admission suite (landing 10e), including the 7 Codex counterexamples, a01,
 Astra's 69 cells and Fable's controls64. Expected closures are write-free, identity-stable cells:
@@ -552,8 +629,8 @@ Each closure is attributed per family. A family that cannot hold 0 new failures 
 | `value/kinds.rs` + `GoType` | — | +200…+300 |
 | catalog facets | — | +80…+150 |
 | seal views + consumer edits | — | +40…+100 |
-| write-free scan | — | +40…+80 |
-| **Net** | | −310…+230 |
+| write-free certificate | — | +40…+80 |
+| **Net** | | −40…+330 |
 
 ### 5.4 R3a — remove proven-equivalent re-execution and carrier copies (byte-identical)
 
@@ -563,9 +640,9 @@ before arm effects, comparisons.rs:39), the *resolver and env* each evaluation s
 `constrained_env` refinement, expr_call_eval/mod.rs:1357), and today's operand order. Go order and threaded state are
 R3b.
 
-**Deletes.** The E/R3a rows and the S/R3a rows:
-- 12 condition re-evaluations. Each consumes the hole's existing `EvalResult` only where the env and resolver are
-  identical; otherwise the row is re-tagged R3b.
+**Deletes.** 19 rows: 12 E and 7 S.
+- 10 condition re-evaluating functions in condition_predicate.rs. Each consumes the hole's existing `EvalResult` only
+  where the env and resolver are identical; otherwise the row is re-tagged R3b.
 - The double header execution (hole_effects.rs:339).
 - `root_values_default_source`'s second `merge` evaluation (root_mutation.rs:301).
 - `HoleEval`'s seven copied fields (holes.rs:35-41): a hole holds one `EvalResult`.
@@ -586,7 +663,8 @@ R3b.
 - The caching contract (§4.9).
 - Truth, selection, payload truth and dispatch as queries.
 
-**Deletes.** Every remaining row whose stage is `R3b` (122 at 65a6d6c7, plus R1b residuals), including:
+**Deletes.** Every remaining row whose delete stage is R3b. At 65a6d6c7 that is 95 F/S/E rows, 31 R, 4 K and 1 D,
+plus the slot rows added in R1a and the R1b residuals. These include:
 - the 19 `AbstractValue` variants;
 - `proven_operands`;
 - `DeferredScalarProjection`;
@@ -683,19 +761,25 @@ The evidence is Astra's +57, the nil-fold false rejections, and Codex turn 0 P1-
 Cost: L1 and L2 are large reviews, and R1's byte-identity is checked inside a semantic landing, which needs a
 byte-identity checkpoint commit before R2's first semantic commit.
 
-**Sequence B: amend ADR 0066 with clause 2b, "deletion-only landing".** A landing with no closures passes clause 2
-when all of these hold:
-- (i) every fixture and the IR dump are byte-identical to main's clean dump;
-- (ii) the schema-only battery has 0 flips and the admission suite verdicts equal main's;
-- (iii) it deletes at least one inventory row of class F, S or E listed for its stage, adds none, and the inventory
-  gate passes;
-- (iv) `task tokei:core` net production LOC is strictly negative;
-- (v) it adds no allowlist entry, except R1b residual transfers, which re-tag rows and add none.
+**Sequence B: amend ADR 0066 with clause 2b, "consolidation-only landing".** Every existing ADR 0066 gate still
+applies: no new failure, lists only shrink, clause 3 LOC justification, and the fail-closed chain with its sealed
+receipt. Clause 2 is additionally satisfied, without closures, when all of these hold:
+- (i) **Frozen coverage.** It uses the same artifact set, admission-suite cell set and `ROSTER_BASELINE` as main. Every
+  fixture and the IR dump are byte-identical to main's clean dump, the schema-only battery has 0 flips, and every
+  admission verdict equals main's.
+- (ii) **Frozen classification.** The inventory gate passes against `baseline-65a6d6c7.tsv`: no class changes, and no
+  relabeling of an old F/S/E fact as a new V/D/O row.
+- (iii) **Reviewed consolidation.** Every baseline F/S/E row it deletes has a reviewed `producers.tsv` mapping to a
+  surviving key. Every new F/S/E row names the rows it `replaces`. The number of distinct surviving producers is
+  strictly smaller than the number of deleted rows, or the deleted rows map to producers that already existed.
+  R1a's slot maps qualify: each new slot field replaces two or more container fields.
+- (iv) **LOC.** `task tokei:core` net production LOC is strictly negative, and it comes from the consolidated region
+  named in (iii).
 
 The sequence is then L1 = R1a, L2 = R1b, L3 = R2, L4 = R3a, L5 = R3b.
 
-Recommendation: **B**. Each landing has one kind of evidence, and the receipt makes the progress measurable. Owner
-count is the defect class the plan exists to remove.
+Recommendation: **B**, with the frozen-classification and producer-mapping conditions. Each landing then has one
+kind of evidence. A, which sol prefers as the default, is safe but makes L1 and L2 large reviews.
 
 ## 7. Decisions for the user (product questions)
 
@@ -709,8 +793,9 @@ count is the defect class the plan exists to remove.
   there? Scope:
   - only *proven unchanged* paths: the chart is write-free (R2), or the object is unmodified (R3b), because a07's
     `set .Values "x" (int .Values.x)` makes it work;
-  - only *typed* parameters (`trunc`, `repeat`, `substr`, `indent`, `nindent`, `abbrev`, `until`, `splitn`, the float
-    parameter of `round`), never coercing `interface{}` parameters (a07b `slice`).
+  - only actual Go `int` parameters: `trunc`, `repeat`, `substr`, `indent`, `nindent`, `abbrev`, `until`, `splitn`,
+    and `round`'s integer *precision* parameter (b04b). Never `float64` parameters, which values numbers satisfy
+    (b04: `round 1 0 .Values.cutoff` renders), and never coercing `interface{}` parameters (a07b `slice`).
 
   Product question: values passed natively through the Helm Go SDK can be Go `int` and would render. Are SDK-typed
   values out of scope for ADR 0002's "working configuration"? Recommendation: yes, emit. A values *document* cannot

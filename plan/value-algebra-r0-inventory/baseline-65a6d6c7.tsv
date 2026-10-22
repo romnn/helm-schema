@@ -1,0 +1,510 @@
+key	class	fact	destination	delete	seal	review	replaces
+alias:contract_normalization.rs:RenderSite	O	render site	O buffer	keep		rework3	
+alias:fragment_eval/control.rs:IterationAlternatives	F	range iteration alternatives	guarded alternatives	R3b		rework3	
+alias:fragment_eval/control.rs:IterationEntries	F	range iteration entries	guarded alternatives	R3b		rework3	
+alias:fragment_eval/domain.rs:PathCondition	G	output condition	frozen guard	keep		rework3	
+alias:observed_facts.rs:TypeHints	X	contract hints	-	keep		rework3	
+field:analysis_db.rs:BoundHelperCallCacheKey.bindings	K	helper summary key	key by slot map, then snapshot id + seen	R1a		rework2	
+field:analysis_db.rs:BoundHelperCallCacheKey.dot	K	helper summary key	key by slot map, then snapshot id + seen	R1a		rework2	
+field:analysis_db.rs:BoundHelperCallCacheKey.root_truthy_predicates	K	helper summary key	key by slot map, then snapshot id + seen	R1a		rework2	
+field:analysis_db.rs:BoundHelperCallCacheKey.root_value_dispatches	K	helper summary key	key by slot map, then snapshot id + seen	R1a		rework2	
+field:analysis_db.rs:BoundHelperCallCacheKey.seen	K	recursion cut context	retained in key	keep		rework2	
+field:analysis_db.rs:BoundHelperCallResolution.bindings	S	caller root snapshot for helper	slot map, then heap snapshot	R1a		rework2	
+field:analysis_db.rs:BoundHelperCallResolution.dot	S	caller root snapshot for helper	slot map, then heap snapshot	R1a		rework2	
+field:analysis_db.rs:BoundHelperCallResolution.root_truthy_predicates	S	caller root snapshot for helper	slot map, then heap snapshot	R1a		rework2	
+field:analysis_db.rs:BoundHelperCallResolution.root_value_dispatches	S	caller root snapshot for helper	slot map, then heap snapshot	R1a		rework2	
+field:analysis_db.rs:BoundHelperCallSummary.argument_effects	K	cached summary	cache entry	keep		rework2	
+field:analysis_db.rs:BoundHelperCallSummary.summary	K	cached summary	cache entry	keep		rework2	
+field:analysis_db.rs:DotFrame.fragment	F	dot in two flavors (value, fragment)	one dot value + fragment consumer	R3b		rework2	
+field:analysis_db.rs:DotFrame.helper	F	dot in two flavors (value, fragment)	one dot value + fragment consumer	R3b		rework2	
+field:analysis_db.rs:IrAnalysisDb.body_eval_facts	K	per-helper body facts	-	keep		rework2	
+field:analysis_db.rs:IrAnalysisDb.bound_helper_calls	K	helper summary cache	rekey; read-only+deterministic only	R3b		rework2	
+field:analysis_db.rs:IrAnalysisDb.chart_default_strings	X	policy	-	keep		rework2	
+field:analysis_db.rs:IrAnalysisDb.custom_merge_helpers	K	helper-shape recognizer result	executed body (if reproduced)	R3b		rework2	
+field:analysis_db.rs:IrAnalysisDb.helper_seen_footprints	K	recursion footprints	-	keep		rework2	
+field:analysis_db.rs:IrAnalysisDb.nil_scrub_helpers	K	helper-shape recognizer result	executed body (if reproduced)	R3b		rework2	
+field:analysis_db.rs:IrAnalysisDb.static_root_fields	S	initial root fields	heap initialization	R3b		rework2	
+field:analysis_db.rs:ParsedDefinesInner.define_bodies	X	parse cache	-	keep		rework2	
+field:analysis_db.rs:ParsedDefinesInner.define_names	X	parse cache	-	keep		rework2	
+field:analysis_db.rs:ParsedDefinesInner.define_source_paths	X	parse cache	-	keep		rework2	
+field:analysis_db.rs:ParsedDefinesInner.file_sources	X	parse cache	-	keep		rework2	
+field:analysis_db.rs:ResolveBoundHelperCallParams.context	D	borrowed context	-	keep		rework3	
+field:analysis_db.rs:ResolveBoundHelperCallParams.current_dot	D	borrowed params	-	keep		rework2	
+field:analysis_db.rs:ResolveBoundHelperCallParams.eval_env	D	borrowed env	-	keep		rework3	
+field:analysis_db.rs:ResolveBoundHelperCallParams.outer_bindings	D	borrowed params	-	keep		rework2	
+field:analysis_db.rs:ResolveBoundHelperCallParams.seen	D	borrowed params	-	keep		rework2	
+field:analysis_db.rs:ResolvedBoundHelperCall.argument_effects	O	argument effects	-	keep		rework2	
+field:analysis_db.rs:ResolvedBoundHelperCall.resolution	S	caller root snapshot	slot map, then heap snapshot	R3b		rework3	
+field:bound_value_analysis.rs:BoundValueContext.get_bindings	S	cloned range/get maps	view of LocalSlot	R1a		rework2	
+field:bound_value_analysis.rs:BoundValueContext.range_domains	S	cloned range/get maps	view of LocalSlot	R1a		rework2	
+field:bound_value_analysis.rs:DomainConstraints.by_variable	D	per-evaluation constraint	-	keep		rework2	
+field:bound_value_analysis.rs:GetBinding.base	R	get-plan provenance	V provenance	R3b		rework2	
+field:bound_value_analysis.rs:GetBindingPlan.binding	D	get plan	-	R3b		rework2	
+field:bound_value_analysis.rs:ValueDomainConstraint.allowed	D	per-evaluation constraint	-	keep		rework2	
+field:bound_value_analysis.rs:ValueDomainConstraint.excluded	D	per-evaluation constraint	-	keep		rework2	
+field:contract/graph.rs:ContractIr.dependency_values_roots	X	phase artifact	-	keep		rework3	
+field:contract/graph.rs:ContractIr.observed_facts	X	phase artifact	-	keep		rework3	
+field:contract/graph.rs:ContractIr.values_program_wrapper_exclusions	X	contract	-	keep		rework2	
+field:contract/graph.rs:DependencyValuesRoot.path	X	contract	-	keep		rework2	
+field:contract_signal_builder/contract_rows.rs:ContractPathAccumulator.fallback_type_hints	X	contract builder	-	keep		rework2	
+field:contract_signal_builder/contract_rows.rs:ContractPathAccumulator.guarded_fallback_type_hints	X	contract builder	-	keep		rework2	
+field:contract_signal_builder/contract_rows.rs:ContractPathAccumulator.guarded_type_hints	X	contract builder	-	keep		rework2	
+field:contract_signal_builder/contract_rows.rs:ContractPathAccumulator.type_hints	X	contract builder	-	keep		rework2	
+field:eval_effect.rs:Effects.bound_output_paths	O	path observation	ObservedFacts	keep		rework2	
+field:eval_effect.rs:Effects.chart_default_paths	O	path observation	ObservedFacts	keep		rework2	
+field:eval_effect.rs:Effects.defaults	O	path observation	ObservedFacts	keep		rework2	
+field:eval_effect.rs:Effects.derived_range_key_paths	O	path observation	ObservedFacts	keep		rework2	
+field:eval_effect.rs:Effects.derived_text_paths	O	path observation	ObservedFacts	keep		rework2	
+field:eval_effect.rs:Effects.encoded_paths	O	path observation	ObservedFacts	keep		rework2	
+field:eval_effect.rs:Effects.helper_dependency_rendered	O	helper rendered rows	O buffer	keep		rework3	
+field:eval_effect.rs:Effects.helper_observed_shape_erased_paths	O	path observation	ObservedFacts	keep		rework2	
+field:eval_effect.rs:Effects.helper_reads	O	helper reads	ObservedFacts	keep		rework3	
+field:eval_effect.rs:Effects.helper_rendered	O	helper rendered rows	O buffer	keep		rework3	
+field:eval_effect.rs:Effects.helper_suppressed_paths	O	path observation	ObservedFacts	keep		rework2	
+field:eval_effect.rs:Effects.helper_text_captures	O	helper captures	ObservedFacts	keep		rework3	
+field:eval_effect.rs:Effects.json_serialized_paths	O	path observation	ObservedFacts	keep		rework2	
+field:eval_effect.rs:Effects.local_default_paths	S	binding metadata exported via effects	read V provenance	R3b		rework2	
+field:eval_effect.rs:Effects.local_output_meta	S	binding metadata exported via effects	read V provenance	R3b		rework2	
+field:eval_effect.rs:Effects.local_set_mutations	F	local map writes	H write	R3b		rework2	
+field:eval_effect.rs:Effects.local_source_paths	S	binding metadata exported via effects	read V provenance	R3b		rework2	
+field:eval_effect.rs:Effects.member_host_conversions	F	object conversions	H write	R3b		rework2	
+field:eval_effect.rs:Effects.merge_operand_paths	O	path observation	ObservedFacts	keep		rework2	
+field:eval_effect.rs:Effects.nil_omitting_paths	O	path observation	ObservedFacts	keep		rework2	
+field:eval_effect.rs:Effects.observed_facts	O	observations	ObservedFacts	keep		rework3	
+field:eval_effect.rs:Effects.omitted_map_keys	O	path observation	ObservedFacts	keep		rework2	
+field:eval_effect.rs:Effects.output_paths	O	path observation	ObservedFacts	keep		rework2	
+field:eval_effect.rs:Effects.parsed_yaml_input_paths	O	path observation	ObservedFacts	keep		rework2	
+field:eval_effect.rs:Effects.plain_slot_string_format_paths	O	path observation	ObservedFacts	keep		rework2	
+field:eval_effect.rs:Effects.plain_text_preserving_paths	O	path observation	ObservedFacts	keep		rework2	
+field:eval_effect.rs:Effects.plain_text_range_key_paths	O	path observation	ObservedFacts	keep		rework2	
+field:eval_effect.rs:Effects.root_set_mutations	F	root writes: value	RootSlot map, then H	R1a		rework2	
+field:eval_effect.rs:Effects.root_set_predicates	F	root writes: truth	RootSlot field, then Q	R1a		rework2	
+field:eval_effect.rs:Effects.root_set_value_dispatches	F	root writes: dispatch	RootSlot field, then V	R1a		rework2	
+field:eval_effect.rs:Effects.stringified_paths	O	path observation	ObservedFacts	keep		rework2	
+field:eval_effect.rs:Effects.templated_text_identity_paths	O	path observation	ObservedFacts	keep		rework2	
+field:eval_effect.rs:Effects.templated_yaml_paths	O	path observation	ObservedFacts	keep		rework2	
+field:eval_effect.rs:Effects.yaml_serialized_paths	O	path observation	ObservedFacts	keep		rework2	
+field:eval_effect.rs:EvalResult.effects	O	observations	ObservedFacts	keep		rework2	
+field:eval_effect.rs:EvalResult.field_scalar_dispatches	F	per-field arms of a constructed map	H fields	R3b		rework2	
+field:eval_effect.rs:EvalResult.json_payload_truth	F	payload truth beside text	serialization term snapshot + query	R3b		rework2	
+field:eval_effect.rs:EvalResult.proven_operands	F	second selection tree	guarded alternatives	R3b		rework2	
+field:eval_effect.rs:EvalResult.scalar_dispatch	F	content/kind arms beside value	sealed view (R2), query (R3b)	R3b	R2	rework2	
+field:eval_effect.rs:EvalResult.selection_reachability	F	selection beside value (ADR 0022)	query	R3b		rework2	
+field:eval_effect.rs:EvalResult.truth	F	truth beside value	query	R3b		rework2	
+field:eval_effect.rs:EvalResult.value	V	expression value	V	keep		rework2	
+field:eval_effect.rs:FailCapture.kind	O	capture observation	ObservedFacts	keep		rework3	
+field:eval_effect.rs:FailCapture.ranged	O	capture observation	ObservedFacts	keep		rework3	
+field:eval_effect.rs:MemberHostConversion.path	R	object conversion	H write	R3b		rework2	
+field:eval_effect.rs:ProvenOperand.condition	R	second selection tree node	guarded alternatives	R3b		rework2	
+field:eval_effect.rs:ProvenOperand.result	R	second selection tree node	guarded alternatives	R3b		rework2	
+field:eval_effect.rs:ProvenOperands.known	R	second selection tree	guarded alternatives	R3b		rework3	
+field:eval_effect.rs:SelectionReachability.state	R	reachability state	query result	R3b		rework3	
+field:eval_effect.rs:SelectionTruthReachability.when_false	F	two-polarity reachability	query over alternatives	R3b		rework2	
+field:eval_effect.rs:SelectionTruthReachability.when_true	F	two-polarity reachability	query over alternatives	R3b		rework2	
+field:eval_env.rs:BindingDecision.truth	V	decision structure	single decision structure	keep		rework2	
+field:eval_env.rs:BindingLeaf.selection	D	leaf view	-	keep		rework3	
+field:eval_env.rs:BindingLeaf.value	D	leaf view	-	keep		rework2	
+field:eval_env.rs:BindingLeaves.known	D	leaf view	-	keep		rework3	
+field:eval_env.rs:BindingValue.metadata	V	binding leaf	V leaf	keep		rework2	
+field:eval_env.rs:BindingValue.value	V	binding leaf	V leaf	keep		rework2	
+field:eval_env.rs:BindingValueMetadata.default_paths	V	leaf provenance	V provenance	keep		rework2	
+field:eval_env.rs:BindingValueMetadata.output_meta	V	leaf provenance	V provenance	keep		rework2	
+field:eval_env.rs:EvalEnv.active_predicates	G	ambient guards	frozen guards	keep		rework2	
+field:eval_env.rs:EvalEnv.bound_values	S	BoundValueContext clone	view of LocalSlot	R1a		rework2	
+field:eval_env.rs:EvalEnv.dot	V	dot	frame	keep		rework2	
+field:eval_env.rs:EvalEnv.local_default_paths	F	local: default paths (dup of leaf metadata)	leaf metadata	R1a		rework2	
+field:eval_env.rs:EvalEnv.local_output_meta	F	local: transform program (dup of leaf metadata)	leaf metadata	R1a		rework2	
+field:eval_env.rs:EvalEnv.local_scalar_dispatches	F	local: dispatch	LocalSlot field (R1a), leaf (R1b)	R1a		rework2	
+field:eval_env.rs:EvalEnv.local_truthy_reductions	F	local: truth	LocalSlot field (R1a), leaf or residual (R1b)	R1a		rework2	
+field:eval_env.rs:EvalEnv.locals	V	local bindings	frame (LocalSlot map)	keep		rework2	
+field:eval_env.rs:EvalEnv.member_host_conversions	F	object conversions	H write	R3b		rework2	
+field:eval_env.rs:EvalEnv.root_fields	F	root: value	RootSlot map, then H	R1a		rework2	
+field:eval_env.rs:EvalEnv.root_truthy_predicates	F	root: truth	RootSlot field, then Q	R1a		rework2	
+field:eval_env.rs:EvalEnv.root_value_dispatches	F	root: dispatch	RootSlot field, then V	R1a		rework2	
+field:expr_call_eval/mod.rs:CallInvocation.piped	V	owned piped operand	Operand	keep		rework3	
+field:expr_call_eval/mod.rs:PipedOperand.result	V	owned operand	Operand	keep		rework2	
+field:expr_call_eval/strict_operands.rs:StrictLayerWalk.paths	D	walk scratch	-	keep		rework2	
+field:expr_eval.rs:HelperArgBindings.bindings	F	helper argument bindings beside a dispatch map	frame slots	R1a		rework2	
+field:expr_eval.rs:HelperArgBindings.scalar_dispatches	F	helper argument bindings beside a dispatch map	frame slots	R3b	R2	rework2	
+field:expr_eval.rs:HelperArgBindings.value	F	helper argument bindings beside a dispatch map	frame slots	R1a		rework2	
+field:fragment_eval/assignments.rs:RangeKeyConcretization.keyed	D	range-key rewrite plan	-	keep		rework2	
+field:fragment_eval/assignments.rs:RangeKeyConcretization.rewrites	D	range-key rewrite plan	-	keep		rework2	
+field:fragment_eval/control.rs:ControlHeaderTransition.after_scope	S	local-state snapshot at header	fork/join	R3b		rework3	
+field:fragment_eval/control.rs:ControlHeaderTransition.in_scope	S	local-state snapshot at header	fork/join	R3b		rework3	
+field:fragment_eval/control.rs:DeferredNodes.chain	O	output structure	O buffer	keep		rework3	
+field:fragment_eval/control.rs:DeferredNodes.resolved_chains	O	output structure	O buffer	keep		rework3	
+field:fragment_eval/control.rs:DeferredParent.arms	O	output structure	O buffer	keep		rework3	
+field:fragment_eval/control.rs:GuardedParentChain.condition	O	output structure	O buffer	keep		rework3	
+field:fragment_eval/control.rs:GuardedParentChain.parents	O	output structure	O buffer	keep		rework3	
+field:fragment_eval/control.rs:ParentSelection.condition	O	output structure	O buffer	keep		rework3	
+field:fragment_eval/control.rs:ParentSelection.parents	O	output structure	O buffer	keep		rework3	
+field:fragment_eval/control.rs:RangeIterationAlternative.items	F	range iteration items	guarded alternatives	R3b		rework3	
+field:fragment_eval/control.rs:RangeIterationAlternative.truth	F	per-iteration truth	frozen guard	R3b		rework2	
+field:fragment_eval/control.rs:RangeIterationBinding.dot	D	per-iteration frame	frame	keep		rework2	
+field:fragment_eval/control.rs:RangeIterationBinding.key	D	per-iteration frame	frame	keep		rework2	
+field:fragment_eval/control.rs:RangeIterationBinding.variable	D	per-iteration frame	frame	keep		rework2	
+field:fragment_eval/control.rs:RangeIterations.alternatives	F	range iteration alternatives	guarded alternatives	R3b		rework3	
+field:fragment_eval/control.rs:RootSetState.bindings	S	save/restore of root and observed triples	one RootSlot map	R1a		rework2	
+field:fragment_eval/control.rs:RootSetState.dispatches	S	save/restore of root and observed triples	one RootSlot map	R1a		rework2	
+field:fragment_eval/control.rs:RootSetState.dispatches_observed	S	save/restore of root and observed triples	one RootSlot map	R1a		rework2	
+field:fragment_eval/control.rs:RootSetState.mutations_observed	S	save/restore of root and observed triples	one RootSlot map	R1a		rework2	
+field:fragment_eval/control.rs:RootSetState.predicates_observed	S	save/restore of root and observed triples	one RootSlot map	R1a		rework2	
+field:fragment_eval/control.rs:RootSetState.truthy	S	save/restore of root and observed triples	one RootSlot map	R1a		rework2	
+field:fragment_eval/domain.rs:AbstractString.parts	O	output fragment	O buffer	keep		rework3	
+field:fragment_eval/domain.rs:Guarded.arms	O	output fragment	O buffer	keep		rework3	
+field:fragment_eval/domain.rs:Mapping.entries	O	output fragment	O buffer	keep		rework3	
+field:fragment_eval/domain.rs:MappingEntry.key	O	output fragment	O buffer	keep		rework3	
+field:fragment_eval/domain.rs:MappingEntry.value	O	output fragment	O buffer	keep		rework3	
+field:fragment_eval/domain.rs:Opaque.taint	O	output fragment	O buffer	keep		rework2	
+field:fragment_eval/domain.rs:Sequence.items	O	output fragment	O buffer	keep		rework3	
+field:fragment_eval/domain.rs:Splice.values_path	O	output fragment	O buffer	keep		rework2	
+field:fragment_eval/domain.rs:SpliceMeta.omitted_members	O	output fragment	O buffer	keep		rework2	
+field:fragment_eval/domain.rs:TaintPart.paths	O	output fragment	O buffer	keep		rework2	
+field:fragment_eval/domain.rs:TaintPart.structured_value	O	output fragment	O buffer	keep		rework2	
+field:fragment_eval/eval.rs:Contributions.entries	O	output contributions	O buffer	keep		rework3	
+field:fragment_eval/eval.rs:Contributions.floating	O	output contributions	O buffer	keep		rework3	
+field:fragment_eval/eval.rs:Contributions.items	O	output contributions	O buffer	keep		rework3	
+field:fragment_eval/eval.rs:Contributions.loop_control	S	break/continue states	Flow	R3b		rework3	
+field:fragment_eval/eval.rs:Contributions.values	O	output contributions	O buffer	keep		rework3	
+field:fragment_eval/eval.rs:DotBinding.value	V	dot stack frame	frame	keep		rework2	
+field:fragment_eval/eval.rs:EvaluatedDocument.observed_facts	O	observations	ObservedFacts	keep		rework3	
+field:fragment_eval/eval.rs:EvaluatedDocument.pre_rewrite_strict_paths	O	document observation	ObservedFacts	keep		rework2	
+field:fragment_eval/eval.rs:EvaluatedDocument.reads	O	reads	ObservedFacts	keep		rework3	
+field:fragment_eval/eval.rs:EvaluatedDocument.root	O	document fragment	O buffer	keep		rework3	
+field:fragment_eval/eval.rs:FloatingOutput.value	O	output fragment	O buffer	keep		rework3	
+field:fragment_eval/eval.rs:Interpreter.active_predicates	G	ambient guards	frozen guards	keep		rework2	
+field:fragment_eval/eval.rs:Interpreter.active_range_modes	G	range modes	frozen guards	keep		rework2	
+field:fragment_eval/eval.rs:Interpreter.alternative_capture_approximates	G	approximation guards	frozen guards	keep		rework2	
+field:fragment_eval/eval.rs:Interpreter.chart_defaults_observed	F	set-default writes	H write	R3b		rework2	
+field:fragment_eval/eval.rs:Interpreter.db	X	db handle	-	keep		rework3	
+field:fragment_eval/eval.rs:Interpreter.dot_stack	V	dot frames	frame	keep		rework3	
+field:fragment_eval/eval.rs:Interpreter.evaluated_parent_shells	O	output structure	O buffer	keep		rework3	
+field:fragment_eval/eval.rs:Interpreter.helper_seen	K	recursion cut	-	keep		rework2	
+field:fragment_eval/eval.rs:Interpreter.json_payload_truth_outputs	F	payload truth at hole outputs	query over O	R3b		rework2	
+field:fragment_eval/eval.rs:Interpreter.locals	V	local state (becomes LocalSlot map)	frame	keep		rework3	
+field:fragment_eval/eval.rs:Interpreter.member_host_conversions	F	object conversions	H write	R3b		rework2	
+field:fragment_eval/eval.rs:Interpreter.observed_facts	O	observations	ObservedFacts	keep		rework3	
+field:fragment_eval/eval.rs:Interpreter.parsed_yaml_input_paths	O	path observation	ObservedFacts	keep		rework2	
+field:fragment_eval/eval.rs:Interpreter.pre_rewrite_strict_paths	O	path observation	ObservedFacts	keep		rework2	
+field:fragment_eval/eval.rs:Interpreter.reads	O	reads	ObservedFacts	keep		rework3	
+field:fragment_eval/eval.rs:Interpreter.reads_seen	O	reads	ObservedFacts	keep		rework3	
+field:fragment_eval/eval.rs:Interpreter.root_bindings	F	root: value	RootSlot map, then H	R1a		rework2	
+field:fragment_eval/eval.rs:Interpreter.root_set_mutations_observed	S	root writes exported	RootSlot map, then H	R1a		rework2	
+field:fragment_eval/eval.rs:Interpreter.root_set_predicates_observed	S	root writes exported	RootSlot field	R1a		rework2	
+field:fragment_eval/eval.rs:Interpreter.root_truthy_predicates	F	root: truth	RootSlot field, then Q	R1a		rework2	
+field:fragment_eval/eval.rs:Interpreter.root_value_dispatches	F	root: dispatch	RootSlot field, then V	R1a		rework2	
+field:fragment_eval/eval.rs:Interpreter.root_value_dispatches_observed	S	root writes exported	RootSlot field	R1a		rework2	
+field:fragment_eval/eval.rs:Interpreter.root_value_dot	F	value-flavor helper dot	frame	R3b		rework2	
+field:fragment_eval/eval.rs:Interpreter.run_templated_text_paths	O	path observation	ObservedFacts	keep		rework2	
+field:fragment_eval/eval.rs:Interpreter.suppress_predicate_paths	O	path observation	ObservedFacts	keep		rework2	
+field:fragment_eval/eval.rs:Interpreter.text_captures	O	captures	ObservedFacts	keep		rework3	
+field:fragment_eval/eval.rs:Interpreter.yaml_serialized_paths	O	path observation	ObservedFacts	keep		rework2	
+field:fragment_eval/eval.rs:LoopControl.breaks	S	break states	Flow	R3b		rework3	
+field:fragment_eval/eval.rs:LoopControl.continues	S	continue states	Flow	R3b		rework3	
+field:fragment_eval/eval.rs:ParentShellArm.condition	O	output structure	O buffer	keep		rework3	
+field:fragment_eval/eval.rs:ParentShellArm.shell	O	output structure	O buffer	keep		rework3	
+field:fragment_eval/eval.rs:ValueRead.values_path	O	read observation	ObservedFacts	keep		rework2	
+field:fragment_eval/files.rs:ResolvedTemplateProgram.selection_predicate	G	program selection predicate	frozen guard	keep		rework2	
+field:fragment_eval/holes.rs:ArmClaims.double_quoted	O	quote-context claims	ObservedFacts	keep		rework2	
+field:fragment_eval/holes.rs:ArmClaims.double_quoted_templated	O	quote-context claims	ObservedFacts	keep		rework2	
+field:fragment_eval/holes.rs:ArmClaims.plain_templated	O	quote-context claims	ObservedFacts	keep		rework2	
+field:fragment_eval/holes.rs:ArmClaims.single_quoted	O	quote-context claims	ObservedFacts	keep		rework2	
+field:fragment_eval/holes.rs:ArmClaims.single_quoted_templated	O	quote-context claims	ObservedFacts	keep		rework2	
+field:fragment_eval/holes.rs:ArmClaims.token_initial	O	quote-context claims	ObservedFacts	keep		rework2	
+field:fragment_eval/holes.rs:HoleEval.effects	S	copy of EvalResult.effects	hole holds one EvalResult	R3a		rework2	
+field:fragment_eval/holes.rs:HoleEval.json_payload_truth	S	copy of EvalResult.json_payload_truth	hole holds one EvalResult	R3a		rework2	
+field:fragment_eval/holes.rs:HoleEval.proven_operands	S	copy of EvalResult.proven_operands	hole holds one EvalResult	R3a		rework2	
+field:fragment_eval/holes.rs:HoleEval.scalar_dispatch	S	copy of EvalResult.scalar_dispatch	hole holds one EvalResult	R3a		rework2	
+field:fragment_eval/holes.rs:HoleEval.truth	S	copy of EvalResult.truth	hole holds one EvalResult	R3a		rework2	
+field:fragment_eval/holes.rs:HoleEval.truth_reachability	S	copy of EvalResult.truth_reachability	hole holds one EvalResult	R3a		rework2	
+field:fragment_eval/holes.rs:HoleEval.value	S	copy of EvalResult.value	hole holds one EvalResult	R3a		rework2	
+field:fragment_eval/lower.rs:LowerScope.chart_value_defaults	D	borrowed lowering view	follows its owner	keep		rework2	
+field:fragment_eval/lower.rs:LowerScope.defaulted_paths	D	borrowed lowering view	follows its owner	keep		rework2	
+field:fragment_eval/lower.rs:LowerScope.derived_text_paths	D	borrowed lowering view	follows its owner	keep		rework2	
+field:fragment_eval/lower.rs:LowerScope.encoded_paths	D	borrowed lowering view	follows its owner	keep		rework2	
+field:fragment_eval/lower.rs:LowerScope.json_serialized_paths	D	borrowed lowering view	follows its owner	keep		rework2	
+field:fragment_eval/lower.rs:LowerScope.local_output_meta	D	borrowed lowering view	follows its owner	keep		rework2	
+field:fragment_eval/lower.rs:LowerScope.local_source_paths	D	borrowed lowering view	follows its owner	keep		rework2	
+field:fragment_eval/lower.rs:LowerScope.merge_operand_paths	D	borrowed lowering view	follows its owner	keep		rework2	
+field:fragment_eval/lower.rs:LowerScope.nil_omitting_paths	D	borrowed lowering view	follows its owner	keep		rework2	
+field:fragment_eval/lower.rs:LowerScope.plain_slot_string_format_paths	D	borrowed lowering view	follows its owner	keep		rework2	
+field:fragment_eval/lower.rs:LowerScope.shape_erased_paths	D	borrowed lowering view	follows its owner	keep		rework2	
+field:fragment_eval/lower.rs:LowerScope.stringified_paths	D	borrowed lowering view	follows its owner	keep		rework2	
+field:fragment_eval/lower.rs:LowerScope.templated_yaml_paths	D	borrowed lowering view	follows its owner	keep		rework2	
+field:fragment_eval/lower.rs:LowerScope.yaml_serialized_paths	D	borrowed lowering view	follows its owner	keep		rework2	
+field:fragment_eval/summary.rs:DeferredScalarProjection.resolution	E	deferred second interpreter	in-walk output	R3b		rework3	
+field:fragment_eval/summary.rs:DeferredScalarProjection.seen	E	deferred second interpreter	in-walk output	R3b		rework2	
+field:fragment_eval/summary.rs:DeferredScalarProjection.structural	E	deferred second interpreter	in-walk output	R3b		rework2	
+field:fragment_eval/summary.rs:FragmentSummary.chart_defaults	F	helper set-default writes	H write	R3b		rework2	
+field:fragment_eval/summary.rs:FragmentSummary.deferred_scalar_projection	E	deferred second interpreter	in-walk output	R3b		rework3	
+field:fragment_eval/summary.rs:FragmentSummary.json_payload_truth	S	helper payload truth	query	R3b		rework2	
+field:fragment_eval/summary.rs:FragmentSummary.member_host_conversions	F	object conversions	H write	R3b		rework2	
+field:fragment_eval/summary.rs:FragmentSummary.observed_facts	O	observations	ObservedFacts	keep		rework3	
+field:fragment_eval/summary.rs:FragmentSummary.parsed_yaml_input_paths	O	path observation	ObservedFacts	keep		rework2	
+field:fragment_eval/summary.rs:FragmentSummary.pre_rewrite_strict_paths	O	path observation	ObservedFacts	keep		rework2	
+field:fragment_eval/summary.rs:FragmentSummary.reads	O	helper reads	ObservedFacts	keep		rework3	
+field:fragment_eval/summary.rs:FragmentSummary.rendered	O	rendered rows	O buffer	keep		rework3	
+field:fragment_eval/summary.rs:FragmentSummary.root	O	helper output fragment	O buffer	keep		rework3	
+field:fragment_eval/summary.rs:FragmentSummary.root_set_mutations	S	helper root writes	RootSlot map, then H	R1a		rework2	
+field:fragment_eval/summary.rs:FragmentSummary.root_set_predicates	S	helper root writes	RootSlot field	R1a		rework2	
+field:fragment_eval/summary.rs:FragmentSummary.root_set_value_dispatches	S	helper root writes	RootSlot field	R1a		rework2	
+field:fragment_eval/summary.rs:FragmentSummary.scalar_dispatch	K	lazy cache of helper output arms (may re-execute)	sealed view (R2), O buffer (R3b)	R3b	R2	rework2	
+field:fragment_eval/summary.rs:FragmentSummary.suppress_predicate_paths	O	path observation	ObservedFacts	keep		rework2	
+field:fragment_eval/summary.rs:FragmentSummary.text_captures	O	captures	ObservedFacts	keep		rework3	
+field:fragment_eval/summary.rs:FragmentSummary.value	S	helper result value	V returned by helper	R3b		rework2	
+field:fragment_eval/summary.rs:FragmentSummary.yaml_serialized_paths	O	path observation	ObservedFacts	keep		rework2	
+field:fragment_eval/summary.rs:SummaryRows.rendered	O	summary rows	O buffer	keep		rework3	
+field:fragment_eval/summary.rs:SummaryRows.suppressed_reads	O	summary rows	ObservedFacts	keep		rework3	
+field:fragment_expr_eval/bound_helper_resolver.rs:BoundHelperValueResolver.caller_env	D	borrowed env	-	keep		rework3	
+field:fragment_expr_eval/bound_helper_resolver.rs:BoundHelperValueResolver.params	D	borrowed params	-	keep		rework3	
+field:fragment_expr_eval/bound_helper_resolver.rs:BoundHelperValueResolverParams.context	D	borrowed params	-	keep		rework3	
+field:fragment_expr_eval/bound_helper_resolver.rs:BoundHelperValueResolverParams.current_dot	D	borrowed params	-	keep		rework2	
+field:fragment_expr_eval/bound_helper_resolver.rs:BoundHelperValueResolverParams.outer	D	borrowed params	-	keep		rework2	
+field:fragment_expr_eval/bound_helper_resolver.rs:BoundHelperValueResolverParams.seen	D	borrowed params	-	keep		rework2	
+field:fragment_expr_eval/context.rs:FragmentEvalContext.analysis_db	X	db handle	-	keep		rework3	
+field:function_semantics.rs:FunctionSemantics.output	R	catalog output facet	catalog facets	keep		rework3	
+field:helper_meta.rs:HelperOutputMeta.capture_exclusions	V	transform program (provenance)	V provenance	keep		rework2	
+field:helper_meta.rs:HelperOutputMeta.omitted_keys	V	transform program (provenance)	V provenance	keep		rework2	
+field:helper_meta.rs:HelperOutputMeta.predicates	V	transform program (provenance)	V provenance	keep		rework2	
+field:helper_meta.rs:HelperOutputMeta.suppress_predicate_paths	V	transform program (provenance)	V provenance	keep		rework2	
+field:helper_meta.rs:RenderedRow.meta	O	rendered row	O buffer	keep		rework2	
+field:helper_meta.rs:RenderedRow.path	O	rendered row	O buffer	keep		rework2	
+field:observed_facts.rs:ActivatedValuesRootOverlay.source_path	X	phase artifact	-	keep		rework2	
+field:observed_facts.rs:ActivatedValuesRootOverlay.target_path	X	phase artifact	-	keep		rework2	
+field:observed_facts.rs:HintGrade.scope	X	contract builder	-	keep		rework3	
+field:observed_facts.rs:ObservedFacts.activated_values_root_overlays	X	phase artifact	-	keep		rework3	
+field:observed_facts.rs:ObservedFacts.captures	X	phase artifact	-	keep		rework3	
+field:observed_facts.rs:ObservedFacts.range_modes	X	phase artifact	-	keep		rework3	
+field:observed_facts.rs:ObservedFacts.shape_erased_paths	X	phase artifact	-	keep		rework2	
+field:observed_facts.rs:ObservedFacts.type_hints	X	phase artifact	-	keep		rework3	
+field:observed_facts.rs:ObservedFacts.values_root_helper_includes	X	phase artifact	-	keep		rework2	
+field:observed_facts.rs:ObservedFacts.values_root_overlays	X	phase artifact	-	keep		rework3	
+field:observed_facts.rs:ValuesRootOverlay.source_path	X	phase artifact	-	keep		rework2	
+field:observed_facts.rs:ValuesRootOverlay.target_path	X	phase artifact	-	keep		rework2	
+field:range_modes.rs:RangeModes.modes	G	range modes	frozen guard context	keep		rework2	
+field:resource_identity.rs:HelperOutputEvaluator.seen	E	apiVersion helper-output evaluator	consume evaluator output	R3b		rework2	
+field:resource_identity.rs:IdentitySource.db	X	db handle	-	keep		rework3	
+field:scalar_value.rs:ScalarValueDispatch.arms	R	dispatch arms	sealed view (R2), query (R3b)	R3b	R2	rework2	
+field:static_file_template.rs:StaticTemplateProgram.dot	D	template request	-	keep		rework2	
+field:symbolic/mod.rs:SymbolicIrContext.analysis_db	X	db handle	-	keep		rework3	
+field:symbolic/mod.rs:SymbolicPolicy.chart_default_strings	X	policy	-	keep		rework2	
+field:symbolic_local_state/mod.rs:ControlOutcome.condition	S	control exit state	fork/join under frozen guard	R3b		rework2	
+field:symbolic_local_state/mod.rs:ControlOutcome.state	S	control exit state	fork/join	R3b		rework3	
+field:symbolic_local_state/mod.rs:ControlOutcome.truth	S	control exit state	fork/join under frozen guard	R3b		rework2	
+field:symbolic_local_state/mod.rs:IntCastSource.path	R	int-cast provenance	V provenance	R3b		rework2	
+field:symbolic_local_state/mod.rs:LocalScopeFrame.previous_values	S	scope-undo frame	whole-slot save	R1a		rework2	
+field:symbolic_local_state/mod.rs:SymbolicLocalState.chart_value_defaults	F	set-default writes	H write	R3b		rework2	
+field:symbolic_local_state/mod.rs:SymbolicLocalState.default_paths	F	local: default_paths	LocalSlot field	R1a		rework2	
+field:symbolic_local_state/mod.rs:SymbolicLocalState.definite_range_member_values	F	local: definite_range_member_values	LocalSlot field	R1a		rework2	
+field:symbolic_local_state/mod.rs:SymbolicLocalState.fragment_values	V	local bindings	LocalSlot.binding	R1a		rework2	
+field:symbolic_local_state/mod.rs:SymbolicLocalState.get_bindings	F	local: get_bindings	LocalSlot field	R1a		rework2	
+field:symbolic_local_state/mod.rs:SymbolicLocalState.int_cast_sources	F	local: int_cast_sources	LocalSlot field	R1a		rework2	
+field:symbolic_local_state/mod.rs:SymbolicLocalState.local_scopes	S	scope-undo frames	whole-slot save	R1a		rework3	
+field:symbolic_local_state/mod.rs:SymbolicLocalState.output_meta	F	local: output_meta	LocalSlot field	R1a		rework2	
+field:symbolic_local_state/mod.rs:SymbolicLocalState.range_domains	F	local: range_domains	LocalSlot field	R1a		rework2	
+field:symbolic_local_state/mod.rs:SymbolicLocalState.range_member_values	F	local: range_member_values	LocalSlot field	R1a		rework2	
+field:symbolic_local_state/mod.rs:SymbolicLocalState.scalar_dispatches	F	local: scalar_dispatches	LocalSlot field	R1a		rework2	
+field:symbolic_local_state/mod.rs:SymbolicLocalState.truthiness_abstentions	F	local: truthiness_abstentions	LocalSlot field	R1a		rework2	
+field:symbolic_local_state/mod.rs:SymbolicLocalState.truthiness_clears	F	local: truthiness_clears	LocalSlot field	R1a		rework2	
+field:symbolic_local_state/mod.rs:SymbolicLocalState.truthy_reductions	F	local: truthy_reductions	LocalSlot field	R1a		rework2	
+field:symbolic_local_state/mod.rs:SymbolicLocalState.typeof_sources	F	local: typeof_sources	LocalSlot field	R1a		rework2	
+field:symbolic_local_state/mod.rs:VariableLocalState.default_paths	S	scope-undo copy of one local's 13 facts	becomes LocalSlot	R1a		rework2	
+field:symbolic_local_state/mod.rs:VariableLocalState.definite_range_member_value	S	scope-undo copy of one local's 13 facts	becomes LocalSlot	R1a		rework2	
+field:symbolic_local_state/mod.rs:VariableLocalState.fragment_value	S	scope-undo copy of one local's 13 facts	becomes LocalSlot	R1a		rework2	
+field:symbolic_local_state/mod.rs:VariableLocalState.get_binding	S	scope-undo copy of one local's 13 facts	becomes LocalSlot	R1a		rework2	
+field:symbolic_local_state/mod.rs:VariableLocalState.int_cast_source	S	scope-undo copy of one local's 13 facts	becomes LocalSlot	R1a		rework2	
+field:symbolic_local_state/mod.rs:VariableLocalState.output_meta	S	scope-undo copy of one local's 13 facts	becomes LocalSlot	R1a		rework2	
+field:symbolic_local_state/mod.rs:VariableLocalState.range_member_value	S	scope-undo copy of one local's 13 facts	becomes LocalSlot	R1a		rework2	
+field:symbolic_local_state/mod.rs:VariableLocalState.scalar_dispatch	S	scope-undo copy of one local's 13 facts	becomes LocalSlot	R1a		rework2	
+field:symbolic_local_state/mod.rs:VariableLocalState.truthy_reduction	S	scope-undo copy of one local's 13 facts	becomes LocalSlot	R1a		rework2	
+field:symbolic_local_state/mod.rs:VariableLocalState.typeof_source	S	scope-undo copy of one local's 13 facts	becomes LocalSlot	R1a		rework2	
+field:value_path_context/mod.rs:RangeSubject.influence_paths	F	range alternatives carrier	V iterable + member identity	R3b		rework2	
+field:value_path_context/mod.rs:RangeSubject.input_identity	F	range alternatives carrier	V iterable + member identity	R3b		rework2	
+field:value_path_context/mod.rs:RangeSubject.member_identity	F	range alternatives carrier	V iterable + member identity	R3b		rework2	
+field:value_path_context/mod.rs:RangeSubject.member_value	F	range alternatives carrier	V iterable + member identity	R3b		rework2	
+field:value_path_context/mod.rs:RangeSubject.output_meta	F	range alternatives carrier	V iterable + member identity	R3b		rework2	
+field:value_path_context/mod.rs:RangeSubject.truth_reachability	F	range alternatives carrier	V iterable + member identity	R3b		rework2	
+field:value_path_context/mod.rs:RangeSubject.value	F	range alternatives carrier	V iterable + member identity	R3b		rework2	
+field:value_path_context/mod.rs:RangeSubject.value_alternatives	F	range alternatives	guarded alternatives	R3b		rework3	
+field:value_path_context/mod.rs:RangeSubjectIdentity.path	R	range identity	V provenance	keep		rework2	
+field:value_path_context/mod.rs:RangeValueAlternative.condition	F	range alternative	guarded alternative	R3b		rework2	
+field:value_path_context/mod.rs:RangeValueAlternative.value	F	range alternative	guarded alternative	R3b		rework2	
+field:value_path_context/mod.rs:RangeValueAlternatives.known	F	range alternatives	guarded alternatives	R3b		rework3	
+field:value_path_context/mod.rs:ValuePathContext.current_dot_fragment	S	owned snapshot of the current dot fragment	frame	R3b		rework2	
+field:value_path_context/mod.rs:ValuePathContext.eval_env	D	borrowed env	-	keep		rework3	
+field:value_path_context/mod.rs:ValuePathContext.fragment_context	D	borrowed context	-	keep		rework3	
+field:value_path_context/mod.rs:ValuePathContext.int_cast_bindings	D	borrowed view of local state	follows R1 slot	keep		rework2	
+field:value_path_context/mod.rs:ValuePathContext.template_truthiness_abstentions	D	borrowed view of local state	follows R1 slot	keep		rework2	
+field:value_path_context/mod.rs:ValuePathContext.typeof_bindings	D	borrowed view of local state	follows R1 slot	keep		rework2	
+fn:analysis_db.rs:classify_nil_scrub_helper	E	helper-shape recognizer	executed body (if reproduced)	R3b		rework2	
+fn:analysis_db.rs:classify_pair_merge_helper	E	helper-shape recognizer	executed body (if reproduced)	R3b		rework2	
+fn:analysis_db.rs:classify_parsed_map_list_merge_helper	E	helper-shape recognizer	executed body (if reproduced)	R3b		rework2	
+fn:analysis_db.rs:classify_typed_yaml_renderer	E	helper-shape recognizer	executed body (if reproduced)	R3b		rework2	
+fn:analysis_db.rs:program_wrapper_sentinels	E	helper-shape recognizer	executed body (if reproduced)	R3b		rework2	
+fn:expr_call_eval/collections.rs:eval_append	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/collections.rs:eval_coalesce	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/collections.rs:eval_concat	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/collections.rs:eval_default	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/collections.rs:eval_dict	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/collections.rs:eval_list	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/collections.rs:eval_merge	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/collections.rs:eval_nonempty_split	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/collections.rs:eval_omit	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/collections.rs:eval_pick	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/collections.rs:eval_pluck	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/collections.rs:eval_prepend	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/collections.rs:eval_regex_split	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/collections.rs:eval_split_list	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/comparisons.rs:eval_comparison	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/comparisons.rs:eval_ternary	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/comparisons.rs:eval_ternary_condition	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/comparisons.rs:eval_type_is	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/mod.rs:direct_quoted_falsy_pattern_condition	E	AST-only argument fact	V fact	R3b		rework2	
+fn:expr_call_eval/mod.rs:direct_stringified_dispatch	E	AST-only argument fact	V fact	R3b		rework2	
+fn:expr_call_eval/mod.rs:eval_direct_invocation	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/mod.rs:eval_helper_call	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/mod.rs:eval_piped_invocation	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/mod.rs:eval_pipeline_with_helper_calls	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/mod.rs:eval_sequence_invocation	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/mod.rs:eval_short_circuit_args	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/mod.rs:eval_string_transform_invocation	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/mod.rs:merge_arg_effects	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/mod.rs:merge_arg_values	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/mod.rs:split_length_dispatch	E	AST-only argument fact	V fact	R3b		rework2	
+fn:expr_call_eval/root_mutation.rs:eval_set_call	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/root_mutation.rs:root_values_default_source	E	merge operands evaluated again (:316, :320)	one evaluation	R3a		rework2	
+fn:expr_call_eval/serialization.rs:eval_cat	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/serialization.rs:eval_from_json	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/serialization.rs:eval_from_yaml	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/serialization.rs:eval_join	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/serialization.rs:eval_print	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/serialization.rs:eval_printf	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/serialization.rs:eval_regex_replace	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/serialization.rs:eval_repeat	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/serialization.rs:eval_replace	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/serialization.rs:eval_to_json	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/serialization.rs:eval_to_yaml	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/serialization.rs:eval_tpl	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/serialization.rs:eval_trim_affix	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/strict_operands.rs:record_length_bearing_operand	E	contract collector evaluates operand syntax again	receives owned operands	R3b		rework3	
+fn:expr_call_eval/strict_operands.rs:record_strict_kind_operands	E	contract collector evaluates operand syntax again	receives owned operands	R3b		rework3	
+fn:expr_call_eval/strict_operands.rs:record_strict_parser_invocation	E	contract collector evaluates operand syntax again	receives owned operands	R3b		rework3	
+fn:expr_call_eval/strict_operands.rs:record_string_call_consumers	E	contract collector evaluates operand syntax again	receives owned operands	R3b		rework3	
+fn:expr_call_eval/strict_operands.rs:string_invocation_operand_facts	E	contract collector evaluates operand syntax again	receives owned operands	R3b		rework3	
+fn:expr_call_eval/traversal.rs:eval_dig	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_call_eval/traversal.rs:eval_index	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
+fn:expr_eval.rs:apply_local_set_mutations_expr	E	mutation re-evaluated	H write	R3b		rework2	
+fn:expr_eval.rs:direct_values_path	D	delegates to the evaluator once	-	keep		rework3	
+fn:expr_eval.rs:eval_expr	V	the evaluator	evaluator	keep		rework3	
+fn:expr_eval.rs:eval_expr_with_helper_calls	V	the evaluator	evaluator	keep		rework3	
+fn:expr_eval.rs:eval_exprs_effects	V	the evaluator	evaluator	keep		rework3	
+fn:expr_eval.rs:static_semver_numeric_selector	D	delegates to the evaluator once	-	keep		rework3	
+fn:fragment_eval/assignments.rs:apply_context_copy_value_mutations	E	context-copy re-evaluation (:434)	H write	R3b		rework2	
+fn:fragment_eval/eval.rs:eval_document	V	the evaluator	evaluator	keep		rework3	
+fn:fragment_eval/files.rs:eval_static_template_program	E	nested file/tpl interpreter	tpl with cloned namespace + State	R3b		rework3	
+fn:fragment_eval/summary.rs:bound_helper_interpreter	E	fresh helper interpreter without caller state	helper frame with State	R3b		rework2	
+fn:fragment_eval/summary.rs:eval_bound_helper_fragment	E	helper summary run in a fresh interpreter	helper frame with State	R3b		rework3	
+fn:fragment_eval/summary.rs:evaluate	E	DeferredScalarProjection second run	in-walk output	R3b		rework2	
+fn:fragment_expr_eval/bound_helper_resolver.rs:eval_expr_result_with_bound_helpers	V	the evaluator	evaluator	keep		rework3	
+fn:fragment_expr_eval/mod.rs:context_value_from_outer_expr	D	delegates to the evaluator once	-	keep		rework3	
+fn:helper_literal_dispatch.rs:helper_literal_dispatch	E	syntactic helper-output interpreter	O buffer of executed helper	R3b		rework2	
+fn:resource_identity.rs:static_literal_outputs	E	apiVersion helper-output evaluator	O buffer of executed helper	R3b		rework3	
+fn:resource_identity.rs:with_helper_body	E	apiVersion helper-output evaluator	O buffer of executed helper	R3b		rework3	
+fn:static_file_template.rs:collect_template_requests_from_helper	E	syntactic helper walk	evaluator	R3b		rework2	
+fn:value_path_context/condition_predicate.rs:constant_scalar	E	condition re-evaluation	consume hole EvalResult where env/resolver identical, else R3b	R3a		rework3	
+fn:value_path_context/condition_predicate.rs:decoded_field_condition_predicate	E	condition re-evaluation	consume hole EvalResult where env/resolver identical, else R3b	R3a		rework3	
+fn:value_path_context/condition_predicate.rs:decoded_variable_condition_predicate	E	condition re-evaluation	consume hole EvalResult where env/resolver identical, else R3b	R3a		rework3	
+fn:value_path_context/condition_predicate.rs:exact_evaluated_truth_predicate	E	condition re-evaluation	consume hole EvalResult where env/resolver identical, else R3b	R3a		rework3	
+fn:value_path_context/condition_predicate.rs:len_comparison_sound_subset	E	condition re-evaluation	consume hole EvalResult where env/resolver identical, else R3b	R3a		rework3	
+fn:value_path_context/condition_predicate.rs:negated_merged_layers_sound_subset	E	condition re-evaluation	consume hole EvalResult where env/resolver identical, else R3b	R3a		rework3	
+fn:value_path_context/condition_predicate.rs:selected_value_predicate	E	condition re-evaluation	consume hole EvalResult where env/resolver identical, else R3b	R3a		rework3	
+fn:value_path_context/condition_predicate.rs:truthy_predicate	E	condition re-evaluation	consume hole EvalResult where env/resolver identical, else R3b	R3a		rework3	
+fn:value_path_context/condition_predicate.rs:type_descriptor_subject_sources	E	condition re-evaluation	consume hole EvalResult where env/resolver identical, else R3b	R3a		rework3	
+fn:value_path_context/condition_predicate.rs:type_is_predicate	E	condition re-evaluation	consume hole EvalResult where env/resolver identical, else R3b	R3a		rework3	
+fn:value_path_context/path_resolution.rs:resolved_values_paths_from_expr	E	paths re-derived by evaluation	V provenance	R3b		rework3	
+needle:eval_env.rs:pub(crate) fn apply_local_set_mutations(	E	mutation replay	H write	R3b		rework2	
+needle:expr_call_eval/comparisons.rs:// Literal and intrinsic return types survive preceding argument mutations.	E	syntactic ternary kind list	require_kind(Bool)	R2		rework2	
+needle:expr_call_eval/mod.rs:"required" if matches!(args, [_, _]) => {	E	negated-truth required arm	required_subject over kinds	R2		rework2	
+needle:expr_call_eval/mod.rs:fn scalar_pattern_condition(	E	AST-only argument fact	V fact	R3b		rework2	
+needle:expr_call_eval/root_mutation.rs:pub(super) fn root_set_literal_is_truthy(literal: &Literal) -> bool {	E	AST re-derivation	query	R3b		rework2	
+needle:expr_call_eval/root_mutation.rs:pub(super) fn root_set_predicate_any(predicates: Vec<Predicate>) -> Predicate {	E	AST re-derivation	query	R3b		rework2	
+needle:expr_call_eval/root_mutation.rs:pub(super) fn root_set_string_literal(expr: &TemplateExpr) -> Option<&str> {	E	AST re-derivation	query	R3b		rework2	
+needle:expr_call_eval/root_mutation.rs:pub(super) fn root_set_stringified_comparison(	E	AST re-derivation	query	R3b		rework2	
+needle:expr_call_eval/root_mutation.rs:pub(super) fn root_set_truthy_predicate(expr: &TemplateExpr, env: &EvalEnv) -> Option<Predicate> {	E	AST truth re-derivation	query over written V	R3b		rework2	
+needle:fragment_eval/assignments.rs:pub(super) fn apply_helper_scope_set_mutations(&mut self, exprs: &[TemplateExpr]) -> bool {	E	helper-scope mutation replay	H write	R3b		rework2	
+needle:fragment_eval/eval.rs:pub(super) fn record_required_condition(&mut self, subject_path: &str) {	E	AST required lane	evaluator required consumer	R2		rework2	
+needle:fragment_eval/hole_effects.rs:pub(super) fn apply_root_set_mutations(	E	root mutation replay	H write	R3b		rework2	
+needle:fragment_eval/hole_effects.rs:pub(super) fn collect_required_subjects<'e>(	E	AST required lane	evaluator required consumer	R2		rework2	
+needle:fragment_eval/hole_effects.rs:pub(super) fn eval_condition_header(	E	header evaluated twice	one evaluation	R3a		rework2	
+needle:fragment_eval/hole_effects.rs:pub(super) fn record_required_subjects(&mut self, exprs: &[TemplateExpr]) {	E	AST required lane	evaluator required consumer	R2		rework2	
+needle:fragment_eval/hole_effects.rs:pub(super) fn required_call_subjects(expr: &TemplateExpr) -> Vec<&TemplateExpr> {	E	AST required lane	evaluator required consumer	R2		rework2	
+needle:fragment_eval/hole_effects.rs:pub(super) fn subject_is_statically_helm_empty(expr: &TemplateExpr) -> bool {	E	AST required lane	evaluator required consumer	R2		rework2	
+needle:fragment_eval/summary.rs:fn scalar_dispatch_from_fragment(	E	fragment-to-output fallback	in-walk output	R3b		rework2	
+needle:fragment_expr_eval/mod.rs:pub(crate) fn document_result_from_expr(	D	delegates to the evaluator once	-	keep		rework2	
+needle:resource_identity.rs:pub(crate) struct HelperOutputEvaluator {	E	apiVersion helper-output evaluator	O buffer of executed helper	R3b		rework2	
+needle:value_path_context/path_resolution.rs:pub(crate) fn paths_for_expr(&self, expr: &TemplateExpr) -> BTreeSet<String> {	E	paths re-derived by evaluation	V provenance	R3b		rework2	
+variant:abstract_value.rs:AbstractValue::Choice	R	runtime-shaped value variant	H object / V sequence / guarded alternatives	R3b		rework2	
+variant:abstract_value.rs:AbstractValue::DerivedBoolean	R	path/scalar value variant	V leaf + provenance	R3b		rework2	
+variant:abstract_value.rs:AbstractValue::Dict	R	runtime-shaped value variant	H object / V sequence / guarded alternatives	R3b		rework2	
+variant:abstract_value.rs:AbstractValue::FirstTruthy	R	runtime-shaped value variant	H object / V sequence / guarded alternatives	R3b		rework2	
+variant:abstract_value.rs:AbstractValue::JsonDecodedPath	R	path/scalar value variant	V leaf + provenance	R3b		rework2	
+variant:abstract_value.rs:AbstractValue::KeysList	R	path/scalar value variant	V leaf + provenance	R3b		rework2	
+variant:abstract_value.rs:AbstractValue::List	R	runtime-shaped value variant	H object / V sequence / guarded alternatives	R3b		rework2	
+variant:abstract_value.rs:AbstractValue::MergedLayers	R	runtime-shaped value variant	H object / V sequence / guarded alternatives	R3b		rework2	
+variant:abstract_value.rs:AbstractValue::OutputPath	R	path/scalar value variant	V leaf + provenance	R3b		rework2	
+variant:abstract_value.rs:AbstractValue::Overlay	R	runtime-shaped value variant	H object / V sequence / guarded alternatives	R3b		rework2	
+variant:abstract_value.rs:AbstractValue::RangeKey	R	path/scalar value variant	V leaf + provenance	R3b		rework2	
+variant:abstract_value.rs:AbstractValue::RootContext	R	path/scalar value variant	V leaf + provenance	R3b		rework2	
+variant:abstract_value.rs:AbstractValue::SplitList	R	runtime-shaped value variant	H object / V sequence / guarded alternatives	R3b		rework2	
+variant:abstract_value.rs:AbstractValue::SplitSegment	R	runtime-shaped value variant	H object / V sequence / guarded alternatives	R3b		rework2	
+variant:abstract_value.rs:AbstractValue::StringSet	R	path/scalar value variant	V leaf + provenance	R3b		rework2	
+variant:abstract_value.rs:AbstractValue::Top	R	path/scalar value variant	V leaf + provenance	R3b		rework2	
+variant:abstract_value.rs:AbstractValue::Unknown	R	path/scalar value variant	V leaf + provenance	R3b		rework2	
+variant:abstract_value.rs:AbstractValue::ValuesPath	R	path/scalar value variant	V leaf + provenance	R3b		rework2	
+variant:abstract_value.rs:AbstractValue::Widened	R	runtime-shaped value variant	H object / V sequence / guarded alternatives	R3b		rework2	
+variant:abstract_value.rs:SelectionChainIdentities::Complete	R	selection identities	V provenance	R3b		rework3	
+variant:abstract_value.rs:SelectionChainIdentities::Prefix	R	selection identities	V provenance	R3b		rework3	
+variant:eval_effect.rs:CaptureKind::AbsenceAborts	O	capture observation	ObservedFacts	keep		rework3	
+variant:eval_effect.rs:CaptureKind::CollectionItems	O	capture observation	ObservedFacts	keep		rework3	
+variant:eval_effect.rs:CaptureKind::ComparableKind	O	capture observation	ObservedFacts	keep		rework3	
+variant:eval_effect.rs:CaptureKind::DigSubject	O	capture observation	ObservedFacts	keep		rework3	
+variant:eval_effect.rs:CaptureKind::IndexAccess	O	capture observation	ObservedFacts	keep		rework3	
+variant:eval_effect.rs:CaptureKind::PlainSlotText	O	capture observation	ObservedFacts	keep		rework3	
+variant:eval_effect.rs:CaptureKind::PrintfStringOperand	O	capture observation	ObservedFacts	keep		rework3	
+variant:eval_effect.rs:CaptureKind::QuotedSerialization	O	capture observation	ObservedFacts	keep		rework3	
+variant:eval_effect.rs:CaptureKind::RangeInput	O	capture observation	ObservedFacts	keep		rework3	
+variant:eval_effect.rs:CaptureKind::RangeKeyPlainSlot	O	capture observation	ObservedFacts	keep		rework3	
+variant:eval_effect.rs:CaptureKind::RangeKeyStrings	O	capture observation	ObservedFacts	keep		rework3	
+variant:eval_effect.rs:CaptureKind::RangeSelection	O	capture observation	ObservedFacts	keep		rework3	
+variant:eval_effect.rs:CaptureKind::RequiredPresence	O	capture observation	ObservedFacts	keep		rework3	
+variant:eval_effect.rs:CaptureKind::SplitIndexAccess	O	capture observation	ObservedFacts	keep		rework3	
+variant:eval_effect.rs:CaptureKind::StringRequirement	O	capture observation	ObservedFacts	keep		rework3	
+variant:eval_effect.rs:CaptureKind::ValuePattern	O	capture observation	ObservedFacts	keep		rework3	
+variant:eval_effect.rs:CaptureKind::ValueType	O	capture observation	ObservedFacts	keep		rework3	
+variant:eval_effect.rs:SelectionState::Approximate	R	reachability state	query result	R3b		rework3	
+variant:eval_effect.rs:SelectionState::Exact	R	reachability state	query result	R3b		rework3	
+variant:eval_env.rs:BindingNode::Select	V	binding tree	decision structure	keep		rework3	
+variant:eval_env.rs:BindingNode::Value	V	binding tree	decision structure	keep		rework3	
+variant:eval_env.rs:LeafSelection::Proven	V	leaf selection	decision structure	keep		rework3	
+variant:fragment_eval/control.rs:BranchStep::Deferred	O	output structure	O buffer	keep		rework3	
+variant:fragment_eval/domain.rs:AbstractFragment::Mapping	O	output fragment	O buffer	keep		rework3	
+variant:fragment_eval/domain.rs:AbstractFragment::Opaque	O	output fragment	O buffer	keep		rework3	
+variant:fragment_eval/domain.rs:AbstractFragment::Scalar	O	output fragment	O buffer	keep		rework3	
+variant:fragment_eval/domain.rs:AbstractFragment::Sequence	O	output fragment	O buffer	keep		rework3	
+variant:fragment_eval/domain.rs:AbstractFragment::Splice	O	output fragment	O buffer	keep		rework3	
+variant:fragment_eval/domain.rs:EntryKey::Dynamic	O	output fragment	O buffer	keep		rework3	
+variant:fragment_eval/domain.rs:StringPart::Splice	O	output fragment	O buffer	keep		rework3	
+variant:fragment_eval/domain.rs:StringPart::Taint	O	output fragment	O buffer	keep		rework3	
+variant:fragment_eval/eval.rs:ParentShell::Entry	O	output structure	O buffer	keep		rework3	
+variant:fragment_eval/summary.rs:StructuralDispatch::Known	E	fragment-to-output fallback	in-walk output	R3b		rework3	
+variant:scalar_value.rs:ScalarRenderPart::Identity	R	rendered text part	V text term	keep		rework3	
+variant:scalar_value.rs:ScalarValue::Identity	R	content leaf	V leaf	keep		rework3	
+variant:scalar_value.rs:ScalarValue::Length	R	content leaf	V leaf	keep		rework3	
+variant:scalar_value.rs:ScalarValue::Literal	R	content leaf	V leaf	keep		rework3	
+variant:scalar_value.rs:ScalarValue::PrintfStringIdentity	R	content leaf	V leaf	keep		rework3	
+variant:scalar_value.rs:ScalarValue::Rendered	R	content leaf	V leaf	keep		rework3	
+variant:scalar_value.rs:ScalarValue::SplitLength	R	content leaf	V leaf	keep		rework3	
+variant:scalar_value.rs:TruthCondition::Exact	R	truth query result	query result type	keep		rework3	
+variant:scalar_value.rs:TruthCondition::Partial	R	truth query result	query result type	keep		rework3	
+variant:value_path_context/condition_predicate.rs:Decoded::Approximate	D	condition decoding result	-	keep		rework3	
+variant:value_path_context/condition_predicate.rs:Decoded::Exact	D	condition decoding result	-	keep		rework3	
