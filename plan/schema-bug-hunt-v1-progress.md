@@ -9275,4 +9275,6 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   0 NEW / 76 closed, +310 LOC) found three more traced stale-read P1s; recommendation accepted — land only the ternary arity check
   (plus any ablation-proven independent piece) and preserve all ~1,500 witness cells and counterexamples as the rearchitecture's
   admission suite. Opus building w1/stage1-min on 5220c19b. Orchestrator.
-Next: luup2 gate on main 2a76012e; collect w1/stage1-min, sol review, landing 10e; then R0 of `plan/value-algebra-interpreter.md`.
+- 07:2x (Oct 22) — **Downstream luup2 gate GREEN on main 73d1fa15 (= 2a76012e + ledger): 0/32 charts fail** (cargo install exit 0,
+  then `<chart>:check:local` per chart; every log renders and validates). Orchestrator.
+Next: collect w1/stage1-min, sol review, landing 10e; then R0 of `plan/value-algebra-interpreter.md`.
