@@ -1588,7 +1588,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                 oracle: OracleExpectation::Aborts {
                     diagnostic: "Error: trino/templates/deployment-worker.yaml:37:35 — trino/templates/configmap-worker.yaml:23:18 — nil pointer evaluating interface {}.maxHeapSize",
                 },
-                schema: SchemaExpectation::KnownFalseAcceptance,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
                 adjudicated: "731f61367292a748",
             },
             Witness {
@@ -1599,7 +1599,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                 oracle: OracleExpectation::Aborts {
                     diagnostic: "Error: trino/templates/deployment-worker.yaml:201:43 — nil pointer evaluating interface {}.initialDelaySeconds",
                 },
-                schema: SchemaExpectation::KnownFalseAcceptance,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
                 adjudicated: "79ae7979799ef34a",
             },
         ],
