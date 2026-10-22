@@ -6264,6 +6264,102 @@
       ],
       "type": "object"
     },
+    "constrains/containerSecurityContext.runAsUser:t": {
+      "properties": {
+        "containerSecurityContext": {
+          "properties": {
+            "runAsUser": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "runAsUser"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "containerSecurityContext"
+      ],
+      "type": "object"
+    },
+    "constrains/containerSecurityContext.runAsUser@2": {
+      "properties": {
+        "containerSecurityContext": {
+          "properties": {
+            "runAsUser": {
+              "anyOf": [
+                {
+                  "not": {
+                    "pattern": "^-([1-9][0-9]{1,17}|[1-9]|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{1,14}|0[xX]0*[1-9a-fA-F]|0[bB]0*1[0-1]{1,61}|0[bB]0*1|0[oO]?0*[1-7][0-7]{1,19}|0[oO]?0*[1-7]|[0-9_]*[1-9][0-9_]*_[0-9_]*|[0-9_]*_[0-9_]*[1-9][0-9_]*|0[xX][0-9a-fA-F_]*[1-9a-fA-F][0-9a-fA-F_]*_[0-9a-fA-F_]*|0[xX][0-9a-fA-F_]*_[0-9a-fA-F_]*[1-9a-fA-F][0-9a-fA-F_]*|0[bB][01_]*1[01_]*_[01_]*|0[bB][01_]*_[01_]*1[01_]*|0[oO]?[0-7_]*[1-7][0-7_]*_[0-7_]*|0[oO]?[0-7_]*_[0-7_]*[1-7][0-7_]*|[1-9][0-9]{18}|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{15}|0[bB]0*1[01]{62}|0[oO]?0*[1-7][0-7]{20})(\\.0*)?$"
+                  },
+                  "type": "string"
+                },
+                {
+                  "exclusiveMinimum": -1,
+                  "type": "integer"
+                }
+              ]
+            }
+          },
+          "required": [
+            "runAsUser"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "containerSecurityContext"
+      ],
+      "type": "object"
+    },
+    "constrains/containerSecurityContext.runAsUser@3": {
+      "properties": {
+        "containerSecurityContext": {
+          "properties": {
+            "runAsUser": {
+              "anyOf": [
+                {
+                  "not": {
+                    "pattern": "^\\+?([1-9][0-9]{1,17}|[1-9]|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{1,14}|0[xX]0*[1-9a-fA-F]|0[bB]0*1[0-1]{1,61}|0[bB]0*1|0[oO]?0*[1-7][0-7]{1,19}|0[oO]?0*[1-7]|[0-9_]*[1-9][0-9_]*_[0-9_]*|[0-9_]*_[0-9_]*[1-9][0-9_]*|0[xX][0-9a-fA-F_]*[1-9a-fA-F][0-9a-fA-F_]*_[0-9a-fA-F_]*|0[xX][0-9a-fA-F_]*_[0-9a-fA-F_]*[1-9a-fA-F][0-9a-fA-F_]*|0[bB][01_]*1[01_]*_[01_]*|0[bB][01_]*_[01_]*1[01_]*|0[oO]?[0-7_]*[1-7][0-7_]*_[0-7_]*|0[oO]?[0-7_]*_[0-7_]*[1-7][0-7_]*|[1-9][0-9]{18}|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{15}|0[bB]0*1[01]{62}|0[oO]?0*[1-7][0-7]{20})(\\.0*)?$"
+                  },
+                  "type": "string"
+                },
+                {
+                  "exclusiveMaximum": 1,
+                  "type": "integer"
+                }
+              ]
+            }
+          },
+          "required": [
+            "runAsUser"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "containerSecurityContext"
+      ],
+      "type": "object"
+    },
+    "constrains/containerSecurityContext.runAsUser@4": {
+      "properties": {
+        "containerSecurityContext": {
+          "properties": {
+            "runAsUser": {}
+          },
+          "required": [
+            "runAsUser"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "containerSecurityContext"
+      ],
+      "type": "object"
+    },
     "constrains/containerSecurityContext.seLinuxOptions!=null": {
       "properties": {
         "containerSecurityContext": {
@@ -18198,41 +18294,11 @@
           "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t"
         },
         {
-          "$ref": "#/$defs/constrains~1postgresql.passwordUpdateJob.containerSecurityContext.seLinuxOptions:t"
-        }
-      ]
-    },
-    "constrains/postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1postgresql.readReplicas.containerSecurityContext.seLinuxOptions:t"
-        }
-      ]
-    },
-    "constrains/postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1postgresql.passwordUpdateJob.podSecurityContext.seLinuxOptions:t"
-        }
-      ]
-    },
-    "constrains/postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t"
-        },
-        {
           "$ref": "#/$defs/constrains~1postgresql.primary.containerSecurityContext.seLinuxOptions:t"
         }
       ]
     },
-    "constrains/postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@5": {
+    "constrains/postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@2": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1postgresql.metrics.containerSecurityContext.seLinuxOptions:t"
@@ -18242,7 +18308,7 @@
         }
       ]
     },
-    "constrains/postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@6": {
+    "constrains/postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@3": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t"
@@ -18252,13 +18318,43 @@
         }
       ]
     },
-    "constrains/postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@7": {
+    "constrains/postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@4": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t"
         },
         {
           "$ref": "#/$defs/constrains~1postgresql.primary.podSecurityContext.seLinuxOptions:t"
+        }
+      ]
+    },
+    "constrains/postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@5": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1postgresql.passwordUpdateJob.containerSecurityContext.seLinuxOptions:t"
+        }
+      ]
+    },
+    "constrains/postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@6": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1postgresql.readReplicas.containerSecurityContext.seLinuxOptions:t"
+        }
+      ]
+    },
+    "constrains/postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@7": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1postgresql.passwordUpdateJob.podSecurityContext.seLinuxOptions:t"
         }
       ]
     },
@@ -23707,6 +23803,131 @@
         }
       ]
     },
+    "constrains/redis+redis.architecture=replication+redis.enabled+redis.enabled:t+6more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1redis.replica.containerSecurityContext+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1redis.architecture=replication"
+        },
+        {
+          "$ref": "#/$defs/constrains~1redis.replica.containerSecurityContext+1more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1redis.replica.containerSecurityContext.runAsUser:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1redis.architecture=replication+redis.sentinel.enabled:t@2"
+        }
+      ]
+    },
+    "constrains/redis+redis.architecture=replication+redis.enabled+redis.enabled:t+6more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1redis.replica.containerSecurityContext+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1redis.architecture=replication"
+        },
+        {
+          "$ref": "#/$defs/constrains~1redis.replica.containerSecurityContext+1more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1redis.replica.containerSecurityContext.runAsUser:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1redis.sentinel.enabled:t@2"
+        }
+      ]
+    },
+    "constrains/redis+redis.architecture=replication+redis.enabled+redis.enabled:t+6more@3": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1redis.master.containerSecurityContext.runAsUser"
+            },
+            {
+              "properties": {
+                "redis": {
+                  "properties": {
+                    "master": {
+                      "$ref": "#/$defs/constrains~1containerSecurityContext.runAsUser@3"
+                    }
+                  },
+                  "required": [
+                    "master"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "redis"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null"
+        },
+        {
+          "properties": {
+            "redis": {
+              "properties": {
+                "master": {
+                  "$ref": "#/$defs/constrains~1containerSecurityContext.runAsUser:t"
+                }
+              },
+              "required": [
+                "master"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "redis"
+          ],
+          "type": "object"
+        },
+        {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1redis.master.containerSecurityContext.runAsUser"
+            },
+            {
+              "properties": {
+                "redis": {
+                  "properties": {
+                    "master": {
+                      "$ref": "#/$defs/constrains~1containerSecurityContext.runAsUser@2"
+                    }
+                  },
+                  "required": [
+                    "master"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "redis"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "$ref": "#/$defs/constrains~1redis.architecture=replication+redis.sentinel.enabled:t@2"
+        }
+      ]
+    },
     "constrains/redis+redis.architecture=replication+redis.enabled+redis.enabled:t+7more": {
       "allOf": [
         {
@@ -25751,6 +25972,27 @@
       ],
       "type": "object"
     },
+    "constrains/redis.master.containerSecurityContext.runAsUser": {
+      "not": {
+        "properties": {
+          "redis": {
+            "properties": {
+              "master": {
+                "$ref": "#/$defs/constrains~1containerSecurityContext.runAsUser@4"
+              }
+            },
+            "required": [
+              "master"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "redis"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/redis.master.count": {
       "properties": {
         "redis": {
@@ -26791,6 +27033,58 @@
       ],
       "type": "object"
     },
+    "constrains/redis.replica.containerSecurityContext+1more": {
+      "anyOf": [
+        {
+          "properties": {
+            "redis": {
+              "properties": {
+                "replica": {
+                  "$ref": "#/$defs/constrains~1containerSecurityContext.runAsUser@3"
+                }
+              },
+              "required": [
+                "replica"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "redis"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1redis.replica.containerSecurityContext.runAsUser"
+        }
+      ]
+    },
+    "constrains/redis.replica.containerSecurityContext+1more@2": {
+      "anyOf": [
+        {
+          "properties": {
+            "redis": {
+              "properties": {
+                "replica": {
+                  "$ref": "#/$defs/constrains~1containerSecurityContext.runAsUser@2"
+                }
+              },
+              "required": [
+                "replica"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "redis"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1redis.replica.containerSecurityContext.runAsUser"
+        }
+      ]
+    },
     "constrains/redis.replica.containerSecurityContext+redis.replica.initContainers:t+4more": {
       "anyOf": [
         {
@@ -26829,6 +27123,46 @@
       "properties": {
         "redis": {
           "$ref": "#/$defs/constrains~1replica.containerSecurityContext.enabled:t"
+        }
+      },
+      "required": [
+        "redis"
+      ],
+      "type": "object"
+    },
+    "constrains/redis.replica.containerSecurityContext.runAsUser": {
+      "not": {
+        "properties": {
+          "redis": {
+            "properties": {
+              "replica": {
+                "$ref": "#/$defs/constrains~1containerSecurityContext.runAsUser@4"
+              }
+            },
+            "required": [
+              "replica"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "redis"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/redis.replica.containerSecurityContext.runAsUser:t": {
+      "properties": {
+        "redis": {
+          "properties": {
+            "replica": {
+              "$ref": "#/$defs/constrains~1containerSecurityContext.runAsUser:t"
+            }
+          },
+          "required": [
+            "replica"
+          ],
+          "type": "object"
         }
       },
       "required": [
@@ -34459,7 +34793,7 @@
                 "$ref": "#/$defs/constrains~1postgresql.primary.podSecurityContext.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@7"
+                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@4"
               }
             ]
           },
@@ -34478,7 +34812,7 @@
                 "$ref": "#/$defs/constrains~1postgresql.global.compatibility.openshift.adaptSecurityContext=force"
               },
               {
-                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@7"
+                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@4"
               }
             ]
           },
@@ -34513,7 +34847,7 @@
                 "$ref": "#/$defs/constrains~1postgresql.global.compatibility.openshift.adaptSecurityContext=force"
               },
               {
-                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@7"
+                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@4"
               }
             ]
           },
@@ -34581,7 +34915,7 @@
                 "$ref": "#/$defs/constrains~1postgresql.primary.podSecurityContext.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@7"
+                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@4"
               }
             ]
           }
@@ -39798,6 +40132,71 @@
       "if": {
         "anyOf": [
           {
+            "$ref": "#/$defs/constrains~1redis+redis.architecture+redis.architecture!=replication+7more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.architecture+redis.architecture!=replication+7more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled:t+4more"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1redis.sentinel.service.type=NodePort"
+              },
+              {
+                "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null"
+              },
+              {
+                "$ref": "#/$defs/constrains~1redis.sentinel.service.nodePorts.redis:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1redis.architecture=replication"
+              },
+              {
+                "$ref": "#/$defs/constrains~1redis.sentinel.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled:t+6more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled:t+6more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis.enabled+redis.enabled=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis@4"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.architecture+redis.architecture!=replication+7more@3"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "redis": {
+            "additionalProperties": {},
+            "properties": {
+              "replica": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "allOf": [
               {
                 "$ref": "#/$defs/constrains~1postgresql.passwordUpdateJob.podLabels"
@@ -41863,7 +42262,7 @@
                 "$ref": "#/$defs/constrains~1postgresql.passwordUpdateJob.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more"
+                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@5"
               }
             ]
           },
@@ -41917,7 +42316,7 @@
                 "$ref": "#/$defs/constrains~1postgresql.passwordUpdateJob.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more"
+                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@5"
               },
               {
                 "$ref": "#/$defs/constrains~1postgresql.global.compatibility.openshift:t@2"
@@ -41963,7 +42362,7 @@
                 "$ref": "#/$defs/constrains~1postgresql.passwordUpdateJob.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more"
+                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@5"
               }
             ]
           },
@@ -41979,7 +42378,7 @@
                 "$ref": "#/$defs/constrains~1postgresql.passwordUpdateJob.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more"
+                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@5"
               },
               {
                 "$ref": "#/$defs/constrains~1postgresql.global.compatibility.openshift:t@2"
@@ -44359,7 +44758,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@6"
+                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@3"
               },
               {
                 "$ref": "#/$defs/constrains~1postgresql.enabled:t"
@@ -44405,7 +44804,7 @@
                 "$ref": "#/$defs/constrains~1postgresql+postgresql.enabled+postgresql.enabled=null"
               },
               {
-                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@6"
+                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@3"
               },
               {
                 "$ref": "#/$defs/constrains~1postgresql.readReplicas.podSecurityContext.enabled:t"
@@ -44467,7 +44866,7 @@
                 "$ref": "#/$defs/constrains~1postgresql+postgresql.enabled+postgresql.enabled=null"
               },
               {
-                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@6"
+                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@3"
               },
               {
                 "$ref": "#/$defs/constrains~1postgresql.global.compatibility.openshift:t"
@@ -44483,7 +44882,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@6"
+                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@3"
               },
               {
                 "$ref": "#/$defs/constrains~1postgresql.global.compatibility.openshift:t"
@@ -46476,7 +46875,7 @@
                 "$ref": "#/$defs/constrains~1postgresql+postgresql.enabled+postgresql.enabled=null"
               },
               {
-                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@3"
+                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@7"
               },
               {
                 "$ref": "#/$defs/constrains~1postgresql.passwordUpdateJob.enabled:t"
@@ -46514,7 +46913,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@3"
+                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@7"
               },
               {
                 "$ref": "#/$defs/constrains~1postgresql.enabled:t"
@@ -46539,7 +46938,7 @@
                 "$ref": "#/$defs/constrains~1postgresql.global.compatibility.openshift:t"
               },
               {
-                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@3"
+                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@7"
               },
               {
                 "$ref": "#/$defs/constrains~1postgresql.enabled:t"
@@ -46561,7 +46960,7 @@
                 "$ref": "#/$defs/constrains~1postgresql.global.compatibility.openshift:t"
               },
               {
-                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@3"
+                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@7"
               },
               {
                 "$ref": "#/$defs/constrains~1postgresql.passwordUpdateJob.enabled:t"
@@ -51447,76 +51846,6 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null"
-              },
-              {
-                "$ref": "#/$defs/constrains~1redis.existingConfigmap:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1redis.sentinel.service.nodePorts.redis:t+redis.sentinel.service.type=NodePort"
-              },
-              {
-                "$ref": "#/$defs/constrains~1redis.configmapChecksumAnnotations:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null"
-              },
-              {
-                "$ref": "#/$defs/constrains~1redis.architecture=replication"
-              },
-              {
-                "$ref": "#/$defs/constrains~1redis.existingConfigmap:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1redis.sentinel.enabled:t@2"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1redis+redis.architecture+redis.architecture!=replication+redis.enabled+4more"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null"
-              },
-              {
-                "$ref": "#/$defs/constrains~1redis.master.kind=Deployment@2"
-              },
-              {
-                "$ref": "#/$defs/constrains~1redis.architecture=standalone"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled=null+4more"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "redis": {
-            "additionalProperties": {},
-            "properties": {
-              "master": {
-                "$ref": "#/$defs/constrains~1persistence"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
                 "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled=null"
               },
               {
@@ -54457,65 +54786,6 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1redis+redis.architecture+redis.architecture!=replication+7more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1redis+redis.architecture+redis.architecture!=replication+7more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled:t+4more"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1redis.sentinel.service.type=NodePort"
-              },
-              {
-                "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null"
-              },
-              {
-                "$ref": "#/$defs/constrains~1redis.sentinel.service.nodePorts.redis:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1redis.architecture=replication"
-              },
-              {
-                "$ref": "#/$defs/constrains~1redis.sentinel.enabled:t@2"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1redis.enabled+redis.enabled=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1redis.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1redis@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1redis+redis.architecture+redis.architecture!=replication+7more@3"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "redis": {
-            "additionalProperties": {},
-            "properties": {
-              "replica": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
             "allOf": [
               {
                 "$ref": "#/$defs/constrains~1postgresql+postgresql.enabled+postgresql.enabled=null"
@@ -56786,7 +57056,7 @@
                 "$ref": "#/$defs/constrains~1postgresql.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@4"
+                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more"
               },
               {
                 "$ref": "#/$defs/constrains~1postgresql.global.compatibility.openshift:t@2"
@@ -56808,7 +57078,7 @@
                 "$ref": "#/$defs/constrains~1postgresql.global.compatibility.openshift:t"
               },
               {
-                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@4"
+                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more"
               }
             ]
           },
@@ -56837,7 +57107,7 @@
                 "$ref": "#/$defs/constrains~1postgresql.primary.containerSecurityContext.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@4"
+                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more"
               },
               {
                 "$ref": "#/$defs/constrains~1postgresql.global.compatibility.openshift:t@2"
@@ -56859,7 +57129,7 @@
                 "$ref": "#/$defs/constrains~1postgresql.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@4"
+                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more"
               }
             ]
           }
@@ -61754,6 +62024,56 @@
                       "null",
                       "string"
                     ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null"
+              },
+              {
+                "$ref": "#/$defs/constrains~1redis.existingConfigmap:t"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled:t+4more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled:t+6more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled:t+6more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled=null+1more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.architecture+redis.architecture!=replication+7more@3"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "redis": {
+            "additionalProperties": {},
+            "properties": {
+              "replica": {
+                "additionalProperties": {},
+                "properties": {
+                  "persistence": {
+                    "description": "Persistence Parameters\nref: https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
+                    "type": "object"
                   }
                 }
               }
@@ -66769,7 +67089,7 @@
                 "$ref": "#/$defs/constrains~1postgresql.global.compatibility.openshift:t"
               },
               {
-                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@2"
+                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@6"
               },
               {
                 "$ref": "#/$defs/constrains~1postgresql.architecture=replication"
@@ -66788,7 +67108,7 @@
                 "$ref": "#/$defs/constrains~1postgresql.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@2"
+                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@6"
               },
               {
                 "$ref": "#/$defs/constrains~1postgresql.architecture=replication"
@@ -66825,7 +67145,7 @@
                 "$ref": "#/$defs/constrains~1postgresql.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@2"
+                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@6"
               },
               {
                 "$ref": "#/$defs/constrains~1postgresql.global.compatibility.openshift:t@2"
@@ -66847,7 +67167,7 @@
                 "$ref": "#/$defs/constrains~1postgresql+postgresql.enabled+postgresql.enabled=null"
               },
               {
-                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@2"
+                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@6"
               },
               {
                 "$ref": "#/$defs/constrains~1postgresql.global.compatibility.openshift:t@2"
@@ -69158,50 +69478,6 @@
       "if": {
         "anyOf": [
           {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null"
-              },
-              {
-                "$ref": "#/$defs/constrains~1redis.existingConfigmap:t"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled:t+4more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled=null+1more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1redis+redis.architecture+redis.architecture!=replication+7more@3"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "redis": {
-            "additionalProperties": {},
-            "properties": {
-              "replica": {
-                "additionalProperties": {},
-                "properties": {
-                  "persistence": {
-                    "description": "Persistence Parameters\nref: https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
             "$ref": "#/$defs/constrains~1postgresql.enabled:t+postgresql.primary.affinity:t+2more"
           },
           {
@@ -70706,6 +70982,49 @@
         "properties": {
           "postgresql": {
             "$ref": "#/$defs/constrains~1metrics.resourcesPreset"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.architecture+redis.architecture!=replication+redis.enabled+4more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null+redis.global+3more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled=null+redis.master.count+1more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled:t+6more@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis.enabled+redis.enabled=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.configmapChecksumAnnotations:t+6more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis@4"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "redis": {
+            "additionalProperties": {},
+            "properties": {
+              "master": {
+                "type": "object"
+              }
+            }
           }
         }
       }
@@ -75493,6 +75812,79 @@
           {
             "allOf": [
               {
+                "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null"
+              },
+              {
+                "$ref": "#/$defs/constrains~1redis.existingConfigmap:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1redis.sentinel.service.nodePorts.redis:t+redis.sentinel.service.type=NodePort"
+              },
+              {
+                "$ref": "#/$defs/constrains~1redis.configmapChecksumAnnotations:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null"
+              },
+              {
+                "$ref": "#/$defs/constrains~1redis.architecture=replication"
+              },
+              {
+                "$ref": "#/$defs/constrains~1redis.existingConfigmap:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1redis.sentinel.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.architecture+redis.architecture!=replication+redis.enabled+4more"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null"
+              },
+              {
+                "$ref": "#/$defs/constrains~1redis.master.kind=Deployment@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1redis.architecture=standalone"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled:t+6more@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled=null+4more"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "redis": {
+            "additionalProperties": {},
+            "properties": {
+              "master": {
+                "$ref": "#/$defs/constrains~1persistence"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
                 "$ref": "#/$defs/constrains~1global.compatibility.openshift.adaptSecurityContext!=null"
               },
               {
@@ -78393,46 +78785,6 @@
       },
       "then": {
         "$ref": "#/$defs/constrains~1containerSecurityContext@2"
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1redis+redis.architecture+redis.architecture!=replication+redis.enabled+4more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null+redis.global+3more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled=null+redis.master.count+1more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1redis.enabled+redis.enabled=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1redis.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.configmapChecksumAnnotations:t+6more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1redis@4"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "redis": {
-            "additionalProperties": {},
-            "properties": {
-              "master": {
-                "type": "object"
-              }
-            }
-          }
-        }
       }
     },
     {
@@ -84024,7 +84376,7 @@
                 "$ref": "#/$defs/constrains~1postgresql+postgresql.enabled+postgresql.enabled=null"
               },
               {
-                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@5"
+                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1postgresql.global.compatibility.openshift:t@2"
@@ -84049,7 +84401,7 @@
                 "$ref": "#/$defs/constrains~1postgresql.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@5"
+                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1postgresql.metrics.containerSecurityContext.enabled:t"
@@ -84065,7 +84417,7 @@
                 "$ref": "#/$defs/constrains~1postgresql.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@5"
+                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1postgresql.global.compatibility.openshift:t@2"
@@ -84128,7 +84480,7 @@
                 "$ref": "#/$defs/constrains~1postgresql.global.compatibility.openshift:t"
               },
               {
-                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@5"
+                "$ref": "#/$defs/constrains~1postgresql.global.compatibility.omitEmptySeLinuxOptions:t+1more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1postgresql.metrics.containerSecurityContext.enabled:t"

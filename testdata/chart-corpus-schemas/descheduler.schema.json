@@ -947,6 +947,26 @@
       ],
       "type": "object"
     },
+    "constrains/replicas": {
+      "properties": {
+        "replicas": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 1,
+              "type": "integer"
+            },
+            {
+              "pattern": "^\\+?([1-9][0-9]{1,17}|[2-9]|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{1,14}|0[xX]0*[2-9a-fA-F]|0[bB]0*1[0-1]{1,61}|0[oO]?0*[1-7][0-7]{1,19}|0[oO]?0*[2-7])$",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "required": [
+        "replicas"
+      ],
+      "type": "object"
+    },
     "constrains/serviceAccount.create:t": {
       "properties": {
         "serviceAccount": {
@@ -1820,6 +1840,40 @@
   "allOf": [
     {
       "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1replicas"
+          },
+          {
+            "$ref": "#/$defs/constrains~1kind=Deployment"
+          },
+          {
+            "not": {
+              "properties": {
+                "leaderElection": {
+                  "properties": {
+                    "enabled": {
+                      "$ref": "#/$defs/t"
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "leaderElection"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "not": {
@@ -2308,6 +2362,60 @@
       "if": {
         "allOf": [
           {
+            "anyOf": [
+              {
+                "properties": {
+                  "replicas": {
+                    "enum": [
+                      ""
+                    ]
+                  }
+                },
+                "required": [
+                  "replicas"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "replicas": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "replicas"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "replicas": {}
+                  },
+                  "required": [
+                    "replicas"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1replicas"
+          },
+          {
+            "$ref": "#/$defs/constrains~1kind=Deployment"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "$ref": "#/$defs/constrains~1leaderElection:t"
           },
           {
@@ -2356,6 +2464,16 @@
         "anyOf": [
           {
             "$ref": "#/$defs/constrains~1rbac.create:t"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1replicas"
+              },
+              {
+                "$ref": "#/$defs/constrains~1kind=Deployment"
+              }
+            ]
           },
           {
             "$ref": "#/$defs/constrains~1kind=Deployment"

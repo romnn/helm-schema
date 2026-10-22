@@ -3164,6 +3164,59 @@
     },
     {
       "if": {
+        "not": {
+          "$ref": "#/$defs/constrains~1snapshotRestoration.enabled:t"
+        }
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "config": {
+                "additionalProperties": {},
+                "description": "modification example for configuration to overwrite defaults",
+                "properties": {
+                  "cluster": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "p2p": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "config": {
+                "additionalProperties": {},
+                "description": "modification example for configuration to overwrite defaults",
+                "properties": {
+                  "cluster": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "config": {
+                "description": "modification example for configuration to overwrite defaults",
+                "type": "object"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "$ref": "#/$defs/constrains~1ingress.enabled:t"
@@ -3403,6 +3456,62 @@
       "if": {
         "allOf": [
           {
+            "not": {
+              "$ref": "#/$defs/constrains~1snapshotRestoration.enabled:t"
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "config": {
+                      "properties": {
+                        "cluster": {}
+                      },
+                      "required": [
+                        "cluster"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "config"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "config": {
+                    "properties": {
+                      "cluster": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "cluster"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "config"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "$ref": "#/$defs/constrains~1apiKey:t+readOnlyApiKey:t"
           },
           {
@@ -3469,6 +3578,78 @@
               "ingress"
             ],
             "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "$ref": "#/$defs/constrains~1snapshotRestoration.enabled:t"
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "config": {
+                    "properties": {
+                      "cluster": {
+                        "properties": {
+                          "p2p": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "p2p"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "cluster"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "config"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "config": {
+                      "properties": {
+                        "cluster": {
+                          "properties": {
+                            "p2p": {}
+                          },
+                          "required": [
+                            "p2p"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "cluster"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "config"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
           }
         ]
       },
@@ -4478,6 +4659,46 @@
               "persistence"
             ],
             "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "config": {}
+                  },
+                  "required": [
+                    "config"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "config": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "config"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "$ref": "#/$defs/constrains~1snapshotRestoration.enabled:t"
+            }
           }
         ]
       },
