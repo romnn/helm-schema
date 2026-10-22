@@ -58,21 +58,38 @@ must say why, so this plan does not repeat it.
   `int`; YAML `2` is float64 while `--set` yields int64 — JSON Schema cannot distinguish them, so runtime-kind
   alternatives stay alternatives when the loading path is unknown.
 - Capturing a scalar freezes it; capturing a map keeps reference identity. `set`/`unset`/merge mutate; `pick`
-  copies the outer map and aliases nested maps; `deepCopy` copies every nested map. A tested guard and emitted
-  bytes are snapshots. Map range iterates a sorted entry snapshot; nested maps stay live. Helm parses all
-  definitions first, then renders deeper paths first with reverse-lexical ties.
+  copies the outer map and aliases nested maps; `deepCopy` copies per occurrence, breaking internal sharing. A
+  tested guard and emitted bytes are snapshots. Map range iterates a sorted entry snapshot; nested maps stay live.
+  Helm parses all definitions first, then renders deeper paths first with reverse-lexical ties.
+- (R0 rework 2, probes in `plan/value-algebra-r0-probes/review-results.txt`.)
+  - Slices have backing identity: `sortAlpha` sorts a `[]string` in place through `slice` views, while `append`
+    copies slots.
+  - Assignability is by concrete Go type, not kind: `map[string]string` is not a `map[string]interface{}`;
+    `index "A" 0` is `uint8`.
+  - `.Values` is `common.Values`, whose zero-argument methods (`YAML`) win over keys.
+  - A typed nil map (`fromJson "null"`) passes `required`, equals nil and aborts on write.
+  - Chained field access through an absent value aborts, but not after grouping. `get` of an absent key gives `""`;
+    `index` gives nil.
+  - Selectors test emptiness after eager arguments ran.
+  - `tpl` clones the template namespace.
+  - `.Subcharts.<c>.Values` is the parent's `.Values.<c>` object.
+  - Helpers can be nondeterministic (`randInt`).
+  - A values number never satisfies a Go `int` parameter unless the template wrote an `int` there first.
+  - Details and the contracts that encode them: `plan/value-algebra-r0.md` §3-§4.
 
 ## 3. Target model
 
 Extend the interpreter in place; keep `ObservedFacts → ContractIr → FinalizedContract` (ADR 0014, 0015).
 
 1. **Values.** One guarded alternative algebra (existing `BindingDecision` machinery): immutable scalars/terms,
-   map references, sequences, explicit unknown alternatives. Every leaf carries a Go kind (always) and content
-   (optionally): "a string with unknown bytes" is a first-class fact. Truth, equality and kind queries are
+   map references, `[]interface{}` sequences, `[]string` values with backing identity, and explicit unknown
+   alternatives. Every leaf carries a concrete Go type (with explicit unknown coverage; kind is derived) and
+   content (optionally): "a string with unknown bytes" is a first-class fact. Truth, equality and kind queries are
    derived from leaves, never stored beside them. Nil interface, typed nil containers and unknown are distinct.
-   Return kinds live in the function catalog (`function_semantics`, ADR 0021), using Helm's real bindings
-   (`fromJson` returns a map).
-2. **Access discipline (the review's type change).** `EvalResult`'s dispatch is private. Content consumers call
+   The function catalog (`function_semantics`, ADR 0021) declares fixed or selected success types, abort
+   conditions and a mutation facet separately, using Helm's real bindings (`fromJson` returns a map, even an
+   error map; Sprig `mustFromJson` does not).
+2. **Access discipline (the review's type change).** `ScalarValueDispatch`'s arms are private on every carrier. Content consumers call
    `content()` (kind-only arms dropped, `complete = false`, which is the existing "incomplete dispatch may omit
    an arm" meaning); kind consumers call `kinds()`. The compiler then enumerates every consumer (34 production
    field reads plus the local/branch-join dispatch maps at 7c200618) and each chooses one. This prevents, by
@@ -80,19 +97,21 @@ Extend the interpreter in place; keep `ObservedFacts → ContractIr → Finalize
 3. **Provenance.** Input-path/transform attribution rides next to a value, never as a substitute for its kind
    or identity.
 4. **State.** One interpreter-owned heap from object identity to fields; lexical frames map names to values.
-   Root and `.Values` are ordinary objects, interned by source identity so repeated reads alias. Objects have
+   Root and `.Values` are ordinary objects. They are initialized from Helm's constructed values graph (subchart
+   views alias, `global` copied at Helm's levels), so repeated reads alias. Objects have
    known fields plus an explicit unknown remainder (setting a known key proves non-emptiness; deleting one does
    not prove emptiness of an open map). Mutations update the heap exactly once. Unmodelled writers invalidate
    every reachable mutable object.
-5. **Execution.** Only the evaluator executes syntax, once, in Go's order. Transfers and contract collectors
+5. **Execution.** Only the evaluator executes syntax, once, in Go's order. The pipeline input runs first, then
+   each argument is evaluated and validated in turn. `and`/`or` are special forms. Transfers and contract collectors
    receive owned operands and state access, never `TemplateExpr`. Flow carries normal continuation, abort, break and continue
    separately from the produced value; unknown output is not an abort. Predicates are frozen when tested and
    expressed over the original coalesced inputs.
 6. **Joins and output.** Branches fork state sharing identities and join changed fields under frozen branch
    predicates. Emit a rejection only when every alternative under an input predicate fails. Text is accumulated
    in the same walk (after trim handling); each helper returns its own buffer.
-7. **Caching.** Memoize only proven deterministic, transitively read-only helpers; key by namespace, mode,
-   evaluated arguments and heap snapshot identity (ADR 0028: never an oracle).
+7. **Caching.** Memoize only proven deterministic, transitively read-only, untruncated helpers. Key by namespace,
+   mode, evaluated arguments, heap snapshot identity and the recursion `seen` set (ADR 0028: never an oracle).
 
 Kind consumers live in one module: `require_kind` (ternary condition, string parameters, `required` message) and
 `required_subject`. `required` and `ternary` each have exactly one owner, the evaluator.
