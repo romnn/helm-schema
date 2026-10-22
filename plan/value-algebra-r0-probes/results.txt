@@ -1,0 +1,446 @@
+version.BuildInfo{Version:"v4.2.3", GitCommit:"43e8b7feece8beb0fcba47059ec9b522fd929a64", GitTreeState:"clean", GoVersion:"go1.26.5", KubeClientVersion:"v1.36"}
+
+### int-trunc-add
+values.yaml: {}
+template: v: {{ trunc (add 1 2) "abcdef" }}
+command: helm template p $SCRATCH/int-trunc-add --show-only templates/cm.yaml 
+exit: 1
+output:
+  Error: int-trunc-add/templates/cm.yaml:1:19
+    executing "int-trunc-add/templates/cm.yaml" at <2>:
+      wrong type for value; expected int; got int64
+  
+  Use --debug flag to render out invalid YAML
+
+### int-trunc-len
+values.yaml: {}
+template: v: {{ trunc (len "abc") "abcdef" }}
+command: helm template p $SCRATCH/int-trunc-len --show-only templates/cm.yaml 
+exit: 0
+output:
+  ---
+  # Source: int-trunc-len/templates/cm.yaml
+  v: abc
+
+### int-trunc-literal
+values.yaml: {}
+template: v: {{ trunc 3 "abcdef" }}
+command: helm template p $SCRATCH/int-trunc-literal --show-only templates/cm.yaml 
+exit: 0
+output:
+  ---
+  # Source: int-trunc-literal/templates/cm.yaml
+  v: abc
+
+### int-trunc-int
+values.yaml: {}
+template: v: {{ trunc (int 3) "abcdef" }}
+command: helm template p $SCRATCH/int-trunc-int --show-only templates/cm.yaml 
+exit: 0
+output:
+  ---
+  # Source: int-trunc-int/templates/cm.yaml
+  v: abc
+
+### int-trunc-int64
+values.yaml: {}
+template: v: {{ trunc (int64 3) "abcdef" }}
+command: helm template p $SCRATCH/int-trunc-int64 --show-only templates/cm.yaml 
+exit: 1
+output:
+  Error: int-trunc-int64/templates/cm.yaml:1:19
+    executing "int-trunc-int64/templates/cm.yaml" at <3>:
+      wrong type for value; expected int; got int64
+  
+  Use --debug flag to render out invalid YAML
+
+### int-trunc-atoi
+values.yaml: {}
+template: v: {{ trunc (atoi "3") "abcdef" }}
+command: helm template p $SCRATCH/int-trunc-atoi --show-only templates/cm.yaml 
+exit: 0
+output:
+  ---
+  # Source: int-trunc-atoi/templates/cm.yaml
+  v: abc
+
+### int-trunc-float-literal
+values.yaml: {}
+template: v: {{ trunc 3.0 "abcdef" }}
+command: helm template p $SCRATCH/int-trunc-float-literal --show-only templates/cm.yaml 
+exit: 0
+output:
+  ---
+  # Source: int-trunc-float-literal/templates/cm.yaml
+  v: abc
+
+### int-trunc-grouped-float
+values.yaml: {}
+template: v: {{ trunc (3.0) "abcdef" }}
+command: helm template p $SCRATCH/int-trunc-grouped-float --show-only templates/cm.yaml 
+exit: 1
+output:
+  Error: int-trunc-grouped-float/templates/cm.yaml:1:13
+    executing "int-trunc-grouped-float/templates/cm.yaml" at <3.0>:
+      wrong type for value; expected int; got float64
+  
+  Use --debug flag to render out invalid YAML
+
+### int-trunc-values-yaml
+values.yaml: num: 3
+template: v: {{ trunc .Values.num "abcdef" }}
+command: helm template p $SCRATCH/int-trunc-values-yaml --show-only templates/cm.yaml 
+exit: 1
+output:
+  Error: int-trunc-values-yaml/templates/cm.yaml:1:19
+    executing "int-trunc-values-yaml/templates/cm.yaml" at <.Values.num>:
+      wrong type for value; expected int; got float64
+  
+  Use --debug flag to render out invalid YAML
+
+### int-trunc-values-set
+values.yaml: {}
+template: v: {{ trunc .Values.num "abcdef" }}
+command: helm template p $SCRATCH/int-trunc-values-set --show-only templates/cm.yaml --set num=3
+exit: 1
+output:
+  Error: int-trunc-values-set/templates/cm.yaml:1:19
+    executing "int-trunc-values-set/templates/cm.yaml" at <.Values.num>:
+      wrong type for value; expected int; got int64
+  
+  Use --debug flag to render out invalid YAML
+
+### int-repeat-add
+values.yaml: {}
+template: v: {{ repeat (add 1 1) "a" }}
+command: helm template p $SCRATCH/int-repeat-add --show-only templates/cm.yaml 
+exit: 1
+output:
+  Error: int-repeat-add/templates/cm.yaml:1:20
+    executing "int-repeat-add/templates/cm.yaml" at <1>:
+      wrong type for value; expected int; got int64
+  
+  Use --debug flag to render out invalid YAML
+
+### int-repeat-len
+values.yaml: {}
+template: v: {{ repeat (len "ab") "a" }}
+command: helm template p $SCRATCH/int-repeat-len --show-only templates/cm.yaml 
+exit: 0
+output:
+  ---
+  # Source: int-repeat-len/templates/cm.yaml
+  v: aa
+
+### int-substr-add
+values.yaml: {}
+template: v: {{ substr 0 (add 1 1) "abc" }}
+command: helm template p $SCRATCH/int-substr-add --show-only templates/cm.yaml 
+exit: 1
+output:
+  Error: int-substr-add/templates/cm.yaml:1:22
+    executing "int-substr-add/templates/cm.yaml" at <1>:
+      wrong type for value; expected int; got int64
+  
+  Use --debug flag to render out invalid YAML
+
+### int-indent-add
+values.yaml: {}
+template: v: {{ indent (add 1 1) "x" | quote }}
+command: helm template p $SCRATCH/int-indent-add --show-only templates/cm.yaml 
+exit: 1
+output:
+  Error: int-indent-add/templates/cm.yaml:1:20
+    executing "int-indent-add/templates/cm.yaml" at <1>:
+      wrong type for value; expected int; got int64
+  
+  Use --debug flag to render out invalid YAML
+
+### int-abbrev-add
+values.yaml: {}
+template: v: {{ abbrev (add 4 0) "abcdefg" }}
+command: helm template p $SCRATCH/int-abbrev-add --show-only templates/cm.yaml 
+exit: 1
+output:
+  Error: int-abbrev-add/templates/cm.yaml:1:20
+    executing "int-abbrev-add/templates/cm.yaml" at <0>:
+      wrong type for value; expected int; got int64
+  
+  Use --debug flag to render out invalid YAML
+
+### int-until-add
+values.yaml: {}
+template: v: {{ until (add 1 1) }}
+command: helm template p $SCRATCH/int-until-add --show-only templates/cm.yaml 
+exit: 1
+output:
+  Error: int-until-add/templates/cm.yaml:1:19
+    executing "int-until-add/templates/cm.yaml" at <1>:
+      wrong type for value; expected int; got int64
+  
+  Use --debug flag to render out invalid YAML
+
+### int-splitn-add
+values.yaml: {}
+template: v: {{ splitn "," (add 1 1) "a,b,c" }}
+command: helm template p $SCRATCH/int-splitn-add --show-only templates/cm.yaml 
+exit: 1
+output:
+  Error: int-splitn-add/templates/cm.yaml:1:24
+    executing "int-splitn-add/templates/cm.yaml" at <1>:
+      wrong type for value; expected int; got int64
+  
+  Use --debug flag to render out invalid YAML
+
+### int-index-add
+values.yaml: {}
+template: v: {{ index (list "a" "b") (add 0 1) }}
+command: helm template p $SCRATCH/int-index-add --show-only templates/cm.yaml 
+exit: 0
+output:
+  ---
+  # Source: int-index-add/templates/cm.yaml
+  v: b
+
+### int-eq-add-literal
+values.yaml: {}
+template: v: {{ eq (add 1 2) 3 }}
+command: helm template p $SCRATCH/int-eq-add-literal --show-only templates/cm.yaml 
+exit: 0
+output:
+  ---
+  # Source: int-eq-add-literal/templates/cm.yaml
+  v: true
+
+### int-eq-len-add
+values.yaml: {}
+template: v: {{ eq (len "abc") (add 1 2) }}
+command: helm template p $SCRATCH/int-eq-len-add --show-only templates/cm.yaml 
+exit: 0
+output:
+  ---
+  # Source: int-eq-len-add/templates/cm.yaml
+  v: true
+
+### int-eq-values-yaml-literal
+values.yaml: num: 3
+template: v: {{ eq .Values.num 3 }}
+command: helm template p $SCRATCH/int-eq-values-yaml-literal --show-only templates/cm.yaml 
+exit: 1
+output:
+  Error: template: int-eq-values-yaml-literal/templates/cm.yaml:1:6: executing "int-eq-values-yaml-literal/templates/cm.yaml" at <eq .Values.num 3>: error calling eq: incompatible types for comparison: float64 and int
+  
+  Use --debug flag to render out invalid YAML
+
+### int-range-add
+values.yaml: {}
+template: v: [{{ range (add 1 1) }}{{ . }},{{ end }}]
+command: helm template p $SCRATCH/int-range-add --show-only templates/cm.yaml 
+exit: 0
+output:
+  ---
+  # Source: int-range-add/templates/cm.yaml
+  v: [0,1,]
+
+### int-range-values-yaml
+values.yaml: num: 2
+template: v: [{{ range .Values.num }}{{ . }},{{ end }}]
+command: helm template p $SCRATCH/int-range-values-yaml --show-only templates/cm.yaml 
+exit: 1
+output:
+  Error: int-range-values-yaml/templates/cm.yaml:1:20
+    executing "int-range-values-yaml/templates/cm.yaml" at <.Values.num>:
+      range can't iterate over 2
+  
+  Use --debug flag to render out invalid YAML
+
+### int-range-values-set
+values.yaml: {}
+template: v: [{{ range .Values.num }}{{ . }},{{ end }}]
+command: helm template p $SCRATCH/int-range-values-set --show-only templates/cm.yaml --set num=2
+exit: 0
+output:
+  ---
+  # Source: int-range-values-set/templates/cm.yaml
+  v: [0,1,]
+
+### int-eq-values-set-literal
+values.yaml: {}
+template: v: {{ eq .Values.num 3 }}
+command: helm template p $SCRATCH/int-eq-values-set-literal --show-only templates/cm.yaml --set num=3
+exit: 0
+output:
+  ---
+  # Source: int-eq-values-set-literal/templates/cm.yaml
+  v: true
+
+### int-typeof-values
+values.yaml: num: 3
+template: v: {{ typeOf .Values.num }}/{{ typeOf (int .Values.num) }}/{{ typeOf (add .Values.num 0) }}
+command: helm template p $SCRATCH/int-typeof-values --show-only templates/cm.yaml 
+exit: 0
+output:
+  ---
+  # Source: int-typeof-values/templates/cm.yaml
+  v: float64/int/int64
+
+### int-typeof-values-set
+values.yaml: {}
+template: v: {{ typeOf .Values.num }}
+command: helm template p $SCRATCH/int-typeof-values-set --show-only templates/cm.yaml --set num=3
+exit: 0
+output:
+  ---
+  # Source: int-typeof-values-set/templates/cm.yaml
+  v: int64
+
+### int-trunc-int-of-values
+values.yaml: num: 3
+template: v: {{ trunc (int .Values.num) "abcdef" }}
+command: helm template p $SCRATCH/int-trunc-int-of-values --show-only templates/cm.yaml 
+exit: 0
+output:
+  ---
+  # Source: int-trunc-int-of-values/templates/cm.yaml
+  v: abc
+
+### int-typeof-add-len
+values.yaml: {}
+template: v: {{ typeOf (add 1 2) }}/{{ typeOf (len "a") }}/{{ typeOf (int 1) }}/{{ typeOf 1 }}
+command: helm template p $SCRATCH/int-typeof-add-len --show-only templates/cm.yaml 
+exit: 0
+output:
+  ---
+  # Source: int-typeof-add-len/templates/cm.yaml
+  v: int64/int/int/int
+
+### typeis-omit-string
+values.yaml: {}
+template: v: {{ if typeIs "string" (omit (dict "a" 1) "b") }}x{{ else }}y{{ end }}
+command: helm template p $SCRATCH/typeis-omit-string --show-only templates/cm.yaml 
+exit: 0
+output:
+  ---
+  # Source: typeis-omit-string/templates/cm.yaml
+  v: y
+
+### typeis-omit-map
+values.yaml: {}
+template: v: {{ typeOf (omit (dict "a" 1) "b") }}/{{ kindOf (omit (dict "a" 1) "b") }}/{{ typeIs "map[string]interface {}" (omit (dict "a" 1) "b") }}
+command: helm template p $SCRATCH/typeis-omit-map --show-only templates/cm.yaml 
+exit: 0
+output:
+  ---
+  # Source: typeis-omit-map/templates/cm.yaml
+  v: map[string]interface {}/map/true
+
+### typeis-omit-values
+values.yaml: m: {a: 1}
+template: v: {{ typeOf (omit .Values.m "b") }}/{{ typeIs "string" (omit .Values.m "b") }}
+command: helm template p $SCRATCH/typeis-omit-values --show-only templates/cm.yaml 
+exit: 0
+output:
+  ---
+  # Source: typeis-omit-values/templates/cm.yaml
+  v: map[string]interface {}/false
+
+### req-default-string
+values.yaml: name: app
+template: v: {{ .Values.name | required "name is required" | default "fallback" }}
+command: helm template p $SCRATCH/req-default-string --show-only templates/cm.yaml 
+exit: 0
+output:
+  ---
+  # Source: req-default-string/templates/cm.yaml
+  v: app
+
+### req-default-int
+values.yaml: name: 5
+template: v: {{ .Values.name | required "name is required" | default "fallback" }}
+command: helm template p $SCRATCH/req-default-int --show-only templates/cm.yaml 
+exit: 0
+output:
+  ---
+  # Source: req-default-int/templates/cm.yaml
+  v: 5
+
+### req-default-false
+values.yaml: name: false
+template: v: {{ .Values.name | required "name is required" | default "fallback" }}
+command: helm template p $SCRATCH/req-default-false --show-only templates/cm.yaml 
+exit: 0
+output:
+  ---
+  # Source: req-default-false/templates/cm.yaml
+  v: fallback
+
+### req-default-zero
+values.yaml: name: 0
+template: v: {{ .Values.name | required "name is required" | default "fallback" }}
+command: helm template p $SCRATCH/req-default-zero --show-only templates/cm.yaml 
+exit: 0
+output:
+  ---
+  # Source: req-default-zero/templates/cm.yaml
+  v: fallback
+
+### req-default-empty-map
+values.yaml: name: {}
+template: v: {{ .Values.name | required "name is required" | default "fallback" }}
+command: helm template p $SCRATCH/req-default-empty-map --show-only templates/cm.yaml 
+exit: 0
+output:
+  ---
+  # Source: req-default-empty-map/templates/cm.yaml
+  v: fallback
+
+### req-default-empty-list
+values.yaml: name: []
+template: v: {{ .Values.name | required "name is required" | default "fallback" }}
+command: helm template p $SCRATCH/req-default-empty-list --show-only templates/cm.yaml 
+exit: 0
+output:
+  ---
+  # Source: req-default-empty-list/templates/cm.yaml
+  v: fallback
+
+### req-default-empty-string
+values.yaml: name: ""
+template: v: {{ .Values.name | required "name is required" | default "fallback" }}
+command: helm template p $SCRATCH/req-default-empty-string --show-only templates/cm.yaml 
+exit: 1
+output:
+  Error: execution error at (req-default-empty-string/templates/cm.yaml:1:21): name is required
+  
+  Use --debug flag to render out invalid YAML
+
+### req-default-null
+values.yaml: name: null
+template: v: {{ .Values.name | required "name is required" | default "fallback" }}
+command: helm template p $SCRATCH/req-default-null --show-only templates/cm.yaml 
+exit: 1
+output:
+  Error: execution error at (req-default-null/templates/cm.yaml:1:21): name is required
+  
+  Use --debug flag to render out invalid YAML
+
+### req-default-absent
+values.yaml: {}
+template: v: {{ .Values.name | required "name is required" | default "fallback" }}
+command: helm template p $SCRATCH/req-default-absent --show-only templates/cm.yaml 
+exit: 1
+output:
+  Error: execution error at (req-default-absent/templates/cm.yaml:1:21): name is required
+  
+  Use --debug flag to render out invalid YAML
+
+### req-default-map
+values.yaml: name: {a: 1}
+template: v: {{ .Values.name | required "name is required" | default "fallback" }}
+command: helm template p $SCRATCH/req-default-map --show-only templates/cm.yaml 
+exit: 0
+output:
+  ---
+  # Source: req-default-map/templates/cm.yaml
+  v: map[a:1]
+

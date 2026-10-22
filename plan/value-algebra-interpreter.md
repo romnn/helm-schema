@@ -57,22 +57,41 @@ must say why, so this plan does not repeat it.
   final output strip `<no value>`. Rune literals are integer code points. Sprig `int64` is distinct from Go
   `int`; YAML `2` is float64 while `--set` yields int64 — JSON Schema cannot distinguish them, so runtime-kind
   alternatives stay alternatives when the loading path is unknown.
-- Capturing a scalar freezes it; capturing a map keeps reference identity. `set`/`unset`/merge mutate; `pick`
-  copies the outer map and aliases nested maps; `deepCopy` copies every nested map. A tested guard and emitted
-  bytes are snapshots. Map range iterates a sorted entry snapshot; nested maps stay live. Helm parses all
-  definitions first, then renders deeper paths first with reverse-lexical ties.
+- Capturing a non-addressable scalar freezes it, but an `index` slot or a slice-range variable stays a live slot
+  reference; capturing a map keeps reference identity. `set`/`unset`/merge mutate; `pick`
+  copies the outer map and aliases nested maps; `deepCopy` copies per occurrence, breaking internal sharing. A
+  tested guard and emitted bytes are snapshots. Map range iterates a sorted entry snapshot; nested maps stay live.
+  Helm parses all definitions first, then renders deeper paths first with reverse-lexical ties.
+- (R0 rework 2, probes in `plan/value-algebra-r0-probes/review-results.txt`.)
+  - Slices have backing identity: `sortAlpha` sorts a `[]string` in place through `slice` views, while `append`
+    copies slots.
+  - Assignability is by concrete Go type, not kind: `map[string]string` is not a `map[string]interface{}`;
+    `index "A" 0` is `uint8`.
+  - `.Values` is `common.Values`, whose zero-argument methods (`YAML`) win over keys.
+  - A typed nil map (`fromJson "null"`) passes `required`, equals nil and aborts on write.
+  - Chained field access through an absent value aborts, but not after grouping. `get` of an absent key gives `""`;
+    `index` gives nil.
+  - Selectors test emptiness after eager arguments ran.
+  - `tpl` clones the template namespace.
+  - `.Subcharts.<c>.Values` is the parent's `.Values.<c>` object.
+  - `.Release` and `.Chart` are mutable maps, and literal `tpl` programs can write.
+  - Helpers can be nondeterministic (`randInt`).
+  - A values number never satisfies a Go `int` parameter unless the template wrote an `int` there first.
+  - Details and the contracts that encode them: `plan/value-algebra-r0.md` §3-§4.
 
 ## 3. Target model
 
 Extend the interpreter in place; keep `ObservedFacts → ContractIr → FinalizedContract` (ADR 0014, 0015).
 
 1. **Values.** One guarded alternative algebra (existing `BindingDecision` machinery): immutable scalars/terms,
-   map references, sequences, explicit unknown alternatives. Every leaf carries a Go kind (always) and content
-   (optionally): "a string with unknown bytes" is a first-class fact. Truth, equality and kind queries are
+   map references, `[]interface{}` sequences, `[]string` values with backing identity, and explicit unknown
+   alternatives. Every leaf carries a concrete Go type (with explicit unknown coverage; kind is derived) and
+   content (optionally): "a string with unknown bytes" is a first-class fact. Truth, equality and kind queries are
    derived from leaves, never stored beside them. Nil interface, typed nil containers and unknown are distinct.
-   Return kinds live in the function catalog (`function_semantics`, ADR 0021), using Helm's real bindings
-   (`fromJson` returns a map).
-2. **Access discipline (the review's type change).** `EvalResult`'s dispatch is private. Content consumers call
+   The function catalog (`function_semantics`, ADR 0021) declares fixed or selected success types, abort
+   conditions and a mutation facet separately, using Helm's real bindings (`fromJson` returns a map, even an
+   error map; Sprig `mustFromJson` does not).
+2. **Access discipline (the review's type change).** `ScalarValueDispatch`'s arms are private on every carrier. Content consumers call
    `content()` (kind-only arms dropped, `complete = false`, which is the existing "incomplete dispatch may omit
    an arm" meaning); kind consumers call `kinds()`. The compiler then enumerates every consumer (34 production
    field reads plus the local/branch-join dispatch maps at 7c200618) and each chooses one. This prevents, by
@@ -80,19 +99,21 @@ Extend the interpreter in place; keep `ObservedFacts → ContractIr → Finalize
 3. **Provenance.** Input-path/transform attribution rides next to a value, never as a substitute for its kind
    or identity.
 4. **State.** One interpreter-owned heap from object identity to fields; lexical frames map names to values.
-   Root and `.Values` are ordinary objects, interned by source identity so repeated reads alias. Objects have
+   Root and `.Values` are ordinary objects. They are initialized from Helm's constructed values graph (subchart
+   views alias, `global` copied at Helm's levels), so repeated reads alias. Objects have
    known fields plus an explicit unknown remainder (setting a known key proves non-emptiness; deleting one does
    not prove emptiness of an open map). Mutations update the heap exactly once. Unmodelled writers invalidate
    every reachable mutable object.
-5. **Execution.** Only the evaluator executes syntax, once, in Go's order. Transfers and contract collectors
+5. **Execution.** Only the evaluator executes syntax, once, in Go's order. The pipeline input runs first, then
+   each argument is evaluated and validated in turn. `and`/`or` are special forms. Transfers and contract collectors
    receive owned operands and state access, never `TemplateExpr`. Flow carries normal continuation, abort, break and continue
    separately from the produced value; unknown output is not an abort. Predicates are frozen when tested and
    expressed over the original coalesced inputs.
 6. **Joins and output.** Branches fork state sharing identities and join changed fields under frozen branch
    predicates. Emit a rejection only when every alternative under an input predicate fails. Text is accumulated
    in the same walk (after trim handling); each helper returns its own buffer.
-7. **Caching.** Memoize only proven deterministic, transitively read-only helpers; key by namespace, mode,
-   evaluated arguments and heap snapshot identity (ADR 0028: never an oracle).
+7. **Caching.** Memoize only proven deterministic, transitively read-only, untruncated helpers. Key by namespace,
+   mode, evaluated arguments, heap snapshot identity and the recursion `seen` set (ADR 0028: never an oracle).
 
 Kind consumers live in one module: `require_kind` (ternary condition, string parameters, `required` message) and
 `required_subject`. `required` and `ternary` each have exactly one owner, the evaluator.
@@ -138,24 +159,25 @@ fences.
 - An ADR recording the value algebra as the interpreter's single semantic model.
 - Cross-vendor design review (architecture + Helm-semantics lenses) before R1.
 
-**R1 — binding ownership, byte-identical.** Consolidate binding facts without changing evaluation order:
-truth derived from the binding leaf. Delete `local_truthy_reductions`, `root_truthy_predicates` and
-`Effects.local_set_truths`. Gate: every fixture byte-identical, schema-only battery 0 flips (a refactor).
+**R1-R3: refined by R0.** The authoritative stage contracts are in `plan/value-algebra-r0.md` §5. Their deletion
+lists are the `delete`/`seal` columns of `plan/value-algebra-r0-inventory/classification.tsv`, checked fail-closed
+by `inventory.py`. In summary:
+- **R1a** transposes binding and root containers into `LocalSlot`/`RootSlot`, byte-identically.
+- **R1b** moves slot facts onto binding leaves where a derivation contract is proven byte-identical. Residuals are
+  re-tagged R3b.
+- **R2** seals `ScalarValueDispatch` on every carrier, adds the concrete-type leaf and catalog facets, and deletes
+  the AST `required` lane, the negated-truth `required` arm and the syntactic ternary list. New rejections need an
+  identity-stable operand *and* a write-free certificate for the chart. It closes the write-free collection, rune,
+  message and string/int-parameter cells; `helper-maybe-dict` and `tpl-maybe-text` move to R3b.
+- **R3a** removes only proven-equivalent re-executions and carrier copies, preserving evaluation demand, effect
+  order and env/resolver, and adds the `State` seam. It is byte-identical.
+- **R3b** is the coupled cut-over: heap, Go-order invocation, frozen snapshots, flow, frames and namespaces, in-walk
+  output, and the caching contract. It deletes every remaining R3b row and closes the stateful classes.
 
-**R2 — kind leaf behind the access discipline.** Add `ScalarValue::Kind`, make the dispatch private behind
-`content()`/`kinds()`, stamp catalog return kinds once in `eval_invocation`. Delete the syntactic ternary list,
-`selection_dispatch`, `selects_truthy` and the `¬truth` fallback. Closes collection/include cells (required ×7
-dict/list, ternary condition-10/11/17/18, helper-maybe-dict, tpl-maybe-text).
-
-**R3 — one execution (the coupled stage).** Single evaluation of calls and headers, the heap, frozen guards and
-flow joins, in-walk output, together: an intermediate precise heap with legacy output replay is not a safe
-boundary (Astra's measurements). Remove scalar replay before publishing newly exact return or abort facts;
-migrate every writer or invalidate its targets. Delete `DeferredScalarProjection`, scalar projection replay,
-the fragment-to-output fallback, the mutation maps and replay/apply rescans, the `writes_state` fences,
-`proven_operands`' second selection tree, and the runtime-shaped `AbstractValue` variants (`Dict`, `List`,
-`Overlay`, selection/layer variants) replaced by the algebra. Closes the stateful classes (store24,
-guarded-writes, header10, reviewer42, Opus attempt-2 local-truth/values-root blockers). R3 may be split further
-by R0 only if each split point is shown safe.
+R3 splits exactly once, R3a | R3b (R0 §5.6). The landing sequence (refactors folded into semantic landings, or an
+ADR 0066 consolidation-only clause) is user decision D3 (R0 §6). Corrections against this plan's earlier text:
+`Effects.local_set_truths`, `selection_dispatch`, `selects_truthy` and the `writes_state` fences never existed on
+main.
 
 ## 5. Admission suite (kept for every stage)
 
