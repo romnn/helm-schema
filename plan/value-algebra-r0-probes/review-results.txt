@@ -293,8 +293,8 @@ output:
 ### a10-randint-helper
 template: v: {{ define "r" }}{{ randInt 0 2 }}{{ end }}{{ if eq (include "r" .) (include "r" .) }}{{ fail "same" }}{{ end }}ok
 runs: 30
-exit 0: 11
-exit 1: 19
+exit 0: 12
+exit 1: 18
 
 ### b01-tpl-literal-writes
 values.yaml: {} 
@@ -410,6 +410,41 @@ output:
 ### b06-shuffle-helper
 template: v: {{ define "r" }}{{ shuffle "ab" }}{{ end }}{{ eq (include "r" .) (include "r" .) }}
 runs: 30
-v: true: 18
-v: false: 12
+v: true: 17
+v: false: 13
+
+### c01-pipeline-fills-fixed-param
+values.yaml: {} 
+template: v: {{ int 1 | round 1 }}
+args: 
+exit: 0
+output:
+  ---
+  v: 1
+
+### c02-pipeline-fills-printf-format
+values.yaml: {} 
+template: v: {{ 1 | printf }}
+args: 
+exit: 1
+output:
+  Error: c02-pipeline-fills-printf-format/templates/cm.yaml:1:10
+    executing "c02-pipeline-fills-printf-format/templates/cm.yaml" at <printf>:
+      wrong type for value; expected string; got int
+
+### c03-fromyaml-open-remainder
+values.yaml: payload: "x: 1" 
+template: v: {{ if hasKey (fromYaml .Values.payload) "x" }}{{ fail "x" }}{{ end }}ok
+args: 
+exit: 1
+output:
+  Error: execution error at (c03-fromyaml-open-remainder/templates/cm.yaml:1:52): x
+
+### c04-dict-open-remainder
+values.yaml: key: x 
+template: v: {{ if hasKey (dict .Values.key 1) "x" }}{{ fail "x" }}{{ end }}ok
+args: 
+exit: 1
+output:
+  Error: execution error at (c04-dict-open-remainder/templates/cm.yaml:1:46): x
 

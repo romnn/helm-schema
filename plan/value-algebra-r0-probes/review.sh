@@ -106,3 +106,9 @@ for _ in $(seq 1 30); do
   case "$("$HELM" template p "$dir" --show-only templates/cm.yaml 2>&1)" in *"v: true"*) t=$((t+1));; *"v: false"*) f=$((f+1));; esac
 done
 printf '### b06-shuffle-helper\ntemplate: %s\nruns: 30\nv: true: %s\nv: false: %s\n\n' "$(cat "$dir/templates/cm.yaml")" "$t" "$f"
+
+# Round 3 of the semantics review (turn 2): positional pipeline parameter; fresh maps with open remainders.
+probe c01-pipeline-fills-fixed-param '{}' '{{ int 1 | round 1 }}'
+probe c02-pipeline-fills-printf-format '{}' '{{ 1 | printf }}'
+probe c03-fromyaml-open-remainder 'payload: "x: 1"' '{{ if hasKey (fromYaml .Values.payload) "x" }}{{ fail "x" }}{{ end }}ok'
+probe c04-dict-open-remainder 'key: x' '{{ if hasKey (dict .Values.key 1) "x" }}{{ fail "x" }}{{ end }}ok'
