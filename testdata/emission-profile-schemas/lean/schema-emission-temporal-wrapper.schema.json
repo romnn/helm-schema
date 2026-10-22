@@ -1927,6 +1927,24 @@
       ],
       "type": "object"
     },
+    "constrains/alertmanager.additionalPeers:t+alertmanager.replicaCount": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t"
+        },
+        {
+          "properties": {
+            "alertmanager": {
+              "$ref": "#/$defs/constrains~1replicaCount"
+            }
+          },
+          "required": [
+            "alertmanager"
+          ],
+          "type": "object"
+        }
+      ]
+    },
     "constrains/alertmanager.affinity:t": {
       "not": {
         "$ref": "#/$defs/constrains~1alertmanager.affinity:t@2"
@@ -9390,7 +9408,7 @@
           "$ref": "#/$defs/constrains~1enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1prometheus-node-exporter.service.enabled:t"
+          "$ref": "#/$defs/constrains~1prometheus-node-exporter.kubeRBACProxy.enabled=false"
         }
       ]
     },
@@ -9403,7 +9421,7 @@
           "$ref": "#/$defs/constrains~1enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1prometheus-node-exporter.kubeRBACProxy.enabled:t"
+          "$ref": "#/$defs/constrains~1prometheus-node-exporter.service.enabled:t"
         }
       ]
     },
@@ -9416,7 +9434,7 @@
           "$ref": "#/$defs/constrains~1enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1prometheus-node-exporter.networkPolicy.enabled:t"
+          "$ref": "#/$defs/constrains~1prometheus-node-exporter.kubeRBACProxy.enabled:t"
         }
       ]
     },
@@ -9429,7 +9447,7 @@
           "$ref": "#/$defs/constrains~1enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1prometheus-node-exporter.kubeRBACProxy.enabled=false"
+          "$ref": "#/$defs/constrains~1prometheus-node-exporter.networkPolicy.enabled:t"
         }
       ]
     },
@@ -15211,6 +15229,19 @@
         "null"
       ]
     },
+    "constrains/maxUnavailable+minAvailable+selector.matchExpressions@items.key+4more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1@items.action=replace,Replace,keep,+19more+@items.modulus+@items.regex+4more~1not~1:t"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1maxUnavailable+minAvailable+selector.matchExpressions@items.key+4more"
+        }
+      ]
+    },
     "constrains/medium+sizeLimit": {
       "additionalProperties": false,
       "description": "Represents an empty directory for a pod. Empty directory volumes support ownership management and SELinux relabeling.",
@@ -18127,6 +18158,14 @@
       ],
       "type": "object"
     },
+    "constrains/podDisruptionBudget.maxUnavailable+podDisruptionBudget.minAvailable+6more": {
+      "additionalProperties": {},
+      "properties": {
+        "podDisruptionBudget": {
+          "$ref": "#/$defs/constrains~1maxUnavailable+minAvailable+selector.matchExpressions@items.key+4more@2"
+        }
+      }
+    },
     "constrains/podDisruptionBudget:t": {
       "properties": {
         "podDisruptionBudget": {
@@ -18780,7 +18819,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1prometheus-node-exporter.kubeRBACProxy.enabled:t"
+          "$ref": "#/$defs/constrains~1prometheus-node-exporter.service.enabled:t"
         }
       ]
     },
@@ -18796,7 +18835,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1prometheus-node-exporter.networkPolicy.enabled:t"
+          "$ref": "#/$defs/constrains~1prometheus-node-exporter.kubeRBACProxy.enabled:t"
         }
       ]
     },
@@ -18812,7 +18851,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1prometheus-node-exporter.kubeRBACProxy.enabled=false"
+          "$ref": "#/$defs/constrains~1prometheus-node-exporter.networkPolicy.enabled:t"
         }
       ]
     },
@@ -18828,7 +18867,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1prometheus-node-exporter.service.enabled:t"
+          "$ref": "#/$defs/constrains~1prometheus-node-exporter.kubeRBACProxy.enabled=false"
         }
       ]
     },
@@ -20049,6 +20088,26 @@
           "$ref": "#/$defs/constrains~1@items.action=replace,Replace,keep,+19more+@items.modulus+@items.regex+4more"
         }
       }
+    },
+    "constrains/replicaCount": {
+      "properties": {
+        "replicaCount": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 1,
+              "type": "integer"
+            },
+            {
+              "pattern": "^\\+?([1-9][0-9]{1,17}|[2-9]|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{1,14}|0[xX]0*[2-9a-fA-F]|0[bB]0*1[0-1]{1,61}|0[oO]?0*[1-7][0-7]{1,19}|0[oO]?0*[2-7])$",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "required": [
+        "replicaCount"
+      ],
+      "type": "object"
     },
     "constrains/replicaCount:t": {
       "additionalProperties": {},
@@ -28446,9 +28505,7 @@
         },
         "nodeSelector": {},
         "podAnnotations": {},
-        "podDisruptionBudget": {
-          "$ref": "#/$defs/values~1temporal.admintools.podDisruptionBudget"
-        },
+        "podDisruptionBudget": {},
         "podLabels": {},
         "replicaCount": {},
         "resources": {},
@@ -59061,13 +59118,13 @@
               "if": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/constrains~1enabled:t+prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more"
+                    "$ref": "#/$defs/constrains~1enabled:t+prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@2"
                   },
                   {
                     "$ref": "#/$defs/constrains~1enabled+enabled=null+prometheus-node-exporter.enabled:t+1more@5"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@8"
+                    "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@5"
                   },
                   {
                     "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled:t+prometheus-node-exporter.service"
@@ -59164,10 +59221,10 @@
                     "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled:t+prometheus-node-exporter.kubeRBACProxy"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@5"
+                    "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@6"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1enabled:t+prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@2"
+                    "$ref": "#/$defs/constrains~1enabled:t+prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@3"
                   }
                 ]
               },
@@ -62932,13 +62989,13 @@
                     "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled:t+prometheus-node-exporter.networkPolicy"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@6"
+                    "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@7"
                   },
                   {
                     "$ref": "#/$defs/constrains~1enabled+enabled=null+prometheus-node-exporter.enabled:t+1more@3"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1enabled:t+prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@3"
+                    "$ref": "#/$defs/constrains~1enabled:t+prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@4"
                   }
                 ]
               },
@@ -62955,107 +63012,6 @@
                     }
                   }
                 }
-              }
-            },
-            {
-              "if": {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1alertmanager.enabled+alertmanager.enabled=null"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1enabled:t"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1alertmanager.enabled+alertmanager.enabled=null"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1enabled:t"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1alertmanager.enabled:t"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1alertmanager.enabled:t"
-                      }
-                    ]
-                  }
-                ]
-              },
-              "then": {
-                "allOf": [
-                  {
-                    "additionalProperties": {},
-                    "properties": {
-                      "alertmanager": {
-                        "additionalProperties": {},
-                        "description": "alertmanager sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/alertmanager",
-                        "properties": {
-                          "service": {
-                            "additionalProperties": {},
-                            "properties": {
-                              "clusterPort": {
-                                "$ref": "#/$defs/constrains~1httpPort~1anyOf~1integer:int32;number-of-port-to+string;pattern-0-1-9"
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  },
-                  {
-                    "additionalProperties": {},
-                    "properties": {
-                      "alertmanager": {
-                        "additionalProperties": {},
-                        "description": "alertmanager sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/alertmanager",
-                        "properties": {
-                          "additionalPeers": {
-                            "$ref": "#/$defs/constrains~1hosts~1array,integer,null,object"
-                          }
-                        }
-                      }
-                    }
-                  }
-                ]
               }
             },
             {
@@ -63223,6 +63179,89 @@
                     "properties": {
                       "serviceAccount": {
                         "$ref": "#/$defs/constrains~1name:t@5"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t+alertmanager.replicaCount"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1alertmanager.enabled+alertmanager.enabled=null"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t+alertmanager.replicaCount"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1alertmanager.enabled:t"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t+alertmanager.replicaCount"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1enabled:t"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1alertmanager.enabled:t"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t+alertmanager.replicaCount"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1enabled:t"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1alertmanager.enabled+alertmanager.enabled=null"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "then": {
+                "additionalProperties": {},
+                "properties": {
+                  "alertmanager": {
+                    "additionalProperties": {},
+                    "description": "alertmanager sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/alertmanager",
+                    "properties": {
+                      "service": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "clusterPort": {
+                            "$ref": "#/$defs/constrains~1httpPort~1anyOf~1integer:int32;number-of-port-to+string;pattern-0-1-9"
+                          }
+                        }
                       }
                     }
                   }
@@ -67094,10 +67133,10 @@
               "if": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/constrains~1enabled:t+prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@4"
+                    "$ref": "#/$defs/constrains~1enabled:t+prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@7"
+                    "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@8"
                   },
                   {
                     "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled:t+1more"
@@ -67736,22 +67775,22 @@
                     "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled:t+prometheus-node-exporter.networkPolicy"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@6"
+                    "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@7"
                   },
                   {
                     "$ref": "#/$defs/constrains~1enabled+enabled=null+prometheus-node-exporter.enabled:t+1more@3"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1enabled:t+prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@3"
+                    "$ref": "#/$defs/constrains~1enabled:t+prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@4"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1enabled:t+prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more"
+                    "$ref": "#/$defs/constrains~1enabled:t+prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@2"
                   },
                   {
                     "$ref": "#/$defs/constrains~1enabled+enabled=null+prometheus-node-exporter.enabled:t+1more@5"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@8"
+                    "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@5"
                   },
                   {
                     "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled:t+prometheus-node-exporter.service"
@@ -73310,16 +73349,16 @@
                     "$ref": "#/$defs/constrains~1enabled+enabled=null+prometheus-node-exporter.enabled:t+1more@2"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1enabled:t+prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@4"
+                    "$ref": "#/$defs/constrains~1enabled:t+prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@7"
+                    "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@8"
                   },
                   {
                     "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled:t+prometheus-node-exporter.kubeRBACProxy"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@5"
+                    "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@6"
                   },
                   {
                     "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled:t+1more"
@@ -73328,7 +73367,7 @@
                     "$ref": "#/$defs/constrains~1enabled+enabled=null+prometheus-node-exporter.enabled:t+1more@4"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1enabled:t+prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@2"
+                    "$ref": "#/$defs/constrains~1enabled:t+prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@3"
                   }
                 ]
               },
@@ -76523,6 +76562,84 @@
                     }
                   }
                 ]
+              }
+            },
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1alertmanager.enabled+alertmanager.enabled=null"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1enabled:t"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1alertmanager.enabled+alertmanager.enabled=null"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1enabled:t"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1alertmanager.enabled:t"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1alertmanager.enabled:t"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "then": {
+                "additionalProperties": {},
+                "properties": {
+                  "alertmanager": {
+                    "additionalProperties": {},
+                    "description": "alertmanager sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/alertmanager",
+                    "properties": {
+                      "additionalPeers": {
+                        "$ref": "#/$defs/constrains~1hosts~1array,integer,null,object"
+                      }
+                    }
+                  }
+                }
               }
             },
             {
@@ -84024,6 +84141,68 @@
               "if": {
                 "allOf": [
                   {
+                    "$ref": "#/$defs/constrains~1enabled:t"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1history.enabled+history.enabled:t+history.enabled=null"
+                  },
+                  {
+                    "properties": {
+                      "history": {
+                        "$ref": "#/$defs/constrains~1replicaCount"
+                      }
+                    },
+                    "required": [
+                      "history"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              "then": {
+                "additionalProperties": {},
+                "properties": {
+                  "history": {
+                    "$ref": "#/$defs/constrains~1podDisruptionBudget.maxUnavailable+podDisruptionBudget.minAvailable+6more"
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "properties": {
+                      "worker": {
+                        "$ref": "#/$defs/constrains~1replicaCount"
+                      }
+                    },
+                    "required": [
+                      "worker"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1worker.enabled+worker.enabled:t+worker.enabled=null"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1enabled:t"
+                  }
+                ]
+              },
+              "then": {
+                "additionalProperties": {},
+                "properties": {
+                  "worker": {
+                    "$ref": "#/$defs/constrains~1podDisruptionBudget.maxUnavailable+podDisruptionBudget.minAvailable+6more"
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "allOf": [
+                  {
                     "$ref": "#/$defs/constrains~1affinity:t"
                   },
                   {
@@ -84113,6 +84292,37 @@
                         }
                       }
                     }
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1internalFrontend.enabled+internalFrontend.enabled:t+1more"
+                  },
+                  {
+                    "properties": {
+                      "internalFrontend": {
+                        "$ref": "#/$defs/constrains~1replicaCount"
+                      }
+                    },
+                    "required": [
+                      "internalFrontend"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1enabled:t"
+                  }
+                ]
+              },
+              "then": {
+                "additionalProperties": {},
+                "properties": {
+                  "internalFrontend": {
+                    "$ref": "#/$defs/constrains~1podDisruptionBudget.maxUnavailable+podDisruptionBudget.minAvailable+6more"
                   }
                 }
               }
@@ -85335,6 +85545,37 @@
                     }
                   }
                 ]
+              }
+            },
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1enabled:t"
+                  },
+                  {
+                    "properties": {
+                      "matching": {
+                        "$ref": "#/$defs/constrains~1replicaCount"
+                      }
+                    },
+                    "required": [
+                      "matching"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1matching.enabled+matching.enabled:t+matching.enabled=null"
+                  }
+                ]
+              },
+              "then": {
+                "additionalProperties": {},
+                "properties": {
+                  "matching": {
+                    "$ref": "#/$defs/constrains~1podDisruptionBudget.maxUnavailable+podDisruptionBudget.minAvailable+6more"
+                  }
+                }
               }
             },
             {
@@ -87117,6 +87358,43 @@
             },
             {
               "if": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1frontend.enabled+frontend.enabled:t+frontend.enabled=null"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1enabled:t"
+                  },
+                  {
+                    "properties": {
+                      "frontend": {
+                        "$ref": "#/$defs/constrains~1replicaCount"
+                      }
+                    },
+                    "required": [
+                      "frontend"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              "then": {
+                "additionalProperties": {},
+                "properties": {
+                  "frontend": {
+                    "additionalProperties": {},
+                    "description": "tls:\nenabled: true\nenableHostVerification: true\nserverName: _HOST_ # this is strictly required when using serverless CRDB offerings\ncaFile: /path/to/certs/<CA-file> # Here we assumed that caFile, certFile, keyFile are stored in one secret mounted as 'secret-with-certs' (see: server.additionalVolumes and server.additionalVolumeMounts sections).\ncertFile: /path/to/certs/<client-cert-file>\nkeyFile: /path/to/certs/<client-key-file>\nserver.frontend is the grpc/http temporal API, which we don't want to expose via an ingress.",
+                    "properties": {
+                      "podDisruptionBudget": {
+                        "$ref": "#/$defs/constrains~1maxUnavailable+minAvailable+selector.matchExpressions@items.key+4more@2"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "if": {
                 "anyOf": [
                   {
                     "$ref": "#/$defs/constrains~1worker+worker.enabled+worker.enabled:t+worker.enabled=null+worker.podLabels:t+1more"
@@ -87673,9 +87951,7 @@
                 },
                 "nodeSelector": {},
                 "podAnnotations": {},
-                "podDisruptionBudget": {
-                  "$ref": "#/$defs/values~1temporal.admintools.podDisruptionBudget"
-                },
+                "podDisruptionBudget": {},
                 "podLabels": {},
                 "replicaCount": {},
                 "resources": {},
@@ -87710,9 +87986,7 @@
                 },
                 "nodeSelector": {},
                 "podAnnotations": {},
-                "podDisruptionBudget": {
-                  "$ref": "#/$defs/values~1temporal.admintools.podDisruptionBudget"
-                },
+                "podDisruptionBudget": {},
                 "podLabels": {},
                 "replicaCount": {},
                 "resources": {},
@@ -87755,9 +88029,7 @@
                 "podAnnotations": {
                   "$ref": "#/$defs/values~1temporal.admintools.service.annotations"
                 },
-                "podDisruptionBudget": {
-                  "$ref": "#/$defs/values~1temporal.admintools.service.annotations"
-                },
+                "podDisruptionBudget": {},
                 "podLabels": {
                   "$ref": "#/$defs/values~1temporal.admintools.service.annotations"
                 },
@@ -88050,22 +88322,7 @@
                     "$ref": "#/$defs/constrains~1tolerations:t+tolerations@items.effect+tolerations@items.key+3more"
                   },
                   {
-                    "additionalProperties": {},
-                    "properties": {
-                      "podDisruptionBudget": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/constrains~1@items.action=replace,Replace,keep,+19more+@items.modulus+@items.regex+4more~1not~1:t"
-                          },
-                          {
-                            "type": "null"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1maxUnavailable+minAvailable+selector.matchExpressions@items.key+4more"
-                          }
-                        ]
-                      }
-                    }
+                    "$ref": "#/$defs/constrains~1podDisruptionBudget.maxUnavailable+podDisruptionBudget.minAvailable+6more"
                   },
                   {
                     "$ref": "#/$defs/constrains~1service.clusterIP:t"

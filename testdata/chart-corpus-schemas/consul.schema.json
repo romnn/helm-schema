@@ -12455,57 +12455,6 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1externalServers+global+global.acls.manageSystemACLs:t+server+server.enabled+2more@3"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "server": {
-                "additionalProperties": {},
-                "description": "Server, when enabled, configures a server cluster to run. This should\nbe disabled if you plan on connecting to a Consul cluster external to\nthe Kube cluster.",
-                "properties": {
-                  "containerSecurityContext": {
-                    "description": "The container securityContext for each container in the server pods.  In\naddition to the Pod's SecurityContext this can\nset the capabilities of processes running in the container and ensure the\nroot file systems in the container is read-only.",
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "global": {
-                "additionalProperties": {},
-                "description": "Holds values that affect multiple components of the chart.",
-                "properties": {
-                  "metrics": {
-                    "additionalProperties": {},
-                    "description": "Configures metrics for Consul service mesh",
-                    "properties": {
-                      "datadog": {
-                        "additionalProperties": {},
-                        "description": "Configures consul integration configurations for datadog on kubernetes.\nOnly applicable if `global.metrics.enabled` and `global.metrics.enableAgentMetrics` is true.",
-                        "properties": {
-                          "dogstatsd": {
-                            "description": "Configuration settings for DogStatsD metrics aggregation service\nthat is bundled with the Datadog Agent.\nDogStatsD implements the StatsD protocol and adds a few Datadog-specific extensions:\n- Histogram metric type\n- Service checks\n- Events\n- Tagging",
-                            "type": "object"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
             "anyOf": [
@@ -13686,6 +13635,26 @@
                     "description": "The name of the primary datacenter."
                   }
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1externalServers+global+global.acls.manageSystemACLs:t+server+server.enabled+2more@3"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "server": {
+            "additionalProperties": {},
+            "description": "Server, when enabled, configures a server cluster to run. This should\nbe disabled if you plan on connecting to a Consul cluster external to\nthe Kube cluster.",
+            "properties": {
+              "containerSecurityContext": {
+                "description": "The container securityContext for each container in the server pods.  In\naddition to the Pod's SecurityContext this can\nset the capabilities of processes running in the container and ensure the\nroot file systems in the container is read-only.",
+                "type": "object"
               }
             }
           }
@@ -22139,6 +22108,178 @@
                       "null",
                       "string"
                     ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1global.metrics.datadog.enabled:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1global.metrics.datadog.dogstatsd.enabled:t"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "metrics": {
+                            "properties": {
+                              "datadog": {
+                                "properties": {
+                                  "dogstatsd": {
+                                    "properties": {
+                                      "dogstatsdPort": {
+                                        "anyOf": [
+                                          {
+                                            "pattern": "^\\+?([1-9][0-9]{1,17}|[1-9]|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{1,14}|0[xX]0*[1-9a-fA-F]|0[bB]0*1[0-1]{1,61}|0[bB]0*1|0[oO]?0*[1-7][0-7]{1,19}|0[oO]?0*[1-7])$",
+                                            "type": "string"
+                                          },
+                                          {
+                                            "exclusiveMinimum": 0,
+                                            "type": "integer"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "dogstatsdPort"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "dogstatsd"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "datadog"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "metrics"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "metrics": {
+                            "properties": {
+                              "datadog": {
+                                "properties": {
+                                  "dogstatsd": {
+                                    "properties": {
+                                      "dogstatsdPort": {
+                                        "anyOf": [
+                                          {
+                                            "pattern": "^-([1-9][0-9]{1,17}|[1-9]|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{1,14}|0[xX]0*[1-9a-fA-F]|0[bB]0*1[0-1]{1,61}|0[bB]0*1|0[oO]?0*[1-7][0-7]{1,19}|0[oO]?0*[1-7])$",
+                                            "type": "string"
+                                          },
+                                          {
+                                            "exclusiveMaximum": 0,
+                                            "type": "integer"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "dogstatsdPort"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "dogstatsd"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "datadog"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "metrics"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/$defs/constrains~1global.metrics.datadog.dogstatsd.socketTransportType=UDS"
+              },
+              {
+                "$ref": "#/$defs/constrains~1global+server.enabled+server.enabled:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1global.metrics.enableAgentMetrics:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1global.metrics.enabled:t"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1server.enabled+server.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1global.enabled:t+server.enabled"
+          },
+          {
+            "$ref": "#/$defs/constrains~1externalServers+global+global.acls.manageSystemACLs:t+server+server.enabled+2more@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "additionalProperties": {},
+            "description": "Holds values that affect multiple components of the chart.",
+            "properties": {
+              "metrics": {
+                "additionalProperties": {},
+                "description": "Configures metrics for Consul service mesh",
+                "properties": {
+                  "datadog": {
+                    "additionalProperties": {},
+                    "description": "Configures consul integration configurations for datadog on kubernetes.\nOnly applicable if `global.metrics.enabled` and `global.metrics.enableAgentMetrics` is true.",
+                    "properties": {
+                      "dogstatsd": {
+                        "description": "Configuration settings for DogStatsD metrics aggregation service\nthat is bundled with the Datadog Agent.\nDogStatsD implements the StatsD protocol and adds a few Datadog-specific extensions:\n- Histogram metric type\n- Service checks\n- Events\n- Tagging",
+                        "type": "object"
+                      }
+                    }
                   }
                 }
               }

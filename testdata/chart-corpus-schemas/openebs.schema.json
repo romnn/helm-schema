@@ -15127,7 +15127,7 @@
       "additionalProperties": {},
       "properties": {
         "configMap": {
-          "$ref": "#/$defs/constrains~1name@7"
+          "$ref": "#/$defs/constrains~1name@5"
         }
       }
     },
@@ -21726,7 +21726,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1monitoring.selfMonitoring.logsInstance:t"
+          "$ref": "#/$defs/constrains~1monitoring.selfMonitoring.grafanaAgent:t"
         }
       ]
     },
@@ -21742,7 +21742,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1monitoring.selfMonitoring.grafanaAgent:t"
+          "$ref": "#/$defs/constrains~1monitoring.selfMonitoring.logsInstance:t"
         }
       ]
     },
@@ -76268,6 +76268,75 @@
       ],
       "type": "object"
     },
+    "constrains/mayastor.io_engine+mayastor.io_engine.cpuCount": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "mayastor": {
+                "properties": {
+                  "io_engine": {
+                    "properties": {
+                      "cpuCount": {}
+                    },
+                    "required": [
+                      "cpuCount"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "io_engine"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "mayastor"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "mayastor": {
+              "properties": {
+                "io_engine": {
+                  "properties": {
+                    "cpuCount": {
+                      "anyOf": [
+                        {
+                          "not": {
+                            "pattern": "^\\+?([1-9][0-9]{1,17}|[1-9]|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{1,14}|0[xX]0*[1-9a-fA-F]|0[bB]0*1[0-1]{1,61}|0[bB]0*1|0[oO]?0*[1-7][0-7]{1,19}|0[oO]?0*[1-7]|[0-9_]*[1-9][0-9_]*_[0-9_]*|[0-9_]*_[0-9_]*[1-9][0-9_]*|0[xX][0-9a-fA-F_]*[1-9a-fA-F][0-9a-fA-F_]*_[0-9a-fA-F_]*|0[xX][0-9a-fA-F_]*_[0-9a-fA-F_]*[1-9a-fA-F][0-9a-fA-F_]*|0[bB][01_]*1[01_]*_[01_]*|0[bB][01_]*_[01_]*1[01_]*|0[oO]?[0-7_]*[1-7][0-7_]*_[0-7_]*|0[oO]?[0-7_]*_[0-7_]*[1-7][0-7_]*|[1-9][0-9]{18}|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{15}|0[bB]0*1[01]{62}|0[oO]?0*[1-7][0-7]{20})(\\.0*)?$"
+                          },
+                          "type": "string"
+                        },
+                        {
+                          "exclusiveMaximum": 1,
+                          "type": "integer"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "cpuCount"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "io_engine"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "mayastor"
+          ],
+          "type": "object"
+        }
+      ]
+    },
     "constrains/mayastor.io_engine.coreList": {
       "properties": {
         "mayastor": {
@@ -98462,7 +98531,7 @@
       "additionalProperties": {},
       "properties": {
         "name": {
-          "$ref": "#/$defs/constrains~1name~1anyOf~1object+string+string;this-must-match-the"
+          "$ref": "#/$defs/constrains~1imagePullSecrets~1anyOf~1null;name-of-the-referent+object+string+string;name-of-the-referent+3more"
         }
       }
     },
@@ -98470,7 +98539,7 @@
       "additionalProperties": {},
       "properties": {
         "name": {
-          "$ref": "#/$defs/constrains~1name~1anyOf~1object+string+string;name-of-the-container"
+          "$ref": "#/$defs/constrains~1name~1anyOf~1object+string+string;this-must-match-the"
         }
       }
     },
@@ -98478,7 +98547,7 @@
       "additionalProperties": {},
       "properties": {
         "name": {
-          "$ref": "#/$defs/constrains~1imagePullSecrets~1anyOf~1null;name-of-the-referent+object+string+string;name-of-the-referent+3more"
+          "$ref": "#/$defs/constrains~1name~1anyOf~1object+string+string;name-of-the-container"
         }
       }
     },
@@ -99812,25 +99881,6 @@
           "$ref": "#/$defs/constrains~1networkPolicy.externalStorage.ports:t"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicy.flavor=cilium"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicy.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicy.externalStorage.cidrs:t@2"
-        }
-      ]
-    },
-    "constrains/networkPolicy.enabled:t+networkPolicy.externalStorage.cidrs:t+2more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1networkPolicy.externalStorage.ports:t"
-        },
-        {
           "$ref": "#/$defs/constrains~1networkPolicy.enabled:t"
         },
         {
@@ -99841,6 +99891,25 @@
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicy.flavor=kubernetes"
+        }
+      ]
+    },
+    "constrains/networkPolicy.enabled:t+networkPolicy.externalStorage.cidrs:t+2more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1networkPolicy.externalStorage.ports:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicy.flavor=cilium"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicy.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicy.externalStorage.cidrs:t@2"
         }
       ]
     },
@@ -125316,6 +125385,67 @@
                 },
                 "required": [
                   "etcd"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "mayastor"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    "when/mayastor.io_engine.coreList+mayastor.io_engine.cpuCount!=null/then/fail": {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "mayastor": {
+                "properties": {
+                  "io_engine": {
+                    "properties": {
+                      "cpuCount": {
+                        "$ref": "#/$defs/constrains~1client!=null~1not~1=null"
+                      }
+                    },
+                    "required": [
+                      "cpuCount"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "io_engine"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "mayastor"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "mayastor": {
+                "properties": {
+                  "io_engine": {
+                    "properties": {
+                      "coreList": {
+                        "$ref": "#/$defs/constrains~1client!=null~1not~1=null"
+                      }
+                    },
+                    "required": [
+                      "coreList"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "io_engine"
                 ],
                 "type": "object"
               }
@@ -181025,10 +181155,10 @@
                         "properties": {
                           "config": {
                             "additionalProperties": {
-                              "$ref": "#/$defs/constrains~1name@5"
+                              "$ref": "#/$defs/constrains~1name@6"
                             },
                             "items": {
-                              "$ref": "#/$defs/constrains~1name@5"
+                              "$ref": "#/$defs/constrains~1name@6"
                             }
                           }
                         }
@@ -199506,7 +199636,7 @@
                     "description": "zfsNode contains the configurables for\nthe zfs node daemonset",
                     "properties": {
                       "driverRegistrar": {
-                        "$ref": "#/$defs/constrains~1name@6"
+                        "$ref": "#/$defs/constrains~1name@7"
                       }
                     }
                   }
@@ -199729,7 +199859,7 @@
                     "description": "zfsController contains the configurables for\nthe zfs controller deployment",
                     "properties": {
                       "snapshotter": {
-                        "$ref": "#/$defs/constrains~1name@6"
+                        "$ref": "#/$defs/constrains~1name@7"
                       }
                     }
                   }
@@ -199749,7 +199879,7 @@
                     "description": "zfsController contains the configurables for\nthe zfs controller deployment",
                     "properties": {
                       "provisioner": {
-                        "$ref": "#/$defs/constrains~1name@6"
+                        "$ref": "#/$defs/constrains~1name@7"
                       }
                     }
                   }
@@ -199919,7 +200049,7 @@
                     "description": "zfsController contains the configurables for\nthe zfs controller deployment",
                     "properties": {
                       "resizer": {
-                        "$ref": "#/$defs/constrains~1name@6"
+                        "$ref": "#/$defs/constrains~1name@7"
                       }
                     }
                   }
@@ -211649,6 +211779,26 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "not": {
+              "$ref": "#/$defs/constrains~1mayastor.io_engine.coreList:t"
+            }
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor.io_engine+mayastor.io_engine.cpuCount"
+          },
+          {
+            "$ref": "#/$defs/constrains~1engines.replicated.mayastor.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mayastor.io_engine.coreList+mayastor.io_engine.cpuCount!=null~1then~1fail"
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -219661,7 +219811,7 @@
                     "description": "lvmNode contains the configurables for\nthe lvm node daemonset",
                     "properties": {
                       "driverRegistrar": {
-                        "$ref": "#/$defs/constrains~1name@6"
+                        "$ref": "#/$defs/constrains~1name@7"
                       }
                     }
                   }
@@ -220430,7 +220580,7 @@
                     "description": "lvmController contains the configurables for\nthe lvm controller deployment",
                     "properties": {
                       "provisioner": {
-                        "$ref": "#/$defs/constrains~1name@6"
+                        "$ref": "#/$defs/constrains~1name@7"
                       }
                     }
                   }
@@ -220450,7 +220600,7 @@
                     "description": "lvmController contains the configurables for\nthe lvm controller deployment",
                     "properties": {
                       "resizer": {
-                        "$ref": "#/$defs/constrains~1name@6"
+                        "$ref": "#/$defs/constrains~1name@7"
                       }
                     }
                   }
@@ -220822,7 +220972,7 @@
                     "description": "lvmController contains the configurables for\nthe lvm controller deployment",
                     "properties": {
                       "snapshotter": {
-                        "$ref": "#/$defs/constrains~1name@6"
+                        "$ref": "#/$defs/constrains~1name@7"
                       }
                     }
                   }
@@ -233577,7 +233727,7 @@
                     "description": "lvmController contains the configurables for\nthe lvm controller deployment",
                     "properties": {
                       "snapshotController": {
-                        "$ref": "#/$defs/constrains~1name@6"
+                        "$ref": "#/$defs/constrains~1name@7"
                       }
                     }
                   }
@@ -235097,7 +235247,7 @@
                                 "description": "Jetstream Encryption  #\nUse key if you want to provide the key via Helm Values\nkey: random_key",
                                 "properties": {
                                   "secret": {
-                                    "$ref": "#/$defs/constrains~1name@7"
+                                    "$ref": "#/$defs/constrains~1name@5"
                                   }
                                 }
                               }
@@ -274497,6 +274647,26 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null"
+          },
+          {
+            "not": {
+              "$ref": "#/$defs/constrains~1mayastor.io_engine.coreList:t"
+            }
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor.io_engine+mayastor.io_engine.cpuCount"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mayastor.io_engine.coreList+mayastor.io_engine.cpuCount!=null~1then~1fail"
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -283660,7 +283830,7 @@
                     "description": "zfsController contains the configurables for\nthe zfs controller deployment",
                     "properties": {
                       "snapshotController": {
-                        "$ref": "#/$defs/constrains~1name@6"
+                        "$ref": "#/$defs/constrains~1name@7"
                       }
                     }
                   }
@@ -360097,7 +360267,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1networkPolicy.enabled:t+networkPolicy.externalStorage.cidrs:t+2more"
+                "$ref": "#/$defs/constrains~1networkPolicy.enabled:t+networkPolicy.externalStorage.cidrs:t+2more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1enabled+enabled=null+networkPolicy.enabled:t+3more"
@@ -360895,7 +361065,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1networkPolicy.enabled:t+networkPolicy.externalStorage.cidrs:t+2more@2"
+                "$ref": "#/$defs/constrains~1networkPolicy.enabled:t+networkPolicy.externalStorage.cidrs:t+2more"
               },
               {
                 "$ref": "#/$defs/constrains~1enabled+enabled=null+networkPolicy.enabled:t+3more@2"
@@ -369266,7 +369436,7 @@
                 "$ref": "#/$defs/constrains~1networkPolicy.enabled:t+networkPolicy.flavor=cilium"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null+monitoring.selfMonitoring.enabled:t+1more"
+                "$ref": "#/$defs/constrains~1enabled+enabled=null+monitoring.selfMonitoring.enabled:t+1more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1enabled+enabled=null+serviceMonitor+serviceMonitor:t+tableManager.enabled:t"
@@ -369281,7 +369451,7 @@
                 "$ref": "#/$defs/constrains~1enabled+enabled=null+networkPolicy.enabled:t+networkPolicy.flavor=cilium"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null+monitoring.selfMonitoring.enabled:t+1more@2"
+                "$ref": "#/$defs/constrains~1enabled+enabled=null+monitoring.selfMonitoring.enabled:t+1more"
               },
               {
                 "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor:t+tableManager.enabled:t"
@@ -375927,10 +376097,10 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1networkPolicy.enabled:t+networkPolicy.externalStorage.cidrs:t+2more@2"
+                "$ref": "#/$defs/constrains~1networkPolicy.enabled:t+networkPolicy.externalStorage.cidrs:t+2more"
               },
               {
-                "$ref": "#/$defs/constrains~1networkPolicy.enabled:t+networkPolicy.externalStorage.cidrs:t+2more"
+                "$ref": "#/$defs/constrains~1networkPolicy.enabled:t+networkPolicy.externalStorage.cidrs:t+2more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1enabled+enabled=null+networkPolicy.enabled:t+3more"
@@ -377242,7 +377412,7 @@
                 "$ref": "#/$defs/constrains~1monitoring.selfMonitoring.enabled:t+monitoring.selfMonitoring.grafanaAgent:t"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null+monitoring.selfMonitoring.enabled:t+1more@2"
+                "$ref": "#/$defs/constrains~1enabled+enabled=null+monitoring.selfMonitoring.enabled:t+1more"
               }
             ]
           },
@@ -377450,7 +377620,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null+monitoring.selfMonitoring.enabled:t+1more"
+                "$ref": "#/$defs/constrains~1enabled+enabled=null+monitoring.selfMonitoring.enabled:t+1more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1monitoring.selfMonitoring.enabled:t+monitoring.selfMonitoring.logsInstance:t"

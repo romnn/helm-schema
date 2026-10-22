@@ -622,6 +622,17 @@
         "null"
       ]
     },
+    "constrains/additionalPeers:t": {
+      "properties": {
+        "additionalPeers": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "additionalPeers"
+      ],
+      "type": "object"
+    },
     "constrains/additionalRules+annotations+apiVersion+enabled+filters+hostnames+httpsRedirect+4more": {
       "additionalProperties": {},
       "properties": {
@@ -9356,6 +9367,19 @@
     },
     {
       "if": {
+        "$ref": "#/$defs/constrains~1additionalPeers:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "additionalPeers": {
+            "$ref": "#/$defs/constrains~1hosts~1array,integer,null,object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "$ref": "#/$defs/constrains~1persistence.enabled:t"
@@ -9807,77 +9831,6 @@
     {
       "if": {
         "properties": {
-          "additionalPeers": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "additionalPeers"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "additionalPeers": {
-                "$ref": "#/$defs/constrains~1hosts~1array,integer,null,object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "service": {
-                "additionalProperties": {},
-                "properties": {
-                  "clusterPort": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1containerPort+hostIP+hostPort+name+protocol~1integer:int32;number-of-port-to"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1string;pattern-0-1-9"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "service": {
-                "required": [
-                  "clusterPort"
-                ],
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "service": {
-                "additionalProperties": {},
-                "properties": {
-                  "clusterPort": {
-                    "not": {
-                      "type": "null"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "properties": {
           "service": {
             "properties": {
               "loadBalancerSourceRanges": {
@@ -10108,6 +10061,85 @@
                         "type": "null"
                       }
                     ]
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1additionalPeers:t"
+          },
+          {
+            "properties": {
+              "replicaCount": {
+                "anyOf": [
+                  {
+                    "exclusiveMinimum": 1,
+                    "type": "integer"
+                  },
+                  {
+                    "pattern": "^\\+?([1-9][0-9]{1,17}|[2-9]|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{1,14}|0[xX]0*[2-9a-fA-F]|0[bB]0*1[0-1]{1,61}|0[oO]?0*[1-7][0-7]{1,19}|0[oO]?0*[2-7])$",
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "replicaCount"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "properties": {
+                  "clusterPort": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1containerPort+hostIP+hostPort+name+protocol~1integer:int32;number-of-port-to"
+                      },
+                      {
+                        "$ref": "#/$defs/values~1string;pattern-0-1-9"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "required": [
+                  "clusterPort"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "properties": {
+                  "clusterPort": {
+                    "not": {
+                      "type": "null"
+                    }
                   }
                 }
               }

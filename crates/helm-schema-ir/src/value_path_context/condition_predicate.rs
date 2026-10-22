@@ -582,21 +582,16 @@ impl ValuePathContext<'_> {
         };
         let source = self.int_cast_operand(cast_expr)?;
         let paths = self.resolved_values_paths_from_expr(expr);
-        // A literal `default` substitutes for every Helm-falsy input
-        // BEFORE the comparison: when the fallback equals the literal, a
-        // raw 0 and the empty string no longer satisfy `ne`, so both arms
-        // exclude them (the other falsy spellings match no arm encoding).
+        // A literal `default` substitutes for every Helm-falsy input —
+        // absent, null, 0 and the empty string alike — BEFORE the
+        // comparison: when the fallback equals the literal, none of them
+        // satisfies `ne`, so both arms claim only truthy inputs.
         let default_collides = literal != 0 && source.default_int == Some(literal);
         let arm = |guard: Guard, tag: &str| {
             let mut guards = vec![guard];
             if default_collides {
-                guards.push(Guard::NotEq {
+                guards.push(Guard::Truthy {
                     path: source.path.clone(),
-                    value: helm_schema_core::GuardValue::Int(0),
-                });
-                guards.push(Guard::NotEq {
-                    path: source.path.clone(),
-                    value: helm_schema_core::GuardValue::string(""),
                 });
             }
             Predicate::approximate_with_sound_subset(
@@ -2045,27 +2040,25 @@ impl ValuePathContext<'_> {
     /// `cluster.name` bound). Long collections also satisfy the guard but
     /// have no pattern encoding, so they stay outside the subset. The
     /// inclusive comparators normalize by shifting the bound (traefik's
-    /// `ge (len .Values.hub.token) 65` license gates).
+    /// `ge (len .Values.hub.token) 65` license gates). The measured operand
+    /// is the evaluated length provenance, so the call, the pipeline and a
+    /// local bound to either all decode alike.
     fn len_comparison_sound_subset(&self, expr: &TemplateExpr) -> Vec<Guard> {
         let TemplateExpr::Call { function, args } = expr.deparen() else {
             return Vec::new();
         };
         let form = match (function.as_str(), args.as_slice()) {
             ("gt" | "ge", [left, right]) => match right.deparen() {
-                TemplateExpr::Literal(Literal::Int(bound)) => {
-                    Some((function, left.deparen(), *bound))
-                }
+                TemplateExpr::Literal(Literal::Int(bound)) => Some((function, left, *bound)),
                 _ => None,
             },
             ("lt" | "le", [left, right]) => match left.deparen() {
-                TemplateExpr::Literal(Literal::Int(bound)) => {
-                    Some((function, right.deparen(), *bound))
-                }
+                TemplateExpr::Literal(Literal::Int(bound)) => Some((function, right, *bound)),
                 _ => None,
             },
             _ => None,
         };
-        let Some((function, len_expr, bound)) = form else {
+        let Some((function, length_expr, bound)) = form else {
             return Vec::new();
         };
         let bound = match function.as_str() {
@@ -2076,24 +2069,13 @@ impl ValuePathContext<'_> {
                 None => return Vec::new(),
             },
         };
-        let TemplateExpr::Call { function, args } = len_expr else {
+        let Ok(bound) = usize::try_from(bound) else {
             return Vec::new();
         };
-        if function != "len" || args.len() != 1 {
-            return Vec::new();
-        }
-        let (Some(path), Ok(bound)) = (
-            args.first()
-                .and_then(|arg| self.single_resolved_values_path_expr(arg)),
-            usize::try_from(bound),
-        ) else {
-            return Vec::new();
-        };
-        vec![Guard::MatchesPattern {
-            path: helm_schema_core::ValuesPath::parse(&path),
-            pattern: format!("^[\\s\\S]{{{},}}$", bound + 1),
-            templated: false,
-        }]
+        eval_expr(length_expr, self.expression_eval_env())
+            .scalar_dispatch
+            .map(|dispatch| dispatch.length_exceeds_subset(bound))
+            .unwrap_or_default()
     }
 
     /// `ne (int x) L` admits a raw-integer strengthening: an integer input
@@ -2189,13 +2171,13 @@ impl ValuePathContext<'_> {
                 bound: above,
             },
         ];
-        // A literal `default` substitutes for a raw 0 (numerically empty)
-        // BEFORE the comparison: when the fallback misses the literal, a
-        // raw 0 no longer satisfies the equality, so exclude it.
+        // A literal `default` substitutes for every Helm-falsy input
+        // (absent, null, 0, the empty string) BEFORE the comparison: when
+        // the fallback misses the literal, none of them satisfies the
+        // equality, so the claim keeps only truthy inputs.
         if literal == 0 && source.default_int.is_some_and(|fallback| fallback != 0) {
-            guards.push(Guard::NotEq {
+            guards.push(Guard::Truthy {
                 path: source.path.clone(),
-                value: helm_schema_core::GuardValue::Int(0),
             });
         }
         guards
@@ -2508,9 +2490,10 @@ impl ValuePathContext<'_> {
                 bound,
             }
         }];
-        // A literal `default` substitutes for a raw 0 (numerically empty)
-        // BEFORE the comparison: when 0 itself would satisfy the claim but
-        // the substituted fallback does not, exclude 0 from the claim.
+        // A literal `default` substitutes for every Helm-falsy input
+        // (absent, null, 0, the empty string) BEFORE the comparison: when
+        // their coerced 0 would satisfy the claim but the substituted
+        // fallback does not, the claim keeps only truthy inputs.
         let zero_claims = if greater { 0 > bound } else { 0 < bound };
         let fallback_escapes = source.default_int.is_some_and(|fallback| {
             !(if greater {
@@ -2520,19 +2503,19 @@ impl ValuePathContext<'_> {
             })
         });
         if zero_claims && fallback_escapes {
-            guards.push(Guard::NotEq {
+            guards.push(Guard::Truthy {
                 path: source.path.clone(),
-                value: helm_schema_core::GuardValue::Int(0),
             });
         }
         guards
     }
 
-    /// The int-cast provenance behind a comparison operand: the inline
-    /// `int X` / `int (default L X)` call over one direct values selector,
-    /// or a local bound to exactly that shape. Any other subject transform
-    /// breaks the "a raw JSON integer at the path reaches the comparison
-    /// unchanged" argument the raw-integer subsets rely on.
+    /// The int-cast provenance behind a comparison operand: `int X` /
+    /// `int (default L X)` over one direct values selector in any call or
+    /// pipeline spelling (`X | int`, `X | default L | int`), or a local
+    /// bound to exactly that shape. Any other subject transform breaks the
+    /// "a raw JSON integer at the path reaches the comparison unchanged"
+    /// argument the raw-integer subsets rely on.
     pub(crate) fn int_cast_operand(
         &self,
         expr: &TemplateExpr,
@@ -2544,26 +2527,16 @@ impl ValuePathContext<'_> {
                 .or_else(|| self.int_cast_bindings.get(name.trim_start_matches('$')))
                 .cloned();
         }
-        let TemplateExpr::Call { function, args } = expr.deparen() else {
+        let (function, [], operand) = call_with_final_operand(expr)? else {
             return None;
         };
-        let [operand] = args.as_slice() else {
-            return None;
-        };
-        if !matches!(function.as_str(), "int" | "int64") {
+        if !matches!(function, "int" | "int64") {
             return None;
         }
-        let (subject, default_int) = match operand.deparen() {
-            TemplateExpr::Call { function, args } if function == "default" => {
-                let [fallback, subject] = args.as_slice() else {
-                    return None;
-                };
-                let TemplateExpr::Literal(Literal::Int(fallback)) = fallback.deparen() else {
-                    return None;
-                };
-                (subject, Some(*fallback))
-            }
-            _ => (operand, None),
+        let (subject, default_int) = match default_call_operand(&operand) {
+            Some((GuardValue::Int(fallback), subject)) => (subject, Some(fallback)),
+            Some(_) => return None,
+            None => (operand, None),
         };
         if !matches!(
             subject.deparen(),
@@ -2572,7 +2545,7 @@ impl ValuePathContext<'_> {
             return None;
         }
         let path =
-            helm_schema_core::ValuesPath::parse(&self.single_resolved_values_path_expr(subject)?);
+            helm_schema_core::ValuesPath::parse(&self.single_resolved_values_path_expr(&subject)?);
         Some(crate::symbolic_local_state::IntCastSource { path, default_int })
     }
 
@@ -2734,9 +2707,9 @@ impl ValuePathContext<'_> {
                     _ => None,
                 };
                 if let Some((value, fallback, subject)) = defaulted
-                    && direct_selector(subject)
+                    && direct_selector(&subject)
                 {
-                    let paths = subject_paths(subject);
+                    let paths = subject_paths(&subject);
                     if !paths.is_empty() {
                         let predicate = if value == fallback {
                             Predicate::all(
@@ -3643,33 +3616,42 @@ fn is_tostring_selector(expr: &TemplateExpr) -> bool {
     })
 }
 
-/// The `(fallback, subject)` of a literal-fallback `default` call —
-/// `default D X` or the two-stage pipeline `X | default D`.
-fn default_call_operand(expr: &TemplateExpr) -> Option<(GuardValue, &TemplateExpr)> {
+/// A call split into its function, its explicit leading arguments and its
+/// final operand, whatever the spelling: Go passes a piped value as the
+/// LAST argument of the next stage, so `X | f a` is the call `f a X`, and
+/// a longer pipeline's prefix is the final stage's operand.
+fn call_with_final_operand(expr: &TemplateExpr) -> Option<(&str, &[TemplateExpr], TemplateExpr)> {
     match expr.deparen() {
-        TemplateExpr::Call { function, args } if function == "default" => {
-            let [fallback, subject] = args.as_slice() else {
-                return None;
-            };
-            Some((guard_value_literal(fallback)?, subject))
+        TemplateExpr::Call { function, args } => {
+            let (operand, leading) = args.split_last()?;
+            Some((function, leading, operand.clone()))
         }
         TemplateExpr::Pipeline(stages) => {
-            let [subject, tail] = stages.as_slice() else {
+            let (last, prefix) = stages.split_last()?;
+            let TemplateExpr::Call { function, args } = last.deparen() else {
                 return None;
             };
-            let TemplateExpr::Call { function, args } = tail.deparen() else {
-                return None;
+            let operand = match prefix {
+                [] => return None,
+                [operand] => operand.clone(),
+                _ => TemplateExpr::Pipeline(prefix.to_vec()),
             };
-            let [fallback] = args.as_slice() else {
-                return None;
-            };
-            if function != "default" {
-                return None;
-            }
-            Some((guard_value_literal(fallback)?, subject))
+            Some((function, args, operand))
         }
         _ => None,
     }
+}
+
+/// The `(fallback, subject)` of a literal-fallback `default` call —
+/// `default D X` or its pipeline spelling `X | default D`.
+fn default_call_operand(expr: &TemplateExpr) -> Option<(GuardValue, TemplateExpr)> {
+    let (function, [fallback], subject) = call_with_final_operand(expr)? else {
+        return None;
+    };
+    if function != "default" {
+        return None;
+    }
+    Some((guard_value_literal(fallback)?, subject))
 }
 
 /// Helm truthiness of a literal guard value (sprig `empty` complement):

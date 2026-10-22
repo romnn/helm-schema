@@ -2138,6 +2138,428 @@ fn overlay_range_member_gates_carry_definite_entry_sound_subsets() {
     }
 }
 
+/// The overlay's definite entry REPLACES the ranged wildcard decode: `set`
+/// overwrites the input `default` member, so a wildcard reading of the
+/// input map is no subset of the condition the overlaid range evaluates.
+/// With the service disabled, the input `default: {enabled: true}` member
+/// never iterates and Helm renders (the `and` short-circuits before its
+/// float-vs-int `count` comparison).
+#[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the full expected schema and the overwritten-member verdict read as one fixture"
+)]
+fn overlay_overwritten_member_keeps_the_fail_dormant() {
+    let src = indoc! {r#"
+        {{- $services := .Values.service.additionalServices -}}
+        {{- $services = set $services "default" (omit .Values.service "additionalServices") -}}
+        {{- range $name, $service := $services -}}
+          {{- if and (eq $service.enabled true) (eq $.Values.count 1) -}}
+            {{- fail "bad" -}}
+          {{- end -}}
+        {{- end -}}
+    "#};
+    let values_yaml = indoc! {r"
+        service:
+          enabled: false
+          additionalServices: {}
+        count: 1
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    // The only fail arm is the definite `default` entry's: service.enabled
+    // true with count 1. No wildcard `additionalServices.*` arm appears.
+    sim_assert_eq!(
+        have: schema.clone(),
+        want: serde_json::json!({
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "allOf": [
+                {
+                    "additionalProperties": {},
+                    "properties": {
+                        "service": {
+                            "additionalProperties": {},
+                            "properties": {
+                                "additionalServices": {
+                                    "anyOf": [
+                                        {
+                                            "items": {
+                                                "properties": {
+                                                    "enabled": {
+                                                        "type": [
+                                                            "boolean",
+                                                            "null"
+                                                        ]
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "type": "array"
+                                        },
+                                        {
+                                            "additionalProperties": {
+                                                "properties": {
+                                                    "enabled": {
+                                                        "type": [
+                                                            "boolean",
+                                                            "null"
+                                                        ]
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "type": "object"
+                                        },
+                                        {
+                                            "type": "null"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "additionalProperties": {},
+                    "properties": {
+                        "service": {
+                            "additionalProperties": {},
+                            "properties": {
+                                "enabled": {
+                                    "type": [
+                                        "boolean",
+                                        "null"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "anyOf": [
+                            {
+                                "not": {
+                                    "properties": {
+                                        "service": {}
+                                    },
+                                    "required": [
+                                        "service"
+                                    ],
+                                    "type": "object"
+                                }
+                            },
+                            {
+                                "properties": {
+                                    "service": {
+                                        "enum": [
+                                            null
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "service"
+                                ],
+                                "type": "object"
+                            }
+                        ]
+                    },
+                    "then": false
+                },
+                {
+                    "if": {
+                        "allOf": [
+                            {
+                                "properties": {
+                                    "count": {
+                                        "enum": [
+                                            1
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "count"
+                                ],
+                                "type": "object"
+                            },
+                            {
+                                "properties": {
+                                    "service": {
+                                        "properties": {
+                                            "enabled": {
+                                                "enum": [
+                                                    true
+                                                ]
+                                            }
+                                        },
+                                        "required": [
+                                            "enabled"
+                                        ],
+                                        "type": "object"
+                                    }
+                                },
+                                "required": [
+                                    "service"
+                                ],
+                                "type": "object"
+                            }
+                        ]
+                    },
+                    "then": false
+                }
+            ],
+            "properties": {
+                "count": {},
+                "global": {},
+                "service": {
+                    "additionalProperties": {},
+                    "properties": {
+                        "additionalServices": {
+                            "additionalProperties": {
+                                "additionalProperties": {},
+                                "properties": {
+                                    "enabled": {}
+                                }
+                            },
+                            "type": "object"
+                        },
+                        "enabled": {}
+                    },
+                    "type": "object"
+                }
+            },
+            "type": "object"
+        }),
+    );
+    let instance = composed_instance(
+        values_yaml,
+        serde_json::json!({ "service": { "additionalServices": { "default": { "enabled": true } } } }),
+    );
+    assert!(
+        schema_accepts_instance(&schema, &instance),
+        "an overwritten default member must stay accepted: instance={instance}; schema={schema}"
+    );
+}
+
+/// An overlay range whose fail test ORs a root switch with an undecodable
+/// member conjunct keeps the switch's own rejection: the structural decode
+/// of the member conjunct reads the ranged wildcard, which `set` may have
+/// overwritten and which would make the capture abandon the switch, so it
+/// never joins the sound subset. Helm aborts for `bypass: true` whatever
+/// the members say, because the overlay always iterates its `default`
+/// entry.
+#[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the full expected schema and the Helm-adjudicated switch verdicts read as one fixture"
+)]
+fn overlay_wildcard_conjunct_keeps_the_root_switch_rejection() {
+    let src = indoc! {r#"
+        {{- $services := .Values.service.additionalServices -}}
+        {{- $services = set $services "default" (omit .Values.service "additionalServices") -}}
+        {{- range $name, $service := $services -}}
+          {{- if or $.Values.bypass (and (eq $service.enabled true) (gt (int $.Values.count) 0)) -}}
+            {{- fail "bad" -}}
+          {{- end -}}
+        {{- end -}}
+    "#};
+    let values_yaml = indoc! {r"
+        service:
+          enabled: false
+          additionalServices: {}
+        count: 1
+        bypass: false
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    sim_assert_eq!(
+        have: schema.clone(),
+        want: serde_json::json!({
+            "$defs": {
+                "t": {
+                    "anyOf": [
+                        {
+                            "const": true
+                        },
+                        {
+                            "not": {
+                                "const": 0
+                            },
+                            "type": "number"
+                        },
+                        {
+                            "minLength": 1,
+                            "type": "string"
+                        },
+                        {
+                            "minItems": 1,
+                            "type": "array"
+                        },
+                        {
+                            "minProperties": 1,
+                            "type": "object"
+                        }
+                    ]
+                }
+            },
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "allOf": [
+                {
+                    "if": {
+                        "not": {
+                            "properties": {
+                                "bypass": {
+                                    "$ref": "#/$defs/t"
+                                }
+                            },
+                            "required": [
+                                "bypass"
+                            ],
+                            "type": "object"
+                        }
+                    },
+                    "then": {
+                        "allOf": [
+                            {
+                                "additionalProperties": {},
+                                "properties": {
+                                    "service": {
+                                        "additionalProperties": {},
+                                        "properties": {
+                                            "additionalServices": {
+                                                "anyOf": [
+                                                    {
+                                                        "items": {
+                                                            "properties": {
+                                                                "enabled": {
+                                                                    "type": [
+                                                                        "boolean",
+                                                                        "null"
+                                                                    ]
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "type": "array"
+                                                    },
+                                                    {
+                                                        "additionalProperties": {
+                                                            "properties": {
+                                                                "enabled": {
+                                                                    "type": [
+                                                                        "boolean",
+                                                                        "null"
+                                                                    ]
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    {
+                                                        "type": "null"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "additionalProperties": {},
+                                "properties": {
+                                    "service": {
+                                        "additionalProperties": {},
+                                        "properties": {
+                                            "enabled": {
+                                                "type": [
+                                                    "boolean",
+                                                    "null"
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "bypass": {
+                                "$ref": "#/$defs/t"
+                            }
+                        },
+                        "required": [
+                            "bypass"
+                        ],
+                        "type": "object"
+                    },
+                    "then": false
+                },
+                {
+                    "if": {
+                        "anyOf": [
+                            {
+                                "not": {
+                                    "properties": {
+                                        "service": {}
+                                    },
+                                    "required": [
+                                        "service"
+                                    ],
+                                    "type": "object"
+                                }
+                            },
+                            {
+                                "properties": {
+                                    "service": {
+                                        "enum": [
+                                            null
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "service"
+                                ],
+                                "type": "object"
+                            }
+                        ]
+                    },
+                    "then": false
+                }
+            ],
+            "properties": {
+                "bypass": {},
+                "count": {},
+                "global": {},
+                "service": {
+                    "additionalProperties": {},
+                    "properties": {
+                        "additionalServices": {},
+                        "enabled": {}
+                    },
+                    "type": "object"
+                }
+            },
+            "type": "object"
+        }),
+    );
+    for (overrides, accepted) in [
+        (serde_json::json!({}), true),
+        (serde_json::json!({ "bypass": true }), false),
+        (serde_json::json!({ "bypass": true, "count": 0 }), false),
+    ] {
+        let instance = composed_instance(values_yaml, overrides);
+        sim_assert_eq!(
+            have: schema_accepts_instance(&schema, &instance),
+            want: accepted,
+            "instance={instance}"
+        );
+    }
+}
+
 /// A ranged fail whose test CONJOINS several member conditions negates to
 /// the disjunction of their negations, per member: an equality on a member
 /// field flips to the absence-tolerant `FieldNotEquals`, a negated

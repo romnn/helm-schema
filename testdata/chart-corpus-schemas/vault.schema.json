@@ -23711,116 +23711,6 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1global+global.enabled+global.enabled=true+injector.externalVaultAddr:t+server+5more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global+global.enabled=true+server+server.enabled=true+2more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global+global.enabled+global.enabled=true+injector.externalVaultAddr:t+server+2more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1server.networkPolicy.enabled=true"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global.openshift:t+server.serviceCA.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1injector.podDisruptionBudget:t"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1global+injector.enabled+injector.enabled=-+injector.enabled=true"
-              },
-              {
-                "$ref": "#/$defs/constrains~1global.psp.enable+global.psp.enable=true"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1server.networkPolicy.enabled"
-          },
-          {
-            "$ref": "#/$defs/constrains~1csi.enabled=true@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1csi.enabled=-+global.enabled+global.enabled=true"
-          },
-          {
-            "$ref": "#/$defs/constrains~1csi.enabled=true"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global+global.enabled+global.enabled=true+injector.externalVaultAddr:t+server+6more@2"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1server.serviceAccount.create+server.serviceAccount.create=true"
-              },
-              {
-                "$ref": "#/$defs/constrains~1server.serviceAccount.createSecret+server.serviceAccount.createSecret=true"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1global+global.enabled+global.enabled=true+global.psp.enable+9more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global+global.enabled+global.enabled=true+injector.externalVaultAddr:t+server+6more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global+global.enabled+global.enabled=true+injector.externalVaultAddr:t+server+5more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global+injector.externalVaultAddr:t+server+ui.enabled+ui.enabled=-+1more"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "global": {
-            "additionalProperties": {},
-            "properties": {
-              "namespace": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/values~1null;namespace-defines-the-space"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1envName~1string@2"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.key+25more~1not~1:t"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1gid:t~1string;pattern-a-za-z0-9-t"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1envName~1object"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1gid:t~1string;pattern-t"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1gid:t~1string;pattern-null-null-null"
-                  },
-                  {
-                    "$ref": "#/$defs/values~1string;namespace-defines-the-space"
-                  }
-                ],
-                "description": "The namespace to deploy to. Defaults to the `helm` installation namespace."
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
             "$ref": "#/$defs/constrains~1global.enabled+global.enabled=true+server+server.enabled=-"
@@ -29227,6 +29117,193 @@
             }
           }
         ]
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1global+global.enabled+global.enabled=true+injector.externalVaultAddr:t+server+5more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1global+global.enabled=true+server+server.enabled=true+2more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1global+global.enabled+global.enabled=true+injector.externalVaultAddr:t+server+2more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1server.networkPolicy.enabled=true"
+          },
+          {
+            "$ref": "#/$defs/constrains~1global.openshift:t+server.serviceCA.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1injector.podDisruptionBudget:t"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1global+injector.enabled+injector.enabled=-+injector.enabled=true"
+              },
+              {
+                "$ref": "#/$defs/constrains~1global.psp.enable+global.psp.enable=true"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1server.networkPolicy.enabled"
+          },
+          {
+            "$ref": "#/$defs/constrains~1csi.enabled=true@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1csi.enabled=-+global.enabled+global.enabled=true"
+          },
+          {
+            "$ref": "#/$defs/constrains~1csi.enabled=true"
+          },
+          {
+            "$ref": "#/$defs/constrains~1global+global.enabled+global.enabled=true+injector.externalVaultAddr:t+server+6more@2"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "injector": {
+                        "properties": {
+                          "leaderElector": {
+                            "$ref": "#/$defs/constrains~1enabled=true@2"
+                          }
+                        },
+                        "required": [
+                          "leaderElector"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "injector"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "injector": {
+                        "properties": {
+                          "leaderElector": {
+                            "$ref": "#/$defs/constrains~1enabled"
+                          }
+                        },
+                        "required": [
+                          "leaderElector"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "injector"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "injector": {
+                    "properties": {
+                      "replicas": {
+                        "anyOf": [
+                          {
+                            "exclusiveMinimum": 1,
+                            "type": "integer"
+                          },
+                          {
+                            "pattern": "^\\+?([1-9][0-9]{1,17}|[2-9]|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{1,14}|0[xX]0*[2-9a-fA-F]|0[bB]0*1[0-1]{1,61}|0[oO]?0*[1-7][0-7]{1,19}|0[oO]?0*[2-7])$",
+                            "type": "string"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "replicas"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "injector"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/constrains~1global+injector.enabled+injector.enabled=-+injector.enabled=true"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1server.serviceAccount.create+server.serviceAccount.create=true"
+              },
+              {
+                "$ref": "#/$defs/constrains~1server.serviceAccount.createSecret+server.serviceAccount.createSecret=true"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1global+global.enabled+global.enabled=true+global.psp.enable+9more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1global+global.enabled+global.enabled=true+injector.externalVaultAddr:t+server+6more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1global+global.enabled+global.enabled=true+injector.externalVaultAddr:t+server+5more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1global+injector.externalVaultAddr:t+server+ui.enabled+ui.enabled=-+1more"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "additionalProperties": {},
+            "properties": {
+              "namespace": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/values~1null;namespace-defines-the-space"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1envName~1string@2"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.key+25more~1not~1:t"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1gid:t~1string;pattern-a-za-z0-9-t"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1envName~1object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1gid:t~1string;pattern-t"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1gid:t~1string;pattern-null-null-null"
+                  },
+                  {
+                    "$ref": "#/$defs/values~1string;namespace-defines-the-space"
+                  }
+                ],
+                "description": "The namespace to deploy to. Defaults to the `helm` installation namespace."
+              }
+            }
+          }
+        }
       }
     },
     {

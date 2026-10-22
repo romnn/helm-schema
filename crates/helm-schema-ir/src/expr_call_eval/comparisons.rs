@@ -348,7 +348,7 @@ fn scalar_value_type_is(
         ScalarValue::Rendered(_) | ScalarValue::PrintfStringIdentity(_) => {
             TruthCondition::exact_with_memo(bool_predicate(schema_type == "string"), memo)
         }
-        ScalarValue::SplitLength { .. } => {
+        ScalarValue::SplitLength { .. } | ScalarValue::Length(_) => {
             TruthCondition::exact_with_memo(bool_predicate(schema_type == "integer"), memo)
         }
     }

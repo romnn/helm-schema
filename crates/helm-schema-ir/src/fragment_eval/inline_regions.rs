@@ -637,31 +637,12 @@ impl Interpreter<'_> {
             );
         }
         if !faithful {
-            let mut paths = self
-                .value_path_context()
-                .resolved_values_paths_from_expr(header.expr());
             let evaluated_subset = evaluated_truth.when_true().proven_selected_subset();
             let evaluated_subset =
                 (evaluated_subset != Predicate::False).then_some(evaluated_subset);
-            let dedup_subset = self.first_iteration_dedup_sound_subset(header.expr());
-            let dedup_subset = (!dedup_subset.is_empty())
-                .then(|| Predicate::all(dedup_subset.into_iter().map(Predicate::from).collect()));
-            let positive_subset = any_predicates_with_memo(
-                evaluated_subset.into_iter().chain(dedup_subset).collect(),
-                self.db.predicate_memo().as_ref(),
-            );
-            paths.extend(
-                positive_subset
-                    .value_paths()
-                    .into_iter()
-                    .map(|path| path.encode()),
-            );
             let marker = format!("{}:{region_start}:{branch_index}", self.source_offset);
-            predicate = if positive_subset == Predicate::False {
-                Predicate::approximate(marker, paths)
-            } else {
-                Predicate::approximate_with_sound_predicate(marker, paths, positive_subset)
-            };
+            predicate =
+                self.approximate_arm_predicate(header.expr(), marker, Vec::new(), evaluated_subset);
         }
         let guards = predicate.contract_guards();
         if let Some(guards) = &guards {

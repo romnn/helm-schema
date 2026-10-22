@@ -17016,7 +17016,7 @@
                         "not": {
                           "properties": {
                             "metrics": {
-                              "$ref": "#/$defs/constrains~1replicaCount"
+                              "$ref": "#/$defs/constrains~1replicaCount@2"
                             }
                           },
                           "required": [
@@ -17129,7 +17129,7 @@
                         "not": {
                           "properties": {
                             "primary": {
-                              "$ref": "#/$defs/constrains~1replicaCount"
+                              "$ref": "#/$defs/constrains~1replicaCount@2"
                             }
                           },
                           "required": [
@@ -17480,7 +17480,7 @@
                         "not": {
                           "properties": {
                             "volumePermissions": {
-                              "$ref": "#/$defs/constrains~1replicaCount"
+                              "$ref": "#/$defs/constrains~1replicaCount@2"
                             }
                           },
                           "required": [
@@ -21169,7 +21169,7 @@
                     "not": {
                       "properties": {
                         "readReplicas": {
-                          "$ref": "#/$defs/constrains~1replicaCount"
+                          "$ref": "#/$defs/constrains~1replicaCount@2"
                         }
                       },
                       "required": [
@@ -22221,7 +22221,18 @@
     },
     "constrains/replicaCount": {
       "properties": {
-        "replicaCount": {}
+        "replicaCount": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 1,
+              "type": "integer"
+            },
+            {
+              "pattern": "^\\+?([1-9][0-9]{1,17}|[2-9]|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{1,14}|0[xX]0*[2-9a-fA-F]|0[bB]0*1[0-1]{1,61}|0[oO]?0*[1-7][0-7]{1,19}|0[oO]?0*[2-7])$",
+              "type": "string"
+            }
+          ]
+        }
       },
       "required": [
         "replicaCount"
@@ -22235,6 +22246,15 @@
             null
           ]
         }
+      },
+      "required": [
+        "replicaCount"
+      ],
+      "type": "object"
+    },
+    "constrains/replicaCount@2": {
+      "properties": {
+        "replicaCount": {}
       },
       "required": [
         "replicaCount"
@@ -30546,24 +30566,7 @@
     "constrains/zookeeper.replicaCount": {
       "properties": {
         "zookeeper": {
-          "properties": {
-            "replicaCount": {
-              "anyOf": [
-                {
-                  "exclusiveMinimum": 1,
-                  "type": "integer"
-                },
-                {
-                  "pattern": "^\\+?([1-9][0-9]{1,17}|[2-9]|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{1,14}|0[xX]0*[2-9a-fA-F]|0[bB]0*1[0-1]{1,61}|0[oO]?0*[1-7][0-7]{1,19}|0[oO]?0*[2-7])$",
-                  "type": "string"
-                }
-              ]
-            }
-          },
-          "required": [
-            "replicaCount"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/constrains~1replicaCount"
         }
       },
       "required": [
@@ -47544,66 +47547,6 @@
         "$ref": "#/$defs/constrains~1signoz+signoz=null"
       },
       "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1alertmanager:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1alertmanager.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "alertmanager": {
-                "additionalProperties": {},
-                "description": "Default values for Alertmanager",
-                "properties": {
-                  "service": {
-                    "additionalProperties": {},
-                    "description": "Alertmanager service",
-                    "properties": {
-                      "clusterPort": {
-                        "description": "Alertmanager cluster port",
-                        "not": {
-                          "type": "null"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "alertmanager": {
-                "additionalProperties": {},
-                "description": "Default values for Alertmanager",
-                "properties": {
-                  "service": {
-                    "description": "Alertmanager service",
-                    "required": [
-                      "clusterPort"
-                    ],
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
     },
     {
       "if": {
@@ -66949,6 +66892,81 @@
                         "description": "signoz HTTP port"
                       }
                     }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t"
+              },
+              {
+                "properties": {
+                  "alertmanager": {
+                    "$ref": "#/$defs/constrains~1replicaCount"
+                  }
+                },
+                "required": [
+                  "alertmanager"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1alertmanager:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1alertmanager.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "alertmanager": {
+                "additionalProperties": {},
+                "description": "Default values for Alertmanager",
+                "properties": {
+                  "service": {
+                    "additionalProperties": {},
+                    "description": "Alertmanager service",
+                    "properties": {
+                      "clusterPort": {
+                        "description": "Alertmanager cluster port",
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "alertmanager": {
+                "additionalProperties": {},
+                "description": "Default values for Alertmanager",
+                "properties": {
+                  "service": {
+                    "description": "Alertmanager service",
+                    "required": [
+                      "clusterPort"
+                    ],
+                    "type": "object"
                   }
                 }
               }
@@ -88185,50 +88203,6 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1additionalPeers:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1enabled:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1alertmanager:t~1anyOf~1:t+object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "service": {
-                "additionalProperties": {},
-                "description": "Alertmanager service",
-                "properties": {
-                  "clusterPort": {
-                    "allOf": [
-                      {
-                        "$ref": "#/$defs/values~1alertmanager~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more"
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1integer:int32;the-port-that-will"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1postgresql~1string;pattern-0-1-9"
-                          }
-                        ]
-                      }
-                    ],
-                    "description": "Alertmanager cluster port"
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
                 "$ref": "#/$defs/constrains~1imagePullSecrets:t"
               },
               {
@@ -88343,6 +88317,57 @@
                 }
               }
             ]
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1additionalPeers:t"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1replicaCount"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/$defs/constrains~1enabled:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1alertmanager:t~1anyOf~1:t+object"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "description": "Alertmanager service",
+                "properties": {
+                  "clusterPort": {
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/values~1alertmanager~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1integer:int32;the-port-that-will"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1postgresql~1string;pattern-0-1-9"
+                          }
+                        ]
+                      }
+                    ],
+                    "description": "Alertmanager cluster port"
+                  }
+                }
+              }
+            }
           }
         },
         {

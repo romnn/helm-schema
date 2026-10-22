@@ -3536,6 +3536,122 @@
         }
       ]
     },
+    "constrains/global+global.imageRegistry:t+global:t+image.registry:t": {
+      "not": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/constrains~1global:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1global.imageRegistry:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1image.registry:t"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/constrains~1global:t@3"
+              },
+              {
+                "$ref": "#/$defs/constrains~1image.registry:t"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "constrains/global+global.imageRegistry:t+global:t+initSchema.image.registry:t": {
+      "not": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/constrains~1initSchema.image.registry:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1global:t@3"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/constrains~1initSchema.image.registry:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1global:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1global.imageRegistry:t"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "constrains/global+global.imageRegistry:t+global:t+initTLSSecret.image.registry:t": {
+      "not": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/constrains~1global:t@3"
+              },
+              {
+                "$ref": "#/$defs/constrains~1initTLSSecret.image.registry:t"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/constrains~1global:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1global.imageRegistry:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1initTLSSecret.image.registry:t"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "constrains/global+global.imageRegistry:t+global:t+volumePermissions.image.registry:t": {
+      "not": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/constrains~1global:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1global.imageRegistry:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1volumePermissions.image.registry:t"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/constrains~1global:t@3"
+              },
+              {
+                "$ref": "#/$defs/constrains~1volumePermissions.image.registry:t"
+              }
+            ]
+          }
+        ]
+      }
+    },
     "constrains/global+global.kubeVersion+global.kubeVersion=null": {
       "anyOf": [
         {
@@ -3803,6 +3919,16 @@
         "global"
       ],
       "type": "object"
+    },
+    "constrains/global.ldapDomain+global.ldapDomain=null": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.ldapDomain"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.ldapDomain=null"
+        }
+      ]
     },
     "constrains/global.ldapDomain=null": {
       "properties": {
@@ -5804,6 +5930,34 @@
       ],
       "type": "object"
     },
+    "constrains/initSchema.image.repository+initSchema.image.repository=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "initSchema": {
+              "$ref": "#/$defs/constrains~1image.repository=null"
+            }
+          },
+          "required": [
+            "initSchema"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "initSchema": {
+                "$ref": "#/$defs/constrains~1image.repository"
+              }
+            },
+            "required": [
+              "initSchema"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
     "constrains/initTLSSecret+initTLSSecret=null": {
       "anyOf": [
         {
@@ -5842,6 +5996,34 @@
         "initTLSSecret"
       ],
       "type": "object"
+    },
+    "constrains/initTLSSecret.image.repository+initTLSSecret.image.repository=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "initTLSSecret": {
+              "$ref": "#/$defs/constrains~1image.repository=null"
+            }
+          },
+          "required": [
+            "initTLSSecret"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "initTLSSecret": {
+                "$ref": "#/$defs/constrains~1image.repository"
+              }
+            },
+            "required": [
+              "initTLSSecret"
+            ],
+            "type": "object"
+          }
+        }
+      ]
     },
     "constrains/key+mode+path": {
       "additionalProperties": false,
@@ -7344,6 +7526,26 @@
         }
       }
     },
+    "constrains/readOnlyReplicaCount": {
+      "properties": {
+        "readOnlyReplicaCount": {
+          "anyOf": [
+            {
+              "pattern": "^\\+?([1-9][0-9]{1,17}|[1-9]|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{1,14}|0[xX]0*[1-9a-fA-F]|0[bB]0*1[0-1]{1,61}|0[bB]0*1|0[oO]?0*[1-7][0-7]{1,19}|0[oO]?0*[1-7])$",
+              "type": "string"
+            },
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            }
+          ]
+        }
+      },
+      "required": [
+        "readOnlyReplicaCount"
+      ],
+      "type": "object"
+    },
     "constrains/registry": {
       "additionalProperties": {},
       "properties": {
@@ -7516,6 +7718,68 @@
       ],
       "type": "object"
     },
+    "constrains/serviceReadOnly.enableLdapPort:t": {
+      "properties": {
+        "serviceReadOnly": {
+          "$ref": "#/$defs/constrains~1enableLdapPort:t"
+        }
+      },
+      "required": [
+        "serviceReadOnly"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceReadOnly.enableSslLdapPort:t": {
+      "properties": {
+        "serviceReadOnly": {
+          "$ref": "#/$defs/constrains~1enableSslLdapPort:t"
+        }
+      },
+      "required": [
+        "serviceReadOnly"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceReadOnly.type=ClusterIP": {
+      "properties": {
+        "serviceReadOnly": {
+          "$ref": "#/$defs/constrains~1type=ClusterIP"
+        }
+      },
+      "required": [
+        "serviceReadOnly"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceReadOnly.type=LoadBalancer": {
+      "properties": {
+        "serviceReadOnly": {
+          "$ref": "#/$defs/constrains~1type=LoadBalancer"
+        }
+      },
+      "required": [
+        "serviceReadOnly"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceReadOnly.type=LoadBalancer+serviceReadOnly.type=NodePort": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1serviceReadOnly.type=LoadBalancer"
+        },
+        {
+          "properties": {
+            "serviceReadOnly": {
+              "$ref": "#/$defs/constrains~1type=NodePort"
+            }
+          },
+          "required": [
+            "serviceReadOnly"
+          ],
+          "type": "object"
+        }
+      ]
+    },
     "constrains/targetPath": {
       "properties": {
         "targetPath": {
@@ -7600,25 +7864,18 @@
       ],
       "type": "object"
     },
-    "constrains/type=LoadBalancer+type=NodePort": {
-      "anyOf": [
-        {
-          "properties": {
-            "type": {
-              "enum": [
-                "NodePort"
-              ]
-            }
-          },
-          "required": [
-            "type"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1type=LoadBalancer"
+    "constrains/type=NodePort": {
+      "properties": {
+        "type": {
+          "enum": [
+            "NodePort"
+          ]
         }
-      ]
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
     },
     "constrains/volumeMounts:t+volumeMounts@items.mountPath+volumeMounts@items.mountPropagation+4more": {
       "additionalProperties": {},
@@ -7660,6 +7917,34 @@
         "volumePermissions"
       ],
       "type": "object"
+    },
+    "constrains/volumePermissions.image.repository+volumePermissions.image.repository=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "volumePermissions": {
+                "$ref": "#/$defs/constrains~1image.repository"
+              }
+            },
+            "required": [
+              "volumePermissions"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "volumePermissions": {
+              "$ref": "#/$defs/constrains~1image.repository=null"
+            }
+          },
+          "required": [
+            "volumePermissions"
+          ],
+          "type": "object"
+        }
+      ]
     },
     "constrains/volumes:t+volumes@items.awsElasticBlockStore.fsType+186more": {
       "additionalProperties": {},
@@ -8047,6 +8332,52 @@
         }
       ]
     },
+    "values/anyOf/array;if-specified-and-supported+not/:t+null": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.key+25more~1not~1:t"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "description": "If specified and supported by the platform, this will restrict traffic through the cloud-provider load-balancer will be restricted to the specified client IPs. This field will be ignored if the cloud-provider does not support the feature.\" More info: https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/",
+          "items": {
+            "$ref": "#/$defs/k8s~1deployment-apps-v1~1spec.template.spec.containers@items.livenessProbe@ref.exec.command@items"
+          },
+          "type": "array"
+        }
+      ]
+    },
+    "values/anyOf/integer:int32;the-port-on-each+not/:t+null:int32;the-port-on-each+4more": {
+      "anyOf": [
+        {
+          "description": "The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport",
+          "format": "int32",
+          "type": "integer"
+        },
+        {
+          "description": "The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport",
+          "format": "int32",
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.key+25more~1not~1:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1hosts~1string;pattern-a-za-z0-9-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1hosts~1string;pattern-t"
+        },
+        {
+          "$ref": "#/$defs/values~1string;pattern-0-1-9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1hosts~1string;pattern-null-null-null"
+        }
+      ]
+    },
     "values/anyOf/integer:int32;the-port-that-will+string;pattern-0-1-9": {
       "anyOf": [
         {
@@ -8054,6 +8385,248 @@
         },
         {
           "$ref": "#/$defs/values~1string;pattern-0-1-9"
+        }
+      ]
+    },
+    "values/anyOf/not/:t+null;clusterip-is-the-ip+object+string+string;clusterip-is-the-ip+3more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1string@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.key+25more~1not~1:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1hosts~1string;pattern-a-za-z0-9-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1object"
+        },
+        {
+          "description": "clusterIP is the IP address of the service and is usually assigned randomly. If an address is specified manually, is in-range (as per system configuration), and is not in use, it will be allocated to the service; otherwise creation of the service will fail. This field may not be changed through updates unless the type field is also being changed to ExternalName (which requires this field to be blank) or the type field is being changed from ExternalName (in which case this field may optionally be specified, as describe above).  Valid values are \"None\", empty string (\"\"), or a valid IP address. Setting this to \"None\" makes a \"headless service\" (no virtual IP), which is useful when direct endpoint connections are preferred and proxying is not required.  Only applies to types ClusterIP, NodePort, and LoadBalancer. If this field is specified when creating a Service of type ExternalName, creation will fail. This field will be wiped when updating a Service to type ExternalName. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1hosts~1string;pattern-t"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@10"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@4"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@9"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@2"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@5"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@7"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@8"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@3"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@6"
+            }
+          ],
+          "description": "clusterIP is the IP address of the service and is usually assigned randomly. If an address is specified manually, is in-range (as per system configuration), and is not in use, it will be allocated to the service; otherwise creation of the service will fail. This field may not be changed through updates unless the type field is also being changed to ExternalName (which requires this field to be blank) or the type field is being changed from ExternalName (in which case this field may optionally be specified, as describe above).  Valid values are \"None\", empty string (\"\"), or a valid IP address. Setting this to \"None\" makes a \"headless service\" (no virtual IP), which is useful when direct endpoint connections are preferred and proxying is not required.  Only applies to types ClusterIP, NodePort, and LoadBalancer. If this field is specified when creating a Service of type ExternalName, creation will fail. This field will be wiped when updating a Service to type ExternalName. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
+          "type": "string"
+        },
+        {
+          "$ref": "#/$defs/constrains~1hosts~1string;pattern-null-null-null"
+        }
+      ]
+    },
+    "values/anyOf/not/:t+null;only-applies-to-service+object+string+string;only-applies-to-service+3more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1string@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.key+25more~1not~1:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1hosts~1string;pattern-a-za-z0-9-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1hosts~1string;pattern-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1hosts~1string;pattern-null-null-null"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@10"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@4"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@9"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@2"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@5"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@7"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@8"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@3"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@6"
+            }
+          ],
+          "description": "Only applies to Service Type: LoadBalancer. This feature depends on whether the underlying cloud-provider supports specifying the loadBalancerIP when a load balancer is created. This field will be ignored if the cloud-provider does not support the feature. Deprecated: This field was under-specified and its meaning varies across implementations. Using it is non-portable and it may not support dual-stack. Users are encouraged to use implementation-specific annotations when available.",
+          "type": "string"
+        },
+        {
+          "description": "Only applies to Service Type: LoadBalancer. This feature depends on whether the underlying cloud-provider supports specifying the loadBalancerIP when a load balancer is created. This field will be ignored if the cloud-provider does not support the feature. Deprecated: This field was under-specified and its meaning varies across implementations. Using it is non-portable and it may not support dual-stack. Users are encouraged to use implementation-specific annotations when available.",
+          "type": "null"
+        }
+      ]
+    },
+    "values/anyOf/null;externaltrafficpolicy-describes-how-nodes+object+string+4more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1string@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1hosts~1string;pattern-a-za-z0-9-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1object"
+        },
+        {
+          "description": "externalTrafficPolicy describes how nodes distribute service traffic they receive on one of the Service's \"externally-facing\" addresses (NodePorts, ExternalIPs, and LoadBalancer IPs). If set to \"Local\", the proxy will configure the service in a way that assumes that external load balancers will take care of balancing the service traffic between nodes, and so each node will deliver traffic only to the node-local endpoints of the service, without masquerading the client source IP. (Traffic mistakenly sent to a node with no endpoints will be dropped.) The default value, \"Cluster\", uses the standard behavior of routing to all endpoints evenly (possibly modified by topology and other features). Note that traffic sent to an External IP or LoadBalancer IP from within the cluster will always get \"Cluster\" semantics, but clients sending to a NodePort from within the cluster may need to take traffic policy into account when picking a node.",
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1hosts~1string;pattern-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1hosts~1string;pattern-null-null-null"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@10"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@4"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@9"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@2"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@5"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@7"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@8"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@3"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@6"
+            }
+          ],
+          "description": "externalTrafficPolicy describes how nodes distribute service traffic they receive on one of the Service's \"externally-facing\" addresses (NodePorts, ExternalIPs, and LoadBalancer IPs). If set to \"Local\", the proxy will configure the service in a way that assumes that external load balancers will take care of balancing the service traffic between nodes, and so each node will deliver traffic only to the node-local endpoints of the service, without masquerading the client source IP. (Traffic mistakenly sent to a node with no endpoints will be dropped.) The default value, \"Cluster\", uses the standard behavior of routing to all endpoints evenly (possibly modified by topology and other features). Note that traffic sent to an External IP or LoadBalancer IP from within the cluster will always get \"Cluster\" semantics, but clients sending to a NodePort from within the cluster may need to take traffic policy into account when picking a node.",
+          "type": "string"
+        }
+      ]
+    },
+    "values/anyOf/null;supports-clientip-and-none+object+string+string;pattern-a-za-z0-9-t+3more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1string@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1hosts~1string;pattern-a-za-z0-9-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1object"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@10"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@4"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@9"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@2"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@5"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@7"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@8"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@3"
+            },
+            {
+              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@6"
+            }
+          ],
+          "description": "Supports \"ClientIP\" and \"None\". Used to maintain session affinity. Enable client IP based session affinity. Must be ClientIP or None. Defaults to None. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
+          "type": "string"
+        },
+        {
+          "description": "Supports \"ClientIP\" and \"None\". Used to maintain session affinity. Enable client IP based session affinity. Must be ClientIP or None. Defaults to None. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1hosts~1string;pattern-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1hosts~1string;pattern-null-null-null"
         }
       ]
     },
@@ -8378,6 +8951,13 @@
       "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
       "type": "string"
     },
+    "values/null,string;define-a-static-clusterip": {
+      "description": "Define a static clusterIP\nclusterIP:\nloadBalancerIP:\nloadBalancerSourceRanges: []",
+      "type": [
+        "null",
+        "string"
+      ]
+    },
     "values/object;annotations-is-an-unstructured": {
       "additionalProperties": {
         "anyOf": [
@@ -8433,30 +9013,35 @@
         }
       ]
     },
-    "values/phpldapadmin/anyOf/array;if-specified-and-supported+not/:t+null": {
-      "anyOf": [
+    "values/readinessProbe": {
+      "additionalProperties": {},
+      "allOf": [
         {
-          "$ref": "#/$defs/constrains~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.key+25more~1not~1:t"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "description": "If specified and supported by the platform, this will restrict traffic through the cloud-provider load-balancer will be restricted to the specified client IPs. This field will be ignored if the cloud-provider does not support the feature.\" More info: https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/",
-          "items": {
-            "$ref": "#/$defs/k8s~1deployment-apps-v1~1spec.template.spec.containers@items.livenessProbe@ref.exec.command@items"
-          },
-          "type": "array"
+          "$ref": "#/$defs/when~1enabled:t~1then~1failureThreshold+initialDelaySeconds+periodSeconds+successThreshold+1more"
         }
-      ]
+      ],
+      "properties": {
+        "enabled": {},
+        "failureThreshold": {},
+        "initialDelaySeconds": {},
+        "periodSeconds": {},
+        "successThreshold": {},
+        "timeoutSeconds": {}
+      },
+      "type": "object"
     },
-    "values/phpldapadmin/anyOf/not/:t+null;only-applies-to-service+object+string+string;only-applies-to-service+3more": {
+    "values/service.enableLdapPort": {
+      "description": "Disable if you do not want to expose port on service"
+    },
+    "values/service.externalIPs": {
+      "description": "List of IP addresses at which the service is available\nRef: https://kubernetes.io/docs/user-guide/services/#external-ips",
+      "items": {},
+      "type": "array"
+    },
+    "values/service.ipFamilyPolicy": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1string@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.key+25more~1not~1:t"
         },
         {
           "$ref": "#/$defs/constrains~1hosts~1string;pattern-a-za-z0-9-t"
@@ -8466,6 +9051,10 @@
         },
         {
           "$ref": "#/$defs/constrains~1hosts~1string;pattern-t"
+        },
+        {
+          "description": "IPFamilyPolicy represents the dual-stack-ness requested or required by this Service. If there is no value provided, then this field will be set to SingleStack. Services can be \"SingleStack\" (a single IP family), \"PreferDualStack\" (two IP families on dual-stack configured clusters or a single IP family on single-stack clusters), or \"RequireDualStack\" (two IP families on dual-stack configured clusters, otherwise fail). The ipFamilies and clusterIPs fields depend on the value of this field. This field will be wiped when updating a service to type ExternalName.",
+          "type": "null"
         },
         {
           "$ref": "#/$defs/constrains~1hosts~1string;pattern-null-null-null"
@@ -8503,68 +9092,37 @@
               "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@6"
             }
           ],
-          "description": "Only applies to Service Type: LoadBalancer. This feature depends on whether the underlying cloud-provider supports specifying the loadBalancerIP when a load balancer is created. This field will be ignored if the cloud-provider does not support the feature. Deprecated: This field was under-specified and its meaning varies across implementations. Using it is non-portable and it may not support dual-stack. Users are encouraged to use implementation-specific annotations when available.",
+          "description": "IPFamilyPolicy represents the dual-stack-ness requested or required by this Service. If there is no value provided, then this field will be set to SingleStack. Services can be \"SingleStack\" (a single IP family), \"PreferDualStack\" (two IP families on dual-stack configured clusters or a single IP family on single-stack clusters), or \"RequireDualStack\" (two IP families on dual-stack configured clusters, otherwise fail). The ipFamilies and clusterIPs fields depend on the value of this field. This field will be wiped when updating a service to type ExternalName.",
           "type": "string"
-        },
-        {
-          "description": "Only applies to Service Type: LoadBalancer. This feature depends on whether the underlying cloud-provider supports specifying the loadBalancerIP when a load balancer is created. This field will be ignored if the cloud-provider does not support the feature. Deprecated: This field was under-specified and its meaning varies across implementations. Using it is non-portable and it may not support dual-stack. Users are encouraged to use implementation-specific annotations when available.",
-          "type": "null"
-        }
-      ]
-    },
-    "values/readinessProbe": {
-      "additionalProperties": {},
-      "allOf": [
-        {
-          "$ref": "#/$defs/when~1enabled:t~1then~1failureThreshold+initialDelaySeconds+periodSeconds+successThreshold+1more"
         }
       ],
-      "properties": {
-        "enabled": {},
-        "failureThreshold": {},
-        "initialDelaySeconds": {},
-        "periodSeconds": {},
-        "successThreshold": {},
-        "timeoutSeconds": {}
-      },
-      "type": "object"
+      "description": "Represents the dual-stack-ness requested or required by this Service. Possible values are\nSingleStack, PreferDualStack or RequireDualStack.\nThe ipFamilies and clusterIPs fields depend on the value of this field.\nRef: https://kubernetes.io/docs/concepts/services-networking/dual-stack/"
     },
-    "values/service.enableLdapPort": {
-      "description": "Disable if you do not want to expose port on service"
-    },
-    "values/service.externalIPs": {
-      "description": "List of IP addresses at which the service is available\nRef: https://kubernetes.io/docs/user-guide/services/#external-ips",
-      "items": {},
-      "type": "array"
-    },
-    "values/service/anyOf/integer:int32;the-port-on-each+not/:t+null:int32;the-port-on-each+4more": {
+    "values/service.type": {
       "anyOf": [
         {
-          "description": "The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport",
-          "format": "int32",
-          "type": "integer"
+          "$ref": "#/$defs/values~1ltb-passwd~1null;type-determines-how-the"
         },
         {
-          "description": "The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport",
-          "format": "int32",
-          "type": "null"
+          "$ref": "#/$defs/values~1ltb-passwd~1string;type-determines-how-the"
         },
         {
-          "$ref": "#/$defs/constrains~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.key+25more~1not~1:t"
+          "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1string@2"
         },
         {
           "$ref": "#/$defs/constrains~1hosts~1string;pattern-a-za-z0-9-t"
         },
         {
-          "$ref": "#/$defs/constrains~1hosts~1string;pattern-t"
+          "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1object"
         },
         {
-          "$ref": "#/$defs/values~1string;pattern-0-1-9"
+          "$ref": "#/$defs/constrains~1hosts~1string;pattern-t"
         },
         {
           "$ref": "#/$defs/constrains~1hosts~1string;pattern-null-null-null"
         }
-      ]
+      ],
+      "description": "Define a static clusterIP\nclusterIP:\nloadBalancerIP:\nloadBalancerSourceRanges: []"
     },
     "values/string;pattern-0-1-9": {
       "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
@@ -8950,6 +9508,31 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1global+global.imageRegistry:t+global:t+image.registry:t"
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/constrains~1image.repository=null"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/constrains~1image.repository"
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1readOnlyReplicaCount"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -9041,61 +9624,10 @@
       "if": {
         "allOf": [
           {
-            "not": {
-              "allOf": [
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1initSchema.image.registry:t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1global:t@3"
-                    }
-                  ]
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1initSchema.image.registry:t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1global:t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1global.imageRegistry:t"
-                    }
-                  ]
-                }
-              ]
-            }
+            "$ref": "#/$defs/constrains~1global+global.imageRegistry:t+global:t+initSchema.image.registry:t"
           },
           {
-            "anyOf": [
-              {
-                "properties": {
-                  "initSchema": {
-                    "$ref": "#/$defs/constrains~1image.repository=null"
-                  }
-                },
-                "required": [
-                  "initSchema"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "initSchema": {
-                      "$ref": "#/$defs/constrains~1image.repository"
-                    }
-                  },
-                  "required": [
-                    "initSchema"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
+            "$ref": "#/$defs/constrains~1initSchema.image.repository+initSchema.image.repository=null"
           }
         ]
       },
@@ -9218,110 +9750,36 @@
       }
     },
     {
-      "$ref": "#/$defs/constrains~1image.pullSecrets"
-    },
-    {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1global.ldapDomain!=null"
-              },
-              {
-                "$ref": "#/$defs/constrains~1global.ldapDomain?"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ltb-passwd.enabled:t"
-              }
-            ]
+            "$ref": "#/$defs/constrains~1serviceReadOnly.type=LoadBalancer+serviceReadOnly.type=NodePort"
           },
           {
-            "not": {
-              "$ref": "#/$defs/constrains~1customAcls:t"
-            }
+            "$ref": "#/$defs/constrains~1serviceReadOnly.enableLdapPort:t"
           },
           {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1global.ldapDomain!=null"
-              },
-              {
-                "$ref": "#/$defs/constrains~1global.ldapDomain?"
-              },
-              {
-                "$ref": "#/$defs/constrains~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1global.ldapDomain!=null"
-              },
-              {
-                "$ref": "#/$defs/constrains~1phpldapadmin.enabled:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1global.ldapDomain?"
-              }
-            ]
-          },
-          {
-            "not": {
-              "properties": {
-                "global": {
-                  "properties": {
-                    "ldapDomain": {
-                      "pattern": ".*=.*",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "ldapDomain"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "global"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1global.ldapDomain!=null"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null"
-              },
-              {
-                "$ref": "#/$defs/constrains~1global.ldapDomain?"
-              }
-            ]
+            "$ref": "#/$defs/constrains~1readOnlyReplicaCount"
           }
         ]
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "global": {
+          "serviceReadOnly": {
             "additionalProperties": {},
-            "description": "Global Docker image parameters\nPlease, note that this will override the image parameters, including dependencies, configured to use the global value\nCurrent available global Docker image parameters: imageRegistry, imagePullSecrets and storageClass",
+            "description": "Service for read only cluster pods (if enabled)",
             "properties": {
-              "ldapDomain": {
-                "description": "E.g.\nimagePullSecrets:\n- myRegistryKeySecretName\nimagePullSecrets: [\"\"]\nldapDomain , can be explicit (e.g dc=toto,c=ca) or domain based (e.g example.com)",
-                "type": [
-                  "null",
-                  "string"
-                ]
+              "ldapPortNodePort": {
+                "$ref": "#/$defs/values~1anyOf~1integer:int32;the-port-on-each+not~1:t+null:int32;the-port-on-each+4more"
               }
             }
           }
         }
       }
+    },
+    {
+      "$ref": "#/$defs/constrains~1image.pullSecrets"
     },
     {
       "if": {
@@ -9502,64 +9960,13 @@
       "if": {
         "allOf": [
           {
-            "not": {
-              "allOf": [
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1global:t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1global.imageRegistry:t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1volumePermissions.image.registry:t"
-                    }
-                  ]
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1global:t@3"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1volumePermissions.image.registry:t"
-                    }
-                  ]
-                }
-              ]
-            }
+            "$ref": "#/$defs/constrains~1global+global.imageRegistry:t+global:t+volumePermissions.image.registry:t"
           },
           {
             "$ref": "#/$defs/constrains~1volumePermissions.enabled:t"
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "volumePermissions": {
-                      "$ref": "#/$defs/constrains~1image.repository"
-                    }
-                  },
-                  "required": [
-                    "volumePermissions"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "volumePermissions": {
-                    "$ref": "#/$defs/constrains~1image.repository=null"
-                  }
-                },
-                "required": [
-                  "volumePermissions"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/constrains~1volumePermissions.image.repository+volumePermissions.image.repository=null"
           }
         ]
       },
@@ -10274,6 +10681,50 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1serviceReadOnly.type=LoadBalancer"
+          },
+          {
+            "$ref": "#/$defs/constrains~1readOnlyReplicaCount"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "serviceReadOnly": {
+                "additionalProperties": {},
+                "description": "Service for read only cluster pods (if enabled)",
+                "properties": {
+                  "loadBalancerSourceRanges": {
+                    "$ref": "#/$defs/values~1anyOf~1array;if-specified-and-supported+not~1:t+null"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "serviceReadOnly": {
+                "additionalProperties": {},
+                "description": "Service for read only cluster pods (if enabled)",
+                "properties": {
+                  "loadBalancerIP": {
+                    "$ref": "#/$defs/values~1anyOf~1not~1:t+null;only-applies-to-service+object+string+string;only-applies-to-service+3more"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -10437,14 +10888,7 @@
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/constrains~1global.ldapDomain"
-              },
-              {
-                "$ref": "#/$defs/constrains~1global.ldapDomain=null"
-              }
-            ]
+            "$ref": "#/$defs/constrains~1global.ldapDomain+global.ldapDomain=null"
           },
           {
             "not": {
@@ -10462,11 +10906,7 @@
           "additionalProperties": {},
           "properties": {
             "type": {
-              "description": "Define a static clusterIP\nclusterIP:\nloadBalancerIP:\nloadBalancerSourceRanges: []",
-              "type": [
-                "null",
-                "string"
-              ]
+              "$ref": "#/$defs/values~1null,string;define-a-static-clusterip"
             }
           }
         }
@@ -10503,65 +10943,6 @@
             }
           }
         }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "service": {
-            "$ref": "#/$defs/constrains~1enableLdapPort:t"
-          }
-        },
-        "required": [
-          "service"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "global": {
-                "additionalProperties": {},
-                "description": "Global Docker image parameters\nPlease, note that this will override the image parameters, including dependencies, configured to use the global value\nCurrent available global Docker image parameters: imageRegistry, imagePullSecrets and storageClass",
-                "properties": {
-                  "ldapPort": {
-                    "$ref": "#/$defs/values~1anyOf~1integer:int32;the-port-that-will+string;pattern-0-1-9"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "global": {
-                "additionalProperties": {},
-                "description": "Global Docker image parameters\nPlease, note that this will override the image parameters, including dependencies, configured to use the global value\nCurrent available global Docker image parameters: imageRegistry, imagePullSecrets and storageClass",
-                "properties": {
-                  "ldapPort": {
-                    "not": {
-                      "type": "null"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "global": {
-                "description": "Global Docker image parameters\nPlease, note that this will override the image parameters, including dependencies, configured to use the global value\nCurrent available global Docker image parameters: imageRegistry, imagePullSecrets and storageClass",
-                "required": [
-                  "ldapPort"
-                ],
-                "type": "object"
-              }
-            }
-          }
-        ]
       }
     },
     {
@@ -10688,15 +11069,55 @@
     },
     {
       "if": {
-        "properties": {
-          "service": {
-            "$ref": "#/$defs/constrains~1enableSslLdapPort:t"
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1readOnlyReplicaCount"
+              },
+              {
+                "properties": {
+                  "serviceReadOnly": {
+                    "properties": {
+                      "headlessEnableSslLdapPort": {
+                        "$ref": "#/$defs/t"
+                      }
+                    },
+                    "required": [
+                      "headlessEnableSslLdapPort"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceReadOnly"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "service": {
+                "$ref": "#/$defs/constrains~1enableSslLdapPort:t"
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1serviceReadOnly.enableSslLdapPort:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1readOnlyReplicaCount"
+              }
+            ]
           }
-        },
-        "required": [
-          "service"
-        ],
-        "type": "object"
+        ]
       },
       "then": {
         "allOf": [
@@ -10946,6 +11367,51 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1serviceReadOnly.enableSslLdapPort:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1serviceReadOnly.type=LoadBalancer+serviceReadOnly.type=NodePort"
+          },
+          {
+            "$ref": "#/$defs/constrains~1readOnlyReplicaCount"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "serviceReadOnly": {
+            "additionalProperties": {},
+            "description": "Service for read only cluster pods (if enabled)",
+            "properties": {
+              "sslLdapPortNodePort": {
+                "$ref": "#/$defs/values~1anyOf~1integer:int32;the-port-on-each+not~1:t+null:int32;the-port-on-each+4more"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1global+global.imageRegistry:t+global:t+initTLSSecret.image.registry:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1readOnlyReplicaCount"
+          },
+          {
+            "$ref": "#/$defs/constrains~1initTLSSecret.image.repository+initTLSSecret.image.repository=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -11078,6 +11544,22 @@
       }
     },
     {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1global+global.imageRegistry:t+global:t+initSchema.image.registry:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1initSchema.image.repository+initSchema.image.repository=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1readOnlyReplicaCount"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
       "additionalProperties": {},
       "properties": {
         "customFileSets": {
@@ -11108,61 +11590,10 @@
       "if": {
         "allOf": [
           {
-            "not": {
-              "allOf": [
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1global:t@3"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1initTLSSecret.image.registry:t"
-                    }
-                  ]
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1global:t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1global.imageRegistry:t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1initTLSSecret.image.registry:t"
-                    }
-                  ]
-                }
-              ]
-            }
+            "$ref": "#/$defs/constrains~1global+global.imageRegistry:t+global:t+initTLSSecret.image.registry:t"
           },
           {
-            "anyOf": [
-              {
-                "properties": {
-                  "initTLSSecret": {
-                    "$ref": "#/$defs/constrains~1image.repository=null"
-                  }
-                },
-                "required": [
-                  "initTLSSecret"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "initTLSSecret": {
-                      "$ref": "#/$defs/constrains~1image.repository"
-                    }
-                  },
-                  "required": [
-                    "initTLSSecret"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
+            "$ref": "#/$defs/constrains~1initTLSSecret.image.repository+initTLSSecret.image.repository=null"
           }
         ]
       },
@@ -11177,6 +11608,32 @@
         "properties": {
           "podSecurityContext": {
             "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1serviceReadOnly.type=ClusterIP"
+          },
+          {
+            "$ref": "#/$defs/constrains~1readOnlyReplicaCount"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "serviceReadOnly": {
+            "additionalProperties": {},
+            "description": "Service for read only cluster pods (if enabled)",
+            "properties": {
+              "clusterIP": {
+                "$ref": "#/$defs/values~1anyOf~1not~1:t+null;clusterip-is-the-ip+object+string+string;clusterip-is-the-ip+3more"
+              }
+            }
           }
         }
       }
@@ -11578,6 +12035,22 @@
     {
       "if": {
         "$ref": "#/$defs/constrains~1containerSecurityContext+containerSecurityContext=null"
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1containerSecurityContext+containerSecurityContext=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1containerSecurityContext.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1readOnlyReplicaCount"
+          }
+        ]
       },
       "then": false
     },
@@ -12201,6 +12674,44 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1readOnlyReplicaCount"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "serviceReadOnly": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "serviceReadOnly"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "serviceReadOnly": {}
+                  },
+                  "required": [
+                    "serviceReadOnly"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -12590,6 +13101,112 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1global.ldapDomain!=null"
+              },
+              {
+                "$ref": "#/$defs/constrains~1global.ldapDomain?"
+              },
+              {
+                "$ref": "#/$defs/constrains~1ltb-passwd.enabled:t"
+              }
+            ]
+          },
+          {
+            "not": {
+              "$ref": "#/$defs/constrains~1customAcls:t"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1global.ldapDomain!=null"
+              },
+              {
+                "$ref": "#/$defs/constrains~1global.ldapDomain?"
+              },
+              {
+                "$ref": "#/$defs/constrains~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1readOnlyReplicaCount"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1global.ldapDomain!=null"
+              },
+              {
+                "$ref": "#/$defs/constrains~1phpldapadmin.enabled:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1global.ldapDomain?"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "global": {
+                  "properties": {
+                    "ldapDomain": {
+                      "pattern": ".*=.*",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ldapDomain"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "global"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1global.ldapDomain!=null"
+              },
+              {
+                "$ref": "#/$defs/constrains~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null"
+              },
+              {
+                "$ref": "#/$defs/constrains~1global.ldapDomain?"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "additionalProperties": {},
+            "description": "Global Docker image parameters\nPlease, note that this will override the image parameters, including dependencies, configured to use the global value\nCurrent available global Docker image parameters: imageRegistry, imagePullSecrets and storageClass",
+            "properties": {
+              "ldapDomain": {
+                "description": "E.g.\nimagePullSecrets:\n- myRegistryKeySecretName\nimagePullSecrets: [\"\"]\nldapDomain , can be explicit (e.g dc=toto,c=ca) or domain based (e.g example.com)",
+                "type": [
+                  "null",
+                  "string"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "$ref": "#/$defs/constrains~1podSecurityContext.enabled:t"
@@ -12676,6 +13293,102 @@
             }
           }
         }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1readOnlyReplicaCount"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "serviceReadOnly": {
+                "description": "Service for read only cluster pods (if enabled)",
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "serviceReadOnly": {
+                "additionalProperties": {},
+                "description": "Service for read only cluster pods (if enabled)",
+                "properties": {
+                  "type": {
+                    "$ref": "#/$defs/values~1null,string;define-a-static-clusterip"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "serviceReadOnly": {
+                "additionalProperties": {},
+                "description": "Service for read only cluster pods (if enabled)",
+                "properties": {
+                  "type": {
+                    "$ref": "#/$defs/values~1service.type"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "serviceReadOnly": {
+                "additionalProperties": {},
+                "description": "Service for read only cluster pods (if enabled)",
+                "properties": {
+                  "sessionAffinity": {
+                    "$ref": "#/$defs/values~1anyOf~1null;supports-clientip-and-none+object+string+string;pattern-a-za-z0-9-t+3more"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "serviceReadOnly": {
+                "additionalProperties": {},
+                "description": "Service for read only cluster pods (if enabled)",
+                "properties": {
+                  "ipFamilyPolicy": {
+                    "$ref": "#/$defs/values~1service.ipFamilyPolicy"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "serviceReadOnly": {
+                "additionalProperties": {},
+                "description": "Service for read only cluster pods (if enabled)",
+                "properties": {
+                  "annotations": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.key+25more~1not~1:t"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1ingress.annotations:t~1allOf~1object+object,null;annotations-is-an-unstructured"
+                      }
+                    ],
+                    "description": "If service type NodePort, define the value here\nldapPortNodePort:\nsslLdapPortNodePort:"
+                  }
+                }
+              }
+            }
+          }
+        ]
       }
     },
     {
@@ -12809,6 +13522,34 @@
             "properties": {
               "image": {
                 "$ref": "#/$defs/constrains~1repository"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1readOnlyReplicaCount"
+          },
+          {
+            "not": {
+              "$ref": "#/$defs/constrains~1serviceReadOnly.type=ClusterIP"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "serviceReadOnly": {
+            "additionalProperties": {},
+            "description": "Service for read only cluster pods (if enabled)",
+            "properties": {
+              "externalTrafficPolicy": {
+                "$ref": "#/$defs/values~1anyOf~1null;externaltrafficpolicy-describes-how-nodes+object+string+4more"
               }
             }
           }
@@ -13330,6 +14071,19 @@
       "if": {
         "allOf": [
           {
+            "$ref": "#/$defs/constrains~1global.ldapDomain+global.ldapDomain=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1readOnlyReplicaCount"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "anyOf": [
               {
                 "not": {
@@ -13461,6 +14215,22 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1podSecurityContext.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1readOnlyReplicaCount"
+          },
+          {
+            "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null"
+          }
+        ]
+      },
+      "then": false
     },
     {
       "if": {
@@ -13814,33 +14584,45 @@
       "if": {
         "allOf": [
           {
-            "not": {
-              "allOf": [
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1global:t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1global.imageRegistry:t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1image.registry:t"
-                    }
-                  ]
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1global:t@3"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1image.registry:t"
-                    }
-                  ]
-                }
-              ]
-            }
+            "$ref": "#/$defs/constrains~1containerSecurityContext+containerSecurityContext=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1containerSecurityContext.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1readOnlyReplicaCount"
+          },
+          {
+            "$ref": "#/$defs/constrains~1volumePermissions.enabled:t"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1readOnlyReplicaCount"
+          },
+          {
+            "$ref": "#/$defs/constrains~1global+global.imageRegistry:t+global:t+volumePermissions.image.registry:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1volumePermissions.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1volumePermissions.image.repository+volumePermissions.image.repository=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1global+global.imageRegistry:t+global:t+image.registry:t"
           },
           {
             "anyOf": [
@@ -14362,14 +15144,7 @@
             "$ref": "#/$defs/constrains~1global+global=null"
           },
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/constrains~1global.ldapDomain"
-              },
-              {
-                "$ref": "#/$defs/constrains~1global.ldapDomain=null"
-              }
-            ]
+            "$ref": "#/$defs/constrains~1global.ldapDomain+global.ldapDomain=null"
           }
         ]
       },
@@ -14514,6 +15289,105 @@
             }
           }
         }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1serviceReadOnly.enableLdapPort:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1readOnlyReplicaCount"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "service": {
+                "$ref": "#/$defs/constrains~1enableLdapPort:t"
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1readOnlyReplicaCount"
+              },
+              {
+                "properties": {
+                  "serviceReadOnly": {
+                    "properties": {
+                      "headlessEnableLdapPort": {
+                        "$ref": "#/$defs/t"
+                      }
+                    },
+                    "required": [
+                      "headlessEnableLdapPort"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceReadOnly"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "global": {
+                "additionalProperties": {},
+                "description": "Global Docker image parameters\nPlease, note that this will override the image parameters, including dependencies, configured to use the global value\nCurrent available global Docker image parameters: imageRegistry, imagePullSecrets and storageClass",
+                "properties": {
+                  "ldapPort": {
+                    "$ref": "#/$defs/values~1anyOf~1integer:int32;the-port-that-will+string;pattern-0-1-9"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "global": {
+                "additionalProperties": {},
+                "description": "Global Docker image parameters\nPlease, note that this will override the image parameters, including dependencies, configured to use the global value\nCurrent available global Docker image parameters: imageRegistry, imagePullSecrets and storageClass",
+                "properties": {
+                  "ldapPort": {
+                    "not": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "global": {
+                "description": "Global Docker image parameters\nPlease, note that this will override the image parameters, including dependencies, configured to use the global value\nCurrent available global Docker image parameters: imageRegistry, imagePullSecrets and storageClass",
+                "required": [
+                  "ldapPort"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        ]
       }
     },
     {
@@ -15455,12 +16329,6 @@
           "$ref": "#/$defs/when~1enabled+enabled:t+enabled=null+ingress+ingress=null~1then~1fail"
         },
         {
-          "$ref": "#/$defs/when~1enabled+enabled:t+enabled=null+image+image=null~1then~1fail"
-        },
-        {
-          "$ref": "#/$defs/when~1enabled+enabled=null+ingress.enabled:t+ingress:t~1then~1ingress.apiVersion:t+ingress.apiVersion='networking.k8s.io~1v1'"
-        },
-        {
           "if": {
             "$ref": "#/$defs/constrains~1enabled+enabled=null+ingress.enabled:t@2"
           },
@@ -15485,6 +16353,12 @@
               }
             ]
           }
+        },
+        {
+          "$ref": "#/$defs/when~1enabled+enabled:t+enabled=null+image+image=null~1then~1fail"
+        },
+        {
+          "$ref": "#/$defs/when~1enabled+enabled=null+ingress.enabled:t+ingress:t~1then~1ingress.apiVersion:t+ingress.apiVersion='networking.k8s.io~1v1'"
         },
         {
           "if": {
@@ -15698,11 +16572,11 @@
                     "properties": {
                       "tls": {
                         "additionalProperties": {
-                          "$ref": "#/$defs/constrains~1hosts@2"
+                          "$ref": "#/$defs/constrains~1hosts:t"
                         },
                         "description": "Ingress cert\n- secretName: ssl-ldap2.example\nhosts:\n- ssl-ldap2.example\nldap:\nif you want to restrict search base tree for users instead of complete domain\nsearchBase: \"ou=....,dc=mydomain,dc=com\"\nif you want to use a dedicated bindDN for the search with less permissions instead of cn=admin one\nbindDN: \"cn=....,dc=mydomain,dc=com\"\nif you want to use a specific key of the credentials secret instead of the default one (LDAP_ADMIN_PASSWORD)\npassKey: LDAP_MY_KEY",
                         "items": {
-                          "$ref": "#/$defs/constrains~1hosts@2"
+                          "$ref": "#/$defs/constrains~1hosts:t"
                         }
                       }
                     }
@@ -15718,11 +16592,11 @@
                     "properties": {
                       "tls": {
                         "additionalProperties": {
-                          "$ref": "#/$defs/constrains~1hosts:t"
+                          "$ref": "#/$defs/constrains~1hosts@2"
                         },
                         "description": "Ingress cert\n- secretName: ssl-ldap2.example\nhosts:\n- ssl-ldap2.example\nldap:\nif you want to restrict search base tree for users instead of complete domain\nsearchBase: \"ou=....,dc=mydomain,dc=com\"\nif you want to use a dedicated bindDN for the search with less permissions instead of cn=admin one\nbindDN: \"cn=....,dc=mydomain,dc=com\"\nif you want to use a specific key of the credentials secret instead of the default one (LDAP_ADMIN_PASSWORD)\npassKey: LDAP_MY_KEY",
                         "items": {
-                          "$ref": "#/$defs/constrains~1hosts:t"
+                          "$ref": "#/$defs/constrains~1hosts@2"
                         }
                       }
                     }
@@ -15946,65 +16820,6 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/constrains~1enabled:t"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "existingClaim": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1string@2"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@10"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@4"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@9"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@2"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@5"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@7"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@8"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@3"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@6"
-                      }
-                    ],
-                    "description": "claimName is the name of a PersistentVolumeClaim in the same namespace as the pod using this volume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#persistentvolumeclaims",
-                    "type": "string"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.key+25more~1not~1:t"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1object"
-                  }
-                ]
-              }
-            }
-          }
-        },
-        {
-          "if": {
             "allOf": [
               {
                 "$ref": "#/$defs/constrains~1enabled:t"
@@ -16084,6 +16899,65 @@
               }
             ]
           }
+        },
+        {
+          "if": {
+            "$ref": "#/$defs/constrains~1enabled:t"
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "existingClaim": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1string@2"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@10"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@4"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@9"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@2"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@5"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@7"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@8"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@3"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@6"
+                      }
+                    ],
+                    "description": "claimName is the name of a PersistentVolumeClaim in the same namespace as the pod using this volume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#persistentvolumeclaims",
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.key+25more~1not~1:t"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1object"
+                  }
+                ]
+              }
+            }
+          }
         }
       ],
       "description": "override the tls_reqcert parameter (default if never and demand when initTLSSecret.tls_enabled = true )\ntls_reqcert: \"never\"\noverride the location of tls_cacert to trust (allowed when initTLSSecret.tls_enabled = true )\ntls_cacert: \"/etc/ssl/certs/ca-certificates.crt\"\nPersist data to a persistent volume",
@@ -16156,17 +17030,26 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/constrains~1enabled+enabled=null+ingress.enabled:t"
+            "$ref": "#/$defs/constrains~1enabled+enabled=null+ingress.enabled:t@2"
           },
           "then": {
-            "$ref": "#/$defs/constrains~1ingress.hosts@2"
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1ingress.hosts"
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "ingress": {
+                    "$ref": "#/$defs/constrains~1tls@items.hosts"
+                  }
+                }
+              },
+              {
+                "$ref": "#/$defs/constrains~1ingress.annotations:t"
+              }
+            ]
           }
-        },
-        {
-          "$ref": "#/$defs/when~1enabled+enabled:t+enabled=null+image+image=null~1then~1fail"
-        },
-        {
-          "$ref": "#/$defs/when~1enabled+enabled=null+ingress.enabled:t+ingress:t~1then~1ingress.apiVersion:t+ingress.apiVersion='networking.k8s.io~1v1'"
         },
         {
           "if": {
@@ -16458,6 +17341,113 @@
         },
         {
           "if": {
+            "$ref": "#/$defs/constrains~1enabled+enabled=null+ingress.enabled:t"
+          },
+          "then": {
+            "$ref": "#/$defs/constrains~1ingress.hosts@2"
+          }
+        },
+        {
+          "$ref": "#/$defs/when~1enabled+enabled:t+enabled=null+image+image=null~1then~1fail"
+        },
+        {
+          "$ref": "#/$defs/when~1enabled+enabled=null+ingress.enabled:t+ingress:t~1then~1ingress.apiVersion:t+ingress.apiVersion='networking.k8s.io~1v1'"
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1enabled:t"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1service.type=LoadBalancer"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1service.type=LoadBalancer"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "allOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "service": {
+                    "additionalProperties": {},
+                    "description": "Expose the pgAdmin service to be accessed from outside the cluster (LoadBalancer service).\nor access it from within the cluster (ClusterIP service). Set the service type and the port to serve it.\nref: http://kubernetes.io/docs/user-guide/services/",
+                    "properties": {
+                      "loadBalancerIP": {
+                        "$ref": "#/$defs/values~1anyOf~1not~1:t+null;only-applies-to-service+object+string+string;only-applies-to-service+3more"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "service": {
+                    "additionalProperties": {},
+                    "description": "Expose the pgAdmin service to be accessed from outside the cluster (LoadBalancer service).\nor access it from within the cluster (ClusterIP service). Set the service type and the port to serve it.\nref: http://kubernetes.io/docs/user-guide/services/",
+                    "properties": {
+                      "loadBalancerSourceRanges": {
+                        "$ref": "#/$defs/values~1anyOf~1array;if-specified-and-supported+not~1:t+null"
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/constrains~1env+env=null"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/constrains~1env+env=null"
+              },
+              {
+                "$ref": "#/$defs/constrains~1enabled:t"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
             "$ref": "#/$defs/constrains~1enabled+enabled=null+ingress.enabled:t+ingress.tls:t"
           },
           "then": {
@@ -16524,122 +17514,6 @@
               }
             ]
           }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/constrains~1enabled:t"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1service.type=LoadBalancer"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1service.type=LoadBalancer"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "allOf": [
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "service": {
-                    "additionalProperties": {},
-                    "description": "Expose the pgAdmin service to be accessed from outside the cluster (LoadBalancer service).\nor access it from within the cluster (ClusterIP service). Set the service type and the port to serve it.\nref: http://kubernetes.io/docs/user-guide/services/",
-                    "properties": {
-                      "loadBalancerIP": {
-                        "$ref": "#/$defs/values~1phpldapadmin~1anyOf~1not~1:t+null;only-applies-to-service+object+string+string;only-applies-to-service+3more"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "service": {
-                    "additionalProperties": {},
-                    "description": "Expose the pgAdmin service to be accessed from outside the cluster (LoadBalancer service).\nor access it from within the cluster (ClusterIP service). Set the service type and the port to serve it.\nref: http://kubernetes.io/docs/user-guide/services/",
-                    "properties": {
-                      "loadBalancerSourceRanges": {
-                        "$ref": "#/$defs/values~1phpldapadmin~1anyOf~1array;if-specified-and-supported+not~1:t+null"
-                      }
-                    }
-                  }
-                }
-              }
-            ]
-          }
-        },
-        {
-          "if": {
-            "$ref": "#/$defs/constrains~1enabled+enabled=null+ingress.enabled:t@2"
-          },
-          "then": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1ingress.hosts"
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "ingress": {
-                    "$ref": "#/$defs/constrains~1tls@items.hosts"
-                  }
-                }
-              },
-              {
-                "$ref": "#/$defs/constrains~1ingress.annotations:t"
-              }
-            ]
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
-              },
-              {
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/constrains~1env+env=null"
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/constrains~1env+env=null"
-              },
-              {
-                "$ref": "#/$defs/constrains~1enabled:t"
-              }
-            ]
-          },
-          "then": false
         }
       ],
       "description": "phpldapadmin\nFor more parameters check following file: ./charts/phpldapadmin/values.yaml",
@@ -17051,143 +17925,13 @@
       "allOf": [
         {
           "if": {
-            "not": {
-              "$ref": "#/$defs/constrains~1type=ClusterIP"
-            }
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "externalTrafficPolicy": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1string@2"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1hosts~1string;pattern-a-za-z0-9-t"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1object"
-                  },
-                  {
-                    "description": "externalTrafficPolicy describes how nodes distribute service traffic they receive on one of the Service's \"externally-facing\" addresses (NodePorts, ExternalIPs, and LoadBalancer IPs). If set to \"Local\", the proxy will configure the service in a way that assumes that external load balancers will take care of balancing the service traffic between nodes, and so each node will deliver traffic only to the node-local endpoints of the service, without masquerading the client source IP. (Traffic mistakenly sent to a node with no endpoints will be dropped.) The default value, \"Cluster\", uses the standard behavior of routing to all endpoints evenly (possibly modified by topology and other features). Note that traffic sent to an External IP or LoadBalancer IP from within the cluster will always get \"Cluster\" semantics, but clients sending to a NodePort from within the cluster may need to take traffic policy into account when picking a node.",
-                    "type": "null"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1hosts~1string;pattern-t"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1hosts~1string;pattern-null-null-null"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@10"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@4"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@9"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@2"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@5"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@7"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@8"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@3"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@6"
-                      }
-                    ],
-                    "description": "externalTrafficPolicy describes how nodes distribute service traffic they receive on one of the Service's \"externally-facing\" addresses (NodePorts, ExternalIPs, and LoadBalancer IPs). If set to \"Local\", the proxy will configure the service in a way that assumes that external load balancers will take care of balancing the service traffic between nodes, and so each node will deliver traffic only to the node-local endpoints of the service, without masquerading the client source IP. (Traffic mistakenly sent to a node with no endpoints will be dropped.) The default value, \"Cluster\", uses the standard behavior of routing to all endpoints evenly (possibly modified by topology and other features). Note that traffic sent to an External IP or LoadBalancer IP from within the cluster will always get \"Cluster\" semantics, but clients sending to a NodePort from within the cluster may need to take traffic policy into account when picking a node.",
-                    "type": "string"
-                  }
-                ]
-              }
-            }
-          }
-        },
-        {
-          "if": {
             "$ref": "#/$defs/constrains~1type=ClusterIP"
           },
           "then": {
             "additionalProperties": {},
             "properties": {
               "clusterIP": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1string@2"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.key+25more~1not~1:t"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1hosts~1string;pattern-a-za-z0-9-t"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1object"
-                  },
-                  {
-                    "description": "clusterIP is the IP address of the service and is usually assigned randomly. If an address is specified manually, is in-range (as per system configuration), and is not in use, it will be allocated to the service; otherwise creation of the service will fail. This field may not be changed through updates unless the type field is also being changed to ExternalName (which requires this field to be blank) or the type field is being changed from ExternalName (in which case this field may optionally be specified, as describe above).  Valid values are \"None\", empty string (\"\"), or a valid IP address. Setting this to \"None\" makes a \"headless service\" (no virtual IP), which is useful when direct endpoint connections are preferred and proxying is not required.  Only applies to types ClusterIP, NodePort, and LoadBalancer. If this field is specified when creating a Service of type ExternalName, creation will fail. This field will be wiped when updating a Service to type ExternalName. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
-                    "type": "null"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1hosts~1string;pattern-t"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@10"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@4"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@9"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@2"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@5"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@7"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@8"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@3"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@6"
-                      }
-                    ],
-                    "description": "clusterIP is the IP address of the service and is usually assigned randomly. If an address is specified manually, is in-range (as per system configuration), and is not in use, it will be allocated to the service; otherwise creation of the service will fail. This field may not be changed through updates unless the type field is also being changed to ExternalName (which requires this field to be blank) or the type field is being changed from ExternalName (in which case this field may optionally be specified, as describe above).  Valid values are \"None\", empty string (\"\"), or a valid IP address. Setting this to \"None\" makes a \"headless service\" (no virtual IP), which is useful when direct endpoint connections are preferred and proxying is not required.  Only applies to types ClusterIP, NodePort, and LoadBalancer. If this field is specified when creating a Service of type ExternalName, creation will fail. This field will be wiped when updating a Service to type ExternalName. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
-                    "type": "string"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1hosts~1string;pattern-null-null-null"
-                  }
-                ]
+                "$ref": "#/$defs/values~1anyOf~1not~1:t+null;clusterip-is-the-ip+object+string+string;clusterip-is-the-ip+3more"
               }
             }
           }
@@ -17199,7 +17943,14 @@
                 "$ref": "#/$defs/constrains~1enableLdapPort:t"
               },
               {
-                "$ref": "#/$defs/constrains~1type=LoadBalancer+type=NodePort"
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1type=NodePort"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1type=LoadBalancer"
+                  }
+                ]
               }
             ]
           },
@@ -17207,7 +17958,7 @@
             "additionalProperties": {},
             "properties": {
               "ldapPortNodePort": {
-                "$ref": "#/$defs/values~1service~1anyOf~1integer:int32;the-port-on-each+not~1:t+null:int32;the-port-on-each+4more"
+                "$ref": "#/$defs/values~1anyOf~1integer:int32;the-port-on-each+not~1:t+null:int32;the-port-on-each+4more"
               }
             }
           }
@@ -17222,7 +17973,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "loadBalancerIP": {
-                    "$ref": "#/$defs/values~1phpldapadmin~1anyOf~1not~1:t+null;only-applies-to-service+object+string+string;only-applies-to-service+3more"
+                    "$ref": "#/$defs/values~1anyOf~1not~1:t+null;only-applies-to-service+object+string+string;only-applies-to-service+3more"
                   }
                 }
               },
@@ -17230,7 +17981,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "loadBalancerSourceRanges": {
-                    "$ref": "#/$defs/values~1phpldapadmin~1anyOf~1array;if-specified-and-supported+not~1:t+null"
+                    "$ref": "#/$defs/values~1anyOf~1array;if-specified-and-supported+not~1:t+null"
                   }
                 }
               }
@@ -17239,9 +17990,31 @@
         },
         {
           "if": {
+            "not": {
+              "$ref": "#/$defs/constrains~1type=ClusterIP"
+            }
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "externalTrafficPolicy": {
+                "$ref": "#/$defs/values~1anyOf~1null;externaltrafficpolicy-describes-how-nodes+object+string+4more"
+              }
+            }
+          }
+        },
+        {
+          "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1type=LoadBalancer+type=NodePort"
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1type=NodePort"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1type=LoadBalancer"
+                  }
+                ]
               },
               {
                 "$ref": "#/$defs/constrains~1enableSslLdapPort:t"
@@ -17252,7 +18025,7 @@
             "additionalProperties": {},
             "properties": {
               "sslLdapPortNodePort": {
-                "$ref": "#/$defs/values~1service~1anyOf~1integer:int32;the-port-on-each+not~1:t+null:int32;the-port-on-each+4more"
+                "$ref": "#/$defs/values~1anyOf~1integer:int32;the-port-on-each+not~1:t+null:int32;the-port-on-each+4more"
               }
             }
           }
@@ -17283,64 +18056,7 @@
         },
         "externalTrafficPolicy": {},
         "ipFamilyPolicy": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1string@2"
-            },
-            {
-              "$ref": "#/$defs/constrains~1hosts~1string;pattern-a-za-z0-9-t"
-            },
-            {
-              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1object"
-            },
-            {
-              "$ref": "#/$defs/constrains~1hosts~1string;pattern-t"
-            },
-            {
-              "description": "IPFamilyPolicy represents the dual-stack-ness requested or required by this Service. If there is no value provided, then this field will be set to SingleStack. Services can be \"SingleStack\" (a single IP family), \"PreferDualStack\" (two IP families on dual-stack configured clusters or a single IP family on single-stack clusters), or \"RequireDualStack\" (two IP families on dual-stack configured clusters, otherwise fail). The ipFamilies and clusterIPs fields depend on the value of this field. This field will be wiped when updating a service to type ExternalName.",
-              "type": "null"
-            },
-            {
-              "$ref": "#/$defs/constrains~1hosts~1string;pattern-null-null-null"
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@10"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@4"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@9"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@2"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@5"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@7"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@8"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@3"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@6"
-                }
-              ],
-              "description": "IPFamilyPolicy represents the dual-stack-ness requested or required by this Service. If there is no value provided, then this field will be set to SingleStack. Services can be \"SingleStack\" (a single IP family), \"PreferDualStack\" (two IP families on dual-stack configured clusters or a single IP family on single-stack clusters), or \"RequireDualStack\" (two IP families on dual-stack configured clusters, otherwise fail). The ipFamilies and clusterIPs fields depend on the value of this field. This field will be wiped when updating a service to type ExternalName.",
-              "type": "string"
-            }
-          ],
-          "description": "Represents the dual-stack-ness requested or required by this Service. Possible values are\nSingleStack, PreferDualStack or RequireDualStack.\nThe ipFamilies and clusterIPs fields depend on the value of this field.\nRef: https://kubernetes.io/docs/concepts/services-networking/dual-stack/"
+          "$ref": "#/$defs/values~1service.ipFamilyPolicy"
         },
         "ldapPort": {},
         "ldapPortNodePort": {},
@@ -17349,89 +18065,17 @@
         "sessionAffinity": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1string@2"
+              "const": "None"
             },
             {
-              "$ref": "#/$defs/constrains~1hosts~1string;pattern-a-za-z0-9-t"
-            },
-            {
-              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1object"
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@10"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@4"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@9"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@2"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@5"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@7"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@8"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@3"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1not~1keywords~1pattern@6"
-                }
-              ],
-              "description": "Supports \"ClientIP\" and \"None\". Used to maintain session affinity. Enable client IP based session affinity. Must be ClientIP or None. Defaults to None. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
-              "type": "string"
-            },
-            {
-              "description": "Supports \"ClientIP\" and \"None\". Used to maintain session affinity. Enable client IP based session affinity. Must be ClientIP or None. Defaults to None. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
-              "type": "null"
-            },
-            {
-              "$ref": "#/$defs/constrains~1hosts~1string;pattern-t"
-            },
-            {
-              "$ref": "#/$defs/constrains~1hosts~1string;pattern-null-null-null"
+              "$ref": "#/$defs/values~1anyOf~1null;supports-clientip-and-none+object+string+string;pattern-a-za-z0-9-t+3more"
             }
           ]
         },
         "sslLdapPort": {},
         "sslLdapPortNodePort": {},
         "type": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/values~1ltb-passwd~1null;type-determines-how-the"
-            },
-            {
-              "$ref": "#/$defs/values~1ltb-passwd~1string;type-determines-how-the"
-            },
-            {
-              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1string@2"
-            },
-            {
-              "$ref": "#/$defs/constrains~1hosts~1string;pattern-a-za-z0-9-t"
-            },
-            {
-              "$ref": "#/$defs/constrains~1files@items.content+files@items.filename+name+targetPath~1object"
-            },
-            {
-              "$ref": "#/$defs/constrains~1hosts~1string;pattern-t"
-            },
-            {
-              "$ref": "#/$defs/constrains~1hosts~1string;pattern-null-null-null"
-            }
-          ],
-          "description": "Define a static clusterIP\nclusterIP:\nloadBalancerIP:\nloadBalancerSourceRanges: []"
+          "$ref": "#/$defs/values~1service.type"
         }
       },
       "type": "object"
@@ -17633,9 +18277,7 @@
       "description": "Service for read only cluster pods (if enabled)",
       "properties": {
         "annotations": {
-          "additionalProperties": {},
-          "description": "If service type NodePort, define the value here\nldapPortNodePort:\nsslLdapPortNodePort:",
-          "type": "object"
+          "description": "If service type NodePort, define the value here\nldapPortNodePort:\nsslLdapPortNodePort:"
         },
         "clusterIP": {},
         "enableLdapPort": {
@@ -17645,43 +18287,20 @@
         "externalIPs": {
           "$ref": "#/$defs/values~1service.externalIPs"
         },
-        "externalTrafficPolicy": {
-          "type": "string"
-        },
+        "externalTrafficPolicy": {},
         "headlessEnableLdapPort": {
           "description": "Control ports used in statefulset"
         },
         "headlessEnableSslLdapPort": {},
         "ipFamilyPolicy": {
-          "description": "Represents the dual-stack-ness requested or required by this Service. Possible values are\nSingleStack, PreferDualStack or RequireDualStack.\nThe ipFamilies and clusterIPs fields depend on the value of this field.\nRef: https://kubernetes.io/docs/concepts/services-networking/dual-stack/",
-          "type": "string"
+          "description": "Represents the dual-stack-ness requested or required by this Service. Possible values are\nSingleStack, PreferDualStack or RequireDualStack.\nThe ipFamilies and clusterIPs fields depend on the value of this field.\nRef: https://kubernetes.io/docs/concepts/services-networking/dual-stack/"
         },
         "ldapPortNodePort": {},
         "loadBalancerIP": {},
         "loadBalancerSourceRanges": {},
-        "sessionAffinity": {
-          "type": "string"
-        },
+        "sessionAffinity": {},
         "sslLdapPortNodePort": {},
         "type": {
-          "anyOf": [
-            {
-              "enum": [
-                "ClusterIP"
-              ]
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            },
-            {
-              "enum": [
-                "LoadBalancer"
-              ]
-            }
-          ],
           "description": "Define a static clusterIP\nclusterIP:\nloadBalancerIP:\nloadBalancerSourceRanges: []"
         }
       },

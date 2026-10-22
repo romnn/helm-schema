@@ -1052,6 +1052,25 @@
         }
       ]
     },
+    "constrains/admissionController+admissionController.replicas+backgroundController+4more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1admissionController.replicas@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cleanupController.enabled:t+cleanupController.podDisruptionBudget+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1admissionController.podDisruptionBudget.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1reportsController+reportsController.podDisruptionBudget.enabled:t+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1backgroundController+backgroundController.podDisruptionBudget.enabled:t+1more"
+        }
+      ]
+    },
     "constrains/admissionController+admissionController=null": {
       "anyOf": [
         {
@@ -1077,22 +1096,6 @@
             "admissionController"
           ],
           "type": "object"
-        }
-      ]
-    },
-    "constrains/admissionController+backgroundController+cleanupController+2more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1reportsController.enabled:t+reportsController.podDisruptionBudget"
-        },
-        {
-          "$ref": "#/$defs/constrains~1backgroundController.enabled:t+backgroundController.podDisruptionBudget"
-        },
-        {
-          "$ref": "#/$defs/constrains~1admissionController.podDisruptionBudget.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cleanupController.enabled:t+cleanupController.podDisruptionBudget"
         }
       ]
     },
@@ -1607,7 +1610,7 @@
       "not": {
         "properties": {
           "admissionController": {
-            "$ref": "#/$defs/constrains~1replicas@3"
+            "$ref": "#/$defs/constrains~1replicas@4"
           }
         },
         "required": [
@@ -1615,6 +1618,17 @@
         ],
         "type": "object"
       }
+    },
+    "constrains/admissionController.replicas@2": {
+      "properties": {
+        "admissionController": {
+          "$ref": "#/$defs/constrains~1replicas"
+        }
+      },
+      "required": [
+        "admissionController"
+      ],
+      "type": "object"
     },
     "constrains/admissionController.serviceMonitor.enabled:t": {
       "properties": {
@@ -2501,6 +2515,39 @@
       "description": "name of the volume. Must be a DNS_LABEL and unique within the pod. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": "string"
     },
+    "constrains/backgroundController+backgroundController.podDisruptionBudget.enabled:t+1more": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "properties": {
+                "backgroundController": {
+                  "$ref": "#/$defs/constrains~1podDisruptionBudget.enabled:t"
+                }
+              },
+              "required": [
+                "backgroundController"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "backgroundController": {
+                  "$ref": "#/$defs/constrains~1replicas"
+                }
+              },
+              "required": [
+                "backgroundController"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "$ref": "#/$defs/constrains~1backgroundController.enabled:t"
+        }
+      ]
+    },
     "constrains/backgroundController+backgroundController.serviceMonitor.enabled:t": {
       "allOf": [
         {
@@ -2634,24 +2681,6 @@
         }
       ]
     },
-    "constrains/backgroundController.enabled:t+backgroundController.podDisruptionBudget": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1backgroundController.enabled:t"
-        },
-        {
-          "properties": {
-            "backgroundController": {
-              "$ref": "#/$defs/constrains~1podDisruptionBudget.enabled:t"
-            }
-          },
-          "required": [
-            "backgroundController"
-          ],
-          "type": "object"
-        }
-      ]
-    },
     "constrains/backgroundController.enabled:t+backgroundController.rbac.create:t": {
       "allOf": [
         {
@@ -2696,19 +2725,6 @@
     "constrains/backgroundController.enabled=true+backgroundController.sanityChecks=true+1more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1crds.groups.reports.ephemeralreports=false"
-        },
-        {
-          "$ref": "#/$defs/constrains~1backgroundController.sanityChecks=true"
-        },
-        {
-          "$ref": "#/$defs/constrains~1backgroundController.enabled=true"
-        }
-      ]
-    },
-    "constrains/backgroundController.enabled=true+backgroundController.sanityChecks=true+1more@2": {
-      "allOf": [
-        {
           "$ref": "#/$defs/constrains~1backgroundController.sanityChecks=true"
         },
         {
@@ -2716,6 +2732,19 @@
         },
         {
           "$ref": "#/$defs/constrains~1crds.groups.reports.clusterephemeralreports=false"
+        }
+      ]
+    },
+    "constrains/backgroundController.enabled=true+backgroundController.sanityChecks=true+1more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1crds.groups.reports.ephemeralreports=false"
+        },
+        {
+          "$ref": "#/$defs/constrains~1backgroundController.sanityChecks=true"
+        },
+        {
+          "$ref": "#/$defs/constrains~1backgroundController.enabled=true"
         }
       ]
     },
@@ -2762,7 +2791,7 @@
           ]
         },
         {
-          "$ref": "#/$defs/constrains~1backgroundController.enabled=true+backgroundController.sanityChecks=true+1more@2"
+          "$ref": "#/$defs/constrains~1backgroundController.enabled=true+backgroundController.sanityChecks=true+1more"
         },
         {
           "$ref": "#/$defs/constrains~1crds.groups.reports.clusterephemeralreports=false+reportsController.enabled=true+1more"
@@ -2810,7 +2839,7 @@
           ]
         },
         {
-          "$ref": "#/$defs/constrains~1backgroundController.enabled=true+backgroundController.sanityChecks=true+1more"
+          "$ref": "#/$defs/constrains~1backgroundController.enabled=true+backgroundController.sanityChecks=true+1more@2"
         },
         {
           "$ref": "#/$defs/constrains~1crds.groups.reports.ephemeralreports=false+reportsController.enabled=true+1more"
@@ -3025,7 +3054,7 @@
       "not": {
         "properties": {
           "backgroundController": {
-            "$ref": "#/$defs/constrains~1replicas@3"
+            "$ref": "#/$defs/constrains~1replicas@4"
           }
         },
         "required": [
@@ -3893,21 +3922,36 @@
         }
       ]
     },
-    "constrains/cleanupController.enabled:t+cleanupController.podDisruptionBudget": {
+    "constrains/cleanupController.enabled:t+cleanupController.podDisruptionBudget+1more": {
       "allOf": [
         {
           "$ref": "#/$defs/constrains~1cleanupController.enabled:t"
         },
         {
-          "properties": {
-            "cleanupController": {
-              "$ref": "#/$defs/constrains~1podDisruptionBudget.enabled:t"
+          "anyOf": [
+            {
+              "properties": {
+                "cleanupController": {
+                  "$ref": "#/$defs/constrains~1podDisruptionBudget.enabled:t"
+                }
+              },
+              "required": [
+                "cleanupController"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "cleanupController": {
+                  "$ref": "#/$defs/constrains~1replicas"
+                }
+              },
+              "required": [
+                "cleanupController"
+              ],
+              "type": "object"
             }
-          },
-          "required": [
-            "cleanupController"
-          ],
-          "type": "object"
+          ]
         }
       ]
     },
@@ -4078,7 +4122,7 @@
       "not": {
         "properties": {
           "cleanupController": {
-            "$ref": "#/$defs/constrains~1replicas@3"
+            "$ref": "#/$defs/constrains~1replicas@4"
           }
         },
         "required": [
@@ -12007,7 +12051,7 @@
           "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;matchlabelkeys-is-a-set@2"
         },
         "mismatchLabelKeys": {
-          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;mismatchlabelkeys-is-a-set"
+          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;mismatchlabelkeys-is-a-set@2"
         },
         "namespaceSelector": {
           "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more"
@@ -12052,7 +12096,7 @@
     "constrains/labelSelector.matchExpressions@items.key+8more/array,null;mismatchlabelkeys-is-a-set": {
       "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
       "items": {
-        "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1string,null"
+        "$ref": "#/$defs/constrains~1@items.labelSelector.matchExpressions@items.key+10more~1anyOf~1null+string+string;pattern-"
       },
       "type": [
         "array",
@@ -12063,7 +12107,7 @@
     "constrains/labelSelector.matchExpressions@items.key+8more/array,null;mismatchlabelkeys-is-a-set@2": {
       "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
       "items": {
-        "$ref": "#/$defs/constrains~1@items.labelSelector.matchExpressions@items.key+10more~1anyOf~1null+string+string;pattern-"
+        "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1string,null"
       },
       "type": [
         "array",
@@ -12106,7 +12150,7 @@
           "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;matchlabelkeys-is-a-set"
         },
         "mismatchLabelKeys": {
-          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;mismatchlabelkeys-is-a-set@2"
+          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;mismatchlabelkeys-is-a-set"
         },
         "namespaceSelector": {
           "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more@2"
@@ -12423,118 +12467,6 @@
       "description": "Selector to match an existing Persistent Volume (this value is evaluated as a template)\nselector:\nmatchLabels:\napp: my-app"
     },
     "constrains/maxUnavailable:t": {
-      "additionalProperties": {},
-      "properties": {
-        "maxUnavailable": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/constrains~1maxUnavailable:t~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more"
-            },
-            {
-              "$ref": "#/$defs/constrains~1@items.effect+@items.key+@items.operator+@items.tolerationSeconds+@items.value~1not~1:t"
-            }
-          ],
-          "description": "Configures the maximum unavailable pods for disruptions.\nCannot be used if `minAvailable` is set."
-        }
-      }
-    },
-    "constrains/maxUnavailable:t/anyOf/integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
-        },
-        {
-          "type": "null"
-        }
-      ]
-    },
-    "constrains/maxUnavailable:t/anyOf/null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1global.imageRegistry~1string@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1duration:t~1object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1maxUnavailable:t~1string"
-        }
-      ]
-    },
-    "constrains/maxUnavailable:t/oneOf/anyOf/integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more": {
-      "oneOf": [
-        {
-          "$ref": "#/$defs/constrains~1maxUnavailable:t~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1maxUnavailable:t~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more"
-        }
-      ]
-    },
-    "constrains/maxUnavailable:t/string": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1global.imageRegistry~1not~1keywords~1pattern@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1image.pullPolicy~1not~1keywords~1pattern"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.imageRegistry~1not~1keywords~1pattern"
-        },
-        {
-          "$ref": "#/$defs/constrains~1duration:t~1not~1keywords~1pattern@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1image.pullPolicy~1not~1keywords~1pattern@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1image.pullPolicy~1not~1keywords~1pattern@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1image.pullPolicy~1not~1keywords~1pattern@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1duration:t~1not~1keywords~1pattern"
-        },
-        {
-          "$ref": "#/$defs/constrains~1duration:t~1not~1keywords~1pattern@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1image.pullPolicy~1not~1keywords~1pattern@3"
-        }
-      ],
-      "type": "string"
-    },
-    "constrains/maxUnavailable:t/string;pattern-0-1-9": {
-      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
-      "type": "string"
-    },
-    "constrains/maxUnavailable:t@2": {
       "properties": {
         "maxUnavailable": {
           "$ref": "#/$defs/t"
@@ -12584,16 +12516,102 @@
               "description": "Prometheus endpoint port",
               "oneOf": [
                 {
-                  "$ref": "#/$defs/constrains~1maxUnavailable:t~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
+                  "$ref": "#/$defs/constrains~1metering.port~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1maxUnavailable:t~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more"
+                  "$ref": "#/$defs/constrains~1metering.port~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more"
                 }
               ]
             }
           }
         }
       }
+    },
+    "constrains/metering.port/anyOf/integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "constrains/metering.port/anyOf/null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.imageRegistry~1string@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1duration:t~1object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1metering.port~1string"
+        }
+      ]
+    },
+    "constrains/metering.port/string": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.imageRegistry~1not~1keywords~1pattern@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1image.pullPolicy~1not~1keywords~1pattern"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.imageRegistry~1not~1keywords~1pattern"
+        },
+        {
+          "$ref": "#/$defs/constrains~1duration:t~1not~1keywords~1pattern@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1image.pullPolicy~1not~1keywords~1pattern@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1image.pullPolicy~1not~1keywords~1pattern@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1image.pullPolicy~1not~1keywords~1pattern@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1duration:t~1not~1keywords~1pattern"
+        },
+        {
+          "$ref": "#/$defs/constrains~1duration:t~1not~1keywords~1pattern@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1image.pullPolicy~1not~1keywords~1pattern@3"
+        }
+      ],
+      "type": "string"
+    },
+    "constrains/metering.port/string;pattern-0-1-9": {
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
+      "type": "string"
     },
     "constrains/metering=null": {
       "properties": {
@@ -12807,33 +12825,6 @@
       },
       "required": [
         "migration"
-      ],
-      "type": "object"
-    },
-    "constrains/minAvailable:t": {
-      "additionalProperties": {},
-      "properties": {
-        "minAvailable": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/constrains~1maxUnavailable:t~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more"
-            },
-            {
-              "$ref": "#/$defs/constrains~1@items.effect+@items.key+@items.operator+@items.tolerationSeconds+@items.value~1not~1:t"
-            }
-          ],
-          "description": "Configures the minimum available pods for disruptions.\nCannot be used if `maxUnavailable` is set."
-        }
-      }
-    },
-    "constrains/minAvailable:t@2": {
-      "properties": {
-        "minAvailable": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "minAvailable"
       ],
       "type": "object"
     },
@@ -13408,7 +13399,7 @@
               "$ref": "#/$defs/constrains~1duration:t~1object"
             },
             {
-              "$ref": "#/$defs/constrains~1maxUnavailable:t~1string"
+              "$ref": "#/$defs/constrains~1metering.port~1string"
             }
           ]
         },
@@ -13628,7 +13619,7 @@
               "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
             },
             {
-              "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
+              "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
             },
             {
               "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
@@ -13839,7 +13830,7 @@
               "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;matchlabelkeys-is-a-set@2"
             },
             "mismatchLabelKeys": {
-              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;mismatchlabelkeys-is-a-set"
+              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;mismatchlabelkeys-is-a-set@2"
             },
             "namespaceSelector": {
               "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more"
@@ -13889,7 +13880,7 @@
               "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;matchlabelkeys-is-a-set"
             },
             "mismatchLabelKeys": {
-              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;mismatchlabelkeys-is-a-set@2"
+              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;mismatchlabelkeys-is-a-set"
             },
             "namespaceSelector": {
               "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more@2"
@@ -13990,10 +13981,168 @@
       ],
       "type": "object"
     },
+    "constrains/podDisruptionBudget.enabled:t+replicas": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1replicas"
+        },
+        {
+          "$ref": "#/$defs/constrains~1podDisruptionBudget.enabled:t"
+        }
+      ]
+    },
+    "constrains/podDisruptionBudget.maxUnavailable+1more": {
+      "allOf": [
+        {
+          "additionalProperties": {},
+          "properties": {
+            "podDisruptionBudget": {
+              "additionalProperties": {},
+              "properties": {
+                "unhealthyPodEvictionPolicy": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/constrains~1global.imageRegistry~1string@2"
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1@items.effect+@items.key+@items.operator+@items.tolerationSeconds+@items.value~1not~1:t"
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1duration:t~1object"
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                    },
+                    {
+                      "description": "UnhealthyPodEvictionPolicy defines the criteria for when unhealthy pods should be considered for eviction. Current implementation considers healthy pods, as pods that have status.conditions item with type=\"Ready\",status=\"True\".\n\nValid policies are IfHealthyBudget and AlwaysAllow. If no policy is specified, the default behavior will be used, which corresponds to the IfHealthyBudget policy.\n\nIfHealthyBudget policy means that running pods (status.phase=\"Running\"), but not yet healthy can be evicted only if the guarded application is not disrupted (status.currentHealthy is at least equal to status.desiredHealthy). Healthy pods will be subject to the PDB for eviction.\n\nAlwaysAllow policy means that all running pods (status.phase=\"Running\"), but not yet healthy are considered disrupted and can be evicted regardless of whether the criteria in a PDB is met. This means perspective running pods of a disrupted application might not get a chance to become healthy. Healthy pods will be subject to the PDB for eviction.\n\nAdditional policies may be added in the future. Clients making eviction decisions should disallow eviction of unhealthy pods if they encounter an unrecognized policy in this field.\n\nThis field is beta-level. The eviction API uses this field when the feature gate PDBUnhealthyPodEvictionPolicy is enabled (enabled by default).",
+                      "type": "null"
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/$defs/constrains~1global.imageRegistry~1not~1keywords~1pattern@2"
+                        },
+                        {
+                          "$ref": "#/$defs/constrains~1image.pullPolicy~1not~1keywords~1pattern"
+                        },
+                        {
+                          "$ref": "#/$defs/constrains~1global.imageRegistry~1not~1keywords~1pattern"
+                        },
+                        {
+                          "$ref": "#/$defs/constrains~1duration:t~1not~1keywords~1pattern@2"
+                        },
+                        {
+                          "$ref": "#/$defs/constrains~1image.pullPolicy~1not~1keywords~1pattern@2"
+                        },
+                        {
+                          "$ref": "#/$defs/constrains~1image.pullPolicy~1not~1keywords~1pattern@4"
+                        },
+                        {
+                          "$ref": "#/$defs/constrains~1image.pullPolicy~1not~1keywords~1pattern@5"
+                        },
+                        {
+                          "$ref": "#/$defs/constrains~1duration:t~1not~1keywords~1pattern"
+                        },
+                        {
+                          "$ref": "#/$defs/constrains~1duration:t~1not~1keywords~1pattern@3"
+                        },
+                        {
+                          "$ref": "#/$defs/constrains~1image.pullPolicy~1not~1keywords~1pattern@3"
+                        }
+                      ],
+                      "description": "UnhealthyPodEvictionPolicy defines the criteria for when unhealthy pods should be considered for eviction. Current implementation considers healthy pods, as pods that have status.conditions item with type=\"Ready\",status=\"True\".\n\nValid policies are IfHealthyBudget and AlwaysAllow. If no policy is specified, the default behavior will be used, which corresponds to the IfHealthyBudget policy.\n\nIfHealthyBudget policy means that running pods (status.phase=\"Running\"), but not yet healthy can be evicted only if the guarded application is not disrupted (status.currentHealthy is at least equal to status.desiredHealthy). Healthy pods will be subject to the PDB for eviction.\n\nAlwaysAllow policy means that all running pods (status.phase=\"Running\"), but not yet healthy are considered disrupted and can be evicted regardless of whether the criteria in a PDB is met. This means perspective running pods of a disrupted application might not get a chance to become healthy. Healthy pods will be subject to the PDB for eviction.\n\nAdditional policies may be added in the future. Clients making eviction decisions should disallow eviction of unhealthy pods if they encounter an unrecognized policy in this field.\n\nThis field is beta-level. The eviction API uses this field when the feature gate PDBUnhealthyPodEvictionPolicy is enabled (enabled by default).",
+                      "type": "string"
+                    }
+                  ],
+                  "description": "Unhealthy pod eviction policy to be used.\nPossible values are `IfHealthyBudget` or `AlwaysAllow`."
+                }
+              }
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "podDisruptionBudget": {
+              "additionalProperties": {},
+              "properties": {
+                "maxUnavailable": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/constrains~1podDisruptionBudget.maxUnavailable+1more~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more"
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1@items.effect+@items.key+@items.operator+@items.tolerationSeconds+@items.value~1not~1:t"
+                    }
+                  ],
+                  "description": "Configures the maximum unavailable pods for disruptions.\nCannot be used if `minAvailable` is set."
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "constrains/podDisruptionBudget.maxUnavailable+1more/oneOf/anyOf/integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/constrains~1metering.port~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1metering.port~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more"
+        }
+      ]
+    },
     "constrains/podDisruptionBudget.maxUnavailable:t": {
       "properties": {
         "podDisruptionBudget": {
-          "$ref": "#/$defs/constrains~1maxUnavailable:t@2"
+          "$ref": "#/$defs/constrains~1maxUnavailable:t"
+        }
+      },
+      "required": [
+        "podDisruptionBudget"
+      ],
+      "type": "object"
+    },
+    "constrains/podDisruptionBudget.minAvailable:t": {
+      "additionalProperties": {},
+      "properties": {
+        "podDisruptionBudget": {
+          "additionalProperties": {},
+          "properties": {
+            "minAvailable": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/constrains~1podDisruptionBudget.maxUnavailable+1more~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1@items.effect+@items.key+@items.operator+@items.tolerationSeconds+@items.value~1not~1:t"
+                }
+              ],
+              "description": "Configures the minimum available pods for disruptions.\nCannot be used if `maxUnavailable` is set."
+            }
+          }
+        }
+      }
+    },
+    "constrains/podDisruptionBudget.minAvailable:t@2": {
+      "properties": {
+        "podDisruptionBudget": {
+          "properties": {
+            "minAvailable": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "minAvailable"
+          ],
+          "type": "object"
         }
       },
       "required": [
@@ -14311,7 +14460,7 @@
         "port": {
           "allOf": [
             {
-              "$ref": "#/$defs/constrains~1maxUnavailable:t~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more"
+              "$ref": "#/$defs/constrains~1podDisruptionBudget.maxUnavailable+1more~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more"
             },
             {
               "anyOf": [
@@ -14319,7 +14468,7 @@
                   "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1integer:int32;the-port-that-will"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
+                  "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
                 }
               ]
             }
@@ -14365,7 +14514,7 @@
               "$ref": "#/$defs/constrains~1containerPort+hostIP+hostPort+name+protocol~1integer:int32;number-of-port-to"
             },
             {
-              "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
+              "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
             }
           ],
           "description": "Profiling endpoint port"
@@ -14381,7 +14530,7 @@
               "$ref": "#/$defs/constrains~1containerPort+hostIP+hostPort+name+protocol~1integer:int32;number-of-port-to"
             },
             {
-              "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
+              "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
             }
           ],
           "description": "Prometheus endpoint port"
@@ -14459,7 +14608,7 @@
               "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1integer:int32;the-port-that-will"
             },
             {
-              "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
+              "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
             }
           ],
           "description": "PostgreSQL service port\nNode ports to expose\nNOTE: choose port between <30000-32767>"
@@ -14651,7 +14800,7 @@
               "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
             },
             {
-              "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
+              "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
             },
             {
               "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
@@ -15594,14 +15743,12 @@
         "replicas": {
           "anyOf": [
             {
-              "not": {
-                "pattern": "^-([1-9][0-9]{1,17}|[1-9]|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{1,14}|0[xX]0*[1-9a-fA-F]|0[bB]0*1[0-1]{1,61}|0[bB]0*1|0[oO]?0*[1-7][0-7]{1,19}|0[oO]?0*[1-7]|[0-9_]*[1-9][0-9_]*_[0-9_]*|[0-9_]*_[0-9_]*[1-9][0-9_]*|0[xX][0-9a-fA-F_]*[1-9a-fA-F][0-9a-fA-F_]*_[0-9a-fA-F_]*|0[xX][0-9a-fA-F_]*_[0-9a-fA-F_]*[1-9a-fA-F][0-9a-fA-F_]*|0[bB][01_]*1[01_]*_[01_]*|0[bB][01_]*_[01_]*1[01_]*|0[oO]?[0-7_]*[1-7][0-7_]*_[0-7_]*|0[oO]?[0-7_]*_[0-7_]*[1-7][0-7_]*|[1-9][0-9]{18}|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{15}|0[bB]0*1[01]{62}|0[oO]?0*[1-7][0-7]{20})(\\.0*)?$"
-              },
-              "type": "string"
+              "exclusiveMinimum": 1,
+              "type": "integer"
             },
             {
-              "exclusiveMinimum": -1,
-              "type": "integer"
+              "pattern": "^\\+?([1-9][0-9]{1,17}|[2-9]|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{1,14}|0[xX]0*[2-9a-fA-F]|0[bB]0*1[0-1]{1,61}|0[oO]?0*[1-7][0-7]{1,19}|0[oO]?0*[2-7])$",
+              "type": "string"
             }
           ]
         }
@@ -15641,6 +15788,28 @@
           "anyOf": [
             {
               "not": {
+                "pattern": "^-([1-9][0-9]{1,17}|[1-9]|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{1,14}|0[xX]0*[1-9a-fA-F]|0[bB]0*1[0-1]{1,61}|0[bB]0*1|0[oO]?0*[1-7][0-7]{1,19}|0[oO]?0*[1-7]|[0-9_]*[1-9][0-9_]*_[0-9_]*|[0-9_]*_[0-9_]*[1-9][0-9_]*|0[xX][0-9a-fA-F_]*[1-9a-fA-F][0-9a-fA-F_]*_[0-9a-fA-F_]*|0[xX][0-9a-fA-F_]*_[0-9a-fA-F_]*[1-9a-fA-F][0-9a-fA-F_]*|0[bB][01_]*1[01_]*_[01_]*|0[bB][01_]*_[01_]*1[01_]*|0[oO]?[0-7_]*[1-7][0-7_]*_[0-7_]*|0[oO]?[0-7_]*_[0-7_]*[1-7][0-7_]*|[1-9][0-9]{18}|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{15}|0[bB]0*1[01]{62}|0[oO]?0*[1-7][0-7]{20})(\\.0*)?$"
+              },
+              "type": "string"
+            },
+            {
+              "exclusiveMinimum": -1,
+              "type": "integer"
+            }
+          ]
+        }
+      },
+      "required": [
+        "replicas"
+      ],
+      "type": "object"
+    },
+    "constrains/replicas@3": {
+      "properties": {
+        "replicas": {
+          "anyOf": [
+            {
+              "not": {
                 "pattern": "^\\+?([1-9][0-9]{1,17}|[1-9]|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{1,14}|0[xX]0*[1-9a-fA-F]|0[bB]0*1[0-1]{1,61}|0[bB]0*1|0[oO]?0*[1-7][0-7]{1,19}|0[oO]?0*[1-7]|[0-9_]*[1-9][0-9_]*_[0-9_]*|[0-9_]*_[0-9_]*[1-9][0-9_]*|0[xX][0-9a-fA-F_]*[1-9a-fA-F][0-9a-fA-F_]*_[0-9a-fA-F_]*|0[xX][0-9a-fA-F_]*_[0-9a-fA-F_]*[1-9a-fA-F][0-9a-fA-F_]*|0[bB][01_]*1[01_]*_[01_]*|0[bB][01_]*_[01_]*1[01_]*|0[oO]?[0-7_]*[1-7][0-7_]*_[0-7_]*|0[oO]?[0-7_]*_[0-7_]*[1-7][0-7_]*|[1-9][0-9]{18}|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{15}|0[bB]0*1[01]{62}|0[oO]?0*[1-7][0-7]{20})(\\.0*)?$"
               },
               "type": "string"
@@ -15657,7 +15826,7 @@
       ],
       "type": "object"
     },
-    "constrains/replicas@3": {
+    "constrains/replicas@4": {
       "properties": {
         "replicas": {}
       },
@@ -16812,7 +16981,7 @@
           "reports-server": {
             "properties": {
               "pdb": {
-                "$ref": "#/$defs/constrains~1maxUnavailable:t@2"
+                "$ref": "#/$defs/constrains~1maxUnavailable:t"
               }
             },
             "required": [
@@ -17109,6 +17278,28 @@
           "$ref": "#/$defs/constrains~1reports-server.postgresql.diagnosticMode.enabled:t"
         },
         {
+          "$ref": "#/$defs/constrains~1reports-server.postgresql.readReplicas.livenessProbe.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1reports-server.postgresql.readReplicas.customLivenessProbe:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1reportsServer.enabled:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1reports-server.postgresql.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication"
+        }
+      ]
+    },
+    "constrains/reports-server.postgresql+reports-server.postgresql.architecture=replication+4more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1reports-server.postgresql.diagnosticMode.enabled:t"
+        },
+        {
           "$ref": "#/$defs/constrains~1reports-server.postgresql.readReplicas.customStartupProbe:t"
         },
         {
@@ -17125,7 +17316,7 @@
         }
       ]
     },
-    "constrains/reports-server.postgresql+reports-server.postgresql.architecture=replication+4more@2": {
+    "constrains/reports-server.postgresql+reports-server.postgresql.architecture=replication+4more@3": {
       "allOf": [
         {
           "$ref": "#/$defs/constrains~1reports-server.postgresql.readReplicas.readinessProbe.enabled:t"
@@ -17135,28 +17326,6 @@
         },
         {
           "$ref": "#/$defs/constrains~1reports-server.postgresql.readReplicas.customReadinessProbe:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1reportsServer.enabled:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication"
-        }
-      ]
-    },
-    "constrains/reports-server.postgresql+reports-server.postgresql.architecture=replication+4more@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.diagnosticMode.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.readReplicas.livenessProbe.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.readReplicas.customLivenessProbe:t"
         },
         {
           "$ref": "#/$defs/constrains~1reportsServer.enabled:t@2"
@@ -20602,10 +20771,10 @@
           "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.global:t"
+          "$ref": "#/$defs/constrains~1reports-server.postgresql.primary.persistence.storageClass:t"
         },
         {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.readReplicas.persistence.storageClass:t"
+          "$ref": "#/$defs/constrains~1reports-server.postgresql.global:t"
         }
       ]
     },
@@ -20615,10 +20784,10 @@
           "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.primary.persistence.storageClass:t"
+          "$ref": "#/$defs/constrains~1reports-server.postgresql.global:t"
         },
         {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.global:t"
+          "$ref": "#/$defs/constrains~1reports-server.postgresql.readReplicas.persistence.storageClass:t"
         }
       ]
     },
@@ -26377,6 +26546,39 @@
         }
       ]
     },
+    "constrains/reportsController+reportsController.podDisruptionBudget.enabled:t+1more": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "properties": {
+                "reportsController": {
+                  "$ref": "#/$defs/constrains~1replicas"
+                }
+              },
+              "required": [
+                "reportsController"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "reportsController": {
+                  "$ref": "#/$defs/constrains~1podDisruptionBudget.enabled:t"
+                }
+              },
+              "required": [
+                "reportsController"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "$ref": "#/$defs/constrains~1reportsController.enabled:t"
+        }
+      ]
+    },
     "constrains/reportsController+reportsController.serviceMonitor.enabled:t": {
       "allOf": [
         {
@@ -26474,24 +26676,6 @@
         },
         {
           "$ref": "#/$defs/constrains~1reportsController.enabled:t"
-        }
-      ]
-    },
-    "constrains/reportsController.enabled:t+reportsController.podDisruptionBudget": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1reportsController.enabled:t"
-        },
-        {
-          "properties": {
-            "reportsController": {
-              "$ref": "#/$defs/constrains~1podDisruptionBudget.enabled:t"
-            }
-          },
-          "required": [
-            "reportsController"
-          ],
-          "type": "object"
         }
       ]
     },
@@ -26639,7 +26823,7 @@
       "not": {
         "properties": {
           "reportsController": {
-            "$ref": "#/$defs/constrains~1replicas@3"
+            "$ref": "#/$defs/constrains~1replicas@4"
           }
         },
         "required": [
@@ -28433,74 +28617,6 @@
         }
       }
     },
-    "constrains/unhealthyPodEvictionPolicy:t": {
-      "additionalProperties": {},
-      "properties": {
-        "unhealthyPodEvictionPolicy": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/constrains~1global.imageRegistry~1string@2"
-            },
-            {
-              "$ref": "#/$defs/constrains~1@items.effect+@items.key+@items.operator+@items.tolerationSeconds+@items.value~1not~1:t"
-            },
-            {
-              "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
-            },
-            {
-              "$ref": "#/$defs/constrains~1duration:t~1object"
-            },
-            {
-              "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
-            },
-            {
-              "description": "UnhealthyPodEvictionPolicy defines the criteria for when unhealthy pods should be considered for eviction. Current implementation considers healthy pods, as pods that have status.conditions item with type=\"Ready\",status=\"True\".\n\nValid policies are IfHealthyBudget and AlwaysAllow. If no policy is specified, the default behavior will be used, which corresponds to the IfHealthyBudget policy.\n\nIfHealthyBudget policy means that running pods (status.phase=\"Running\"), but not yet healthy can be evicted only if the guarded application is not disrupted (status.currentHealthy is at least equal to status.desiredHealthy). Healthy pods will be subject to the PDB for eviction.\n\nAlwaysAllow policy means that all running pods (status.phase=\"Running\"), but not yet healthy are considered disrupted and can be evicted regardless of whether the criteria in a PDB is met. This means perspective running pods of a disrupted application might not get a chance to become healthy. Healthy pods will be subject to the PDB for eviction.\n\nAdditional policies may be added in the future. Clients making eviction decisions should disallow eviction of unhealthy pods if they encounter an unrecognized policy in this field.\n\nThis field is beta-level. The eviction API uses this field when the feature gate PDBUnhealthyPodEvictionPolicy is enabled (enabled by default).",
-              "type": "null"
-            },
-            {
-              "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/constrains~1global.imageRegistry~1not~1keywords~1pattern@2"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1image.pullPolicy~1not~1keywords~1pattern"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1global.imageRegistry~1not~1keywords~1pattern"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1duration:t~1not~1keywords~1pattern@2"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1image.pullPolicy~1not~1keywords~1pattern@2"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1image.pullPolicy~1not~1keywords~1pattern@4"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1image.pullPolicy~1not~1keywords~1pattern@5"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1duration:t~1not~1keywords~1pattern"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1duration:t~1not~1keywords~1pattern@3"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1image.pullPolicy~1not~1keywords~1pattern@3"
-                }
-              ],
-              "description": "UnhealthyPodEvictionPolicy defines the criteria for when unhealthy pods should be considered for eviction. Current implementation considers healthy pods, as pods that have status.conditions item with type=\"Ready\",status=\"True\".\n\nValid policies are IfHealthyBudget and AlwaysAllow. If no policy is specified, the default behavior will be used, which corresponds to the IfHealthyBudget policy.\n\nIfHealthyBudget policy means that running pods (status.phase=\"Running\"), but not yet healthy can be evicted only if the guarded application is not disrupted (status.currentHealthy is at least equal to status.desiredHealthy). Healthy pods will be subject to the PDB for eviction.\n\nAlwaysAllow policy means that all running pods (status.phase=\"Running\"), but not yet healthy are considered disrupted and can be evicted regardless of whether the criteria in a PDB is met. This means perspective running pods of a disrupted application might not get a chance to become healthy. Healthy pods will be subject to the PDB for eviction.\n\nAdditional policies may be added in the future. Clients making eviction decisions should disallow eviction of unhealthy pods if they encounter an unrecognized policy in this field.\n\nThis field is beta-level. The eviction API uses this field when the feature gate PDBUnhealthyPodEvictionPolicy is enabled (enabled by default).",
-              "type": "string"
-            }
-          ],
-          "description": "Unhealthy pod eviction policy to be used.\nPossible values are `IfHealthyBudget` or `AlwaysAllow`."
-        }
-      }
-    },
     "constrains/viewRoleName": {
       "additionalProperties": {},
       "properties": {
@@ -29384,7 +29500,7 @@
           "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1integer:int32;the-port-that-will"
         },
         {
-          "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
+          "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
         }
       ],
       "description": "Service port."
@@ -29475,7 +29591,7 @@
           "$ref": "#/$defs/constrains~1@items.effect+@items.key+@items.operator+@items.tolerationSeconds+@items.value~1not~1:t"
         },
         {
-          "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
+          "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
         }
       ],
       "description": "Key size for RSA (2048, 4096) or ECDSA (256, 384).\nIgnored for Ed25519."
@@ -29738,7 +29854,7 @@
           "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
         },
         {
-          "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
+          "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
         },
         {
           "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
@@ -29752,7 +29868,7 @@
           "$ref": "#/$defs/constrains~1containerPort+hostIP+hostPort+name+protocol~1integer:int32;number-of-port-to"
         },
         {
-          "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
+          "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
         }
       ]
     },
@@ -29770,7 +29886,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
+          "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
         },
         {
           "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
@@ -29807,7 +29923,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/constrains~1maxUnavailable:t~1string"
+          "$ref": "#/$defs/constrains~1metering.port~1string"
         }
       ],
       "description": "(string) The configmap name (required if `create` is `false`)."
@@ -31972,7 +32088,7 @@
                     "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
+                    "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
                   },
                   {
                     "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
@@ -32026,7 +32142,7 @@
                         "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1integer:int32;the-port-that-will"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
+                        "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
                       }
                     ],
                     "description": "Service port.\nMetrics server will be exposed at this port."
@@ -32063,58 +32179,6 @@
       },
       "then": false
     },
-    "when/enabled:t+podDisruptionBudget+podDisruptionBudget.maxUnavailable:t+1more/then/fail": {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "podDisruptionBudget": {
-                "$ref": "#/$defs/constrains~1minAvailable:t@2"
-              }
-            },
-            "required": [
-              "podDisruptionBudget"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/$defs/constrains~1podDisruptionBudget.maxUnavailable:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1podDisruptionBudget.enabled:t"
-          }
-        ]
-      },
-      "then": false
-    },
-    "when/enabled:t+podDisruptionBudget+podDisruptionBudget.maxUnavailable:t/then/podDisruptionBudget.minAvailable:t": {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1podDisruptionBudget.enabled:t"
-          },
-          {
-            "not": {
-              "$ref": "#/$defs/constrains~1podDisruptionBudget.maxUnavailable:t"
-            }
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "podDisruptionBudget": {
-            "$ref": "#/$defs/constrains~1minAvailable:t"
-          }
-        }
-      }
-    },
     "when/enabled:t+podDisruptionBudget+podDisruptionBudget=null/then/fail": {
       "if": {
         "allOf": [
@@ -32136,38 +32200,6 @@
         ]
       },
       "then": false
-    },
-    "when/enabled:t+podDisruptionBudget/then/podDisruptionBudget.maxUnavailable+1more": {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1podDisruptionBudget.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "podDisruptionBudget": {
-                "$ref": "#/$defs/constrains~1unhealthyPodEvictionPolicy:t"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "podDisruptionBudget": {
-                "$ref": "#/$defs/constrains~1maxUnavailable:t"
-              }
-            }
-          }
-        ]
-      }
     },
     "when/enabled:t+rbac+rbac=null/then/fail": {
       "if": {
@@ -32484,10 +32516,10 @@
                 "description": "Service port.\nMetrics server will be exposed at this port.",
                 "oneOf": [
                   {
-                    "$ref": "#/$defs/constrains~1maxUnavailable:t~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
+                    "$ref": "#/$defs/constrains~1metering.port~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1maxUnavailable:t~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more"
+                    "$ref": "#/$defs/constrains~1metering.port~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more"
                   }
                 ]
               }
@@ -32512,6 +32544,60 @@
       },
       "then": {
         "$ref": "#/$defs/constrains~1networkPolicy.ingressFrom:t+networkPolicy.ingressFrom@items.ipBlock.cidr+6more"
+      }
+    },
+    "when/podDisruptionBudget.enabled:t+podDisruptionBudget.maxUnavailable:t+2more/then/fail": {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1podDisruptionBudget.enabled:t+replicas"
+          },
+          {
+            "$ref": "#/$defs/constrains~1podDisruptionBudget.minAvailable:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1podDisruptionBudget.maxUnavailable:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1enabled:t"
+          }
+        ]
+      },
+      "then": false
+    },
+    "when/podDisruptionBudget.enabled:t+podDisruptionBudget.maxUnavailable:t+replicas/then/podDisruptionBudget.minAvailable:t": {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1podDisruptionBudget.enabled:t+replicas"
+          },
+          {
+            "$ref": "#/$defs/constrains~1enabled:t"
+          },
+          {
+            "not": {
+              "$ref": "#/$defs/constrains~1podDisruptionBudget.maxUnavailable:t"
+            }
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1podDisruptionBudget.minAvailable:t"
+      }
+    },
+    "when/podDisruptionBudget.enabled:t+replicas/then/podDisruptionBudget.maxUnavailable+1more": {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1podDisruptionBudget.enabled:t+replicas"
+          },
+          {
+            "$ref": "#/$defs/constrains~1enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1podDisruptionBudget.maxUnavailable+1more"
       }
     },
     "when/profiling+profiling=null/then/fail": {
@@ -34403,7 +34489,7 @@
               {
                 "properties": {
                   "admissionController": {
-                    "$ref": "#/$defs/constrains~1replicas@2"
+                    "$ref": "#/$defs/constrains~1replicas@3"
                   }
                 },
                 "required": [
@@ -34418,7 +34504,7 @@
               {
                 "properties": {
                   "admissionController": {
-                    "$ref": "#/$defs/constrains~1replicas"
+                    "$ref": "#/$defs/constrains~1replicas@2"
                   }
                 },
                 "required": [
@@ -35740,7 +35826,7 @@
                                 "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
+                                "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
                               },
                               {
                                 "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
@@ -36004,7 +36090,7 @@
                                 "$ref": "#/$defs/values~1null:int64;optional-duration-in-seconds"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
+                                "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
                               },
                               {
                                 "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
@@ -37151,7 +37237,7 @@
             "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication+6more@5"
           },
           {
-            "$ref": "#/$defs/constrains~1reports-server.postgresql+reports-server.postgresql.architecture=replication+4more@3"
+            "$ref": "#/$defs/constrains~1reports-server.postgresql+reports-server.postgresql.architecture=replication+4more"
           }
         ]
       },
@@ -38729,7 +38815,7 @@
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1maxUnavailable:t~1string"
+                        "$ref": "#/$defs/constrains~1metering.port~1string"
                       }
                     ],
                     "description": "Name override"
@@ -38910,7 +38996,7 @@
                             "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1integer:int32;the-port-that-will"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
+                            "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
                           }
                         ],
                         "description": "Service port"
@@ -39612,96 +39698,6 @@
         ]
       },
       "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1admissionController+backgroundController+cleanupController+2more"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "apiVersionOverride": {
-                "additionalProperties": {},
-                "properties": {
-                  "podDisruptionBudget": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1@items.effect+@items.key+@items.operator+@items.tolerationSeconds+@items.value~1not~1:t"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
-                      },
-                      {
-                        "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-                        "enum": [
-                          "policy/v1"
-                        ],
-                        "type": "null"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/$defs/constrains~1global.imageRegistry~1not~1keywords~1pattern@2"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1image.pullPolicy~1not~1keywords~1pattern"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1global.imageRegistry~1not~1keywords~1pattern"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1duration:t~1not~1keywords~1pattern@2"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1image.pullPolicy~1not~1keywords~1pattern@2"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1image.pullPolicy~1not~1keywords~1pattern@4"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1image.pullPolicy~1not~1keywords~1pattern@5"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1duration:t~1not~1keywords~1pattern"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1duration:t~1not~1keywords~1pattern@3"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1image.pullPolicy~1not~1keywords~1pattern@3"
-                          }
-                        ],
-                        "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-                        "enum": [
-                          "policy/v1"
-                        ],
-                        "type": "string"
-                      }
-                    ],
-                    "description": "(string) Override api version used to create `PodDisruptionBudget`` resources.\nWhen not specified the chart will check if `policy/v1/PodDisruptionBudget` is available to\ndetermine the api version automatically."
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "apiVersionOverride": {
-                "type": "object"
-              }
-            }
-          }
-        ]
-      }
     },
     {
       "if": {
@@ -42343,7 +42339,7 @@
                                         "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1integer:int32;the-port-that-will"
                                       },
                                       {
-                                        "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
+                                        "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
                                       }
                                     ],
                                     "description": "PostgreSQL Prometheus Exporter service port"
@@ -42436,7 +42432,7 @@
                                     "$ref": "#/$defs/constrains~1containerPort+hostIP+hostPort+name+protocol~1integer:int32;number-of-port-to"
                                   },
                                   {
-                                    "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
+                                    "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
                                   }
                                 ],
                                 "description": "PostgreSQL Prometheus exporter metrics container port\nPostgreSQL Prometheus exporter resource requests and limits\nref: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/"
@@ -43183,10 +43179,10 @@
                             "description": "PostgreSQL Prometheus exporter metrics container port\nPostgreSQL Prometheus exporter resource requests and limits\nref: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/",
                             "oneOf": [
                               {
-                                "$ref": "#/$defs/constrains~1maxUnavailable:t~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
+                                "$ref": "#/$defs/constrains~1metering.port~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1maxUnavailable:t~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more"
+                                "$ref": "#/$defs/constrains~1metering.port~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more"
                               }
                             ]
                           }
@@ -43232,7 +43228,7 @@
               {
                 "properties": {
                   "cleanupController": {
-                    "$ref": "#/$defs/constrains~1replicas@2"
+                    "$ref": "#/$defs/constrains~1replicas@3"
                   }
                 },
                 "required": [
@@ -43253,7 +43249,7 @@
               {
                 "properties": {
                   "cleanupController": {
-                    "$ref": "#/$defs/constrains~1replicas"
+                    "$ref": "#/$defs/constrains~1replicas@2"
                   }
                 },
                 "required": [
@@ -43704,7 +43700,7 @@
                           {
                             "oneOf": [
                               {
-                                "$ref": "#/$defs/constrains~1maxUnavailable:t~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
+                                "$ref": "#/$defs/constrains~1metering.port~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
                               },
                               {
                                 "anyOf": [
@@ -43962,140 +43958,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1reportsController.enabled:t+reportsController.podDisruptionBudget"
-          },
-          {
-            "$ref": "#/$defs/constrains~1reportsController.caCertificates.data:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1admissionController.caCertificates.data:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1crds.migration+global.templating.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1backgroundController.enabled:t+backgroundController.podDisruptionBudget"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global.templating.debug:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global.templating.enabled:t+webhooksCleanup"
-          },
-          {
-            "$ref": "#/$defs/constrains~1admissionController.networkPolicy.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1metricsConfig.create:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1admissionController.podDisruptionBudget.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global.caCertificates.data:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1admissionController.rbac.create:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1backgroundController.enabled:t+backgroundController.metricsService.create:t+1more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1cleanupController.enabled:t+cleanupController.podDisruptionBudget"
-          },
-          {
-            "$ref": "#/$defs/constrains~1reportsController+reportsController.metricsService.create:t+1more"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1cleanupController.enabled:t"
-              },
-              {
-                "properties": {
-                  "cleanupController": {
-                    "$ref": "#/$defs/constrains~1networkPolicy.enabled:t"
-                  }
-                },
-                "required": [
-                  "cleanupController"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.create:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1backgroundController.caCertificates.data:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1reportsController.enabled:t+reportsController.rbac.create:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1cleanupController.enabled:t+cleanupController.rbac.create:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1backgroundController.enabled:t+backgroundController.rbac.create:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1admissionController.createSelfSignedCert:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1admissionController.autoscaling.enabled:t"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1cleanupController.createSelfSignedCert:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1cleanupController.enabled:t"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "namespaceOverride": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/values~1null;namespace-defines-the-space"
-              },
-              {
-                "$ref": "#/$defs/constrains~1global.imageRegistry~1string@2"
-              },
-              {
-                "$ref": "#/$defs/constrains~1@items.effect+@items.key+@items.operator+@items.tolerationSeconds+@items.value~1not~1:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1duration:t~1object"
-              },
-              {
-                "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
-              },
-              {
-                "$ref": "#/$defs/values~1string;namespace-defines-the-space"
-              }
-            ],
-            "description": "(string) Override the namespace the chart deploys to"
-          }
-        }
       }
     },
     {
@@ -45121,7 +44983,7 @@
               {
                 "properties": {
                   "backgroundController": {
-                    "$ref": "#/$defs/constrains~1replicas@2"
+                    "$ref": "#/$defs/constrains~1replicas@3"
                   }
                 },
                 "required": [
@@ -45179,7 +45041,7 @@
               {
                 "properties": {
                   "backgroundController": {
-                    "$ref": "#/$defs/constrains~1replicas"
+                    "$ref": "#/$defs/constrains~1replicas@2"
                   }
                 },
                 "required": [
@@ -45479,7 +45341,7 @@
                 "$ref": "#/$defs/constrains~1global.storageClass+global.storageClass=null+global.storageClass?"
               },
               {
-                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more@2"
+                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more"
               },
               {
                 "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled=null"
@@ -45525,7 +45387,7 @@
                 "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled=null"
               },
               {
-                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more"
+                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1reports-server.postgresql.global:t@2"
@@ -45553,7 +45415,7 @@
                 "$ref": "#/$defs/constrains~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null"
               },
               {
-                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more@2"
+                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more"
               },
               {
                 "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled=null"
@@ -45596,7 +45458,7 @@
                 "$ref": "#/$defs/constrains~1reportsServer.enabled:t@2"
               },
               {
-                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more"
+                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1reports-server.postgresql.global:t@2"
@@ -45633,7 +45495,7 @@
                 "$ref": "#/$defs/constrains~1reports-server.postgresql.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more"
+                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1reports-server.postgresql.global:t@2"
@@ -45670,7 +45532,7 @@
                 "$ref": "#/$defs/constrains~1reports-server.postgresql.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more"
+                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1reports-server.postgresql.global:t@2"
@@ -45729,7 +45591,7 @@
                 "$ref": "#/$defs/constrains~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null"
               },
               {
-                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more@2"
+                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more"
               },
               {
                 "$ref": "#/$defs/constrains~1reportsServer.enabled:t@2"
@@ -45760,7 +45622,7 @@
                 "$ref": "#/$defs/constrains~1global.storageClass+global.storageClass=null+global.storageClass?"
               },
               {
-                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more@2"
+                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more"
               },
               {
                 "$ref": "#/$defs/constrains~1reportsServer.enabled:t@2"
@@ -46818,10 +46680,10 @@
                         "description": "PostgreSQL container port\nAudit settings\nhttps://github.com/bitnami/containers/tree/main/bitnami/postgresql#auditing",
                         "oneOf": [
                           {
-                            "$ref": "#/$defs/constrains~1maxUnavailable:t~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
+                            "$ref": "#/$defs/constrains~1metering.port~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1maxUnavailable:t~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more"
+                            "$ref": "#/$defs/constrains~1metering.port~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more"
                           }
                         ]
                       }
@@ -49044,7 +48906,7 @@
             "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication+6more@4"
           },
           {
-            "$ref": "#/$defs/constrains~1reports-server.postgresql+reports-server.postgresql.architecture=replication+4more@2"
+            "$ref": "#/$defs/constrains~1reports-server.postgresql+reports-server.postgresql.architecture=replication+4more@3"
           }
         ]
       },
@@ -51292,7 +51154,7 @@
                         ]
                       },
                       {
-                        "$ref": "#/$defs/constrains~1maxUnavailable:t~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
+                        "$ref": "#/$defs/constrains~1metering.port~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
                       }
                     ]
                   },
@@ -52280,7 +52142,7 @@
                                 "$ref": "#/$defs/constrains~1containerPort+hostIP+hostPort+name+protocol~1integer:int32;number-of-port-to"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
+                                "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
                               }
                             ],
                             "description": "PostgreSQL container port\nAudit settings\nhttps://github.com/bitnami/containers/tree/main/bitnami/postgresql#auditing"
@@ -52534,7 +52396,7 @@
                                 "$ref": "#/$defs/values~1null:int64;optional-duration-in-seconds"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
+                                "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
                               },
                               {
                                 "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
@@ -54656,7 +54518,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1reports-server.postgresql+reports-server.postgresql.architecture=replication+4more"
+            "$ref": "#/$defs/constrains~1reports-server.postgresql+reports-server.postgresql.architecture=replication+4more@2"
           },
           {
             "allOf": [
@@ -55828,6 +55690,143 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1reportsController.caCertificates.data:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1admissionController.replicas@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1admissionController.caCertificates.data:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1crds.migration+global.templating.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1global.templating.debug:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1global.templating.enabled:t+webhooksCleanup"
+          },
+          {
+            "$ref": "#/$defs/constrains~1admissionController.networkPolicy.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1metricsConfig.create:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1cleanupController.enabled:t+cleanupController.podDisruptionBudget+1more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1admissionController.podDisruptionBudget.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1global.caCertificates.data:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1admissionController.rbac.create:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1backgroundController.enabled:t+backgroundController.metricsService.create:t+1more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1reportsController+reportsController.podDisruptionBudget.enabled:t+1more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1reportsController+reportsController.metricsService.create:t+1more"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1cleanupController.enabled:t"
+              },
+              {
+                "properties": {
+                  "cleanupController": {
+                    "$ref": "#/$defs/constrains~1networkPolicy.enabled:t"
+                  }
+                },
+                "required": [
+                  "cleanupController"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.create:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1backgroundController.caCertificates.data:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1reportsController.enabled:t+reportsController.rbac.create:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1cleanupController.enabled:t+cleanupController.rbac.create:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1backgroundController.enabled:t+backgroundController.rbac.create:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1admissionController.createSelfSignedCert:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1admissionController.autoscaling.enabled:t"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1cleanupController.createSelfSignedCert:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1cleanupController.enabled:t"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1backgroundController+backgroundController.podDisruptionBudget.enabled:t+1more"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "namespaceOverride": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/values~1null;namespace-defines-the-space"
+              },
+              {
+                "$ref": "#/$defs/constrains~1global.imageRegistry~1string@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1@items.effect+@items.key+@items.operator+@items.tolerationSeconds+@items.value~1not~1:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1duration:t~1object"
+              },
+              {
+                "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+              },
+              {
+                "$ref": "#/$defs/values~1string;namespace-defines-the-space"
+              }
+            ],
+            "description": "(string) Override the namespace the chart deploys to"
+          }
+        }
+      }
     },
     {
       "if": {
@@ -57461,6 +57460,96 @@
     },
     {
       "if": {
+        "$ref": "#/$defs/constrains~1admissionController+admissionController.replicas+backgroundController+4more"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "apiVersionOverride": {
+                "additionalProperties": {},
+                "properties": {
+                  "podDisruptionBudget": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1@items.effect+@items.key+@items.operator+@items.tolerationSeconds+@items.value~1not~1:t"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                      },
+                      {
+                        "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+                        "enum": [
+                          "policy/v1"
+                        ],
+                        "type": "null"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/$defs/constrains~1global.imageRegistry~1not~1keywords~1pattern@2"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1image.pullPolicy~1not~1keywords~1pattern"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1global.imageRegistry~1not~1keywords~1pattern"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1duration:t~1not~1keywords~1pattern@2"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1image.pullPolicy~1not~1keywords~1pattern@2"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1image.pullPolicy~1not~1keywords~1pattern@4"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1image.pullPolicy~1not~1keywords~1pattern@5"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1duration:t~1not~1keywords~1pattern"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1duration:t~1not~1keywords~1pattern@3"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1image.pullPolicy~1not~1keywords~1pattern@3"
+                          }
+                        ],
+                        "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+                        "enum": [
+                          "policy/v1"
+                        ],
+                        "type": "string"
+                      }
+                    ],
+                    "description": "(string) Override api version used to create `PodDisruptionBudget`` resources.\nWhen not specified the chart will check if `policy/v1/PodDisruptionBudget` is available to\ndetermine the api version automatically."
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "apiVersionOverride": {
+                "type": "object"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "$ref": "#/$defs/constrains~1global.templating.debug:t"
@@ -57489,6 +57578,73 @@
                 "$ref": "#/$defs/constrains~1preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector.matchExpressions@items.key+15more@4"
               }
             }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1admissionController.replicas@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1cleanupController.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1global.templating.debug:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1admissionController.networkPolicy.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1admissionController.podDisruptionBudget.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1backgroundController.enabled:t+backgroundController.metricsService.create:t+1more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1reportsController+reportsController.podDisruptionBudget.enabled:t+1more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1reportsController+reportsController.metricsService.create:t+1more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1backgroundController+backgroundController.podDisruptionBudget.enabled:t+1more"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/constrains~1name:t~1string;name-must-be-unique"
+              },
+              {
+                "$ref": "#/$defs/constrains~1global.imageRegistry~1string@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1@items.effect+@items.key+@items.operator+@items.tolerationSeconds+@items.value~1not~1:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1duration:t~1object"
+              },
+              {
+                "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1name:t~1null;name-must-be-unique"
+              },
+              {
+                "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+              }
+            ],
+            "description": "(string) Override the name of the chart"
           }
         }
       }
@@ -59067,7 +59223,7 @@
                     "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
+                    "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
                   },
                   {
                     "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
@@ -59178,11 +59334,11 @@
                     "properties": {
                       "resources": {
                         "additionalProperties": {
-                          "$ref": "#/$defs/constrains~1maxUnavailable:t~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
+                          "$ref": "#/$defs/constrains~1metering.port~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
                         },
                         "description": "Resources to migrate",
                         "items": {
-                          "$ref": "#/$defs/constrains~1maxUnavailable:t~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
+                          "$ref": "#/$defs/constrains~1metering.port~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
                         }
                       }
                     }
@@ -59518,7 +59674,7 @@
                 "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t"
               },
               {
-                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more"
+                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1reports-server.postgresql.global:t@2"
@@ -59549,7 +59705,7 @@
                 "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t"
               },
               {
-                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more"
+                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1reports-server.postgresql.global:t@2"
@@ -59580,7 +59736,7 @@
                 "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t"
               },
               {
-                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more"
+                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1reports-server.postgresql.global:t@2"
@@ -59611,7 +59767,7 @@
                 "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t"
               },
               {
-                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more"
+                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1reports-server.postgresql.global:t@2"
@@ -59642,7 +59798,7 @@
                 "$ref": "#/$defs/constrains~1reports-server.postgresql.global:t"
               },
               {
-                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more"
+                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication"
@@ -59670,7 +59826,7 @@
                 "$ref": "#/$defs/constrains~1reports-server.postgresql.global:t"
               },
               {
-                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more"
+                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication"
@@ -59698,7 +59854,7 @@
                 "$ref": "#/$defs/constrains~1reports-server.postgresql.global:t"
               },
               {
-                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more"
+                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication"
@@ -59726,7 +59882,7 @@
                 "$ref": "#/$defs/constrains~1reports-server.postgresql.global:t"
               },
               {
-                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more"
+                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication"
@@ -60651,7 +60807,7 @@
                         "$ref": "#/$defs/constrains~1duration:t~1object"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1maxUnavailable:t~1string"
+                        "$ref": "#/$defs/constrains~1metering.port~1string"
                       }
                     ],
                     "description": "Name override"
@@ -60746,44 +60902,6 @@
           },
           {
             "$ref": "#/$defs/constrains~1features+features=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1admissionController+backgroundController+cleanupController+2more"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "apiVersionOverride": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "apiVersionOverride"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "apiVersionOverride": {}
-                  },
-                  "required": [
-                    "apiVersionOverride"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
           }
         ]
       },
@@ -61572,7 +61690,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1reports-server.postgresql+reports-server.postgresql.architecture=replication+4more"
+            "$ref": "#/$defs/constrains~1reports-server.postgresql+reports-server.postgresql.architecture=replication+4more@2"
           },
           {
             "$ref": "#/$defs/constrains~1reports-server.postgresql+reports-server.postgresql.architecture=replication+5more@3"
@@ -63123,70 +63241,6 @@
                 }
               }
             }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1reportsController.enabled:t+reportsController.podDisruptionBudget"
-          },
-          {
-            "$ref": "#/$defs/constrains~1cleanupController.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1backgroundController.enabled:t+backgroundController.podDisruptionBudget"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global.templating.debug:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1admissionController.networkPolicy.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1admissionController.podDisruptionBudget.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1backgroundController.enabled:t+backgroundController.metricsService.create:t+1more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1reportsController+reportsController.metricsService.create:t+1more"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/constrains~1name:t~1string;name-must-be-unique"
-              },
-              {
-                "$ref": "#/$defs/constrains~1global.imageRegistry~1string@2"
-              },
-              {
-                "$ref": "#/$defs/constrains~1@items.effect+@items.key+@items.operator+@items.tolerationSeconds+@items.value~1not~1:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1duration:t~1object"
-              },
-              {
-                "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1name:t~1null;name-must-be-unique"
-              },
-              {
-                "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
-              }
-            ],
-            "description": "(string) Override the name of the chart"
           }
         }
       }
@@ -64888,7 +64942,7 @@
                   "minAvailable": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/constrains~1maxUnavailable:t~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more"
+                        "$ref": "#/$defs/constrains~1podDisruptionBudget.maxUnavailable+1more~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more"
                       },
                       {
                         "$ref": "#/$defs/constrains~1@items.effect+@items.key+@items.operator+@items.tolerationSeconds+@items.value~1not~1:t"
@@ -66221,7 +66275,7 @@
             "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication+6more@5"
           },
           {
-            "$ref": "#/$defs/constrains~1reports-server.postgresql+reports-server.postgresql.architecture=replication+4more@3"
+            "$ref": "#/$defs/constrains~1reports-server.postgresql+reports-server.postgresql.architecture=replication+4more"
           }
         ]
       },
@@ -68856,7 +68910,7 @@
                 "$ref": "#/$defs/constrains~1duration:t~1object"
               },
               {
-                "$ref": "#/$defs/constrains~1maxUnavailable:t~1string"
+                "$ref": "#/$defs/constrains~1metering.port~1string"
               }
             ],
             "description": "(string) Override the name of the chart"
@@ -69589,7 +69643,7 @@
             "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication+6more@4"
           },
           {
-            "$ref": "#/$defs/constrains~1reports-server.postgresql+reports-server.postgresql.architecture=replication+4more@2"
+            "$ref": "#/$defs/constrains~1reports-server.postgresql+reports-server.postgresql.architecture=replication+4more@3"
           }
         ]
       },
@@ -70431,7 +70485,7 @@
                   "maxUnavailable": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/constrains~1maxUnavailable:t~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more"
+                        "$ref": "#/$defs/constrains~1podDisruptionBudget.maxUnavailable+1more~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more"
                       },
                       {
                         "$ref": "#/$defs/constrains~1@items.effect+@items.key+@items.operator+@items.tolerationSeconds+@items.value~1not~1:t"
@@ -71967,7 +72021,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1backgroundController.enabled=true+backgroundController.sanityChecks=true+1more@2"
+            "$ref": "#/$defs/constrains~1backgroundController.enabled=true+backgroundController.sanityChecks=true+1more"
           },
           {
             "$ref": "#/$defs/constrains~1crds.groups.reports.clusterephemeralreports=false+reportsController.enabled=true+1more"
@@ -71979,7 +72033,7 @@
             "$ref": "#/$defs/constrains~1crds.groups.wgpolicyk8s.policyreports=false+reportsController.enabled=true+1more"
           },
           {
-            "$ref": "#/$defs/constrains~1backgroundController.enabled=true+backgroundController.sanityChecks=true+1more"
+            "$ref": "#/$defs/constrains~1backgroundController.enabled=true+backgroundController.sanityChecks=true+1more@2"
           },
           {
             "$ref": "#/$defs/constrains~1crds.groups.reports.ephemeralreports=false+reportsController.enabled=true+1more"
@@ -72582,7 +72636,7 @@
                                     "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
                                   },
                                   {
-                                    "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
+                                    "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
                                   },
                                   {
                                     "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
@@ -72635,7 +72689,7 @@
                                     "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
                                   },
                                   {
-                                    "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
+                                    "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
                                   },
                                   {
                                     "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
@@ -72686,7 +72740,7 @@
                                     "type": "integer"
                                   },
                                   {
-                                    "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
+                                    "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
                                   },
                                   {
                                     "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
@@ -72928,7 +72982,7 @@
                                     "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
                                   },
                                   {
-                                    "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
+                                    "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
                                   },
                                   {
                                     "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
@@ -79387,7 +79441,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more@2"
+                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more"
               },
               {
                 "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled=null"
@@ -79415,7 +79469,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more@2"
+                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more"
               },
               {
                 "$ref": "#/$defs/constrains~1reportsServer.enabled:t@2"
@@ -79446,7 +79500,7 @@
                 "$ref": "#/$defs/constrains~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null"
               },
               {
-                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more@2"
+                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more"
               },
               {
                 "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled=null"
@@ -79471,7 +79525,7 @@
                 "$ref": "#/$defs/constrains~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null"
               },
               {
-                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more@2"
+                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more"
               },
               {
                 "$ref": "#/$defs/constrains~1reportsServer.enabled:t@2"
@@ -79496,7 +79550,7 @@
                 "$ref": "#/$defs/constrains~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null"
               },
               {
-                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more@2"
+                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more"
               },
               {
                 "$ref": "#/$defs/constrains~1reportsServer.enabled:t@2"
@@ -79521,7 +79575,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more@2"
+                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more"
               },
               {
                 "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled=null"
@@ -79546,7 +79600,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more@2"
+                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more"
               },
               {
                 "$ref": "#/$defs/constrains~1reportsServer.enabled:t@2"
@@ -79574,7 +79628,7 @@
                 "$ref": "#/$defs/constrains~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null"
               },
               {
-                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more@2"
+                "$ref": "#/$defs/constrains~1reports-server.postgresql.global.storageClass:t+2more"
               },
               {
                 "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled=null"
@@ -80715,6 +80769,44 @@
       "if": {
         "allOf": [
           {
+            "$ref": "#/$defs/constrains~1admissionController+admissionController.replicas+backgroundController+4more"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "apiVersionOverride": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "apiVersionOverride"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "apiVersionOverride": {}
+                  },
+                  "required": [
+                    "apiVersionOverride"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "$ref": "#/$defs/constrains~1reports-server.postgresql.metrics.customStartupProbe:t"
           },
           {
@@ -81740,7 +81832,7 @@
                                         "$ref": "#/$defs/constrains~1@items.effect+@items.key+@items.operator+@items.tolerationSeconds+@items.value~1not~1:t"
                                       },
                                       {
-                                        "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
+                                        "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
                                       }
                                     ],
                                     "description": "PostgreSQL service port (overrides `service.ports.postgresql`)"
@@ -83116,7 +83208,7 @@
               {
                 "properties": {
                   "reportsController": {
-                    "$ref": "#/$defs/constrains~1replicas@2"
+                    "$ref": "#/$defs/constrains~1replicas@3"
                   }
                 },
                 "required": [
@@ -83140,7 +83232,7 @@
               {
                 "properties": {
                   "reportsController": {
-                    "$ref": "#/$defs/constrains~1replicas"
+                    "$ref": "#/$defs/constrains~1replicas@2"
                   }
                 },
                 "required": [
@@ -85484,7 +85576,7 @@
                 "$ref": "#/$defs/constrains~1duration:t~1object"
               },
               {
-                "$ref": "#/$defs/constrains~1maxUnavailable:t~1string"
+                "$ref": "#/$defs/constrains~1metering.port~1string"
               }
             ],
             "description": "(string) Override the namespace the chart deploys to"
@@ -86137,7 +86229,7 @@
                                     "type": "null"
                                   },
                                   {
-                                    "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
+                                    "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
                                   },
                                   {
                                     "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
@@ -87246,10 +87338,10 @@
                     "description": "Service port.\nKyverno's metrics server will be exposed at this port.",
                     "oneOf": [
                       {
-                        "$ref": "#/$defs/constrains~1maxUnavailable:t~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
+                        "$ref": "#/$defs/constrains~1metering.port~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1maxUnavailable:t~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more"
+                        "$ref": "#/$defs/constrains~1metering.port~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more"
                       }
                     ]
                   }
@@ -87397,6 +87489,31 @@
           }
         },
         {
+          "if": {
+            "$ref": "#/$defs/constrains~1podDisruptionBudget.enabled:t+replicas"
+          },
+          "then": {
+            "$ref": "#/$defs/constrains~1podDisruptionBudget.maxUnavailable+1more"
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1podDisruptionBudget.enabled:t+replicas"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/constrains~1podDisruptionBudget.maxUnavailable:t"
+                }
+              }
+            ]
+          },
+          "then": {
+            "$ref": "#/$defs/constrains~1podDisruptionBudget.minAvailable:t"
+          }
+        },
+        {
           "$ref": "#/$defs/when~1profiling+profiling=null~1then~1fail"
         },
         {
@@ -87476,30 +87593,6 @@
                       },
                       {
                         "$ref": "#/$defs/constrains~1coreClusterRole.extraResources:t+coreClusterRole.extraResources@items.apiGroups+4more"
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "podDisruptionBudget": {
-              "allOf": [
-                {
-                  "if": {
-                    "$ref": "#/$defs/constrains~1enabled:t"
-                  },
-                  "then": {
-                    "allOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1unhealthyPodEvictionPolicy:t"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1maxUnavailable:t"
                       }
                     ]
                   }
@@ -87661,57 +87754,6 @@
         {
           "additionalProperties": {},
           "properties": {
-            "podDisruptionBudget": {
-              "allOf": [
-                {
-                  "if": {
-                    "allOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1enabled:t"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/$defs/constrains~1maxUnavailable:t@2"
-                        }
-                      }
-                    ]
-                  },
-                  "then": {
-                    "$ref": "#/$defs/constrains~1minAvailable:t"
-                  }
-                }
-              ]
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "podDisruptionBudget": {
-              "allOf": [
-                {
-                  "if": {
-                    "allOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1maxUnavailable:t@2"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1enabled:t"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1minAvailable:t@2"
-                      }
-                    ]
-                  },
-                  "then": false
-                }
-              ]
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
             "networkPolicy": {
               "allOf": [
                 {
@@ -87790,7 +87832,7 @@
                                 "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
+                                "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
                               },
                               {
                                 "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
@@ -87821,7 +87863,7 @@
                                 "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
+                                "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
                               },
                               {
                                 "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
@@ -87853,7 +87895,7 @@
                                 "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
+                                "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
                               },
                               {
                                 "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
@@ -87874,7 +87916,7 @@
                                 "type": "integer"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
+                                "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
                               }
                             ],
                             "description": "Maximum number of pods"
@@ -88002,7 +88044,7 @@
                                 "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1integer:int32;the-port-that-will"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
+                                "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
                               }
                             ],
                             "description": "Service port.\nKyverno's metrics server will be exposed at this port."
@@ -88326,6 +88368,22 @@
               },
               {
                 "$ref": "#/$defs/constrains~1serviceMonitor=null"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1podDisruptionBudget.enabled:t+replicas"
+              },
+              {
+                "$ref": "#/$defs/constrains~1podDisruptionBudget.minAvailable:t@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1podDisruptionBudget.maxUnavailable:t"
               }
             ]
           },
@@ -88801,9 +88859,6 @@
           "$ref": "#/$defs/when~1enabled:t+serviceMonitor~1then~1serviceMonitor.additionalAnnotations:t+serviceMonitor.additionalLabels+11more"
         },
         {
-          "$ref": "#/$defs/when~1enabled:t+podDisruptionBudget~1then~1podDisruptionBudget.maxUnavailable+1more"
-        },
-        {
           "$ref": "#/$defs/when~1enabled:t+rbac.create:t+rbac.createViewRoleBinding:t+rbac.serviceAccount.name+2more~1then~1fail"
         },
         {
@@ -88819,10 +88874,16 @@
           "$ref": "#/$defs/constrains~1profiling.enabled:t+profiling.port+profiling.serviceType"
         },
         {
+          "$ref": "#/$defs/when~1podDisruptionBudget.enabled:t+podDisruptionBudget.maxUnavailable:t+replicas~1then~1podDisruptionBudget.minAvailable:t"
+        },
+        {
           "$ref": "#/$defs/when~1enabled:t+rbac.create:t+rbac.createViewRoleBinding:t~1then~1rbac.viewRoleName"
         },
         {
           "$ref": "#/$defs/when~1enabled:t+metricsService.create:t+metricsService.type=NodePort~1then~1metricsService.nodePort:t"
+        },
+        {
+          "$ref": "#/$defs/when~1podDisruptionBudget.enabled:t+replicas~1then~1podDisruptionBudget.maxUnavailable+1more"
         },
         {
           "$ref": "#/$defs/when~1profiling+profiling=null~1then~1fail"
@@ -88890,16 +88951,13 @@
           "$ref": "#/$defs/when~1enabled:t+metricsService.create:t~1then~1metering.port+metricsService.annotations:t+metricsService.port+1more"
         },
         {
+          "$ref": "#/$defs/when~1podDisruptionBudget.enabled:t+podDisruptionBudget.maxUnavailable:t+2more~1then~1fail"
+        },
+        {
           "$ref": "#/$defs/constrains~1profiling.enabled:t+profiling.nodePort:t+profiling.serviceType=NodePort"
         },
         {
-          "$ref": "#/$defs/when~1enabled:t+podDisruptionBudget+podDisruptionBudget.maxUnavailable:t~1then~1podDisruptionBudget.minAvailable:t"
-        },
-        {
           "$ref": "#/$defs/when~1enabled:t+rbac.clusterRole+rbac.clusterRole=null+rbac.create:t~1then~1fail"
-        },
-        {
-          "$ref": "#/$defs/when~1enabled:t+podDisruptionBudget+podDisruptionBudget.maxUnavailable:t+1more~1then~1fail"
         },
         {
           "$ref": "#/$defs/when~1enabled:t+metricsService+metricsService=null~1then~1fail"
@@ -89159,9 +89217,6 @@
           "$ref": "#/$defs/when~1enabled:t+serviceMonitor~1then~1serviceMonitor.additionalAnnotations:t+serviceMonitor.additionalLabels+11more"
         },
         {
-          "$ref": "#/$defs/when~1enabled:t+podDisruptionBudget~1then~1podDisruptionBudget.maxUnavailable+1more"
-        },
-        {
           "if": {
             "allOf": [
               {
@@ -89334,7 +89389,7 @@
                         "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
+                        "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
                       },
                       {
                         "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
@@ -89395,6 +89450,9 @@
           }
         },
         {
+          "$ref": "#/$defs/when~1podDisruptionBudget.enabled:t+podDisruptionBudget.maxUnavailable:t+replicas~1then~1podDisruptionBudget.minAvailable:t"
+        },
+        {
           "if": {
             "allOf": [
               {
@@ -89442,6 +89500,9 @@
           "then": {
             "$ref": "#/$defs/constrains~1networkPolicy.ingressFrom:t+networkPolicy.ingressFrom@items.ipBlock.cidr+6more"
           }
+        },
+        {
+          "$ref": "#/$defs/when~1podDisruptionBudget.enabled:t+replicas~1then~1podDisruptionBudget.maxUnavailable+1more"
         },
         {
           "if": {
@@ -89547,6 +89608,9 @@
           "$ref": "#/$defs/when~1enabled:t+metricsService.create:t~1then~1metering.port+metricsService.annotations:t+metricsService.port+1more"
         },
         {
+          "$ref": "#/$defs/when~1podDisruptionBudget.enabled:t+podDisruptionBudget.maxUnavailable:t+2more~1then~1fail"
+        },
+        {
           "if": {
             "allOf": [
               {
@@ -89590,9 +89654,6 @@
           "then": false
         },
         {
-          "$ref": "#/$defs/when~1enabled:t+podDisruptionBudget+podDisruptionBudget.maxUnavailable:t~1then~1podDisruptionBudget.minAvailable:t"
-        },
-        {
           "$ref": "#/$defs/when~1enabled:t+rbac.clusterRole+rbac.clusterRole=null+rbac.create:t~1then~1fail"
         },
         {
@@ -89632,9 +89693,6 @@
               }
             ]
           }
-        },
-        {
-          "$ref": "#/$defs/when~1enabled:t+podDisruptionBudget+podDisruptionBudget.maxUnavailable:t+1more~1then~1fail"
         },
         {
           "$ref": "#/$defs/when~1enabled:t+metricsService+metricsService=null~1then~1fail"
@@ -90990,7 +91048,7 @@
                     "$ref": "#/$defs/constrains~1duration:t~1object"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1maxUnavailable:t~1string"
+                    "$ref": "#/$defs/constrains~1metering.port~1string"
                   }
                 ]
               }
@@ -91433,7 +91491,7 @@
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1maxUnavailable:t~1string"
+                        "$ref": "#/$defs/constrains~1metering.port~1string"
                       }
                     ],
                     "description": "(string) Rate at which metrics should reset so as to clean up the memory footprint of kyverno metrics, if you might be expecting high memory footprint of Kyverno's metrics. Default: 0, no refresh of metrics. WARNING: This flag is not working since Kyverno 1.8.0\nmetricsRefreshInterval: 24h"
@@ -93506,9 +93564,6 @@
           "$ref": "#/$defs/when~1enabled:t+serviceMonitor~1then~1serviceMonitor.additionalAnnotations:t+serviceMonitor.additionalLabels+11more"
         },
         {
-          "$ref": "#/$defs/when~1enabled:t+podDisruptionBudget~1then~1podDisruptionBudget.maxUnavailable+1more"
-        },
-        {
           "if": {
             "allOf": [
               {
@@ -93568,7 +93623,13 @@
           "$ref": "#/$defs/constrains~1profiling.enabled:t+profiling.port+profiling.serviceType"
         },
         {
+          "$ref": "#/$defs/when~1podDisruptionBudget.enabled:t+podDisruptionBudget.maxUnavailable:t+replicas~1then~1podDisruptionBudget.minAvailable:t"
+        },
+        {
           "$ref": "#/$defs/when~1enabled:t+rbac.create:t+rbac.createViewRoleBinding:t~1then~1rbac.viewRoleName"
+        },
+        {
+          "$ref": "#/$defs/when~1podDisruptionBudget.enabled:t+replicas~1then~1podDisruptionBudget.maxUnavailable+1more"
         },
         {
           "$ref": "#/$defs/when~1profiling+profiling=null~1then~1fail"
@@ -93589,10 +93650,10 @@
           "$ref": "#/$defs/when~1enabled:t+metricsService.create:t~1then~1metering.port+metricsService.annotations:t+metricsService.port+1more"
         },
         {
-          "$ref": "#/$defs/constrains~1profiling.enabled:t+profiling.nodePort:t+profiling.serviceType=NodePort"
+          "$ref": "#/$defs/when~1podDisruptionBudget.enabled:t+podDisruptionBudget.maxUnavailable:t+2more~1then~1fail"
         },
         {
-          "$ref": "#/$defs/when~1enabled:t+podDisruptionBudget+podDisruptionBudget.maxUnavailable:t~1then~1podDisruptionBudget.minAvailable:t"
+          "$ref": "#/$defs/constrains~1profiling.enabled:t+profiling.nodePort:t+profiling.serviceType=NodePort"
         },
         {
           "$ref": "#/$defs/when~1enabled:t+rbac.clusterRole+rbac.clusterRole=null+rbac.create:t~1then~1fail"
@@ -93614,9 +93675,6 @@
               }
             ]
           }
-        },
-        {
-          "$ref": "#/$defs/when~1enabled:t+podDisruptionBudget+podDisruptionBudget.maxUnavailable:t+1more~1then~1fail"
         },
         {
           "$ref": "#/$defs/when~1enabled:t+metricsService+metricsService=null~1then~1fail"
@@ -93672,7 +93730,7 @@
                         "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1maxUnavailable:t~1string;pattern-0-1-9"
+                        "$ref": "#/$defs/constrains~1metering.port~1string;pattern-0-1-9"
                       },
                       {
                         "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"

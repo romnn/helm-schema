@@ -3286,6 +3286,27 @@
       ],
       "type": "object"
     },
+    "constrains/controller.admissionWebhooks.certManager.issuerRef:t": {
+      "not": {
+        "properties": {
+          "controller": {
+            "properties": {
+              "admissionWebhooks": {
+                "$ref": "#/$defs/constrains~1certManager.issuerRef:t"
+              }
+            },
+            "required": [
+              "admissionWebhooks"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "controller"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/controller.admissionWebhooks.enabled:t": {
       "properties": {
         "controller": {
@@ -6969,6 +6990,26 @@
         }
       }
     },
+    "constrains/revisionHistoryLimit": {
+      "properties": {
+        "revisionHistoryLimit": {
+          "anyOf": [
+            {
+              "pattern": "^\\+?([1-9][0-9]{1,17}|[1-9]|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{1,14}|0[xX]0*[1-9a-fA-F]|0[bB]0*1[0-1]{1,61}|0[bB]0*1|0[oO]?0*[1-7][0-7]{1,19}|0[oO]?0*[1-7])$",
+              "type": "string"
+            },
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            }
+          ]
+        }
+      },
+      "required": [
+        "revisionHistoryLimit"
+      ],
+      "type": "object"
+    },
     "constrains/seconds": {
       "additionalProperties": false,
       "description": "SleepAction describes a \"sleep\" action.",
@@ -9734,6 +9775,170 @@
     },
     {
       "if": {
+        "$ref": "#/$defs/constrains~1controller.admissionWebhooks.enabled:t"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "namespaceOverride": {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/constrains~1name~1string@2"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1name~1object"
+                          },
+                          {
+                            "allOf": [
+                              {
+                                "$ref": "#/$defs/constrains~1name~1not~1keywords~1pattern@10"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1name~1not~1keywords~1pattern@4"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1name~1not~1keywords~1pattern@9"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1name~1not~1keywords~1pattern@2"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1name~1not~1keywords~1pattern@5"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1name~1not~1keywords~1pattern@7"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1name~1not~1keywords~1pattern@8"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1name~1not~1keywords~1pattern"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1name~1not~1keywords~1pattern@3"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1name~1not~1keywords~1pattern@6"
+                              }
+                            ],
+                            "description": "`namespace` is the namespace of the service. Required",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/values~1null;namespace-defines-the-space"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1name~1string@2"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1allocateLoadBalancerNodePorts~1string;pattern-a-za-z0-9-t"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1name~1object"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1allocateLoadBalancerNodePorts~1string;pattern-t"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1allocateLoadBalancerNodePorts~1string;pattern-null-null-null"
+                          },
+                          {
+                            "$ref": "#/$defs/values~1string;namespace-defines-the-space"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                  }
+                ],
+                "description": "Override the deployment namespace; defaults to .Release.Namespace"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "controller": {
+                "additionalProperties": {},
+                "properties": {
+                  "admissionWebhooks": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "service": {
+                        "$ref": "#/$defs/constrains~1servicePort"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "controller": {
+                "additionalProperties": {},
+                "properties": {
+                  "admissionWebhooks": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "patch": {
+                        "$ref": "#/$defs/values~1object;name-certs-secret"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "controller": {
+                "additionalProperties": {},
+                "properties": {
+                  "admissionWebhooks": {
+                    "$ref": "#/$defs/constrains~1service"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "controller": {
+                "additionalProperties": {},
+                "properties": {
+                  "admissionWebhooks": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "service": {
+                        "$ref": "#/$defs/constrains~1servicePort?"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
         "properties": {
           "namespaceOverride": {
             "$ref": "#/$defs/t"
@@ -9929,189 +10134,6 @@
             }
           }
         }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1controller.admissionWebhooks.enabled:t"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "namespaceOverride": {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/constrains~1name~1string@2"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1name~1object"
-                          },
-                          {
-                            "allOf": [
-                              {
-                                "$ref": "#/$defs/constrains~1name~1not~1keywords~1pattern@10"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1name~1not~1keywords~1pattern@4"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1name~1not~1keywords~1pattern@9"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1name~1not~1keywords~1pattern@2"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1name~1not~1keywords~1pattern@5"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1name~1not~1keywords~1pattern@7"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1name~1not~1keywords~1pattern@8"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1name~1not~1keywords~1pattern"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1name~1not~1keywords~1pattern@3"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1name~1not~1keywords~1pattern@6"
-                              }
-                            ],
-                            "description": "`namespace` is the namespace of the service. Required",
-                            "type": "string"
-                          }
-                        ]
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/values~1null;namespace-defines-the-space"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1name~1string@2"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1allocateLoadBalancerNodePorts~1string;pattern-a-za-z0-9-t"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1name~1object"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1allocateLoadBalancerNodePorts~1string;pattern-t"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1allocateLoadBalancerNodePorts~1string;pattern-null-null-null"
-                          },
-                          {
-                            "$ref": "#/$defs/values~1string;namespace-defines-the-space"
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
-                  }
-                ],
-                "description": "Override the deployment namespace; defaults to .Release.Namespace"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "controller": {
-                "additionalProperties": {},
-                "properties": {
-                  "admissionWebhooks": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "certManager": {
-                        "description": "Use certmanager to generate webhook certs",
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "controller": {
-                "additionalProperties": {},
-                "properties": {
-                  "admissionWebhooks": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "service": {
-                        "$ref": "#/$defs/constrains~1servicePort"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "controller": {
-                "additionalProperties": {},
-                "properties": {
-                  "admissionWebhooks": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "patch": {
-                        "$ref": "#/$defs/values~1object;name-certs-secret"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "controller": {
-                "additionalProperties": {},
-                "properties": {
-                  "admissionWebhooks": {
-                    "$ref": "#/$defs/constrains~1service"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "controller": {
-                "additionalProperties": {},
-                "properties": {
-                  "admissionWebhooks": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "service": {
-                        "$ref": "#/$defs/constrains~1servicePort?"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        ]
       }
     },
     {
@@ -11784,25 +11806,7 @@
             "$ref": "#/$defs/constrains~1controller.admissionWebhooks.enabled:t"
           },
           {
-            "not": {
-              "properties": {
-                "controller": {
-                  "properties": {
-                    "admissionWebhooks": {
-                      "$ref": "#/$defs/constrains~1certManager.issuerRef:t"
-                    }
-                  },
-                  "required": [
-                    "admissionWebhooks"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "controller"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/constrains~1controller.admissionWebhooks.certManager.issuerRef:t"
           }
         ]
       },
@@ -12448,6 +12452,127 @@
         "properties": {
           "controller": {
             "$ref": "#/$defs/constrains~1image"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1controller.admissionWebhooks.enabled:t"
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "admissionWebhooks": {
+                        "properties": {
+                          "certManager": {
+                            "properties": {
+                              "admissionCert": {
+                                "$ref": "#/$defs/constrains~1revisionHistoryLimit"
+                              }
+                            },
+                            "required": [
+                              "admissionCert"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "certManager"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "admissionWebhooks"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/constrains~1controller.admissionWebhooks.certManager.enabled:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1controller.admissionWebhooks.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1controller.admissionWebhooks.certManager.enabled:t"
+              },
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "admissionWebhooks": {
+                        "properties": {
+                          "certManager": {
+                            "properties": {
+                              "rootCert": {
+                                "$ref": "#/$defs/constrains~1revisionHistoryLimit"
+                              }
+                            },
+                            "required": [
+                              "rootCert"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "certManager"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "admissionWebhooks"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/constrains~1controller.admissionWebhooks.enabled:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1controller.admissionWebhooks.certManager.issuerRef:t"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "controller": {
+            "additionalProperties": {},
+            "properties": {
+              "admissionWebhooks": {
+                "additionalProperties": {},
+                "properties": {
+                  "certManager": {
+                    "description": "Use certmanager to generate webhook certs",
+                    "type": "object"
+                  }
+                }
+              }
+            }
           }
         }
       }

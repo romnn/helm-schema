@@ -4016,7 +4016,7 @@
             "$ref": "#/$defs/constrains~1hostPath+mountPath+mountPropagation+name+readOnly@2"
           },
           {
-            "$ref": "#/$defs/constrains~1hostPath@2"
+            "$ref": "#/$defs/constrains~1mountPath@3"
           }
         ]
       },
@@ -4029,7 +4029,7 @@
             "$ref": "#/$defs/constrains~1hostPath+mountPath+mountPropagation+name+readOnly@2"
           },
           {
-            "$ref": "#/$defs/constrains~1mountPath@3"
+            "$ref": "#/$defs/constrains~1hostPath@2"
           }
         ]
       },
@@ -7029,6 +7029,16 @@
       ],
       "type": "object"
     },
+    "constrains/alertmanager.additionalPeers:t+alertmanager.replicaCount": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1alertmanager.replicaCount"
+        }
+      ]
+    },
     "constrains/alertmanager.affinity:t": {
       "not": {
         "$ref": "#/$defs/constrains~1alertmanager.affinity:t@2"
@@ -7410,6 +7420,34 @@
           },
           "required": [
             "podAntiAffinity"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "alertmanager"
+      ],
+      "type": "object"
+    },
+    "constrains/alertmanager.replicaCount": {
+      "properties": {
+        "alertmanager": {
+          "properties": {
+            "replicaCount": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "pattern": "^\\+?([1-9][0-9]{1,17}|[2-9]|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{1,14}|0[xX]0*[2-9a-fA-F]|0[bB]0*1[0-1]{1,61}|0[oO]?0*[1-7][0-7]{1,19}|0[oO]?0*[2-7])$",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "required": [
+            "replicaCount"
           ],
           "type": "object"
         }
@@ -14723,7 +14761,7 @@
               "type": "object"
             },
             {
-              "$ref": "#/$defs/constrains~1commonLabels"
+              "$ref": "#/$defs/constrains~1commonLabels@2"
             }
           ]
         },
@@ -14733,7 +14771,7 @@
               "$ref": "#/$defs/constrains~1enabled:t"
             },
             {
-              "$ref": "#/$defs/constrains~1commonLabels"
+              "$ref": "#/$defs/constrains~1commonLabels@2"
             }
           ]
         }
@@ -14750,7 +14788,7 @@
               "type": "object"
             },
             {
-              "$ref": "#/$defs/constrains~1commonLabels@2"
+              "$ref": "#/$defs/constrains~1commonLabels"
             }
           ]
         },
@@ -14760,7 +14798,7 @@
               "$ref": "#/$defs/constrains~1enabled:t"
             },
             {
-              "$ref": "#/$defs/constrains~1commonLabels@2"
+              "$ref": "#/$defs/constrains~1commonLabels"
             }
           ]
         }
@@ -15659,6 +15697,102 @@
       "properties": {
         "containerSecurityContext": {
           "$ref": "#/$defs/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "containerSecurityContext"
+      ],
+      "type": "object"
+    },
+    "constrains/containerSecurityContext.runAsUser": {
+      "properties": {
+        "containerSecurityContext": {
+          "properties": {
+            "runAsUser": {
+              "anyOf": [
+                {
+                  "not": {
+                    "pattern": "^-([1-9][0-9]{1,17}|[1-9]|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{1,14}|0[xX]0*[1-9a-fA-F]|0[bB]0*1[0-1]{1,61}|0[bB]0*1|0[oO]?0*[1-7][0-7]{1,19}|0[oO]?0*[1-7]|[0-9_]*[1-9][0-9_]*_[0-9_]*|[0-9_]*_[0-9_]*[1-9][0-9_]*|0[xX][0-9a-fA-F_]*[1-9a-fA-F][0-9a-fA-F_]*_[0-9a-fA-F_]*|0[xX][0-9a-fA-F_]*_[0-9a-fA-F_]*[1-9a-fA-F][0-9a-fA-F_]*|0[bB][01_]*1[01_]*_[01_]*|0[bB][01_]*_[01_]*1[01_]*|0[oO]?[0-7_]*[1-7][0-7_]*_[0-7_]*|0[oO]?[0-7_]*_[0-7_]*[1-7][0-7_]*|[1-9][0-9]{18}|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{15}|0[bB]0*1[01]{62}|0[oO]?0*[1-7][0-7]{20})(\\.0*)?$"
+                  },
+                  "type": "string"
+                },
+                {
+                  "exclusiveMinimum": -1,
+                  "type": "integer"
+                }
+              ]
+            }
+          },
+          "required": [
+            "runAsUser"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "containerSecurityContext"
+      ],
+      "type": "object"
+    },
+    "constrains/containerSecurityContext.runAsUser:t": {
+      "properties": {
+        "containerSecurityContext": {
+          "properties": {
+            "runAsUser": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "runAsUser"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "containerSecurityContext"
+      ],
+      "type": "object"
+    },
+    "constrains/containerSecurityContext.runAsUser@2": {
+      "properties": {
+        "containerSecurityContext": {
+          "properties": {
+            "runAsUser": {
+              "anyOf": [
+                {
+                  "not": {
+                    "pattern": "^\\+?([1-9][0-9]{1,17}|[1-9]|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{1,14}|0[xX]0*[1-9a-fA-F]|0[bB]0*1[0-1]{1,61}|0[bB]0*1|0[oO]?0*[1-7][0-7]{1,19}|0[oO]?0*[1-7]|[0-9_]*[1-9][0-9_]*_[0-9_]*|[0-9_]*_[0-9_]*[1-9][0-9_]*|0[xX][0-9a-fA-F_]*[1-9a-fA-F][0-9a-fA-F_]*_[0-9a-fA-F_]*|0[xX][0-9a-fA-F_]*_[0-9a-fA-F_]*[1-9a-fA-F][0-9a-fA-F_]*|0[bB][01_]*1[01_]*_[01_]*|0[bB][01_]*_[01_]*1[01_]*|0[oO]?[0-7_]*[1-7][0-7_]*_[0-7_]*|0[oO]?[0-7_]*_[0-7_]*[1-7][0-7_]*|[1-9][0-9]{18}|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{15}|0[bB]0*1[01]{62}|0[oO]?0*[1-7][0-7]{20})(\\.0*)?$"
+                  },
+                  "type": "string"
+                },
+                {
+                  "exclusiveMaximum": 1,
+                  "type": "integer"
+                }
+              ]
+            }
+          },
+          "required": [
+            "runAsUser"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "containerSecurityContext"
+      ],
+      "type": "object"
+    },
+    "constrains/containerSecurityContext.runAsUser@3": {
+      "properties": {
+        "containerSecurityContext": {
+          "properties": {
+            "runAsUser": {}
+          },
+          "required": [
+            "runAsUser"
+          ],
+          "type": "object"
         }
       },
       "required": [
@@ -20323,7 +20457,7 @@
     "constrains/enabled+enabled=null+kube-state-metrics+1more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1kube-state-metrics.kubeRBACProxy.enabled:t@2"
+          "$ref": "#/$defs/constrains~1kube-state-metrics.serviceAccount.create:t"
         },
         {
           "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
@@ -20339,7 +20473,7 @@
     "constrains/enabled+enabled=null+kube-state-metrics+1more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1kube-state-metrics.serviceAccount.create:t"
+          "$ref": "#/$defs/constrains~1kube-state-metrics.kubeRBACProxy.enabled:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
@@ -20665,7 +20799,7 @@
           "$ref": "#/$defs/constrains~1kube-state-metrics.networkPolicy.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1kube-state-metrics.networkPolicy.flavor=cilium"
+          "$ref": "#/$defs/constrains~1kube-state-metrics.networkPolicy.flavor=kubernetes"
         }
       ]
     },
@@ -20684,7 +20818,7 @@
           "$ref": "#/$defs/constrains~1kube-state-metrics.networkPolicy.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1kube-state-metrics.networkPolicy.flavor=kubernetes"
+          "$ref": "#/$defs/constrains~1kube-state-metrics.networkPolicy.flavor=cilium"
         }
       ]
     },
@@ -22477,7 +22611,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1prometheus-node-exporter.kubeRBACProxy.enabled:t"
+          "$ref": "#/$defs/constrains~1prometheus-node-exporter.kubeRBACProxy.enabled=false"
         }
       ]
     },
@@ -22493,7 +22627,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1prometheus-node-exporter.networkPolicy.enabled:t"
+          "$ref": "#/$defs/constrains~1prometheus-node-exporter.service.enabled:t"
         }
       ]
     },
@@ -22509,7 +22643,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1prometheus-node-exporter.service.enabled:t"
+          "$ref": "#/$defs/constrains~1prometheus-node-exporter.kubeRBACProxy.enabled:t"
         }
       ]
     },
@@ -22525,7 +22659,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1prometheus-node-exporter.kubeRBACProxy.enabled=false"
+          "$ref": "#/$defs/constrains~1prometheus-node-exporter.networkPolicy.enabled:t"
         }
       ]
     },
@@ -23213,16 +23347,16 @@
     "constrains/enabled:t+kube-state-metrics.enabled+kube-state-metrics.enabled=null+2more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1kube-state-metrics.rbac.useClusterRole:t"
-        },
-        {
           "$ref": "#/$defs/constrains~1kube-state-metrics.enabled+kube-state-metrics.enabled=null"
         },
         {
           "$ref": "#/$defs/constrains~1enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1kube-state-metrics.rbac.create:t"
+          "$ref": "#/$defs/constrains~1kube-state-metrics.networkPolicy.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kube-state-metrics.networkPolicy.flavor=cilium"
         }
       ]
     },
@@ -23245,16 +23379,16 @@
     "constrains/enabled:t+kube-state-metrics.enabled+kube-state-metrics.enabled=null+2more@3": {
       "allOf": [
         {
+          "$ref": "#/$defs/constrains~1kube-state-metrics.rbac.useClusterRole:t"
+        },
+        {
           "$ref": "#/$defs/constrains~1kube-state-metrics.enabled+kube-state-metrics.enabled=null"
         },
         {
           "$ref": "#/$defs/constrains~1enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1kube-state-metrics.networkPolicy.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kube-state-metrics.networkPolicy.flavor=cilium"
+          "$ref": "#/$defs/constrains~1kube-state-metrics.rbac.create:t"
         }
       ]
     },
@@ -23458,7 +23592,7 @@
           "$ref": "#/$defs/constrains~1enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1prometheus-node-exporter.kubeRBACProxy.enabled=false"
+          "$ref": "#/$defs/constrains~1prometheus-node-exporter.kubeRBACProxy.enabled:t"
         }
       ]
     },
@@ -23471,7 +23605,7 @@
           "$ref": "#/$defs/constrains~1enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1prometheus-node-exporter.kubeRBACProxy.enabled:t"
+          "$ref": "#/$defs/constrains~1prometheus-node-exporter.networkPolicy.enabled:t"
         }
       ]
     },
@@ -23484,7 +23618,7 @@
           "$ref": "#/$defs/constrains~1enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1prometheus-node-exporter.networkPolicy.enabled:t"
+          "$ref": "#/$defs/constrains~1prometheus-node-exporter.kubeRBACProxy.enabled=false"
         }
       ]
     },
@@ -31607,6 +31741,25 @@
           "$ref": "#/$defs/constrains~1grafana.persistence.enabled:t+grafana.persistence.existingClaim:t+4more"
         },
         {
+          "$ref": "#/$defs/constrains~1grafana.sidecar.datasources.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1grafana.sidecar.datasources.watchServerTimeout:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1grafana+grafana.enabled+grafana.enabled=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1grafana.sidecar.datasources.initDatasources:t"
+        }
+      ]
+    },
+    "constrains/grafana+grafana.enabled+grafana.enabled=null+grafana.persistence.enabled:t+8more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1grafana.persistence.enabled:t+grafana.persistence.existingClaim:t+4more"
+        },
+        {
           "$ref": "#/$defs/constrains~1grafana.sidecar.datasources.watchClientTimeout:t"
         },
         {
@@ -31620,7 +31773,7 @@
         }
       ]
     },
-    "constrains/grafana+grafana.enabled+grafana.enabled=null+grafana.persistence.enabled:t+8more@2": {
+    "constrains/grafana+grafana.enabled+grafana.enabled=null+grafana.persistence.enabled:t+8more@3": {
       "allOf": [
         {
           "$ref": "#/$defs/constrains~1grafana.persistence.enabled:t+grafana.persistence.existingClaim:t+4more"
@@ -31639,7 +31792,7 @@
         }
       ]
     },
-    "constrains/grafana+grafana.enabled+grafana.enabled=null+grafana.persistence.enabled:t+8more@3": {
+    "constrains/grafana+grafana.enabled+grafana.enabled=null+grafana.persistence.enabled:t+8more@4": {
       "allOf": [
         {
           "$ref": "#/$defs/constrains~1grafana.persistence.enabled:t+grafana.persistence.existingClaim:t+4more"
@@ -31655,25 +31808,6 @@
         },
         {
           "$ref": "#/$defs/constrains~1grafana.sidecar.alerts.enabled:t"
-        }
-      ]
-    },
-    "constrains/grafana+grafana.enabled+grafana.enabled=null+grafana.persistence.enabled:t+8more@4": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1grafana.persistence.enabled:t+grafana.persistence.existingClaim:t+4more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1grafana.sidecar.datasources.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1grafana.sidecar.datasources.watchServerTimeout:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1grafana+grafana.enabled+grafana.enabled=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1grafana.sidecar.datasources.initDatasources:t"
         }
       ]
     },
@@ -34841,10 +34975,10 @@
       "properties": {
         "httpHeaders": {
           "additionalProperties": {
-            "$ref": "#/$defs/constrains~1name@4"
+            "$ref": "#/$defs/constrains~1name@6"
           },
           "items": {
-            "$ref": "#/$defs/constrains~1name@4"
+            "$ref": "#/$defs/constrains~1name@6"
           }
         }
       }
@@ -46190,7 +46324,7 @@
       "additionalProperties": {},
       "properties": {
         "name": {
-          "$ref": "#/$defs/constrains~1name~1anyOf~1object+string+string;this-must-match-the"
+          "$ref": "#/$defs/constrains~1Name~1anyOf~1object+string+string;name-of-the-container"
         }
       }
     },
@@ -46198,7 +46332,7 @@
       "additionalProperties": {},
       "properties": {
         "name": {
-          "$ref": "#/$defs/constrains~1name~1anyOf~1object+string+string;the-header-field-name"
+          "$ref": "#/$defs/constrains~1name~1anyOf~1object+string+string;name-of-the-volume"
         }
       }
     },
@@ -46206,7 +46340,7 @@
       "additionalProperties": {},
       "properties": {
         "name": {
-          "$ref": "#/$defs/constrains~1Name~1anyOf~1object+string+string;name-of-the-container"
+          "$ref": "#/$defs/constrains~1name~1anyOf~1object+string+string;this-must-match-the"
         }
       }
     },
@@ -46214,7 +46348,7 @@
       "additionalProperties": {},
       "properties": {
         "name": {
-          "$ref": "#/$defs/constrains~1name~1anyOf~1object+string+string;name-of-the-volume"
+          "$ref": "#/$defs/constrains~1name~1anyOf~1object+string+string;the-header-field-name"
         }
       }
     },
@@ -48129,7 +48263,7 @@
       "additionalProperties": {},
       "properties": {
         "path": {
-          "$ref": "#/$defs/constrains~1path~1anyOf~1null;path-is-matched-against+object+string+string;path-is-matched-against+3more"
+          "$ref": "#/$defs/constrains~1path~1anyOf~1object+string+string;path-defines-the-http"
         }
       }
     },
@@ -48337,7 +48471,7 @@
       "additionalProperties": {},
       "properties": {
         "path": {
-          "$ref": "#/$defs/constrains~1path~1anyOf~1object+string+string;path-defines-the-http"
+          "$ref": "#/$defs/constrains~1path~1anyOf~1null;path-is-matched-against+object+string+string;path-is-matched-against+3more"
         }
       }
     },
@@ -48456,10 +48590,10 @@
       "properties": {
         "paths": {
           "additionalProperties": {
-            "$ref": "#/$defs/constrains~1path"
+            "$ref": "#/$defs/constrains~1path@2"
           },
           "items": {
-            "$ref": "#/$defs/constrains~1path"
+            "$ref": "#/$defs/constrains~1path@2"
           }
         }
       }
@@ -55685,10 +55819,10 @@
         }
       ]
     },
-    "constrains/prometheus+prometheus.alertmanager.additionalPeers:t+1more": {
+    "constrains/prometheus+prometheus.alertmanager.additionalPeers:t+2more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1prometheus.alertmanager.additionalPeers:t"
+          "$ref": "#/$defs/constrains~1prometheus.alertmanager.additionalPeers:t+prometheus.alertmanager.replicaCount"
         },
         {
           "$ref": "#/$defs/constrains~1prometheus.alertmanager.enabled:t"
@@ -55698,10 +55832,10 @@
         }
       ]
     },
-    "constrains/prometheus+prometheus.alertmanager.additionalPeers:t+3more": {
+    "constrains/prometheus+prometheus.alertmanager.additionalPeers:t+4more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1prometheus.alertmanager.additionalPeers:t"
+          "$ref": "#/$defs/constrains~1prometheus.alertmanager.additionalPeers:t+prometheus.alertmanager.replicaCount"
         },
         {
           "$ref": "#/$defs/constrains~1prometheus.alertmanager.enabled:t"
@@ -55990,19 +56124,6 @@
     "constrains/prometheus+prometheus.enabled+prometheus.enabled=null+2more@4": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1prometheus.prometheus-node-exporter.kubeRBACProxy.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1prometheus.prometheus-node-exporter.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1prometheus+prometheus.enabled+prometheus.enabled=null"
-        }
-      ]
-    },
-    "constrains/prometheus+prometheus.enabled+prometheus.enabled=null+2more@5": {
-      "allOf": [
-        {
           "$ref": "#/$defs/constrains~1prometheus.prometheus-pushgateway.enabled:t"
         },
         {
@@ -56013,10 +56134,23 @@
         }
       ]
     },
-    "constrains/prometheus+prometheus.enabled+prometheus.enabled=null+2more@6": {
+    "constrains/prometheus+prometheus.enabled+prometheus.enabled=null+2more@5": {
       "allOf": [
         {
           "$ref": "#/$defs/constrains~1prometheus.prometheus-node-exporter.service.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1prometheus.prometheus-node-exporter.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1prometheus+prometheus.enabled+prometheus.enabled=null"
+        }
+      ]
+    },
+    "constrains/prometheus+prometheus.enabled+prometheus.enabled=null+2more@6": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1prometheus.prometheus-node-exporter.kubeRBACProxy.enabled:t"
         },
         {
           "$ref": "#/$defs/constrains~1prometheus.prometheus-node-exporter.enabled:t"
@@ -56156,7 +56290,7 @@
     "constrains/prometheus+prometheus.prometheus-node-exporter+1more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1prometheus.prometheus-node-exporter.service.enabled:t"
+          "$ref": "#/$defs/constrains~1prometheus.prometheus-node-exporter.kubeRBACProxy.enabled:t"
         },
         {
           "$ref": "#/$defs/constrains~1prometheus.prometheus-node-exporter.enabled:t"
@@ -56169,7 +56303,7 @@
     "constrains/prometheus+prometheus.prometheus-node-exporter+1more@3": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1prometheus.prometheus-node-exporter.kubeRBACProxy.enabled:t"
+          "$ref": "#/$defs/constrains~1prometheus.prometheus-node-exporter.service.enabled:t"
         },
         {
           "$ref": "#/$defs/constrains~1prometheus.prometheus-node-exporter.enabled:t"
@@ -56345,7 +56479,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1prometheus-node-exporter.service.enabled:t"
+          "$ref": "#/$defs/constrains~1prometheus-node-exporter.kubeRBACProxy.enabled:t"
         }
       ]
     },
@@ -56361,7 +56495,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1prometheus-node-exporter.kubeRBACProxy.enabled:t"
+          "$ref": "#/$defs/constrains~1prometheus-node-exporter.networkPolicy.enabled:t"
         }
       ]
     },
@@ -56377,7 +56511,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1prometheus-node-exporter.networkPolicy.enabled:t"
+          "$ref": "#/$defs/constrains~1prometheus-node-exporter.kubeRBACProxy.enabled=false"
         }
       ]
     },
@@ -56393,7 +56527,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1prometheus-node-exporter.kubeRBACProxy.enabled=false"
+          "$ref": "#/$defs/constrains~1prometheus-node-exporter.service.enabled:t"
         }
       ]
     },
@@ -57210,6 +57344,24 @@
         "prometheus"
       ],
       "type": "object"
+    },
+    "constrains/prometheus.alertmanager.additionalPeers:t+prometheus.alertmanager.replicaCount": {
+      "anyOf": [
+        {
+          "properties": {
+            "prometheus": {
+              "$ref": "#/$defs/constrains~1alertmanager.replicaCount"
+            }
+          },
+          "required": [
+            "prometheus"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1prometheus.alertmanager.additionalPeers:t"
+        }
+      ]
     },
     "constrains/prometheus.alertmanager.affinity:t+prometheus.alertmanager.podAntiAffinity:t": {
       "anyOf": [
@@ -58506,7 +58658,7 @@
             "prometheus": {
               "properties": {
                 "prometheus-node-exporter": {
-                  "$ref": "#/$defs/constrains~1enabled!=false"
+                  "$ref": "#/$defs/constrains~1enabled!=true"
                 }
               },
               "required": [
@@ -58532,7 +58684,7 @@
             "prometheus": {
               "properties": {
                 "prometheus-node-exporter": {
-                  "$ref": "#/$defs/constrains~1enabled!=true"
+                  "$ref": "#/$defs/constrains~1enabled!=false"
                 }
               },
               "required": [
@@ -59292,7 +59444,7 @@
           "prometheus": {
             "properties": {
               "prometheus-pushgateway": {
-                "$ref": "#/$defs/constrains~1service.type@4"
+                "$ref": "#/$defs/constrains~1service.type@5"
               }
             },
             "required": [
@@ -59313,7 +59465,7 @@
           "prometheus": {
             "properties": {
               "prometheus-pushgateway": {
-                "$ref": "#/$defs/constrains~1service.type@5"
+                "$ref": "#/$defs/constrains~1service.type@4"
               }
             },
             "required": [
@@ -64438,6 +64590,131 @@
         }
       ]
     },
+    "constrains/redis+redis.architecture=replication+redis.enabled+redis.enabled:t+6more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1redis.replica.containerSecurityContext+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1redis.architecture=replication"
+        },
+        {
+          "$ref": "#/$defs/constrains~1redis.replica.containerSecurityContext+1more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1redis.replica.containerSecurityContext.runAsUser:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1redis.architecture=replication+redis.sentinel.enabled:t"
+        }
+      ]
+    },
+    "constrains/redis+redis.architecture=replication+redis.enabled+redis.enabled:t+6more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1redis.replica.containerSecurityContext+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1redis.architecture=replication"
+        },
+        {
+          "$ref": "#/$defs/constrains~1redis.replica.containerSecurityContext+1more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1redis.replica.containerSecurityContext.runAsUser:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1redis.sentinel.enabled:t@2"
+        }
+      ]
+    },
+    "constrains/redis+redis.architecture=replication+redis.enabled+redis.enabled:t+6more@3": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1redis.master.containerSecurityContext.runAsUser"
+            },
+            {
+              "properties": {
+                "redis": {
+                  "properties": {
+                    "master": {
+                      "$ref": "#/$defs/constrains~1containerSecurityContext.runAsUser@2"
+                    }
+                  },
+                  "required": [
+                    "master"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "redis"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null"
+        },
+        {
+          "properties": {
+            "redis": {
+              "properties": {
+                "master": {
+                  "$ref": "#/$defs/constrains~1containerSecurityContext.runAsUser:t"
+                }
+              },
+              "required": [
+                "master"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "redis"
+          ],
+          "type": "object"
+        },
+        {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1redis.master.containerSecurityContext.runAsUser"
+            },
+            {
+              "properties": {
+                "redis": {
+                  "properties": {
+                    "master": {
+                      "$ref": "#/$defs/constrains~1containerSecurityContext.runAsUser"
+                    }
+                  },
+                  "required": [
+                    "master"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "redis"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "$ref": "#/$defs/constrains~1redis.architecture=replication+redis.sentinel.enabled:t"
+        }
+      ]
+    },
     "constrains/redis+redis.architecture=replication+redis.enabled+redis.enabled=null+1more": {
       "allOf": [
         {
@@ -65567,7 +65844,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1redis.sentinel.image.registry:t"
+                "$ref": "#/$defs/constrains~1redis.volumePermissions.image.registry:t"
               },
               {
                 "not": {
@@ -65585,7 +65862,7 @@
                 "$ref": "#/$defs/constrains~1redis.global:t@2"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.sentinel.image.registry:t"
+                "$ref": "#/$defs/constrains~1redis.volumePermissions.image.registry:t"
               }
             ]
           }
@@ -65598,7 +65875,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1redis.sysctl.image.registry:t"
+                "$ref": "#/$defs/constrains~1redis.sentinel.image.registry:t"
               },
               {
                 "not": {
@@ -65616,7 +65893,7 @@
                 "$ref": "#/$defs/constrains~1redis.global:t@2"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.sysctl.image.registry:t"
+                "$ref": "#/$defs/constrains~1redis.sentinel.image.registry:t"
               }
             ]
           }
@@ -65629,7 +65906,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1redis.volumePermissions.image.registry:t"
+                "$ref": "#/$defs/constrains~1redis.sysctl.image.registry:t"
               },
               {
                 "not": {
@@ -65647,7 +65924,7 @@
                 "$ref": "#/$defs/constrains~1redis.global:t@2"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.volumePermissions.image.registry:t"
+                "$ref": "#/$defs/constrains~1redis.sysctl.image.registry:t"
               }
             ]
           }
@@ -66086,6 +66363,27 @@
         "redis"
       ],
       "type": "object"
+    },
+    "constrains/redis.master.containerSecurityContext.runAsUser": {
+      "not": {
+        "properties": {
+          "redis": {
+            "properties": {
+              "master": {
+                "$ref": "#/$defs/constrains~1containerSecurityContext.runAsUser@3"
+              }
+            },
+            "required": [
+              "master"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "redis"
+        ],
+        "type": "object"
+      }
     },
     "constrains/redis.master.customLivenessProbe": {
       "properties": {
@@ -67594,6 +67892,58 @@
         }
       }
     },
+    "constrains/redis.replica.containerSecurityContext+1more": {
+      "anyOf": [
+        {
+          "properties": {
+            "redis": {
+              "properties": {
+                "replica": {
+                  "$ref": "#/$defs/constrains~1containerSecurityContext.runAsUser@2"
+                }
+              },
+              "required": [
+                "replica"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "redis"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1redis.replica.containerSecurityContext.runAsUser"
+        }
+      ]
+    },
+    "constrains/redis.replica.containerSecurityContext+1more@2": {
+      "anyOf": [
+        {
+          "properties": {
+            "redis": {
+              "properties": {
+                "replica": {
+                  "$ref": "#/$defs/constrains~1containerSecurityContext.runAsUser"
+                }
+              },
+              "required": [
+                "replica"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "redis"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1redis.replica.containerSecurityContext.runAsUser"
+        }
+      ]
+    },
     "constrains/redis.replica.containerSecurityContext+redis.replica.initContainers:t+4more": {
       "anyOf": [
         {
@@ -67624,6 +67974,46 @@
       "properties": {
         "redis": {
           "$ref": "#/$defs/constrains~1replica.containerSecurityContext.enabled:t"
+        }
+      },
+      "required": [
+        "redis"
+      ],
+      "type": "object"
+    },
+    "constrains/redis.replica.containerSecurityContext.runAsUser": {
+      "not": {
+        "properties": {
+          "redis": {
+            "properties": {
+              "replica": {
+                "$ref": "#/$defs/constrains~1containerSecurityContext.runAsUser@3"
+              }
+            },
+            "required": [
+              "replica"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "redis"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/redis.replica.containerSecurityContext.runAsUser:t": {
+      "properties": {
+        "redis": {
+          "properties": {
+            "replica": {
+              "$ref": "#/$defs/constrains~1containerSecurityContext.runAsUser:t"
+            }
+          },
+          "required": [
+            "replica"
+          ],
+          "type": "object"
         }
       },
       "required": [
@@ -82545,7 +82935,7 @@
     },
     "when/commonLabels+enabled+enabled:t+enabled=null/then/commonLabels:t": {
       "if": {
-        "$ref": "#/$defs/constrains~1commonLabels+enabled+enabled:t+enabled=null"
+        "$ref": "#/$defs/constrains~1commonLabels+enabled+enabled:t+enabled=null@2"
       },
       "then": {
         "additionalProperties": {},
@@ -82566,7 +82956,7 @@
     },
     "when/commonLabels+enabled+enabled:t+enabled=null/then/commonLabels:t@2": {
       "if": {
-        "$ref": "#/$defs/constrains~1commonLabels+enabled+enabled:t+enabled=null@2"
+        "$ref": "#/$defs/constrains~1commonLabels+enabled+enabled:t+enabled=null"
       },
       "then": {
         "additionalProperties": {},
@@ -82738,7 +83128,7 @@
         ]
       },
       "then": {
-        "$ref": "#/$defs/constrains~1name@6"
+        "$ref": "#/$defs/constrains~1name@4"
       }
     },
     "when/enabled+enabled:t+enabled=null+primary.affinity/then/primary.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.key+25more": {
@@ -83370,7 +83760,7 @@
         ]
       },
       "then": {
-        "$ref": "#/$defs/constrains~1name@6"
+        "$ref": "#/$defs/constrains~1name@4"
       }
     },
     "when/secretName:t/then/defaultMode": {
@@ -83441,7 +83831,7 @@
         "$ref": "#/$defs/constrains~1secretName:t@2"
       },
       "then": {
-        "$ref": "#/$defs/constrains~1name@6"
+        "$ref": "#/$defs/constrains~1name@4"
       }
     },
     "when/secretName:t/then/projected.defaultMode+27more": {
@@ -85578,6 +85968,47 @@
       "if": {
         "anyOf": [
           {
+            "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null+redis.existingConfigmap:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled:t+4more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled:t+6more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled:t+6more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled=null+1more"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "redis": {
+            "additionalProperties": {},
+            "description": "Redis is included into this release for the convenience.\nIt is recommended to host it separately from this release",
+            "properties": {
+              "replica": {
+                "additionalProperties": {},
+                "properties": {
+                  "persistence": {
+                    "description": "Persistence Parameters\nref: https://kubernetes.io/docs/user-guide/persistent-volumes/",
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "allOf": [
               {
                 "$ref": "#/$defs/constrains~1rabbitmq.podAnnotations"
@@ -85831,6 +86262,72 @@
             "properties": {
               "global": {
                 "$ref": "#/$defs/constrains~1imageRegistry"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled:t+4more"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1redis.sentinel.service.type=NodePort"
+              },
+              {
+                "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null"
+              },
+              {
+                "$ref": "#/$defs/constrains~1redis.sentinel.service.nodePorts.redis:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1redis.architecture=replication"
+              },
+              {
+                "$ref": "#/$defs/constrains~1redis.sentinel.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled:t+6more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null+redis.global+5more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled:t+6more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis.enabled+redis.enabled=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis.enabled:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled=null+5more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null+redis.global+5more"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "redis": {
+            "additionalProperties": {},
+            "description": "Redis is included into this release for the convenience.\nIt is recommended to host it separately from this release",
+            "properties": {
+              "replica": {
+                "type": "object"
               }
             }
           }
@@ -90070,13 +90567,13 @@
                 "$ref": "#/$defs/constrains~1prometheus.prometheus-pushgateway.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1prometheus.prometheus-pushgateway.service.type@2"
+                "$ref": "#/$defs/constrains~1prometheus.prometheus-pushgateway.service.type"
               },
               {
                 "$ref": "#/$defs/constrains~1prometheus.prometheus-pushgateway.service.type@3"
               },
               {
-                "$ref": "#/$defs/constrains~1prometheus.prometheus-pushgateway.service.type"
+                "$ref": "#/$defs/constrains~1prometheus.prometheus-pushgateway.service.type@2"
               },
               {
                 "$ref": "#/$defs/constrains~1prometheus+prometheus.enabled+prometheus.enabled=null"
@@ -90100,13 +90597,13 @@
                 "$ref": "#/$defs/constrains~1prometheus.prometheus-pushgateway.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1prometheus.prometheus-pushgateway.service.type@2"
+                "$ref": "#/$defs/constrains~1prometheus.prometheus-pushgateway.service.type"
               },
               {
                 "$ref": "#/$defs/constrains~1prometheus.prometheus-pushgateway.service.type@3"
               },
               {
-                "$ref": "#/$defs/constrains~1prometheus.prometheus-pushgateway.service.type"
+                "$ref": "#/$defs/constrains~1prometheus.prometheus-pushgateway.service.type@2"
               },
               {
                 "$ref": "#/$defs/constrains~1prometheus.enabled:t"
@@ -93549,10 +94046,10 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1prometheus+prometheus.enabled+prometheus.enabled=null+2more@6"
+            "$ref": "#/$defs/constrains~1prometheus+prometheus.enabled+prometheus.enabled=null+2more@5"
           },
           {
-            "$ref": "#/$defs/constrains~1prometheus+prometheus.prometheus-node-exporter+1more@2"
+            "$ref": "#/$defs/constrains~1prometheus+prometheus.prometheus-node-exporter+1more@3"
           }
         ]
       },
@@ -98387,6 +98884,80 @@
       }
     },
     {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null+redis.existingConfigmap:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled:t+1more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled:t+4more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.architecture+redis.architecture!=replication+redis.enabled+3more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled=null+redis.global+redis.global.kubeVersion:t+3more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled:t+6more@3"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null"
+              },
+              {
+                "$ref": "#/$defs/constrains~1redis.networkPolicy.enabled:t"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.diagnosticMode+redis.enabled+redis.enabled:t+redis.enabled=null"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null"
+              },
+              {
+                "$ref": "#/$defs/constrains~1redis.architecture=replication+redis.sentinel.enabled:t"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled=null+redis.sentinel.enabled:t"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null"
+              },
+              {
+                "$ref": "#/$defs/constrains~1redis.architecture=standalone"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "redis": {
+            "additionalProperties": {},
+            "description": "Redis is included into this release for the convenience.\nIt is recommended to host it separately from this release",
+            "properties": {
+              "master": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "additionalProperties": {},
       "properties": {
         "postgresql": {
@@ -99672,77 +100243,6 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null+redis.existingConfigmap:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled:t+1more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled:t+4more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1redis+redis.architecture+redis.architecture!=replication+redis.enabled+3more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled=null+redis.global+redis.global.kubeVersion:t+3more"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null"
-              },
-              {
-                "$ref": "#/$defs/constrains~1redis.networkPolicy.enabled:t"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1redis+redis.diagnosticMode+redis.enabled+redis.enabled:t+redis.enabled=null"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null"
-              },
-              {
-                "$ref": "#/$defs/constrains~1redis.architecture=replication+redis.sentinel.enabled:t"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled=null+redis.sentinel.enabled:t"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null"
-              },
-              {
-                "$ref": "#/$defs/constrains~1redis.architecture=standalone"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "redis": {
-            "additionalProperties": {},
-            "description": "Redis is included into this release for the convenience.\nIt is recommended to host it separately from this release",
-            "properties": {
-              "master": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
             "allOf": [
               {
                 "$ref": "#/$defs/constrains~1postgresql.enabled:t@2"
@@ -100793,41 +101293,6 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null+redis.existingConfigmap:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled:t+4more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled=null+1more"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "redis": {
-            "additionalProperties": {},
-            "description": "Redis is included into this release for the convenience.\nIt is recommended to host it separately from this release",
-            "properties": {
-              "replica": {
-                "additionalProperties": {},
-                "properties": {
-                  "persistence": {
-                    "description": "Persistence Parameters\nref: https://kubernetes.io/docs/user-guide/persistent-volumes/",
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
             "allOf": [
               {
                 "anyOf": [
@@ -101178,7 +101643,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/constrains~1prometheus+prometheus.enabled+prometheus.enabled=null+2more@6"
+            "$ref": "#/$defs/constrains~1prometheus+prometheus.enabled+prometheus.enabled=null+2more@5"
           },
           {
             "allOf": [
@@ -101194,7 +101659,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/constrains~1prometheus+prometheus.prometheus-node-exporter+1more@2"
+            "$ref": "#/$defs/constrains~1prometheus+prometheus.prometheus-node-exporter+1more@3"
           }
         ]
       },
@@ -113823,82 +114288,6 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1prometheus+prometheus.alertmanager.additionalPeers:t+1more"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1prometheus.alertmanager.additionalPeers:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1prometheus.alertmanager.enabled+prometheus.alertmanager.enabled=null"
-              },
-              {
-                "$ref": "#/$defs/constrains~1prometheus.enabled:t"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1prometheus+prometheus.alertmanager.additionalPeers:t+3more"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1prometheus.alertmanager.additionalPeers:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1prometheus.alertmanager.enabled+prometheus.alertmanager.enabled=null"
-              },
-              {
-                "$ref": "#/$defs/constrains~1prometheus+prometheus.enabled+prometheus.enabled=null"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "prometheus": {
-                "additionalProperties": {},
-                "properties": {
-                  "alertmanager": {
-                    "additionalProperties": {},
-                    "description": "alertmanager sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/alertmanager",
-                    "properties": {
-                      "service": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "clusterPort": {
-                            "not": {
-                              "type": "null"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "prometheus": {
-                "$ref": "#/$defs/constrains~1alertmanager.additionalPeers"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
             "$ref": "#/$defs/constrains~1prometheus+prometheus.alertmanager.config.enabled:t+2more@2"
           },
           {
@@ -116054,7 +116443,7 @@
             "$ref": "#/$defs/constrains~1prometheus+prometheus.prometheus-pushgateway.enabled:t+1more"
           },
           {
-            "$ref": "#/$defs/constrains~1prometheus+prometheus.enabled+prometheus.enabled=null+2more@5"
+            "$ref": "#/$defs/constrains~1prometheus+prometheus.enabled+prometheus.enabled=null+2more@4"
           },
           {
             "allOf": [
@@ -126692,10 +127081,10 @@
             "$ref": "#/$defs/constrains~1grafana+grafana.enabled+grafana.enabled=null+grafana.persistence.enabled:t+5more"
           },
           {
-            "$ref": "#/$defs/constrains~1grafana+grafana.enabled+grafana.enabled=null+grafana.persistence.enabled:t+8more@2"
+            "$ref": "#/$defs/constrains~1grafana+grafana.enabled+grafana.enabled=null+grafana.persistence.enabled:t+8more@3"
           },
           {
-            "$ref": "#/$defs/constrains~1grafana+grafana.enabled+grafana.enabled=null+grafana.persistence.enabled:t+8more@3"
+            "$ref": "#/$defs/constrains~1grafana+grafana.enabled+grafana.enabled=null+grafana.persistence.enabled:t+8more@4"
           },
           {
             "$ref": "#/$defs/constrains~1grafana+grafana.persistence.enabled:t+grafana.persistence.existingClaim:t+7more@3"
@@ -130796,10 +131185,10 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1prometheus+prometheus.enabled+prometheus.enabled=null+2more@4"
+            "$ref": "#/$defs/constrains~1prometheus+prometheus.enabled+prometheus.enabled=null+2more@6"
           },
           {
-            "$ref": "#/$defs/constrains~1prometheus+prometheus.prometheus-node-exporter+1more@3"
+            "$ref": "#/$defs/constrains~1prometheus+prometheus.prometheus-node-exporter+1more@2"
           },
           {
             "allOf": [
@@ -135171,6 +135560,77 @@
       "if": {
         "anyOf": [
           {
+            "$ref": "#/$defs/constrains~1prometheus+prometheus.alertmanager.additionalPeers:t+4more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1prometheus+prometheus.alertmanager.additionalPeers:t+2more"
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "properties": {
+            "prometheus": {
+              "properties": {
+                "alertmanager": {
+                  "properties": {
+                    "service": {
+                      "properties": {
+                        "clusterPort": {
+                          "$ref": "#/$defs/constrains~1affinity!=null~1not~1=null"
+                        }
+                      },
+                      "required": [
+                        "clusterPort"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "service"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "alertmanager"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "prometheus"
+          ],
+          "type": "object"
+        },
+        "then": {
+          "additionalProperties": {},
+          "properties": {
+            "prometheus": {
+              "additionalProperties": {},
+              "properties": {
+                "alertmanager": {
+                  "additionalProperties": {},
+                  "description": "alertmanager sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/alertmanager",
+                  "properties": {
+                    "service": {
+                      "required": [
+                        "clusterPort"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "allOf": [
               {
                 "$ref": "#/$defs/constrains~1ingress-nginx+ingress-nginx.enabled+ingress-nginx.enabled=null"
@@ -136212,7 +136672,7 @@
             "$ref": "#/$defs/constrains~1grafana+grafana.enabled+grafana.enabled=null+grafana.persistence.enabled:t+5more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1grafana+grafana.enabled+grafana.enabled=null+grafana.persistence.enabled:t+8more@3"
+            "$ref": "#/$defs/constrains~1grafana+grafana.enabled+grafana.enabled=null+grafana.persistence.enabled:t+8more@4"
           }
         ]
       },
@@ -147333,7 +147793,7 @@
                 "$ref": "#/$defs/constrains~1redis.replica.containerSecurityContext+redis.replica.initContainers:t+4more"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.global+redis.global.imageRegistry:t+redis.global:t+1more@4"
+                "$ref": "#/$defs/constrains~1redis.global+redis.global.imageRegistry:t+redis.global:t+1more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1redis.enabled:t@2"
@@ -147355,7 +147815,7 @@
                 "$ref": "#/$defs/constrains~1redis.volumePermissions.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.global+redis.global.imageRegistry:t+redis.global:t+1more@4"
+                "$ref": "#/$defs/constrains~1redis.global+redis.global.imageRegistry:t+redis.global:t+1more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1redis.enabled:t@2"
@@ -147395,7 +147855,7 @@
                 "$ref": "#/$defs/constrains~1redis.replica.containerSecurityContext+redis.replica.initContainers:t+4more"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.global+redis.global.imageRegistry:t+redis.global:t+1more@4"
+                "$ref": "#/$defs/constrains~1redis.global+redis.global.imageRegistry:t+redis.global:t+1more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1redis.replica.podSecurityContext.enabled:t"
@@ -147423,7 +147883,7 @@
                 "$ref": "#/$defs/constrains~1redis.replica.containerSecurityContext+redis.replica.initContainers:t+4more"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.global+redis.global.imageRegistry:t+redis.global:t+1more@4"
+                "$ref": "#/$defs/constrains~1redis.global+redis.global.imageRegistry:t+redis.global:t+1more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1redis.enabled:t@2"
@@ -147451,7 +147911,7 @@
                 "$ref": "#/$defs/constrains~1redis.volumePermissions.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.global+redis.global.imageRegistry:t+redis.global:t+1more@4"
+                "$ref": "#/$defs/constrains~1redis.global+redis.global.imageRegistry:t+redis.global:t+1more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1redis.master.persistence.enabled:t"
@@ -147488,7 +147948,7 @@
                 "$ref": "#/$defs/constrains~1redis.replica.containerSecurityContext+redis.replica.initContainers:t+4more"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.global+redis.global.imageRegistry:t+redis.global:t+1more@4"
+                "$ref": "#/$defs/constrains~1redis.global+redis.global.imageRegistry:t+redis.global:t+1more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1redis.replica.podSecurityContext.enabled:t"
@@ -148103,7 +148563,7 @@
                 "$ref": "#/$defs/constrains~1redis.enabled:t@2"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.global+redis.global.imageRegistry:t+redis.global:t+1more@2"
+                "$ref": "#/$defs/constrains~1redis.global+redis.global.imageRegistry:t+redis.global:t+1more@3"
               },
               {
                 "$ref": "#/$defs/constrains~1redis.sentinel.enabled:t@2"
@@ -148122,7 +148582,7 @@
                 "$ref": "#/$defs/constrains~1redis.architecture=replication"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.global+redis.global.imageRegistry:t+redis.global:t+1more@2"
+                "$ref": "#/$defs/constrains~1redis.global+redis.global.imageRegistry:t+redis.global:t+1more@3"
               },
               {
                 "$ref": "#/$defs/constrains~1redis.sentinel.enabled:t@2"
@@ -149089,6 +149549,51 @@
       "if": {
         "anyOf": [
           {
+            "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null+redis.existingConfigmap:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.architecture+redis.architecture!=replication+redis.enabled+3more"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null"
+              },
+              {
+                "$ref": "#/$defs/constrains~1redis.master.kind=Deployment@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1redis.architecture=standalone"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled:t+6more@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled:t+5more@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "redis": {
+            "additionalProperties": {},
+            "description": "Redis is included into this release for the convenience.\nIt is recommended to host it separately from this release",
+            "properties": {
+              "master": {
+                "$ref": "#/$defs/constrains~1persistence"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "$ref": "#/$defs/constrains~1global+global.imagePullSecrets+global.imagePullSecrets=null+prometheus+4more@3"
           },
           {
@@ -149784,10 +150289,10 @@
                 "$ref": "#/$defs/constrains~1prometheus.enabled=true"
               },
               {
-                "$ref": "#/$defs/constrains~1prometheus.prometheus-node-exporter.enabled+1more"
+                "$ref": "#/$defs/constrains~1prometheus.prometheus-node-exporter.enabled+1more@2"
               },
               {
-                "$ref": "#/$defs/constrains~1prometheus.prometheus-node-exporter.enabled+1more@2"
+                "$ref": "#/$defs/constrains~1prometheus.prometheus-node-exporter.enabled+1more"
               }
             ]
           },
@@ -149823,10 +150328,10 @@
                 "$ref": "#/$defs/constrains~1prometheus.enabled+prometheus.enabled!=false"
               },
               {
-                "$ref": "#/$defs/constrains~1prometheus.prometheus-node-exporter.enabled+1more"
+                "$ref": "#/$defs/constrains~1prometheus.prometheus-node-exporter.enabled+1more@2"
               },
               {
-                "$ref": "#/$defs/constrains~1prometheus.prometheus-node-exporter.enabled+1more@2"
+                "$ref": "#/$defs/constrains~1prometheus.prometheus-node-exporter.enabled+1more"
               }
             ]
           }
@@ -149854,7 +150359,7 @@
             "$ref": "#/$defs/constrains~1prometheus+prometheus.prometheus-pushgateway.enabled:t+1more"
           },
           {
-            "$ref": "#/$defs/constrains~1prometheus+prometheus.enabled+prometheus.enabled=null+2more@5"
+            "$ref": "#/$defs/constrains~1prometheus+prometheus.enabled+prometheus.enabled=null+2more@4"
           }
         ]
       },
@@ -152254,77 +152759,6 @@
                 "properties": {
                   "ingressRules": {
                     "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1prometheus+prometheus.alertmanager.additionalPeers:t+1more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1prometheus+prometheus.alertmanager.additionalPeers:t+3more"
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "properties": {
-            "prometheus": {
-              "properties": {
-                "alertmanager": {
-                  "properties": {
-                    "service": {
-                      "properties": {
-                        "clusterPort": {
-                          "$ref": "#/$defs/constrains~1affinity!=null~1not~1=null"
-                        }
-                      },
-                      "required": [
-                        "clusterPort"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "service"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "alertmanager"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "prometheus"
-          ],
-          "type": "object"
-        },
-        "then": {
-          "additionalProperties": {},
-          "properties": {
-            "prometheus": {
-              "additionalProperties": {},
-              "properties": {
-                "alertmanager": {
-                  "additionalProperties": {},
-                  "description": "alertmanager sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/alertmanager",
-                  "properties": {
-                    "service": {
-                      "required": [
-                        "clusterPort"
-                      ],
-                      "type": "object"
-                    }
                   }
                 }
               }
@@ -160379,6 +160813,70 @@
           {
             "allOf": [
               {
+                "$ref": "#/$defs/constrains~1prometheus.alertmanager.additionalPeers:t+prometheus.alertmanager.replicaCount"
+              },
+              {
+                "$ref": "#/$defs/constrains~1prometheus.alertmanager.enabled+prometheus.alertmanager.enabled=null"
+              },
+              {
+                "$ref": "#/$defs/constrains~1prometheus.enabled:t"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1prometheus+prometheus.alertmanager.additionalPeers:t+4more"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1prometheus.alertmanager.additionalPeers:t+prometheus.alertmanager.replicaCount"
+              },
+              {
+                "$ref": "#/$defs/constrains~1prometheus.alertmanager.enabled+prometheus.alertmanager.enabled=null"
+              },
+              {
+                "$ref": "#/$defs/constrains~1prometheus+prometheus.enabled+prometheus.enabled=null"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1prometheus+prometheus.alertmanager.additionalPeers:t+2more"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "prometheus": {
+            "additionalProperties": {},
+            "properties": {
+              "alertmanager": {
+                "additionalProperties": {},
+                "description": "alertmanager sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/alertmanager",
+                "properties": {
+                  "service": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "clusterPort": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
                 "$ref": "#/$defs/constrains~1mariadb+mariadb.enabled+mariadb.enabled=null"
               },
               {
@@ -160804,66 +161302,6 @@
                     ]
                   }
                 }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled:t+4more"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1redis.sentinel.service.type=NodePort"
-              },
-              {
-                "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null"
-              },
-              {
-                "$ref": "#/$defs/constrains~1redis.sentinel.service.nodePorts.redis:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1redis.architecture=replication"
-              },
-              {
-                "$ref": "#/$defs/constrains~1redis.sentinel.enabled:t@2"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null+redis.global+5more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1redis.enabled+redis.enabled=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1redis.enabled:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1redis"
-          },
-          {
-            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled=null+5more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null+redis.global+5more"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "redis": {
-            "additionalProperties": {},
-            "description": "Redis is included into this release for the convenience.\nIt is recommended to host it separately from this release",
-            "properties": {
-              "replica": {
-                "type": "object"
               }
             }
           }
@@ -162274,7 +162712,7 @@
                       "sidecarHostVolumeMounts": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/constrains~1@*.hostPath+@*.mountPath+@*.mountPropagation+@*.name+@*.readOnly"
+                            "$ref": "#/$defs/constrains~1@*.hostPath+@*.mountPath+@*.mountPropagation+@*.name+@*.readOnly@2"
                           },
                           {
                             "$ref": "#/$defs/constrains~1@items.hostPath+@items.mountPath+@items.mountPropagation+@items.name+1more@2"
@@ -162608,7 +163046,7 @@
                       "extraHostVolumeMounts": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/constrains~1@*.hostPath+@*.mountPath+@*.mountPropagation+@*.name+@*.readOnly"
+                            "$ref": "#/$defs/constrains~1@*.hostPath+@*.mountPath+@*.mountPropagation+@*.name+@*.readOnly@2"
                           },
                           {
                             "$ref": "#/$defs/constrains~1@items.hostPath+@items.mountPath+@items.mountPropagation+@items.name+1more@2"
@@ -162904,7 +163342,7 @@
                             "$ref": "#/$defs/constrains~1httpHeaders@*.name+httpHeaders@*.value~1integer"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1@*.hostPath+@*.mountPath+@*.mountPropagation+@*.name+@*.readOnly@2"
+                            "$ref": "#/$defs/constrains~1@*.hostPath+@*.mountPath+@*.mountPropagation+@*.name+@*.readOnly"
                           },
                           {
                             "type": "null"
@@ -164732,7 +165170,7 @@
             "$ref": "#/$defs/constrains~1grafana+grafana.enabled+grafana.enabled=null+grafana.persistence.enabled:t+5more"
           },
           {
-            "$ref": "#/$defs/constrains~1grafana+grafana.enabled+grafana.enabled=null+grafana.persistence.enabled:t+8more@2"
+            "$ref": "#/$defs/constrains~1grafana+grafana.enabled+grafana.enabled=null+grafana.persistence.enabled:t+8more@3"
           },
           {
             "$ref": "#/$defs/constrains~1grafana+grafana.persistence.enabled:t+grafana.persistence.existingClaim:t+7more@3"
@@ -172826,7 +173264,7 @@
             "$ref": "#/$defs/constrains~1grafana+grafana.persistence+grafana.persistence.type=pvc+4more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1grafana+grafana.enabled+grafana.enabled=null+grafana.persistence.enabled:t+8more"
+            "$ref": "#/$defs/constrains~1grafana+grafana.enabled+grafana.enabled=null+grafana.persistence.enabled:t+8more@2"
           },
           {
             "$ref": "#/$defs/constrains~1grafana+grafana.enabled+grafana.enabled=null+grafana.persistence+5more@2"
@@ -177681,10 +178119,10 @@
             "$ref": "#/$defs/constrains~1grafana+grafana.persistence+grafana.persistence.type=pvc+4more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1grafana+grafana.enabled+grafana.enabled=null+grafana.persistence.enabled:t+8more@4"
+            "$ref": "#/$defs/constrains~1grafana+grafana.enabled+grafana.enabled=null+grafana.persistence.enabled:t+8more"
           },
           {
-            "$ref": "#/$defs/constrains~1grafana+grafana.enabled+grafana.enabled=null+grafana.persistence.enabled:t+8more"
+            "$ref": "#/$defs/constrains~1grafana+grafana.enabled+grafana.enabled=null+grafana.persistence.enabled:t+8more@2"
           },
           {
             "$ref": "#/$defs/constrains~1grafana+grafana.persistence+grafana.persistence.type=pvc+4more"
@@ -179036,7 +179474,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1prometheus+prometheus.enabled+prometheus.enabled=null+2more@4"
+            "$ref": "#/$defs/constrains~1prometheus+prometheus.enabled+prometheus.enabled=null+2more@6"
           },
           {
             "allOf": [
@@ -179052,7 +179490,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/constrains~1prometheus+prometheus.enabled+prometheus.enabled=null+2more@6"
+            "$ref": "#/$defs/constrains~1prometheus+prometheus.enabled+prometheus.enabled=null+2more@5"
           },
           {
             "allOf": [
@@ -179068,7 +179506,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/constrains~1prometheus+prometheus.prometheus-node-exporter+1more@3"
+            "$ref": "#/$defs/constrains~1prometheus+prometheus.prometheus-node-exporter+1more@2"
           },
           {
             "allOf": [
@@ -179084,7 +179522,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/constrains~1prometheus+prometheus.prometheus-node-exporter+1more@2"
+            "$ref": "#/$defs/constrains~1prometheus+prometheus.prometheus-node-exporter+1more@3"
           },
           {
             "allOf": [
@@ -179263,48 +179701,6 @@
                     ]
                   }
                 }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null+redis.existingConfigmap:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1redis+redis.architecture+redis.architecture!=replication+redis.enabled+3more"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null"
-              },
-              {
-                "$ref": "#/$defs/constrains~1redis.master.kind=Deployment@2"
-              },
-              {
-                "$ref": "#/$defs/constrains~1redis.architecture=standalone"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled:t+5more@2"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "redis": {
-            "additionalProperties": {},
-            "description": "Redis is included into this release for the convenience.\nIt is recommended to host it separately from this release",
-            "properties": {
-              "master": {
-                "$ref": "#/$defs/constrains~1persistence"
               }
             }
           }
@@ -181492,7 +181888,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1redis.global+redis.global.imageRegistry:t+redis.global:t+1more@3"
+                "$ref": "#/$defs/constrains~1redis.global+redis.global.imageRegistry:t+redis.global:t+1more@4"
               },
               {
                 "$ref": "#/$defs/constrains~1redis.sysctl.enabled:t"
@@ -181514,7 +181910,7 @@
                 "$ref": "#/$defs/constrains~1redis.sentinel.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.global+redis.global.imageRegistry:t+redis.global:t+1more@3"
+                "$ref": "#/$defs/constrains~1redis.global+redis.global.imageRegistry:t+redis.global:t+1more@4"
               },
               {
                 "$ref": "#/$defs/constrains~1redis.sysctl.enabled:t"
@@ -181536,7 +181932,7 @@
                 "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled=null"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.global+redis.global.imageRegistry:t+redis.global:t+1more@3"
+                "$ref": "#/$defs/constrains~1redis.global+redis.global.imageRegistry:t+redis.global:t+1more@4"
               },
               {
                 "$ref": "#/$defs/constrains~1redis.sysctl.enabled:t"
@@ -181558,7 +181954,7 @@
                 "$ref": "#/$defs/constrains~1redis.sentinel.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.global+redis.global.imageRegistry:t+redis.global:t+1more@3"
+                "$ref": "#/$defs/constrains~1redis.global+redis.global.imageRegistry:t+redis.global:t+1more@4"
               },
               {
                 "$ref": "#/$defs/constrains~1redis.sysctl.enabled:t"
@@ -181580,7 +181976,7 @@
                 "$ref": "#/$defs/constrains~1redis.sentinel.service.nodePorts.redis:t+redis.sentinel.service.type=NodePort"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.global+redis.global.imageRegistry:t+redis.global:t+1more@3"
+                "$ref": "#/$defs/constrains~1redis.global+redis.global.imageRegistry:t+redis.global:t+1more@4"
               },
               {
                 "$ref": "#/$defs/constrains~1redis.sysctl.enabled:t"
@@ -181602,7 +181998,7 @@
                 "$ref": "#/$defs/constrains~1redis.sentinel.service.nodePorts.redis:t+redis.sentinel.service.type=NodePort"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.global+redis.global.imageRegistry:t+redis.global:t+1more@3"
+                "$ref": "#/$defs/constrains~1redis.global+redis.global.imageRegistry:t+redis.global:t+1more@4"
               },
               {
                 "$ref": "#/$defs/constrains~1redis.sysctl.enabled:t"
@@ -182876,7 +183272,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1grafana+grafana.enabled+grafana.enabled=null+grafana.persistence.enabled:t+8more@4"
+            "$ref": "#/$defs/constrains~1grafana+grafana.enabled+grafana.enabled=null+grafana.persistence.enabled:t+8more"
           },
           {
             "$ref": "#/$defs/constrains~1grafana+grafana.persistence+grafana.persistence.type=pvc+4more"
@@ -184616,6 +185012,72 @@
           {
             "allOf": [
               {
+                "$ref": "#/$defs/constrains~1prometheus.alertmanager.additionalPeers:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1prometheus.alertmanager.enabled:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1prometheus.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1prometheus.alertmanager.additionalPeers:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1prometheus.alertmanager.enabled+prometheus.alertmanager.enabled=null"
+              },
+              {
+                "$ref": "#/$defs/constrains~1prometheus.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1prometheus.alertmanager.additionalPeers:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1prometheus.alertmanager.enabled:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1prometheus+prometheus.enabled+prometheus.enabled=null"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1prometheus.alertmanager.additionalPeers:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1prometheus.alertmanager.enabled+prometheus.alertmanager.enabled=null"
+              },
+              {
+                "$ref": "#/$defs/constrains~1prometheus+prometheus.enabled+prometheus.enabled=null"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "prometheus": {
+            "$ref": "#/$defs/constrains~1alertmanager.additionalPeers"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
                 "$ref": "#/$defs/constrains~1redis.master.hostAliases:t"
               },
               {
@@ -185240,7 +185702,7 @@
                         "$ref": "#/$defs/constrains~1httpHeaders@*.name+httpHeaders@*.value~1integer"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1@*.hostPath+@*.mountPath+@*.mountPropagation+@*.name+@*.readOnly@2"
+                        "$ref": "#/$defs/constrains~1@*.hostPath+@*.mountPath+@*.mountPropagation+@*.name+@*.readOnly"
                       },
                       {
                         "type": "null"
@@ -197968,11 +198430,11 @@
                     "properties": {
                       "extraVolumes": {
                         "additionalProperties": {
-                          "$ref": "#/$defs/constrains~1name@6"
+                          "$ref": "#/$defs/constrains~1name@4"
                         },
                         "description": "Extra volumes for image-renderer pods",
                         "items": {
-                          "$ref": "#/$defs/constrains~1name@6"
+                          "$ref": "#/$defs/constrains~1name@4"
                         }
                       }
                     }
@@ -198628,11 +199090,11 @@
                     "properties": {
                       "extraSecretMounts": {
                         "additionalProperties": {
-                          "$ref": "#/$defs/constrains~1name@3"
+                          "$ref": "#/$defs/constrains~1name@5"
                         },
                         "description": "Extra secrets to mount in image-renderer pods",
                         "items": {
-                          "$ref": "#/$defs/constrains~1name@3"
+                          "$ref": "#/$defs/constrains~1name@5"
                         }
                       }
                     }
@@ -198757,11 +199219,11 @@
                     "properties": {
                       "extraVolumeMounts": {
                         "additionalProperties": {
-                          "$ref": "#/$defs/constrains~1name@3"
+                          "$ref": "#/$defs/constrains~1name@5"
                         },
                         "description": "Extra volumes to mount in image-renderer pods",
                         "items": {
-                          "$ref": "#/$defs/constrains~1name@3"
+                          "$ref": "#/$defs/constrains~1name@5"
                         }
                       }
                     }
@@ -199653,11 +200115,11 @@
                 "properties": {
                   "extraVolumes": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/constrains~1name@6"
+                      "$ref": "#/$defs/constrains~1name@4"
                     },
                     "description": "Additional Grafana server volumes\n- name: extra-volume-0\nexistingClaim: volume-claim\n- name: extra-volume-1\nhostPath:\npath: /usr/shared/\ntype: \"\"\n- name: grafana-secrets\ncsi:\ndriver: secrets-store.csi.k8s.io\nreadOnly: true\nvolumeAttributes:\nsecretProviderClass: \"grafana-env-spc\"",
                     "items": {
-                      "$ref": "#/$defs/constrains~1name@6"
+                      "$ref": "#/$defs/constrains~1name@4"
                     }
                   }
                 }
@@ -199698,11 +200160,11 @@
                 "properties": {
                   "extraSecretMounts": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/constrains~1name@3"
+                      "$ref": "#/$defs/constrains~1name@5"
                     },
                     "description": "Additional grafana server secret mounts\nDefines additional mounts with secrets. Secrets must be manually created in the namespace.\n- name: secret-files\nmountPath: /etc/secrets\nsecretName: grafana-secret-files\nreadOnly: true\noptional: false\nsubPath: \"\"\nfor AWS EKS (cloudwatch) use the following (see also instruction in env: above)\n- name: aws-iam-token\nmountPath: /var/run/secrets/eks.amazonaws.com/serviceaccount\nreadOnly: true\nprojected:\ndefaultMode: 420\nsources:\n- serviceAccountToken:\naudience: sts.amazonaws.com\nexpirationSeconds: 86400\npath: token\nfor CSI e.g. Azure Key Vault use the following\n- name: secrets-store-inline\nmountPath: /run/secrets\nreadOnly: true\ncsi:\ndriver: secrets-store.csi.k8s.io\nreadOnly: true\nvolumeAttributes:\nsecretProviderClass: \"akv-grafana-spc\"\nnodePublishSecretRef:                       # Only required when using service principal mode\nname: grafana-akv-creds                  # Only required when using service principal mode",
                     "items": {
-                      "$ref": "#/$defs/constrains~1name@3"
+                      "$ref": "#/$defs/constrains~1name@5"
                     }
                   }
                 }
@@ -200138,11 +200600,11 @@
                 "properties": {
                   "extraVolumeMounts": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/constrains~1name@3"
+                      "$ref": "#/$defs/constrains~1name@5"
                     },
                     "description": "Additional grafana server volume mounts\nDefines additional volume mounts.\n- name: extra-volume-0\nmountPath: /mnt/volume0\nreadOnly: true\n- name: extra-volume-1\nmountPath: /mnt/volume1\nreadOnly: true\n- name: grafana-secrets\nmountPath: /mnt/volume2",
                     "items": {
-                      "$ref": "#/$defs/constrains~1name@3"
+                      "$ref": "#/$defs/constrains~1name@5"
                     }
                   }
                 }
@@ -201063,7 +201525,7 @@
                     "description": "Add a seperate remote image renderer deployment/service",
                     "properties": {
                       "serviceMonitor": {
-                        "$ref": "#/$defs/constrains~1path@2"
+                        "$ref": "#/$defs/constrains~1path"
                       }
                     }
                   }
@@ -213429,7 +213891,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "serviceMonitor": {
-                    "$ref": "#/$defs/constrains~1path@2"
+                    "$ref": "#/$defs/constrains~1path"
                   }
                 }
               },
@@ -218638,11 +219100,11 @@
                     "properties": {
                       "extraModules": {
                         "additionalProperties": {
-                          "$ref": "#/$defs/constrains~1name@5"
+                          "$ref": "#/$defs/constrains~1name@3"
                         },
                         "description": "Modules, which are mounted into the core nginx image\n- name: opentelemetry\nimage: registry.k8s.io/ingress-nginx/opentelemetry:v20220415-controller-v1.2.0-beta.0-2-g81c2afd97@sha256:ce61e2cf0b347dffebb2dcbf57c33891d2217c1bad9c0959c878e5be671ef941\nThe image must contain a `/usr/local/bin/init_module.sh` executable, which\nwill be executed as initContainers, to move its config files within the\nmounted volume.",
                         "items": {
-                          "$ref": "#/$defs/constrains~1name@5"
+                          "$ref": "#/$defs/constrains~1name@3"
                         }
                       }
                     }
@@ -226738,7 +227200,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/constrains~1commonLabels+enabled+enabled:t+enabled=null@2"
+            "$ref": "#/$defs/constrains~1commonLabels+enabled+enabled:t+enabled=null"
           },
           "then": {
             "additionalProperties": {},
@@ -229166,7 +229628,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/constrains~1commonLabels+enabled+enabled:t+enabled=null"
+            "$ref": "#/$defs/constrains~1commonLabels+enabled+enabled:t+enabled=null@2"
           },
           "then": {
             "additionalProperties": {},
@@ -239258,7 +239720,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/constrains~1commonLabels+enabled+enabled:t+enabled=null"
+            "$ref": "#/$defs/constrains~1commonLabels+enabled+enabled:t+enabled=null@2"
           },
           "then": {
             "additionalProperties": {},
@@ -240804,7 +241266,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/constrains~1commonLabels+enabled+enabled:t+enabled=null@2"
+            "$ref": "#/$defs/constrains~1commonLabels+enabled+enabled:t+enabled=null"
           },
           "then": {
             "additionalProperties": {},
@@ -252714,7 +253176,7 @@
                 "$ref": "#/$defs/constrains~1kube-state-metrics+kube-state-metrics.kubeRBACProxy.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics+1more@2"
+                "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics+1more"
               },
               {
                 "$ref": "#/$defs/constrains~1kube-state-metrics.autosharding+kube-state-metrics.enabled:t+1more"
@@ -252779,13 +253241,13 @@
                 "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics.enabled:t+1more"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics+1more"
+                "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics+1more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1enabled:t+kube-state-metrics.enabled+kube-state-metrics.enabled=null+2more@5"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled:t+kube-state-metrics.enabled+kube-state-metrics.enabled=null+2more"
+                "$ref": "#/$defs/constrains~1enabled:t+kube-state-metrics.enabled+kube-state-metrics.enabled=null+2more@3"
               },
               {
                 "$ref": "#/$defs/constrains~1kube-state-metrics.enabled:t+kube-state-metrics.kubeconfig"
@@ -252845,7 +253307,7 @@
                 "$ref": "#/$defs/constrains~1enabled:t+kube-state-metrics.enabled+kube-state-metrics.enabled=null+2more@4"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics.enabled:t+2more@3"
+                "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics.enabled:t+2more@2"
               },
               {
                 "allOf": [
@@ -253229,10 +253691,10 @@
                 "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics+2more@3"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics.enabled:t+2more@2"
+                "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics.enabled:t+2more@3"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled:t+kube-state-metrics.enabled+kube-state-metrics.enabled=null+2more@3"
+                "$ref": "#/$defs/constrains~1enabled:t+kube-state-metrics.enabled+kube-state-metrics.enabled=null+2more"
               },
               {
                 "$ref": "#/$defs/constrains~1kube-state-metrics.enabled:t+kube-state-metrics.networkPolicy+1more@2"
@@ -253790,7 +254252,7 @@
                 "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics+1more@3"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics+1more"
+                "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics+1more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1kube-state-metrics.enabled+kube-state-metrics.enabled=null+1more"
@@ -253923,7 +254385,7 @@
                 "$ref": "#/$defs/constrains~1kube-state-metrics.enabled:t+kube-state-metrics.prometheus.monitor"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics.enabled:t+2more@2"
+                "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics.enabled:t+2more@3"
               },
               {
                 "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics.enabled:t+1more@2"
@@ -253932,7 +254394,7 @@
                 "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics+1more@4"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled:t+kube-state-metrics.enabled+kube-state-metrics.enabled=null+2more@3"
+                "$ref": "#/$defs/constrains~1enabled:t+kube-state-metrics.enabled+kube-state-metrics.enabled=null+2more"
               },
               {
                 "$ref": "#/$defs/constrains~1kube-state-metrics.enabled:t+kube-state-metrics.networkPolicy+1more@2"
@@ -254026,13 +254488,13 @@
                 "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled:t+prometheus-node-exporter.networkPolicy"
               },
               {
-                "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@7"
+                "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@6"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null+prometheus-node-exporter.enabled:t+1more@3"
+                "$ref": "#/$defs/constrains~1enabled+enabled=null+prometheus-node-exporter.enabled:t+1more@5"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled:t+prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@3"
+                "$ref": "#/$defs/constrains~1enabled:t+prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@2"
               }
             ]
           },
@@ -254207,96 +254669,6 @@
           "if": {
             "anyOf": [
               {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1alertmanager.enabled+alertmanager.enabled=null"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1enabled:t"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1alertmanager.enabled+alertmanager.enabled=null"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1enabled:t"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1alertmanager.enabled:t"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1alertmanager.enabled:t"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "allOf": [
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "alertmanager": {
-                    "additionalProperties": {},
-                    "description": "alertmanager sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/alertmanager",
-                    "properties": {
-                      "service": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "clusterPort": {
-                            "$ref": "#/$defs/constrains~1port~1anyOf~1integer:int32;number-of-port-to+string;pattern-0-1-9"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "$ref": "#/$defs/constrains~1alertmanager.additionalPeers"
-              }
-            ]
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
                 "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics.customResourceState+1more"
               },
               {
@@ -254306,7 +254678,7 @@
                 "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics+1more@3"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics+1more"
+                "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics+1more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics+1more@5"
@@ -254330,7 +254702,7 @@
                 "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics+2more@2"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics.enabled:t+2more@3"
+                "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics.enabled:t+2more@2"
               }
             ]
           },
@@ -254427,7 +254799,7 @@
                 "$ref": "#/$defs/constrains~1kube-state-metrics.enabled:t+kube-state-metrics.rbac.create=true+1more"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled:t+kube-state-metrics.enabled+kube-state-metrics.enabled=null+2more"
+                "$ref": "#/$defs/constrains~1enabled:t+kube-state-metrics.enabled+kube-state-metrics.enabled=null+2more@3"
               },
               {
                 "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics.autosharding+2more"
@@ -254458,6 +254830,89 @@
                 "properties": {
                   "serviceAccount": {
                     "$ref": "#/$defs/constrains~1name:t@8"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t+alertmanager.replicaCount"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1alertmanager.enabled+alertmanager.enabled=null"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t+alertmanager.replicaCount"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1alertmanager.enabled:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t+alertmanager.replicaCount"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1enabled:t"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1alertmanager.enabled:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t+alertmanager.replicaCount"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1enabled:t"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1alertmanager.enabled+alertmanager.enabled=null"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "alertmanager": {
+                "additionalProperties": {},
+                "description": "alertmanager sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/alertmanager",
+                "properties": {
+                  "service": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "clusterPort": {
+                        "$ref": "#/$defs/constrains~1port~1anyOf~1integer:int32;number-of-port-to+string;pattern-0-1-9"
+                      }
+                    }
                   }
                 }
               }
@@ -255916,7 +256371,7 @@
                 "$ref": "#/$defs/constrains~1kube-state-metrics.enabled:t+kube-state-metrics.rbac.create=true+1more"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled:t+kube-state-metrics.enabled+kube-state-metrics.enabled=null+2more"
+                "$ref": "#/$defs/constrains~1enabled:t+kube-state-metrics.enabled+kube-state-metrics.enabled=null+2more@3"
               },
               {
                 "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics.enabled:t+2more"
@@ -256062,11 +256517,11 @@
                     "properties": {
                       "probeHeaders": {
                         "additionalProperties": {
-                          "$ref": "#/$defs/constrains~1name@4"
+                          "$ref": "#/$defs/constrains~1name@6"
                         },
                         "description": "Custom HTTP headers for Liveness/Readiness/Startup Probe\nUseful for providing HTTP Basic Auth to healthchecks\n- name: \"Authorization\"\nvalue: \"Bearer ABCDEabcde12345\"",
                         "items": {
-                          "$ref": "#/$defs/constrains~1name@4"
+                          "$ref": "#/$defs/constrains~1name@6"
                         }
                       }
                     }
@@ -256868,16 +257323,16 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1enabled:t+prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more"
+                "$ref": "#/$defs/constrains~1enabled:t+prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@3"
               },
               {
-                "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@8"
+                "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@7"
               },
               {
                 "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled:t+1more"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null+prometheus-node-exporter.enabled:t+1more@5"
+                "$ref": "#/$defs/constrains~1enabled+enabled=null+prometheus-node-exporter.enabled:t+1more@2"
               }
             ]
           },
@@ -256911,7 +257366,7 @@
                 "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics+1more@3"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics+1more"
+                "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics+1more@2"
               },
               {
                 "allOf": [
@@ -257453,22 +257908,22 @@
                 "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled:t+prometheus-node-exporter.networkPolicy"
               },
               {
-                "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@7"
+                "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@6"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null+prometheus-node-exporter.enabled:t+1more@3"
+                "$ref": "#/$defs/constrains~1enabled+enabled=null+prometheus-node-exporter.enabled:t+1more@5"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled:t+prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@3"
+                "$ref": "#/$defs/constrains~1enabled:t+prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1enabled:t+prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@4"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null+prometheus-node-exporter.enabled:t+1more@4"
+                "$ref": "#/$defs/constrains~1enabled+enabled=null+prometheus-node-exporter.enabled:t+1more@3"
               },
               {
-                "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@5"
+                "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@8"
               },
               {
                 "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled:t+prometheus-node-exporter.service"
@@ -258055,7 +258510,7 @@
                 "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics+2more@2"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics.enabled:t+2more@3"
+                "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics.enabled:t+2more@2"
               }
             ]
           },
@@ -259471,10 +259926,10 @@
                 "$ref": "#/$defs/constrains~1enabled:t+prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@4"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null+prometheus-node-exporter.enabled:t+1more@4"
+                "$ref": "#/$defs/constrains~1enabled+enabled=null+prometheus-node-exporter.enabled:t+1more@3"
               },
               {
-                "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@5"
+                "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@8"
               },
               {
                 "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled:t+prometheus-node-exporter.service"
@@ -260182,11 +260637,11 @@
                         "properties": {
                           "extraConfigmapMounts": {
                             "additionalProperties": {
-                              "$ref": "#/$defs/constrains~1name@6"
+                              "$ref": "#/$defs/constrains~1name@4"
                             },
                             "description": "Additional configmap-reload mounts\n- name: prometheus-alerts\nmountPath: /etc/alerts.d\nsubPath: \"\"\nconfigMap: prometheus-alerts\nreadOnly: true",
                             "items": {
-                              "$ref": "#/$defs/constrains~1name@6"
+                              "$ref": "#/$defs/constrains~1name@4"
                             }
                           }
                         }
@@ -262468,28 +262923,28 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null+prometheus-node-exporter.enabled:t+1more@2"
+                "$ref": "#/$defs/constrains~1enabled+enabled=null+prometheus-node-exporter.enabled:t+1more@4"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled:t+prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more"
+                "$ref": "#/$defs/constrains~1enabled:t+prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@3"
               },
               {
-                "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@8"
+                "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@7"
               },
               {
                 "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled:t+prometheus-node-exporter.kubeRBACProxy"
               },
               {
-                "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@6"
+                "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@5"
               },
               {
                 "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled:t+1more"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null+prometheus-node-exporter.enabled:t+1more@5"
+                "$ref": "#/$defs/constrains~1enabled+enabled=null+prometheus-node-exporter.enabled:t+1more@2"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled:t+prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@2"
+                "$ref": "#/$defs/constrains~1enabled:t+prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more"
               }
             ]
           },
@@ -262524,7 +262979,7 @@
                 "$ref": "#/$defs/constrains~1kube-state-metrics+kube-state-metrics.kubeRBACProxy.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics+1more@2"
+                "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics+1more"
               },
               {
                 "$ref": "#/$defs/constrains~1kube-state-metrics.autosharding+kube-state-metrics.enabled:t+1more"
@@ -262560,10 +263015,10 @@
                 "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics.enabled:t+1more"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics+1more"
+                "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics+1more@2"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled:t+kube-state-metrics.enabled+kube-state-metrics.enabled=null+2more"
+                "$ref": "#/$defs/constrains~1enabled:t+kube-state-metrics.enabled+kube-state-metrics.enabled=null+2more@3"
               },
               {
                 "$ref": "#/$defs/constrains~1kube-state-metrics.enabled:t+kube-state-metrics.kubeconfig"
@@ -262617,7 +263072,7 @@
                 "$ref": "#/$defs/constrains~1enabled:t+kube-state-metrics.enabled+kube-state-metrics.enabled=null+2more@4"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics.enabled:t+2more@3"
+                "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics.enabled:t+2more@2"
               }
             ]
           },
@@ -263804,7 +264259,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics+1more@2"
+                "$ref": "#/$defs/constrains~1enabled+enabled=null+kube-state-metrics+1more"
               },
               {
                 "$ref": "#/$defs/constrains~1kube-state-metrics.enabled:t+kube-state-metrics.serviceAccount.create:t"
@@ -265095,11 +265550,11 @@
                     "properties": {
                       "sidecarHostVolumeMounts": {
                         "additionalProperties": {
-                          "$ref": "#/$defs/constrains~1name@6"
+                          "$ref": "#/$defs/constrains~1name@4"
                         },
                         "description": "Additional mounts from the host to sidecar containers\n- name: <mountName>\nhostPath: <hostPath>\nmountPath: <mountPath>\nreadOnly: true|false\nmountPropagation: None|HostToContainer|Bidirectional",
                         "items": {
-                          "$ref": "#/$defs/constrains~1name@6"
+                          "$ref": "#/$defs/constrains~1name@4"
                         }
                       }
                     }
@@ -265814,6 +266269,73 @@
                 }
               }
             ]
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1alertmanager.enabled+alertmanager.enabled=null"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1enabled:t"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1alertmanager.enabled+alertmanager.enabled=null"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1enabled:t"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1alertmanager.enabled:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1alertmanager.additionalPeers:t"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1alertmanager.enabled:t"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "$ref": "#/$defs/constrains~1alertmanager.additionalPeers"
           }
         },
         {
@@ -267159,16 +267681,16 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null+prometheus-node-exporter.enabled:t+1more@2"
+                "$ref": "#/$defs/constrains~1enabled+enabled=null+prometheus-node-exporter.enabled:t+1more@4"
               },
               {
                 "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled:t+prometheus-node-exporter.kubeRBACProxy"
               },
               {
-                "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@6"
+                "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@5"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled:t+prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more@2"
+                "$ref": "#/$defs/constrains~1enabled:t+prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null+1more"
               }
             ]
           },
@@ -269638,11 +270160,11 @@
                     "properties": {
                       "sidecarHostVolumeMounts": {
                         "additionalProperties": {
-                          "$ref": "#/$defs/constrains~1name@3"
+                          "$ref": "#/$defs/constrains~1name@5"
                         },
                         "description": "Additional mounts from the host to sidecar containers\n- name: <mountName>\nhostPath: <hostPath>\nmountPath: <mountPath>\nreadOnly: true|false\nmountPropagation: None|HostToContainer|Bidirectional",
                         "items": {
-                          "$ref": "#/$defs/constrains~1name@3"
+                          "$ref": "#/$defs/constrains~1name@5"
                         }
                       }
                     }
