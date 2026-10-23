@@ -9288,4 +9288,10 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   via an ADR 0066 consolidation clause (B, rec.) vs folding refactors into semantic landings (A), D4 reject raw numbers at genuine Go
   int parameters on proven-unchanged paths (rec. yes). W1 stage-1-min builder stalled ~3.5 h without activity; stopped and restarted
   as a fresh Opus agent on w1/stage1-min (= 5220c19b). Orchestrator.
-Next: user decisions D1–D4; collect w1/stage1-min, sol review, landing 10e; then R0 of `plan/value-algebra-interpreter.md`.
+- 11:4x (Oct 23) — **USER DECISIONS D1–D4 (plan/value-algebra-r0.md §7): D1 no fallback hint after a piped `required`; D2 the 15
+  `selected-*-4..8` cells become ADR 0042 closed-root policy rows (W1 ternary 53 → 38); D3 sequence B — ADR 0066 amended with clause
+  2b "consolidation-only landing" (frozen coverage, frozen classification, reviewed producer mappings, negative LOC); D4 reject
+  raw numbers at genuine Go `int` parameters on proven-unchanged paths (SDK-typed values out of scope).** ADR 0069 Accepted. User
+  also: Codex quota reset — shift some implementation back to Codex builders. Landing sequence now L1 R1a, L2 R1b, L3 R2, L4 R3a,
+  L5 R3b. w1/stage1-min: arity fix committed (72ba6d7a), admission suite in progress. Orchestrator.
+Next: start R1a (Codex sol builder, byte-identical, inventory gate, ADR 0066 clause 2b); collect w1/stage1-min, sol review, landing 10e; then R0 of `plan/value-algebra-interpreter.md`.
