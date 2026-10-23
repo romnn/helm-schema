@@ -50,6 +50,7 @@ fn every_admission_cell_keeps_its_recorded_verdict() -> eyre::Result<()> {
     failures.extend(suite.roster_mismatches());
     failures.extend(suite.obligation_mismatches());
     failures.extend(suite.coalesced_mismatches()?);
+    failures.extend(suite.empty_files()?);
     let scratch = ScratchDir::new("w1-admission")?;
     let jobs: BTreeSet<(String, DeclaredTypes)> = suite
         .cells

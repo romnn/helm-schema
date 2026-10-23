@@ -17,7 +17,9 @@ documents here are the canonical inputs. The lane grounds they were taken from a
 - `cells.tsv`: 995 cells, generated with `--declared-types annotate` (the witness lanes' mode).
 - `cells-assert.tsv`: 614 cells (`frozen614`), generated with `--declared-types assert`, the
   binary's default, under which that lane was recorded.
-- `charts/<lane>/<chart>/`: the cells' charts (`Chart.yaml`, `values.yaml`, `templates/`).
+- `charts/<lane>/<chart>/`: the cells' charts (`Chart.yaml`, `values.yaml`, `templates/`). The suite
+  holds no zero-byte file: Helm reads an absent template like an empty one, the landing dump
+  refuses zero-byte files, and the gate fails on one.
 - `values/`: values files too long or unusual to inline. Values are ASCII-escaped JSON: raw U+0085
   decodes differently through YAML, and every lane's Helm ground read the escaped form.
 - `roster.tsv`: the frozen cell ids and modes. The gate pins its size (1,609) and sha256, so

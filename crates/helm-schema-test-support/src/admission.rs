@@ -414,6 +414,33 @@ impl Suite {
         mismatches
     }
 
+    /// Every zero-byte file under the suite. Helm reads an absent template like an empty one, and
+    /// the landing dump refuses zero-byte files as truncations, so the suite holds none.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when a directory cannot be read.
+    pub fn empty_files(&self) -> eyre::Result<Vec<String>> {
+        fn walk(dir: &Path, base: &Path, out: &mut Vec<String>) -> eyre::Result<()> {
+            for entry in fs::read_dir(dir)? {
+                let path = entry?.path();
+                if path.is_dir() {
+                    walk(&path, base, out)?;
+                } else if fs::metadata(&path)?.len() == 0 {
+                    out.push(format!(
+                        "{}: a zero-byte file; delete it",
+                        path.strip_prefix(base)?.display()
+                    ));
+                }
+            }
+            Ok(())
+        }
+        let mut empty = Vec::new();
+        walk(&self.root, &self.root, &mut empty)?;
+        empty.sort();
+        Ok(empty)
+    }
+
     /// Every difference between `coalesced.tsv` (and its snapshots) and the cells.
     ///
     /// # Errors

@@ -145,6 +145,21 @@ fn the_cells_must_be_exactly_the_frozen_roster() -> eyre::Result<()> {
     Ok(())
 }
 
+/// A zero-byte file anywhere in the suite is refused.
+#[test]
+fn the_suite_holds_no_zero_byte_file() -> eyre::Result<()> {
+    let scratch = ScratchDir::new("admission")?;
+    let root = scratch.path();
+    sim_assert_eq!(have: suite(root, CELLS, BAD_ROW)?.empty_files()?, want: Vec::<String>::new());
+    fs::create_dir_all(root.join("charts/c/templates"))?;
+    fs::write(root.join("charts/c/templates/_helpers.tpl"), "")?;
+    sim_assert_eq!(
+        have: read_suite(root)?.empty_files()?,
+        want: vec!["charts/c/templates/_helpers.tpl: a zero-byte file; delete it".to_string()],
+    );
+    Ok(())
+}
+
 /// The composed document must be the one Helm coalesced from the same inputs: changed values, a
 /// tampered snapshot, a diverging port and a missing row all fail.
 #[test]
