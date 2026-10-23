@@ -298,7 +298,7 @@ fn parse_cell(root: &Path, line: &str, declared_types: DeclaredTypes) -> eyre::R
         None => values.as_bytes().to_vec(),
     };
     let (helm, main) = parse_expect(expect)
-        .wrap_err_with(|| format!("{id}"))?
+        .wrap_err_with(|| id.to_string())?
         .ok_or_else(|| eyre::eyre!("{id}: not measured yet (`-`); run admission_refresh"))?;
     Ok(Cell {
         id: (*id).to_string(),
@@ -635,36 +635,7 @@ pub fn record_helm_coalesced(
 /// or reject, the cells differ from the roster, a re-recording is refused, or a file cannot be
 /// read or written.
 pub fn refresh(root: &Path, matrices: &[PathBuf]) -> eyre::Result<()> {
-    let mut measured = BTreeMap::new();
-    for matrix in matrices {
-        let text =
-            fs::read_to_string(matrix).wrap_err_with(|| format!("read {}", matrix.display()))?;
-        let mut lines = text.lines().filter(|line| !line.starts_with('#'));
-        let header: Vec<&str> = lines.next().unwrap_or_default().split('\t').collect();
-        let column = |name: &str| {
-            header
-                .iter()
-                .position(|field| *field == name)
-                .ok_or_else(|| eyre::eyre!("{}: no {name} column", matrix.display()))
-        };
-        let (id_column, main_column, helm_column) =
-            (column("cell_id")?, column("main")?, column("helm_class")?);
-        for line in lines {
-            let fields: Vec<&str> = line.split('\t').collect();
-            let field = |index: usize| fields.get(index).copied().unwrap_or_default();
-            let main = match field(main_column) {
-                "accept" => Verdict::Accept,
-                "reject" => Verdict::Reject,
-                other => eyre::bail!("{}: main is {other:?}", field(id_column)),
-            };
-            let helm = match field(helm_column) {
-                "pass" => HelmClass::Pass,
-                "reject" => HelmClass::Reject,
-                other => eyre::bail!("{}: helm_class is {other:?}", field(id_column)),
-            };
-            measured.insert(field(id_column).to_string(), (helm, main));
-        }
-    }
+    let measured = read_measured(matrices)?;
     let owners = read_owners(root)?;
     let roster: BTreeSet<(String, DeclaredTypes)> = read_roster(root)?.into_iter().collect();
     let mut listed = BTreeSet::new();
@@ -683,23 +654,20 @@ pub fn refresh(root: &Path, matrices: &[PathBuf]) -> eyre::Result<()> {
                 .ok_or_else(|| eyre::eyre!("no table measured {id}"))?;
             let recorded = parse_expect(fields.last().copied().unwrap_or_default())
                 .wrap_err_with(|| format!("{name}: {id}"))?;
-            match recorded {
-                None => {}
-                Some((recorded_helm, _)) if recorded_helm != helm => refusals.push(format!(
-                    "{id}: Helm's class changed from {} to {}",
-                    recorded_helm.as_str(),
-                    helm.as_str()
-                )),
-                Some((recorded_helm, recorded_main))
-                    if recorded_main.agrees_with(recorded_helm) && !main.agrees_with(helm) =>
-                {
+            if let Some((recorded_helm, recorded_main)) = recorded {
+                if recorded_helm != helm {
+                    refusals.push(format!(
+                        "{id}: Helm's class changed from {} to {}",
+                        recorded_helm.as_str(),
+                        helm.as_str()
+                    ));
+                } else if recorded_main.agrees_with(recorded_helm) && !main.agrees_with(helm) {
                     refusals.push(format!(
                         "{id}: NEW failure: main={} agreed with Helm, the table says {}",
                         recorded_main.as_str(),
                         main.as_str()
                     ));
                 }
-                Some(_) => {}
             }
             let expect = format!("helm_class={} main={}", helm.as_str(), main.as_str());
             if let Some(field) = fields.last_mut() {
@@ -739,6 +707,41 @@ pub fn refresh(root: &Path, matrices: &[PathBuf]) -> eyre::Result<()> {
     }
     fs::write(root.join("obligations.tsv"), out)?;
     Ok(())
+}
+
+/// Every cell's measured Helm class and `main` verdict in `cell_matrix` tables; a later table wins.
+fn read_measured(matrices: &[PathBuf]) -> eyre::Result<BTreeMap<String, (HelmClass, Verdict)>> {
+    let mut measured = BTreeMap::new();
+    for matrix in matrices {
+        let text =
+            fs::read_to_string(matrix).wrap_err_with(|| format!("read {}", matrix.display()))?;
+        let mut lines = text.lines().filter(|line| !line.starts_with('#'));
+        let header: Vec<&str> = lines.next().unwrap_or_default().split('\t').collect();
+        let column = |name: &str| {
+            header
+                .iter()
+                .position(|field| *field == name)
+                .ok_or_else(|| eyre::eyre!("{}: no {name} column", matrix.display()))
+        };
+        let (id_column, main_column, helm_column) =
+            (column("cell_id")?, column("main")?, column("helm_class")?);
+        for line in lines {
+            let fields: Vec<&str> = line.split('\t').collect();
+            let field = |index: usize| fields.get(index).copied().unwrap_or_default();
+            let main = match field(main_column) {
+                "accept" => Verdict::Accept,
+                "reject" => Verdict::Reject,
+                other => eyre::bail!("{}: main is {other:?}", field(id_column)),
+            };
+            let helm = match field(helm_column) {
+                "pass" => HelmClass::Pass,
+                "reject" => HelmClass::Reject,
+                other => eyre::bail!("{}: helm_class is {other:?}", field(id_column)),
+            };
+            measured.insert(field(id_column).to_string(), (helm, main));
+        }
+    }
+    Ok(measured)
 }
 
 fn read_owners(root: &Path) -> eyre::Result<BTreeMap<String, String>> {

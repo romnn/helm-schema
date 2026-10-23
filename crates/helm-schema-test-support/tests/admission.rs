@@ -67,6 +67,16 @@ fn suite(root: &Path, cells: &str, obligations: &str) -> eyre::Result<Suite> {
     read_suite(root)
 }
 
+/// `text` without the lines starting with `prefix`.
+fn without_rows(text: &str, prefix: &str) -> String {
+    let mut out = String::new();
+    for line in text.lines().filter(|line| !line.starts_with(prefix)) {
+        out.push_str(line);
+        out.push('\n');
+    }
+    out
+}
+
 #[test]
 fn obligations_must_be_exactly_the_cells_main_gets_wrong() -> eyre::Result<()> {
     let scratch = ScratchDir::new("admission")?;
@@ -109,11 +119,7 @@ fn the_cells_must_be_exactly_the_frozen_roster() -> eyre::Result<()> {
     let scratch = ScratchDir::new("admission")?;
     let root = scratch.path();
     sim_assert_eq!(have: suite(root, CELLS, BAD_ROW)?.roster_mismatches(), want: Vec::<String>::new());
-    let without_ok = CELLS
-        .lines()
-        .filter(|line| !line.starts_with("lane.ok.0"))
-        .map(|line| format!("{line}\n"))
-        .collect::<String>();
+    let without_ok = without_rows(CELLS, "lane.ok.0");
     sim_assert_eq!(
         have: suite(root, &without_ok, BAD_ROW)?.roster_mismatches(),
         want: vec!["lane.ok.0 (annotate): in roster.tsv, missing from the cells files".to_string()],
@@ -186,11 +192,7 @@ fn composed_documents_are_bound_to_helms_recorded_document() -> eyre::Result<()>
         "a diverging port fails"
     );
 
-    let first_row_dropped: String = table
-        .lines()
-        .filter(|line| !line.starts_with("lane.bad.0"))
-        .map(|line| format!("{line}\n"))
-        .collect();
+    let first_row_dropped = without_rows(&table, "lane.bad.0");
     fs::write(root.join("coalesced.tsv"), first_row_dropped)?;
     sim_assert_eq!(
         have: read_suite(&root)?.coalesced_mismatches()?,
