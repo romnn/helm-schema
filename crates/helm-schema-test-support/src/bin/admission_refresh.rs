@@ -8,8 +8,10 @@
 //! The first form re-records every cell's `helm_class=` and `main=` and `obligations.tsv` from
 //! `cell_matrix` tables, each from a run over one of the suite's cells files with the binary to
 //! record labelled `main` (the suite's README.md names the commands); together they must measure
-//! every cell. The second records pinned Helm's coalesced document for every cell the Rust values
-//! port does not model.
+//! every cell; it refuses NEW failures and changed Helm classes on existing cells. The second
+//! records, for every cell, the hash of its inputs and of the document pinned Helm coalesces from
+//! them (`coalesced.tsv`), and snapshots that document where the Rust values port does not
+//! reproduce it.
 
 use std::path::PathBuf;
 

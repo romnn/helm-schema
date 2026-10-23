@@ -5,7 +5,10 @@
 //! values composed over the chart defaults. The recorded verdict must hold: a cell that moves away
 //! from the recorded pinned-Helm class is a new failure, and a cell that moves toward it must be
 //! re-recorded, so the suite always states the current main. `obligations.tsv` must list exactly
-//! the cells main gets wrong. Helm does not run here; its class is recorded.
+//! the cells main gets wrong, and the cells must be exactly the frozen `roster.tsv`, whose size
+//! and digest are pinned here. Every composed values document must hash to the one pinned Helm
+//! coalesced from the same inputs (`coalesced.tsv`). Helm does not run here; its results are
+//! recorded.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
@@ -15,11 +18,16 @@ use std::sync::Mutex;
 
 use color_eyre::eyre;
 use helm_schema_test_support::admission::{
-    self, Admission, Cell, DeclaredTypes, Verdict, classify,
+    self, Admission, Cell, DeclaredTypes, Suite, Verdict, classify,
 };
 use helm_schema_test_support::registry::PROVIDER_BUNDLE;
+use helm_schema_test_support::source_digest::sha256_hex;
 use serde_json::Value;
 use test_util::scratch::ScratchDir;
+
+/// The frozen roster: adding or removing a cell edits `roster.tsv` and these two constants.
+const ROSTER_CELLS: usize = 1609;
+const ROSTER_SHA256: &str = "851b97b5a9c694c4ae0e998b9ed35cea8c86875266723bcd1d2545614037d557";
 
 /// Concurrent generations: each is a short CLI run over a one-template chart.
 const WORKERS: usize = 4;
@@ -30,7 +38,18 @@ type Schemas = BTreeMap<(String, DeclaredTypes), Result<jsonschema::Validator, S
 fn every_admission_cell_keeps_its_recorded_verdict() -> eyre::Result<()> {
     let root = test_util::workspace_testdata().join(admission::SUITE_DIR);
     let suite = admission::read_suite(&root)?;
-    let mut failures = suite.obligation_mismatches();
+    let roster = fs::read(root.join(admission::ROSTER))?;
+    let mut failures = Vec::new();
+    if sha256_hex(&roster) != ROSTER_SHA256 || suite.roster.len() != ROSTER_CELLS {
+        failures.push(format!(
+            "roster.tsv holds {} cells with another digest than the pinned {ROSTER_CELLS}; \
+             a roster change edits ROSTER_CELLS and ROSTER_SHA256 explicitly",
+            suite.roster.len()
+        ));
+    }
+    failures.extend(suite.roster_mismatches());
+    failures.extend(suite.obligation_mismatches());
+    failures.extend(suite.coalesced_mismatches()?);
     let scratch = ScratchDir::new("w1-admission")?;
     let jobs: BTreeSet<(String, DeclaredTypes)> = suite
         .cells
@@ -44,7 +63,7 @@ fn every_admission_cell_keeps_its_recorded_verdict() -> eyre::Result<()> {
             .get(&(cell.chart.clone(), cell.declared_types))
             .ok_or_else(|| "never generated".to_string())
             .and_then(|schema| schema.as_ref().map_err(Clone::clone))
-            .and_then(|schema| verdict(&root, cell, schema, scratch.path()));
+            .and_then(|schema| verdict(&suite, cell, schema, scratch.path()));
         let observed = match observed {
             Ok(observed) => observed,
             Err(reason) => {
@@ -158,12 +177,13 @@ fn generate_one(
 
 /// The schema's verdict on the cell's values composed over its chart's defaults.
 fn verdict(
-    root: &Path,
+    suite: &Suite,
     cell: &Cell,
     schema: &jsonschema::Validator,
     scratch: &Path,
 ) -> Result<Verdict, String> {
-    let instance = admission::compose(root, cell, scratch).map_err(|error| format!("{error:#}"))?;
+    let instance =
+        admission::compose(suite, cell, scratch).map_err(|error| format!("{error:#}"))?;
     Ok(if schema.is_valid(&instance) {
         Verdict::Accept
     } else {

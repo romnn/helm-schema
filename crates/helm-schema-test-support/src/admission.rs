@@ -10,13 +10,17 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::time::Duration;
 
 use color_eyre::eyre::{self, OptionExt as _, WrapErr as _};
 use serde_json::Value;
 use test_util::helm_values::{ValuesError, ValuesOptions, coalesce_chart_values};
 
 use crate::cell_matrix::generation_recipe;
+use crate::helm::adjudication::PinnedHelmChart;
+use crate::helm::invocation::HelmRunner;
 use crate::registry::BUNDLE_K8S_VERSION;
+use crate::source_digest::sha256_hex;
 
 /// The suite's directory under the workspace `testdata/`.
 pub const SUITE_DIR: &str = "w1-admission";
@@ -27,6 +31,13 @@ pub const CELL_FILES: [(&str, DeclaredTypes); 2] = [
     ("cells-assert.tsv", DeclaredTypes::Assert),
 ];
 
+/// The frozen roster of cell ids and modes.
+pub const ROSTER: &str = "roster.tsv";
+const ROSTER_HEADER: &str = "cell_id\tdeclared_types";
+const COALESCED_TABLE: &str = "coalesced.tsv";
+const COALESCED_HEADER: &str = "cell_id\tinputs_sha256\tdocument_sha256";
+/// Snapshots of Helm's coalesced document, for the cells the Rust values port does not reproduce.
+const COALESCED_DIR: &str = "coalesced";
 const CELLS_HEADER: &str = "cell_id\tchart\tvalues\tkube_version\texpect";
 const OBLIGATIONS_HEADER: &str = "cell_id\tlane\tdeclared_types\thelm_class\tmain\terror\towner";
 /// The owner a newly recorded obligation gets; ADR 0042 policy rows are classified by hand.
@@ -107,6 +118,8 @@ pub struct Cell {
     pub chart: String,
     /// The values file bytes Helm and the schema read.
     pub values: Vec<u8>,
+    /// The Kubernetes version Helm renders the cell at.
+    pub kube_version: String,
     /// The mode its file was measured under.
     pub declared_types: DeclaredTypes,
     /// Pinned Helm's class.
@@ -155,6 +168,20 @@ pub struct Suite {
     pub cells: Vec<Cell>,
     /// `obligations.tsv` rows by cell id, as written.
     pub obligations: BTreeMap<String, String>,
+    /// `roster.tsv`: the frozen cell ids with their modes, edited only by hand.
+    pub roster: Vec<(String, DeclaredTypes)>,
+    /// `coalesced.tsv`: each cell's inputs hash and the hash of the document pinned Helm
+    /// coalesced from them.
+    pub coalesced: BTreeMap<String, CoalescedRecord>,
+}
+
+/// One `coalesced.tsv` row.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct CoalescedRecord {
+    /// [`inputs_sha256`] when Helm's document was recorded.
+    pub inputs_sha256: String,
+    /// [`document_sha256`] of Helm's coalesced document.
+    pub document_sha256: String,
 }
 
 /// How a cell's verdict under the code under test compares with the recorded one.
@@ -225,16 +252,39 @@ pub fn read_suite(root: &Path) -> eyre::Result<Suite> {
             "obligations.tsv: duplicate {id}"
         );
     }
+    let roster = read_roster(root)?;
+    let mut coalesced = BTreeMap::new();
+    if let Ok(text) = fs::read_to_string(root.join(COALESCED_TABLE)) {
+        let mut lines = text.lines();
+        eyre::ensure!(
+            lines.next() == Some(COALESCED_HEADER),
+            "coalesced.tsv: unexpected header"
+        );
+        for line in lines {
+            let [id, inputs, document] = line.split('\t').collect::<Vec<_>>()[..] else {
+                eyre::bail!("coalesced.tsv: malformed row {line:?}");
+            };
+            coalesced.insert(
+                id.to_string(),
+                CoalescedRecord {
+                    inputs_sha256: inputs.to_string(),
+                    document_sha256: document.to_string(),
+                },
+            );
+        }
+    }
     Ok(Suite {
         root: root.to_path_buf(),
         cells,
         obligations,
+        roster,
+        coalesced,
     })
 }
 
 fn parse_cell(root: &Path, line: &str, declared_types: DeclaredTypes) -> eyre::Result<Cell> {
     let fields: Vec<&str> = line.split('\t').collect();
-    let [id, chart, values, _kube_version, expect] = fields.as_slice() else {
+    let [id, chart, values, kube_version, expect] = fields.as_slice() else {
         eyre::bail!("needs five tab-separated fields");
     };
     eyre::ensure!(
@@ -247,6 +297,25 @@ fn parse_cell(root: &Path, line: &str, declared_types: DeclaredTypes) -> eyre::R
         }
         None => values.as_bytes().to_vec(),
     };
+    let (helm, main) = parse_expect(expect)
+        .wrap_err_with(|| format!("{id}"))?
+        .ok_or_else(|| eyre::eyre!("{id}: not measured yet (`-`); run admission_refresh"))?;
+    Ok(Cell {
+        id: (*id).to_string(),
+        chart: (*chart).to_string(),
+        values,
+        kube_version: (*kube_version).to_string(),
+        declared_types,
+        helm,
+        main,
+    })
+}
+
+/// A cell's recorded expectations, or `None` for a new cell not measured yet (`-`).
+fn parse_expect(expect: &str) -> eyre::Result<Option<(HelmClass, Verdict)>> {
+    if expect == "-" {
+        return Ok(None);
+    }
     let mut helm = None;
     let mut main = None;
     for token in expect.split(' ') {
@@ -255,17 +324,13 @@ fn parse_cell(root: &Path, line: &str, declared_types: DeclaredTypes) -> eyre::R
             "helm_class=reject" => helm = Some(HelmClass::Reject),
             "main=accept" => main = Some(Verdict::Accept),
             "main=reject" => main = Some(Verdict::Reject),
-            other => eyre::bail!("{id}: unexpected expectation {other:?}"),
+            other => eyre::bail!("unexpected expectation {other:?}"),
         }
     }
-    Ok(Cell {
-        id: (*id).to_string(),
-        chart: (*chart).to_string(),
-        values,
-        declared_types,
-        helm: helm.ok_or_eyre("no helm_class expectation")?,
-        main: main.ok_or_eyre("no main expectation")?,
-    })
+    Ok(Some((
+        helm.ok_or_eyre("no helm_class expectation")?,
+        main.ok_or_eyre("no main expectation")?,
+    )))
 }
 
 impl Suite {
@@ -307,30 +372,161 @@ impl Suite {
         }
         mismatches
     }
+
+    /// Every difference between the cells files and the frozen `roster.tsv`: a cell may be added
+    /// or removed only by editing the roster, and an empty suite is refused.
+    #[must_use]
+    pub fn roster_mismatches(&self) -> Vec<String> {
+        let mut mismatches = Vec::new();
+        if self.roster.is_empty() || self.cells.is_empty() {
+            mismatches.push("the suite holds no cells".to_string());
+        }
+        for (name, mode) in CELL_FILES {
+            if !self.cells.iter().any(|cell| cell.declared_types == mode) {
+                mismatches.push(format!("{name} holds no cells"));
+            }
+        }
+        let roster: BTreeSet<(&str, DeclaredTypes)> = self
+            .roster
+            .iter()
+            .map(|(id, mode)| (id.as_str(), *mode))
+            .collect();
+        if roster.len() != self.roster.len() {
+            mismatches.push("roster.tsv lists a cell twice".to_string());
+        }
+        let cells: BTreeSet<(&str, DeclaredTypes)> = self
+            .cells
+            .iter()
+            .map(|cell| (cell.id.as_str(), cell.declared_types))
+            .collect();
+        for (id, mode) in roster.difference(&cells) {
+            mismatches.push(format!(
+                "{id} ({}): in roster.tsv, missing from the cells files",
+                mode.as_arg()
+            ));
+        }
+        for (id, mode) in cells.difference(&roster) {
+            mismatches.push(format!(
+                "{id} ({}): in the cells files, missing from roster.tsv",
+                mode.as_arg()
+            ));
+        }
+        mismatches
+    }
+
+    /// Every difference between `coalesced.tsv` (and its snapshots) and the cells.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the snapshot directory cannot be read.
+    pub fn coalesced_mismatches(&self) -> eyre::Result<Vec<String>> {
+        let ids: BTreeSet<&str> = self.cells.iter().map(|cell| cell.id.as_str()).collect();
+        let mut mismatches = Vec::new();
+        for id in &ids {
+            if !self.coalesced.contains_key(*id) {
+                mismatches.push(format!("{id}: no coalesced.tsv row"));
+            }
+        }
+        for id in self.coalesced.keys() {
+            if !ids.contains(id.as_str()) {
+                mismatches.push(format!("{id}: coalesced.tsv names no cell"));
+            }
+        }
+        let dir = self.root.join(COALESCED_DIR);
+        if dir.is_dir() {
+            for entry in fs::read_dir(&dir)? {
+                let name = entry?.file_name().to_string_lossy().to_string();
+                let id = name.strip_suffix(".json").unwrap_or(&name);
+                if !ids.contains(id) {
+                    mismatches.push(format!("coalesced/{name}: names no cell"));
+                }
+            }
+        }
+        Ok(mismatches)
+    }
 }
 
-/// The directory of Helm-coalesced documents recorded for the cells the Rust values port does not
-/// model (a YAML 1.1 boolean in `values.yaml`, for example).
-const COALESCED_DIR: &str = "coalesced";
-
-/// The values document a cell's schema validates: the cell's values composed over its chart's
-/// defaults by the Rust port of Helm's coalescing, or, where the port does not model the input,
-/// the document pinned Helm coalesced, recorded under `coalesced/`.
+/// The sha256 of a cell's inputs: its values bytes and every file of its chart.
 ///
 /// # Errors
 ///
-/// Returns an error when neither yields a document.
-pub fn compose(root: &Path, cell: &Cell, scratch: &Path) -> eyre::Result<Value> {
-    let recorded = root.join(COALESCED_DIR).join(format!("{}.json", cell.id));
-    if recorded.is_file() {
-        return Ok(serde_json::from_slice(&fs::read(&recorded)?)?);
+/// Returns an error when the chart cannot be read.
+pub fn inputs_sha256(root: &Path, cell: &Cell) -> eyre::Result<String> {
+    fn walk(dir: &Path, base: &Path, out: &mut Vec<u8>) -> eyre::Result<()> {
+        let mut entries: Vec<PathBuf> = fs::read_dir(dir)?
+            .map(|entry| entry.map(|entry| entry.path()))
+            .collect::<Result<_, _>>()?;
+        entries.sort();
+        for path in entries {
+            if path.is_dir() {
+                walk(&path, base, out)?;
+            } else {
+                let bytes = fs::read(&path)?;
+                let relative = path
+                    .strip_prefix(base)?
+                    .to_string_lossy()
+                    .replace('\\', "/");
+                out.extend(format!("file {relative} {}\n", bytes.len()).as_bytes());
+                out.extend(bytes);
+            }
+        }
+        Ok(())
     }
-    match port_composed(root, cell, scratch)? {
-        Ok(instance) => Ok(instance),
-        Err(reason) => Err(eyre::eyre!(
-            "{reason}; record Helm's document with `admission_refresh --coalesced <helm>`"
-        )),
+    let mut bytes = format!("values {}\n", cell.values.len()).into_bytes();
+    bytes.extend(&cell.values);
+    let chart = root.join(&cell.chart);
+    walk(&chart, &chart, &mut bytes)?;
+    Ok(sha256_hex(&bytes))
+}
+
+/// The sha256 of a values document's JSON (object keys sorted).
+///
+/// # Errors
+///
+/// Returns an error when the document cannot be serialized.
+pub fn document_sha256(document: &Value) -> eyre::Result<String> {
+    Ok(sha256_hex(&serde_json::to_vec(document)?))
+}
+
+/// The values document a cell's schema validates, checked against the document pinned Helm
+/// coalesced from the same inputs (`coalesced.tsv`): the Rust port's composition must hash to
+/// it, and where the port does not reproduce it, the recorded snapshot must.
+///
+/// # Errors
+///
+/// Returns an error when the inputs changed since Helm's document was recorded, or neither the
+/// port nor a snapshot yields Helm's document.
+pub fn compose(suite: &Suite, cell: &Cell, scratch: &Path) -> eyre::Result<Value> {
+    let record = suite
+        .coalesced
+        .get(&cell.id)
+        .ok_or_else(|| eyre::eyre!("no coalesced.tsv row; run `admission_refresh --coalesced`"))?;
+    eyre::ensure!(
+        inputs_sha256(&suite.root, cell)? == record.inputs_sha256,
+        "the chart or values changed since Helm's document was recorded; run \
+         `admission_refresh --coalesced`"
+    );
+    let snapshot = suite
+        .root
+        .join(COALESCED_DIR)
+        .join(format!("{}.json", cell.id));
+    if snapshot.is_file() {
+        let document: Value = serde_json::from_slice(&fs::read(&snapshot)?)?;
+        eyre::ensure!(
+            document_sha256(&document)? == record.document_sha256,
+            "coalesced/{}.json is not the document Helm coalesced",
+            cell.id
+        );
+        return Ok(document);
     }
+    let document = port_composed(&suite.root, cell, scratch)?
+        .map_err(|reason| eyre::eyre!("the Rust values port refuses the cell: {reason}"))?;
+    eyre::ensure!(
+        document_sha256(&document)? == record.document_sha256,
+        "the Rust values port composes another document than Helm recorded; run \
+         `admission_refresh --coalesced` to snapshot Helm's"
+    );
+    Ok(document)
 }
 
 fn port_composed(root: &Path, cell: &Cell, scratch: &Path) -> eyre::Result<Result<Value, String>> {
@@ -350,61 +546,78 @@ fn port_composed(root: &Path, cell: &Cell, scratch: &Path) -> eyre::Result<Resul
     }
 }
 
-/// Records, under `coalesced/`, the document `helm` coalesces for every cell the Rust port does not
-/// model, and removes every other recorded document. Returns the recorded cell ids.
+/// Re-records `coalesced.tsv` from the documents `helm` coalesces (as `cell_matrix` reads them),
+/// and a snapshot for every cell whose Rust-port composition differs or is refused. Returns the
+/// snapshotted cell ids.
 ///
 /// # Errors
 ///
-/// Returns an error when Helm fails or its output holds no document.
+/// Returns an error when the cells differ from the roster, or Helm fails or coalesces nothing.
 pub fn record_helm_coalesced(
     root: &Path,
     helm: &Path,
     scratch: &Path,
 ) -> eyre::Result<Vec<String>> {
     let suite = read_suite(root)?;
+    let roster = suite.roster_mismatches();
+    eyre::ensure!(
+        roster.is_empty(),
+        "the cells differ from roster.tsv:\n{}",
+        roster.join("\n")
+    );
+    let runner: &'static HelmRunner = Box::leak(Box::new(HelmRunner::with_program_within(
+        &scratch.join("helm"),
+        false,
+        helm.to_path_buf(),
+        Duration::from_secs(300),
+    )?));
+    let mut charts = BTreeMap::new();
+    let mut table = format!("{COALESCED_HEADER}\n");
+    let mut snapshots = Vec::new();
+    let mut ids: Vec<&Cell> = suite.cells.iter().collect();
+    ids.sort_by(|a, b| a.id.cmp(&b.id));
+    for cell in ids {
+        if !charts.contains_key(&cell.chart) {
+            let chart =
+                PinnedHelmChart::prepare_for_explicit_versions(runner, &root.join(&cell.chart))?;
+            charts.insert(cell.chart.clone(), chart);
+        }
+        let chart = charts.get(&cell.chart).ok_or_eyre("unprepared chart")?;
+        let probe = chart.adjudicate_file(&cell.values, &cell.kube_version)?;
+        let document = probe
+            .values
+            .ok_or_else(|| eyre::eyre!("{}: Helm coalesces no document", cell.id))?
+            .as_json()
+            .clone();
+        let document_hash = document_sha256(&document)?;
+        let port = port_composed(root, cell, scratch)?;
+        let reproduced = match &port {
+            Ok(composed) => document_sha256(composed)? == document_hash,
+            Err(_) => false,
+        };
+        if !reproduced {
+            snapshots.push((cell.id.clone(), document));
+        }
+        writeln!(
+            table,
+            "{}\t{}\t{document_hash}",
+            cell.id,
+            inputs_sha256(root, cell)?
+        )?;
+    }
     let dir = root.join(COALESCED_DIR);
     if dir.is_dir() {
         fs::remove_dir_all(&dir)?;
     }
     let mut recorded = Vec::new();
-    for cell in &suite.cells {
-        if port_composed(root, cell, scratch)?.is_ok() {
-            continue;
-        }
-        let chart = scratch.join(&cell.id);
-        test_util::scratch::copy_tree(&root.join(&cell.chart), &chart)?;
-        fs::remove_dir_all(chart.join("templates"))?;
-        fs::create_dir_all(chart.join("templates"))?;
-        fs::write(
-            chart.join("templates/values.json"),
-            "{{ toJson .Values }}\n",
-        )?;
-        let values = scratch.join(format!("{}.values", cell.id));
-        let output = std::process::Command::new(helm)
-            .args(["template", "probe"])
-            .arg(&chart)
-            .arg("-f")
-            .arg(&values)
-            .args(["--show-only", "templates/values.json"])
-            .output()?;
-        eyre::ensure!(
-            output.status.success(),
-            "{}: helm failed: {}",
-            cell.id,
-            String::from_utf8_lossy(&output.stderr)
-        );
-        let text = String::from_utf8(output.stdout)?;
-        let document = text
-            .lines()
-            .find(|line| line.starts_with('{'))
-            .ok_or_else(|| eyre::eyre!("{}: no document in {text:?}", cell.id))?;
-        let document: Value = serde_json::from_str(document)?;
+    for (id, document) in snapshots {
         fs::create_dir_all(&dir)?;
         let mut bytes = serde_json::to_vec_pretty(&document)?;
         bytes.push(b'\n');
-        fs::write(dir.join(format!("{}.json", cell.id)), bytes)?;
-        recorded.push(cell.id.clone());
+        fs::write(dir.join(format!("{id}.json")), bytes)?;
+        recorded.push(id);
     }
+    fs::write(root.join(COALESCED_TABLE), table)?;
     Ok(recorded)
 }
 
@@ -412,10 +625,15 @@ pub fn record_helm_coalesced(
 /// cell with a binary labelled `main`: each cell's `helm_class=` and `main=` expectation, and
 /// `obligations.tsv`, whose existing owners are kept.
 ///
+/// Only closures re-record an existing cell: a verdict moving away from Helm on a cell main got
+/// right, or a changed Helm class, is refused. A new cell (expectation `-`, listed in
+/// `roster.tsv`) takes whatever was measured.
+///
 /// # Errors
 ///
-/// Returns an error when a table misses a cell, holds a class other than pass or reject, or a file
-/// cannot be read or written.
+/// Returns an error, writing nothing, when a table misses a cell or holds a class other than pass
+/// or reject, the cells differ from the roster, a re-recording is refused, or a file cannot be
+/// read or written.
 pub fn refresh(root: &Path, matrices: &[PathBuf]) -> eyre::Result<()> {
     let mut measured = BTreeMap::new();
     for matrix in matrices {
@@ -435,46 +653,72 @@ pub fn refresh(root: &Path, matrices: &[PathBuf]) -> eyre::Result<()> {
             let fields: Vec<&str> = line.split('\t').collect();
             let field = |index: usize| fields.get(index).copied().unwrap_or_default();
             let main = match field(main_column) {
-                "accept" | "reject" => field(main_column),
+                "accept" => Verdict::Accept,
+                "reject" => Verdict::Reject,
                 other => eyre::bail!("{}: main is {other:?}", field(id_column)),
             };
             let helm = match field(helm_column) {
-                "pass" | "reject" => field(helm_column),
+                "pass" => HelmClass::Pass,
+                "reject" => HelmClass::Reject,
                 other => eyre::bail!("{}: helm_class is {other:?}", field(id_column)),
             };
-            measured.insert(
-                field(id_column).to_string(),
-                format!("helm_class={helm} main={main}"),
-            );
+            measured.insert(field(id_column).to_string(), (helm, main));
         }
     }
-    let owners: BTreeMap<String, String> = read_suite(root)?
-        .obligations
-        .into_iter()
-        .map(|(id, row)| {
-            let owner = row.rsplit('\t').next().unwrap_or_default().to_string();
-            (id, owner)
-        })
-        .collect();
+    let owners = read_owners(root)?;
+    let roster: BTreeSet<(String, DeclaredTypes)> = read_roster(root)?.into_iter().collect();
+    let mut listed = BTreeSet::new();
+    let mut refusals = Vec::new();
     let mut rewritten = Vec::new();
-    for (name, _) in CELL_FILES {
+    for (name, mode) in CELL_FILES {
         let path = root.join(name);
         let text = fs::read_to_string(&path)?;
         let mut out = format!("{CELLS_HEADER}\n");
         for line in text.lines().skip(1) {
             let mut fields: Vec<&str> = line.split('\t').collect();
             let id = fields.first().copied().unwrap_or_default();
-            let expect = measured
+            listed.insert((id.to_string(), mode));
+            let &(helm, main) = measured
                 .get(id)
                 .ok_or_else(|| eyre::eyre!("no table measured {id}"))?;
+            let recorded = parse_expect(fields.last().copied().unwrap_or_default())
+                .wrap_err_with(|| format!("{name}: {id}"))?;
+            match recorded {
+                None => {}
+                Some((recorded_helm, _)) if recorded_helm != helm => refusals.push(format!(
+                    "{id}: Helm's class changed from {} to {}",
+                    recorded_helm.as_str(),
+                    helm.as_str()
+                )),
+                Some((recorded_helm, recorded_main))
+                    if recorded_main.agrees_with(recorded_helm) && !main.agrees_with(helm) =>
+                {
+                    refusals.push(format!(
+                        "{id}: NEW failure: main={} agreed with Helm, the table says {}",
+                        recorded_main.as_str(),
+                        main.as_str()
+                    ));
+                }
+                Some(_) => {}
+            }
+            let expect = format!("helm_class={} main={}", helm.as_str(), main.as_str());
             if let Some(field) = fields.last_mut() {
-                *field = expect;
+                *field = &expect;
             }
             writeln!(out, "{}", fields.join("\t"))?;
         }
         rewritten.push((path, out));
     }
-    // Written only once every cell was measured, so a refused table changes nothing.
+    eyre::ensure!(
+        listed == roster,
+        "the cells files differ from roster.tsv; add or remove a cell in both"
+    );
+    eyre::ensure!(
+        refusals.is_empty(),
+        "refusing to re-record:\n{}",
+        refusals.join("\n")
+    );
+    // Written only once every cell was measured and admitted, so a refusal changes nothing.
     for (path, out) in rewritten {
         fs::write(path, out)?;
     }
@@ -495,4 +739,37 @@ pub fn refresh(root: &Path, matrices: &[PathBuf]) -> eyre::Result<()> {
     }
     fs::write(root.join("obligations.tsv"), out)?;
     Ok(())
+}
+
+fn read_owners(root: &Path) -> eyre::Result<BTreeMap<String, String>> {
+    let text = fs::read_to_string(root.join("obligations.tsv")).wrap_err("read obligations.tsv")?;
+    Ok(text
+        .lines()
+        .skip(1)
+        .map(|row| {
+            let id = row.split('\t').next().unwrap_or_default().to_string();
+            let owner = row.rsplit('\t').next().unwrap_or_default().to_string();
+            (id, owner)
+        })
+        .collect())
+}
+
+fn read_roster(root: &Path) -> eyre::Result<Vec<(String, DeclaredTypes)>> {
+    let text = fs::read_to_string(root.join(ROSTER)).wrap_err("read roster.tsv")?;
+    let mut lines = text.lines();
+    eyre::ensure!(
+        lines.next() == Some(ROSTER_HEADER),
+        "roster.tsv: unexpected header"
+    );
+    let mut roster = Vec::new();
+    for line in lines {
+        let (id, mode) = line.split_once('\t').unwrap_or((line, ""));
+        let mode = match mode {
+            "annotate" => DeclaredTypes::Annotate,
+            "assert" => DeclaredTypes::Assert,
+            other => eyre::bail!("roster.tsv: {id} has mode {other:?}"),
+        };
+        roster.push((id.to_string(), mode));
+    }
+    Ok(roster)
 }

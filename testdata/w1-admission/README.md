@@ -20,8 +20,13 @@ documents here are the canonical inputs. The lane grounds they were taken from a
 - `charts/<lane>/<chart>/`: the cells' charts (`Chart.yaml`, `values.yaml`, `templates/`).
 - `values/`: values files too long or unusual to inline. Values are ASCII-escaped JSON: raw U+0085
   decodes differently through YAML, and every lane's Helm ground read the escaped form.
-- `coalesced/`: pinned Helm's coalesced values for the 8 cells whose `values.yaml` holds a YAML 1.1
-  boolean, which the Rust values port does not model.
+- `roster.tsv`: the frozen cell ids and modes. The gate pins its size (1,609) and sha256, so
+  adding or removing a cell is an explicit edit of the roster and of the gate's constants.
+- `coalesced.tsv`: for every cell, the sha256 of its inputs (values bytes and chart files) and of
+  the values document pinned Helm coalesced from them. The Rust values port reproduces that
+  document for every other cell.
+- `coalesced/`: Helm's document for the 8 cells whose `values.yaml` holds a YAML 1.1 boolean, which
+  the Rust values port does not model.
 - `obligations.tsv`: the 575 cells main gets wrong, with their owner.
 
 Each `expect` column holds `helm_class=<pass|reject> main=<accept|reject>`. Every cell renders at
@@ -44,12 +49,17 @@ Kubernetes 1.29.0.
 checkout's CLI. The recipe is `cell_matrix`'s (`admission::generation_arguments`): the bundled
 Kubernetes schemas, `v1.29.0-standalone-strict`, the `full` profile, and each file's
 declared-types mode pinned. The gate validates every cell's values composed over the chart's
-defaults, or the recorded `coalesced/` document. It fails on:
+defaults. That document must hash to the one Helm coalesced from the same inputs: the port's
+composition, or the `coalesced/` snapshot. It fails on:
 
 - a NEW failure, where the verdict moves away from `helm_class`;
 - a closure, where the verdict moves toward `helm_class`. Re-record the cell (below), so the
   suite always states the current main;
-- any unreadable cell, failed generation or uncomposable values;
+- any unreadable cell or failed generation;
+- inputs that changed since Helm's document was recorded, or a composed document that is not
+  Helm's;
+- cells that differ from `roster.tsv`, an empty table, or a roster whose size or digest is not
+  the pinned one;
 - any difference between `obligations.tsv` and the cells where `main` disagrees with Helm.
 
 Helm does not run in the gate: `helm_class` is recorded.
@@ -70,8 +80,16 @@ admission_refresh --coalesced <helm 4.2.3>
 ```
 
 `admission_refresh` rewrites every `expect` column and `obligations.tsv`, and keeps each existing
-obligation's owner. A new obligation gets `R1-R3`. `--coalesced` re-records `coalesced/`. Read the
-diff before committing it. Adding `--require-expected` to `cell_matrix` instead checks the recorded
+obligation's owner. It writes nothing if any of these hold:
+
+- a cell main got right would move away from Helm (a NEW failure);
+- a Helm class changed;
+- a table misses a cell;
+- the cells differ from `roster.tsv`.
+
+To add a cell, write its row with the expectation `-` and add it to `roster.tsv` and the gate's
+constants. Its measured verdicts are then recorded, and a new obligation gets `R1-R3`.
+`--coalesced` re-records `coalesced.tsv` and `coalesced/`. Read the diff before committing it. Adding `--require-expected` to `cell_matrix` instead checks the recorded
 expectations against pinned Helm. The recipe generates with the bundled Kubernetes schemas, unlike
 the lanes' `--no-k8s-schemas`, so the recorded verdicts belong to this protocol.
 
