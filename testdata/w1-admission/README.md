@@ -13,7 +13,7 @@ binaries and pinned Helm and checks per-cell expectations.
 
 ## Contents
 
-- `cells.tsv`: 994 cells, generated with `--declared-types annotate` (the witness lanes' mode).
+- `cells.tsv`: 995 cells, generated with `--declared-types annotate` (the witness lanes' mode).
 - `cells-assert.tsv`: 614 cells (`frozen614`), generated with the binary's default declared types,
   as that lane was recorded.
 - `charts/<lane>/<chart>/`: the cells' charts (`Chart.yaml`, `values.yaml`, `templates/`).
@@ -32,7 +32,7 @@ Kubernetes 1.29.0.
 | review75 | 75 | `review-cx*`: counterexamples of the first sol review of `w1/stage1-combined` |
 | review-p1 | 7 | `review-p1`: the three P1 counterexamples of the second sol review |
 | r0-probes | 83 | `plan/value-algebra-r0-probes/{run,review}.sh` probes that take no extra Helm flags and are deterministic |
-| ternary-arity | 16 | `ternary` operand-count cells and their stale-guard controls |
+| ternary-arity | 17 | `ternary` operand-count cells and their stale-guard controls |
 
 ## Running
 
@@ -81,5 +81,7 @@ review-cx and review-p1 have none.
 The `ternary-arity` lane records why the operand-count check did not land in stage 1. An abort
 capture conjoins the call's guards, and those guards read the original inputs. The
 `stale-guard-after-write.1` and `stale-and-after-write.1` cells render because a prior `set` makes
-the guard false, yet a capture under the stale guard rejects them. The check waits for R2's
-write-free certificate.
+the guard false, yet a capture under the stale guard rejects them. Emitting only captures whose
+conjunction stays empty still rejects `stale-local-guard.0`, whose guard folds to a stale constant
+after a `with`-scoped reassignment and an aliased `set`. The check waits for R2's write-free
+certificate.
