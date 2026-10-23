@@ -15,7 +15,7 @@ Candidates (enumerated with ast-grep over crates/helm-schema-ir/src, tests exclu
 Inputs (this directory):
   classification.tsv   one reviewed row per declaration: key, class, fact, destination, delete, seal, review, replaces.
   baseline-65a6d6c7.tsv  the frozen R0 classification. Never edited.
-  landed.txt           stages that have landed (one per line), e.g. R1a.
+  landed.txt           stages that have landed (one per line, `#` comments), e.g. R1a.
   producers.tsv        reviewed old->new producer mapping for every deleted baseline F/S/E row.
 
 Checks (exit 1 on any failure):
@@ -190,7 +190,7 @@ def self_test(found, rows, baseline):
 def main():
     found = candidates()
     rows, baseline = read_tsv("classification.tsv"), read_tsv("baseline-65a6d6c7.tsv")
-    landed = {l.strip() for l in (HERE / "landed.txt").read_text().splitlines() if l.strip()}
+    landed = {l.strip() for l in (HERE / "landed.txt").read_text().splitlines() if l.strip() and not l.startswith("#")}
     if "--self-test" in sys.argv:
         self_test(found, rows, baseline)
     errors = check(found, rows, baseline, landed, read_tsv("producers.tsv"))
