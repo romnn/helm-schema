@@ -88,6 +88,11 @@ pub(super) fn eval_ternary(
             }
         }
     }
+    // Sprig's `ternary` takes exactly two values and the condition; Go
+    // aborts a call with any other operand count wherever it is reached.
+    if args.len() + usize::from(has_piped_condition) != 3 {
+        push_fail_capture(Vec::new(), &mut effects);
+    }
     effects.promote_tested_type_hints();
     let mut result = EvalResult::with_effects(AbstractValue::choice(values), effects);
     result.proven_operands = Some(ProvenOperands {
