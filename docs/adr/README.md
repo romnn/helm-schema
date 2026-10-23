@@ -97,7 +97,7 @@ strategies live in their surviving decisions.
 | [0063](0063-deterministic-output-and-the-performance-law.md) | Output is deterministic, ordered and fast by architecture | Accepted | 2026-06-26 |
 | [0064](0064-performance-measurement-protocol.md) | Performance claims follow one binding measurement protocol | Accepted | 2026-09-03 |
 | [0065](0065-drift-tooling-is-isolated-maintainer-tooling.md) | Helm/Kubernetes drift tooling is isolated maintainer tooling under tools/ | Accepted | 2026-10-19 |
-| [0066](0066-landing-ratchet.md) | Landings ratchet: no new failure, strictly fewer known failures | Accepted | 2026-10-20 |
+| [0066](0066-landing-ratchet.md) | Landings ratchet: no new failure, strictly fewer known failures (amended: consolidation-only landings) | Accepted | 2026-10-23 |
 | [0067](0067-continuous-benchmarks.md) | Continuous end-to-end benchmarks, published with benchtrail beside the docs | Accepted | 2026-10-20 |
 | [0068](0068-benchmarks-compare-like-with-like-across-runner-cpus.md) | Benchmarks compare like with like across runner CPUs, and count instructions | Accepted | 2026-10-20 |
-| [0069](0069-value-algebra-is-the-interpreter-semantic-model.md) | The value algebra is the interpreter's single semantic model | Proposed | 2026-10-22 |
+| [0069](0069-value-algebra-is-the-interpreter-semantic-model.md) | The value algebra is the interpreter's single semantic model | Accepted | 2026-10-23 |

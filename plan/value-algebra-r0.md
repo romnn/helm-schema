@@ -819,6 +819,8 @@ kind of evidence. A, which sol prefers as the default, is safe but makes L1 and 
 
 ## 7. Decisions for the user (product questions)
 
+**Decided 2026-10-23 (user): D1 no, D2 yes, D3 B (ADR 0066 clause 2b), D4 yes (scope as below).**
+
 - **D1.** Should a `default` after a piped `required` emit a fallback type hint? Recommendation: no. This is main's
   behavior, and in the algebra it is derived: nil cannot reach the `default`.
 - **D2.** Should the 15 closed-root cells be confirmed as ADR 0042 POLICY-EXCEPTION rows (W1 ternary 53 → 38)?

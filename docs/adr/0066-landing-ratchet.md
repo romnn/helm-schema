@@ -19,6 +19,24 @@ A candidate lands when it satisfies the ratchet:
 2. Strictly fewer known failures: closed witness obligations, fewer false
    acceptances/rejections or inherited-list entries. Test-infrastructure
    landings may instead only record the existing failures they make visible.
+2b. Consolidation-only landing (amendment, 2026-10-23, user decision D3 of
+   `plan/value-algebra-r0.md` §6). A behavior-preserving consolidation
+   satisfies clause 2 without closures when every other gate here and the
+   fail-closed chain still pass, and all of:
+   (i) frozen coverage: same artifact set, admission-suite cells and
+   `ROSTER_BASELINE` as `main`; every fixture and the IR dump byte-identical
+   to `main`'s clean dump; schema-only battery 0 flips; every admission
+   verdict equal to `main`'s;
+   (ii) frozen classification: the owner inventory gate
+   (`plan/value-algebra-r0-inventory/`) passes against its baseline, with no
+   class change and no fact/snapshot/re-execution row relabeled as a
+   view/derived/observation row;
+   (iii) reviewed consolidation: every deleted fact/snapshot/re-execution
+   row has a reviewed producer mapping to a surviving declaration, every new
+   such row names the rows it replaces, and the surviving producers are
+   strictly fewer than the deleted rows (or are pre-existing);
+   (iv) net production LOC (`task tokei:core`) strictly negative, coming
+   from the region consolidated in (iii).
 3. No net production growth unless reviewers justify it by the defect class
    closed. Fix the shared root cause; name the representation/pass/flag/case
    deleted or merged and report net LOC with `task tokei:core`. Per-witness
