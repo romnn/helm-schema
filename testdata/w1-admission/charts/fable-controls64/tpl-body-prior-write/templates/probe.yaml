@@ -1,0 +1,5 @@
+{{ $_ := required "bad" (tpl "{{ $_ := set .Values `choose` true }}{{ if .Values.choose }}false{{ end }}" .) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: partial-required

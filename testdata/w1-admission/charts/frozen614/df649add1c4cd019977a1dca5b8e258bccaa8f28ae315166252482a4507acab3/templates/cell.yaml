@@ -1,0 +1,7 @@
+{{- $v := .Values.s }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe
+data:
+  k: {{ ternary (set .Values "s" "ok") (b64enc $v) false | quote }}

@@ -1,0 +1,1 @@
+{{ define "check" }}{{ $_ := required "bad" false }}{{ end }}

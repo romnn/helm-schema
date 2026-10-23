@@ -1,0 +1,10 @@
+{{- $_ := set . "f2" true }}
+{{- if and (set . "f2" false) .Values.flag }}
+{{- $_ := set . "f2" true }}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe
+data:
+  k: "{{ if .f2 }}{{ .Values.t }}{{ else }}ok{{ end }}"

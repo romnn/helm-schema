@@ -1,0 +1,1 @@
+{{ $m := dict "enabled" true }}{{ $items := list $m }}{{ $_ := unset (index $items 0) "enabled" }}{{ if $m.enabled }}{{ $_ := required "bad" }}{{ end }}{{ dict "apiVersion" "v1" "kind" "ConfigMap" "metadata" (dict "name" "review-pair") | toJson }}

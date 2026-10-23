@@ -1,0 +1,11 @@
+{{- if .Values.a }}
+{{- $_ := set . "f" true }}
+{{- else }}
+{{- $_ := set . "f" false }}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe
+data:
+  k: "{{ if .f }}{{ .Values.t }}{{ else }}ok{{ end }}"

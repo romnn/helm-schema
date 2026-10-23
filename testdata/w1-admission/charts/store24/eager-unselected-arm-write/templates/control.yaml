@@ -1,0 +1,5 @@
+{{ $_ := set $ "flag" false }}{{ $_ := ternary (dict) (set $ "flag" false) true }}{{ if $.flag }}{{ fail "body" }}{{ end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: store-guard-control

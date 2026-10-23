@@ -1,0 +1,5 @@
+{{ if ne (ternary (coalesce false 0) nil .Values.enabled) nil }}{{ fail "arm" }}{{ end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: emitters

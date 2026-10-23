@@ -1,0 +1,5 @@
+{{ $_ := set .Values "enabled" false }}{{ $_ := and .Values.enabled (ternary "a" "b") }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe

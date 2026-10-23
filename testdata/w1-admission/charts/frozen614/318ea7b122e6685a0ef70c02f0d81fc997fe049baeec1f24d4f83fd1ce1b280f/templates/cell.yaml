@@ -1,0 +1,7 @@
+{{- $key := .Values.key }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe
+data:
+  k: "{{ index .Values.m $key }}{{ .Values.x }}"

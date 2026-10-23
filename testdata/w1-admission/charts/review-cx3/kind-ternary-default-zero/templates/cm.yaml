@@ -1,0 +1,5 @@
+{{ $_ := mergeOverwrite .Values (dict "choose" true) }}{{ $_ := ternary "a" "b" (.Values.choose | default 0) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: state

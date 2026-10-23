@@ -1,0 +1,5 @@
+{{ tpl "{{ if .Values.enabled }}{{ $_ := required \"bad\" }}{{ end }}" (dict "Values" .Values "ignored" (set .Values "enabled" false)) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: arity-phase

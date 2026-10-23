@@ -1,0 +1,5 @@
+{{ $_ := set $ "flag" false }}{{ if and (set $ "flag" true) false }}unreached{{ else if $.flag }}{{ fail "body" }}{{ end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: store-guard-control

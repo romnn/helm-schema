@@ -1,0 +1,8 @@
+{{- $v := .Values.obj }}
+{{- $_ := set $v "t" "ok" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe
+data:
+  k: "{{ $v.t }}{{ .Values.x }}"

@@ -1,0 +1,5 @@
+{{ $_ := set $ "flag" false }}{{ if .Values.choose }}{{ $_ := set $ "flag" true }}{{ fail "selected" }}{{ else if $.flag }}{{ fail "sibling" }}{{ end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: store-guard-control

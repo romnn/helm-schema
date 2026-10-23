@@ -1,0 +1,5 @@
+{{ $_ := required "bad" (include "h" (merge (dict) (dict "Values" .Values) (dict "ignored" (set .Values "choose" true)))) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: args

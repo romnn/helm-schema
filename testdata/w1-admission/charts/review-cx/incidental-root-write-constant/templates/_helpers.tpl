@@ -1,0 +1,1 @@
+{{ define "h" }}{{ $_ := set $ "ignored" true }}ok{{ end }}

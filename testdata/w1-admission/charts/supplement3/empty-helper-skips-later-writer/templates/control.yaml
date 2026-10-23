@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: supplemental-store-control
+data:
+  result: |-
+    {{ $_ := set $ "flag" true }}{{ $_ := and (include "gate" .) (set $ "flag" false) }}{{ if $.flag }}{{ fail "flag remains true" }}{{ end }}

@@ -1,0 +1,9 @@
+{{- if and (set .Values "t" "ok") false }}
+{{- else }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe
+data:
+  k: "{{ .Values.t }}{{ .Values.x }}"
+{{- end }}

@@ -1,0 +1,1 @@
+{{ define "h" }}{{ $_ := set .Values "enabled" false }}{{ if .Values.enabled }}{{ $_ := required "bad" }}{{ end }}{{ end }}

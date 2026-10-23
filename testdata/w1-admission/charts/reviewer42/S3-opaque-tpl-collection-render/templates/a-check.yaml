@@ -1,0 +1,1 @@
+{{ $m := dict "enabled" true }}{{ $_ := tpl .Values.program (dict "items" (list $m)) }}{{ if $m.enabled }}{{ $_ := required "bad" }}{{ end }}{{ dict "apiVersion" "v1" "kind" "ConfigMap" "metadata" (dict "name" "review-pair") | toJson }}

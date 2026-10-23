@@ -1,0 +1,17 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: d
+spec:
+  replicas: {{ default (set .Values "rep" 3) .Values.rep }}
+  selector:
+    matchLabels:
+      a: b
+  template:
+    metadata:
+      labels:
+        a: b
+    spec:
+      containers:
+      - name: c
+        image: i

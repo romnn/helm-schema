@@ -1,0 +1,7 @@
+{{- $v := b64enc .Values.t }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe
+data:
+  k: "{{ $v }}{{ .Values.x }}"

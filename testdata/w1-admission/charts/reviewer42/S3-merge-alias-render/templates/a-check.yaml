@@ -1,0 +1,1 @@
+{{ $source := dict "nested" (dict "enabled" true) }}{{ $copy := merge (dict) $source }}{{ $_ := unset $copy.nested "enabled" }}{{ if $source.nested.enabled }}{{ $_ := required "bad" }}{{ end }}{{ dict "apiVersion" "v1" "kind" "ConfigMap" "metadata" (dict "name" "review-pair") | toJson }}

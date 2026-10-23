@@ -1,0 +1,5 @@
+{{ $_ := set $ "flag" true }}{{ $_ := required (ternary "ok" (set $ "flag" false) $.flag) false }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: literal-required

@@ -1,0 +1,5 @@
+{{ $_ := set $ "flag" "bad" }}{{ $_ := $.flag | ternary (set $ "flag" false) "b" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe

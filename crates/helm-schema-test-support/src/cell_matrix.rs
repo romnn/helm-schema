@@ -74,6 +74,9 @@ pub struct Options {
     pub gen_k8s_version: String,
     /// `--profile` of every schema generation.
     pub profile: String,
+    /// `--declared-types` of every schema generation (`assert` or `annotate`); `None` leaves the
+    /// binary's default.
+    pub declared_types: Option<String>,
     /// The Kubernetes release the rendered resources are validated against.
     pub validate_release: String,
     /// Where the three output files live.
@@ -333,6 +336,7 @@ fn resolved(options: &Options) -> eyre::Result<Options> {
         bundle: canonical("--bundle", &options.bundle)?,
         gen_k8s_version: options.gen_k8s_version.clone(),
         profile: options.profile.clone(),
+        declared_types: options.declared_types.clone(),
         validate_release: options.validate_release.clone(),
         out: options.out.clone(),
         check: options.check,
@@ -755,11 +759,27 @@ fn helm_runner(helm: &Path, timeout: Duration, private: bool) -> eyre::Result<&'
 
 /// The arguments of one generation, with the chart, bundle and output as placeholders.
 fn recipe(options: &Options) -> Vec<String> {
-    [
+    generation_recipe(
+        &options.gen_k8s_version,
+        &options.profile,
+        options.declared_types.as_deref(),
+    )
+}
+
+/// The arguments of one `cell_matrix` generation at `gen_k8s_version` under `profile` and, when
+/// given, `declared_types`, with `<chart>`, `<bundle>` and `<out>` as placeholders. Every consumer
+/// that must reproduce a recorded verdict generates with exactly these.
+#[must_use]
+pub fn generation_recipe(
+    gen_k8s_version: &str,
+    profile: &str,
+    declared_types: Option<&str>,
+) -> Vec<String> {
+    let mut recipe: Vec<String> = [
         "<chart>",
         "--no-config",
         "--k8s-version",
-        &options.gen_k8s_version,
+        gen_k8s_version,
         "--strict-k8s-version",
         "--offline",
         "--k8s-schema-cache-dir",
@@ -767,13 +787,16 @@ fn recipe(options: &Options) -> Vec<String> {
         "--crd-catalog-cache-dir",
         "<bundle>/crds-catalog-cache",
         "--profile",
-        &options.profile,
+        profile,
         "--exclude-tests",
-        "--output",
-        "<out>",
     ]
     .map(str::to_string)
-    .to_vec()
+    .to_vec();
+    if let Some(declared_types) = declared_types {
+        recipe.extend(["--declared-types".to_string(), declared_types.to_string()]);
+    }
+    recipe.extend(["--output".to_string(), "<out>".to_string()]);
+    recipe
 }
 
 /// One generated schema's identity: its bytes and the draft the prober compiles it under.
@@ -1209,6 +1232,7 @@ fn manifest(
             "no_config": true,
             "exclude_tests": true,
             "profile": options.profile,
+            "declared_types": options.declared_types,
             "k8s_schema_cache": "<bundle>/kubernetes-json-schema-cache",
             "crd_catalog_cache": "<bundle>/crds-catalog-cache",
             "environment": "empty, with HOME and XDG dirs in scratch",

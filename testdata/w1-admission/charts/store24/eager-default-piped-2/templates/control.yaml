@@ -1,0 +1,5 @@
+{{ $_ := set $ "flag" false }}{{ $saved := $.flag | default (and (set $ "flag" true) false) }}{{ if $saved }}{{ fail "body" }}{{ end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: store-guard-control
