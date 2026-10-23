@@ -65,32 +65,24 @@ pub(crate) struct LocalSlot {
 
 impl LocalSlot {
     pub(crate) fn has_current_value(&self) -> bool {
-        let Self {
-            range_domain,
-            get_binding,
-            binding,
-            default_paths,
-            output_meta,
-            scalar_dispatch,
-            truthy_reduction,
-            truthiness_abstained,
-            truthiness_cleared: _,
-            typeof_source,
-            int_cast_source,
-            range_member_value,
-            definite_range_member_value: _,
-        } = self;
-        range_domain.is_some()
-            || get_binding.is_some()
-            || binding.is_some()
-            || default_paths.is_some()
-            || output_meta.is_some()
-            || scalar_dispatch.is_some()
-            || truthy_reduction.is_some()
-            || *truthiness_abstained
-            || typeof_source.is_some()
-            || int_cast_source.is_some()
-            || range_member_value.is_some()
+        !matches!(
+            self,
+            Self {
+                range_domain: None,
+                get_binding: None,
+                binding: None,
+                default_paths: None,
+                output_meta: None,
+                scalar_dispatch: None,
+                truthy_reduction: None,
+                truthiness_abstained: false,
+                truthiness_cleared: _,
+                typeof_source: None,
+                int_cast_source: None,
+                range_member_value: None,
+                definite_range_member_value: _,
+            }
+        )
     }
 
     pub(crate) const EMPTY: Self = Self {
@@ -145,18 +137,21 @@ impl RootSlot {
     }
 }
 
-pub(crate) fn root_values(
-    slots: &std::collections::HashMap<String, RootSlot>,
-) -> std::collections::HashMap<String, AbstractValue> {
+pub(crate) fn root_values(slots: &HashMap<String, RootSlot>) -> HashMap<String, AbstractValue> {
     slots
         .iter()
-        .filter_map(|(name, slot)| slot.value.clone().map(|value| (name.clone(), value)))
+        .filter_map(|(name, slot)| {
+            let RootSlot {
+                value,
+                truth: _,
+                dispatch: _,
+            } = slot;
+            value.clone().map(|value| (name.clone(), value))
+        })
         .collect()
 }
 
-pub(crate) fn root_slots(
-    values: std::collections::HashMap<String, AbstractValue>,
-) -> std::collections::HashMap<String, RootSlot> {
+pub(crate) fn root_slots(values: HashMap<String, AbstractValue>) -> HashMap<String, RootSlot> {
     values
         .into_iter()
         .map(|(name, value)| {

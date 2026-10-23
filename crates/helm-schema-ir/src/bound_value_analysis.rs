@@ -100,7 +100,22 @@ pub(crate) fn output_metadata(
     slots
         .iter()
         .filter_map(|(name, slot)| {
-            slot.output_meta
+            let LocalSlot {
+                range_domain: _,
+                get_binding: _,
+                binding: _,
+                default_paths: _,
+                output_meta,
+                scalar_dispatch: _,
+                truthy_reduction: _,
+                truthiness_abstained: _,
+                truthiness_cleared: _,
+                typeof_source: _,
+                int_cast_source: _,
+                range_member_value: _,
+                definite_range_member_value: _,
+            } = slot;
+            output_meta
                 .as_ref()
                 .map(|value| (name.clone(), value.clone()))
         })
