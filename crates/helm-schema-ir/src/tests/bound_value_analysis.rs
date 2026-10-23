@@ -28,8 +28,15 @@ fn extract_bound_values(
     range_domains: &HashMap<String, Vec<String>>,
     get_bindings: &HashMap<String, GetBinding>,
 ) -> Vec<String> {
+    let mut slots = crate::value::LocalSlots::default();
+    for (name, domain) in range_domains {
+        slots.entry(name.clone()).or_default().range_domain = Some(domain.clone());
+    }
+    for (name, binding) in get_bindings {
+        slots.entry(name.clone()).or_default().get_binding = Some(binding.clone());
+    }
     let env = EvalEnv {
-        bound_values: BoundValueContext::new(range_domains, get_bindings),
+        local_slots: BoundValueContext::new(&slots),
         ..EvalEnv::default()
     };
     eval_exprs_effects(&parse_expr_text(text), &env)

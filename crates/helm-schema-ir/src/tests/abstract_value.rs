@@ -88,7 +88,11 @@ fn bound_helper_budget_widens_a_non_config_binding() {
     ]);
     let mut widened_paths = BTreeSet::new();
 
-    widen_large_bound_values(&mut bindings, "unrelated.applyPayload", &mut widened_paths);
+    widen_large_bound_values(
+        bindings.values_mut(),
+        "unrelated.applyPayload",
+        &mut widened_paths,
+    );
 
     sim_assert_eq!(
         have: bindings,

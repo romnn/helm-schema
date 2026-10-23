@@ -134,12 +134,18 @@ pub(super) fn eval_set_call(
         for key in keys {
             if let Some(predicate) = &assigned_predicate {
                 effects
-                    .root_set_predicates
-                    .insert(key.clone(), predicate.clone());
+                    .root_writes
+                    .entry(key.clone())
+                    .or_default()
+                    .truth
+                    .replace(predicate.clone());
             }
             effects
-                .root_set_mutations
-                .insert(key, assigned_value.clone());
+                .root_writes
+                .entry(key)
+                .or_default()
+                .value
+                .replace(assigned_value.clone());
         }
     }
     EvalResult::with_effects(value, effects)
@@ -154,14 +160,22 @@ pub(super) fn root_set_truthy_predicate(expr: &TemplateExpr, env: &EvalEnv) -> O
         }),
         TemplateExpr::Field(path) if path.len() == 1 => path
             .first()
-            .and_then(|field| env.root_truthy_predicates.get(field))
+            .and_then(|field| {
+                env.root_slots
+                    .get(field)
+                    .and_then(|slot| slot.truth.as_ref())
+            })
             .cloned(),
         TemplateExpr::Selector { operand, path }
             if path.len() == 1
                 && matches!(operand.as_ref(), TemplateExpr::Variable(variable) if variable.is_empty()) =>
         {
             path.first()
-                .and_then(|field| env.root_truthy_predicates.get(field))
+                .and_then(|field| {
+                    env.root_slots
+                        .get(field)
+                        .and_then(|slot| slot.truth.as_ref())
+                })
                 .cloned()
         }
         TemplateExpr::Field(_) | TemplateExpr::Selector { .. } => {

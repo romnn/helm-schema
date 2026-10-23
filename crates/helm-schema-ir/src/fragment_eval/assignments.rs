@@ -364,25 +364,42 @@ impl Interpreter<'_> {
         }
         let current_dot = self.current_dot_fragment();
         let mut seen = self.helper_seen.clone();
-        if !crate::fragment_assignment::apply_local_set_mutations_from_exprs(
+        let mut bindings = self
+            .locals
+            .slots
+            .iter()
+            .filter_map(|(name, slot)| {
+                slot.binding
+                    .as_ref()
+                    .map(|value| (name.clone(), value.clone()))
+            })
+            .collect();
+        let applied = crate::fragment_assignment::apply_local_set_mutations_from_exprs(
             exprs,
-            &mut self.locals.fragment_values,
+            &mut bindings,
             current_dot.as_ref(),
             FragmentEvalContext::new(self.db),
             &mut seen,
-        ) {
+        );
+        for slot in self.locals.slots.values_mut() {
+            slot.binding = None;
+        }
+        for (name, binding) in bindings {
+            self.locals.slots.entry(name).or_default().binding = Some(binding);
+        }
+        if !applied {
             return false;
         }
         let effects = crate::expr_eval::eval_helper_exprs_direct_effects(
             exprs,
-            &self.root_bindings,
+            &crate::value::root_values(&self.root_slots),
             self.current_value_dot().as_ref(),
             self.current_dot_binding_mode(),
         );
         self.chart_defaults_observed
             .extend(effects.chart_default_paths.iter().cloned());
         let mut chart_defaults = effects.chart_default_paths;
-        self.locals.append_chart_value_defaults(&mut chart_defaults);
+        self.locals.chart_value_defaults.append(&mut chart_defaults);
         true
     }
 
@@ -401,23 +418,7 @@ impl Interpreter<'_> {
             }
         }
 
-        let mut template_bindings = self
-            .locals
-            .range_member_values
-            .iter()
-            .map(|(name, value)| {
-                (
-                    name.clone(),
-                    crate::eval_env::LocalBinding::direct(value.clone()),
-                )
-            })
-            .collect::<std::collections::HashMap<_, _>>();
-        template_bindings.extend(
-            self.locals
-                .fragment_values
-                .iter()
-                .map(|(name, value)| (name.clone(), value.clone())),
-        );
+        let template_bindings = self.locals.evaluation_bindings();
         let current_dot = self.current_dot_fragment();
         let env = crate::eval_env::EvalEnv::from_fragment_context(
             &template_bindings,
@@ -436,7 +437,7 @@ impl Interpreter<'_> {
                 if !entries.keys().all(|key| key == "Values") {
                     continue;
                 }
-                let Some(binding) = self.locals.fragment_values.get(name) else {
+                let Some(binding) = self.locals.slot(name).binding.as_ref() else {
                     continue;
                 };
                 if !binding
@@ -447,7 +448,11 @@ impl Interpreter<'_> {
                     continue;
                 }
                 let updated = binding.with_overlay_entries(entries);
-                self.locals.fragment_values.insert(name.clone(), updated);
+                self.locals
+                    .slots
+                    .entry(name.to_owned())
+                    .or_default()
+                    .binding = Some(updated);
             }
         }
     }
@@ -640,19 +645,13 @@ impl Interpreter<'_> {
                 None
             };
             let rhs_truthy_reduction = result_truth.or(condition_truthy_reduction);
-            let previous_truthy_reduction = self
-                .locals
-                .truthy_reductions
-                .get(&assignment.variable)
-                .cloned();
+            let previous = self.locals.slot(&assignment.variable);
+            let previous_truthy_reduction = previous.truthy_reduction.clone();
             // Snapshot before the value binding below: its rebind clears
             // every per-variable fact, but a write-through's monotonicity
             // poison must stay sticky across later writes.
-            let previously_cleared = self.locals.truthiness_clears.contains(&assignment.variable);
-            let previously_abstained = self
-                .locals
-                .truthiness_abstentions
-                .contains(&assignment.variable);
+            let previously_cleared = previous.truthiness_cleared;
+            let previously_abstained = previous.truthiness_abstained;
             let truthy_reduction = match assignment.kind {
                 crate::fragment_assignment::AssignmentKind::Declaration => rhs_truthy_reduction
                     .or_else(|| {
@@ -740,28 +739,38 @@ impl Interpreter<'_> {
                 );
                 if let Some(dispatch) = scalar_dispatch {
                     self.locals
-                        .scalar_dispatches
-                        .insert(assignment.variable.clone(), dispatch);
+                        .slots
+                        .entry(assignment.variable.clone())
+                        .or_default()
+                        .scalar_dispatch = Some(dispatch);
                 }
             }
             if let Some(predicate) = truthy_reduction {
                 self.locals
-                    .truthy_reductions
-                    .insert(assignment.variable.clone(), predicate);
+                    .slots
+                    .entry(assignment.variable.clone())
+                    .or_default()
+                    .truthy_reduction = Some(predicate);
             } else {
-                self.locals.truthy_reductions.remove(&assignment.variable);
+                self.locals
+                    .slot_mut(&assignment.variable)
+                    .truthy_reduction
+                    .take();
             }
             match assignment.kind {
                 crate::fragment_assignment::AssignmentKind::Declaration => {
                     self.locals
-                        .truthiness_abstentions
-                        .remove(&assignment.variable);
+                        .slot_mut(&assignment.variable)
+                        .truthiness_abstained = false;
                 }
                 crate::fragment_assignment::AssignmentKind::Assignment if previously_abstained => {
-                    self.locals.truthy_reductions.remove(&assignment.variable);
                     self.locals
-                        .truthiness_abstentions
-                        .insert(assignment.variable.clone());
+                        .slot_mut(&assignment.variable)
+                        .truthy_reduction
+                        .take();
+                    self.locals
+                        .slot_mut(&assignment.variable)
+                        .truthiness_abstained = true;
                 }
                 crate::fragment_assignment::AssignmentKind::Assignment => {}
             }
@@ -772,18 +781,24 @@ impl Interpreter<'_> {
             // accumulation stays monotone by construction.
             match assignment.kind {
                 crate::fragment_assignment::AssignmentKind::Declaration => {
-                    self.locals.truthiness_clears.remove(&assignment.variable);
+                    self.locals
+                        .slot_mut(&assignment.variable)
+                        .truthiness_cleared = false;
                 }
                 crate::fragment_assignment::AssignmentKind::Assignment => {
                     let may_clear = !self_preserving_nonempty_accumulation(
                         &assignment.rhs_expr,
                         &assignment.variable,
-                    ) && self.locals.truthy_reductions.get(&assignment.variable)
+                    ) && self
+                        .locals
+                        .slot(&assignment.variable)
+                        .truthy_reduction
+                        .as_ref()
                         != Some(&Predicate::True);
                     if previously_cleared || may_clear {
                         self.locals
-                            .truthiness_clears
-                            .insert(assignment.variable.clone());
+                            .slot_mut(&assignment.variable)
+                            .truthiness_cleared = true;
                     }
                 }
             }
@@ -795,8 +810,10 @@ impl Interpreter<'_> {
                 type_descriptor_sources(&assignment.rhs_expr, self, &hole.effects.local_output_meta)
             {
                 self.locals
-                    .typeof_sources
-                    .insert(assignment.variable.clone(), sources);
+                    .slots
+                    .entry(assignment.variable.clone())
+                    .or_default()
+                    .typeof_source = Some(sources);
             }
             // `$replicas := int (default 1 .Values.x)` binds an INTEGER
             // COERCION of the path: comparisons on the local strengthen
@@ -807,19 +824,25 @@ impl Interpreter<'_> {
                 .int_cast_operand(&assignment.rhs_expr);
             if let Some(source) = cast_source {
                 self.locals
-                    .int_cast_sources
-                    .insert(assignment.variable.clone(), source);
+                    .slots
+                    .entry(assignment.variable.clone())
+                    .or_default()
+                    .int_cast_source = Some(source);
             }
             // Keep the (possibly empty) default and meta entries: the branch
             // join unions per-variable facts only for variables every outcome
             // still tracks, and a pre-branch binding without facts must not
             // erase a branch's recorded ones.
             self.locals
-                .default_paths
-                .insert(assignment.variable.clone(), binding_metadata.default_paths);
+                .slots
+                .entry(assignment.variable.clone())
+                .or_default()
+                .default_paths = Some(binding_metadata.default_paths);
             self.locals
-                .output_meta
-                .insert(assignment.variable.clone(), binding_metadata.output_meta);
+                .slots
+                .entry(assignment.variable.clone())
+                .or_default()
+                .output_meta = Some(binding_metadata.output_meta);
             let demotion = if self.helper_scope {
                 RenderedDemotion::Dependency
             } else {

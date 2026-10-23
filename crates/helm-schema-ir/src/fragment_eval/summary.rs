@@ -38,6 +38,7 @@ use crate::scalar_value::{
     conjoin_predicates_with_memo,
 };
 use crate::symbolic_local_state::SymbolicLocalState;
+use crate::value::RootSlot;
 use crate::{ContractProvenance, ValueKind};
 use helm_schema_core::{GuardDnf, Predicate, PredicateMemo};
 
@@ -71,13 +72,9 @@ pub(crate) struct FragmentSummary {
     pub(crate) member_host_conversions: BTreeSet<crate::eval_effect::MemberHostConversion>,
     /// Chart-level `set … default` normalizations the body applies.
     pub(crate) chart_defaults: BTreeSet<helm_schema_core::ValuesPath>,
-    /// Root-context fields replaced while the helper executes.
-    pub(crate) root_set_mutations: BTreeMap<String, AbstractValue>,
-    /// Truth predicates for root-context fields replaced by the helper.
-    pub(crate) root_set_predicates: BTreeMap<String, Predicate>,
-    /// Joined per-arm value alternatives for root-context fields the helper
-    /// set across complete if/else chains.
-    pub(crate) root_set_value_dispatches: BTreeMap<String, ScalarValueDispatch>,
+    /// Root-context replacements, truth predicates and joined per-arm scalar
+    /// alternatives observed while the helper executes.
+    pub(crate) root_writes: BTreeMap<String, RootSlot>,
     /// Strictly string-consumed paths whose consumers ran before the
     /// body's values-root wrapper rewrite (see the interpreter field).
     pub(crate) pre_rewrite_strict_paths: BTreeSet<helm_schema_core::ValuesPath>,
@@ -230,9 +227,7 @@ pub(crate) fn eval_bound_helper_fragment(
         text_captures: interpreter.text_captures.into_iter().collect(),
         member_host_conversions: interpreter.member_host_conversions,
         chart_defaults: interpreter.chart_defaults_observed,
-        root_set_mutations: interpreter.root_set_mutations_observed,
-        root_set_predicates: interpreter.root_set_predicates_observed,
-        root_set_value_dispatches: interpreter.root_value_dispatches_observed,
+        root_writes: interpreter.root_writes,
         pre_rewrite_strict_paths: interpreter.pre_rewrite_strict_paths,
     }
 }
@@ -258,9 +253,7 @@ fn bound_helper_interpreter<'a>(
     interpreter.inline_files = vec![format!("define:{name}")];
     interpreter.helper_scope = true;
     interpreter.helper_seen = seen.clone();
-    interpreter.root_bindings = resolution.bindings.clone();
-    interpreter.root_truthy_predicates = resolution.root_truthy_predicates.clone();
-    interpreter.root_value_dispatches = resolution.root_value_dispatches.clone();
+    interpreter.root_slots = resolution.root_slots.clone();
     interpreter.root_value_dot = resolution.dot.helper.clone();
     interpreter.push_dot(
         resolution.dot.fragment.clone(),

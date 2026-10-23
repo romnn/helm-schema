@@ -61,8 +61,9 @@ use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_meta::{HelperOutputMeta, merge_provenance_sites};
 use crate::node_eval::{NodeAction, control_headers, node_action};
 use crate::observed_facts::ObservedFacts;
-use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
+use crate::scalar_value::TruthCondition;
 use crate::symbolic_local_state::SymbolicLocalState;
+use crate::value::{RootSlot, root_slots};
 use crate::value_path_context::{RootDotIdentity, ValuePathContext};
 use crate::{ContractProvenance, Guard, ResourceRef, SourceSpan};
 use helm_schema_core::{GuardDnf, Predicate};
@@ -1484,16 +1485,10 @@ pub(super) struct Interpreter<'a> {
     /// boundary resolves both flavors; see [`DotBinding`]).
     /// Document scope has none: its value dot derives from the fragment dot.
     pub(super) root_value_dot: Option<AbstractValue>,
-    pub(super) root_bindings: HashMap<String, AbstractValue>,
-    pub(super) root_truthy_predicates: HashMap<String, Predicate>,
-    /// Exhaustive per-arm value alternatives for root-context fields set
-    /// across complete if/else chains (see [`ScalarValueDispatch`]); condition
-    /// decoding resolves root-field equalities through them.
-    pub(super) root_value_dispatches: HashMap<String, ScalarValueDispatch>,
+    /// Live root-context values, truth predicates and per-arm scalar alternatives.
+    pub(super) root_slots: HashMap<String, RootSlot>,
     /// Root-context replacements observed in source order and exported by helper summaries.
-    pub(super) root_set_mutations_observed: BTreeMap<String, AbstractValue>,
-    pub(super) root_set_predicates_observed: BTreeMap<String, Predicate>,
-    pub(super) root_value_dispatches_observed: BTreeMap<String, ScalarValueDispatch>,
+    pub(super) root_writes: BTreeMap<String, RootSlot>,
     /// Values paths with a strict STRING consumer that executed before the
     /// first values-root program-wrapper rewrite in this source: a wrapper
     /// map at such a path reaches the consumer raw and aborts (nats'
@@ -1634,12 +1629,8 @@ impl<'a> Interpreter<'a> {
             ),
             dot_stack: Vec::new(),
             root_value_dot: None,
-            root_bindings: db.static_root_fields().clone(),
-            root_truthy_predicates: HashMap::new(),
-            root_value_dispatches: HashMap::new(),
-            root_set_mutations_observed: BTreeMap::new(),
-            root_set_predicates_observed: BTreeMap::new(),
-            root_value_dispatches_observed: BTreeMap::new(),
+            root_slots: root_slots(db.static_root_fields().clone()),
+            root_writes: BTreeMap::new(),
             pre_rewrite_strict_paths: BTreeSet::new(),
             active_predicates: Vec::new(),
             loop_depth: 0,
@@ -1858,23 +1849,6 @@ impl<'a> Interpreter<'a> {
     pub(super) fn value_path_context(&self) -> ValuePathContext<'_> {
         // Member bindings resolve for conditions and assignments; explicit
         // fragment values shadow them where both exist.
-        let mut template_bindings = self
-            .locals
-            .range_member_values
-            .iter()
-            .map(|(name, value)| {
-                (
-                    name.clone(),
-                    crate::eval_env::LocalBinding::direct(value.clone()),
-                )
-            })
-            .collect::<HashMap<_, _>>();
-        template_bindings.extend(
-            self.locals
-                .fragment_values
-                .iter()
-                .map(|(name, value)| (name.clone(), value.clone())),
-        );
         let current_dot_fragment = self.current_dot_fragment();
         let current_value_dot = self.current_value_dot();
         let root_dot_identity = match current_value_dot.as_ref() {
@@ -1887,31 +1861,26 @@ impl<'a> Interpreter<'a> {
             .map(AbstractValue::to_context_value)
             .or(current_value_dot);
         let mut eval_env = EvalEnv::from_helper_context(
-            Some(&self.root_bindings),
+            None,
             current_dot.as_ref(),
             self.current_dot_binding_mode(),
         )
         .without_helper_call_args()
         .with_predicate_memo(std::rc::Rc::clone(self.db.predicate_memo()));
         // Locals and root bindings are distinct namespaces (see the hole
-        // evaluator); roots resolve through `root_fields` only.
-        eval_env.locals = template_bindings;
-        eval_env.local_default_paths = self.locals.default_paths.clone();
-        eval_env.local_output_meta = self.locals.output_meta.clone();
-        eval_env.local_scalar_dispatches = self.locals.scalar_dispatches.clone();
-        eval_env.local_truthy_reductions = self.locals.truthy_reductions.clone();
-        eval_env.root_truthy_predicates = self.root_truthy_predicates.clone();
-        eval_env.root_value_dispatches = self.root_value_dispatches.clone();
+        // evaluator); roots resolve through `root_slots` only.
+        eval_env.locals = self.locals.evaluation_bindings();
+        eval_env.local_slots = BoundValueContext::new(&self.locals.slots);
+        eval_env.root_slots = self.root_slots.clone();
         eval_env.root_field_semantics_on_current_dot =
             self.root_value_dot.is_some() && self.dot_stack.len() <= 1;
-        eval_env.bound_values =
-            BoundValueContext::new(&self.locals.range_domains, &self.locals.get_bindings);
+
         ValuePathContext {
             helper_dispatch_depth: std::cell::Cell::new(0),
             eval_env,
-            template_truthiness_abstentions: &self.locals.truthiness_abstentions,
-            typeof_bindings: &self.locals.typeof_sources,
-            int_cast_bindings: &self.locals.int_cast_sources,
+            template_truthiness_abstentions: &self.locals.slots,
+            typeof_bindings: &self.locals.slots,
+            int_cast_bindings: &self.locals.slots,
             fragment_context: FragmentEvalContext::new(self.db),
             current_dot_fragment,
             root_dot_identity,

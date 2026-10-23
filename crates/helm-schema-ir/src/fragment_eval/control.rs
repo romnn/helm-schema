@@ -15,6 +15,7 @@ use crate::eval_effect::{SelectionTruthReachability, SelectionTruthSource};
 use crate::scalar_value::{
     ScalarValue, ScalarValueDispatch, TruthCondition, any_predicates_with_memo,
 };
+use crate::value::RootSlot;
 use crate::value_path_context::{guard_value_is_truthy, predicate_any};
 use crate::{Guard, ValueKind};
 use helm_schema_core::{GuardValue, Predicate};
@@ -1231,8 +1232,13 @@ impl Interpreter<'_> {
         });
         let definite: Vec<(String, AbstractValue)> = self
             .locals
-            .definite_range_member_values
+            .slots
             .iter()
+            .filter_map(|(name, slot)| {
+                slot.definite_range_member_value
+                    .as_ref()
+                    .map(|value| (name, value))
+            })
             .filter(|(variable, _)| referenced_variables.contains(variable.trim_start_matches('$')))
             .map(|(variable, value)| (variable.clone(), value.clone()))
             .collect();
@@ -1243,7 +1249,12 @@ impl Interpreter<'_> {
         for (variable, value) in definite {
             saved.push((
                 variable.clone(),
-                self.locals.range_member_values.insert(variable, value),
+                self.locals
+                    .slots
+                    .entry(variable.clone())
+                    .or_default()
+                    .range_member_value
+                    .replace(value),
             ));
         }
         let (predicate, faithful) = {
@@ -1256,10 +1267,15 @@ impl Interpreter<'_> {
         for (variable, previous) in saved {
             match previous {
                 Some(previous) => {
-                    self.locals.range_member_values.insert(variable, previous);
+                    self.locals
+                        .slots
+                        .entry(variable.clone())
+                        .or_default()
+                        .range_member_value
+                        .replace(previous);
                 }
                 None => {
-                    self.locals.range_member_values.remove(&variable);
+                    self.locals.slot_mut(&variable).range_member_value.take();
                 }
             }
         }
@@ -1501,8 +1517,9 @@ impl Interpreter<'_> {
         };
         let accumulator_is_empty = self
             .locals
-            .fragment_values
-            .get(name.trim_start_matches('$'))
+            .slot(name.trim_start_matches('$'))
+            .binding
+            .as_ref()
             .and_then(|binding| binding.value(self.db.predicate_memo()))
             .is_some_and(|value| {
                 matches!(
@@ -1705,7 +1722,11 @@ impl Interpreter<'_> {
         }
         if let Some((variable, literals)) = parse_literal_list_range_expr(header.expr()) {
             if binding_kind == crate::fragment_assignment::AssignmentKind::Assignment {
-                self.locals.range_domains.insert(variable, literals);
+                self.locals
+                    .slots
+                    .entry(variable.clone())
+                    .or_default()
+                    .range_domain = Some(literals);
             } else {
                 self.locals.insert_range_domain(variable, literals);
             }
@@ -1716,7 +1737,11 @@ impl Interpreter<'_> {
             // literal keys: `$k`'s domain makes `get map $k` reads decode
             // to the finite member set.
             if binding_kind == crate::fragment_assignment::AssignmentKind::Assignment {
-                self.locals.range_domains.insert(variable.to_string(), keys);
+                self.locals
+                    .slots
+                    .entry(variable.to_string())
+                    .or_default()
+                    .range_domain = Some(keys);
             } else {
                 self.locals.insert_range_domain(variable.to_string(), keys);
             }
@@ -1969,7 +1994,12 @@ impl Interpreter<'_> {
             None => None,
         };
         if let Some((variable, binding)) = member_variable.clone().zip(dot.clone()) {
-            self.locals.range_member_values.insert(variable, binding);
+            self.locals
+                .slots
+                .entry(variable.clone())
+                .or_default()
+                .range_member_value
+                .replace(binding);
         }
         // A local dict assembled by an unconditional `set` over a
         // values-backed map iterates its literal entries on EVERY render
@@ -1984,13 +2014,18 @@ impl Interpreter<'_> {
             && let Some(entry) = entries.values().next()
         {
             self.locals
-                .definite_range_member_values
-                .insert(variable, entry.clone());
+                .slots
+                .entry(variable.clone())
+                .or_default()
+                .definite_range_member_value = Some(entry.clone());
         }
         if let Some((variable, path)) = key_variable.zip(range_binding_path) {
             self.locals
-                .range_member_values
-                .insert(variable.to_string(), AbstractValue::RangeKey(path));
+                .slots
+                .entry(variable.to_string())
+                .or_default()
+                .range_member_value
+                .replace(AbstractValue::RangeKey(path));
         }
         self.push_dot(dot, crate::eval_env::BindingEvaluationMode::Direct);
         (Some(own_condition), extra, None, truth, post_header_locals)
@@ -2607,8 +2642,9 @@ impl Interpreter<'_> {
         region_start: usize,
     ) {
         let mut entry_identities: Vec<(&String, BTreeSet<helm_schema_core::ValuesPath>)> = entry
-            .fragment_values
+            .slots
             .iter()
+            .filter_map(|(name, slot)| slot.binding.as_ref().map(|value| (name, value)))
             .filter_map(|(name, value)| {
                 let paths = value.paths(self.db.predicate_memo());
                 (!paths.is_empty()).then_some((name, paths))
@@ -2623,7 +2659,7 @@ impl Interpreter<'_> {
             // one unexplained arm drops the record entirely.
             let mut fold_spellings: Option<BTreeSet<GuardValue>> = Some(BTreeSet::new());
             for (index, outcome) in outcomes.iter().enumerate() {
-                let Some(value) = outcome.fragment_values.get(name) else {
+                let Some(value) = outcome.slot(name).binding.as_ref() else {
                     continue;
                 };
                 // A reassignment severs the identity when the arm's value
@@ -2664,7 +2700,7 @@ impl Interpreter<'_> {
             let fold_spellings = fold_spellings.filter(|spellings| !spellings.is_empty());
             for index in keeping {
                 if let Some(outcome) = outcomes.get_mut(index)
-                    && let Some(value) = outcome.fragment_values.get(name).cloned()
+                    && let Some(value) = outcome.slot(name).binding.clone()
                 {
                     let mut excluded =
                         value.map_values(|value| attach_reassignment_exclusion(&value, &exclusion));
@@ -2672,7 +2708,7 @@ impl Interpreter<'_> {
                         excluded = excluded
                             .map_values(|value| attach_empty_fold_spellings(value, spellings));
                     }
-                    outcome.fragment_values.insert(name.clone(), excluded);
+                    outcome.slots.entry(name.to_owned()).or_default().binding = Some(excluded);
                 }
             }
         }
@@ -2858,15 +2894,22 @@ impl Interpreter<'_> {
     ) {
         let mut names: Vec<String> = outcomes
             .iter()
-            .flat_map(|outcome| outcome.output_meta.keys().cloned())
+            .flat_map(|outcome| {
+                outcome
+                    .slots
+                    .iter()
+                    .filter_map(|(name, slot)| slot.output_meta.is_some().then_some(name))
+                    .cloned()
+            })
             .collect();
         names.sort();
         names.dedup();
         for name in names {
-            let entry_omitted = binding_omitted_keys(entry.output_meta.get(&name));
+            let entry_omitted = binding_omitted_keys(entry.slot(&name).output_meta.as_ref());
             let mut additions: BTreeMap<String, Vec<Guard>> = BTreeMap::new();
             for (index, outcome) in outcomes.iter().enumerate() {
-                for (key, retain) in binding_omitted_keys(outcome.output_meta.get(&name)) {
+                for (key, retain) in binding_omitted_keys(outcome.slot(&name).output_meta.as_ref())
+                {
                     if entry_omitted.contains_key(&key) {
                         continue;
                     }
@@ -2899,7 +2942,7 @@ impl Interpreter<'_> {
             // Every arm's snapshot gets the post-join truth so the render
             // lowers as one unguarded splice.
             for outcome in outcomes.iter_mut() {
-                if let Some(metas) = outcome.output_meta.get_mut(&name) {
+                if let Some(metas) = outcome.slot_mut(&name).output_meta.as_mut() {
                     for meta in metas.values_mut() {
                         meta.predicates.clear();
                         meta.omitted_keys.extend(additions.clone());
@@ -3003,33 +3046,21 @@ fn attach_reassignment_exclusion(
 /// truthiness predicates, value dispatches, and the summary-exported
 /// observed maps.
 pub(super) struct RootSetState {
-    bindings: HashMap<String, AbstractValue>,
-    truthy: HashMap<String, Predicate>,
-    dispatches: HashMap<String, ScalarValueDispatch>,
-    mutations_observed: BTreeMap<String, AbstractValue>,
-    predicates_observed: BTreeMap<String, Predicate>,
-    dispatches_observed: BTreeMap<String, ScalarValueDispatch>,
+    root: HashMap<String, RootSlot>,
+    observed: BTreeMap<String, RootSlot>,
 }
 
 impl Interpreter<'_> {
     pub(super) fn capture_root_set_state(&self) -> RootSetState {
         RootSetState {
-            bindings: self.root_bindings.clone(),
-            truthy: self.root_truthy_predicates.clone(),
-            dispatches: self.root_value_dispatches.clone(),
-            mutations_observed: self.root_set_mutations_observed.clone(),
-            predicates_observed: self.root_set_predicates_observed.clone(),
-            dispatches_observed: self.root_value_dispatches_observed.clone(),
+            root: self.root_slots.clone(),
+            observed: self.root_writes.clone(),
         }
     }
 
     fn restore_root_set_state(&mut self, state: &RootSetState) {
-        self.root_bindings = state.bindings.clone();
-        self.root_truthy_predicates = state.truthy.clone();
-        self.root_value_dispatches = state.dispatches.clone();
-        self.root_set_mutations_observed = state.mutations_observed.clone();
-        self.root_set_predicates_observed = state.predicates_observed.clone();
-        self.root_value_dispatches_observed = state.dispatches_observed.clone();
+        self.root_slots = state.root.clone();
+        self.root_writes = state.observed.clone();
     }
 
     /// Join per-arm root `set` outcomes after an if/else region.
@@ -3051,8 +3082,12 @@ impl Interpreter<'_> {
     ) {
         let mut keys: BTreeSet<String> = BTreeSet::new();
         for (_, _, state) in arms {
-            for (key, value) in &state.mutations_observed {
-                if entry.mutations_observed.get(key) != Some(value) {
+            for (key, value) in state
+                .observed
+                .iter()
+                .filter_map(|(name, slot)| slot.value.as_ref().map(|value| (name, value)))
+            {
+                if entry.observed.get(key).and_then(|slot| slot.value.as_ref()) != Some(value) {
                     keys.insert(key.clone());
                 }
             }
@@ -3062,30 +3097,16 @@ impl Interpreter<'_> {
         }
         for (_, _, state) in arms {
             for key in &keys {
-                let Some(value) = state.mutations_observed.get(key) else {
+                let Some(value) = state.observed.get(key).and_then(|slot| slot.value.as_ref())
+                else {
                     continue;
                 };
-                if entry.mutations_observed.get(key) == Some(value) {
+                if entry.observed.get(key).and_then(|slot| slot.value.as_ref()) == Some(value) {
                     continue;
                 }
-                self.root_truthy_predicates.remove(key);
-                self.root_set_predicates_observed.remove(key);
-                self.root_value_dispatches.remove(key);
-                self.root_value_dispatches_observed.remove(key);
-                self.root_bindings.insert(key.clone(), value.clone());
-                self.root_set_mutations_observed
-                    .insert(key.clone(), value.clone());
-                if let Some(predicate) = state.predicates_observed.get(key) {
-                    self.root_truthy_predicates
-                        .insert(key.clone(), predicate.clone());
-                    self.root_set_predicates_observed
-                        .insert(key.clone(), predicate.clone());
-                }
-                if let Some(dispatch) = state.dispatches_observed.get(key) {
-                    self.root_value_dispatches
-                        .insert(key.clone(), dispatch.clone());
-                    self.root_value_dispatches_observed
-                        .insert(key.clone(), dispatch.clone());
+                if let Some(slot) = state.observed.get(key) {
+                    self.root_slots.insert(key.clone(), slot.clone());
+                    self.root_writes.insert(key.clone(), slot.clone());
                 }
             }
         }
@@ -3102,9 +3123,10 @@ impl Interpreter<'_> {
             let mut truthy_conditions = Vec::new();
             for (condition, _, state) in arms {
                 let value = state
-                    .mutations_observed
+                    .observed
                     .get(key)
-                    .or_else(|| entry.mutations_observed.get(key));
+                    .and_then(|slot| slot.value.as_ref())
+                    .or_else(|| entry.observed.get(key).and_then(|slot| slot.value.as_ref()));
                 let Some(value) = value else {
                     continue 'keys;
                 };
@@ -3126,21 +3148,17 @@ impl Interpreter<'_> {
             } else {
                 AbstractValue::Choice(joined_values)
             };
-            self.root_bindings.insert(key.clone(), joined_value.clone());
-            self.root_set_mutations_observed
-                .insert(key.clone(), joined_value);
-            self.root_truthy_predicates
-                .insert(key.clone(), truthy.clone());
-            self.root_set_predicates_observed
-                .insert(key.clone(), truthy);
             let dispatch = ScalarValueDispatch {
                 arms: dispatch_arms,
                 complete: true,
             };
-            self.root_value_dispatches
-                .insert(key.clone(), dispatch.clone());
-            self.root_value_dispatches_observed
-                .insert(key.clone(), dispatch);
+            let slot = RootSlot {
+                value: Some(joined_value),
+                truth: Some(truthy),
+                dispatch: Some(dispatch),
+            };
+            self.root_slots.insert(key.clone(), slot.clone());
+            self.root_writes.insert(key.clone(), slot);
         }
     }
 }

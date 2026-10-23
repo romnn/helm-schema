@@ -8,7 +8,8 @@ use crate::bound_value_analysis::BoundValueContext;
 use crate::eval_effect::MemberHostConversion;
 use crate::function_semantics::ArgumentEvaluationMode;
 use crate::helper_meta::HelperOutputMeta;
-use crate::scalar_value::{ScalarValueDispatch, TruthCondition, conjoin_predicates_with_memo};
+use crate::scalar_value::{TruthCondition, conjoin_predicates_with_memo};
+use crate::value::{RootSlot, root_slots};
 use helm_schema_core::{Predicate, PredicateMemo};
 
 /// How a template value reached a dot or variable binding.
@@ -419,30 +420,15 @@ impl LocalBinding {
 pub(crate) struct EvalEnv {
     pub(crate) dot: Option<AbstractValue>,
     pub(crate) dot_binding_mode: BindingEvaluationMode,
-    pub(crate) root_fields: HashMap<String, AbstractValue>,
-    pub(crate) root_truthy_predicates: HashMap<String, Predicate>,
-    pub(crate) root_value_dispatches: HashMap<String, ScalarValueDispatch>,
+    pub(crate) root_slots: HashMap<String, RootSlot>,
     /// The root-field semantic maps describe the current dot rather than
     /// only the global root. Bound helpers set this for their call argument
     /// frame; nested `with`/`range` frames clear it.
     pub(crate) root_field_semantics_on_current_dot: bool,
     pub(crate) locals: HashMap<String, LocalBinding>,
-    /// Exact scalar values carried by locals, including branch-dependent
-    /// reassignments. This is separate from `locals`: an abstract fragment
-    /// identifies where a value came from, while a scalar dispatch identifies
-    /// the runtime value that equality and truthiness consume.
-    pub(crate) local_scalar_dispatches: HashMap<String, ScalarValueDispatch>,
-    pub(crate) local_default_paths: HashMap<String, BTreeSet<helm_schema_core::ValuesPath>>,
-    pub(crate) local_output_meta:
-        HashMap<String, BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>,
-    /// Structural conditions under which a local is truthy, as the fragment
-    /// interpreter reduced them. A boolean flag carries no values-path
-    /// identity, so short-circuit operand truthiness has no other way to
-    /// decode it.
-    pub(crate) local_truthy_reductions: HashMap<String, Predicate>,
+    pub(crate) local_slots: BoundValueContext,
     pub(crate) member_host_conversions: BTreeSet<MemberHostConversion>,
     pub(crate) active_predicates: Vec<Predicate>,
-    pub(crate) bound_values: BoundValueContext,
     pub(crate) allow_field_root_lookup: bool,
     pub(crate) skip_helper_call_args: bool,
     pub(crate) predicate_memo: Rc<PredicateMemo>,
@@ -495,7 +481,11 @@ impl EvalEnv {
             && let Some((head, tail)) = path.split_first()
             && head != "Values"
         {
-            return self.root_fields.get(head)?.apply_to_path(tail);
+            return self
+                .root_slots
+                .get(head)
+                .and_then(|slot| slot.value.as_ref())?
+                .apply_to_path(tail);
         }
         value.apply_to_path(path)
     }
@@ -508,7 +498,7 @@ impl EvalEnv {
         Self {
             dot: current_dot.cloned(),
             dot_binding_mode,
-            root_fields: bindings.cloned().unwrap_or_default(),
+            root_slots: root_slots(bindings.cloned().unwrap_or_default()),
             allow_field_root_lookup: true,
             ..Self::default()
         }
@@ -523,12 +513,19 @@ impl EvalEnv {
         Self {
             dot: current_dot.cloned(),
             dot_binding_mode,
-            root_fields: locals
+            root_slots: locals
                 .iter()
                 .filter_map(|(name, binding)| {
-                    binding
-                        .value(predicate_memo)
-                        .map(|value| (name.clone(), value))
+                    binding.value(predicate_memo).map(|value| {
+                        (
+                            name.clone(),
+                            RootSlot {
+                                value: Some(value),
+                                truth: None,
+                                dispatch: None,
+                            },
+                        )
+                    })
                 })
                 .collect(),
             locals: locals.clone(),
