@@ -1,0 +1,18 @@
+{{- $_ := set .Values "rep" 3 }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: d
+spec:
+  replicas: {{ .Values.rep }}
+  selector:
+    matchLabels:
+      a: b
+  template:
+    metadata:
+      labels:
+        a: b
+    spec:
+      containers:
+      - name: c
+        image: i

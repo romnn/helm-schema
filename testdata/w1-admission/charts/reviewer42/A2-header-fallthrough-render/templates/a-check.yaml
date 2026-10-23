@@ -1,0 +1,1 @@
+{{ if default (and (set .Values "enabled" false) false) .Values.enabled }}{{ $_ := required "bad" }}{{ else if .Values.enabled }}{{ $_ := required "bad" }}{{ end }}{{ dict "apiVersion" "v1" "kind" "ConfigMap" "metadata" (dict "name" "review-pair") | toJson }}

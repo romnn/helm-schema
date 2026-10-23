@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe
+data:
+  j: "{{ include "s" (.Values.u | b64dec) }}{{ .Values.x }}"
+  k: "{{ include "s" .Values.u }}"

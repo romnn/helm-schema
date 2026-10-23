@@ -1,0 +1,7 @@
+{{- include "setflag" . }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe
+data:
+  k: {{ .Values.flag | b64enc | quote }}

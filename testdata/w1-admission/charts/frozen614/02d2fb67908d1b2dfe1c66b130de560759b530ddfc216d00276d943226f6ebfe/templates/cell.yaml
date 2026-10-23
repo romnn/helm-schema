@@ -1,0 +1,7 @@
+{{- $v := default "ok" .Values.t }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe
+data:
+  k: "{{ if .Values.show }}{{ $v }}{{ .Values.yy }}{{ end }}{{ .Values.x }}"

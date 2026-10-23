@@ -1,0 +1,5 @@
+{{ if .Values.enabled }}{{ if eq (coalesce .Values.value false) nil }}{{ fail "empty" }}{{ end }}{{ end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coalesce-probe

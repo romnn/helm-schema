@@ -1,0 +1,5 @@
+{{ $_ := set .Values "enabled" false }}{{ if .Values.enabled }}{{ $_ := required "bad" }}{{ end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: arity-phase

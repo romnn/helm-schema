@@ -1,0 +1,8 @@
+{{- $w := "" }}
+{{- $w = ternary "a" "b" (default (set .Values "bb" true) .Values.bb) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe
+data:
+  k: {{ $w | quote }}

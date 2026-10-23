@@ -1,0 +1,8 @@
+{{- $i := .Values.image }}
+{{- $_ := set $i "tag" "v1" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe
+data:
+  k: {{ .Values.image.tag | b64enc | quote }}

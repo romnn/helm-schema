@@ -1,0 +1,1 @@
+{{ define "w" }}{{ $_ := set .Values "x" "ok" }}{{ if .Values.emit }}{{ dict }}{{ end }}{{ end }}

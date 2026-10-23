@@ -1,0 +1,7 @@
+{{- $_ := unset .Values "flag" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe
+data:
+  k: {{ default "x" .Values.flag | b64enc | quote }}

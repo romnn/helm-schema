@@ -1,0 +1,5 @@
+{{ $_ := set .Values "items" (list) }}{{ range .Values.items }}{{ $_ := required "bad" }}{{ end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: arity-phase

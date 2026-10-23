@@ -1,0 +1,5 @@
+{{ $_ := required "bad" (include "h" (dict "ignored" (set .Values "choose" true) "Values" (deepCopy .Values))) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: args

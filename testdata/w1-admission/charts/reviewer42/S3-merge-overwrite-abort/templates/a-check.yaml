@@ -1,0 +1,1 @@
+{{ $_ := mergeOverwrite .Values (dict "enabled" true) }}{{ if .Values.enabled }}{{ $_ := required "bad" }}{{ end }}{{ dict "apiVersion" "v1" "kind" "ConfigMap" "metadata" (dict "name" "review-pair") | toJson }}

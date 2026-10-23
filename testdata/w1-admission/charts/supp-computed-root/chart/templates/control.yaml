@@ -1,0 +1,7 @@
+{{ if index .Values.flags .Values.key }}{{ $_ := set $ "f" true }}{{ end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: computed-root-obligation
+data:
+  k: "{{ if .f }}{{ .Values.t }}{{else}}ok{{end}}"

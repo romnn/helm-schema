@@ -1,0 +1,7 @@
+{{- range $t := .Values.ts }}{{ $_ := set $t "k" "v" }}{{ end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe
+data:
+  k: "{{ range .Values.ts }}{{ .k | b64enc }}{{ end }}"

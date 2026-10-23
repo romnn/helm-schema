@@ -1,0 +1,1 @@
+{{ define "badCondition" }}{{ $_ := ternary "a" "b" 0 }}{{ end }}

@@ -1,0 +1,5 @@
+{{ $_ := set $ "flag" true }}{{ $_ := and false (tpl "{{ $_ := set $ \"flag\" false }}" $) }}{{ if $.flag }}{{ fail "body" }}{{ end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: store-guard-control

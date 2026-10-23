@@ -1,0 +1,7 @@
+{{- $_ := set . "f2" true }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe
+data:
+  k: "{{ if ternary true (and (set . "f2" false) false) .f2 }}{{ .Values.t }}{{ else }}ok{{ end }}"

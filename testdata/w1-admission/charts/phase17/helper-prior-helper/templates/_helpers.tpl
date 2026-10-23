@@ -1,0 +1,1 @@
+{{ define "writer" }}{{ $_ := set .Values "enabled" false }}{{ end }}{{ define "h" }}{{ if .Values.enabled }}{{ $_ := required "bad" }}{{ end }}{{ end }}

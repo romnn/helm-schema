@@ -1,0 +1,5 @@
+{{ $x := dict "c" "bad" }}{{ $y := $x }}{{ $_ := set $y "c" true }}{{ $_ := ternary "a" "b" (get $x "c") }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe

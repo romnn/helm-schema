@@ -1,0 +1,1 @@
+{{ $m := dict "ready" true }}{{ range list 1 2 }}{{ if not $m.ready }}{{ $_ := required "bad" }}{{ end }}{{ $_ := unset $m "ready" }}{{ end }}{{ dict "apiVersion" "v1" "kind" "ConfigMap" "metadata" (dict "name" "review-pair") | toJson }}
