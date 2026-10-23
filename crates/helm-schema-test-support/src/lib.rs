@@ -10,6 +10,7 @@
 
 use color_eyre::eyre::{self, WrapErr as _};
 
+pub mod admission;
 pub mod cell_matrix;
 pub mod consume;
 pub mod generate;

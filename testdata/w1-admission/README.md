@@ -5,20 +5,23 @@ aborting by Go operand kind), with its pinned Helm 4.2.3 verdict and the verdict
 `73d1fa159703dc3ca2c2cb9a3016f83edc1bd579` (landing 10d). It is the admission suite of the
 value-algebra stages R1–R3 (`plan/value-algebra-interpreter.md`, Stage 1 rescoped): a stage keeps
 every cell main gets right and closes cells from `obligations.tsv`. Cells main gets wrong are
-obligations, not failing tests; nothing here runs in the workspace test profiles.
+obligations, not failing tests.
 
 The format is the `cell_matrix` cells file (`crates/helm-schema-test-support/src/cell_matrix.rs`),
 because that tool already measures a (chart, values, Kubernetes version) cell against labelled
-binaries and pinned Helm and checks per-cell expectations.
+binaries and pinned Helm and checks per-cell expectations. The charts, values and recorded
+documents here are the canonical inputs. The lane grounds they were taken from are not needed again.
 
 ## Contents
 
 - `cells.tsv`: 995 cells, generated with `--declared-types annotate` (the witness lanes' mode).
-- `cells-assert.tsv`: 614 cells (`frozen614`), generated with the binary's default declared types,
-  as that lane was recorded.
+- `cells-assert.tsv`: 614 cells (`frozen614`), generated with `--declared-types assert`, the
+  binary's default, under which that lane was recorded.
 - `charts/<lane>/<chart>/`: the cells' charts (`Chart.yaml`, `values.yaml`, `templates/`).
 - `values/`: values files too long or unusual to inline. Values are ASCII-escaped JSON: raw U+0085
   decodes differently through YAML, and every lane's Helm ground read the escaped form.
+- `coalesced/`: pinned Helm's coalesced values for the 8 cells whose `values.yaml` holds a YAML 1.1
+  boolean, which the Rust values port does not model.
 - `obligations.tsv`: the 575 cells main gets wrong, with their owner.
 
 Each `expect` column holds `helm_class=<pass|reject> main=<accept|reject>`. Every cell renders at
@@ -34,22 +37,43 @@ Kubernetes 1.29.0.
 | r0-probes | 83 | `plan/value-algebra-r0-probes/{run,review}.sh` probes that take no extra Helm flags and are deterministic |
 | ternary-arity | 17 | `ternary` operand-count cells and their stale-guard controls |
 
-## Running
+## The gate
+
+`crates/helm-schema-cli/tests/w1_admission.rs` runs in the nextest `integration` profile, so in
+`task test:integration` and in CI. It takes about 4 seconds. It generates every chart with the
+checkout's CLI. The recipe is `cell_matrix`'s (`admission::generation_arguments`): the bundled
+Kubernetes schemas, `v1.29.0-standalone-strict`, the `full` profile, and each file's
+declared-types mode pinned. The gate validates every cell's values composed over the chart's
+defaults, or the recorded `coalesced/` document. It fails on:
+
+- a NEW failure, where the verdict moves away from `helm_class`;
+- a closure, where the verdict moves toward `helm_class`. Re-record the cell (below), so the
+  suite always states the current main;
+- any unreadable cell, failed generation or uncomposable values;
+- any difference between `obligations.tsv` and the cells where `main` disagrees with Helm.
+
+Helm does not run in the gate: `helm_class` is recorded.
+
+## Re-recording
+
+After an intended change (a closure, or a new chart or cell), re-measure with pinned Helm. Both
+tables must label the binary that will become main `main`:
 
 ```sh
+cargo build -p helm-schema-cli -p helm-schema-test-support --bins
 cell_matrix --cells testdata/w1-admission/cells.tsv --declared-types annotate \
-  --bin main=<main CLI>@73d1fa159703dc3ca2c2cb9a3016f83edc1bd579 --bin cand=<candidate CLI>@<sha> \
-  --helm <helm 4.2.3> --helmsweep target/helmsweep --out <dir> --require-expected
-cell_matrix --cells testdata/w1-admission/cells-assert.tsv \
-  --bin main=<main CLI>@73d1fa159703dc3ca2c2cb9a3016f83edc1bd579 --bin cand=<candidate CLI>@<sha> \
-  --helm <helm 4.2.3> --helmsweep target/helmsweep --out <dir> --require-expected
+  --bin main=target/debug/helm-schema@<sha> --helm <helm 4.2.3> --helmsweep target/helmsweep --out <a>
+cell_matrix --cells testdata/w1-admission/cells-assert.tsv --declared-types assert \
+  --bin main=target/debug/helm-schema@<sha> --helm <helm 4.2.3> --helmsweep target/helmsweep --out <b>
+admission_refresh <a>/matrix.tsv <b>/matrix.tsv
+admission_refresh --coalesced <helm 4.2.3>
 ```
 
-With a main binary of that commit, exit 0 means pinned Helm and main reproduced every recorded
-verdict. In `matrix.tsv`, a cell is NEW for the candidate when `cand` disagrees with `helm_class`
-(`accept` against `pass` and `reject` against `reject` agree) where `main` agrees, and closed in the
-opposite case. The recipe generates with the bundled Kubernetes schemas, unlike the lanes'
-`--no-k8s-schemas`, so the recorded verdicts belong to this protocol.
+`admission_refresh` rewrites every `expect` column and `obligations.tsv`, and keeps each existing
+obligation's owner. A new obligation gets `R1-R3`. `--coalesced` re-records `coalesced/`. Read the
+diff before committing it. Adding `--require-expected` to `cell_matrix` instead checks the recorded
+expectations against pinned Helm. The recipe generates with the bundled Kubernetes schemas, unlike
+the lanes' `--no-k8s-schemas`, so the recorded verdicts belong to this protocol.
 
 ## Obligations
 

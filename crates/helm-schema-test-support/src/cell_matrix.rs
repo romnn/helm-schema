@@ -759,11 +759,27 @@ fn helm_runner(helm: &Path, timeout: Duration, private: bool) -> eyre::Result<&'
 
 /// The arguments of one generation, with the chart, bundle and output as placeholders.
 fn recipe(options: &Options) -> Vec<String> {
+    generation_recipe(
+        &options.gen_k8s_version,
+        &options.profile,
+        options.declared_types.as_deref(),
+    )
+}
+
+/// The arguments of one `cell_matrix` generation at `gen_k8s_version` under `profile` and, when
+/// given, `declared_types`, with `<chart>`, `<bundle>` and `<out>` as placeholders. Every consumer
+/// that must reproduce a recorded verdict generates with exactly these.
+#[must_use]
+pub fn generation_recipe(
+    gen_k8s_version: &str,
+    profile: &str,
+    declared_types: Option<&str>,
+) -> Vec<String> {
     let mut recipe: Vec<String> = [
         "<chart>",
         "--no-config",
         "--k8s-version",
-        &options.gen_k8s_version,
+        gen_k8s_version,
         "--strict-k8s-version",
         "--offline",
         "--k8s-schema-cache-dir",
@@ -771,13 +787,13 @@ fn recipe(options: &Options) -> Vec<String> {
         "--crd-catalog-cache-dir",
         "<bundle>/crds-catalog-cache",
         "--profile",
-        &options.profile,
+        profile,
         "--exclude-tests",
     ]
     .map(str::to_string)
     .to_vec();
-    if let Some(declared_types) = &options.declared_types {
-        recipe.extend(["--declared-types".to_string(), declared_types.clone()]);
+    if let Some(declared_types) = declared_types {
+        recipe.extend(["--declared-types".to_string(), declared_types.to_string()]);
     }
     recipe.extend(["--output".to_string(), "<out>".to_string()]);
     recipe
