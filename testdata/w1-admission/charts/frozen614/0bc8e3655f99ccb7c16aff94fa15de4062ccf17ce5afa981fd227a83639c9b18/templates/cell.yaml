@@ -1,0 +1,10 @@
+{{- $v := .Values.a }}
+{{- if .Values.f }}
+{{- $v = .Values.b }}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe
+data:
+  k: "{{ $v }}{{ .Values.x }}"

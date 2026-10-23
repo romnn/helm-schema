@@ -1,0 +1,1 @@
+{{ define "h" }}{{ $x := .Values.a }}{{ $_ := set $x "choose" true }}{{ if .Values.a.choose }}ok{{ end }}{{ end }}

@@ -4,8 +4,8 @@
 //! ```text
 //! cell_matrix --cells <cells.tsv> --bin <LABEL>=<PATH>@<COMMIT>... --helm <helm> --helmsweep <helmsweep>
 //!             --out <dir> [--bundle <dir>] [--gen-k8s-version <v>] [--profile <p>]
-//!             [--validate-release <r>] [--timeout <seconds>] [--scratch <dir>] [--check]
-//!             [--require-expected]
+//!             [--declared-types <assert|annotate>] [--validate-release <r>] [--timeout <seconds>]
+//!             [--scratch <dir>] [--check] [--require-expected]
 //! ```
 //!
 //! `--scratch <dir>` puts every scratch file, the Helm replay store included, in `dir` instead of the
@@ -32,7 +32,7 @@ use helm_schema_test_support::registry::{BUNDLE_K8S_VERSION, PROVIDER_BUNDLE};
 
 const USAGE: &str = "usage: cell_matrix --cells <cells.tsv> --bin <LABEL>=<PATH>@<COMMIT>... \
      --helm <helm> --helmsweep <helmsweep> --out <dir> [--bundle <dir>] [--gen-k8s-version <v>] \
-     [--profile <p>] [--validate-release <r>] [--timeout <seconds>] [--scratch <dir>] [--check] \
+     [--profile <p>] [--declared-types <assert|annotate>] [--validate-release <r>] [--timeout <seconds>] [--scratch <dir>] [--check] \
      [--require-expected]";
 
 fn main() -> ExitCode {
@@ -65,6 +65,7 @@ fn options() -> eyre::Result<Options> {
     let mut bundle = test_util::workspace_testdata().join(PROVIDER_BUNDLE);
     let mut gen_k8s_version = BUNDLE_K8S_VERSION.to_string();
     let mut profile = "full".to_string();
+    let mut declared_types = None;
     let mut validate_release = KUBERNETES_RELEASE.to_string();
     let mut check = false;
     let mut require_expected = false;
@@ -85,6 +86,16 @@ fn options() -> eyre::Result<Options> {
             "--bundle" => bundle = PathBuf::from(value()?),
             "--gen-k8s-version" => gen_k8s_version = value()?,
             "--profile" => profile = value()?,
+            "--declared-types" => {
+                let mode = value()?;
+                if !matches!(mode.as_str(), "assert" | "annotate") {
+                    return Err(Refusal(format!(
+                        "--declared-types {mode:?} is neither assert nor annotate"
+                    ))
+                    .into());
+                }
+                declared_types = Some(mode);
+            }
             "--validate-release" => validate_release = value()?,
             "--timeout" => {
                 let seconds = value()?;
@@ -113,6 +124,7 @@ fn options() -> eyre::Result<Options> {
         bundle,
         gen_k8s_version,
         profile,
+        declared_types,
         validate_release,
         out: out.ok_or_else(missing)?,
         check,

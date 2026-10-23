@@ -1,0 +1,5 @@
+{{ $_ := mergeOverwrite .Values (dict "choose" "x") }}{{ $_ := coalesce .Values.choose false | b64enc }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: state

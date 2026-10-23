@@ -1,0 +1,1 @@
+{{ $_ := required "bad" (tpl "{{ define \"h\" }}x{{ end }}{{ include \"h\" . }}" .) }}{{ dict "apiVersion" "v1" "kind" "ConfigMap" "metadata" (dict "name" "review-pair") | toJson }}

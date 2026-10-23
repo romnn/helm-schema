@@ -1,0 +1,7 @@
+{{- $_ := set .Values "flag" true }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe
+data:
+  k: {{ ternary "a" "b" .Values.flag | quote }}

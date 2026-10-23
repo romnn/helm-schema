@@ -1,0 +1,5 @@
+{{ $_ := mustMergeOverwrite .Values (dict "choose" true) }}{{ if eq (coalesce (include "h" .) false) nil }}{{ fail "nil" }}{{ end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: state

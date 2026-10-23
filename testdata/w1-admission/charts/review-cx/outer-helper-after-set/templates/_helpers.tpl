@@ -1,0 +1,1 @@
+{{ define "h" }}{{ if .Values.choose }}ok{{ end }}{{ end }}{{ define "outer" }}{{ if eq (coalesce (include "h" .) false) nil }}{{ fail "nil" }}{{ end }}{{ end }}

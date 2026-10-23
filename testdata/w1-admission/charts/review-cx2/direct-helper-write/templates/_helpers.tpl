@@ -1,0 +1,1 @@
+{{ define "w" }}{{ $_ := set .Values "choose" true }}{{ end }}

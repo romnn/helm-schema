@@ -1,0 +1,1 @@
+{{ define "h" }}{{ if default (and (set .Values "choose" true) false) .Values.choose }}{{ dict }}{{ end }}{{ end }}

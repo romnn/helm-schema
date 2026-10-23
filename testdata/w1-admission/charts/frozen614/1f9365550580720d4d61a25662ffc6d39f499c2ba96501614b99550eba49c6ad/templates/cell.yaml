@@ -1,0 +1,8 @@
+{{- $v := ternary .Values.t (b64dec .Values.t) .Values.flag }}
+{{- $_ := set .Values "t" "ok" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe
+data:
+  k: "{{ $v }}{{ .Values.x }}"

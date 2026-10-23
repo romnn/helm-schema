@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: guarded-writes-control
+data:
+  result: |-
+    {{ $_ := set $ "box" (dict "cfg" "before") }}{{ $_ := and .Values.enabled (set $ "box" (dict "cfg" "")) }}{{ if $.box.cfg }}{{ fail "body" }}{{ end }}

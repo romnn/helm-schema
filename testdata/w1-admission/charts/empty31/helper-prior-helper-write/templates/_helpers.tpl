@@ -1,0 +1,1 @@
+{{ define "msg" }}{{ $_ := set .Values "choose" true }}{{ end }}{{ define "h" }}{{ if .Values.choose }}{{ dict }}{{ end }}{{ end }}

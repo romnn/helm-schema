@@ -1,0 +1,1 @@
+{{ define "h" }}{{ if .Values.choose }}ok{{ end }}{{ $_ := unset .Values "choose" }}{{ end }}

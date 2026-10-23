@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: piped-guard-control
+data:
+  result: |-
+    {{ $_ := set $ "flag" false }}{{ $_ := true | or true (set $ "flag" true) }}{{ if $.flag }}{{ fail "unreachable" }}{{ end }}

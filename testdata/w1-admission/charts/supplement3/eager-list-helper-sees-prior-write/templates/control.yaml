@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: supplemental-store-control
+data:
+  result: |-
+    {{ $_ := set $ "flag" "before" }}{{ $_ := list (set $ "flag" (dict "x" true)) (include "check" $) }}

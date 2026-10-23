@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bool-default-obligation
+data:
+  result: |-
+    {{ $_ := set $ "flag" true }}{{ if default (not (set $ "flag" false)) $.flag }}{{ fail "body" }}{{ end }}

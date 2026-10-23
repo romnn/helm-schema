@@ -1,0 +1,9 @@
+{{- if .Values.on2 }}
+{{- $_ := set .Values "flag" "str" }}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe
+data:
+  k: {{ .Values.flag | b64enc | quote }}

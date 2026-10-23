@@ -1,0 +1,7 @@
+{{ $_ := and .Values.a (set $ "f" true) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: absent-root-obligation
+data:
+  k: "{{ if $.f }}{{ .Values.t }}{{else}}ok{{end}}"

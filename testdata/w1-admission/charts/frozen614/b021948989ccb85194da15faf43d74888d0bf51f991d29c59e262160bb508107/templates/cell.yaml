@@ -1,0 +1,7 @@
+{{- $_ := merge .Values.cfg (dict "flag" "str") }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe
+data:
+  k: {{ .Values.cfg.flag | b64enc | quote }}

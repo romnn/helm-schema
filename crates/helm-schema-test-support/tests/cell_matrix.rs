@@ -244,7 +244,9 @@ fn a_matrix_reproduces_and_measures_the_prepared_chart() -> eyre::Result<()> {
     }
     let args = fs::read_to_string(run.path().join("A.args"))?;
     eyre::ensure!(
-        args.contains("--no-config") && args.contains("--exclude-tests"),
+        args.contains("--no-config")
+            && args.contains("--exclude-tests")
+            && !args.contains("--declared-types"),
         "recipe: {args}"
     );
 
@@ -265,6 +267,32 @@ fn a_matrix_reproduces_and_measures_the_prepared_chart() -> eyre::Result<()> {
         run.path().join("out/matrix.tsv"),
         before.first().ok_or_else(|| eyre::eyre!("no bytes"))?,
     )?;
+    Ok(())
+}
+
+/// `--declared-types` reaches every generation and the manifest; a mode the binary does not
+/// know is refused before anything runs.
+#[test]
+fn the_declared_types_mode_reaches_every_generation() -> eyre::Result<()> {
+    let mut run = Run::new()?;
+    chart(run.path(), "app", APP_VALUES, CONFIGMAP)?;
+    run.bin("A", Some(ACCEPT_ALL))?;
+    run.cells(&["c1\tapp\t{}\t1.29.0\tA=accept helm_class=pass"])?;
+    let refused = run.run(&["--declared-types", "loose"], &[])?;
+    sim_assert_eq!(have: code(&refused), want: Some(2), "{}", stderr(&refused));
+    eyre::ensure!(
+        !run.path().join("A.args").exists(),
+        "a refused mode generated"
+    );
+    let output = run.run(&["--declared-types", "annotate", "--require-expected"], &[])?;
+    sim_assert_eq!(have: code(&output), want: Some(0), "{}", stderr(&output));
+    let args = fs::read_to_string(run.path().join("A.args"))?;
+    eyre::ensure!(args.contains("--declared-types annotate"), "recipe: {args}");
+    let manifest: serde_json::Value = serde_json::from_str(&run.file("manifest.json")?)?;
+    sim_assert_eq!(
+        have: manifest.pointer("/generation_settings/declared_types").cloned(),
+        want: Some(serde_json::json!("annotate")),
+    );
     Ok(())
 }
 

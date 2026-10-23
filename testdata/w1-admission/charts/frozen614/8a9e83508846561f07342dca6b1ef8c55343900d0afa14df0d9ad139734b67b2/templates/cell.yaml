@@ -1,0 +1,7 @@
+{{- $_ := set .Values "image" (dict "repository" "r") }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe
+data:
+  k: {{ .Values.image.tag | default "latest" | b64enc | quote }}

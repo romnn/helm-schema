@@ -1,0 +1,1 @@
+{{ define "h" }}{{ if .stop }}{{ fail "stopped" }}{{ else }}ok{{ end }}{{ end }}

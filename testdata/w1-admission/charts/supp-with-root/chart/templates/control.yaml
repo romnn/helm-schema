@@ -1,0 +1,7 @@
+{{ with .Values.obj }}{{ if $.Values.a }}{{ $_ := set $ "f" true }}{{ end }}{{ end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: with-root-obligation
+data:
+  k: "{{ if .f }}{{ .Values.t }}{{else}}ok{{end}}"

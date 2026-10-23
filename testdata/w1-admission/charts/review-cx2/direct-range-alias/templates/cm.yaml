@@ -1,0 +1,5 @@
+{{ range $k, $v := .Values }}{{ if kindIs "map" $v }}{{ $_ := set $v "choose" true }}{{ end }}{{ end }}{{ if eq (coalesce .Values.a.choose false) nil }}{{ fail "nil" }}{{ end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: state

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe
+data:
+  j: "{{ with .Values.a }}{{ $_ := set $ "f" true }}{{ end }}x"
+  k: "{{ if .f }}{{ .Values.t }}{{ else }}ok{{ end }}"

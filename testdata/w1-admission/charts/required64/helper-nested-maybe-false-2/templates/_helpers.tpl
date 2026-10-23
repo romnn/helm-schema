@@ -1,0 +1,1 @@
+{{ define "inner" }}{{ if .Values.choose }}{{ false }}{{ end }}{{ end }}{{ define "outer" }}{{ include "inner" . }}{{ end }}

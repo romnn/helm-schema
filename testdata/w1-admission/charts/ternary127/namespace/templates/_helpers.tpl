@@ -1,0 +1,1 @@
+{{ define "ternary" }}safe{{ end }}

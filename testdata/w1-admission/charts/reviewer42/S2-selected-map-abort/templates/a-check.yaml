@@ -1,0 +1,1 @@
+{{ $m := dict "x" true }}{{ if ternary $m (set $m "x" true) true }}{{ $_ := required "bad" }}{{ end }}{{ dict "apiVersion" "v1" "kind" "ConfigMap" "metadata" (dict "name" "review-pair") | toJson }}

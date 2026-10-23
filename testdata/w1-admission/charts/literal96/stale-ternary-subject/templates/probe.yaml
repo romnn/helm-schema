@@ -1,0 +1,5 @@
+{{ $_ := set $ "flag" true }}{{ $_ := required "bad" (ternary (default false (get (unset $ "flag") "x")) nil $.flag) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: literal-required

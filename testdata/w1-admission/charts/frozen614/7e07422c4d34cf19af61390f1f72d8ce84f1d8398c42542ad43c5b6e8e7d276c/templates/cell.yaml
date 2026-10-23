@@ -1,0 +1,7 @@
+{{- $n := "setter" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe
+data:
+  k: {{ ternary "a" (include $n .) .Values.flag | quote }}
