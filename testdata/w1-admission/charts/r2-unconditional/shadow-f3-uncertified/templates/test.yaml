@@ -1,0 +1,16 @@
+{{- define "unrelated-writer" -}}{{- $_ := set (dict) "marker" true -}}{{- end -}}
+{{- define "shadow" -}}
+{{- $x := dict "a" 1 -}}
+{{- if true -}}
+{{- $x := 0.0 -}}
+{{- end -}}
+{{- if not $x -}}
+{{- required 3 "ok" -}}
+{{- end -}}
+{{- end -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: shadow
+data:
+  value: {{ include "shadow" . | quote }}

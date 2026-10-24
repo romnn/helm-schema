@@ -14,7 +14,7 @@ documents here are the canonical inputs. The lane grounds they were taken from a
 
 ## Contents
 
-- `cells.tsv`: 1,207 cells, generated with `--declared-types annotate` (the witness lanes' mode).
+- `cells.tsv`: 1,243 cells, generated with `--declared-types annotate` (the witness lanes' mode).
 - `cells-assert.tsv`: 614 cells (`frozen614`), generated with `--declared-types assert`, the
   binary's default, under which that lane was recorded.
 - `charts/<lane>/<chart>/`: the cells' charts (`Chart.yaml`, `values.yaml`, `templates/`). The suite
@@ -22,14 +22,14 @@ documents here are the canonical inputs. The lane grounds they were taken from a
   refuses zero-byte files, and the gate fails on one.
 - `values/`: values files too long or unusual to inline. Values are ASCII-escaped JSON: raw U+0085
   decodes differently through YAML, and every lane's Helm ground read the escaped form.
-- `roster.tsv`: the frozen cell ids and modes. The gate pins its size (1,821) and sha256, so
+- `roster.tsv`: the frozen cell ids and modes. The gate pins its size (1,857) and sha256, so
   adding or removing a cell is an explicit edit of the roster and of the gate's constants.
 - `coalesced.tsv`: for every cell, the sha256 of its inputs (values bytes and chart files) and of
   the values document pinned Helm coalesced from them. The Rust values port reproduces that
   document for every other cell.
 - `coalesced/`: Helm's document for the 8 cells whose `values.yaml` holds a YAML 1.1 boolean, which
   the Rust values port does not model.
-- `obligations.tsv`: the 687 cells main gets wrong, with their owner.
+- `obligations.tsv`: the 693 cells main gets wrong, with their owner.
 
 Each `expect` column holds `helm_class=<pass|reject> main=<accept|reject>`. Every cell renders at
 Kubernetes 1.29.0.
@@ -45,6 +45,7 @@ Kubernetes 1.29.0.
 | ternary-arity | 17 | `ternary` operand-count cells and their stale-guard controls |
 | r2 | 83 | Go parameter types, direct/grouped literals, method resolution, mutation, binding, reachability, and legacy projection/join controls |
 | r2-twins | 129 | The R2 controls and pre-registered closure witnesses with an unrelated `set (dict)` that refutes certification |
+| r2-unconditional | 36 | Float-shadow and decoder reachability controls for all five families, plus conditional/uncertified twins; R3b owns their legacy verdicts |
 
 ## The gate
 
@@ -99,9 +100,10 @@ the lanes' `--no-k8s-schemas`, so the recorded verdicts belong to this protocol.
 
 ## Obligations
 
-Main gets 687 cells wrong: 350 false rejections and 337 false acceptances.
+Main gets 693 cells wrong: 356 false rejections and 337 false acceptances.
 
 - 672 cells belong to R1–R3.
+- 6 inherited reachability failures belong to R3b; all 36 R2-11 controls are listed in `reachability-controls.tsv`.
 - 15 cells (`ternary127.selected-{0,2,3}-{4..8}.0`) belong to ADR 0042, not W1 (decision D2,
   2026-10-23). They render once the root's `additionalProperties: false` is lifted
   (`plan/value-algebra-r0-probes/selected.sh`). With them excluded, ternary127 has 38 W1
@@ -111,6 +113,7 @@ Main gets 687 cells wrong: 350 false rejections and 337 false acceptances.
 |---|---:|---|---:|
 | frozen614 | 292 | ternary127 | 53 (15 ADR 0042) |
 | r2 | 33 | r2-twins | 79 |
+| r2-unconditional | 6 | | |
 | literal96 | 30 | arity54 | 28 |
 | required64 | 22 | r0-probes | 22 |
 | fable-controls64 | 21 | reviewer42 | 17 |
@@ -132,3 +135,9 @@ the guard false, yet a capture under the stale guard rejects them. Emitting only
 conjunction stays empty still rejects `stale-local-guard.0`, whose guard folds to a stale constant
 after a `with`-scoped reassignment and an aliased `set`. The check waits for R2's write-free
 certificate.
+
+R2-11 permits each new R2 rejection only at a site with no ambient guards: no enclosing
+`if`/`else`/`with`/`range`, no skippable `and`/`or` operand, and unconditional helper ancestry.
+The float-shadow and `fromJson "[]"` controls expose inherited guard errors. R2 preserves
+main's verdict for all their variants; the six equivalent terminal-channel controls remain
+R3b false-rejection obligations. R2 does not repair scope snapshots or decoder truth.

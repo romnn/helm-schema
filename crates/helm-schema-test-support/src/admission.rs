@@ -42,7 +42,7 @@ const CELLS_HEADER: &str = "cell_id\tchart\tvalues\tkube_version\texpect";
 const OBLIGATIONS_HEADER: &str = "cell_id\tlane\tdeclared_types\thelm_class\tmain\terror\towner";
 /// The owner a newly recorded obligation gets; ADR 0042 policy rows are classified by hand.
 const DEFAULT_OWNER: &str = "R1-R3";
-const OWNERS: [&str; 2] = [DEFAULT_OWNER, "ADR-0042"];
+const OWNERS: [&str; 3] = [DEFAULT_OWNER, "ADR-0042", "R3b"];
 
 /// `--declared-types` of a cells file's generations.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]

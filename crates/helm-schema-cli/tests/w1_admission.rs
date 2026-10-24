@@ -26,8 +26,8 @@ use serde_json::Value;
 use test_util::scratch::ScratchDir;
 
 /// The frozen roster: adding or removing a cell edits `roster.tsv` and these two constants.
-const ROSTER_CELLS: usize = 1821;
-const ROSTER_SHA256: &str = "bfacf1ba527504e9785eccbadae37414b0787c3dd9c7588c1c997d42250b1ce7";
+const ROSTER_CELLS: usize = 1857;
+const ROSTER_SHA256: &str = "091f2742483d33935424de383b4de12d5bcee161129e88c099ec8071c81b1a89";
 
 /// Concurrent generations: each is a short CLI run over a one-template chart.
 const WORKERS: usize = 4;

@@ -1,0 +1,15 @@
+{{- define "shadow" -}}
+{{- $x := dict "a" 1 -}}
+{{- if true -}}
+{{- $x := 0.0 -}}
+{{- end -}}
+{{- if not $x -}}
+{{- required "m" -}}
+{{- end -}}
+{{- end -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: shadow
+data:
+  value: {{ if true }}{{ include "shadow" . | quote }}{{ end }}
