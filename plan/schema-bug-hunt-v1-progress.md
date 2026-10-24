@@ -9294,4 +9294,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   raw numbers at genuine Go `int` parameters on proven-unchanged paths (SDK-typed values out of scope).** ADR 0069 Accepted. User
   also: Codex quota reset — shift some implementation back to Codex builders. Landing sequence now L1 R1a, L2 R1b, L3 R2, L4 R3a,
   L5 R3b. w1/stage1-min: arity fix committed (72ba6d7a), admission suite in progress. Orchestrator.
-Next: start R1a (Codex sol builder, byte-identical, inventory gate, ADR 0066 clause 2b); collect w1/stage1-min, sol review, landing 10e; then R0 of `plan/value-algebra-interpreter.md`.
+- 11:4x (Oct 24) — **LANDED: landing 10e merged into main as 4b19f2b6 (W1 admission suite, test infrastructure; chain green run 2).**
+  Fail-closed gate crates/helm-schema-cli/tests/w1_admission.rs over testdata/w1-admission/ (1,609 pinned-Helm 4.2.3 cells; frozen roster,
+  input + coalesced-document hashes; 575 obligations = 560 R1–R3 + 15 ADR 0042 policy rows per D2); admission_refresh refuses to bless
+  regressions; cell_matrix --declared-types. The ternary arity check was REVERTED (ablation: ternary arity 5 closed/3 NEW, required
+  arity 33/32, unguarded-only 22/2 — stale guards after writes) and deferred to R2. sol review REWORK×3 → LAND. Run 1 refused 474
+  zero-byte files (473 empty _helpers.tpl + R0's empty landed.txt; fixed c207d4d0 and main 0986c2b9; the gate now rejects empty
+  files). Steps run 2: dump 14:49, unit 14:54, lint 15:03, battery 15:07, integration 15:55, sweep 16:05, finalize 16:44 (Oct 23); 0
+  adopted. Receipt /Volumes/T7/dev/round8-landing10e-run2/receipt.json sha256 3e77f872…. Two Opus builders before it hung for hours
+  on a `git checkout` approval prompt (orchestrator now does all branch ops). R1a (value-algebra L1, Codex sol builder in clone
+  round8-r1a): transposition first came in at +244 LOC (clause 2b(iv) fail) → rework dropped the accessor layer → −13; then sol review
+  P2 (non-exhaustive projections) fixed → 77,053 (main 77,061); 205 fixtures byte-identical, 1,502 W1 cells identical, 58 schema-only
+  audit rows identical to main; 60 declarations deleted, 56 F/S rows → 25 slot fields; sol LAND. Landing 11 (= R1a) chain STARTED
+  on main 4b19f2b6 (runner env landing-11.env, E=round8-landing11-run1). Orchestrator.
+Next: watch landing 11; start R1b (per-fact moves onto the leaf) once R1a merges; collect w1/stage1-min, sol review, landing 10e; then R0 of `plan/value-algebra-interpreter.md`.
