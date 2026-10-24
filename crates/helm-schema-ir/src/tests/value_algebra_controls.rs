@@ -173,6 +173,9 @@ fn execute(files: &BTreeMap<String, Vec<u8>>) -> Execution {
     if files.keys().any(|name| name.starts_with("charts/")) {
         gaps.push("dependency charts are not scheduled by the legacy evaluator".to_string());
     }
+    if files.contains_key(".helmignore") {
+        gaps.push(".helmignore file selection is not modeled by the adapter".to_string());
+    }
     let mut index = DefineIndex::new();
     let mut sources = BTreeMap::new();
     for (name, bytes) in files {
@@ -598,5 +601,69 @@ fn adapter_answers_are_deterministic() -> eyre::Result<()> {
         have: canonical_json(&serde_json::to_value(first)?),
         want: canonical_json(&serde_json::to_value(second)?)
     );
+    Ok(())
+}
+
+/// Fails that Helm never executes are never claimed as aborts.
+#[test]
+fn unexecuted_fails_are_not_claimed_aborts() -> eyre::Result<()> {
+    let sources = [
+        "{{ range list }}{{ fail \"boom\" }}{{ end }}\n",
+        "{{ range $k, $v := dict }}{{ fail \"boom\" }}{{ end }}\n",
+        "{{ with \"\" }}{{ fail \"boom\" }}{{ end }}\n",
+        "{{ if false }}{{ fail \"boom\" }}{{ end }}\n",
+        "{{ if eq 1 2 }}{{ fail \"boom\" }}{{ end }}\n",
+        "{{ define \"never\" }}{{ fail \"boom\" }}{{ end }}\n",
+        "{{ if .Release.IsUpgrade }}{{ fail \"boom\" }}{{ end }}\n",
+        "{{ if .Capabilities.APIVersions.Has \"x/v1\" }}{{ fail \"boom\" }}{{ end }}\n",
+        "{{ if lookup \"v1\" \"Secret\" \"default\" \"x\" }}{{ fail \"boom\" }}{{ end }}\n",
+        "{{ $x := false }}{{ if $x }}{{ fail \"boom\" }}{{ end }}\n",
+        "{{ if (empty (list 1)) }}{{ fail \"boom\" }}{{ end }}\n",
+        "{{ if not (hasKey (dict \"a\" 1) \"a\") }}{{ fail \"boom\" }}{{ end }}\n",
+        "{{ if ne .Release.Name \"p\" }}{{ fail \"boom\" }}{{ end }}\n",
+        "{{ if ne .Chart.Name \"c\" }}{{ fail \"boom\" }}{{ end }}\n",
+        "{{ if semverCompare \"<1.0.0\" .Capabilities.KubeVersion.Version }}{{ fail \"boom\" }}{{ end }}\n",
+        "{{ if .Files.Get \"x\" }}{{ fail \"boom\" }}{{ end }}\n",
+        "{{ if (include \"missing.helper\" .) }}{{ fail \"boom\" }}{{ end }}\n",
+    ];
+    for source in sources {
+        let files = [CHART, ("templates/x.yaml", source)];
+        let have = run(
+            &files,
+            &json!({"kind": "termination_v1", "scope": "render"}),
+        )?;
+        let claimed_abort = have
+            == exact(Observation::Termination {
+                outcome: Termination::Abort {
+                    phase: AbortPhase::TemplateEval,
+                },
+            });
+        sim_assert_eq!(have: claimed_abort, want: false, "{source}");
+    }
+    Ok(())
+}
+
+/// Charts whose file selection the adapter does not model are gaps even
+/// when every template is static.
+#[test]
+fn unmodeled_chart_file_selection_is_a_gap() -> eyre::Result<()> {
+    let static_map = "apiVersion: v1\nkind: ConfigMap\ndata:\n  a: b\n";
+    for extra in [
+        (".helmignore", "templates/fail.yaml\n"),
+        (
+            "charts/sub/Chart.yaml",
+            "apiVersion: v2\nname: sub\nversion: 0.1.0\n",
+        ),
+    ] {
+        let files = [CHART, ("templates/cm.yaml", static_map), extra];
+        let have = run(
+            &files,
+            &json!({"kind": "termination_v1", "scope": "render"}),
+        )?;
+        let ControlResult::AbstractUnknown { reason, .. } = have else {
+            eyre::bail!("{}: expected abstract_unknown, have {have:?}", extra.0);
+        };
+        sim_assert_eq!(have: reason, want: UnknownReason::RepresentationGap);
+    }
     Ok(())
 }

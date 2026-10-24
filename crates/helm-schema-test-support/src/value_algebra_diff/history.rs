@@ -68,6 +68,13 @@ pub fn canonical_sha256<T: Serialize>(value: &T) -> Result<String, DiffError> {
 /// [`DiffError::Identity`] when `path` exists; [`DiffError::Infrastructure`]
 /// when the file cannot be written.
 pub fn write_new(path: &Path, bytes: &[u8]) -> Result<(), DiffError> {
+    publish_new(path, bytes, true)
+}
+
+/// [`write_new`], with the data flushed to disk before the rename when
+/// `durable`. Content-addressed blobs skip the flush: every read rehashes
+/// them, so a blob lost to a crash fails closed instead of misleading.
+fn publish_new(path: &Path, bytes: &[u8], durable: bool) -> Result<(), DiffError> {
     if path.exists() {
         return Err(DiffError::Identity(format!(
             "{} already exists; outputs are never replaced",
@@ -82,7 +89,13 @@ pub fn write_new(path: &Path, bytes: &[u8]) -> Result<(), DiffError> {
         tempfile::NamedTempFile::new_in(parent).map_err(|error| io(parent, &error))?;
     temporary
         .write_all(bytes)
-        .and_then(|()| temporary.as_file().sync_all())
+        .and_then(|()| {
+            if durable {
+                temporary.as_file().sync_all()
+            } else {
+                Ok(())
+            }
+        })
         .map_err(|error| io(path, &error))?;
     temporary
         .persist_noclobber(path)
@@ -132,7 +145,7 @@ impl BlobStore {
         if path.exists() {
             self.get(&sha256)?;
         } else {
-            write_new(&path, bytes)?;
+            publish_new(&path, bytes, false)?;
         }
         Ok(sha256)
     }
