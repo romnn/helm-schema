@@ -2197,11 +2197,18 @@ fn partial_override_audits_unchanged_rejection_and_balances_document_coverage() 
     Ok(())
 }
 
+/// One chart's lint lane after the schema-only accounting.
+struct SchemaOnlyLint {
+    /// Raw-lint flips; the coalesced documents a pair also flips are not under test.
+    raw_flips: Vec<String>,
+    deferred_live_audits: Vec<String>,
+}
+
 /// Folds one chart's lint screen through the schema-only accounting.
 fn schema_only_lint_accounting(
     baseline: &Value,
     candidate: &Value,
-) -> eyre::Result<(super::ScreenedProbes, super::ProbeCoverage)> {
+) -> eyre::Result<SchemaOnlyLint> {
     let chart = partial_override_chart()?;
     let schemas = LintSchemas::compile(baseline, candidate, None)?;
     let lint = screen(&ScreenRequest {
@@ -2223,7 +2230,27 @@ fn schema_only_lint_accounting(
         ..Default::default()
     };
     screened.append_lint(Ok(lint), &schemas, &mut coverage, false);
-    Ok((screened, coverage))
+    let lint = coverage.lint.ok_or_eyre("lint coverage absent")?;
+    lint.validate()?;
+    Ok(SchemaOnlyLint {
+        raw_flips: screened
+            .flips
+            .into_iter()
+            .filter(|flip| flip.contains("document=LintRaw"))
+            .collect(),
+        deferred_live_audits: lint.deferred_live_audits,
+    })
+}
+
+/// A child schema whose `first` property carries `assertion`, optionally through a named definition.
+fn first_property_schema(assertion: &Value, definition: Option<&str>) -> Value {
+    match definition {
+        None => json!({"properties": {"child": {"properties": {"first": assertion}}}}),
+        Some(name) => json!({
+            "$defs": {name: assertion},
+            "properties": {"child": {"properties": {"first": {"$ref": format!("#/$defs/{name}")}}}}
+        }),
+    }
 }
 
 /// Schema-only mode cannot run the forced audit, and identical verdicts are no
@@ -2231,54 +2258,77 @@ fn schema_only_lint_accounting(
 #[test]
 fn schema_only_defers_an_unchanged_forced_partial_override_audit() -> eyre::Result<()> {
     let restrictive = json!({"properties": {"child": {"required": ["second"]}}});
-    let (screened, coverage) = schema_only_lint_accounting(&restrictive, &restrictive)?;
-    sim_assert_eq!(have: screened.flips, want: Vec::<String>::new());
-    let lint = coverage.lint.ok_or_eyre("lint coverage absent")?;
-    lint.validate()?;
+    let string = json!({"type": "string"});
+    for (baseline, candidate) in [
+        (restrictive.clone(), restrictive),
+        // The same assertion under a renamed definition is the same reason.
+        (
+            first_property_schema(&string, Some("a")),
+            first_property_schema(&string, Some("b")),
+        ),
+    ] {
+        let lint = schema_only_lint_accounting(&baseline, &candidate)?;
+        sim_assert_eq!(have: lint.raw_flips, want: Vec::<String>::new());
+        sim_assert_eq!(
+            have: lint.deferred_live_audits,
+            want: vec![
+                "document=LintRaw transport=values-file kube=1.29.0 overlay={\"child\":{\"first\":1}}"
+                    .to_string()
+            ]
+        );
+    }
+    Ok(())
+}
+
+/// Asserts the forced audit stays a schema-only flip with `verdicts`, deferring nothing.
+fn assert_forced_audit_flips(
+    baseline: &Value,
+    candidate: &Value,
+    verdicts: &str,
+) -> eyre::Result<()> {
+    let lint = schema_only_lint_accounting(baseline, candidate)?;
+    sim_assert_eq!(have: lint.deferred_live_audits, want: Vec::<String>::new());
     sim_assert_eq!(
-        have: lint.deferred_live_audits,
-        want: vec![
-            "document=LintRaw transport=values-file kube=1.29.0 overlay={\"child\":{\"first\":1}}"
-                .to_string()
-        ]
+        have: lint.raw_flips,
+        want: vec![format!(
+            "partial-override-control: document=LintRaw transport=values-file kube=1.29.0 \
+             overlay={{\"child\":{{\"first\":1}}}}: {verdicts}"
+        )]
     );
     Ok(())
 }
 
-/// A forced audit whose verdict or violations change is a transition and
-/// stays a flip, which schema-only mode cannot adjudicate.
+/// A forced audit whose verdict or violation reasons change is a transition
+/// and stays a flip, which schema-only mode cannot adjudicate.
 #[test]
 fn schema_only_keeps_a_changed_forced_partial_override_audit_as_a_flip() -> eyre::Result<()> {
     let restrictive = json!({"properties": {"child": {"required": ["second"]}}});
     let stricter = json!({"properties": {"child": {"required": ["second", "third"]}}});
-    for (baseline, candidate, verdicts) in [
-        (json!({}), restrictive.clone(), "before=true, after=false"),
-        (
-            restrictive.clone(),
-            stricter.clone(),
-            "before=false, after=false",
-        ),
-        // Both reject, but the candidate drops a reason: still a transition.
-        (stricter, restrictive, "before=false, after=false"),
-    ] {
-        let (screened, coverage) = schema_only_lint_accounting(&baseline, &candidate)?;
-        let lint = coverage.lint.ok_or_eyre("lint coverage absent")?;
-        sim_assert_eq!(have: lint.deferred_live_audits, want: Vec::<String>::new());
-        // The stricter pair also flips coalesced documents; only the raw audit is under test.
-        let raw: Vec<_> = screened
-            .flips
-            .into_iter()
-            .filter(|flip| flip.contains("document=LintRaw"))
-            .collect();
-        sim_assert_eq!(
-            have: raw,
-            want: vec![format!(
-                "partial-override-control: document=LintRaw transport=values-file kube=1.29.0 \
-                 overlay={{\"child\":{{\"first\":1}}}}: {verdicts}"
-            )]
-        );
-    }
-    Ok(())
+    assert_forced_audit_flips(&json!({}), &restrictive, "before=true, after=false")?;
+    assert_forced_audit_flips(&restrictive, &stricter, "before=false, after=false")?;
+    // Both reject, but the candidate drops a reason: still a transition.
+    assert_forced_audit_flips(&stricter, &restrictive, "before=false, after=false")
+}
+
+/// Both reject `first: 1` under `type`, but for a different type.
+#[test]
+fn schema_only_keeps_a_forced_audit_rejected_for_a_changed_type_as_a_flip() -> eyre::Result<()> {
+    assert_forced_audit_flips(
+        &first_property_schema(&json!({"type": "string"}), None),
+        &first_property_schema(&json!({"type": "boolean"}), None),
+        "before=false, after=false",
+    )
+}
+
+/// Both reject `first: 1` under `minimum`, but at a different limit, here
+/// also behind a definition.
+#[test]
+fn schema_only_keeps_a_forced_audit_rejected_at_a_changed_limit_as_a_flip() -> eyre::Result<()> {
+    assert_forced_audit_flips(
+        &first_property_schema(&json!({"minimum": 5}), None),
+        &first_property_schema(&json!({"minimum": 6}), Some("limit")),
+        "before=false, after=false",
+    )
 }
 
 #[test]

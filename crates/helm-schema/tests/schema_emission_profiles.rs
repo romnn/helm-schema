@@ -3024,15 +3024,16 @@ impl ScreenedProbes {
             if adjudicate_live {
                 self.screened.push(probe);
             } else if let Some(document) = probe.document {
-                // Live mode adjudicates every forced audit. Without Helm, one whose verdict
-                // and violations both schemas share is no transition, so it is deferred.
-                if document.lint_control && !schemas.profiles.screen_document(&document.values) {
-                    let (baseline_errors, candidate_errors) =
-                        schemas.profiles.errors(&document.values);
-                    if !rejects_for_a_new_reason(&candidate_errors, &baseline_errors) {
-                        lint.coverage.deferred_live_audits.push(probe.name);
-                        continue;
-                    }
+                // Live mode adjudicates every forced audit.
+                // Without Helm, one both schemas reject for the same assertions is no
+                // transition, so it is deferred.
+                if document.lint_control
+                    && schemas
+                        .profiles
+                        .rejects_for_the_same_assertions(&document.values)
+                {
+                    lint.coverage.deferred_live_audits.push(probe.name);
+                    continue;
                 }
                 let (before, after) = schemas.profiles.document_verdicts(&document.values);
                 self.flips.push(format!(

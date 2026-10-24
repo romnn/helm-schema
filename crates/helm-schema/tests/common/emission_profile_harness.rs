@@ -212,6 +212,7 @@ pub(crate) struct SemanticControl {
 pub(crate) struct ProfileSchemas {
     full: Validator,
     lean: Validator,
+    full_schema: Value,
     lean_schema: Value,
     defaults: Value,
 }
@@ -230,6 +231,7 @@ impl ProfileSchemas {
         Ok(Self {
             full,
             lean,
+            full_schema: full_schema.clone(),
             lean_schema: lean_schema.clone(),
             defaults,
         })
@@ -257,6 +259,20 @@ impl ProfileSchemas {
     pub(crate) fn screens_a_flip(&self, probe: &ProbeInstance) -> bool {
         let instance = self.compose(probe);
         self.screen_document(&instance)
+    }
+
+    /// Whether both schemas reject `instance` for exactly the same assertions,
+    /// parameters included. Keyword values are compared rather than keyword
+    /// locations, so renamed definitions agree; an unresolvable keyword
+    /// location answers `false`.
+    pub(crate) fn rejects_for_the_same_assertions(&self, instance: &Value) -> bool {
+        match (
+            violated_assertions(&self.full, &self.full_schema, instance),
+            violated_assertions(&self.lean, &self.lean_schema, instance),
+        ) {
+            (Some(baseline), Some(candidate)) => !baseline.is_empty() && baseline == candidate,
+            _ => false,
+        }
     }
 
     /// Screens an already composed document without applying template defaults.
@@ -835,6 +851,42 @@ fn synthesized_guard_witness_candidates(
 }
 
 /// The violations `validator` reports on a values document.
+/// One violation together with the violated keyword's schema value, such as
+/// the expected type or the limit, which [`ValuesViolationKey`] leaves out.
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+struct ViolatedAssertion {
+    instance_path: String,
+    keyword: String,
+    detail: String,
+    parameters: String,
+}
+
+/// Every violated assertion, or `None` when a keyword location does not
+/// resolve within `schema`.
+fn violated_assertions(
+    validator: &Validator,
+    schema: &Value,
+    instance: &Value,
+) -> Option<BTreeSet<ViolatedAssertion>> {
+    validator
+        .iter_errors(instance)
+        .map(|error| {
+            let ValuesViolationKey {
+                instance_path,
+                schema_path,
+                keyword,
+                detail,
+            } = ValuesViolationKey::new(&error);
+            Some(ViolatedAssertion {
+                instance_path,
+                keyword,
+                detail,
+                parameters: schema.pointer(&schema_path)?.to_string(),
+            })
+        })
+        .collect()
+}
+
 fn violations(validator: &Validator, instance: &Value) -> Vec<ValuesViolationKey> {
     validator
         .iter_errors(instance)
