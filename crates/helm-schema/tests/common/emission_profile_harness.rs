@@ -212,6 +212,7 @@ pub(crate) struct SemanticControl {
 pub(crate) struct ProfileSchemas {
     full: Validator,
     lean: Validator,
+    full_schema: Value,
     lean_schema: Value,
     defaults: Value,
 }
@@ -230,6 +231,7 @@ impl ProfileSchemas {
         Ok(Self {
             full,
             lean,
+            full_schema: full_schema.clone(),
             lean_schema: lean_schema.clone(),
             defaults,
         })
@@ -257,6 +259,20 @@ impl ProfileSchemas {
     pub(crate) fn screens_a_flip(&self, probe: &ProbeInstance) -> bool {
         let instance = self.compose(probe);
         self.screen_document(&instance)
+    }
+
+    /// Whether both schemas reject `instance` for exactly the same assertions,
+    /// parameters included. Keyword values are compared rather than keyword
+    /// locations, so renamed definitions agree; an unresolvable keyword
+    /// location answers `false`.
+    pub(crate) fn rejects_for_the_same_assertions(&self, instance: &Value) -> bool {
+        match (
+            violated_assertions(&self.full, &self.full_schema, instance),
+            violated_assertions(&self.lean, &self.lean_schema, instance),
+        ) {
+            (Some(baseline), Some(candidate)) => !baseline.is_empty() && baseline == candidate,
+            _ => false,
+        }
     }
 
     /// Screens an already composed document without applying template defaults.
@@ -835,6 +851,95 @@ fn synthesized_guard_witness_candidates(
 }
 
 /// The violations `validator` reports on a values document.
+/// Bounds one inlined keyword value; a larger one is never judged alike.
+const MAX_INLINED_NODES: usize = 1 << 20;
+
+/// One violation together with the violated keyword's schema value, such as
+/// the expected type or the limit, which [`ValuesViolationKey`] leaves out.
+/// Local references in that value are inlined, so definition names drop out.
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+struct ViolatedAssertion {
+    instance_path: String,
+    keyword: String,
+    detail: String,
+    parameters: String,
+}
+
+/// Every violated assertion, or `None` when a keyword value does not inline.
+fn violated_assertions(
+    validator: &Validator,
+    schema: &Value,
+    instance: &Value,
+) -> Option<BTreeSet<ViolatedAssertion>> {
+    validator
+        .iter_errors(instance)
+        .map(|error| {
+            let ValuesViolationKey {
+                instance_path,
+                schema_path,
+                keyword,
+                detail,
+            } = ValuesViolationKey::new(&error);
+            let mut budget = MAX_INLINED_NODES;
+            let parameters = inline_local_refs(
+                schema.pointer(&schema_path)?,
+                schema,
+                &mut Vec::new(),
+                &mut budget,
+            )?;
+            Some(ViolatedAssertion {
+                instance_path,
+                keyword,
+                detail,
+                parameters: parameters.to_string(),
+            })
+        })
+        .collect()
+}
+
+/// `value` with every local `$ref` replaced by its inlined target. A reference
+/// back to a target still being inlined becomes its distance on the inlining
+/// stack, a number no inlined schema can be, so recursion stays finite and
+/// exact. `None` for any other reference, an unresolvable one, or past `budget`.
+fn inline_local_refs(
+    value: &Value,
+    schema: &Value,
+    stack: &mut Vec<String>,
+    budget: &mut usize,
+) -> Option<Value> {
+    *budget = budget.checked_sub(1)?;
+    match value {
+        Value::Array(items) => items
+            .iter()
+            .map(|item| inline_local_refs(item, schema, stack, budget))
+            .collect::<Option<Vec<_>>>()
+            .map(Value::Array),
+        Value::Object(members) => {
+            let mut inlined = Map::new();
+            for (key, member) in members {
+                let member = match (key.as_str(), member) {
+                    ("$ref", Value::String(reference)) => {
+                        let pointer = reference.strip_prefix('#')?;
+                        if let Some(depth) = stack.iter().position(|seen| seen == pointer) {
+                            Value::from(stack.len() - depth)
+                        } else {
+                            let target = schema.pointer(pointer)?;
+                            stack.push(pointer.to_string());
+                            let target = inline_local_refs(target, schema, stack, budget);
+                            stack.pop();
+                            target?
+                        }
+                    }
+                    _ => inline_local_refs(member, schema, stack, budget)?,
+                };
+                inlined.insert(key.clone(), member);
+            }
+            Some(Value::Object(inlined))
+        }
+        Value::Null | Value::Bool(_) | Value::Number(_) | Value::String(_) => Some(value.clone()),
+    }
+}
+
 fn violations(validator: &Validator, instance: &Value) -> Vec<ValuesViolationKey> {
     validator
         .iter_errors(instance)
