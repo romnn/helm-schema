@@ -9327,4 +9327,20 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   derivation contracts plan/value-algebra-r0-inventory/leaf-fact-contracts.md, and inventory re-tags (every LocalSlot field an R3b
   residual). Test/docs only, gates in the sandbox green (fmt, lint, lint:fc 54/54, units 1,740, integration 1,102, inventory);
   it rides with the next landing (R2) instead of a separate chain. Session 6 ends here; hand-off §7 rewritten. Orchestrator.
-Next: resume from plan/schema-bug-hunt-v1-round8-handoff.md §7 (resume prompt at its end): R2 design + build, carrying r1b/leaf-facts c4e352e7, sol review, landing 10e; then R0 of `plan/value-algebra-interpreter.md`.
+- 16:39 (Oct 24) — **Session 7 started; R2 design reviewed twice and reworked twice; R2 Codex builder started.** Design
+  /Volumes/T7/dev/round8/design-r2.md (from R0 §5.3 + hand-off §7.5). Reviews: sol architecture 20261024T140822-f0451cf6
+  (REWORK → REWORK, confirmation pending), astra Helm semantics 20261024T140837-4ed81217 (ACCEPT WITH CHANGES ×2); all findings
+  accepted. Scope changes vs R0 §5.3: F2 (`required` subject: AST lane + negated-truth arm, 6 E rows) moves whole to R3b — the
+  AST lane collects subjects independently of execution demand and `required` needs string content, not kind; determinism
+  facet, nilness and full invocation order also R3b. R2 = seal (incl. `complete`), leaf = Go type + optional content, catalog as
+  the single owner of return types and parameter signatures (legacy JSON-class type comparison and supplied-operand selection
+  kept as named compatibility views), write-free certificate that is fail-closed (default unknown writer; method writers semver
+  Scan/Unmarshal* and time.Append* confirmed by astra under pinned Helm), reassignment-free and — because main's type tests use
+  JSON-class equality (`kindIs "int64" 1` true on main, false in Helm) — type-test-free; families F1 ternary condition, F3
+  required message, F4 string params, F5 int params (D4 applied to every genuine Sprig v3.3.0 `int` parameter), F6 arity.
+  Invariant: uncertified charts byte-identical to main (schema, IR, admission). ~60 new admission cells from astra go in first.
+  Expected LOC growth (reviewers: +200…+500 before consolidation) needs clause-3 justification. Builder: Codex sol
+  20261024T143850-41c36419, clone /Volumes/T7/dev/round8-r2, branch r2/kind-leaf = main 747afaba + d038e682 (the r1b carry
+  c4e352e7 cherry-picked), brief /Volumes/T7/dev/round8/brief-r2-codex.md. Disk: removed 5 idle targets (w1-fable, w1-astra,
+  w4-opus, harness, r1a), T7 69 → 134 GiB free. Orchestrator.
+Next: R2 builder (Codex 20261024T143850-41c36419) hands back per-step transfer patches → orchestrator commits on r2/kind-leaf and sends S/T/C/W to sol review; then families, live battery, landing 12 (= R2 + r1b carry) per hand-off §7.4.
