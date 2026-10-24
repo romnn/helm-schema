@@ -135,7 +135,15 @@ struct DefaultsControlKey {
 }
 
 /// Defaults evidence shared only under the same Kubernetes version and validator inputs.
-type DefaultsEvaluation = Result<Arc<ResourceEvidence>, String>;
+type DefaultsEvaluation = Result<Arc<ResourceEvidence>, DefaultsFailure>;
+
+/// A memoized defaults-control failure: its message, and whether the
+/// control was unusable rather than failed.
+#[derive(Clone, Debug)]
+struct DefaultsFailure {
+    message: String,
+    unusable: bool,
+}
 
 /// Private copies share chart inputs and differ only in their template bodies.
 pub struct PinnedHelmChart {
@@ -1395,12 +1403,22 @@ impl OfflineKubernetesValidator {
                 .or_insert_with(|| {
                     self.evaluate_defaults(chart, kubernetes_version)
                         .map(Arc::new)
-                        .map_err(|err| format!("{err:#}"))
+                        .map_err(|err| DefaultsFailure {
+                            message: format!("{err:#}"),
+                            unusable: err.downcast_ref::<UnusableControl>().is_some(),
+                        })
                 });
-            evaluated
-                .as_ref()
-                .map(Arc::clone)
-                .map_err(|err| eyre::eyre!("defaults render could not be adjudicated: {err}"))?
+            evaluated.as_ref().map(Arc::clone).map_err(|failure| {
+                let message = format!(
+                    "defaults render could not be adjudicated: {}",
+                    failure.message
+                );
+                if failure.unusable {
+                    eyre::Report::new(UnusableControl(message))
+                } else {
+                    eyre::eyre!(message)
+                }
+            })?
         };
         Ok(self.probe_evidence(chart, probe)?.compare(&defaults))
     }
