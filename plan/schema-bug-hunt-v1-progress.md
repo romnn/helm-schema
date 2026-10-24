@@ -9343,4 +9343,25 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   20261024T143850-41c36419, clone /Volumes/T7/dev/round8-r2, branch r2/kind-leaf = main 747afaba + d038e682 (the r1b carry
   c4e352e7 cherry-picked), brief /Volumes/T7/dev/round8/brief-r2-codex.md. Disk: removed 5 idle targets (w1-fable, w1-astra,
   w4-opus, harness, r1a), T7 69 → 134 GiB free. Orchestrator.
-Next: R2 builder (Codex 20261024T143850-41c36419) hands back per-step transfer patches → orchestrator commits on r2/kind-leaf and sends S/T/C/W to sol review; then families, live battery, landing 12 (= R2 + r1b carry) per hand-off §7.4.
+- 21:4x (Oct 24) — **LANDED: landing 12 merged into main as 7028748b (test infrastructure, chain green run 1); R3b design merged
+  (5c48ea13); parallel tracks per the user's new standing rule.** Landing 12 = R1b carry d038e682 + R2 step 0 0db9bbf6 (W1 admission
+  suite 1,609 -> 1,821 cells: 83 R2 controls, 129 uncertified twins, 112 newly visible main-wrong cells as R1-R3 obligations); 0 adopted.
+  Steps: dump 18:08, unit, lint 18:23, battery 18:25 (~105 min vs 68 in landing 11: host load ~35 from 3 builders), integration
+  20:10, sweep 20:25 (73 min vs ~35), finalize 21:38, green 21:41. Receipt /Volumes/T7/dev/round8-landing12-run1/receipt.json sha256
+  1f686972…. USER (2026-10-24 evening): the machine sat idle most of the day — standing rule now ≤ 3 builders + 1 landing chain,
+  landings overlap the next stages, two sol lenses for design reviews, astra for the hardest design work, Fable only rarely, and the
+  orchestrator decides scope trade-offs by "more correct and/or simpler" (playbook 87dacd65). R3b design: astra
+  20261024T160353-7dbbe6a7, sol architecture 20261024T165622-b3c569a6 REWORK → ACCEPT WITH CHANGES → ACCEPT, sol semantics
+  20261024T165630-5cac3e07 REWORK → ACCEPT; 10 construction checkpoints, 184-row deletion map, differential-tool spec, 201 pinned-Helm
+  probes; open user question deferred to C12 (acceptable measured slowdown/RSS). R2 (Codex 20261024T143850-41c36419, r2/kind-leaf):
+  S seal a3700d2d byte-identical (+233 LOC, review REWORK on size) → S-shrink 784e2d64 (+149); T Go-type leaf in progress (+454 so
+  far, a type-only preservation bug found and fixed by the builder); builder witnesses show legacy guard errors the certificate
+  cannot exclude (helper shadow snapshot, `fromJson "[]"` folded falsy) → orchestrator rule R2-11: new R2 rejections only at
+  unconditional sites; family scope decided from re-measured closures + the certificate report (W built in parallel, measurement
+  first: Codex 20261024T194121-189cd3dc, clone round8-r2w). R3a (Codex 20261024T160031-06389e84) stacked on R2's seal and rebased
+  onto S-shrink: hole/header/semver steps byte-identical, −27 LOC, 8 rows retired, 10 deferred to R3b; State facade next. Battery
+  schema-only accounting fix (Opus; forced LintRaw audits on byte-identical refactors) in review rework 3 → simplified to a
+  byte-identity rule. Provider negative-cache audit (Codex 20261024T165549-6af5151f): all 97 vendored not-found markers are genuine
+  upstream 404s; fixed stale negatives surviving an HTTP 200 refresh (05a16b16, +14 LOC, 0 fixtures), in review. Differential tool
+  for R3b (Opus, clone round8-difftool) in progress. Orchestrator.
+Next: landing 13 = battery accounting fix + provider negative-cache fix once both reviews say LAND; R2 T/C then family-scope decision (R2-11 closures + certificate report); R3a State facade; difftool T0; then R3b construction on R2+R3a.
