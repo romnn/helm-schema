@@ -9319,4 +9319,12 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   moved earlier (R3b → R1b) against monotonicity. Builder verifying with a regression test; fallback = revert the move (R1b then lands
   nothing; all 13 fields residual to R3b). User asked why R1b moved so little: these fields are execution-history and identity facts
   the current model has no other home for — evidence for R3b's heap, not a failed refactor. Orchestrator.
-Next: R1b outcome (land as landing 12 or record as no-landing); `task test:all` result on main; then R2 per plan/value-algebra-r0.md §5.3, sol review, landing 10e; then R0 of `plan/value-algebra-interpreter.md`.
+- 15:1x (Oct 24) — **`task test:all` on main 67ce9e9a: exit 0 (unit 0, integration 0, network 0). R1b: NO consolidation lands —
+  the `default_paths` move is reverted.** The builder confirmed sol's P1 (bare schemas equal, but a `toYaml` sink exposes the
+  join difference: 18/192 schemas differ; the leaf set has no absent-vs-present distinction, no safe small fold). Net result on
+  branch r1b/leaf-facts (clone /Volumes/T7/dev/round8-r1b) = c4e352e7 on main 6ad34205: four full-schema regression tests
+  crates/helm-schema/tests/local_default_join.rs (red on the reverted move, green on main's code), the thirteen LocalSlot
+  derivation contracts plan/value-algebra-r0-inventory/leaf-fact-contracts.md, and inventory re-tags (every LocalSlot field an R3b
+  residual). Test/docs only, gates in the sandbox green (fmt, lint, lint:fc 54/54, units 1,740, integration 1,102, inventory);
+  it rides with the next landing (R2) instead of a separate chain. Session 6 ends here; hand-off §7 rewritten. Orchestrator.
+Next: resume from plan/schema-bug-hunt-v1-round8-handoff.md §7 (resume prompt at its end): R2 design + build, carrying r1b/leaf-facts c4e352e7, sol review, landing 10e; then R0 of `plan/value-algebra-interpreter.md`.
