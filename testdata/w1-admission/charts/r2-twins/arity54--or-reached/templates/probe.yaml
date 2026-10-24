@@ -1,0 +1,5 @@
+{{ $_ := set (dict) "unrelated" true }}{{ $_ := or false (true | required "bad" "extra") }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: required-arity

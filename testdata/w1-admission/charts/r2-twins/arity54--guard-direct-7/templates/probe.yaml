@@ -1,0 +1,5 @@
+{{ $_ := set (dict) "unrelated" true }}{{ if and .Values.outer .Values.enabled }}{{ $_ := required "bad" }}{{ end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: required-arity

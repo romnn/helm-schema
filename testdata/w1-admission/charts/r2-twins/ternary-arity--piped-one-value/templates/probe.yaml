@@ -1,0 +1,5 @@
+{{ $_ := set (dict) "unrelated" true }}{{ if .Values.enabled }}{{ $_ := true | ternary "a" }}{{ end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe
