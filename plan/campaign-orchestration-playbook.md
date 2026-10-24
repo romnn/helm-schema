@@ -111,9 +111,16 @@ hand-off, then the ledger's last entries.
   (workspace_write clones, `round8/codex-builder-sandbox.md`) and Opus subagents; Codex sol reviews everything (high routine,
   xhigh semantic core); `gpt-6-astra` only for the hardest Helm/Go-semantics questions. Re-review with `follow_up`. The orchestrator
   does every git branch/worktree operation for Opus builders (they hang on approval prompts).
-- Design reviews of semantic mechanisms go to BOTH Codex reviewers in parallel with distinct lenses (sol architecture,
-  astra Helm/Go semantics); routine pre-landing reviews go to one sol reviewer (user 2026-10-22: "keep it resourceful").
-  Merge findings before resuming the builder.
+- Design reviews of semantic mechanisms go to two reviewers in parallel with distinct lenses (architecture, Helm/Go
+  semantics). Two sol reviewers with different lenses are usually as good as sol + astra and much cheaper (user 2026-10-24);
+  astra does the hardest design/semantics work itself (e.g. the R3b design), Fable only in the rarest cases. Routine
+  pre-landing reviews go to one sol reviewer; re-reviews are follow_ups on the same run. Merge findings before resuming the builder.
+- **Parallel by default (user, 2026-10-24; the machine sat idle most of a day).** Keep up to 3 concurrent builders (mixed Codex sol
+  workspace_write clones and Opus subagents; the orchestrator creates every branch/clone) plus 1 landing chain, within the
+  memory/disk floors. Overlap every landing chain (~2 h) with building the next stages: stack the next stage on the current
+  stage's reviewed checkpoint commit instead of waiting for it to land, and land test-infrastructure pieces early as their own
+  landing. Design work (no cargo) runs on top. Never block on one agent; the heartbeat and completion notifications drive the
+  orchestrator. Codex is effectively unlimited; the Claude quota resets Mondays 10:00. Status updates: 2–3 lines on state changes.
 - Test harnesses and tools never write bulk scratch to the system temp folder on the small
   internal disk: temp roots live under the target volume (`$TARGET/tmp`, `GOTMPDIR`) and stale
   ones are swept at start. Killed battery runs once left 70 GB in `/var/folders/.../T`.
