@@ -413,7 +413,14 @@ fn output_query(pointer: &str) -> Value {
     json!({"kind": "output_v1", "file": "templates/cm.yaml", "document": 0, "pointer": pointer})
 }
 
-const CHART: (&str, &str) = ("Chart.yaml", "apiVersion: v2\nname: c\nversion: 0.1.0\n");
+const CHART: (&str, &str) = (
+    "Chart.yaml",
+    indoc! {"
+        apiVersion: v2
+        name: c
+        version: 0.1.0
+    "},
+);
 
 /// Helm 4.2.3 renders the static `ConfigMap` verbatim; `/data/greeting` is
 /// the string `hello world`.
@@ -460,7 +467,12 @@ fn direct_abort_control_is_exact() -> eyre::Result<()> {
         ("templates/fail.yaml", "{{ fail \"boom\" }}\n"),
         (
             "templates/cm.yaml",
-            "apiVersion: v1\nkind: ConfigMap\ndata:\n  a: b\n",
+            indoc! {"
+                apiVersion: v1
+                kind: ConfigMap
+                data:
+                  a: b
+            "},
         ),
     ];
     let have = run(
@@ -563,7 +575,12 @@ fn static_alias_boolean_is_exact() -> eyre::Result<()> {
         CHART,
         (
             "templates/cm.yaml",
-            "apiVersion: v1\nkind: ConfigMap\ndata:\n  visible: true\n",
+            indoc! {"
+                apiVersion: v1
+                kind: ConfigMap
+                data:
+                  visible: true
+            "},
         ),
     ];
     let query = json!({"kind": "alias_v1", "file": "templates/cm.yaml", "document": 0,
@@ -647,12 +664,21 @@ fn unexecuted_fails_are_not_claimed_aborts() -> eyre::Result<()> {
 /// when every template is static.
 #[test]
 fn unmodeled_chart_file_selection_is_a_gap() -> eyre::Result<()> {
-    let static_map = "apiVersion: v1\nkind: ConfigMap\ndata:\n  a: b\n";
+    let static_map = indoc! {"
+        apiVersion: v1
+        kind: ConfigMap
+        data:
+          a: b
+    "};
     for extra in [
         (".helmignore", "templates/fail.yaml\n"),
         (
             "charts/sub/Chart.yaml",
-            "apiVersion: v2\nname: sub\nversion: 0.1.0\n",
+            indoc! {"
+                apiVersion: v2
+                name: sub
+                version: 0.1.0
+            "},
         ),
     ] {
         let files = [CHART, ("templates/cm.yaml", static_map), extra];

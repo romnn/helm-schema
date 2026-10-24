@@ -29,6 +29,7 @@ use helm_schema_test_support::value_algebra_diff::controls::{
     UnknownReason, UnsupportedReason,
 };
 use helm_schema_test_support::value_algebra_diff::history::FORMAT_VERSION;
+use indoc::indoc;
 use serde_json::{Value, json};
 use test_util::prelude::sim_assert_eq;
 use test_util::scratch::ScratchDir;
@@ -97,33 +98,47 @@ mod tests {
     }
 }
 
-const CHART_YAML: (&str, &str) = ("Chart.yaml", "apiVersion: v2\nname: c\nversion: 0.1.0\n");
+const CHART_YAML: (&str, &str) = (
+    "Chart.yaml",
+    indoc! {"
+        apiVersion: v2
+        name: c
+        version: 0.1.0
+    "},
+);
 
 /// The snapshot template of the required regression test.
-const SNAPSHOT: &str = r#"{{- $d := dict "x" "old" -}}
-{{- $saved := toJson $d -}}
-{{- $_ := set $d "x" "new" -}}
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: snapshot
-data:
-  snapshot: {{ $saved | quote }}
-"#;
+const SNAPSHOT: &str = indoc! {r#"
+    {{- $d := dict "x" "old" -}}
+    {{- $saved := toJson $d -}}
+    {{- $_ := set $d "x" "new" -}}
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: snapshot
+    data:
+      snapshot: {{ $saved | quote }}
+"#};
 
 /// The write-visible alias template.
-const ALIAS: &str = r#"{{- $a := dict "x" "old" -}}
-{{- $b := $a -}}
-{{- $_ := set $a "x" "new" -}}
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: alias
-data:
-  visible: {{ eq (get $b "x") "new" }}
-"#;
+const ALIAS: &str = indoc! {r#"
+    {{- $a := dict "x" "old" -}}
+    {{- $b := $a -}}
+    {{- $_ := set $a "x" "new" -}}
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: alias
+    data:
+      visible: {{ eq (get $b "x") "new" }}
+"#};
 
-const LITERAL: &str = "apiVersion: v1\nkind: ConfigMap\ndata:\n  greeting: \"hello world\"\n";
+const LITERAL: &str = indoc! {r#"
+    apiVersion: v1
+    kind: ConfigMap
+    data:
+      greeting: "hello world"
+"#};
 
 fn output(text: &str) -> Observation {
     Observation::Output {
@@ -919,5 +934,52 @@ fn abort_selections_round_trip() -> eyre::Result<()> {
     let value = serde_json::to_value(&termination)?;
     sim_assert_eq!(have: value.clone(), want: json!({"kind": "termination", "outcome": "abort", "phase": "render_yaml"}));
     sim_assert_eq!(have: serde_json::from_value::<Observation>(value)?, want: termination);
+    Ok(())
+}
+
+/// A retained runner that cannot evaluate a later-discovered query leaves
+/// that observation unadjudicated: neither the current runner nor the
+/// Helm ground fills in for it.
+#[test]
+fn an_unsupported_historical_runner_cannot_be_bypassed() -> eyre::Result<()> {
+    let scratch = ScratchDir::new("vac-unsupported")?;
+    let root = scratch.path();
+    let bin = root.join("bin");
+    let unsupported = ControlResult::Unsupported {
+        query_kind: "output_v1".into(),
+        mode: EngineMode::Render,
+        reason: UnsupportedReason::PrivateHookUnavailable,
+    };
+    let answers = [
+        ("/data/greeting", exact(output("hello world"))),
+        ("/data/snapshot", unsupported.clone()),
+    ];
+    let old_runner = runner(&bin, "old-runner", "answer", &answers)?;
+    let new_runner = revision_runner(&bin, "new-runner", r#"{"x":"old"}"#, exact(alias(true)))?;
+    let first = registry(&root.join("registry-1"), &[literal_case])?;
+    let main = capture(&root.join("main"), b"{}", &first.root, &old_runner)?;
+    let candidate = capture(&root.join("candidate"), b"{}", &first.root, &new_runner)?;
+    let second = registry(&root.join("registry-2"), &[literal_case, snapshot_case])?;
+    let snapshot = second
+        .cases
+        .get("serialized-map-snapshot")
+        .ok_or_eyre("snapshot")?;
+    let replayed_main = backfill_observation(&main, &second, &snapshot.id, &root.join("main-run"))?;
+    let replayed_candidate = backfill_observation(
+        &candidate,
+        &second,
+        &snapshot.id,
+        &root.join("candidate-run"),
+    )?;
+    sim_assert_eq!(have: replayed_main.response.result.clone(), want: unsupported);
+    let outcome = controls::classify_observation(
+        snapshot,
+        &replayed_main.response.result,
+        &replayed_candidate.response.result,
+    )?;
+    sim_assert_eq!(have: outcome.class, want: Class::Unadjudicated);
+    let mut table = OutcomeTable::new(Vec::new());
+    table.observations = vec![outcome];
+    sim_assert_eq!(have: table.closures().len(), want: 0);
     Ok(())
 }
