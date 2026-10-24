@@ -212,7 +212,6 @@ pub(crate) struct SemanticControl {
 pub(crate) struct ProfileSchemas {
     full: Validator,
     lean: Validator,
-    full_schema: Value,
     lean_schema: Value,
     defaults: Value,
 }
@@ -231,7 +230,6 @@ impl ProfileSchemas {
         Ok(Self {
             full,
             lean,
-            full_schema: full_schema.clone(),
             lean_schema: lean_schema.clone(),
             defaults,
         })
@@ -259,19 +257,6 @@ impl ProfileSchemas {
     pub(crate) fn screens_a_flip(&self, probe: &ProbeInstance) -> bool {
         let instance = self.compose(probe);
         self.screen_document(&instance)
-    }
-
-    /// Whether both schemas reject `instance` for exactly the same assertions, parameters included.
-    /// Keyword values are compared rather than keyword locations, so renamed definitions agree.
-    /// An assertion that cannot be identified exactly answers `false`.
-    pub(crate) fn rejects_for_the_same_assertions(&self, instance: &Value) -> bool {
-        match (
-            violated_assertions(&self.full, &self.full_schema, instance),
-            violated_assertions(&self.lean, &self.lean_schema, instance),
-        ) {
-            (Some(baseline), Some(candidate)) => !baseline.is_empty() && baseline == candidate,
-            _ => false,
-        }
     }
 
     /// Screens an already composed document without applying template defaults.
@@ -847,191 +832,6 @@ fn synthesized_guard_witness_candidates(
     }
     let omitted = total.saturating_sub(candidates.len());
     (candidates, omitted)
-}
-
-/// Bounds one inlined keyword value; a larger one is never judged alike.
-const MAX_INLINED_NODES: usize = 1 << 20;
-
-/// One violation together with the violated keyword's schema value, such as
-/// the expected type or the limit, which [`ValuesViolationKey`] leaves out.
-/// Local references in that value are inlined, so definition names drop out.
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
-struct ViolatedAssertion {
-    instance_path: String,
-    keyword: String,
-    detail: String,
-    parameters: String,
-}
-
-/// Every violated assertion, or `None` when one cannot be identified exactly.
-fn violated_assertions(
-    validator: &Validator,
-    schema: &Value,
-    instance: &Value,
-) -> Option<BTreeSet<ViolatedAssertion>> {
-    validator
-        .iter_errors(instance)
-        .map(|error| {
-            let route = error.evaluation_path().to_string();
-            let ValuesViolationKey {
-                instance_path,
-                schema_path,
-                keyword,
-                detail,
-            } = ValuesViolationKey::new(&error);
-            let value = keyword_value(schema, &route, &schema_path)?;
-            let mut inliner = Inliner {
-                schema,
-                stack: Vec::new(),
-                budget: MAX_INLINED_NODES,
-            };
-            let parameters = inliner.keyword(&keyword, value)?;
-            Some(ViolatedAssertion {
-                instance_path,
-                keyword,
-                detail,
-                parameters: parameters.to_string(),
-            })
-        })
-        .collect()
-}
-
-/// The value of the keyword at `location`, when it is provably that JSON
-/// pointer into the root document.
-/// The evaluation `route` is walked from the root: it may cross only local
-/// JSON-pointer `$ref`s, never enter a subschema with its own `$id`, and must
-/// land on `location`.
-/// Anything else, such as an anchor, another resource or a dynamic
-/// reference, answers `None`.
-fn keyword_value<'a>(schema: &'a Value, route: &str, location: &str) -> Option<&'a Value> {
-    let mut node = schema;
-    let mut pointer = String::new();
-    for token in route.split('/').skip(1) {
-        let token = token.replace("~1", "/").replace("~0", "~");
-        if token == "$ref" {
-            let target = local_ref_pointer(node.get("$ref")?)?;
-            node = schema.pointer(target)?;
-            pointer = target.to_string();
-        } else {
-            node = match node {
-                Value::Object(members) => members.get(&token)?,
-                Value::Array(items) => items.get(token.parse::<usize>().ok()?)?,
-                Value::Null | Value::Bool(_) | Value::Number(_) | Value::String(_) => return None,
-            };
-            pointer.push('/');
-            pointer.push_str(&token.replace('~', "~0").replace('/', "~1"));
-        }
-        if node.get("$id").is_some() {
-            return None;
-        }
-    }
-    (pointer == location).then_some(node)
-}
-
-/// The root-document JSON pointer of a local `$ref` value, `None` for
-/// anything else: an anchor, another resource or a percent-encoded pointer.
-fn local_ref_pointer(reference: &Value) -> Option<&str> {
-    let pointer = reference.as_str()?.strip_prefix('#')?;
-    (pointer.is_empty() || pointer.starts_with('/') && !pointer.contains('%')).then_some(pointer)
-}
-
-/// Inlines local references at schema positions only.
-struct Inliner<'a> {
-    schema: &'a Value,
-    /// The references being inlined, outermost first.
-    stack: Vec<String>,
-    budget: usize,
-}
-
-impl Inliner<'_> {
-    /// `value` of `keyword` with every subschema inlined; payloads such as
-    /// `const`, `enum` or `default` are literals and stay as they are.
-    fn keyword(&mut self, keyword: &str, value: &Value) -> Option<Value> {
-        match (keyword, value) {
-            (
-                "additionalProperties"
-                | "items"
-                | "additionalItems"
-                | "contains"
-                | "propertyNames"
-                | "not"
-                | "if"
-                | "then"
-                | "else"
-                | "unevaluatedItems"
-                | "unevaluatedProperties"
-                | "contentSchema",
-                Value::Bool(_) | Value::Object(_),
-            ) => self.schema(value),
-            ("allOf" | "anyOf" | "oneOf" | "prefixItems" | "items", Value::Array(schemas)) => {
-                schemas
-                    .iter()
-                    .map(|schema| self.schema(schema))
-                    .collect::<Option<Vec<_>>>()
-                    .map(Value::Array)
-            }
-            (
-                "properties" | "patternProperties" | "$defs" | "definitions" | "dependentSchemas",
-                Value::Object(schemas),
-            ) => self.members(schemas, Self::schema),
-            ("dependencies", Value::Object(dependencies)) => {
-                self.members(dependencies, |inliner, dependency| match dependency {
-                    Value::Array(_) => Some(dependency.clone()),
-                    _ => inliner.schema(dependency),
-                })
-            }
-            _ => Some(value.clone()),
-        }
-    }
-
-    fn members(
-        &mut self,
-        members: &Map<String, Value>,
-        mut inline: impl FnMut(&mut Self, &Value) -> Option<Value>,
-    ) -> Option<Value> {
-        let mut inlined = Map::new();
-        for (name, member) in members {
-            inlined.insert(name.clone(), inline(self, member)?);
-        }
-        Some(Value::Object(inlined))
-    }
-
-    /// `schema` with every local `$ref` replaced by its inlined target.
-    /// A reference back to a target still being inlined becomes its distance
-    /// on the stack, a number no inlined schema can be, so recursion stays
-    /// finite and exact.
-    /// Any other reference or resource keyword, or exceeding the budget,
-    /// answers `None`.
-    fn schema(&mut self, schema: &Value) -> Option<Value> {
-        self.budget = self.budget.checked_sub(1)?;
-        let members = match schema {
-            Value::Bool(_) => return Some(schema.clone()),
-            Value::Object(members) => members,
-            Value::Null | Value::Number(_) | Value::String(_) | Value::Array(_) => return None,
-        };
-        let mut inlined = Map::new();
-        for (keyword, value) in members {
-            let value = match keyword.as_str() {
-                "$ref" => {
-                    let pointer = local_ref_pointer(value)?;
-                    if let Some(depth) = self.stack.iter().position(|seen| seen == pointer) {
-                        Value::from(self.stack.len() - depth)
-                    } else {
-                        let target = self.schema.pointer(pointer)?;
-                        self.stack.push(pointer.to_string());
-                        let target = self.schema(target);
-                        self.stack.pop();
-                        target?
-                    }
-                }
-                "$dynamicRef" | "$recursiveRef" | "$id" | "$anchor" | "$dynamicAnchor"
-                | "$recursiveAnchor" => return None,
-                _ => self.keyword(keyword, value)?,
-            };
-            inlined.insert(keyword.clone(), value);
-        }
-        Some(Value::Object(inlined))
-    }
 }
 
 /// The violations `validator` reports on a values document.
