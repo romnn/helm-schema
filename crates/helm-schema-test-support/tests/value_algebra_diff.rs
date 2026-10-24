@@ -769,3 +769,21 @@ fn later_checkpoints_only_shrink_the_regression_set() -> eyre::Result<()> {
     sim_assert_eq!(have: problems(3, false, &unadjudicated, &c02, &ledger, None)?.len(), want: 1);
     Ok(())
 }
+
+/// An unusable Kubernetes control (resources no pinned schema decides) is
+/// an undecided oracle, never an infrastructure failure, through context.
+#[test]
+fn an_unusable_kubernetes_control_is_undecided() -> eyre::Result<()> {
+    use color_eyre::eyre::WrapErr as _;
+    use helm_schema_test_support::helm::adjudication::UnusableControl;
+    let unusable: eyre::Result<()> = Err(UnusableControl(
+        "unusable defaults Kubernetes control: uncertainty: document 9".into(),
+    )
+    .into());
+    let Err(error) = unusable.wrap_err("case=document=LintRaw") else {
+        eyre::bail!("the control error vanished");
+    };
+    sim_assert_eq!(have: FailureKind::of(&error), want: FailureKind::Undecided);
+    sim_assert_eq!(have: FailureKind::of(&eyre::eyre!("helm exited")), want: FailureKind::Infrastructure);
+    Ok(())
+}

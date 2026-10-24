@@ -17,7 +17,7 @@ use super::screen::{LintSchemas, ScreenedDocument, ScreenedProbe};
 use super::{AdjudicatedProbe, AdjudicationFailure, LiveChart, elapsed_ms};
 use crate::helm::adjudication::{
     CoalescedValues, DefaultsComparison, HelmLintProbe, HelmProbe, LintProbeRequest,
-    OfflineKubernetesValidator, PinnedHelmChart,
+    OfflineKubernetesValidator, PinnedHelmChart, UnusableControl,
 };
 use crate::helm::invocation::{HelmExecution, Replay, preserve_failure};
 use crate::helm::lint::{LintClassification, LintErrorKind, classify_lint};
@@ -77,9 +77,13 @@ fn finding(kind: FailureKind, reason: impl Into<String>) -> eyre::Report {
 }
 
 impl FailureKind {
-    /// The kind `error` carries, [`FailureKind::Infrastructure`] without one.
+    /// The kind `error` carries: an unusable Kubernetes control is
+    /// undecided, and an error without a kind is infrastructure.
     #[must_use]
     pub fn of(error: &eyre::Report) -> Self {
+        if error.downcast_ref::<UnusableControl>().is_some() {
+            return Self::Undecided;
+        }
         error
             .downcast_ref::<OracleFinding>()
             .map_or(Self::Infrastructure, |finding| finding.kind)

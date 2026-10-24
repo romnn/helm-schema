@@ -34,6 +34,14 @@ use crate::helm::invocation::{
 };
 use crate::helm::kubernetes_version::chart_kubernetes_version;
 
+/// A defaults or context Kubernetes control the oracle cannot use: its
+/// render holds resources no pinned schema decides, or new assertions
+/// versus the defaults. The pinned oracle cannot decide such a document;
+/// nothing failed to execute.
+#[derive(Debug, thiserror::Error)]
+#[error("{0}")]
+pub struct UnusableControl(pub String);
+
 /// Values obtained from template-free Helm execution, before chart mutation.
 #[derive(Clone)]
 pub struct CoalescedValues(Value);
@@ -1427,16 +1435,18 @@ impl OfflineKubernetesValidator {
                 self.control_evidence(chart, context, "context")?
             };
             let comparison = evidence.compare(&defaults_evidence);
-            eyre::ensure!(
-                comparison.new_violations.is_empty(),
-                "unusable context Kubernetes control: new assertions versus defaults: {}",
-                comparison
-                    .new_violations
-                    .iter()
-                    .map(ToString::to_string)
-                    .collect::<Vec<_>>()
-                    .join("; ")
-            );
+            if !comparison.new_violations.is_empty() {
+                return Err(UnusableControl(format!(
+                    "unusable context Kubernetes control: new assertions versus defaults: {}",
+                    comparison
+                        .new_violations
+                        .iter()
+                        .map(ToString::to_string)
+                        .collect::<Vec<_>>()
+                        .join("; ")
+                ))
+                .into());
+            }
             applicable.push(evidence);
         }
         if applicable.is_empty() {
@@ -1458,11 +1468,13 @@ impl OfflineKubernetesValidator {
             "unusable {label} render control"
         );
         let evidence = self.probe_evidence(chart, control)?;
-        eyre::ensure!(
-            evidence.uncertain.is_empty(),
-            "unusable {label} Kubernetes control: uncertainty: {}",
-            evidence.uncertain.join("; ")
-        );
+        if !evidence.uncertain.is_empty() {
+            return Err(UnusableControl(format!(
+                "unusable {label} Kubernetes control: uncertainty: {}",
+                evidence.uncertain.join("; ")
+            ))
+            .into());
+        }
         Ok(evidence)
     }
 
