@@ -2383,6 +2383,7 @@ fn battery_config(charts: &[ComparedChart]) -> eyre::Result<ComparisonConfig> {
         contexts,
         pool: PoolLimits::from_env()?,
         record_witnesses: false,
+        helm: None,
     })
 }
 

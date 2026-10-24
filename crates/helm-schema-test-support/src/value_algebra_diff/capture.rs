@@ -126,6 +126,17 @@ impl VerifiedDump {
         &self.manifest.build
     }
 
+    /// The manifest entry of `key`.
+    ///
+    /// # Errors
+    ///
+    /// [`DiffError::Identity`] when the dump does not list `key`.
+    pub fn entry(&self, key: &str) -> Result<&ManifestEntry, DiffError> {
+        self.entries.get(key).ok_or_else(|| {
+            DiffError::Identity(format!("{} does not list {key}", self.root.display()))
+        })
+    }
+
     /// Every registry key the dump lists.
     pub fn keys(&self) -> impl Iterator<Item = &str> {
         self.entries.keys().map(String::as_str)

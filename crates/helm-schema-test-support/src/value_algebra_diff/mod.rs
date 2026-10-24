@@ -7,6 +7,7 @@
 //! core; this module adds witness identity, history and policy.
 
 pub mod capture;
+pub mod commands;
 pub mod compare;
 pub mod history;
 
@@ -54,6 +55,8 @@ pub struct RunOptions {
     pub selection: Option<BTreeSet<String>>,
     /// Recorded as each new witness's origin.
     pub origin: String,
+    /// The pinned Helm runner for live adjudication.
+    pub helm: Option<&'static crate::helm::invocation::HelmRunner>,
 }
 
 /// One dump-pair comparison over the universe's witnesses and fresh discovery.
@@ -92,6 +95,7 @@ pub fn run_comparison(
         pool,
         selection,
         origin,
+        helm,
     } = options;
     let live = kubernetes.is_some();
     let mut charts = pair.compared_charts(selection.as_ref())?;
@@ -102,6 +106,7 @@ pub fn run_comparison(
         contexts,
         pool,
         record_witnesses: true,
+        helm,
     };
     let mut comparison = compare_charts(charts, &config)
         .map_err(|error| DiffError::Infrastructure(format!("compare: {error:#}")))?;

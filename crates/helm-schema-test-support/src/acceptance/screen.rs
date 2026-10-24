@@ -17,7 +17,8 @@ use super::discovery::{
     ProfileSchemas, UnreachableProbe, structural_probe_battery_with_coverage,
 };
 use super::{
-    ChartCost, ComparedChart, LiveChart, LoadedInputs, ScreenedChart, ScreenedWitness, elapsed_ms,
+    ChartCost, ChartHelm, ComparedChart, LiveChart, LoadedInputs, ScreenedChart, ScreenedWitness,
+    elapsed_ms,
 };
 
 /// Names the imported context roster file in the ordinary battery.
@@ -994,7 +995,7 @@ pub fn screen_chart(
     adjudicate_live: bool,
     roster: Option<&ImportedRoster>,
 ) -> eyre::Result<(ScreenedChart, Option<LiveChart>)> {
-    screen_chart_recording(chart, adjudicate_live, roster, false)
+    screen_chart_recording(chart, adjudicate_live, roster, false, None)
 }
 
 /// [`screen_chart`], also judging the chart's replayed witnesses outside
@@ -1019,6 +1020,7 @@ pub fn screen_chart_recording(
     adjudicate_live: bool,
     roster: Option<&ImportedRoster>,
     record: bool,
+    runner: Option<&'static crate::helm::invocation::HelmRunner>,
 ) -> eyre::Result<(ScreenedChart, Option<LiveChart>)> {
     let started = std::time::Instant::now();
     let ComparedChart {
@@ -1117,7 +1119,10 @@ pub fn screen_chart_recording(
         profiles,
         flips: screened,
         lint_schemas,
-        helm: std::sync::Arc::default(),
+        helm: std::sync::Arc::new(ChartHelm {
+            runner,
+            ..ChartHelm::default()
+        }),
         annotation,
     });
     let screened = ScreenedChart {

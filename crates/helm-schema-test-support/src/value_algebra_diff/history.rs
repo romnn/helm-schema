@@ -422,6 +422,22 @@ impl Universe {
         self.root.join("batches").join(format!("{sha256}.jsonl"))
     }
 
+    /// The witness ids of the journaled batch `sha256`.
+    ///
+    /// # Errors
+    ///
+    /// [`DiffError::Identity`] when the batch is missing or changed.
+    pub fn batch_ids(&self, sha256: &str) -> Result<BTreeSet<String>, DiffError> {
+        let batch = read(&self.batch_path(sha256))?;
+        if sha256_hex(&batch) != sha256 {
+            return Err(DiffError::Identity(format!("batch {sha256} changed")));
+        }
+        Ok(parse_batch(&batch)?
+            .into_iter()
+            .map(|record| record.id)
+            .collect())
+    }
+
     /// Loads and verifies the whole universe: the chain, every batch, every
     /// record and blob.
     ///

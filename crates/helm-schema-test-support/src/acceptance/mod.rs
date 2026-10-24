@@ -44,6 +44,9 @@ pub struct ComparisonConfig {
     /// Whether every discovered and replayed probe and document is reported
     /// as a [`ScreenedWitness`], not only the flips.
     pub record_witnesses: bool,
+    /// The pinned Helm runner live adjudication uses; `None` uses the
+    /// process's shared runner.
+    pub helm: Option<&'static crate::helm::invocation::HelmRunner>,
 }
 
 /// An adjudication that reached no verdict.
@@ -482,6 +485,8 @@ pub struct LiveChart {
 /// them, inline.
 #[derive(Default)]
 pub struct ChartHelm {
+    /// The runner preparing the copies; `None` uses the process's shared runner.
+    pub runner: Option<&'static crate::helm::invocation::HelmRunner>,
     /// The pinned copies, or why they could not be prepared.
     pub chart: std::sync::OnceLock<Result<PinnedHelmChart, String>>,
     /// How long preparing them took.
@@ -500,7 +505,9 @@ impl ChartHelm {
         self.chart
             .get_or_init(|| {
                 let started = std::time::Instant::now();
-                let chart = crate::helm::invocation::HelmRunner::shared()
+                let chart = self
+                    .runner
+                    .map_or_else(crate::helm::invocation::HelmRunner::shared, Ok)
                     .and_then(|runner| PinnedHelmChart::prepare(runner, path))
                     .map_err(|error| error.to_string());
                 self.preparation_ms
@@ -600,6 +607,7 @@ pub fn compare_charts(
         contexts: roster,
         pool: limits,
         record_witnesses,
+        helm,
     } = config;
     let limits = *limits;
     let adjudicate_live = kubernetes.is_some();
@@ -623,6 +631,7 @@ pub fn compare_charts(
                     adjudicate_live,
                     roster.as_ref(),
                     *record_witnesses,
+                    *helm,
                 ) {
                     Ok(screened) => screened,
                     Err(error) => {
