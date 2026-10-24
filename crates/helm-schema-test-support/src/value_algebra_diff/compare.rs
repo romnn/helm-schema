@@ -14,6 +14,7 @@ use serde_json::{Value, json};
 use test_util::helm_values::AcceptanceDocument;
 
 use super::DiffError;
+use super::controls::ObservationOutcome;
 use super::history::{
     BlobStore, DocumentRecord, FORMAT_VERSION, InstanceRecord, SCHEMA_ACCEPTANCE, WitnessIdentity,
     WitnessMode, WitnessRecord, canonical_json, canonical_sha256,
@@ -220,10 +221,13 @@ pub fn classify(
 }
 
 /// Everything one comparison concluded, by witness.
-#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct OutcomeTable {
-    /// Every witness's outcome, sorted by witness id.
+    /// Every schema witness's outcome, sorted by witness id.
     pub outcomes: Vec<WitnessOutcome>,
+    /// Every scored observation's outcome, sorted by witness id.
+    #[serde(default)]
+    pub observations: Vec<ObservationOutcome>,
 }
 
 impl OutcomeTable {
@@ -231,18 +235,29 @@ impl OutcomeTable {
     #[must_use]
     pub fn new(mut outcomes: Vec<WitnessOutcome>) -> Self {
         outcomes.sort_by(|left, right| left.witness.cmp(&right.witness));
-        Self { outcomes }
+        Self {
+            outcomes,
+            observations: Vec::new(),
+        }
     }
 
     /// The regression set.
     #[must_use]
     pub fn regressions(&self) -> BTreeSet<RegressionKey> {
-        self.outcomes
+        let schema = self
+            .outcomes
             .iter()
-            .filter(|outcome| outcome.class == Class::Regression)
-            .map(|outcome| RegressionKey {
-                witness: outcome.witness.clone(),
-                direction: outcome.direction.clone().unwrap_or_default(),
+            .map(|outcome| (outcome.class, &outcome.witness, &outcome.direction));
+        let observed = self
+            .observations
+            .iter()
+            .map(|outcome| (outcome.class, &outcome.witness, &outcome.direction));
+        schema
+            .chain(observed)
+            .filter(|(class, _, _)| *class == Class::Regression)
+            .map(|(_, witness, direction)| RegressionKey {
+                witness: witness.clone(),
+                direction: direction.clone().unwrap_or_default(),
             })
             .collect()
     }
@@ -250,10 +265,18 @@ impl OutcomeTable {
     /// The earned closure set.
     #[must_use]
     pub fn closures(&self) -> BTreeSet<String> {
-        self.outcomes
+        let schema = self
+            .outcomes
             .iter()
-            .filter(|outcome| outcome.class == Class::Closure)
-            .map(|outcome| outcome.witness.clone())
+            .map(|outcome| (outcome.class, &outcome.witness));
+        let observed = self
+            .observations
+            .iter()
+            .map(|outcome| (outcome.class, &outcome.witness));
+        schema
+            .chain(observed)
+            .filter(|(class, _)| *class == Class::Closure)
+            .map(|(_, witness)| witness.clone())
             .collect()
     }
 
@@ -261,8 +284,14 @@ impl OutcomeTable {
     #[must_use]
     pub fn class_counts(&self) -> BTreeMap<Class, usize> {
         let mut counts = BTreeMap::new();
-        for outcome in &self.outcomes {
-            *counts.entry(outcome.class).or_insert(0) += 1;
+        let observed = self.observations.iter().map(|outcome| outcome.class);
+        for class in self
+            .outcomes
+            .iter()
+            .map(|outcome| outcome.class)
+            .chain(observed)
+        {
+            *counts.entry(class).or_insert(0) += 1;
         }
         counts
     }

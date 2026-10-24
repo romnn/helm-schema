@@ -3,7 +3,8 @@
 //!
 //! ```text
 //! value_algebra_diff capture --producer PATH --checkout DIR --commit SHA --helmsweep PATH
-//!                            [--contexts FILE] [--synthetic] --out NEW_DIR
+//!                            [--contexts FILE] [--controls DIR --control-runner PATH]
+//!                            [--synthetic] --out NEW_DIR
 //! value_algebra_diff compare --self-test --main CAPTURE --candidate CAPTURE --out NEW_DIR
 //!                            [--helmsweep PATH] [--contexts FILE] [--chart LABEL]... [--certificates FILE]
 //! value_algebra_diff init --main CAPTURE --plan HISTORY_PLAN --out NEW_HISTORY_DIR
@@ -20,14 +21,14 @@
 //! or monotonicity failure; 2 invalid request, identity or chain; 3
 //! execution, provenance or coverage infrastructure failure. Every
 //! construction success receipt says NON-LANDABLE. `--landing` and
-//! `migrate` are refused until the observation controls are captured.
+//! `migrate` are refused: final gates and history migration are not built.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 use std::process::ExitCode;
 
 use helm_schema_test_support::value_algebra_diff::commands::{
-    self, CaptureRequest, CompareRequest, LiveOptions, Verdict,
+    self, CaptureRequest, CompareRequest, ControlsRequest, LiveOptions, Verdict,
 };
 use helm_schema_test_support::value_algebra_diff::{DiffError, EquivalenceCertificate};
 
@@ -100,13 +101,19 @@ impl Options {
     }
 
     fn path(&mut self, name: &str) -> Result<PathBuf, DiffError> {
-        self.optional(name)?
-            .map(PathBuf::from)
+        self.optional_path(name)?
             .ok_or_else(|| DiffError::Request(format!("{name} is required; {USAGE}")))
     }
 
+    /// The named path made absolute, so child processes that run in another
+    /// directory resolve it the same way.
     fn optional_path(&mut self, name: &str) -> Result<Option<PathBuf>, DiffError> {
-        Ok(self.optional(name)?.map(PathBuf::from))
+        self.optional(name)?
+            .map(|value| {
+                std::path::absolute(&value)
+                    .map_err(|error| DiffError::Request(format!("{name} {value:?}: {error}")))
+            })
+            .transpose()
     }
 
     fn finish(self) -> Result<(), DiffError> {
@@ -129,6 +136,32 @@ impl Options {
         })
     }
 
+    fn capture_request(&mut self) -> Result<CaptureRequest, DiffError> {
+        Ok(CaptureRequest {
+            producer: self.path("--producer")?,
+            checkout: self.path("--checkout")?,
+            commit: self
+                .optional("--commit")?
+                .ok_or_else(|| DiffError::Request("--commit is required".into()))?,
+            helmsweep: self.path("--helmsweep")?,
+            contexts: self.optional_path("--contexts")?,
+            out: self.path("--out")?,
+            synthetic: self.flags.contains("--synthetic"),
+            controls: match (
+                self.optional_path("--controls")?,
+                self.optional_path("--control-runner")?,
+            ) {
+                (None, None) => None,
+                (Some(registry), Some(runner)) => Some(ControlsRequest { registry, runner }),
+                (Some(_), None) | (None, Some(_)) => {
+                    return Err(DiffError::Request(
+                        "--controls and --control-runner go together".into(),
+                    ));
+                }
+            },
+        })
+    }
+
     fn certificates(&mut self) -> Result<Vec<EquivalenceCertificate>, DiffError> {
         let Some(path) = self.optional_path("--certificates")? else {
             return Ok(Vec::new());
@@ -144,17 +177,7 @@ fn run() -> Result<Verdict, DiffError> {
     let mut options = options()?;
     let verdict = match options.command.as_str() {
         "capture" => {
-            let request = CaptureRequest {
-                producer: options.path("--producer")?,
-                checkout: options.path("--checkout")?,
-                commit: options
-                    .optional("--commit")?
-                    .ok_or_else(|| DiffError::Request("--commit is required".into()))?,
-                helmsweep: options.path("--helmsweep")?,
-                contexts: options.optional_path("--contexts")?,
-                out: options.path("--out")?,
-                synthetic: options.flags.contains("--synthetic"),
-            };
+            let request = options.capture_request()?;
             options.finish()?;
             commands::capture(&request).map(|_| Verdict::Pass)?
         }
@@ -172,8 +195,7 @@ fn run() -> Result<Verdict, DiffError> {
         "compare" => {
             if options.flags.contains("--landing") {
                 return Err(DiffError::Request(
-                    "--landing needs captured observation controls and final gates; not available yet"
-                        .into(),
+                    "--landing needs the final gate receipts; not available yet".into(),
                 ));
             }
             let out = options.path("--out")?;
@@ -230,7 +252,7 @@ fn run() -> Result<Verdict, DiffError> {
         }
         "migrate" => {
             return Err(DiffError::Request(
-                "migrate is not available until observation controls are captured".into(),
+                "migrate (history migration) is not available yet".into(),
             ));
         }
         other => {

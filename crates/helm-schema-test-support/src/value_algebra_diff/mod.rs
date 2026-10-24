@@ -9,6 +9,7 @@
 pub mod capture;
 pub mod commands;
 pub mod compare;
+pub mod controls;
 pub mod history;
 
 /// Why a differential-gate command could not run to a verdict.

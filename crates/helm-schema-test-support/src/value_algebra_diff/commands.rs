@@ -14,6 +14,10 @@ use super::compare::{
     Class, ConstructionRequest, LedgerRow, OutcomeTable, PriorSets, RegressionKey, SeedReview,
     construction_policy,
 };
+use super::controls::{
+    ControlRegistry, ControlResponseV1, DescribeResponse, ObservationOutcome, ObservationRecord,
+    Runner, classify_observation, copy_registry, observe_case,
+};
 use super::history::{
     Attempt, FORMAT_VERSION, GateHead, HistoryPlan, Receipt, ReceiptKind, Universe, UniverseState,
     canonical_json, canonical_sha256, write_new,
@@ -76,6 +80,36 @@ pub struct CaptureManifest {
     pub suite_sha256: String,
     /// SHA-256 of the context roster's exact bytes, when one was captured.
     pub contexts_sha256: Option<String>,
+    /// The observation controls, when captured.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub controls: Option<ControlsCapture>,
+}
+
+/// What a capture's `controls/` directory must hash to.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ControlsCapture {
+    /// SHA-256 of the copied registry's manifest.
+    pub registry: String,
+    /// SHA-256 of the copied runner executable: its build id.
+    pub runner: String,
+    /// SHA-256 of the runner's describe response.
+    pub describe: String,
+    /// SHA-256 of `observations.jsonl`.
+    pub observations: String,
+}
+
+/// A capture's verified controls: the registry copy, the retained runner
+/// and one validated observation per scored case.
+#[derive(Debug)]
+pub struct CapturedControls {
+    /// The registry copy.
+    pub registry: ControlRegistry,
+    /// The retained runner.
+    pub runner: Runner,
+    /// The runner's self-description.
+    pub describe: DescribeResponse,
+    /// The observations by case id.
+    pub observations: BTreeMap<String, ObservationRecord>,
 }
 
 /// An opened, verified capture.
@@ -89,6 +123,16 @@ pub struct Capture {
     pub hash: String,
     /// Its verified dump.
     pub dump: VerifiedDump,
+    /// Its verified controls, when captured.
+    pub controls: Option<CapturedControls>,
+}
+
+/// The control registry and the same-revision runner a capture evaluates.
+pub struct ControlsRequest {
+    /// The registry directory.
+    pub registry: PathBuf,
+    /// The revision's IR library test executable.
+    pub runner: PathBuf,
 }
 
 /// What `capture` records.
@@ -107,6 +151,8 @@ pub struct CaptureRequest {
     pub out: PathBuf,
     /// Allows a dirty tree, marking the capture synthetic.
     pub synthetic: bool,
+    /// The observation controls to evaluate, if any.
+    pub controls: Option<ControlsRequest>,
 }
 
 fn io(path: &Path, error: &std::io::Error) -> DiffError {
@@ -173,6 +219,7 @@ pub fn capture(request: &CaptureRequest) -> Result<Capture, DiffError> {
         contexts,
         out,
         synthetic,
+        controls,
     } = request;
     if out.exists() {
         return Err(DiffError::Request(format!(
@@ -230,6 +277,10 @@ pub fn capture(request: &CaptureRequest) -> Result<Capture, DiffError> {
         }
         None => None,
     };
+    let controls = controls
+        .as_ref()
+        .map(|controls| record_controls(out, controls, dump.build()))
+        .transpose()?;
     let manifest = CaptureManifest {
         format_version: FORMAT_VERSION,
         scope: "schema-dumps-v1".into(),
@@ -247,6 +298,7 @@ pub fn capture(request: &CaptureRequest) -> Result<Capture, DiffError> {
         kubernetes_release: KUBERNETES_RELEASE.into(),
         suite_sha256: suite_sha256(&dump)?,
         contexts_sha256,
+        controls,
     };
     let bytes = serde_json::to_vec_pretty(&manifest)
         .map_err(|error| DiffError::Infrastructure(format!("serialize: {error}")))?;
@@ -256,7 +308,11 @@ pub fn capture(request: &CaptureRequest) -> Result<Capture, DiffError> {
 
 /// SHA-256 of a dump's keys, recipes and recipe inputs: what both sides of
 /// a comparison must share.
-fn suite_sha256(dump: &VerifiedDump) -> Result<String, DiffError> {
+///
+/// # Errors
+///
+/// [`DiffError`] when an entry cannot be read or serialized.
+pub fn suite_sha256(dump: &VerifiedDump) -> Result<String, DiffError> {
     let mut suite = Vec::new();
     for key in dump.keys() {
         let schema = dump.entry(key)?;
@@ -293,12 +349,203 @@ pub fn open_capture(root: &Path) -> Result<Capture, DiffError> {
             root.display()
         )));
     }
+    let controls = manifest
+        .controls
+        .as_ref()
+        .map(|controls| open_controls(&root.join("controls"), controls))
+        .transpose()?;
     Ok(Capture {
         root: root.to_path_buf(),
         hash: sha256_hex(&bytes),
         manifest,
         dump,
+        controls,
     })
+}
+
+/// Copies the registry and runner into `out/controls`, checks the runner was
+/// built from the producer's source, and records one observation per
+/// scored case.
+///
+/// # Errors
+///
+/// [`DiffError::Identity`] when the runner was built from another source or
+/// answers another request, input, query or build;
+/// [`DiffError::Infrastructure`] when a runner invocation fails.
+pub fn record_controls(
+    out: &Path,
+    request: &ControlsRequest,
+    build: &BuildProvenance,
+) -> Result<ControlsCapture, DiffError> {
+    let dir = out.join("controls");
+    let registry = copy_registry(
+        &ControlRegistry::open(&request.registry)?,
+        &dir.join("registry"),
+    )?;
+    let runner_dir = dir.join("runner");
+    std::fs::create_dir_all(&runner_dir).map_err(|error| io(&runner_dir, &error))?;
+    let copied = runner_dir.join("protocol-runner");
+    std::fs::copy(&request.runner, &copied).map_err(|error| io(&request.runner, &error))?;
+    let runner = Runner::new(&copied)?;
+    let describe = runner.describe(&dir.join("runs/describe"))?;
+    if describe.build != *build {
+        return Err(DiffError::Identity(format!(
+            "the control runner was built from {:?}, the producer from {build:?}",
+            describe.build
+        )));
+    }
+    let describe_bytes = json_line(&describe)?;
+    write_new(&dir.join("describe.json"), describe_bytes.as_bytes())?;
+    let mut lines = Vec::new();
+    for case in registry.cases.values() {
+        if case.scored_query().is_none() {
+            continue;
+        }
+        let record = observe_case(
+            &runner,
+            &dir.join("runs").join(&case.id),
+            &dir.join("registry/blobs"),
+            case,
+        )?;
+        lines.push(json_line(&record)?);
+    }
+    Ok(ControlsCapture {
+        registry: registry.sha256,
+        runner: runner.build_id,
+        describe: sha256_hex(describe_bytes.as_bytes()),
+        observations: write_lines(&dir.join("observations.jsonl"), &lines)?,
+    })
+}
+
+/// Opens a capture's controls and checks them against its manifest.
+fn open_controls(dir: &Path, expected: &ControlsCapture) -> Result<CapturedControls, DiffError> {
+    let registry = ControlRegistry::open(&dir.join("registry"))?;
+    let runner = Runner::new(&dir.join("runner/protocol-runner"))
+        .map_err(|error| DiffError::Identity(format!("retained runner: {error}")))?;
+    let describe_bytes =
+        std::fs::read(dir.join("describe.json")).map_err(|error| io(dir, &error))?;
+    let observations_bytes =
+        std::fs::read(dir.join("observations.jsonl")).map_err(|error| io(dir, &error))?;
+    if registry.sha256 != expected.registry
+        || runner.build_id != expected.runner
+        || sha256_hex(&describe_bytes) != expected.describe
+        || sha256_hex(&observations_bytes) != expected.observations
+    {
+        return Err(DiffError::Identity(format!(
+            "{} no longer matches its capture manifest",
+            dir.display()
+        )));
+    }
+    let describe: DescribeResponse = serde_json::from_slice(&describe_bytes)
+        .map_err(|error| DiffError::Identity(format!("describe.json: {error}")))?;
+    let mut observations = BTreeMap::new();
+    for line in observations_bytes
+        .split(|byte| *byte == b'\n')
+        .filter(|line| !line.is_empty())
+    {
+        let record: ObservationRecord = serde_json::from_slice(line)
+            .map_err(|error| DiffError::Identity(format!("observations.jsonl: {error}")))?;
+        if record.response.runner_build_id != runner.build_id {
+            return Err(DiffError::Identity(format!(
+                "{}: answered by another runner",
+                record.case
+            )));
+        }
+        observations.insert(record.case.clone(), record);
+    }
+    Ok(CapturedControls {
+        registry,
+        runner,
+        describe,
+        observations,
+    })
+}
+
+/// Re-evaluates `case`, which `registry` holds but the capture never saw,
+/// with the capture's retained runner on a fresh blob root under the new
+/// directory `scratch`: no checkout, current runner or Helm answer is used.
+///
+/// # Errors
+///
+/// [`DiffError::Identity`] when the capture has no retained runner or a
+/// blob is missing; otherwise as [`observe_case`].
+pub fn backfill_observation(
+    capture: &Capture,
+    registry: &ControlRegistry,
+    case_id: &str,
+    scratch: &Path,
+) -> Result<ObservationRecord, DiffError> {
+    let controls = capture.controls.as_ref().ok_or_else(|| {
+        DiffError::Identity(format!(
+            "{} retains no control runner",
+            capture.root.display()
+        ))
+    })?;
+    let runner = Runner::new(&controls.runner.path)
+        .map_err(|error| DiffError::Identity(format!("retained runner: {error}")))?;
+    if runner.build_id != controls.runner.build_id {
+        return Err(DiffError::Identity("the retained runner changed".into()));
+    }
+    let case = registry
+        .cases
+        .get(case_id)
+        .ok_or_else(|| DiffError::Request(format!("{case_id} is not in the registry")))?;
+    if scratch.exists() {
+        return Err(DiffError::Identity(format!(
+            "{} already exists",
+            scratch.display()
+        )));
+    }
+    let blob_root = scratch.join("blobs");
+    super::controls::stage_case_blobs(registry, case, &blob_root)?;
+    observe_case(&runner, &scratch.join("run"), &blob_root, case)
+}
+
+/// Classifies every scored control both captures answered.
+///
+/// # Errors
+///
+/// [`DiffError::Identity`] when only one capture has controls, the
+/// registries differ or a scored case lacks an answer;
+/// [`DiffError::Infrastructure`] for an infrastructure answer.
+pub fn observation_outcomes(
+    main: &Capture,
+    candidate: &Capture,
+) -> Result<Vec<ObservationOutcome>, DiffError> {
+    let (main, candidate) = match (&main.controls, &candidate.controls) {
+        (None, None) => return Ok(Vec::new()),
+        (Some(main), Some(candidate)) => (main, candidate),
+        (Some(_), None) | (None, Some(_)) => {
+            return Err(DiffError::Identity(
+                "only one capture has observation controls".into(),
+            ));
+        }
+    };
+    if main.registry.sha256 != candidate.registry.sha256 {
+        return Err(DiffError::Identity(
+            "the captures evaluated different control registries".into(),
+        ));
+    }
+    let answer =
+        |controls: &CapturedControls, case: &str| -> Result<ControlResponseV1, DiffError> {
+            controls
+                .observations
+                .get(case)
+                .map(|record| record.response.clone())
+                .ok_or_else(|| DiffError::Identity(format!("{case}: no captured observation")))
+        };
+    let mut outcomes = Vec::new();
+    for case in main.registry.cases.values() {
+        if case.scored_query().is_none() {
+            continue;
+        }
+        outcomes.push(classify_observation(
+            case,
+            &answer(main, &case.id)?.result,
+            &answer(candidate, &case.id)?.result,
+        )?);
+    }
+    Ok(outcomes)
 }
 
 /// How live adjudication runs, shared by every comparing command.
@@ -389,7 +636,8 @@ fn compare_captures(
         kubernetes,
         contexts,
     } = live_inputs(options, &labels)?;
-    let run = run_comparison(
+    let observations = observation_outcomes(main, candidate)?;
+    let mut run = run_comparison(
         &pair,
         universe,
         blobs,
@@ -403,6 +651,16 @@ fn compare_captures(
             helm,
         },
     )?;
+    if let (Some(coverage), Some(controls)) = (run.coverage.as_object_mut(), &main.controls) {
+        coverage.insert(
+            "observations".into(),
+            super::controls::coverage(&observations, &controls.registry),
+        );
+    }
+    run.table.observations = observations;
+    run.table
+        .observations
+        .sort_by(|left, right| left.witness.cmp(&right.witness));
     Ok((pair, run))
 }
 
@@ -507,6 +765,16 @@ fn write_tables(
     hashes.insert(
         "witnesses",
         write_lines(&out.join("witnesses.jsonl"), &witnesses)?,
+    );
+    let observations = run
+        .table
+        .observations
+        .iter()
+        .map(json_line)
+        .collect::<Result<Vec<_>, _>>()?;
+    hashes.insert(
+        "observations",
+        write_lines(&out.join("observations.jsonl"), &observations)?,
     );
     let mut coverage = run.coverage.clone();
     if let Some(members) = coverage.as_object_mut() {
@@ -740,7 +1008,11 @@ fn receipt(
         capture_hash: candidate.map(|capture| capture.hash.clone()),
         baseline_capture_hash: main.hash.clone(),
         suite_hash: main.manifest.suite_sha256.clone(),
-        controls_hash: None,
+        controls_hash: main
+            .manifest
+            .controls
+            .as_ref()
+            .map(|controls| controls.registry.clone()),
         context_roster_hash: contexts.clone(),
         provider_hash: main.manifest.suite_sha256.clone(),
         helm_identity: format!(
@@ -763,14 +1035,35 @@ fn receipt(
         regression_set_hash: canonical_sha256(&sets.regressions)?,
         earned_closure_set_hash: canonical_sha256(&sets.closures)?,
         full_outcome_table_hash: hash("outcomes"),
-        control_runner_manifest_hash: None,
-        observation_results_hash: None,
+        control_runner_manifest_hash: control_runner_manifest_hash(main, *candidate)?,
+        observation_results_hash: main
+            .manifest
+            .controls
+            .as_ref()
+            .map(|_| hash("observations")),
         gate_mode: "construction".into(),
         landability: "NON-LANDABLE".into(),
         exit_code,
         seal_sha256: String::new(),
     }
     .seal()
+}
+
+/// SHA-256 of both captures' runner identities, when controls were captured.
+fn control_runner_manifest_hash(
+    main: &Capture,
+    candidate: Option<&Capture>,
+) -> Result<Option<String>, DiffError> {
+    let Some(main_controls) = &main.manifest.controls else {
+        return Ok(None);
+    };
+    let candidate_controls = candidate.and_then(|capture| capture.manifest.controls.as_ref());
+    canonical_sha256(&json!({
+        "main": [main_controls.runner, main_controls.describe],
+        "candidate": candidate_controls
+            .map(|controls| [controls.runner.clone(), controls.describe.clone()]),
+    }))
+    .map(Some)
 }
 
 /// Creates a history: main compared with itself discovers the first

@@ -29,6 +29,7 @@ mod resource_identity;
 mod selection_reachability;
 mod symbolic_local_state;
 mod url_parse_pattern;
+mod value_algebra_controls;
 
 use crate::{Guard, SymbolicIrContext, ValueKind, YamlPath};
 use color_eyre::eyre;

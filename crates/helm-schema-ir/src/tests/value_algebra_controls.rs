@@ -1,0 +1,602 @@
+//! The version-1 value-algebra control runner: answers one observation
+//! request with this revision's own parse and fragment evaluation.
+//!
+//! `value_algebra_diff` invokes the ignored [`protocol_v1`] entry point of
+//! this crate's debug test executable. The adapter evaluates every rendered
+//! template of the frozen chart once and only reads the executed result:
+//! guarded fragments and the observed fail captures. It never walks template
+//! expressions again, schedules dependency charts or coalesces values.
+//!
+//! The legacy fragment does not record whether a render completed, so a
+//! normal exit and an emitted value are exact only when every rendered file
+//! is action-free source the fragment reproduces verbatim. A definite abort
+//! is exact when a fail capture executes unconditionally. Everything else is
+//! an explicit representation gap.
+
+use std::collections::BTreeMap;
+use std::fmt::Write as _;
+
+use color_eyre::eyre;
+use helm_schema_ast::DefineIndex;
+use helm_schema_core::PredicateKind;
+use helm_schema_test_support::value_algebra_diff::controls::{
+    self, AbortPhase, CacheMode, Capabilities, ControlBlobs, ControlInput, ControlResult,
+    EngineMode, ExactCoverage, ExecutionEvidence, InfrastructureCode, Observation,
+    ProjectionStatus, Query, Selection, Termination, UnknownReason,
+};
+use helm_schema_test_support::value_algebra_diff::history::canonical_json;
+use indoc::indoc;
+use serde::Deserialize as _;
+use serde_json::{Value, json};
+use test_util::prelude::sim_assert_eq;
+
+use crate::SymbolicIrContext;
+use crate::eval_effect::CaptureKind;
+use crate::fragment_eval::{
+    AbstractFragment, EntryKey, EvaluatedDocument, Guarded, StringPart, dump_document,
+};
+
+/// The evaluator named in execution evidence.
+const EVALUATOR: &str = "helm-schema-ir legacy fragment evaluator, controls v1";
+
+/// The runner entry point; it does nothing without a request.
+#[test]
+#[ignore = "value_algebra_diff's control runner; it needs HELM_SCHEMA_CONTROL_REQUEST"]
+fn protocol_v1() -> eyre::Result<()> {
+    controls::serve(controls::executable_sha256()?, &capabilities(), observe)?;
+    Ok(())
+}
+
+fn capabilities() -> Capabilities {
+    Capabilities {
+        queries: controls::QUERY_KINDS
+            .iter()
+            .map(ToString::to_string)
+            .collect(),
+        modes: vec![EngineMode::Render],
+        cache_modes: vec![CacheMode::Default, CacheMode::Disabled],
+    }
+}
+
+/// One rendered template's execution.
+struct FileRun {
+    source: String,
+    has_actions: bool,
+    document: EvaluatedDocument,
+}
+
+/// The whole chart's execution: rendered files by chart-relative name, and
+/// why the result cannot prove completion.
+struct Execution {
+    files: BTreeMap<String, FileRun>,
+    gaps: Vec<String>,
+    result_sha256: String,
+}
+
+/// Answers one query; the protocol already verified every blob.
+fn observe(blobs: &ControlBlobs, input: &ControlInput, query: &Query) -> ControlResult {
+    let chart = match blobs.chart(input) {
+        Ok(chart) => chart,
+        Err(error) => {
+            return ControlResult::InfrastructureFailure {
+                code: InfrastructureCode::InputMismatch,
+                diagnostic: error.to_string(),
+            };
+        }
+    };
+    let execution = execute(&chart.files);
+    let termination = termination(&execution);
+    match query {
+        Query::TerminationV1 { .. } => match termination {
+            Ok(outcome) => exact(Observation::Termination { outcome }),
+            Err(gap) => unknown(&execution, gap),
+        },
+        Query::OutputV1 { file, pointer, .. } => {
+            match select(&execution, termination, file, pointer) {
+                Ok(Selected::Abort(phase)) => exact(Observation::Output {
+                    selection: Selection::NotEmitted { phase },
+                }),
+                Ok(Selected::Missing) => exact(Observation::Output {
+                    selection: Selection::Missing,
+                }),
+                Ok(Selected::Value(serde_yaml::Value::String(text))) => {
+                    exact(Observation::Output {
+                        selection: controls::output_value(text.as_bytes()),
+                    })
+                }
+                Ok(Selected::Value(other)) => wrong_type(&execution, &other, |selection| {
+                    Observation::Output { selection }
+                }),
+                Err(gap) => unknown(&execution, gap),
+            }
+        }
+        Query::AliasV1 { file, pointer, .. } => {
+            match select(&execution, termination, file, pointer) {
+                Ok(Selected::Abort(phase)) => exact(Observation::Alias {
+                    selection: Selection::NotEmitted { phase },
+                }),
+                Ok(Selected::Missing) => exact(Observation::Alias {
+                    selection: Selection::Missing,
+                }),
+                Ok(Selected::Value(serde_yaml::Value::Bool(value))) => exact(Observation::Alias {
+                    selection: Selection::Value { value },
+                }),
+                Ok(Selected::Value(other)) => wrong_type(&execution, &other, |selection| {
+                    Observation::Alias { selection }
+                }),
+                Err(gap) => unknown(&execution, gap),
+            }
+        }
+    }
+}
+
+fn exact(observation: Observation) -> ControlResult {
+    ControlResult::Exact {
+        alternatives: vec![observation],
+        coverage: ExactCoverage::Complete,
+    }
+}
+
+fn unknown(execution: &Execution, gap: String) -> ControlResult {
+    let mut gaps = execution.gaps.clone();
+    gaps.push(gap);
+    gaps.sort();
+    gaps.dedup();
+    ControlResult::AbstractUnknown {
+        reason: UnknownReason::RepresentationGap,
+        evidence: ExecutionEvidence {
+            evaluator: EVALUATOR.into(),
+            result_sha256: execution.result_sha256.clone(),
+            gaps,
+            projection: ProjectionStatus::ReadOnly,
+        },
+    }
+}
+
+fn wrong_type<T>(
+    execution: &Execution,
+    value: &serde_yaml::Value,
+    observation: impl FnOnce(Selection<T>) -> Observation,
+) -> ControlResult {
+    match serde_json::to_value(value) {
+        Ok(value) => exact(observation(Selection::WrongType { value })),
+        Err(error) => unknown(
+            execution,
+            format!("selected value has no JSON form: {error}"),
+        ),
+    }
+}
+
+/// Evaluates every rendered template once.
+fn execute(files: &BTreeMap<String, Vec<u8>>) -> Execution {
+    let mut gaps = Vec::new();
+    if files.keys().any(|name| name.starts_with("charts/")) {
+        gaps.push("dependency charts are not scheduled by the legacy evaluator".to_string());
+    }
+    let mut index = DefineIndex::new();
+    let mut sources = BTreeMap::new();
+    for (name, bytes) in files {
+        if !name.starts_with("templates/") {
+            continue;
+        }
+        let Ok(source) = std::str::from_utf8(bytes) else {
+            gaps.push(format!("{name} is not UTF-8"));
+            continue;
+        };
+        index.add_file_source(name, source);
+        let partial = name
+            .rsplit('/')
+            .next()
+            .is_some_and(|base| base.starts_with('_'));
+        if !partial {
+            sources.insert(name.clone(), source.to_string());
+        }
+    }
+    let context = SymbolicIrContext::new(&index);
+    let mut runs = BTreeMap::new();
+    let mut dump = String::new();
+    for (name, source) in sources {
+        let has_actions = match helm_schema_ast::contains_template_action(&source) {
+            Ok(has_actions) => has_actions,
+            Err(error) => {
+                gaps.push(format!("{name} does not parse: {error}"));
+                true
+            }
+        };
+        let document = context.eval_document_fragment(&source);
+        let _ = writeln!(dump, "file {name}\n{}", dump_document(&document));
+        runs.insert(
+            name,
+            FileRun {
+                source,
+                has_actions,
+                document,
+            },
+        );
+    }
+    Execution {
+        files: runs,
+        gaps,
+        result_sha256: helm_schema_test_support::source_digest::sha256_hex(dump.as_bytes()),
+    }
+}
+
+/// The render's exit, or why the executed result cannot prove it.
+fn termination(execution: &Execution) -> Result<Termination, String> {
+    if let Some(gap) = execution.gaps.first() {
+        return Err(gap.clone());
+    }
+    let unconditional_fail = execution.files.values().any(|run| {
+        run.document.observed_facts.captures.iter().any(|capture| {
+            matches!(capture.kind, CaptureKind::Fail)
+                && capture.conjunction.is_empty()
+                && capture.ranged.iter().next().is_none()
+        })
+    });
+    if unconditional_fail {
+        return Ok(Termination::Abort {
+            phase: AbortPhase::TemplateEval,
+        });
+    }
+    if let Some((name, _)) = execution.files.iter().find(|(_, run)| run.has_actions) {
+        return Err(format!(
+            "{name} executes template actions; the legacy fragment does not record completion"
+        ));
+    }
+    for (name, run) in &execution.files {
+        for document in serde_yaml::Deserializer::from_str(&run.source) {
+            if let Err(error) = serde_yaml::Value::deserialize(document) {
+                return Err(format!(
+                    "{name}: rendered YAML parity is unverified: {error}"
+                ));
+            }
+        }
+    }
+    Ok(Termination::Normal)
+}
+
+/// What a selection found once the render's exit is known.
+enum Selected {
+    Abort(AbortPhase),
+    Missing,
+    Value(serde_yaml::Value),
+}
+
+/// Selects `pointer` in `file`'s single executed document.
+fn select(
+    execution: &Execution,
+    termination: Result<Termination, String>,
+    file: &str,
+    pointer: &str,
+) -> Result<Selected, String> {
+    match termination? {
+        Termination::Abort { phase } => return Ok(Selected::Abort(phase)),
+        Termination::Normal => {}
+    }
+    let Some(run) = execution.files.get(file) else {
+        return Ok(Selected::Missing);
+    };
+    let documents = serde_yaml::Deserializer::from_str(&run.source).count();
+    if documents != 1 {
+        return Err(format!(
+            "{file} has {documents} YAML documents; the legacy fragment merges documents"
+        ));
+    }
+    let mut node = single_always(&run.document.root)?;
+    for segment in pointer_segments(pointer)? {
+        let next = match node {
+            AbstractFragment::Mapping(mapping) => {
+                let mut found = None;
+                for entry in &mapping.entries {
+                    let EntryKey::Literal(raw) = &entry.key else {
+                        return Err("a templated key is not decided by the legacy fragment".into());
+                    };
+                    if decode_plain_or_quoted(raw)? == serde_yaml::Value::String(segment.clone()) {
+                        found = Some(&entry.value);
+                        break;
+                    }
+                }
+                found
+            }
+            AbstractFragment::Sequence(sequence) => segment
+                .parse::<usize>()
+                .ok()
+                .and_then(|index| sequence.items.get(index)),
+            AbstractFragment::Scalar(_)
+            | AbstractFragment::Splice(_)
+            | AbstractFragment::Opaque(_) => {
+                return Err("the pointer passes through a scalar or unknown fragment".into());
+            }
+        };
+        let Some(next) = next else {
+            return Ok(Selected::Missing);
+        };
+        node = single_always(next)?;
+    }
+    let AbstractFragment::Scalar(scalar) = node else {
+        return Err("only scalar selections are read from the legacy fragment".into());
+    };
+    if scalar.suppressed {
+        return Err("a block scalar's text is not recorded verbatim".into());
+    }
+    let mut raw = String::new();
+    for part in &scalar.parts {
+        match part {
+            StringPart::Text(alternatives) if alternatives.len() == 1 => {
+                raw.extend(alternatives.iter().map(String::as_str));
+            }
+            StringPart::Text(_) | StringPart::Splice(_) | StringPart::Taint(_) => {
+                return Err("the selected scalar is not one literal".into());
+            }
+        }
+    }
+    decode_plain_or_quoted(&raw).map(Selected::Value)
+}
+
+/// The one unconditional arm of `guarded`.
+fn single_always(guarded: &Guarded<AbstractFragment>) -> Result<&AbstractFragment, String> {
+    match guarded.arms.as_slice() {
+        [(condition, fragment)] if matches!(condition.kind(), PredicateKind::True) => Ok(fragment),
+        _ => Err("the selected position is guarded".into()),
+    }
+}
+
+/// RFC 6901 reference tokens.
+fn pointer_segments(pointer: &str) -> Result<Vec<String>, String> {
+    if pointer.is_empty() {
+        return Ok(Vec::new());
+    }
+    let Some(rest) = pointer.strip_prefix('/') else {
+        return Err(format!("{pointer:?} is not a JSON pointer"));
+    };
+    Ok(rest
+        .split('/')
+        .map(|token| token.replace("~1", "/").replace("~0", "~"))
+        .collect())
+}
+
+/// Decodes one raw scalar the same way YAML 1.1 (Helm) and YAML 1.2
+/// (`serde_yaml`) would, or reports the plain spellings where they differ.
+fn decode_plain_or_quoted(raw: &str) -> Result<serde_yaml::Value, String> {
+    let raw = raw.trim();
+    let value = serde_yaml::from_str::<serde_yaml::Value>(raw)
+        .map_err(|error| format!("selected scalar is not YAML: {error}"))?;
+    if raw.starts_with('"') || raw.starts_with('\'') {
+        return Ok(value);
+    }
+    let ambiguous = match &value {
+        serde_yaml::Value::String(text) => {
+            let lower = text.to_ascii_lowercase();
+            matches!(
+                lower.as_str(),
+                "y" | "yes" | "n" | "no" | "on" | "off" | "true" | "false" | "null" | "~"
+            ) || text
+                .chars()
+                .all(|character| character.is_ascii_digit() || "+-.:_eEoOxX".contains(character))
+        }
+        serde_yaml::Value::Bool(_) => !matches!(raw, "true" | "false"),
+        serde_yaml::Value::Number(_) => {
+            let digits = raw.strip_prefix('-').unwrap_or(raw);
+            digits.is_empty()
+                || !digits.chars().all(|character| character.is_ascii_digit())
+                || (digits.len() > 1 && digits.starts_with('0'))
+        }
+        serde_yaml::Value::Null
+        | serde_yaml::Value::Sequence(_)
+        | serde_yaml::Value::Mapping(_)
+        | serde_yaml::Value::Tagged(_) => true,
+    };
+    if ambiguous {
+        return Err(format!(
+            "plain scalar {raw:?} may decode differently in YAML 1.1"
+        ));
+    }
+    Ok(value)
+}
+
+// ---- Adapter checks against pinned Helm observations ----
+
+/// Runs the adapter on `files` with defaults `{}`.
+fn run(files: &[(&str, &str)], query: &Value) -> eyre::Result<ControlResult> {
+    let scratch = test_util::scratch::ScratchDir::new("ir-controls")?;
+    let mut builder = controls::RegistryBuilder::new(&scratch.path().join("registry"))?;
+    let input = builder.render_input(files, "{}\n", &json!({}))?;
+    let blobs = ControlBlobs::new(scratch.path().join("registry/blobs"));
+    let query: Query = serde_json::from_value(query.clone())?;
+    Ok(observe(&blobs, &input, &query))
+}
+
+fn output_query(pointer: &str) -> Value {
+    json!({"kind": "output_v1", "file": "templates/cm.yaml", "document": 0, "pointer": pointer})
+}
+
+const CHART: (&str, &str) = ("Chart.yaml", "apiVersion: v2\nname: c\nversion: 0.1.0\n");
+
+/// Helm 4.2.3 renders the static `ConfigMap` verbatim; `/data/greeting` is
+/// the string `hello world`.
+#[test]
+fn literal_output_control_is_exact() -> eyre::Result<()> {
+    let template = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: literal
+        data:
+          greeting: "hello world"
+          count: 3
+    "#};
+    let files = [CHART, ("templates/cm.yaml", template)];
+    let have = run(&files, &output_query("/data/greeting"))?;
+    sim_assert_eq!(have: have, want: exact(Observation::Output {
+        selection: controls::output_value(b"hello world"),
+    }));
+    let have = run(&files, &output_query("/data/count"))?;
+    sim_assert_eq!(have: have, want: exact(Observation::Output {
+        selection: Selection::WrongType { value: json!(3) },
+    }));
+    let have = run(&files, &output_query("/data/absent"))?;
+    sim_assert_eq!(have: have, want: exact(Observation::Output {
+        selection: Selection::Missing,
+    }));
+    let have = run(
+        &files,
+        &json!({"kind": "termination_v1", "scope": "render"}),
+    )?;
+    sim_assert_eq!(have: have, want: exact(Observation::Termination {
+        outcome: Termination::Normal,
+    }));
+    Ok(())
+}
+
+/// Helm 4.2.3 aborts `helm template` in template evaluation with
+/// `execution error at (c/templates/fail.yaml:1:3): boom`.
+#[test]
+fn direct_abort_control_is_exact() -> eyre::Result<()> {
+    let files = [
+        CHART,
+        ("templates/fail.yaml", "{{ fail \"boom\" }}\n"),
+        (
+            "templates/cm.yaml",
+            "apiVersion: v1\nkind: ConfigMap\ndata:\n  a: b\n",
+        ),
+    ];
+    let have = run(
+        &files,
+        &json!({"kind": "termination_v1", "scope": "render"}),
+    )?;
+    sim_assert_eq!(have: have, want: exact(Observation::Termination {
+        outcome: Termination::Abort { phase: AbortPhase::TemplateEval },
+    }));
+    let have = run(&files, &output_query("/data/a"))?;
+    sim_assert_eq!(have: have, want: exact(Observation::Output {
+        selection: Selection::NotEmitted { phase: AbortPhase::TemplateEval },
+    }));
+    Ok(())
+}
+
+/// A values-guarded fail is not a definite abort of this input: without
+/// guard projection the legacy result cannot say, so it reports a gap.
+#[test]
+fn guarded_abort_is_a_representation_gap() -> eyre::Result<()> {
+    let files = [
+        CHART,
+        (
+            "templates/fail.yaml",
+            "{{ if .Values.x }}{{ fail \"boom\" }}{{ end }}\n",
+        ),
+    ];
+    let have = run(
+        &files,
+        &json!({"kind": "termination_v1", "scope": "render"}),
+    )?;
+    let ControlResult::AbstractUnknown { reason, .. } = have else {
+        eyre::bail!("expected abstract_unknown, have {have:?}");
+    };
+    sim_assert_eq!(have: reason, want: UnknownReason::RepresentationGap);
+    Ok(())
+}
+
+/// The snapshot chart: Helm 4.2.3 renders `/data/snapshot` as the string
+/// `{"x":"old"}`. The legacy fragment folds `toJson` into a structured
+/// mapping and cannot prove completion, so the adapter must report a gap,
+/// never the structured value as a wrong-type claim.
+#[test]
+fn snapshot_control_is_an_explicit_representation_gap() -> eyre::Result<()> {
+    let template = indoc! {r#"
+        {{- $d := dict "x" "old" -}}
+        {{- $saved := toJson $d -}}
+        {{- $_ := set $d "x" "new" -}}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: snapshot
+        data:
+          snapshot: {{ $saved | quote }}
+    "#};
+    let files = [CHART, ("templates/cm.yaml", template)];
+    let have = run(&files, &output_query("/data/snapshot"))?;
+    let ControlResult::AbstractUnknown { reason, evidence } = have else {
+        eyre::bail!("expected abstract_unknown, have {have:?}");
+    };
+    sim_assert_eq!(have: reason, want: UnknownReason::RepresentationGap);
+    sim_assert_eq!(have: evidence.gaps, want: vec![
+        "templates/cm.yaml executes template actions; the legacy fragment does not record completion"
+            .to_string(),
+    ]);
+    Ok(())
+}
+
+/// The write-visible alias chart: Helm 4.2.3 renders `/data/visible` as
+/// `true`. The mutation/read program executes actions, so the legacy
+/// result reports a representation gap.
+#[test]
+fn alias_control_is_an_explicit_representation_gap() -> eyre::Result<()> {
+    let template = indoc! {r#"
+        {{- $a := dict "x" "old" -}}
+        {{- $b := $a -}}
+        {{- $_ := set $a "x" "new" -}}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: alias
+        data:
+          visible: {{ eq (get $b "x") "new" }}
+    "#};
+    let files = [CHART, ("templates/cm.yaml", template)];
+    let query = json!({"kind": "alias_v1", "file": "templates/cm.yaml", "document": 0,
+        "pointer": "/data/visible", "relation": "write_visible"});
+    let have = run(&files, &query)?;
+    let ControlResult::AbstractUnknown { reason, .. } = have else {
+        eyre::bail!("expected abstract_unknown, have {have:?}");
+    };
+    sim_assert_eq!(have: reason, want: UnknownReason::RepresentationGap);
+    Ok(())
+}
+
+/// A static Boolean is read through the alias evaluator exactly.
+#[test]
+fn static_alias_boolean_is_exact() -> eyre::Result<()> {
+    let files = [
+        CHART,
+        (
+            "templates/cm.yaml",
+            "apiVersion: v1\nkind: ConfigMap\ndata:\n  visible: true\n",
+        ),
+    ];
+    let query = json!({"kind": "alias_v1", "file": "templates/cm.yaml", "document": 0,
+        "pointer": "/data/visible", "relation": "write_visible"});
+    let have = run(&files, &query)?;
+    sim_assert_eq!(have: have, want: exact(Observation::Alias {
+        selection: Selection::Value { value: true },
+    }));
+    Ok(())
+}
+
+/// Plain scalars YAML 1.1 reads differently are gaps, not guesses.
+#[test]
+fn yaml_one_one_ambiguous_scalars_are_gaps() -> eyre::Result<()> {
+    for scalar in ["yes", "on", "012", "1:30", "True"] {
+        let template = format!("apiVersion: v1\nkind: ConfigMap\ndata:\n  v: {scalar}\n");
+        let files = [CHART, ("templates/cm.yaml", template.as_str())];
+        let have = run(&files, &output_query("/data/v"))?;
+        sim_assert_eq!(
+            have: matches!(have, ControlResult::AbstractUnknown { .. }),
+            want: true,
+            "{scalar}: {have:?}"
+        );
+    }
+    Ok(())
+}
+
+/// The canonical result bytes are stable: two runs agree byte for byte.
+#[test]
+fn adapter_answers_are_deterministic() -> eyre::Result<()> {
+    let files = [CHART, ("templates/fail.yaml", "{{ fail \"boom\" }}\n")];
+    let query = json!({"kind": "termination_v1", "scope": "render"});
+    let (first, second) = (run(&files, &query)?, run(&files, &query)?);
+    sim_assert_eq!(
+        have: canonical_json(&serde_json::to_value(first)?),
+        want: canonical_json(&serde_json::to_value(second)?)
+    );
+    Ok(())
+}
