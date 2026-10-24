@@ -187,10 +187,7 @@ impl SymbolicLocalState {
     pub(crate) fn apply_get_binding(&mut self, plan: GetBindingPlan) {
         self.record_binding_shadow(plan.kind, &plan.variable);
         self.clear_current_binding(&plan.variable);
-        self.slots
-            .entry(plan.variable)
-            .or_default()
-            .bind(super::LocalSlotUpdate::GetBinding(Some(plan.binding)));
+        self.slots.entry(plan.variable).or_default().get_binding = Some(plan.binding);
     }
 
     pub(crate) fn bind_fragment_value(
@@ -232,7 +229,10 @@ impl SymbolicLocalState {
         self.record_binding_shadow(kind, &variable);
         self.clear_current_binding(&variable);
         if let Some(binding) = binding {
-            self.slots.entry(variable).or_default().binding = Some(binding);
+            self.slots
+                .entry(variable)
+                .or_default()
+                .bind_runtime(Some(binding), None);
         }
     }
 
@@ -546,4 +546,111 @@ fn path_is_strict_ancestor(
     child: &helm_schema_core::ValuesPath,
 ) -> bool {
     child.is_descendant_of(parent)
+}
+
+impl SymbolicLocalState {
+    pub(crate) fn bind_assignment(
+        &mut self,
+        kind: AssignmentKind,
+        variable: &str,
+        update: super::AssignmentBinding,
+    ) {
+        let super::AssignmentBinding {
+            binding,
+            scalar_dispatch,
+            truthy_reduction,
+            helper_scope,
+            self_preserving,
+        } = update;
+        // Rebinding clears these marks; reassignment must retain their pre-write poison.
+        let previously_abstained = self.slot(variable).truthiness_abstained;
+        let previously_cleared = self.slot(variable).truthiness_cleared;
+        let binding = binding.or_else(|| {
+            (helper_scope && kind == AssignmentKind::Assignment).then(LocalBinding::unknown)
+        });
+        if binding.is_some() || scalar_dispatch.is_some() || !helper_scope {
+            self.bind_local_binding(kind, variable.to_string(), binding);
+            if let Some(dispatch) = scalar_dispatch {
+                let slot = self.slot_mut(variable);
+                let binding = slot.binding.take();
+                slot.bind_runtime(binding, Some(dispatch));
+            }
+        }
+        let slot = self.slot_mut(variable);
+        slot.truthiness_abstained = previously_abstained;
+        slot.truthiness_cleared = previously_cleared;
+        slot.bind_truth(kind, truthy_reduction, self_preserving);
+    }
+
+    pub(crate) fn replace_fragment_bindings(&mut self, bindings: HashMap<String, LocalBinding>) {
+        for slot in self.slots.values_mut() {
+            slot.binding = None;
+        }
+        for (name, binding) in bindings {
+            self.slots.entry(name).or_default().binding = Some(binding);
+        }
+    }
+
+    pub(crate) fn invalidate_binding(&mut self, variable: &str) {
+        self.clear_current_binding(variable);
+        self.slot_mut(variable).binding = Some(LocalBinding::unknown());
+    }
+
+    pub(crate) fn map_existing_binding(
+        &mut self,
+        variable: &str,
+        transform: impl FnOnce(LocalBinding) -> LocalBinding,
+    ) {
+        if let Some(binding) = self
+            .slots
+            .get_mut(variable)
+            .and_then(|slot| slot.binding.as_mut())
+        {
+            *binding = transform(binding.clone());
+        }
+    }
+
+    pub(crate) fn overlay_context_values(
+        &mut self,
+        variable: &str,
+        entries: &std::collections::BTreeMap<String, AbstractValue>,
+        memo: &PredicateMemo,
+    ) {
+        fn is_context_copy(value: &AbstractValue) -> bool {
+            match value {
+                AbstractValue::RootContext => true,
+                AbstractValue::Overlay { fallback, .. } => is_context_copy(fallback),
+                _ => false,
+            }
+        }
+        if !entries.keys().all(|key| key == "Values") {
+            return;
+        }
+        if let Some(slot) = self.slots.get_mut(variable)
+            && let Some(binding) = &slot.binding
+            && binding.value(memo).as_ref().is_some_and(is_context_copy)
+        {
+            slot.binding = Some(binding.with_overlay_entries(entries));
+        }
+    }
+}
+
+impl crate::bound_value_analysis::BoundValueContext {
+    pub(crate) fn set_output_metadata(
+        &mut self,
+        metadata: &HashMap<
+            String,
+            std::collections::BTreeMap<
+                helm_schema_core::ValuesPath,
+                crate::helper_meta::HelperOutputMeta,
+            >,
+        >,
+    ) {
+        for slot in self.slots.values_mut() {
+            slot.output_meta = None;
+        }
+        for (name, meta) in metadata {
+            self.slots.entry(name.to_owned()).or_default().output_meta = Some(meta.clone());
+        }
+    }
 }

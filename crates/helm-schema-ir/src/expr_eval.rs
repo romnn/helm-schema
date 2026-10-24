@@ -516,7 +516,7 @@ pub(crate) fn bindings_for_helper_arg_with(
             let result = eval_binding(arg);
             let value = result.value;
             return HelperArgBindings {
-                scalar_dispatches: helper_arg_slots(
+                scalar_dispatches: crate::value::argument_slots(
                     bindings_from_helper_arg_value(value.clone(), outer),
                     result.field_scalar_dispatches,
                 ),
@@ -525,29 +525,9 @@ pub(crate) fn bindings_for_helper_arg_with(
         }
     };
     HelperArgBindings {
-        scalar_dispatches: helper_arg_slots(bindings, scalar_dispatches),
+        scalar_dispatches: crate::value::argument_slots(bindings, scalar_dispatches),
         value: None,
     }
-}
-
-fn helper_arg_slots(
-    bindings: HashMap<String, AbstractValue>,
-    dispatches: BTreeMap<String, ScalarValueDispatch>,
-) -> BTreeMap<String, crate::value::RootSlot> {
-    let mut slots = BTreeMap::<String, crate::value::RootSlot>::new();
-    for (name, value) in bindings {
-        slots
-            .entry(name)
-            .or_default()
-            .bind(crate::value::RootSlotUpdate::Value(Some(value)));
-    }
-    for (name, dispatch) in dispatches {
-        slots
-            .entry(name)
-            .or_default()
-            .bind(crate::value::RootSlotUpdate::Dispatch(Some(dispatch)));
-    }
-    slots
 }
 
 fn bindings_from_helper_arg_value(

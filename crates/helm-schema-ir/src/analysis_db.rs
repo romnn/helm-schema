@@ -1235,7 +1235,11 @@ fn resolve_bound_helper_call(
             let dispatch = caller.binding().dispatch.as_ref();
             if truth.is_some() || dispatch.is_some() {
                 let slot = slots.entry(name.clone()).or_default();
-                slot.inherit_facts(caller);
+                slot.merge(crate::value::RootSlot::new(
+                    None,
+                    truth.cloned(),
+                    dispatch.cloned(),
+                ));
             }
         }
     }

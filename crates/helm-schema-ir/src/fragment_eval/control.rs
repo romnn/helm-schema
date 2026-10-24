@@ -1254,7 +1254,7 @@ impl Interpreter<'_> {
                     .slots
                     .entry(variable.clone())
                     .or_default()
-                    .replace_range_member(value),
+                    .replace_range_member(Some(value)),
             ));
         }
         let (predicate, faithful) = {
@@ -1271,12 +1271,10 @@ impl Interpreter<'_> {
                         .slots
                         .entry(variable.clone())
                         .or_default()
-                        .replace_range_member(previous);
+                        .replace_range_member(Some(previous));
                 }
                 None => {
-                    self.locals
-                        .slot_mut(&variable)
-                        .bind(crate::value::LocalSlotUpdate::RangeMemberValue(None));
+                    self.locals.slot_mut(&variable).replace_range_member(None);
                 }
             }
         }
@@ -1727,7 +1725,7 @@ impl Interpreter<'_> {
                     .slots
                     .entry(variable.clone())
                     .or_default()
-                    .bind(crate::value::LocalSlotUpdate::RangeDomain(Some(literals)));
+                    .record_iteration_domain(literals);
             } else {
                 self.locals.insert_range_domain(variable, literals);
             }
@@ -1742,7 +1740,7 @@ impl Interpreter<'_> {
                     .slots
                     .entry(variable.to_string())
                     .or_default()
-                    .bind(crate::value::LocalSlotUpdate::RangeDomain(Some(keys)));
+                    .record_iteration_domain(keys);
             } else {
                 self.locals.insert_range_domain(variable.to_string(), keys);
             }
@@ -1999,7 +1997,7 @@ impl Interpreter<'_> {
                 .slots
                 .entry(variable.clone())
                 .or_default()
-                .replace_range_member(binding);
+                .replace_range_member(Some(binding));
         }
         // A local dict assembled by an unconditional `set` over a
         // values-backed map iterates its literal entries on EVERY render
@@ -2013,16 +2011,18 @@ impl Interpreter<'_> {
             && let Some(variable) = member_variable
             && let Some(entry) = entries.values().next()
         {
-            self.locals.slots.entry(variable.clone()).or_default().bind(
-                crate::value::LocalSlotUpdate::DefiniteRangeMemberValue(Some(entry.clone())),
-            );
+            self.locals
+                .slots
+                .entry(variable.clone())
+                .or_default()
+                .record_definite_member(entry.clone());
         }
         if let Some((variable, path)) = key_variable.zip(range_binding_path) {
             self.locals
                 .slots
                 .entry(variable.to_string())
                 .or_default()
-                .replace_range_member(AbstractValue::RangeKey(path));
+                .replace_range_member(Some(AbstractValue::RangeKey(path)));
         }
         self.push_dot(dot, crate::eval_env::BindingEvaluationMode::Direct);
         (Some(own_condition), extra, None, truth, post_header_locals)
@@ -2696,20 +2696,16 @@ impl Interpreter<'_> {
             let exclusion: BTreeSet<Predicate> = exclusions.into_iter().collect();
             let fold_spellings = fold_spellings.filter(|spellings| !spellings.is_empty());
             for index in keeping {
-                if let Some(outcome) = outcomes.get_mut(index)
-                    && let Some(value) = outcome.binding(name).binding.clone()
-                {
-                    let mut excluded =
-                        value.map_values(|value| attach_reassignment_exclusion(&value, &exclusion));
-                    if let Some(spellings) = &fold_spellings {
-                        excluded = excluded
-                            .map_values(|value| attach_empty_fold_spellings(value, spellings));
-                    }
-                    outcome
-                        .slots
-                        .entry(name.to_owned())
-                        .or_default()
-                        .bind(crate::value::LocalSlotUpdate::Binding(Some(excluded)));
+                if let Some(outcome) = outcomes.get_mut(index) {
+                    outcome.map_existing_binding(name, |value| {
+                        let mut excluded = value
+                            .map_values(|value| attach_reassignment_exclusion(&value, &exclusion));
+                        if let Some(spellings) = &fold_spellings {
+                            excluded = excluded
+                                .map_values(|value| attach_empty_fold_spellings(value, spellings));
+                        }
+                        excluded
+                    });
                 }
             }
         }

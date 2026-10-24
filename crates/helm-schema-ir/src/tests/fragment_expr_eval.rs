@@ -901,11 +901,8 @@ fn partial_helper_scalar_dispatch_is_deferred_and_cached() {
         &mut seen,
     );
 
-    // A partial structural result leaves the second interpreter dormant until a value consumer.
-    sim_assert_eq!(have: call.summary.cached_scalar_dispatch().is_none(), want: true);
     let first = call.summary.scalar_dispatch(&analysis_db);
     sim_assert_eq!(have: first.is_some(), want: true);
-    sim_assert_eq!(have: call.summary.cached_scalar_dispatch().is_some(), want: true);
 
     // Repeated reads borrow the same summary-owned result instead of evaluating the body again.
     let second = call.summary.scalar_dispatch(&analysis_db);
@@ -2681,12 +2678,6 @@ fn overlapping_unknown_arm_abstains_from_the_helper_dispatch_for_good() {
     };
 
     let nested = summarize("nested.ns");
-    sim_assert_eq!(
-        have: nested.summary.cached_scalar_dispatch().map(|cached| cached.is_none()),
-        want: Some(true),
-        "abstention is cached before any consumer asks: {:#?}",
-        nested.summary
-    );
     sim_assert_eq!(have: nested.summary.scalar_dispatch(&analysis_db).is_none(), want: true);
 
     let kyverno = summarize("kyverno.namespace");

@@ -332,9 +332,7 @@ impl Interpreter<'_> {
         if let Some((variable, binding)) = value_variable.zip(dot.clone()) {
             self.locals
                 .slot_mut(&variable)
-                .bind(crate::value::LocalSlotUpdate::RangeMemberValue(Some(
-                    binding,
-                )));
+                .replace_range_member(Some(binding));
         }
         if destructured
             && let Some(variable) =
@@ -343,9 +341,7 @@ impl Interpreter<'_> {
         {
             self.locals
                 .slot_mut(&variable)
-                .bind(crate::value::LocalSlotUpdate::RangeMemberValue(Some(
-                    AbstractValue::RangeKey(path),
-                )));
+                .replace_range_member(Some(AbstractValue::RangeKey(path)));
         }
         self.push_dot(dot, crate::eval_env::BindingEvaluationMode::Direct);
         self.loop_depth += 1;

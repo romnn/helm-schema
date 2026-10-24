@@ -152,24 +152,19 @@ fn two_independent_unknown_decisions_expose_both_leaves_with_unresolved_remainde
 #[test]
 fn symbolic_range_exit_widens_only_bindings_changed_by_the_iteration() {
     let mut entry = SymbolicLocalState::default();
-    entry
-        .slots
-        .entry("cfg".to_string())
-        .or_default()
-        .bind(crate::value::LocalSlotUpdate::Binding(Some(
-            LocalBinding::evaluated(values_path!("items")),
-        )));
-    entry.slots.entry("stable".to_string()).or_default().bind(
-        crate::value::LocalSlotUpdate::Binding(Some(LocalBinding::direct(values_path!("stable")))),
+    crate::tests::bind_test_fragment(
+        entry.slots.entry("cfg".to_string()).or_default(),
+        Some(LocalBinding::evaluated(values_path!("items"))),
+    );
+    crate::tests::bind_test_fragment(
+        entry.slots.entry("stable".to_string()).or_default(),
+        Some(LocalBinding::direct(values_path!("stable"))),
     );
     let mut positive_exit = entry.clone();
-    positive_exit
-        .slots
-        .entry("cfg".to_string())
-        .or_default()
-        .bind(crate::value::LocalSlotUpdate::Binding(Some(
-            LocalBinding::direct(values_path!("items.*")),
-        )));
+    crate::tests::bind_test_fragment(
+        positive_exit.slots.entry("cfg".to_string()).or_default(),
+        Some(LocalBinding::direct(values_path!("items.*"))),
+    );
 
     positive_exit.widen_changed_fragment_bindings(&entry);
 
@@ -231,8 +226,9 @@ fn local_binding_has_no_structural_alternative_cap() {
 
 fn state_with_scalar_arm_count(count: usize) -> SymbolicLocalState {
     let mut state = SymbolicLocalState::default();
-    state.slots.entry("value".to_string()).or_default().bind(
-        crate::value::LocalSlotUpdate::ScalarDispatch(Some(ScalarValueDispatch::bind_content(
+    crate::tests::bind_test_dispatch(
+        state.slots.entry("value".to_string()).or_default(),
+        Some(ScalarValueDispatch::bind_content(
             (0..count)
                 .map(|index| {
                     (
@@ -242,7 +238,7 @@ fn state_with_scalar_arm_count(count: usize) -> SymbolicLocalState {
                 })
                 .collect(),
             true,
-        ))),
+        )),
     );
     state
 }
@@ -371,8 +367,9 @@ fn unchanged_partial_dispatch_survives_the_join_cap() {
         .and_then(ScalarValueDispatch::content)
     {
         let dispatch = ScalarValueDispatch::bind_content(content.arms.to_vec(), false);
-        partial.slots.entry("value".to_string()).or_default().bind(
-            crate::value::LocalSlotUpdate::ScalarDispatch(Some(dispatch)),
+        crate::tests::bind_test_dispatch(
+            partial.slots.entry("value".to_string()).or_default(),
+            Some(dispatch),
         );
     }
     let entry = partial.clone();
@@ -407,8 +404,9 @@ fn changed_nested_and_missing_dispatches_match_the_old_join() {
     let outer = Predicate::truthy_path("outer");
     let inner = Predicate::truthy_path("inner");
     let mut nested = SymbolicLocalState::default();
-    nested.slots.entry("value".to_string()).or_default().bind(
-        crate::value::LocalSlotUpdate::ScalarDispatch(Some(ScalarValueDispatch::bind_content(
+    crate::tests::bind_test_dispatch(
+        nested.slots.entry("value".to_string()).or_default(),
+        Some(ScalarValueDispatch::bind_content(
             vec![
                 (
                     inner.clone(),
@@ -420,7 +418,7 @@ fn changed_nested_and_missing_dispatches_match_the_old_join() {
                 ),
             ],
             true,
-        ))),
+        )),
     );
     let changed_arms = vec![
         (TruthCondition::exact(outer.clone()), nested),
@@ -660,10 +658,9 @@ fn local_scope_restores_default_paths_for_shadowed_declaration() {
         "name".to_string(),
         Some(values_path!("outer")),
     );
-    state.slots.entry("name".to_string()).or_default().bind(
-        crate::value::LocalSlotUpdate::DefaultPaths(Some(BTreeSet::from([ValuesPath::parse(
-            "outer.default",
-        )]))),
+    crate::tests::bind_test_defaults(
+        state.slots.entry("name".to_string()).or_default(),
+        Some(BTreeSet::from([ValuesPath::parse("outer.default")])),
     );
 
     state.enter_local_scope();
@@ -672,10 +669,9 @@ fn local_scope_restores_default_paths_for_shadowed_declaration() {
         "name".to_string(),
         Some(values_path!("inner")),
     );
-    state.slots.entry("name".to_string()).or_default().bind(
-        crate::value::LocalSlotUpdate::DefaultPaths(Some(BTreeSet::from([ValuesPath::parse(
-            "inner.default",
-        )]))),
+    crate::tests::bind_test_defaults(
+        state.slots.entry("name".to_string()).or_default(),
+        Some(BTreeSet::from([ValuesPath::parse("inner.default")])),
     );
     state.exit_local_scope();
 
@@ -693,10 +689,9 @@ fn local_scope_keeps_default_paths_for_outer_assignment() {
         "name".to_string(),
         Some(values_path!("outer")),
     );
-    state.slots.entry("name".to_string()).or_default().bind(
-        crate::value::LocalSlotUpdate::DefaultPaths(Some(BTreeSet::from([ValuesPath::parse(
-            "outer.default",
-        )]))),
+    crate::tests::bind_test_defaults(
+        state.slots.entry("name".to_string()).or_default(),
+        Some(BTreeSet::from([ValuesPath::parse("outer.default")])),
     );
 
     state.enter_local_scope();
@@ -705,10 +700,9 @@ fn local_scope_keeps_default_paths_for_outer_assignment() {
         "name".to_string(),
         Some(values_path!("assigned")),
     );
-    state.slots.entry("name".to_string()).or_default().bind(
-        crate::value::LocalSlotUpdate::DefaultPaths(Some(BTreeSet::from([ValuesPath::parse(
-            "assigned.default",
-        )]))),
+    crate::tests::bind_test_defaults(
+        state.slots.entry("name".to_string()).or_default(),
+        Some(BTreeSet::from([ValuesPath::parse("assigned.default")])),
     );
     state.exit_local_scope();
 
@@ -726,8 +720,9 @@ fn local_scope_restores_output_meta_for_shadowed_declaration() {
         "name".to_string(),
         Some(values_path!("outer")),
     );
-    state.slots.entry("name".to_string()).or_default().bind(
-        crate::value::LocalSlotUpdate::OutputMeta(Some(output_meta("outer.output"))),
+    crate::tests::bind_test_output_meta(
+        state.slots.entry("name".to_string()).or_default(),
+        Some(output_meta("outer.output")),
     );
 
     state.enter_local_scope();
@@ -736,8 +731,9 @@ fn local_scope_restores_output_meta_for_shadowed_declaration() {
         "name".to_string(),
         Some(values_path!("inner")),
     );
-    state.slots.entry("name".to_string()).or_default().bind(
-        crate::value::LocalSlotUpdate::OutputMeta(Some(output_meta("inner.output"))),
+    crate::tests::bind_test_output_meta(
+        state.slots.entry("name".to_string()).or_default(),
+        Some(output_meta("inner.output")),
     );
     state.exit_local_scope();
 
@@ -755,8 +751,9 @@ fn local_scope_keeps_output_meta_for_outer_assignment() {
         "name".to_string(),
         Some(values_path!("outer")),
     );
-    state.slots.entry("name".to_string()).or_default().bind(
-        crate::value::LocalSlotUpdate::OutputMeta(Some(output_meta("outer.output"))),
+    crate::tests::bind_test_output_meta(
+        state.slots.entry("name".to_string()).or_default(),
+        Some(output_meta("outer.output")),
     );
 
     state.enter_local_scope();
@@ -765,8 +762,9 @@ fn local_scope_keeps_output_meta_for_outer_assignment() {
         "name".to_string(),
         Some(values_path!("assigned")),
     );
-    state.slots.entry("name".to_string()).or_default().bind(
-        crate::value::LocalSlotUpdate::OutputMeta(Some(output_meta("assigned.output"))),
+    crate::tests::bind_test_output_meta(
+        state.slots.entry("name".to_string()).or_default(),
+        Some(output_meta("assigned.output")),
     );
     state.exit_local_scope();
 
@@ -779,9 +777,15 @@ fn local_scope_keeps_output_meta_for_outer_assignment() {
 #[test]
 fn local_scope_restores_truthy_reduction_for_shadowed_declaration() {
     let mut state = SymbolicLocalState::default();
-    state.slots.entry("message".to_string()).or_default().bind(
-        crate::value::LocalSlotUpdate::TruthyReduction(Some(Predicate::truthy_path("outer"))),
-    );
+    state
+        .slots
+        .entry("message".to_string())
+        .or_default()
+        .bind_truth(
+            crate::fragment_assignment::AssignmentKind::Declaration,
+            Some(Predicate::truthy_path("outer")),
+            false,
+        );
 
     state.enter_local_scope();
     state.bind_fragment_value(
@@ -791,9 +795,15 @@ fn local_scope_restores_truthy_reduction_for_shadowed_declaration() {
             [String::new()].into_iter().collect(),
         )),
     );
-    state.slots.entry("message".to_string()).or_default().bind(
-        crate::value::LocalSlotUpdate::TruthyReduction(Some(Predicate::False)),
-    );
+    state
+        .slots
+        .entry("message".to_string())
+        .or_default()
+        .bind_truth(
+            crate::fragment_assignment::AssignmentKind::Declaration,
+            Some(Predicate::False),
+            false,
+        );
     state.exit_local_scope();
 
     sim_assert_eq!(
@@ -844,9 +854,15 @@ fn branch_join_keeps_bindings_present_in_all_outcomes() {
 #[test]
 fn branch_join_unions_truthy_reductions_across_outcomes() {
     let mut entry = SymbolicLocalState::default();
-    entry.slots.entry("message".to_string()).or_default().bind(
-        crate::value::LocalSlotUpdate::TruthyReduction(Some(Predicate::False)),
-    );
+    entry
+        .slots
+        .entry("message".to_string())
+        .or_default()
+        .bind_truth(
+            crate::fragment_assignment::AssignmentKind::Declaration,
+            Some(Predicate::False),
+            false,
+        );
     let entry_snapshot = entry.clone();
 
     let mut populated = entry.clone();
@@ -854,9 +870,11 @@ fn branch_join_unions_truthy_reductions_across_outcomes() {
         .slots
         .entry("message".to_string())
         .or_default()
-        .bind(crate::value::LocalSlotUpdate::TruthyReduction(Some(
-            Predicate::truthy_path("legacy"),
-        )));
+        .bind_truth(
+            crate::fragment_assignment::AssignmentKind::Declaration,
+            Some(Predicate::truthy_path("legacy")),
+            false,
+        );
 
     let mut joined = entry;
     joined.join_branch_outcomes(&entry_snapshot, &[populated, entry_snapshot.clone()]);
@@ -870,13 +888,25 @@ fn branch_join_unions_truthy_reductions_across_outcomes() {
 #[test]
 fn over_cap_branch_stamp_removes_the_changed_truthy_reduction() {
     let mut entry = SymbolicLocalState::default();
-    entry.slots.entry("message".to_string()).or_default().bind(
-        crate::value::LocalSlotUpdate::TruthyReduction(Some(Predicate::False)),
-    );
+    entry
+        .slots
+        .entry("message".to_string())
+        .or_default()
+        .bind_truth(
+            crate::fragment_assignment::AssignmentKind::Declaration,
+            Some(Predicate::False),
+            false,
+        );
     let mut branch = entry.clone();
-    branch.slots.entry("message".to_string()).or_default().bind(
-        crate::value::LocalSlotUpdate::TruthyReduction(Some(Predicate::truthy_path("result"))),
-    );
+    branch
+        .slots
+        .entry("message".to_string())
+        .or_default()
+        .bind_truth(
+            crate::fragment_assignment::AssignmentKind::Declaration,
+            Some(Predicate::truthy_path("result")),
+            false,
+        );
     let condition = Predicate::all(
         (0..6)
             .map(|index| Predicate::truthy_path(format!("guard.{index}")))
@@ -900,17 +930,25 @@ fn over_cap_branch_stamp_removes_the_changed_truthy_reduction() {
 #[test]
 fn exact_if_join_conditions_an_untouched_entry_truthy_reduction() {
     let mut entry = SymbolicLocalState::default();
-    entry.slots.entry("continue".to_string()).or_default().bind(
-        crate::value::LocalSlotUpdate::TruthyReduction(Some(Predicate::truthy_path("gate"))),
-    );
+    entry
+        .slots
+        .entry("continue".to_string())
+        .or_default()
+        .bind_truth(
+            crate::fragment_assignment::AssignmentKind::Declaration,
+            Some(Predicate::truthy_path("gate")),
+            false,
+        );
     let mut stopped = entry.clone();
     stopped
         .slots
         .entry("continue".to_string())
         .or_default()
-        .bind(crate::value::LocalSlotUpdate::TruthyReduction(Some(
-            Predicate::False,
-        )));
+        .bind_truth(
+            crate::fragment_assignment::AssignmentKind::Declaration,
+            Some(Predicate::False),
+            false,
+        );
     let mut joined = entry.clone();
 
     joined.join_truthy_reduction_arms(

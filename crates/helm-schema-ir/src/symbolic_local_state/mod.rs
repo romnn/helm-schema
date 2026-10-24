@@ -1,6 +1,5 @@
 use std::collections::{BTreeSet, HashMap};
 
-use crate::eval_env::LocalBinding;
 use crate::scalar_value::TruthCondition;
 use crate::value::{LocalSlot, LocalSlots};
 use helm_schema_core::{Predicate, PredicateMemo};
@@ -71,10 +70,7 @@ impl ControlOutcome {
             }) {
                 continue;
             }
-            state.clear_current_binding(&variable);
-            state.slots.entry(variable.clone()).or_default().bind(
-                crate::value::LocalSlotUpdate::Binding(Some(LocalBinding::unknown())),
-            );
+            state.invalidate_binding(&variable);
         }
         Self {
             condition: Predicate::False,

@@ -382,16 +382,7 @@ impl Interpreter<'_> {
             FragmentEvalContext::new(self.db),
             &mut seen,
         );
-        for slot in self.locals.slots.values_mut() {
-            slot.bind(crate::value::LocalSlotUpdate::Binding(None));
-        }
-        for (name, binding) in bindings {
-            self.locals
-                .slots
-                .entry(name)
-                .or_default()
-                .bind(crate::value::LocalSlotUpdate::Binding(Some(binding)));
-        }
+        self.locals.replace_fragment_bindings(bindings);
         if !applied {
             return false;
         }
@@ -415,14 +406,6 @@ impl Interpreter<'_> {
     /// `set $globals.Values "workers" $workers`). Every other document
     /// set call keeps the read-only treatment below.
     fn apply_context_copy_value_mutations(&mut self, exprs: &[TemplateExpr]) {
-        fn is_context_copy(binding: &AbstractValue) -> bool {
-            match binding {
-                AbstractValue::RootContext => true,
-                AbstractValue::Overlay { fallback, .. } => is_context_copy(fallback),
-                _ => false,
-            }
-        }
-
         let template_bindings = self.locals.evaluation_bindings();
         let current_dot = self.current_dot_fragment();
         let env = crate::eval_env::EvalEnv::from_fragment_context(
@@ -439,25 +422,8 @@ impl Interpreter<'_> {
             };
             let result = crate::expr_eval::eval_expr(mutation_expr, &env);
             for (name, entries) in &result.effects.local_set_mutations {
-                if !entries.keys().all(|key| key == "Values") {
-                    continue;
-                }
-                let Some(binding) = self.locals.binding(name).binding.as_ref() else {
-                    continue;
-                };
-                if !binding
-                    .value(self.db.predicate_memo())
-                    .as_ref()
-                    .is_some_and(is_context_copy)
-                {
-                    continue;
-                }
-                let updated = binding.with_overlay_entries(entries);
                 self.locals
-                    .slots
-                    .entry(name.to_owned())
-                    .or_default()
-                    .bind(crate::value::LocalSlotUpdate::Binding(Some(updated)));
+                    .overlay_context_values(name, entries, self.db.predicate_memo());
             }
         }
     }
@@ -652,33 +618,7 @@ impl Interpreter<'_> {
             let rhs_truthy_reduction = result_truth.or(condition_truthy_reduction);
             let previous = self.locals.binding(&assignment.variable);
             let previous_truthy_reduction = previous.truthy_reduction.clone();
-            // Snapshot before the value binding below: its rebind clears
-            // every per-variable fact, but a write-through's monotonicity
-            // poison must stay sticky across later writes.
-            let previously_cleared = previous.truthiness_cleared;
-            let previously_abstained = previous.truthiness_abstained;
             let truthy_reduction = match assignment.kind {
-                crate::fragment_assignment::AssignmentKind::Declaration => rhs_truthy_reduction
-                    .or_else(|| {
-                        // A text-producing RHS (`$m := join "\n" $list`) keeps
-                        // its INPUT value for attribution, but the binding's
-                        // runtime truthiness is the produced text's emptiness,
-                        // which that value cannot witness: a nonempty list can
-                        // join to "". Abstain instead of reducing.
-                        if rhs_produces_derived_text(&assignment.rhs_expr) {
-                            return None;
-                        }
-                        fragment_value
-                            .as_ref()
-                            .and_then(AbstractValue::static_truthiness)
-                            .map(|truthy| {
-                                if truthy {
-                                    Predicate::True
-                                } else {
-                                    Predicate::False
-                                }
-                            })
-                    }),
                 crate::fragment_assignment::AssignmentKind::Assignment
                     if self_preserving_nonempty_accumulation(
                         &assignment.rhs_expr,
@@ -711,8 +651,14 @@ impl Interpreter<'_> {
                 // state; the branch join unions it with the other arms'
                 // reductions (`$shouldContinue = false` in a traversal's
                 // kill-switch arm).
-                crate::fragment_assignment::AssignmentKind::Assignment => rhs_truthy_reduction
+                crate::fragment_assignment::AssignmentKind::Declaration
+                | crate::fragment_assignment::AssignmentKind::Assignment => rhs_truthy_reduction
                     .or_else(|| {
+                        // A text-producing RHS (`$m := join "\n" $list`) keeps
+                        // its INPUT value for attribution, but the binding's
+                        // runtime truthiness is the produced text's emptiness,
+                        // which that value cannot witness: a nonempty list can
+                        // join to "". Abstain instead of reducing.
                         if rhs_produces_derived_text(&assignment.rhs_expr) {
                             return None;
                         }
@@ -728,87 +674,20 @@ impl Interpreter<'_> {
                             })
                     }),
             };
-            let fragment_binding = fragment_binding.or_else(|| {
-                (self.helper_scope
-                    && assignment.kind == crate::fragment_assignment::AssignmentKind::Assignment)
-                    .then(crate::eval_env::LocalBinding::unknown)
-            });
-            // An unresolved helper reassignment explicitly replaces stale
-            // state with Unknown; declarations still abstain when no binding
-            // can be justified.
-            if fragment_binding.is_some() || scalar_dispatch.is_some() || !self.helper_scope {
-                self.locals.bind_local_binding(
-                    assignment.kind,
-                    assignment.variable.clone(),
-                    fragment_binding,
-                );
-                if let Some(dispatch) = scalar_dispatch {
-                    self.locals
-                        .slots
-                        .entry(assignment.variable.clone())
-                        .or_default()
-                        .bind(crate::value::LocalSlotUpdate::ScalarDispatch(Some(
-                            dispatch,
-                        )));
-                }
-            }
-            if let Some(predicate) = truthy_reduction {
-                self.locals
-                    .slots
-                    .entry(assignment.variable.clone())
-                    .or_default()
-                    .bind(crate::value::LocalSlotUpdate::TruthyReduction(Some(
-                        predicate,
-                    )));
-            } else {
-                self.locals
-                    .slot_mut(&assignment.variable)
-                    .bind(crate::value::LocalSlotUpdate::TruthyReduction(None));
-            }
-            match assignment.kind {
-                crate::fragment_assignment::AssignmentKind::Declaration => {
-                    self.locals
-                        .slot_mut(&assignment.variable)
-                        .bind(crate::value::LocalSlotUpdate::TruthinessAbstained(false));
-                }
-                crate::fragment_assignment::AssignmentKind::Assignment if previously_abstained => {
-                    self.locals
-                        .slot_mut(&assignment.variable)
-                        .bind(crate::value::LocalSlotUpdate::TruthyReduction(None));
-                    self.locals
-                        .slot_mut(&assignment.variable)
-                        .bind(crate::value::LocalSlotUpdate::TruthinessAbstained(true));
-                }
-                crate::fragment_assignment::AssignmentKind::Assignment => {}
-            }
-            // A write-through that does not imply truthiness can leave the
-            // local falsy after an earlier truthy write, so an enclosing
-            // range join must not read the accumulator existentially. A
-            // declaration seeds a fresh accumulator; the self-preserving
-            // accumulation stays monotone by construction.
-            match assignment.kind {
-                crate::fragment_assignment::AssignmentKind::Declaration => {
-                    self.locals
-                        .slot_mut(&assignment.variable)
-                        .bind(crate::value::LocalSlotUpdate::TruthinessCleared(false));
-                }
-                crate::fragment_assignment::AssignmentKind::Assignment => {
-                    let may_clear = !self_preserving_nonempty_accumulation(
+            self.locals.bind_assignment(
+                assignment.kind,
+                &assignment.variable,
+                crate::value::AssignmentBinding {
+                    binding: fragment_binding,
+                    scalar_dispatch,
+                    truthy_reduction,
+                    helper_scope: self.helper_scope,
+                    self_preserving: self_preserving_nonempty_accumulation(
                         &assignment.rhs_expr,
                         &assignment.variable,
-                    ) && self
-                        .locals
-                        .binding(&assignment.variable)
-                        .truthy_reduction
-                        .as_ref()
-                        != Some(&Predicate::True);
-                    if previously_cleared || may_clear {
-                        self.locals
-                            .slot_mut(&assignment.variable)
-                            .bind(crate::value::LocalSlotUpdate::TruthinessCleared(true));
-                    }
-                }
-            }
+                    ),
+                },
+            );
             // `$tp := typeOf .Values.x` binds a TYPE DESCRIPTOR of the path:
             // later `eq $tp "string"` comparisons are type tests, never value
             // equalities, so remember the described path. Recorded after the
@@ -820,7 +699,7 @@ impl Interpreter<'_> {
                     .slots
                     .entry(assignment.variable.clone())
                     .or_default()
-                    .bind(crate::value::LocalSlotUpdate::TypeofSource(Some(sources)));
+                    .record_type_source(sources);
             }
             // `$replicas := int (default 1 .Values.x)` binds an INTEGER
             // COERCION of the path: comparisons on the local strengthen
@@ -829,31 +708,10 @@ impl Interpreter<'_> {
             let cast_source = self
                 .value_path_context()
                 .int_cast_operand(&assignment.rhs_expr);
-            if let Some(source) = cast_source {
-                self.locals
-                    .slots
-                    .entry(assignment.variable.clone())
-                    .or_default()
-                    .bind(crate::value::LocalSlotUpdate::IntCastSource(Some(source)));
-            }
-            // Keep the (possibly empty) default and meta entries: the branch
-            // join unions per-variable facts only for variables every outcome
-            // still tracks, and a pre-branch binding without facts must not
-            // erase a branch's recorded ones.
+            // Empty metadata entries remain present so every-exit joins retain their distinction.
             self.locals
-                .slots
-                .entry(assignment.variable.clone())
-                .or_default()
-                .bind(crate::value::LocalSlotUpdate::DefaultPaths(Some(
-                    binding_metadata.default_paths,
-                )));
-            self.locals
-                .slots
-                .entry(assignment.variable.clone())
-                .or_default()
-                .bind(crate::value::LocalSlotUpdate::OutputMeta(Some(
-                    binding_metadata.output_meta,
-                )));
+                .slot_mut(&assignment.variable)
+                .record_assignment_metadata(cast_source, binding_metadata);
             let demotion = if self.helper_scope {
                 RenderedDemotion::Dependency
             } else {

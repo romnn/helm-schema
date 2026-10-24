@@ -103,9 +103,6 @@ struct DeferredScalarProjection {
 
 impl FragmentSummary {
     pub(crate) fn scalar_dispatch(&self, db: &IrAnalysisDb) -> Option<&ScalarValueDispatch> {
-        if let Some(cached) = self.cached_scalar_dispatch() {
-            return cached;
-        }
         self.scalar_dispatch
             .get_or_init(|| {
                 let deferred = self.deferred_scalar_projection.as_ref()?;
@@ -1201,10 +1198,4 @@ fn prune_sibling_conditions(reads: &mut Vec<ValueRead>, rendered: &[RenderedRow]
         }
     }
     *reads = pruned;
-}
-
-impl FragmentSummary {
-    pub(crate) fn cached_scalar_dispatch(&self) -> Option<Option<&ScalarValueDispatch>> {
-        self.scalar_dispatch.get().map(Option::as_ref)
-    }
 }

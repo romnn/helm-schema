@@ -28,25 +28,23 @@ fn extract_bound_values(
     range_domains: &HashMap<String, Vec<String>>,
     get_bindings: &HashMap<String, GetBinding>,
 ) -> Vec<String> {
-    let mut slots = crate::value::LocalSlots::default();
+    let mut state = crate::symbolic_local_state::SymbolicLocalState::default();
     for (name, domain) in range_domains {
-        slots
+        state
+            .slots
             .entry(name.clone())
             .or_default()
-            .bind(crate::value::LocalSlotUpdate::RangeDomain(Some(
-                domain.clone(),
-            )));
+            .record_iteration_domain(domain.clone());
     }
     for (name, binding) in get_bindings {
-        slots
-            .entry(name.clone())
-            .or_default()
-            .bind(crate::value::LocalSlotUpdate::GetBinding(Some(
-                binding.clone(),
-            )));
+        state.apply_get_binding(GetBindingPlan {
+            variable: name.clone(),
+            kind: crate::fragment_assignment::AssignmentKind::Assignment,
+            binding: binding.clone(),
+        });
     }
     let env = EvalEnv {
-        local_slots: BoundValueContext::new(&slots),
+        local_slots: BoundValueContext::new(&state.slots),
         ..EvalEnv::default()
     };
     eval_exprs_effects(&parse_expr_text(text), &env)

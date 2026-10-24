@@ -41,10 +41,10 @@ pub(crate) use comparisons::selected_type_test_truth;
 use comparisons::{eval_comparison, eval_ternary, eval_type_is};
 use root_mutation::eval_set_call;
 use serialization::{
-    conjoin_formatter_operand_selection, eval_cat, eval_from_json, eval_from_yaml, eval_join,
-    eval_print, eval_printf, eval_regex_replace, eval_repeat, eval_replace, eval_to_json,
-    eval_to_json_result, eval_to_yaml, eval_to_yaml_result, eval_tpl, eval_trim_affix,
-    record_printf_argument_effects, record_total_conversion_effects,
+    eval_cat, eval_from_json, eval_from_yaml, eval_join, eval_print, eval_printf,
+    eval_regex_replace, eval_repeat, eval_replace, eval_to_json, eval_to_json_result, eval_to_yaml,
+    eval_to_yaml_result, eval_tpl, eval_trim_affix, record_printf_argument_effects,
+    record_total_conversion_effects,
 };
 use strict_operands::{
     push_fail_capture, record_collection_item_kind_result, record_length_bearing_operand,
@@ -996,7 +996,7 @@ fn eval_piped_invocation(
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
     let PipedOperand {
-        result: current,
+        result: mut current,
         source,
     } = piped;
     let piped_is_direct_values_path = source.and_then(direct_values_path).is_some();
@@ -1087,20 +1087,17 @@ fn eval_piped_invocation(
             let mut effects = Effects::default();
             record_printf_argument_effects(false, &current, &piped, &mut effects);
             effects.merge(current.effects);
+            current.effects = effects;
             if token_initial_string_argument == Some(args.len()) {
-                conjoin_formatter_operand_selection(&piped, piped_dispatch.as_ref(), &mut effects);
+                current.conjoin_formatter_operand_selection(&piped);
             }
+            let mut effects = current.effects;
             let mut scalar_values = Vec::with_capacity(args.len());
             for (index, arg) in args.iter().enumerate() {
                 let mut result = eval_expr_with_helper_calls(arg, env, resolver);
                 let identity_paths = identity_value_paths(result.value.as_ref());
                 if token_initial_string_argument == Some(index) {
-                    let scalar_effects = result.scalar_effects();
-                    conjoin_formatter_operand_selection(
-                        &identity_paths,
-                        scalar_effects.dispatch,
-                        scalar_effects.effects,
-                    );
+                    result.conjoin_formatter_operand_selection(&identity_paths);
                 }
                 if index > 0 {
                     scalar_values.push(
@@ -1472,7 +1469,7 @@ fn split_length_dispatch(
         return None;
     }
     let subject = eval_expr_with_helper_calls(subject, env, resolver);
-    Some(subject.scalar_dispatch().cloned()?.split_length(separator))
+    Some(subject.scalar_dispatch()?.split_length(separator))
 }
 
 fn scalar_pattern_condition(

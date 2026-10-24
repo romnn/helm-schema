@@ -74,12 +74,7 @@ pub(super) fn eval_printf(
         } else {
             BTreeSet::new()
         };
-        let scalar_effects = result.scalar_effects();
-        conjoin_formatter_operand_selection(
-            &plain_slot_format_paths,
-            scalar_effects.dispatch,
-            scalar_effects.effects,
-        );
+        result.conjoin_formatter_operand_selection(&plain_slot_format_paths);
         widened_paths.extend(
             value_paths(result.value.as_ref())
                 .difference(&identity_paths)
@@ -173,44 +168,6 @@ fn printf_scalar_dispatch(
         return None;
     };
     subject.printf_string(format)
-}
-
-pub(super) fn conjoin_formatter_operand_selection(
-    paths: &BTreeSet<String>,
-    dispatch: Option<&crate::scalar_value::ScalarValueDispatch>,
-    effects: &mut Effects,
-) {
-    let Some(dispatch) = dispatch else {
-        return;
-    };
-    for path in paths {
-        let path = ValuesPath::parse(path);
-        let Some(conditions) = dispatch.identity_selection_conditions(&path) else {
-            continue;
-        };
-        if conditions
-            .iter()
-            .any(|condition| matches!(condition.kind(), helm_schema_core::PredicateKind::True))
-        {
-            continue;
-        }
-        let meta = effects.local_output_meta.entry(path).or_default();
-        let existing = if meta.predicates.is_empty() {
-            BTreeSet::from([BTreeSet::new()])
-        } else {
-            std::mem::take(&mut meta.predicates)
-        };
-        meta.predicates = existing
-            .into_iter()
-            .flat_map(|branch| {
-                conditions.iter().map(move |condition| {
-                    let mut selected = branch.clone();
-                    selected.insert(condition.clone());
-                    selected
-                })
-            })
-            .collect();
-    }
 }
 
 /// A total conversion (`quote`/`toString` via `strval`, the numeric casts

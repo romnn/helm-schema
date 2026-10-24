@@ -47,25 +47,6 @@ impl BoundValueContext {
         ]
     }
 
-    pub(crate) fn slot_mut(&mut self, name: &str) -> &mut LocalSlot {
-        self.slots.entry(name.to_owned()).or_default()
-    }
-
-    pub(crate) fn set_output_metadata(
-        &mut self,
-        metadata: &HashMap<String, BTreeMap<ValuesPath, HelperOutputMeta>>,
-    ) {
-        for slot in self.slots.values_mut() {
-            slot.bind(crate::value::LocalSlotUpdate::OutputMeta(None));
-        }
-        for (name, meta) in metadata {
-            self.slot_mut(name)
-                .bind(crate::value::LocalSlotUpdate::OutputMeta(Some(
-                    meta.clone(),
-                )));
-        }
-    }
-
     pub(crate) fn selector_paths(&self, expr: &TemplateExpr) -> BTreeSet<ValuesPath> {
         let Some((variable, rest)) = bound_selector_read(expr) else {
             return BTreeSet::new();
@@ -115,7 +96,6 @@ pub(crate) fn output_metadata(
                 scalar_dispatch: _,
                 truthy_reduction: _,
                 truthiness_abstained: _,
-                truthiness_cleared: _,
                 typeof_source: _,
                 int_cast_source: _,
                 definite_range_member_value: _,

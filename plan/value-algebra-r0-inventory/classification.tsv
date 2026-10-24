@@ -538,8 +538,6 @@ variant:scalar_value.rs:TruthCondition::Exact	R	truth query result	query result 
 variant:scalar_value.rs:TruthCondition::Partial	R	truth query result	query result type	keep		rework3	
 variant:value_path_context/condition_predicate.rs:Decoded::Approximate	D	condition decoding result	-	keep		rework3	
 variant:value_path_context/condition_predicate.rs:Decoded::Exact	D	condition decoding result	-	keep		rework3	
-field:eval_effect.rs:ScalarEffects.dispatch	D	borrowed view of sealed owner	value owner	keep		R2 reviewed design, seal	
-field:eval_effect.rs:ScalarEffects.effects	D	borrowed view of sealed owner	value owner	keep		R2 reviewed design, seal	
 field:value/mod.rs:ContentView.arms	D	borrowed view of sealed owner	value owner	keep		R2 reviewed design, seal	
 field:value/mod.rs:LocalSlotView.binding	D	borrowed view of sealed owner	value owner	keep		R2 reviewed design, seal	
 field:value/mod.rs:LocalSlotView.default_paths	D	borrowed view of sealed owner	value owner	keep		R2 reviewed design, seal	
@@ -554,16 +552,6 @@ field:value/mod.rs:RootSlotView.dispatch	D	borrowed view of sealed owner	value o
 field:value/mod.rs:RootSlotView.truth	D	borrowed view of sealed owner	value owner	keep		R2 reviewed design, seal	
 field:value/mod.rs:RootSlotView.value	D	borrowed view of sealed owner	value owner	keep		R2 reviewed design, seal	
 field:value/mod.rs:ScalarValueDispatch.complete	R	dispatch coverage	value owner	R3b	R2	R2 reviewed design, seal	
-variant:value/mod.rs:LocalSlotUpdate::Binding	R	owned binding update	value owner	keep		R2 reviewed design, seal	
-variant:value/mod.rs:LocalSlotUpdate::DefaultPaths	R	owned binding update	value owner	keep		R2 reviewed design, seal	
-variant:value/mod.rs:LocalSlotUpdate::DefiniteRangeMemberValue	R	owned binding update	value owner	keep		R2 reviewed design, seal	
-variant:value/mod.rs:LocalSlotUpdate::GetBinding	R	owned binding update	value owner	keep		R2 reviewed design, seal	
-variant:value/mod.rs:LocalSlotUpdate::IntCastSource	R	owned binding update	value owner	keep		R2 reviewed design, seal	
-variant:value/mod.rs:LocalSlotUpdate::OutputMeta	R	owned binding update	value owner	keep		R2 reviewed design, seal	
-variant:value/mod.rs:LocalSlotUpdate::RangeMemberValue	R	owned binding update	value owner	keep		R2 reviewed design, seal	
-variant:value/mod.rs:LocalSlotUpdate::ScalarDispatch	R	owned binding update	value owner	keep		R2 reviewed design, seal	
-variant:value/mod.rs:LocalSlotUpdate::TruthyReduction	R	owned binding update	value owner	keep		R2 reviewed design, seal	
-variant:value/mod.rs:LocalSlotUpdate::TypeofSource	R	owned binding update	value owner	keep		R2 reviewed design, seal	
-variant:value/mod.rs:RootSlotUpdate::Dispatch	R	owned binding update	value owner	keep		R2 reviewed design, seal	
-variant:value/mod.rs:RootSlotUpdate::Truth	R	owned binding update	value owner	keep		R2 reviewed design, seal	
-variant:value/mod.rs:RootSlotUpdate::Value	R	owned binding update	value owner	keep		R2 reviewed design, seal	
+field:value/mod.rs:AssignmentBinding.binding	R	one assignment operation input	value owner	keep		S shrink: owned input, no independent fact producer	
+field:value/mod.rs:AssignmentBinding.scalar_dispatch	R	one assignment operation input	value owner	keep		S shrink: owned input, no independent fact producer	
+field:value/mod.rs:AssignmentBinding.truthy_reduction	R	one assignment operation input	value owner	keep		S shrink: owned input, no independent fact producer	

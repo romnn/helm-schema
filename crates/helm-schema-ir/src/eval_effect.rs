@@ -1480,16 +1480,38 @@ impl EvalResult {
     }
 }
 
-pub(crate) struct ScalarEffects<'a> {
-    pub(crate) dispatch: Option<&'a ScalarValueDispatch>,
-    pub(crate) effects: &'a mut Effects,
-}
-
 impl EvalResult {
-    pub(crate) fn scalar_effects(&mut self) -> ScalarEffects<'_> {
-        ScalarEffects {
-            dispatch: self.scalar_dispatch.as_ref(),
-            effects: &mut self.effects,
+    pub(crate) fn conjoin_formatter_operand_selection(&mut self, paths: &BTreeSet<String>) {
+        let Some(dispatch) = self.scalar_dispatch.as_ref() else {
+            return;
+        };
+        for path in paths {
+            let path = ValuesPath::parse(path);
+            let Some(conditions) = dispatch.identity_selection_conditions(&path) else {
+                continue;
+            };
+            if conditions
+                .iter()
+                .any(|condition| matches!(condition.kind(), helm_schema_core::PredicateKind::True))
+            {
+                continue;
+            }
+            let meta = self.effects.local_output_meta.entry(path).or_default();
+            let existing = if meta.predicates.is_empty() {
+                BTreeSet::from([BTreeSet::new()])
+            } else {
+                std::mem::take(&mut meta.predicates)
+            };
+            meta.predicates = existing
+                .into_iter()
+                .flat_map(|branch| {
+                    conditions.iter().map(move |condition| {
+                        let mut selected = branch.clone();
+                        selected.insert(condition.clone());
+                        selected
+                    })
+                })
+                .collect();
         }
     }
 }

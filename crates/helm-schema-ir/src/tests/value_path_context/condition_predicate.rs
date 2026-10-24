@@ -175,12 +175,10 @@ fn condition_context_with_defines(
         .map(|(name, value)| (name, LocalBinding::evaluated(value)))
         .collect();
     for (name, metadata) in template_output_meta {
-        eval_env
-            .local_slots
-            .slots
-            .entry(name)
-            .or_default()
-            .bind(crate::value::LocalSlotUpdate::OutputMeta(Some(metadata)));
+        crate::tests::bind_test_output_meta(
+            eval_env.local_slots.slots.entry(name).or_default(),
+            Some(metadata),
+        );
     }
     let template_truthiness_abstentions = Box::leak(Box::new(crate::value::LocalSlots::default()));
     let defines = Box::leak(Box::new(defines));

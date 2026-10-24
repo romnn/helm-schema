@@ -246,10 +246,6 @@ impl LocalBinding {
         Self::new(value, BindingEvaluationMode::Direct)
     }
 
-    pub(crate) fn evaluated(value: AbstractValue) -> Self {
-        Self::new(value, BindingEvaluationMode::Evaluated)
-    }
-
     pub(crate) fn new(value: AbstractValue, mode: BindingEvaluationMode) -> Self {
         Self::new_with_metadata(value, mode, BindingValueMetadata::default())
     }

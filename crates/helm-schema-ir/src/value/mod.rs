@@ -155,16 +155,7 @@ pub(crate) fn root_values(slots: &HashMap<String, RootSlot>) -> HashMap<String, 
 pub(crate) fn root_slots(values: HashMap<String, AbstractValue>) -> HashMap<String, RootSlot> {
     values
         .into_iter()
-        .map(|(name, value)| {
-            (
-                name,
-                RootSlot {
-                    value: Some(value),
-                    truth: None,
-                    dispatch: None,
-                },
-            )
-        })
+        .map(|(name, value)| (name, RootSlot::new(Some(value), None, None)))
         .collect()
 }
 
@@ -217,7 +208,6 @@ pub(crate) struct LocalSlotView<'a> {
     pub(crate) scalar_dispatch: &'a Option<ScalarValueDispatch>,
     pub(crate) truthy_reduction: &'a Option<Predicate>,
     pub(crate) truthiness_abstained: bool,
-    pub(crate) truthiness_cleared: bool,
     pub(crate) typeof_source: &'a Option<BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>,
     pub(crate) int_cast_source: &'a Option<IntCastSource>,
     pub(crate) definite_range_member_value: &'a Option<AbstractValue>,
@@ -234,48 +224,9 @@ impl LocalSlot {
             scalar_dispatch: &self.scalar_dispatch,
             truthy_reduction: &self.truthy_reduction,
             truthiness_abstained: self.truthiness_abstained,
-            truthiness_cleared: self.truthiness_cleared,
             typeof_source: &self.typeof_source,
             int_cast_source: &self.int_cast_source,
             definite_range_member_value: &self.definite_range_member_value,
-        }
-    }
-}
-
-pub(crate) enum LocalSlotUpdate {
-    RangeDomain(Option<Vec<String>>),
-    GetBinding(Option<GetBinding>),
-    Binding(Option<LocalBinding>),
-    DefaultPaths(Option<BTreeSet<helm_schema_core::ValuesPath>>),
-    OutputMeta(Option<BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>),
-    ScalarDispatch(Option<ScalarValueDispatch>),
-    TruthyReduction(Option<Predicate>),
-    TruthinessAbstained(bool),
-    TruthinessCleared(bool),
-    TypeofSource(Option<BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>),
-    IntCastSource(Option<IntCastSource>),
-    RangeMemberValue(Option<AbstractValue>),
-    DefiniteRangeMemberValue(Option<AbstractValue>),
-}
-
-impl LocalSlot {
-    pub(crate) fn bind(&mut self, update: LocalSlotUpdate) {
-        match update {
-            LocalSlotUpdate::RangeDomain(value) => self.range_domain = value,
-            LocalSlotUpdate::GetBinding(value) => self.get_binding = value,
-            LocalSlotUpdate::Binding(value) => self.binding = value,
-            LocalSlotUpdate::DefaultPaths(value) => self.default_paths = value,
-            LocalSlotUpdate::OutputMeta(value) => self.output_meta = value,
-            LocalSlotUpdate::ScalarDispatch(value) => self.scalar_dispatch = value,
-            LocalSlotUpdate::TruthyReduction(value) => self.truthy_reduction = value,
-            LocalSlotUpdate::TruthinessAbstained(value) => self.truthiness_abstained = value,
-            LocalSlotUpdate::TruthinessCleared(value) => self.truthiness_cleared = value,
-            LocalSlotUpdate::TypeofSource(value) => self.typeof_source = value,
-            LocalSlotUpdate::IntCastSource(value) => self.int_cast_source = value,
-            LocalSlotUpdate::RangeMemberValue(value) => self.range_member_value = value,
-            LocalSlotUpdate::DefiniteRangeMemberValue(value) => {
-                self.definite_range_member_value = value
-            }
         }
     }
 }
@@ -295,8 +246,11 @@ impl LocalSlot {
 }
 
 impl LocalSlot {
-    pub(crate) fn replace_range_member(&mut self, value: AbstractValue) -> Option<AbstractValue> {
-        self.range_member_value.replace(value)
+    pub(crate) fn replace_range_member(
+        &mut self,
+        value: Option<AbstractValue>,
+    ) -> Option<AbstractValue> {
+        std::mem::replace(&mut self.range_member_value, value)
     }
 }
 
@@ -347,25 +301,112 @@ impl RootSlot {
         self.truth = None;
         self.dispatch = None;
     }
-
-    pub(crate) fn inherit_facts(&mut self, source: &Self) {
-        self.truth = source.truth.clone();
-        self.dispatch = source.dispatch.clone();
-    }
 }
 
-pub(crate) enum RootSlotUpdate {
-    Value(Option<AbstractValue>),
-    Truth(Option<Predicate>),
-    Dispatch(Option<ScalarValueDispatch>),
+pub(crate) struct AssignmentBinding {
+    pub(crate) binding: Option<LocalBinding>,
+    pub(crate) scalar_dispatch: Option<ScalarValueDispatch>,
+    pub(crate) truthy_reduction: Option<Predicate>,
+    pub(crate) helper_scope: bool,
+    pub(crate) self_preserving: bool,
+}
+
+impl LocalSlot {
+    pub(crate) fn bind_runtime(
+        &mut self,
+        binding: Option<LocalBinding>,
+        dispatch: Option<ScalarValueDispatch>,
+    ) {
+        self.binding = binding;
+        self.scalar_dispatch = dispatch;
+    }
+
+    /// Preserves reassignment poison across reductions and resets it for a fresh declaration.
+    ///
+    /// A falsy-capable write makes range accumulation last-write-wins;
+    /// self-preserving nonempty accumulation remains monotone.
+    pub(crate) fn bind_truth(
+        &mut self,
+        kind: crate::fragment_assignment::AssignmentKind,
+        reduction: Option<Predicate>,
+        self_preserving: bool,
+    ) {
+        self.truthy_reduction = reduction;
+        match kind {
+            crate::fragment_assignment::AssignmentKind::Declaration => {
+                self.truthiness_abstained = false;
+                self.truthiness_cleared = false;
+            }
+            crate::fragment_assignment::AssignmentKind::Assignment => {
+                if self.truthiness_abstained {
+                    self.truthy_reduction = None;
+                }
+                self.truthiness_cleared |=
+                    !self_preserving && self.truthy_reduction.as_ref() != Some(&Predicate::True);
+            }
+        }
+    }
+
+    pub(crate) fn bind_metadata(
+        &mut self,
+        default_paths: Option<BTreeSet<helm_schema_core::ValuesPath>>,
+        output_meta: Option<BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>,
+    ) {
+        self.default_paths = default_paths;
+        self.output_meta = output_meta;
+    }
+
+    /// Keeps present empty metadata distinct from absent facts at every-exit joins.
+    pub(crate) fn record_assignment_metadata(
+        &mut self,
+        source: Option<IntCastSource>,
+        metadata: crate::eval_env::BindingValueMetadata,
+    ) {
+        if let Some(source) = source {
+            self.int_cast_source = Some(source);
+        }
+        let crate::eval_env::BindingValueMetadata {
+            default_paths,
+            output_meta,
+        } = metadata;
+        self.bind_metadata(Some(default_paths), Some(output_meta));
+    }
+
+    pub(crate) fn record_type_source(
+        &mut self,
+        sources: BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>,
+    ) {
+        self.typeof_source = Some(sources);
+    }
+
+    pub(crate) fn record_iteration_domain(&mut self, domain: Vec<String>) {
+        self.range_domain = Some(domain);
+    }
+    pub(crate) fn record_definite_member(&mut self, member: AbstractValue) {
+        self.definite_range_member_value = Some(member);
+    }
 }
 
 impl RootSlot {
-    pub(crate) fn bind(&mut self, update: RootSlotUpdate) {
-        match update {
-            RootSlotUpdate::Value(value) => self.value = value,
-            RootSlotUpdate::Truth(value) => self.truth = value,
-            RootSlotUpdate::Dispatch(value) => self.dispatch = value,
+    /// Writes truth before value while retaining an earlier dispatch, as direct root writes do.
+    pub(crate) fn overwrite(&mut self, value: AbstractValue, truth: Option<Predicate>) {
+        if let Some(truth) = truth {
+            self.truth = Some(truth);
         }
+        self.value = Some(value);
     }
+}
+
+pub(crate) fn argument_slots(
+    bindings: HashMap<String, AbstractValue>,
+    dispatches: BTreeMap<String, ScalarValueDispatch>,
+) -> BTreeMap<String, RootSlot> {
+    let mut slots = BTreeMap::<String, RootSlot>::new();
+    for (name, value) in bindings {
+        slots.entry(name).or_default().value = Some(value);
+    }
+    for (name, dispatch) in dispatches {
+        slots.entry(name).or_default().dispatch = Some(dispatch);
+    }
+    slots
 }

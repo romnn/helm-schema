@@ -1272,11 +1272,10 @@ fn invalid_kind_abstains_for_a_default_selected_subject_identity() {
         "selected".to_string(),
         BTreeSet::from([ValuesPath::parse("value")]),
     )]) {
-        env.local_slots
-            .slots
-            .entry(name.clone())
-            .or_default()
-            .bind(crate::value::LocalSlotUpdate::DefaultPaths(Some(paths)));
+        crate::tests::bind_test_defaults(
+            env.local_slots.slots.entry(name.clone()).or_default(),
+            Some(paths),
+        );
     }
 
     let result = eval_expr(&expr(r#"kindIs "invalid" $selected"#), &env);
@@ -2113,9 +2112,11 @@ fn truth_only_locals_drive_short_circuit_execution() {
         .slots
         .entry("shouldContinue".to_string())
         .or_default()
-        .bind(crate::value::LocalSlotUpdate::TruthyReduction(Some(
-            Predicate::True,
-        )));
+        .bind_truth(
+            crate::fragment_assignment::AssignmentKind::Declaration,
+            Some(Predicate::True),
+            false,
+        );
 
     let result = eval_expr(
         &single_expr(r#"and $shouldContinue (hasKey .Values.cfg "a")"#),
@@ -2216,9 +2217,11 @@ fn local_selector_truth_comes_from_the_selected_value() {
         .slots
         .entry("plugin".to_string())
         .or_default()
-        .bind(crate::value::LocalSlotUpdate::TruthyReduction(Some(
-            Predicate::truthy_path("plugins.*"),
-        )));
+        .bind_truth(
+            crate::fragment_assignment::AssignmentKind::Declaration,
+            Some(Predicate::truthy_path("plugins.*")),
+            false,
+        );
 
     let result = eval_expr(&single_expr("$plugin.hostPath"), &env);
 
@@ -2422,7 +2425,7 @@ fn root_values_replacement_is_exported_and_used_by_later_values_reads() {
             env.root_slots
                 .entry(name)
                 .or_default()
-                .bind(crate::value::RootSlotUpdate::Value(Some(value)));
+                .overwrite(value, None);
         }
     }
 
@@ -2487,7 +2490,7 @@ fn root_set_truth_predicates_feed_later_root_field_assignments() {
             env.root_slots
                 .entry(name)
                 .or_default()
-                .bind(crate::value::RootSlotUpdate::Truth(Some(truth)));
+                .merge(crate::value::RootSlot::new(None, Some(truth), None));
         }
     }
     let server_enabled = eval_expr(&single_expr(".serverEnabled"), &env);
@@ -2497,16 +2500,21 @@ fn root_set_truth_predicates_feed_later_root_field_assignments() {
             .truth_source(),
         want: SelectionTruthSource::RenderedScalar
     );
-    env.root_slots.entry("mode".to_string()).or_default().bind(
-        crate::value::RootSlotUpdate::Value(Some(AbstractValue::StringSet(BTreeSet::from([
-            "server".to_string(),
-        ])))),
-    );
-    env.root_slots.entry("mode".to_string()).or_default().bind(
-        crate::value::RootSlotUpdate::Dispatch(Some(ScalarValueDispatch::constant(
-            GuardValue::string("server"),
-        ))),
-    );
+    env.root_slots
+        .entry("mode".to_string())
+        .or_default()
+        .overwrite(
+            AbstractValue::StringSet(BTreeSet::from(["server".to_string()])),
+            None,
+        );
+    env.root_slots
+        .entry("mode".to_string())
+        .or_default()
+        .merge(crate::value::RootSlot::new(
+            None,
+            None,
+            Some(ScalarValueDispatch::constant(GuardValue::string("server"))),
+        ));
     let mode = eval_expr(&single_expr(".mode"), &env);
     sim_assert_eq!(
         have: mode

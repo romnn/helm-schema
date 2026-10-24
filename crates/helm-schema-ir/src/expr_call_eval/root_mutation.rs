@@ -132,20 +132,11 @@ pub(super) fn eval_set_call(
             effects.observed_facts.values_default_sources.insert(source);
         }
         for key in keys {
-            if let Some(predicate) = &assigned_predicate {
-                effects
-                    .root_writes
-                    .entry(key.clone())
-                    .or_default()
-                    .bind(crate::value::RootSlotUpdate::Truth(Some(predicate.clone())));
-            }
             effects
                 .root_writes
                 .entry(key)
                 .or_default()
-                .bind(crate::value::RootSlotUpdate::Value(Some(
-                    assigned_value.clone(),
-                )));
+                .overwrite(assigned_value.clone(), assigned_predicate.clone());
         }
     }
     EvalResult::with_effects(value, effects)
