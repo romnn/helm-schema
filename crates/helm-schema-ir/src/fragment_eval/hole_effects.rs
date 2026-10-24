@@ -16,7 +16,6 @@ use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
 use crate::fragment_expr_eval::{FragmentEvalContext, document_result_from_expr};
 use crate::observed_facts::{HintGrade, HintIntent, HintScope, ObservedFacts};
-use crate::scalar_value::TruthCondition;
 use crate::{Guard, ValueKind};
 use helm_schema_core::{Predicate, ValuesPath};
 
