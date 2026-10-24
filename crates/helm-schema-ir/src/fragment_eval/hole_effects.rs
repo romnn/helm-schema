@@ -16,7 +16,7 @@ use crate::eval_effect::Effects;
 use crate::eval_env::EvalEnv;
 use crate::fragment_expr_eval::{FragmentEvalContext, document_result_from_expr};
 use crate::observed_facts::{HintGrade, HintIntent, HintScope, ObservedFacts};
-use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
+use crate::scalar_value::TruthCondition;
 use crate::{Guard, ValueKind};
 use helm_schema_core::{Predicate, ValuesPath};
 
@@ -410,7 +410,7 @@ impl Interpreter<'_> {
             let result = document_result_from_expr(
                 expr,
                 &env,
-                Some(&self.root_bindings),
+                Some(&crate::value::root_values(&self.root_slots)),
                 current_dot.as_ref(),
                 context,
                 &mut seen,
@@ -440,49 +440,25 @@ impl Interpreter<'_> {
     }
 
     pub(super) fn hole_eval_env(&self, current_dot: Option<&AbstractValue>) -> EvalEnv {
-        let mut env = EvalEnv::from_helper_context(
-            Some(&self.root_bindings),
-            current_dot,
-            self.current_dot_binding_mode(),
-        )
-        .without_helper_call_args()
-        .with_predicate_memo(std::rc::Rc::clone(self.db.predicate_memo()));
+        let mut env =
+            EvalEnv::from_helper_context(None, current_dot, self.current_dot_binding_mode())
+                .without_helper_call_args()
+                .with_predicate_memo(std::rc::Rc::clone(self.db.predicate_memo()));
         // Locals (`$x`) and root bindings (`.x`) are distinct namespaces:
-        // roots stay in `root_fields` so a helper-arg key never shadows a
+        // roots stay in `root_slots` so a helper-arg key never shadows a
         // same-named body local. Range VALUE variables resolve to member
         // identity (`$arg` in `range $arg := .Values.args` is `args.*`),
         // the same identity the range dot already carries, so member
         // consumers (`tpl $arg`) bind their contracts per member;
         // explicit fragment values shadow them where both exist.
-        env.locals = self
-            .locals
-            .range_member_values
-            .iter()
-            .map(|(name, value)| {
-                (
-                    name.clone(),
-                    crate::eval_env::LocalBinding::direct(value.clone()),
-                )
-            })
-            .collect();
-        env.locals.extend(
-            self.locals
-                .fragment_values
-                .iter()
-                .map(|(name, value)| (name.clone(), value.clone())),
-        );
-        env.local_default_paths = self.locals.default_paths.clone();
-        env.local_output_meta = self.locals.output_meta.clone();
-        env.local_scalar_dispatches = self.locals.scalar_dispatches.clone();
-        env.local_truthy_reductions = self.locals.truthy_reductions.clone();
+        env.locals = self.locals.evaluation_bindings();
+        env.local_slots = BoundValueContext::new(&self.locals.slots);
         env.member_host_conversions = self.member_host_conversions.clone();
         env.active_predicates = self.active_predicates.clone();
-        env.root_truthy_predicates = self.root_truthy_predicates.clone();
-        env.root_value_dispatches = self.root_value_dispatches.clone();
+        env.root_slots = self.root_slots.clone();
         env.root_field_semantics_on_current_dot =
             self.root_value_dot.is_some() && self.dot_stack.len() <= 1;
-        env.bound_values =
-            BoundValueContext::new(&self.locals.range_domains, &self.locals.get_bindings);
+
         env
     }
 
@@ -565,16 +541,12 @@ impl Interpreter<'_> {
 
     pub(super) fn absorb_hole_effects(&mut self, effects: &Effects, demotion: RenderedDemotion) {
         self.absorb_member_host_conversions(&effects.member_host_conversions);
-        self.apply_root_set_mutations(
-            &effects.root_set_mutations,
-            &effects.root_set_predicates,
-            &effects.root_set_value_dispatches,
-        );
+        self.apply_root_set_mutations(&effects.root_writes);
         self.absorb_scoped_observed_facts(&effects.observed_facts);
         self.chart_defaults_observed
             .extend(effects.chart_default_paths.iter().cloned());
         let mut chart_defaults = effects.chart_default_paths.clone();
-        self.locals.append_chart_value_defaults(&mut chart_defaults);
+        self.locals.chart_value_defaults.append(&mut chart_defaults);
 
         self.parsed_yaml_input_paths
             .extend(effects.parsed_yaml_input_paths.iter().cloned());
@@ -669,33 +641,17 @@ impl Interpreter<'_> {
 
     pub(super) fn apply_root_set_mutations(
         &mut self,
-        mutations: &std::collections::BTreeMap<String, AbstractValue>,
-        predicates: &std::collections::BTreeMap<String, Predicate>,
-        dispatches: &std::collections::BTreeMap<String, ScalarValueDispatch>,
+        writes: &std::collections::BTreeMap<String, crate::value::RootSlot>,
     ) {
-        for (key, value) in mutations {
-            self.root_truthy_predicates.remove(key);
-            self.root_set_predicates_observed.remove(key);
+        for (key, write) in writes {
+            if write.value.as_ref().is_none() {
+                continue;
+            }
             // A plain overwrite invalidates any earlier joined dispatch for
-            // the key; the incoming dispatch (if the mutation came from a
-            // joined chain) is re-installed below.
-            self.root_value_dispatches.remove(key);
-            self.root_value_dispatches_observed.remove(key);
-            self.root_bindings.insert(key.clone(), value.clone());
-            self.root_set_mutations_observed
-                .insert(key.clone(), value.clone());
-            if let Some(predicate) = predicates.get(key) {
-                self.root_truthy_predicates
-                    .insert(key.clone(), predicate.clone());
-                self.root_set_predicates_observed
-                    .insert(key.clone(), predicate.clone());
-            }
-            if let Some(dispatch) = dispatches.get(key) {
-                self.root_value_dispatches
-                    .insert(key.clone(), dispatch.clone());
-                self.root_value_dispatches_observed
-                    .insert(key.clone(), dispatch.clone());
-            }
+            // the key; an incoming joined dispatch is installed with the value.
+            let slot = write.clone();
+            self.root_slots.insert(key.clone(), slot.clone());
+            self.root_writes.insert(key.clone(), slot);
         }
     }
 

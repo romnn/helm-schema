@@ -598,7 +598,7 @@ impl Interpreter<'_> {
         let call = self.db.summarize_bound_helper_call(
             &name,
             arg,
-            Some(&self.root_bindings),
+            Some(&crate::value::root_values(&self.root_slots)),
             current_dot.as_ref(),
             &env,
             FragmentEvalContext::new(self.db),
@@ -644,16 +644,12 @@ impl Interpreter<'_> {
             .extend(summary.yaml_serialized_paths.iter().cloned());
         self.chart_defaults_observed
             .extend(summary.chart_defaults.iter().cloned());
-        self.apply_root_set_mutations(
-            &summary.root_set_mutations,
-            &summary.root_set_predicates,
-            &summary.root_set_value_dispatches,
-        );
+        self.apply_root_set_mutations(&summary.root_writes);
         // A wrapper snapshot stays verbatim because caller reads run afterward.
         self.pre_rewrite_strict_paths
             .extend(summary.pre_rewrite_strict_paths.iter().cloned());
         let mut chart_defaults = summary.chart_defaults.clone();
-        self.locals.append_chart_value_defaults(&mut chart_defaults);
+        self.locals.chart_value_defaults.append(&mut chart_defaults);
         Some((
             splice_summary(summary, self.current_site.as_ref(), self.in_value_slot),
             summary.root_render_indent,

@@ -48,7 +48,7 @@ fn branch_join_still_joins_local_state() {
     state.join_branch_outcomes(&entry, &[branch, other_branch]);
 
     sim_assert_eq!(
-        have: state.locals().range_domains.get("scope"),
+        have: state.locals().slots.range_domain("scope"),
         want: Some(&vec!["backend".to_string(), "frontend".to_string()])
     );
 }

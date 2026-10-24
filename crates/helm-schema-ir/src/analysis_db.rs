@@ -14,8 +14,8 @@ use crate::fragment_eval::{BodyEvalFacts, ValueRead};
 use crate::fragment_expr_eval::{
     FragmentEvalContext, context_value_from_outer_expr, document_result_from_expr,
 };
-use crate::scalar_value::ScalarValueDispatch;
 use crate::symbolic::SymbolicPolicy;
+use crate::value::RootSlot;
 use helm_schema_ast::parse_go_template;
 
 pub(crate) struct ParsedHelperBody<'a> {
@@ -1119,13 +1119,11 @@ pub(crate) struct DotFrame {
 
 #[derive(Clone, Debug)]
 pub(crate) struct BoundHelperCallResolution {
-    pub(crate) bindings: HashMap<String, AbstractValue>,
     pub(crate) dot: DotFrame,
     /// Scalar facts visible through the helper's dot-relative root fields:
     /// caller root facts for a root-passthrough call, or evaluated field
     /// dispatches for a statically constructed argument mapping.
-    pub(crate) root_truthy_predicates: HashMap<String, helm_schema_core::Predicate>,
-    pub(crate) root_value_dispatches: HashMap<String, ScalarValueDispatch>,
+    pub(crate) root_slots: HashMap<String, RootSlot>,
 }
 
 struct ResolvedBoundHelperCall {
@@ -1161,20 +1159,18 @@ fn resolve_bound_helper_call(
         result
     };
     let mut binding_seen = params.seen.clone();
-    let arg_resolution = bindings_for_helper_arg_with(params.arg, params.outer_bindings, |expr| {
+    let crate::expr_eval::HelperArgBindings {
+        scalar_dispatches,
+        value,
+    } = bindings_for_helper_arg_with(params.arg, params.outer_bindings, |expr| {
         eval_arg(expr, &mut binding_seen)
     });
-    let mut bindings = arg_resolution.bindings;
-    let argument_scalar_dispatches = arg_resolution
-        .scalar_dispatches
-        .into_iter()
-        .collect::<HashMap<_, _>>();
+    let mut slots = scalar_dispatches.into_iter().collect::<HashMap<_, _>>();
 
     // The binding resolution already evaluated the whole arg unless the arg
     // was a dot/root or merge call; only those shapes still need their own
     // helper-dot evaluation here (same evaluation, fresh seen set).
-    let mut helper_body_dot = arg_resolution
-        .value
+    let mut helper_body_dot = value
         .or_else(|| {
             let mut dot_seen = params.seen.clone();
             params
@@ -1187,7 +1183,9 @@ fn resolve_bound_helper_call(
         context_value_from_outer_expr(
             expr,
             Some(&params.eval_env.locals),
-            Some(&params.eval_env.local_output_meta),
+            Some(&crate::bound_value_analysis::output_metadata(
+                &params.eval_env.local_slots.slots,
+            )),
             params.outer_bindings,
             params.current_dot,
             &params.eval_env.predicate_memo,
@@ -1195,7 +1193,11 @@ fn resolve_bound_helper_call(
     });
 
     let mut widened_paths = BTreeSet::new();
-    widen_large_bound_values(&mut bindings, params.helper_name, &mut widened_paths);
+    widen_large_bound_values(
+        slots.values_mut().filter_map(|slot| slot.value.as_mut()),
+        params.helper_name,
+        &mut widened_paths,
+    );
     helper_body_dot = helper_body_dot
         .map(|binding| widen_large_bound_value(binding, params.helper_name, &mut widened_paths));
     helper_fragment_dot = helper_fragment_dot
@@ -1221,28 +1223,35 @@ fn resolve_bound_helper_call(
     let root_passthrough = matches!(helper_body_dot, Some(AbstractValue::RootContext));
     if root_passthrough {
         for (field, value) in params.context.analysis_db.static_root_fields() {
-            bindings
+            slots
                 .entry(field.clone())
-                .or_insert_with(|| value.clone());
+                .or_default()
+                .value
+                .get_or_insert_with(|| value.clone());
         }
     }
-    let (root_truthy_predicates, root_value_dispatches) = if root_passthrough {
-        (
-            params.eval_env.root_truthy_predicates.clone(),
-            params.eval_env.root_value_dispatches.clone(),
-        )
-    } else {
-        (HashMap::new(), argument_scalar_dispatches)
-    };
+    if root_passthrough {
+        for slot in slots.values_mut() {
+            slot.truth = None;
+            slot.dispatch = None;
+        }
+        for (name, caller) in &params.eval_env.root_slots {
+            let truth = caller.truth.as_ref();
+            let dispatch = caller.dispatch.as_ref();
+            if truth.is_some() || dispatch.is_some() {
+                let slot = slots.entry(name.clone()).or_default();
+                slot.truth = truth.cloned();
+                slot.dispatch = dispatch.cloned();
+            }
+        }
+    }
     ResolvedBoundHelperCall {
         resolution: BoundHelperCallResolution {
-            bindings,
+            root_slots: slots,
             dot: DotFrame {
                 helper: helper_body_dot,
                 fragment: helper_fragment_dot,
             },
-            root_truthy_predicates,
-            root_value_dispatches,
         },
         argument_effects,
     }
@@ -1255,12 +1264,12 @@ fn resolve_bound_helper_call(
 /// A synthetic 256-leaf value reproduced the preflight blowup this bound prevents.
 pub(crate) const BOUND_HELPER_STRUCTURAL_WIDTH_LIMIT: usize = 32;
 
-pub(crate) fn widen_large_bound_values(
-    bindings: &mut HashMap<String, AbstractValue>,
+pub(crate) fn widen_large_bound_values<'a>(
+    bindings: impl IntoIterator<Item = &'a mut AbstractValue>,
     helper_name: &str,
     widened_paths: &mut BTreeSet<String>,
 ) {
-    for binding in bindings.values_mut() {
+    for binding in bindings {
         let Some(widened) = widen_large_bound_value_ref(binding, helper_name, widened_paths) else {
             continue;
         };
@@ -1333,10 +1342,8 @@ impl CachedDefineBody {
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct BoundHelperCallCacheKey {
     name: String,
-    bindings: BTreeMap<String, AbstractValue>,
+    root_slots: BTreeMap<String, RootSlot>,
     dot: DotFrame,
-    root_truthy_predicates: BTreeMap<String, helm_schema_core::Predicate>,
-    root_value_dispatches: BTreeMap<String, ScalarValueDispatch>,
     seen: BTreeSet<String>,
 }
 
@@ -1346,27 +1353,15 @@ impl BoundHelperCallCacheKey {
         resolution: &BoundHelperCallResolution,
         seen: BTreeSet<String>,
     ) -> Self {
-        let BoundHelperCallResolution {
-            bindings,
-            dot,
-            root_truthy_predicates,
-            root_value_dispatches,
-        } = resolution;
+        let BoundHelperCallResolution { root_slots, dot } = resolution;
         Self {
             name: name.to_string(),
-            bindings: bindings
+            root_slots: root_slots
                 .iter()
-                .map(|(key, value)| (key.clone(), value.clone()))
+                .filter(|(_, slot)| !slot.is_empty())
+                .map(|(key, slot)| (key.clone(), slot.clone()))
                 .collect(),
             dot: dot.clone(),
-            root_truthy_predicates: root_truthy_predicates
-                .iter()
-                .map(|(key, value)| (key.clone(), value.clone()))
-                .collect(),
-            root_value_dispatches: root_value_dispatches
-                .iter()
-                .map(|(key, value)| (key.clone(), value.clone()))
-                .collect(),
             seen,
         }
     }

@@ -49,16 +49,17 @@ pub(crate) fn context_value_from_outer_expr(
             )
         })
     });
-    let env = EvalEnv {
+    let mut env = EvalEnv {
         dot,
         dot_binding_mode: crate::eval_env::BindingEvaluationMode::Direct,
-        root_fields: outer.cloned().unwrap_or_default(),
+        root_slots: crate::value::root_slots(outer.cloned().unwrap_or_default()),
         locals: outer_locals.cloned().unwrap_or_default(),
-        local_output_meta: outer_output_meta.cloned().unwrap_or_default(),
         allow_field_root_lookup: true,
         predicate_memo: Rc::clone(predicate_memo),
         ..EvalEnv::default()
     };
+    env.local_slots
+        .set_output_metadata(&outer_output_meta.cloned().unwrap_or_default());
     let result = eval_expr(expr, &env);
     let mut output_meta = result.effects.local_output_meta.clone();
     for path in &result.effects.yaml_serialized_paths {

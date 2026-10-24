@@ -152,25 +152,23 @@ fn two_independent_unknown_decisions_expose_both_leaves_with_unresolved_remainde
 #[test]
 fn symbolic_range_exit_widens_only_bindings_changed_by_the_iteration() {
     let mut entry = SymbolicLocalState::default();
-    entry.fragment_values.insert(
-        "cfg".to_string(),
-        LocalBinding::evaluated(values_path!("items")),
-    );
-    entry.fragment_values.insert(
-        "stable".to_string(),
-        LocalBinding::direct(values_path!("stable")),
-    );
+    entry.slots.entry("cfg".to_string()).or_default().binding =
+        Some(LocalBinding::evaluated(values_path!("items")));
+    entry.slots.entry("stable".to_string()).or_default().binding =
+        Some(LocalBinding::direct(values_path!("stable")));
     let mut positive_exit = entry.clone();
-    positive_exit.fragment_values.insert(
-        "cfg".to_string(),
-        LocalBinding::direct(values_path!("items.*")),
-    );
+    positive_exit
+        .slots
+        .entry("cfg".to_string())
+        .or_default()
+        .binding = Some(LocalBinding::direct(values_path!("items.*")));
 
     positive_exit.widen_changed_fragment_bindings(&entry);
 
     let cfg = positive_exit
-        .fragment_values
-        .get("cfg")
+        .slot("cfg")
+        .binding
+        .as_ref()
         .map(|binding| binding.leaves(&PredicateMemo::default()));
     // The widen proves no arm, and keeps the iterated value as a candidate.
     sim_assert_eq!(
@@ -188,12 +186,12 @@ fn symbolic_range_exit_widens_only_bindings_changed_by_the_iteration() {
         want: Some(true),
     );
     sim_assert_eq!(
-        have: positive_exit.fragment_values.get("cfg").map(|binding| binding.paths(&PredicateMemo::default())),
+        have: positive_exit.slot("cfg").binding.as_ref().map(|binding| binding.paths(&PredicateMemo::default())),
         want: Some(BTreeSet::from([ValuesPath::parse("items.*")])),
     );
     sim_assert_eq!(
-        have: positive_exit.fragment_values.get("stable"),
-        want: entry.fragment_values.get("stable"),
+        have: positive_exit.slot("stable").binding.as_ref(),
+        want: entry.slot("stable").binding.as_ref(),
     );
 }
 
@@ -225,20 +223,21 @@ fn local_binding_has_no_structural_alternative_cap() {
 
 fn state_with_scalar_arm_count(count: usize) -> SymbolicLocalState {
     let mut state = SymbolicLocalState::default();
-    state.scalar_dispatches.insert(
-        "value".to_string(),
-        ScalarValueDispatch {
-            arms: (0..count)
-                .map(|index| {
-                    (
-                        Predicate::True,
-                        ScalarValue::Literal(GuardValue::String(index.to_string())),
-                    )
-                })
-                .collect(),
-            complete: true,
-        },
-    );
+    state
+        .slots
+        .entry("value".to_string())
+        .or_default()
+        .scalar_dispatch = Some(ScalarValueDispatch {
+        arms: (0..count)
+            .map(|index| {
+                (
+                    Predicate::True,
+                    ScalarValue::Literal(GuardValue::String(index.to_string())),
+                )
+            })
+            .collect(),
+        complete: true,
+    });
     state
 }
 
@@ -268,8 +267,18 @@ fn joined_scalar_dispatches_without_unchanged_shortcut(
 
     let variables: BTreeSet<&String> = arms
         .iter()
-        .flat_map(|(_, state)| state.scalar_dispatches.keys())
-        .chain(entry.scalar_dispatches.keys())
+        .flat_map(|(_, state)| {
+            state
+                .slots
+                .iter()
+                .filter_map(|(name, slot)| slot.scalar_dispatch.is_some().then_some(name))
+        })
+        .chain(
+            entry
+                .slots
+                .iter()
+                .filter_map(|(name, slot)| slot.scalar_dispatch.is_some().then_some(name)),
+        )
         .collect();
     let mut joined = HashMap::new();
     for variable in variables {
@@ -282,7 +291,7 @@ fn joined_scalar_dispatches_without_unchanged_shortcut(
             if outer_condition == Predicate::False {
                 continue;
             }
-            let Some(dispatch) = state.scalar_dispatches.get(variable) else {
+            let Some(dispatch) = state.slot(variable).scalar_dispatch.as_ref() else {
                 complete = false;
                 continue;
             };
@@ -329,7 +338,7 @@ fn scalar_dispatch_join_keeps_128_arms_and_discards_129() {
         &memo,
     );
     sim_assert_eq!(
-        have: at_cap.scalar_dispatches.get("value").map(|dispatch| dispatch.arms.len()),
+        have: at_cap.slot("value").scalar_dispatch.as_ref().map(|dispatch| dispatch.arms.len()),
         want: Some(128)
     );
 
@@ -343,7 +352,7 @@ fn scalar_dispatch_join_keeps_128_arms_and_discards_129() {
         true,
         &memo,
     );
-    sim_assert_eq!(have: over_cap.scalar_dispatches.is_empty(), want: true);
+    sim_assert_eq!(have: over_cap.slots.iter().find_map(|(name, slot)| slot.scalar_dispatch.as_ref().map(|value| (name, value))).is_none(), want: true);
 }
 
 #[test]
@@ -351,8 +360,13 @@ fn unchanged_partial_dispatch_survives_the_join_cap() {
     let memo = PredicateMemo::default();
     let entry = state_with_scalar_arm_count(129);
     let mut partial = entry.clone();
-    if let Some(dispatch) = partial.scalar_dispatches.get_mut("value") {
+    if let Some(mut dispatch) = partial.slot("value").scalar_dispatch.clone() {
         dispatch.complete = false;
+        partial
+            .slots
+            .entry("value".to_string())
+            .or_default()
+            .scalar_dispatch = Some(dispatch);
     }
     let entry = partial.clone();
     let mut joined = SymbolicLocalState::default();
@@ -363,8 +377,8 @@ fn unchanged_partial_dispatch_survives_the_join_cap() {
         &memo,
     );
     sim_assert_eq!(
-        have: joined.scalar_dispatches.get("value"),
-        want: entry.scalar_dispatches.get("value")
+        have: joined.slot("value").scalar_dispatch.as_ref(),
+        want: entry.slot("value").scalar_dispatch.as_ref()
     );
 
     let old = joined_scalar_dispatches_without_unchanged_shortcut(
@@ -386,22 +400,23 @@ fn changed_nested_and_missing_dispatches_match_the_old_join() {
     let outer = Predicate::truthy_path("outer");
     let inner = Predicate::truthy_path("inner");
     let mut nested = SymbolicLocalState::default();
-    nested.scalar_dispatches.insert(
-        "value".to_string(),
-        ScalarValueDispatch {
-            arms: vec![
-                (
-                    inner.clone(),
-                    ScalarValue::Literal(GuardValue::String("nested-true".to_string())),
-                ),
-                (
-                    inner.negated(),
-                    ScalarValue::Literal(GuardValue::String("nested-false".to_string())),
-                ),
-            ],
-            complete: true,
-        },
-    );
+    nested
+        .slots
+        .entry("value".to_string())
+        .or_default()
+        .scalar_dispatch = Some(ScalarValueDispatch {
+        arms: vec![
+            (
+                inner.clone(),
+                ScalarValue::Literal(GuardValue::String("nested-true".to_string())),
+            ),
+            (
+                inner.negated(),
+                ScalarValue::Literal(GuardValue::String("nested-false".to_string())),
+            ),
+        ],
+        complete: true,
+    });
     let changed_arms = vec![
         (TruthCondition::exact(outer.clone()), nested),
         (
@@ -412,7 +427,7 @@ fn changed_nested_and_missing_dispatches_match_the_old_join() {
     let mut changed = SymbolicLocalState::default();
     changed.join_scalar_dispatch_arms(&entry, &changed_arms, true, &memo);
     sim_assert_eq!(
-        have: changed.scalar_dispatches,
+        have: changed.slots.iter().filter_map(|(name, slot)| slot.scalar_dispatch.as_ref().map(|value| (name.clone(), value.clone()))).collect::<HashMap<_,_>>(),
         want: joined_scalar_dispatches_without_unchanged_shortcut(
             &entry,
             &changed_arms,
@@ -435,7 +450,7 @@ fn changed_nested_and_missing_dispatches_match_the_old_join() {
     let mut missing = SymbolicLocalState::default();
     missing.join_scalar_dispatch_arms(&entry, &missing_arms, true, &memo);
     sim_assert_eq!(
-        have: missing.scalar_dispatches,
+        have: missing.slots.iter().filter_map(|(name, slot)| slot.scalar_dispatch.as_ref().map(|value| (name.clone(), value.clone()))).collect::<HashMap<_,_>>(),
         want: joined_scalar_dispatches_without_unchanged_shortcut(
             &entry,
             &missing_arms,
@@ -474,10 +489,15 @@ fn snapshot_restore_replaces_all_local_state_maps() {
     state = snapshot;
 
     sim_assert_eq!(
-        have: state.fragment_values.get("image").and_then(|binding| binding.value(&PredicateMemo::default())),
+        have: state.slot("image").binding.as_ref().and_then(|binding| binding.value(&PredicateMemo::default())),
         want: Some(values_path!("image"))
     );
-    assert!(state.range_domains.is_empty());
+    assert!(
+        state
+            .slots
+            .keys()
+            .all(|name| state.slot(name).range_domain.as_ref().is_none())
+    );
     sim_assert_eq!(
         have: state.chart_value_defaults,
         want: [ValuesPath::parse("serviceAccount.name")]
@@ -504,7 +524,7 @@ fn local_scope_restores_shadowed_fragment_value() {
     state.exit_local_scope();
 
     sim_assert_eq!(
-        have: state.fragment_values.get("name").and_then(|binding| binding.value(&PredicateMemo::default())),
+        have: state.slot("name").binding.as_ref().and_then(|binding| binding.value(&PredicateMemo::default())),
         want: Some(values_path!("outer"))
     );
 }
@@ -527,7 +547,7 @@ fn local_scope_keeps_assignment_to_outer_fragment_value() {
     state.exit_local_scope();
 
     sim_assert_eq!(
-        have: state.fragment_values.get("name").and_then(|binding| binding.value(&PredicateMemo::default())),
+        have: state.slot("name").binding.as_ref().and_then(|binding| binding.value(&PredicateMemo::default())),
         want: Some(values_path!("assigned"))
     );
 }
@@ -552,7 +572,7 @@ fn local_scope_restores_shadowed_get_binding() {
     state.exit_local_scope();
 
     sim_assert_eq!(
-        have: state.get_bindings.get("value"),
+        have: state.slot("value").get_binding.as_ref(),
         want: Some(&get_binding("outer", "key"))
     );
 }
@@ -577,7 +597,7 @@ fn local_scope_keeps_assignment_to_outer_get_binding() {
     state.exit_local_scope();
 
     sim_assert_eq!(
-        have: state.get_bindings.get("value"),
+        have: state.slot("value").get_binding.as_ref(),
         want: Some(&get_binding("assigned", "key"))
     );
 }
@@ -600,9 +620,9 @@ fn fragment_assignment_replaces_outer_get_binding() {
     );
     state.exit_local_scope();
 
-    assert!(!state.get_bindings.contains_key("value"));
+    assert!(state.slot("value").get_binding.as_ref().is_none());
     sim_assert_eq!(
-        have: state.fragment_values.get("value").and_then(|binding| binding.value(&PredicateMemo::default())),
+        have: state.slot("value").binding.as_ref().and_then(|binding| binding.value(&PredicateMemo::default())),
         want: Some(values_path!("assigned"))
     );
 }
@@ -620,9 +640,9 @@ fn local_scope_restores_range_domain_shadowing_outer_binding() {
     state.insert_range_domain("key".to_string(), vec!["inner".to_string()]);
     state.exit_local_scope();
 
-    assert!(!state.range_domains.contains_key("key"));
+    assert!(state.slot("key").range_domain.as_ref().is_none());
     sim_assert_eq!(
-        have: state.fragment_values.get("key").and_then(|binding| binding.value(&PredicateMemo::default())),
+        have: state.slot("key").binding.as_ref().and_then(|binding| binding.value(&PredicateMemo::default())),
         want: Some(values_path!("outer"))
     );
 }
@@ -635,10 +655,11 @@ fn local_scope_restores_default_paths_for_shadowed_declaration() {
         "name".to_string(),
         Some(values_path!("outer")),
     );
-    state.default_paths.insert(
-        "name".to_string(),
-        BTreeSet::from([ValuesPath::parse("outer.default")]),
-    );
+    state
+        .slots
+        .entry("name".to_string())
+        .or_default()
+        .default_paths = Some(BTreeSet::from([ValuesPath::parse("outer.default")]));
 
     state.enter_local_scope();
     state.bind_fragment_value(
@@ -646,14 +667,15 @@ fn local_scope_restores_default_paths_for_shadowed_declaration() {
         "name".to_string(),
         Some(values_path!("inner")),
     );
-    state.default_paths.insert(
-        "name".to_string(),
-        BTreeSet::from([ValuesPath::parse("inner.default")]),
-    );
+    state
+        .slots
+        .entry("name".to_string())
+        .or_default()
+        .default_paths = Some(BTreeSet::from([ValuesPath::parse("inner.default")]));
     state.exit_local_scope();
 
     sim_assert_eq!(
-        have: state.default_paths.get("name"),
+        have: state.slot("name").default_paths.as_ref(),
         want: Some(&BTreeSet::from([ValuesPath::parse("outer.default")]))
     );
 }
@@ -666,10 +688,11 @@ fn local_scope_keeps_default_paths_for_outer_assignment() {
         "name".to_string(),
         Some(values_path!("outer")),
     );
-    state.default_paths.insert(
-        "name".to_string(),
-        BTreeSet::from([ValuesPath::parse("outer.default")]),
-    );
+    state
+        .slots
+        .entry("name".to_string())
+        .or_default()
+        .default_paths = Some(BTreeSet::from([ValuesPath::parse("outer.default")]));
 
     state.enter_local_scope();
     state.bind_fragment_value(
@@ -677,14 +700,15 @@ fn local_scope_keeps_default_paths_for_outer_assignment() {
         "name".to_string(),
         Some(values_path!("assigned")),
     );
-    state.default_paths.insert(
-        "name".to_string(),
-        BTreeSet::from([ValuesPath::parse("assigned.default")]),
-    );
+    state
+        .slots
+        .entry("name".to_string())
+        .or_default()
+        .default_paths = Some(BTreeSet::from([ValuesPath::parse("assigned.default")]));
     state.exit_local_scope();
 
     sim_assert_eq!(
-        have: state.default_paths.get("name"),
+        have: state.slot("name").default_paths.as_ref(),
         want: Some(&BTreeSet::from([ValuesPath::parse("assigned.default")]))
     );
 }
@@ -698,8 +722,10 @@ fn local_scope_restores_output_meta_for_shadowed_declaration() {
         Some(values_path!("outer")),
     );
     state
-        .output_meta
-        .insert("name".to_string(), output_meta("outer.output"));
+        .slots
+        .entry("name".to_string())
+        .or_default()
+        .output_meta = Some(output_meta("outer.output"));
 
     state.enter_local_scope();
     state.bind_fragment_value(
@@ -708,12 +734,14 @@ fn local_scope_restores_output_meta_for_shadowed_declaration() {
         Some(values_path!("inner")),
     );
     state
-        .output_meta
-        .insert("name".to_string(), output_meta("inner.output"));
+        .slots
+        .entry("name".to_string())
+        .or_default()
+        .output_meta = Some(output_meta("inner.output"));
     state.exit_local_scope();
 
     sim_assert_eq!(
-        have: state.output_meta.get("name"),
+        have: state.slot("name").output_meta.as_ref(),
         want: Some(&output_meta("outer.output"))
     );
 }
@@ -727,8 +755,10 @@ fn local_scope_keeps_output_meta_for_outer_assignment() {
         Some(values_path!("outer")),
     );
     state
-        .output_meta
-        .insert("name".to_string(), output_meta("outer.output"));
+        .slots
+        .entry("name".to_string())
+        .or_default()
+        .output_meta = Some(output_meta("outer.output"));
 
     state.enter_local_scope();
     state.bind_fragment_value(
@@ -737,12 +767,14 @@ fn local_scope_keeps_output_meta_for_outer_assignment() {
         Some(values_path!("assigned")),
     );
     state
-        .output_meta
-        .insert("name".to_string(), output_meta("assigned.output"));
+        .slots
+        .entry("name".to_string())
+        .or_default()
+        .output_meta = Some(output_meta("assigned.output"));
     state.exit_local_scope();
 
     sim_assert_eq!(
-        have: state.output_meta.get("name"),
+        have: state.slot("name").output_meta.as_ref(),
         want: Some(&output_meta("assigned.output"))
     );
 }
@@ -751,8 +783,10 @@ fn local_scope_keeps_output_meta_for_outer_assignment() {
 fn local_scope_restores_truthy_reduction_for_shadowed_declaration() {
     let mut state = SymbolicLocalState::default();
     state
-        .truthy_reductions
-        .insert("message".to_string(), Predicate::truthy_path("outer"));
+        .slots
+        .entry("message".to_string())
+        .or_default()
+        .truthy_reduction = Some(Predicate::truthy_path("outer"));
 
     state.enter_local_scope();
     state.bind_fragment_value(
@@ -763,12 +797,14 @@ fn local_scope_restores_truthy_reduction_for_shadowed_declaration() {
         )),
     );
     state
-        .truthy_reductions
-        .insert("message".to_string(), Predicate::False);
+        .slots
+        .entry("message".to_string())
+        .or_default()
+        .truthy_reduction = Some(Predicate::False);
     state.exit_local_scope();
 
     sim_assert_eq!(
-        have: state.truthy_reductions.get("message"),
+        have: state.slot("message").truthy_reduction.as_ref(),
         want: Some(&Predicate::truthy_path("outer"))
     );
 }
@@ -800,7 +836,7 @@ fn branch_join_keeps_bindings_present_in_all_outcomes() {
     joined.join_branch_outcomes(&entry_snapshot, &[first, second]);
 
     sim_assert_eq!(
-        have: joined.fragment_values.get("name").and_then(|binding| binding.value(&PredicateMemo::default())),
+        have: joined.slot("name").binding.as_ref().and_then(|binding| binding.value(&PredicateMemo::default())),
         want: Some(AbstractValue::Choice(
             [
                 values_path!("first"),
@@ -816,20 +852,24 @@ fn branch_join_keeps_bindings_present_in_all_outcomes() {
 fn branch_join_unions_truthy_reductions_across_outcomes() {
     let mut entry = SymbolicLocalState::default();
     entry
-        .truthy_reductions
-        .insert("message".to_string(), Predicate::False);
+        .slots
+        .entry("message".to_string())
+        .or_default()
+        .truthy_reduction = Some(Predicate::False);
     let entry_snapshot = entry.clone();
 
     let mut populated = entry.clone();
     populated
-        .truthy_reductions
-        .insert("message".to_string(), Predicate::truthy_path("legacy"));
+        .slots
+        .entry("message".to_string())
+        .or_default()
+        .truthy_reduction = Some(Predicate::truthy_path("legacy"));
 
     let mut joined = entry;
     joined.join_branch_outcomes(&entry_snapshot, &[populated, entry_snapshot.clone()]);
 
     sim_assert_eq!(
-        have: joined.truthy_reductions.get("message"),
+        have: joined.slot("message").truthy_reduction.as_ref(),
         want: Some(&Predicate::truthy_path("legacy"))
     );
 }
@@ -838,12 +878,16 @@ fn branch_join_unions_truthy_reductions_across_outcomes() {
 fn over_cap_branch_stamp_removes_the_changed_truthy_reduction() {
     let mut entry = SymbolicLocalState::default();
     entry
-        .truthy_reductions
-        .insert("message".to_string(), Predicate::False);
+        .slots
+        .entry("message".to_string())
+        .or_default()
+        .truthy_reduction = Some(Predicate::False);
     let mut branch = entry.clone();
     branch
-        .truthy_reductions
-        .insert("message".to_string(), Predicate::truthy_path("result"));
+        .slots
+        .entry("message".to_string())
+        .or_default()
+        .truthy_reduction = Some(Predicate::truthy_path("result"));
     let condition = Predicate::all(
         (0..6)
             .map(|index| Predicate::truthy_path(format!("guard.{index}")))
@@ -855,25 +899,29 @@ fn over_cap_branch_stamp_removes_the_changed_truthy_reduction() {
         &condition,
         &helm_schema_core::PredicateMemo::new(),
     );
-    sim_assert_eq!(have: branch.truthy_reductions.get("message"), want: None);
-    assert!(branch.truthiness_abstentions.contains("message"));
+    sim_assert_eq!(have: branch.slot("message").truthy_reduction.as_ref(), want: None);
+    assert!(branch.slot("message").truthiness_abstained);
 
     let mut joined = entry.clone();
     joined.join_branch_outcomes(&entry, &[branch, entry.clone()]);
-    sim_assert_eq!(have: joined.truthy_reductions.get("message"), want: None);
-    assert!(joined.truthiness_abstentions.contains("message"));
+    sim_assert_eq!(have: joined.slot("message").truthy_reduction.as_ref(), want: None);
+    assert!(joined.slot("message").truthiness_abstained);
 }
 
 #[test]
 fn exact_if_join_conditions_an_untouched_entry_truthy_reduction() {
     let mut entry = SymbolicLocalState::default();
     entry
-        .truthy_reductions
-        .insert("continue".to_string(), Predicate::truthy_path("gate"));
+        .slots
+        .entry("continue".to_string())
+        .or_default()
+        .truthy_reduction = Some(Predicate::truthy_path("gate"));
     let mut stopped = entry.clone();
     stopped
-        .truthy_reductions
-        .insert("continue".to_string(), Predicate::False);
+        .slots
+        .entry("continue".to_string())
+        .or_default()
+        .truthy_reduction = Some(Predicate::False);
     let mut joined = entry.clone();
 
     joined.join_truthy_reduction_arms(
@@ -887,7 +935,7 @@ fn exact_if_join_conditions_an_untouched_entry_truthy_reduction() {
     );
 
     sim_assert_eq!(
-        have: joined.truthy_reductions.get("continue"),
+        have: joined.slot("continue").truthy_reduction.as_ref(),
         want: Some(
             &Predicate::all(vec![
                 Predicate::truthy_path("gate"),

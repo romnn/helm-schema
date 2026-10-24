@@ -468,7 +468,10 @@ fn pristine_root_values_selector_records_direct_hosts_in_both_binding_modes() {
         BindingEvaluationMode::Evaluated,
     ] {
         let mut env = EvalEnv {
-            root_fields: HashMap::from([("Values".to_string(), AbstractValue::values_root())]),
+            root_slots: crate::value::root_slots(HashMap::from([(
+                "Values".to_string(),
+                AbstractValue::values_root(),
+            )])),
             ..EvalEnv::default()
         };
         env.locals.insert(
@@ -530,7 +533,7 @@ fn direct_binding(value: AbstractValue) -> LocalBinding {
 
 fn env_from_root_fields(root_fields: HashMap<String, AbstractValue>) -> EvalEnv {
     EvalEnv {
-        root_fields,
+        root_slots: crate::value::root_slots(root_fields),
         allow_field_root_lookup: true,
         ..EvalEnv::default()
     }
@@ -616,7 +619,10 @@ fn helper_argument_projection_uses_shared_expression_eval() {
             result
         },
     )
-    .bindings;
+    .scalar_dispatches
+    .into_iter()
+    .filter_map(|(name, slot)| slot.value.clone().map(|value| (name, value)))
+    .collect::<HashMap<_, _>>();
 
     sim_assert_eq!(
         have: bindings,
@@ -648,7 +654,10 @@ fn defaulted_helper_root_descends_to_raw_member_paths() {
             result
         },
     )
-    .bindings;
+    .scalar_dispatches
+    .into_iter()
+    .filter_map(|(name, slot)| slot.value.clone().map(|value| (name, value)))
+    .collect::<HashMap<_, _>>();
     let selected = bindings
         .get("Values")
         .and_then(|value| value.apply_to_path(&["nameOverride".to_string()]));
@@ -724,7 +733,10 @@ fn direct_root_values_path_is_an_expression_eval_projection() {
 #[test]
 fn named_root_alias_projects_values_only_from_its_typed_binding() {
     let mut env = EvalEnv {
-        root_fields: HashMap::from([("Values".to_string(), AbstractValue::values_root())]),
+        root_slots: crate::value::root_slots(HashMap::from([(
+            "Values".to_string(),
+            AbstractValue::values_root(),
+        )])),
         ..EvalEnv::default()
     };
     env.locals.insert(
@@ -1014,9 +1026,7 @@ fn set_call_updates_local_key_with_assigned_literal() {
     assert!(apply_local_set_mutations_expr(&expr, &mut env));
 
     sim_assert_eq!(
-        have: env
-            .locals
-            .get("config")
+        have: env.locals.get("config")
             .and_then(|binding| binding.value(env.predicate_memo.as_ref())),
         want: Some(AbstractValue::Overlay {
             entries: BTreeMap::from([(
@@ -1049,9 +1059,7 @@ fn set_call_inside_throwaway_assignment_updates_local_key() {
     assert!(apply_local_set_mutations_expr(&expr, &mut env));
 
     sim_assert_eq!(
-        have: env
-            .locals
-            .get("config")
+        have: env.locals.get("config")
             .and_then(|binding| binding.value(env.predicate_memo.as_ref())),
         want: Some(AbstractValue::Overlay {
             entries: BTreeMap::from([(
@@ -1232,17 +1240,18 @@ fn invalid_kind_abstains_for_a_meta_selected_subject_identity() {
         ..HelperOutputMeta::default()
     };
     metadata.conjoin_branches(&BTreeSet::from([Predicate::truthy_path("enabled")]));
-    let env = EvalEnv {
+    let mut env = EvalEnv {
         locals: HashMap::from([(
             "selected".to_string(),
             direct_binding(values_path!("value")),
         )]),
-        local_output_meta: HashMap::from([(
-            "selected".to_string(),
-            BTreeMap::from([(ValuesPath::parse("value"), metadata)]),
-        )]),
+
         ..EvalEnv::default()
     };
+    env.local_slots.set_output_metadata(&HashMap::from([(
+        "selected".to_string(),
+        BTreeMap::from([(ValuesPath::parse("value"), metadata)]),
+    )]));
 
     let result = eval_expr(&expr(r#"kindIs "invalid" $selected"#), &env);
 
@@ -1251,17 +1260,24 @@ fn invalid_kind_abstains_for_a_meta_selected_subject_identity() {
 
 #[test]
 fn invalid_kind_abstains_for_a_default_selected_subject_identity() {
-    let env = EvalEnv {
+    let mut env = EvalEnv {
         locals: HashMap::from([(
             "selected".to_string(),
             direct_binding(values_path!("value")),
         )]),
-        local_default_paths: HashMap::from([(
-            "selected".to_string(),
-            BTreeSet::from([ValuesPath::parse("value")]),
-        )]),
+
         ..EvalEnv::default()
     };
+    for (name, paths) in HashMap::from([(
+        "selected".to_string(),
+        BTreeSet::from([ValuesPath::parse("value")]),
+    )]) {
+        env.local_slots
+            .slots
+            .entry(name.clone())
+            .or_default()
+            .default_paths = Some(paths);
+    }
 
     let result = eval_expr(&expr(r#"kindIs "invalid" $selected"#), &env);
 
@@ -2090,8 +2106,11 @@ fn short_circuit_calls_scope_later_runtime_failures_to_execution() {
 #[test]
 fn truth_only_locals_drive_short_circuit_execution() {
     let mut env = EvalEnv::default();
-    env.local_truthy_reductions
-        .insert("shouldContinue".to_string(), Predicate::True);
+    env.local_slots
+        .slots
+        .entry("shouldContinue".to_string())
+        .or_default()
+        .truthy_reduction = Some(Predicate::True);
 
     let result = eval_expr(
         &single_expr(r#"and $shouldContinue (hasKey .Values.cfg "a")"#),
@@ -2188,8 +2207,11 @@ fn local_selector_truth_comes_from_the_selected_value() {
         "plugin".to_string(),
         direct_binding(values_path!("plugins.*")),
     );
-    env.local_truthy_reductions
-        .insert("plugin".to_string(), Predicate::truthy_path("plugins.*"));
+    env.local_slots
+        .slots
+        .entry("plugin".to_string())
+        .or_default()
+        .truthy_reduction = Some(Predicate::truthy_path("plugins.*"));
 
     let result = eval_expr(&single_expr("$plugin.hostPath"), &env);
 
@@ -2256,7 +2278,10 @@ fn project_helper_arg_expr(
         }
         _ => eval_expr(expr, &EvalEnv::default()),
     })
-    .bindings
+    .scalar_dispatches
+    .into_iter()
+    .filter_map(|(name, slot)| slot.value.clone().map(|value| (name, value)))
+    .collect()
 }
 
 #[test]
@@ -2385,7 +2410,11 @@ fn root_values_replacement_is_exported_and_used_by_later_values_reads() {
         &single_expr(r#"set . "Values" (.Values | toJson | fromJson)"#),
         &env,
     );
-    env.root_fields.extend(result.effects.root_set_mutations);
+    for (name, slot) in result.effects.root_writes {
+        if let Some(value) = slot.value.clone() {
+            env.root_slots.entry(name).or_default().value = Some(value);
+        }
+    }
 
     sim_assert_eq!(
         have: eval_expr(&single_expr(".Values.extraResources"), &env).value,
@@ -2439,12 +2468,15 @@ fn root_set_truth_predicates_feed_later_root_field_assignments() {
         ]),
     ]);
     sim_assert_eq!(
-        have: server.effects.root_set_predicates.get("serverEnabled"),
+        have: server.effects.root_writes.get("serverEnabled").and_then(|slot| slot.truth.as_ref()),
         want: Some(&enabled)
     );
 
-    env.root_truthy_predicates
-        .extend(server.effects.root_set_predicates);
+    for (name, slot) in server.effects.root_writes {
+        if let Some(truth) = slot.truth.clone() {
+            env.root_slots.entry(name).or_default().truth = Some(truth);
+        }
+    }
     let server_enabled = eval_expr(&single_expr(".serverEnabled"), &env);
     sim_assert_eq!(
         have: server_enabled
@@ -2452,14 +2484,18 @@ fn root_set_truth_predicates_feed_later_root_field_assignments() {
             .truth_source(),
         want: SelectionTruthSource::RenderedScalar
     );
-    env.root_fields.insert(
-        "mode".to_string(),
-        AbstractValue::StringSet(BTreeSet::from(["server".to_string()])),
-    );
-    env.root_value_dispatches.insert(
-        "mode".to_string(),
-        ScalarValueDispatch::constant(GuardValue::string("server")),
-    );
+    env.root_slots
+        .entry("mode".to_string())
+        .or_default()
+        .value
+        .replace(AbstractValue::StringSet(BTreeSet::from([
+            "server".to_string()
+        ])));
+    env.root_slots
+        .entry("mode".to_string())
+        .or_default()
+        .dispatch
+        .replace(ScalarValueDispatch::constant(GuardValue::string("server")));
     let mode = eval_expr(&single_expr(".mode"), &env);
     sim_assert_eq!(
         have: mode
@@ -2475,10 +2511,7 @@ fn root_set_truth_predicates_feed_later_root_field_assignments() {
         &env,
     );
     sim_assert_eq!(
-        have: service
-            .effects
-            .root_set_predicates
-            .get("serverServiceEnabled"),
+        have: service.effects.root_writes.get("serverServiceEnabled").and_then(|slot| slot.truth.as_ref()),
         want: Some(&Predicate::And(vec![
             enabled,
             Predicate::Or(vec![
@@ -2635,17 +2668,18 @@ fn ternary_condition_discards_local_output_metadata_but_keeps_consumption_contra
         )])]),
         ..HelperOutputMeta::default()
     };
-    let env = EvalEnv {
+    let mut env = EvalEnv {
         locals: HashMap::from([(
             "flag".to_string(),
             direct_binding(values_path!("diagnosticMode.enabled")),
         )]),
-        local_output_meta: HashMap::from([(
-            "flag".to_string(),
-            BTreeMap::from([(ValuesPath::parse("diagnosticMode.enabled"), metadata)]),
-        )]),
+
         ..EvalEnv::default()
     };
+    env.local_slots.set_output_metadata(&HashMap::from([(
+        "flag".to_string(),
+        BTreeMap::from([(ValuesPath::parse("diagnosticMode.enabled"), metadata)]),
+    )]));
     let result = eval_expr(
         &single_expr(r#"$flag | ternary "enabled" "disabled""#),
         &env,

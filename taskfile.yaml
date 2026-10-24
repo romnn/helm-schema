@@ -366,6 +366,7 @@ tasks:
   lint:
     desc: "lint the workspace"
     cmds:
+      - python3 tools/value-algebra-inventory/inventory.py --self-test
       - cargo lint --workspace --all-features {{.CLI_ARGS}}
       - task: lint:ast-grep
       - task: lint:go

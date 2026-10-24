@@ -47,18 +47,7 @@ impl Interpreter<'_> {
     ) -> (Guarded<AbstractFragment>, Option<AbstractValue>) {
         let mut out = Guarded::empty();
         let mut values = Vec::new();
-        let mut template_bindings = self
-            .locals
-            .range_member_values
-            .iter()
-            .map(|(name, value)| {
-                (
-                    name.clone(),
-                    crate::eval_env::LocalBinding::direct(value.clone()),
-                )
-            })
-            .collect::<std::collections::HashMap<_, _>>();
-        template_bindings.extend(self.locals.fragment_values.clone());
+        let template_bindings = self.locals.evaluation_bindings();
         let direct_requests = {
             let context = FragmentEvalContext::new(self.db);
             let current_dot = self.current_dot_fragment();
@@ -66,7 +55,7 @@ impl Interpreter<'_> {
                 exprs,
                 current_dot.as_ref(),
                 &template_bindings,
-                &self.locals.output_meta,
+                &crate::bound_value_analysis::output_metadata(&self.locals.slots),
                 context,
             )
         };
@@ -137,15 +126,15 @@ impl Interpreter<'_> {
         nested.inline_files.push(token);
         nested.helper_scope = self.helper_scope || textual_program;
         nested.helper_seen = self.helper_seen.clone();
+        nested.locals.chart_value_defaults = self.locals.chart_value_defaults.clone();
         nested
             .locals
-            .set_chart_value_defaults(self.locals.chart_value_defaults.clone());
-        nested.locals.fragment_values.insert(
-            String::new(),
-            crate::eval_env::LocalBinding::evaluated(
-                request.dot.clone().unwrap_or(AbstractValue::Unknown),
-            ),
-        );
+            .slots
+            .entry(String::new())
+            .or_default()
+            .binding = Some(crate::eval_env::LocalBinding::evaluated(
+            request.dot.clone().unwrap_or(AbstractValue::Unknown),
+        ));
         nested.push_dot(
             request.dot.clone(),
             crate::eval_env::BindingEvaluationMode::Evaluated,
@@ -174,11 +163,7 @@ impl Interpreter<'_> {
         self.yaml_serialized_paths
             .extend(nested.yaml_serialized_paths);
         self.absorb_member_host_conversions(&nested.member_host_conversions);
-        self.apply_root_set_mutations(
-            &nested.root_set_mutations_observed,
-            &nested.root_set_predicates_observed,
-            &nested.root_value_dispatches_observed,
-        );
+        self.apply_root_set_mutations(&nested.root_writes);
         self.pre_rewrite_strict_paths
             .extend(nested.pre_rewrite_strict_paths);
         self.chart_defaults_observed

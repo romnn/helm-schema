@@ -80,9 +80,9 @@ impl ValuePathContext<'_> {
     ) -> Option<AbstractValue> {
         fragment_context_value(
             expr,
-            &self.eval_env.root_fields,
+            &crate::value::root_values(&self.eval_env.root_slots),
             &self.eval_env.locals,
-            &self.eval_env.local_output_meta,
+            &crate::bound_value_analysis::output_metadata(&self.eval_env.local_slots.slots),
             self.fragment_context,
             self.current_dot_fragment.as_ref(),
         )
@@ -102,7 +102,7 @@ impl ValuePathContext<'_> {
         let evaluated = document_result_from_expr(
             expr,
             env,
-            Some(&self.eval_env.root_fields),
+            Some(&crate::value::root_values(&self.eval_env.root_slots)),
             self.current_dot_fragment.as_ref(),
             self.fragment_context,
             &mut seen,

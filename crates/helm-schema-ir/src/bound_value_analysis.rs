@@ -1,13 +1,17 @@
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
+
+use crate::helper_meta::HelperOutputMeta;
+use helm_schema_core::ValuesPath;
 
 use helm_schema_ast::TemplateExpr;
 
 use crate::expr_eval::direct_values_path;
 use crate::fragment_assignment::AssignmentKind;
+use crate::value::{LocalSlot, LocalSlots};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct GetBinding {
-    pub(crate) base: helm_schema_core::ValuesPath,
+    pub(crate) base: ValuesPath,
     pub(crate) key_var: String,
 }
 
@@ -20,34 +24,50 @@ pub(crate) struct GetBindingPlan {
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) struct BoundValueContext {
-    range_domains: HashMap<String, Vec<String>>,
-    get_bindings: HashMap<String, GetBinding>,
+    pub(crate) slots: LocalSlots,
     constraints: DomainConstraints,
 }
 
 impl BoundValueContext {
-    pub(crate) fn new(
-        range_domains: &HashMap<String, Vec<String>>,
-        get_bindings: &HashMap<String, GetBinding>,
-    ) -> Self {
+    pub(crate) fn new(slots: &LocalSlots) -> Self {
         Self {
-            range_domains: range_domains.clone(),
-            get_bindings: get_bindings.clone(),
+            slots: slots.clone(),
             constraints: DomainConstraints::default(),
         }
     }
 
-    pub(crate) fn selector_paths(
-        &self,
-        expr: &TemplateExpr,
-    ) -> BTreeSet<helm_schema_core::ValuesPath> {
+    pub(crate) fn slot(&self, name: &str) -> &LocalSlot {
+        self.slots.get(name).unwrap_or(&LocalSlot::EMPTY)
+    }
+
+    pub(crate) fn variable_slots(&self, name: &str) -> [&LocalSlot; 2] {
+        [self.slot(name), self.slot(name.trim_start_matches('$'))]
+    }
+
+    pub(crate) fn slot_mut(&mut self, name: &str) -> &mut LocalSlot {
+        self.slots.entry(name.to_owned()).or_default()
+    }
+
+    pub(crate) fn set_output_metadata(
+        &mut self,
+        metadata: &HashMap<String, BTreeMap<ValuesPath, HelperOutputMeta>>,
+    ) {
+        for slot in self.slots.values_mut() {
+            slot.output_meta = None;
+        }
+        for (name, meta) in metadata {
+            self.slot_mut(name).output_meta = Some(meta.clone());
+        }
+    }
+
+    pub(crate) fn selector_paths(&self, expr: &TemplateExpr) -> BTreeSet<ValuesPath> {
         let Some((variable, rest)) = bound_selector_read(expr) else {
             return BTreeSet::new();
         };
-        let Some(binding) = self.get_bindings.get(variable) else {
+        let Some(binding) = self.slot(variable).get_binding.as_ref() else {
             return BTreeSet::new();
         };
-        let Some(domain) = self.range_domains.get(&binding.key_var) else {
+        let Some(domain) = self.slot(&binding.key_var).range_domain.as_ref() else {
             return BTreeSet::new();
         };
 
@@ -57,16 +77,10 @@ impl BoundValueContext {
             .map(|value| {
                 let mut path = binding.base.clone();
                 path.push(value.clone());
-                let rest = helm_schema_core::ValuesPath::parse(&rest);
-                helm_schema_core::ValuesPath::from_segments(path.segments().chain(rest.segments()))
+                let rest = ValuesPath::parse(&rest);
+                ValuesPath::from_segments(path.segments().chain(rest.segments()))
             })
             .collect()
-    }
-
-    pub(crate) fn get_binding_domain(&self, name: &str) -> Option<(&GetBinding, &[String])> {
-        let binding = self.get_bindings.get(name)?;
-        let domain = self.range_domains.get(&binding.key_var)?;
-        Some((binding, domain))
     }
 
     pub(crate) fn with_predicate_constraints(&self, expr: &TemplateExpr, truthy: bool) -> Self {
@@ -74,11 +88,38 @@ impl BoundValueContext {
             return self.clone();
         };
         Self {
-            range_domains: self.range_domains.clone(),
-            get_bindings: self.get_bindings.clone(),
+            slots: self.slots.clone(),
             constraints: self.constraints.and(&next_constraints),
         }
     }
+}
+
+pub(crate) fn output_metadata(
+    slots: &LocalSlots,
+) -> HashMap<String, BTreeMap<ValuesPath, HelperOutputMeta>> {
+    slots
+        .iter()
+        .filter_map(|(name, slot)| {
+            let LocalSlot {
+                range_domain: _,
+                get_binding: _,
+                binding: _,
+                default_paths: _,
+                output_meta,
+                scalar_dispatch: _,
+                truthy_reduction: _,
+                truthiness_abstained: _,
+                truthiness_cleared: _,
+                typeof_source: _,
+                int_cast_source: _,
+                range_member_value: _,
+                definite_range_member_value: _,
+            } = slot;
+            output_meta
+                .as_ref()
+                .map(|value| (name.clone(), value.clone()))
+        })
+        .collect()
 }
 
 pub(crate) fn parse_literal_list_range_expr(expr: &TemplateExpr) -> Option<(String, Vec<String>)> {
@@ -136,7 +177,7 @@ fn get_binding_plan_from_expr(
         variable: variable.trim_start_matches('$').to_string(),
         kind,
         binding: GetBinding {
-            base: helm_schema_core::ValuesPath::parse(&base),
+            base: ValuesPath::parse(&base),
             key_var: key_var.clone(),
         },
     })

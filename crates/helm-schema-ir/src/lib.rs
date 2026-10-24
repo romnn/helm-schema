@@ -24,6 +24,7 @@ mod scalar_value;
 mod static_file_template;
 mod symbolic;
 mod symbolic_local_state;
+mod value;
 mod value_path_context;
 
 pub use analysis_db::ParsedDefines;
