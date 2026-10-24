@@ -1,6 +1,6 @@
-# schema-bug-hunt-v1 — round 8 hand-off (started 2026-09-26; §6 current as of 2026-10-19, end of session 5)
+# schema-bug-hunt-v1 — round 8 hand-off (started 2026-09-26; §7 current as of 2026-10-24, end of session 6)
 
-> **§6 is the current state and ends with the resume prompt — read it first.** §1–§5 are the history of the
+> **§7 is the current state (session 6 end, 2026-10-24) and ends with the resume prompt — read it first; §6 is session 5's.** §1–§5 are the history of the
 > round as of 2026-09-26 (earlier landing plans, superseded statuses); use them only when §6 or the ledger points there.
 >
 > **Start here:** `plan/campaign-orchestration-playbook.md` explains how the campaign is run (roles, landing loop, standing decisions, mistakes to avoid, resume checklist). The builder protocol is `plan/schema-bug-hunt-protocol-v2.md`.
@@ -257,3 +257,95 @@ Do this first:
 (5) Add the runner rule (shipped schema must accept its chart's defaults and be ≤ 5 MiB) via a Codex builder in a runner dev clone,
     applied between chains; then queue D4, F4/F31, F15, imgproxy per round8/triage-defaults-sol.md.
 Recreate the 20-minute heartbeat (CronCreate) on start; `date` before every ledger entry; commit ledger entries `chore(plan): …`.
+
+## 7. Status (written 2026-10-24, end of session 6 — RESUME HERE; supersedes §6)
+
+### 7.1 Where things stand
+
+- **The campaign changed course (user decision, 2026-10-21/22).** Main's interpreter is a local maximum: one fact is stored
+  in several places that drift, syntax runs more than once, and correct verdicts rest on compensating errors. Four W1 attempts and
+  a three-model escalation (Opus, Fable, Astra) showed every exact kind fact reads stale values after writes. Bug-hunt fixes inside
+  the interpreter are PAUSED; the campaign now executes the **value-algebra rearchitecture**. Its bug-hunt findings are kept as the
+  admission suite and as obligations.
+- **Plan of record:** `plan/value-algebra-interpreter.md` (why, Helm facts, target model, stage-1 rescope) and
+  `plan/value-algebra-r0.md` (R0 design closure: post-mortem §1, enforceable anti-recurrence rules §1.4, owner inventory §2, 92 pinned
+  Helm probes §3 + `plan/value-algebra-r0-probes/`, target contracts §4, stages §5, D3 sequences §6, decisions §7, risks §8).
+  ADR [0069](../docs/adr/0069-value-algebra-is-the-interpreter-semantic-model.md) Accepted; ADR [0066](../docs/adr/0066-landing-ratchet.md)
+  amended with **clause 2b, consolidation-only landing**.
+- **User decisions 2026-10-23 (R0 §7):** D1 no fallback type hint after a piped `required`; D2 the 15 `selected-*-4..8` cells are ADR
+  0042 closed-root policy rows (W1 ternary 53 → 38); D3 sequence B — refactor-only stages land alone under clause 2b (frozen
+  coverage, frozen classification, reviewed producer mappings, strictly negative production LOC); D4 reject raw values numbers at
+  genuine Go `int` parameters on proven-unchanged paths only (never float64 params; SDK-typed values out of scope).
+- **Landing sequence:** L1 = R1a (landing 11), L2 = R1b, L3 = R2, L4 = R3a, L5 = R3b (§5 of R0). R2 also owns the deferred
+  `ternary`/`required` arity checks (landing 10e ablation: every variant created NEW failures after writes) and D4.
+- **Owner inventory gate:** `python3 tools/value-algebra-inventory/inventory.py` (+ `--self-test`), wired into `task lint` by R1a;
+  data in `plan/value-algebra-r0-inventory/` (`classification.tsv`, frozen `baseline-65a6d6c7.tsv`, `producers.tsv`, `landed.txt` with a
+  `#` header line — never leave it zero bytes: the runner refuses zero-byte files).
+- **W1 admission gate (landed 10e):** `crates/helm-schema-cli/tests/w1_admission.rs` over `testdata/w1-admission/` (1,609 pinned-Helm
+  cells; 575 obligations = 560 R1–R3 + 15 ADR 0042 policy rows). It fails on NEW, on closures (re-record `main=` with
+  `admission_refresh`, drop the obligation — shrink-only), on roster/hash drift and on zero-byte files. Runs in ~4 s, no Helm needed.
+- **Downstream:** luup2 0/32 failing on main after landing 10d (`<chart>:check:local` per chart; see memory verification-gates-macos).
+
+### 7.2 Landed this session (all `--no-ff` merges on main, nothing pushed by the orchestrator)
+
+10a fe36e909, 10b d7de4249, 10c 7c200618 (luup2 5/32 → 0/32), 10d 2a76012e (harness context-roster guard + intake containment, W4
+comparison-operands slice: 47 matrix cells improved, F34 closes), R0 design closure f1b1cb9e, ADR decisions 91b0f651, 10e 4b19f2b6
+(W1 admission suite). Receipts: `/Volumes/T7/dev/round8-landing10{a-run5,b-run1,c-run2,d-run1,e-run2}/receipt.json`.
+
+### 7.3 In flight at hand-off time (see §7.6 for the final state)
+
+- **Landing 11 = R1a** (value-algebra L1): branch `landing-11` in `/Volumes/T7/dev/round8-landing10a` = main 4b19f2b6 + merge of
+  `r1a/slot-transpose` (01ee3bb0, 054aba56; built in clone `/Volumes/T7/dev/round8-r1a` by Codex sol run 20261023T094530-11bc40ae;
+  sol review LAND). Env `/Volumes/T7/dev/round8/runner/landing-11.env`, E=`/Volumes/T7/dev/round8-landing11-run1`, chain log
+  `$E/chain.log`. Expected: zero fixture moves, production LOC 77,061 → 77,053.
+- **R1b** (L2, per-fact moves onto the leaf): Codex sol builder run 20261024T094803-6eb22423 in clone `/Volumes/T7/dev/round8-r1b`
+  (branch `r1b/leaf-facts` at 054aba56), brief `/Volumes/T7/dev/round8/brief-r1b-codex.md`. It exports transfer patches to
+  `.codex-evidence/` (it cannot write `.git`); the orchestrator commits them, rebases onto main after landing 11 merges, gets a sol
+  pre-landing review, and runs landing 12.
+
+### 7.4 Procedure (unchanged where not stated)
+
+- **Model policy (latest, user 2026-10-23):** Codex quota reset → mix builders again: Codex `gpt-6.1-sol` builders (agentmux
+  `start`, `sandbox: workspace_write`, `keep: true`, effort xhigh, cwd = a standalone clone; rules
+  `/Volumes/T7/dev/round8/codex-builder-sandbox.md`; register every run in `/Volumes/T7/dev/round8/codex-runs.tsv`, 3 tab columns)
+  AND Opus subagent builders (Agent tool, `model: opus`). Codex sol does reviews (read_only, high for routine, xhigh for semantic
+  core); astra (`gpt-6-astra`) only for the hardest questions (Helm/Go semantics). Re-reviews via `follow_up` on the same run.
+  User has free Codex credits even when agentmux `quota` shows 0% — still keep it resourceful.
+- **Opus builders hang on branch operations:** a background subagent's `git checkout` waits forever for an approval nobody sees
+  (two builders lost 1.5–3.5 h on 2026-10-22). The orchestrator creates/checks out every branch/worktree itself; briefs say "do not
+  run git checkout/switch/branch/worktree/stash". If an agent shows no commits for > 60 min, inspect the tail of
+  `~/.claude/projects/-Volumes-T7-dev-helm-schema/<session>/subagents/agent-<id>.jsonl` for a tool call without a result.
+- **Codex builders:** prebuild helmsweep into the clone's target (`mise trust` first, then `CARGO_TARGET_DIR=$PWD/target task
+  build:helmsweep`) — the sandbox has no network. Their `task lint`/`task test:integration` exit 201 on Go DNS; they run documented
+  fallbacks and the landing chain runs the exact gates.
+- **Landing loop:** builder hand-back → review(s) → rework until LAND → assemble `landing-<n>` in `/Volumes/T7/dev/round8-landing10a`
+  (`git checkout -B landing-<n> origin/main`, `git merge --no-ff <branch>`) → env file from the previous one (header comment, fresh E,
+  commit in the runner repo) → chain
+  `cd /Volumes/T7/dev/round8/runner && nohup bash -c 'export LANDING_ENV=<env>; for s in dump unit lint battery integration sweep finalize; do echo "=== step $s start $(date +%H:%M)"; ./run-landing.sh $s || { echo "FAILED[$s]"; exit 1; }; done; echo chain green $(date +%H:%M)' > $E/chain.log 2>&1 &`
+  → on "chain green" `git merge --no-ff` into main with components + receipt sha256 (message from a file, `-F`) → ledger entry.
+  Chains take ~2 h. Never push; never take/remove the heavy lock.
+- **Ledger:** `plan/schema-bug-hunt-v1-progress.md`; run `date`, insert before the trailing `Next:` line, commit `chore(plan): …`.
+- **Heartbeat:** recreate the 20-minute CronCreate heartbeat on start (`7,27,47 * * * *`): watch-codex, uptime/df/`memory_pressure | tail
+  -1` (use the percentage, ≥ ~35% free; raw vm_stat pages are misleading on this Mac), chain.log tail, builder evidence dirs.
+- **Disk:** T7 at 85–160 GiB free this session; keep > ~25 GiB; plan `/Volumes/T7/dev/round8/cleanup-plan.md` (never `du` all of
+  /Volumes/T7/dev). Deletable after R1 lands: round8-w1-fable/target, round8-w1-astra/target, round8-w4-opus/target,
+  round8-harness/target, round8-r0 (worktree, merged), round8-r1a/target once landing 11 merges.
+
+### 7.5 Next work, in order
+
+1. Landing 11 (R1a): on chain green, merge + ledger; run `task test:all` once on main (network gates the Codex sandbox could not run).
+2. R1b: collect the hand-back, commit its transfer patches in `/Volumes/T7/dev/round8-r1b`, rebase onto main, sol review (clause 2b:
+   byte-identical, inventory, producer mappings, LOC below R1a's 77,053), landing 12.
+3. R2 (semantic, closes cells): brief from R0 §5.3 + the pre-R2 obligations (pipeline value fills a fixed parameter of a variadic
+   function; write-free certificate incl. recursive literal `tpl`; per-consumer-family no-regression; D4 scope; deferred arity checks).
+   Design review before coding (sol architecture + astra semantics), admission gate must show closures with 0 NEW.
+4. R3a (byte-identical, legacy evaluation order kept), then R3b (heap, single execution, frozen guards, in-walk output; one coupled
+   landing built on a branch with non-landable construction commits, checked by a main-vs-branch CLI differential on the admission
+   suite and the corpus).
+5. Low priority, outside the interpreter: CRD oracle + Track G fixtures (round8-guards), cross-platform script audit (only stage.sh
+   was converted), audit of the 99 `.not-found` bundle records, kyverno `tpl`-name constraint defect, 81 frozen lint-matrix
+   obligations without a home in code.
+
+### 7.6 Final state at session end
+
+(filled in below at the end of the session)

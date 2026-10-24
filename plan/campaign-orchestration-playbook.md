@@ -9,7 +9,8 @@ hand-off, then the ledger's last entries.
 
 | What | Where |
 |---|---|
-| Resume point, open work, final status | `plan/schema-bug-hunt-v1-round8-handoff.md` (§6 = status) |
+| Resume point, open work, final status | `plan/schema-bug-hunt-v1-round8-handoff.md` (§7 = status) |
+| Interpreter rearchitecture (current campaign focus) | `plan/value-algebra-interpreter.md`, `plan/value-algebra-r0.md`, ADR 0069, ADR 0066 clause 2b |
 | Chronological ledger (every decision, result, timing) | `plan/schema-bug-hunt-v1-progress.md` — append before the trailing line starting `Next:` |
 | Bug-hunt findings (F1…F83) and campaign rules | `plan/schema-bug-hunt-v1.md` (never edit) |
 | Builder/reviewer protocol | `plan/schema-bug-hunt-protocol-v2.md` (copy of `/Volumes/T7/dev/round8/PROTOCOL.md`) |
@@ -106,11 +107,13 @@ hand-off, then the ledger's last entries.
   production code unless reviewers justify the growth by the defect class it closes. Every unfixed counterexample becomes an exact
   obligation (frozen witness row, roster row where allowed, or an entry of the battery's shrink-only inherited-failure list). Builders
   hand back at the next landable improvement and carry a stopping rule; land small slices often.
-- **Models (user, 2026-10-19):** Claude only orchestrates; builders and reviewers are Codex `gpt-6.1-sol`; hard reviews get two sol
-  reviewers with distinct lenses; `gpt-6-astra` only as a tie-breaker.
-- Every pre-landing review, design and diagnosis goes to BOTH Codex reviewers
-  (`gpt-6.1-sol` and `gpt-6-astra`, xhigh, read-only) in parallel; Codex quota is plentiful and
-  the two catch different defects. Merge their findings before resuming the builder.
+- **Models (latest, user 2026-10-23; supersedes 2026-10-19 and 2026-10-21):** builders are a mix of Codex `gpt-6.1-sol`
+  (workspace_write clones, `round8/codex-builder-sandbox.md`) and Opus subagents; Codex sol reviews everything (high routine,
+  xhigh semantic core); `gpt-6-astra` only for the hardest Helm/Go-semantics questions. Re-review with `follow_up`. The orchestrator
+  does every git branch/worktree operation for Opus builders (they hang on approval prompts).
+- Design reviews of semantic mechanisms go to BOTH Codex reviewers in parallel with distinct lenses (sol architecture,
+  astra Helm/Go semantics); routine pre-landing reviews go to one sol reviewer (user 2026-10-22: "keep it resourceful").
+  Merge findings before resuming the builder.
 - Test harnesses and tools never write bulk scratch to the system temp folder on the small
   internal disk: temp roots live under the target volume (`$TARGET/tmp`, `GOTMPDIR`) and stale
   ones are swept at start. Killed battery runs once left 70 GB in `/var/folders/.../T`.
@@ -173,13 +176,17 @@ The orchestrator repeats this list in every builder brief and asks the reviewers
   into a commit. Stage only the files you edited.
 - **Registry files.** `codex-runs.tsv` must stay exactly three tab-separated
   columns or the collector crashes.
+- **Background agents and approvals.** An Opus builder's `git checkout` waited hours for an approval nobody saw; prepare branches
+  yourself and forbid branch commands in briefs.
+- **Zero-byte files.** The runner refuses any zero-byte file new since the baseline (truncation guard); never commit empty
+  placeholder files (give them a comment line).
 - **Scope drift.** When the user narrows the goal ("land what is ready, no new
   work"), checkpoint in-flight builders immediately instead of letting them finish
   speculative work.
 
 ## Resuming from scratch (checklist for a new agent)
 
-1. Read this file, then hand-off §6, then the last ~10 ledger entries.
+1. Read this file, then hand-off §7 (it ends with the resume prompt), then the last ~10 ledger entries.
 2. `git -C /Volumes/T7/dev/helm-schema status --short` and `git log --oneline -5`.
 3. `python3 /Volumes/T7/dev/round8/collect-codex.py` (pending reviews).
 4. `ls -t /Volumes/T7/dev/round8-*-evidence/handoff.md | head` to see recent tracks.
