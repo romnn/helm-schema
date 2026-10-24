@@ -2253,6 +2253,16 @@ fn first_property_schema(assertion: &Value, definition: Option<&str>) -> Value {
     }
 }
 
+/// A child schema whose `first` property must match `name`'s definition or be a boolean.
+fn first_any_of_definition(name: &str, definition: &Value) -> Value {
+    json!({
+        "$defs": {name: definition},
+        "properties": {"child": {"properties": {"first": {
+            "anyOf": [{"$ref": format!("#/$defs/{name}")}, {"type": "boolean"}]
+        }}}}
+    })
+}
+
 /// Schema-only mode cannot run the forced audit, and identical verdicts are no
 /// transition, so the audit is deferred to live mode instead of read as a flip.
 #[test]
@@ -2265,6 +2275,22 @@ fn schema_only_defers_an_unchanged_forced_partial_override_audit() -> eyre::Resu
         (
             first_property_schema(&string, Some("a")),
             first_property_schema(&string, Some("b")),
+        ),
+        // Definition names inside a violated keyword's value drop out too.
+        (
+            first_any_of_definition("a", &string),
+            first_any_of_definition("b", &string),
+        ),
+        // A recursive definition inlines to the same finite value under any name.
+        (
+            first_property_schema(
+                &json!({"anyOf": [{"type": "string"}, {"type": "array", "items": {"$ref": "#/$defs/a"}}]}),
+                Some("a"),
+            ),
+            first_property_schema(
+                &json!({"anyOf": [{"type": "string"}, {"type": "array", "items": {"$ref": "#/$defs/b"}}]}),
+                Some("b"),
+            ),
         ),
     ] {
         let lint = schema_only_lint_accounting(&baseline, &candidate)?;
@@ -2316,6 +2342,17 @@ fn schema_only_keeps_a_forced_audit_rejected_for_a_changed_type_as_a_flip() -> e
     assert_forced_audit_flips(
         &first_property_schema(&json!({"type": "string"}), None),
         &first_property_schema(&json!({"type": "boolean"}), None),
+        "before=false, after=false",
+    )
+}
+
+/// Both reject `first: 1` under `anyOf`, but a referenced alternative changed.
+#[test]
+fn schema_only_keeps_a_forced_audit_rejected_by_a_changed_referenced_subschema_as_a_flip()
+-> eyre::Result<()> {
+    assert_forced_audit_flips(
+        &first_any_of_definition("a", &json!({"type": "string"})),
+        &first_any_of_definition("a", &json!({"type": "array"})),
         "before=false, after=false",
     )
 }
