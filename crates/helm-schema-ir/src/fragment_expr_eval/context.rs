@@ -48,7 +48,7 @@ impl<'a> FragmentEvalContext<'a> {
             crate::eval_env::BindingEvaluationMode::Direct,
             self.analysis_db.predicate_memo(),
         );
-        env.local_output_meta = local_output_meta.clone();
+        env.local_slots.set_output_metadata(local_output_meta);
         let current_dot_helper = current_dot.map(AbstractValue::to_context_value);
         let result = eval_expr_result_with_bound_helpers(
             expr,

@@ -1435,8 +1435,8 @@ fn eval_short_circuit_args(
         if next_condition != Predicate::True {
             execution_predicates.insert(next_condition);
         }
-        constrained_env.bound_values = constrained_env
-            .bound_values
+        constrained_env.local_slots = constrained_env
+            .local_slots
             .with_predicate_constraints(arg, previous_truthy);
     }
     let mut result = EvalResult::with_effects(AbstractValue::choice(values), effects);
@@ -1714,9 +1714,7 @@ fn scope_execution_effects(effects: &mut Effects, predicates: &BTreeSet<Predicat
     // Ignoring those mutations is conservative; applying them globally
     // would let a skipped short-circuit operand alter later analysis.
     effects.local_set_mutations.clear();
-    effects.root_set_mutations.clear();
-    effects.root_set_predicates.clear();
-    effects.root_set_value_dispatches.clear();
+    effects.root_writes.clear();
 }
 
 fn eval_helper_call(

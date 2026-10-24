@@ -6,6 +6,7 @@ use crate::function_semantics::ArgumentEvaluationMode;
 use crate::helper_meta::{HelperOutputMeta, RenderedRow};
 use crate::observed_facts::{HintGrade, ObservedFacts};
 use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
+use crate::value::RootSlot;
 use helm_schema_core::ValuesPath;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -85,12 +86,9 @@ pub(crate) struct Effects {
     /// resolution consume this; output rows ride the value itself.
     pub(crate) local_source_paths: BTreeSet<ValuesPath>,
     pub(crate) local_set_mutations: BTreeMap<String, BTreeMap<String, AbstractValue>>,
-    /// Literal root-context fields replaced by structural `set` calls.
-    pub(crate) root_set_mutations: BTreeMap<String, AbstractValue>,
-    /// Root-field truth predicates already decoded inside called helpers.
-    pub(crate) root_set_predicates: BTreeMap<String, helm_schema_core::Predicate>,
-    /// Root-field value dispatches already joined inside called helpers.
-    pub(crate) root_set_value_dispatches: BTreeMap<String, ScalarValueDispatch>,
+    /// Root-context replacements and their decoded truth predicates and
+    /// joined scalar alternatives, exported by structural `set` calls.
+    pub(crate) root_writes: BTreeMap<String, RootSlot>,
     /// Pathless reads observed inside called helper bodies (guard reads and
     /// dependency-lane rows), carrying helper-internal guards only; the
     /// absorbing site adds its ambient guards and provenance.
@@ -477,9 +475,7 @@ impl Effects {
             local_output_meta,
             local_source_paths,
             local_set_mutations,
-            root_set_mutations,
-            root_set_predicates,
-            root_set_value_dispatches,
+            root_writes,
             helper_reads,
             helper_rendered,
             helper_dependency_rendered,
@@ -525,14 +521,9 @@ impl Effects {
                 .or_default()
                 .extend(entries);
         }
-        for key in root_set_mutations.keys() {
-            self.root_set_predicates.remove(key);
-            self.root_set_value_dispatches.remove(key);
+        for (name, slot) in root_writes {
+            self.root_writes.entry(name).or_default().merge(slot);
         }
-        self.root_set_mutations.extend(root_set_mutations);
-        self.root_set_predicates.extend(root_set_predicates);
-        self.root_set_value_dispatches
-            .extend(root_set_value_dispatches);
         for read in helper_reads {
             if !self.helper_reads.contains(&read) {
                 self.helper_reads.push(read);
@@ -593,9 +584,7 @@ impl Effects {
             local_output_meta: _,
             local_source_paths: _,
             local_set_mutations,
-            root_set_mutations,
-            root_set_predicates,
-            root_set_value_dispatches,
+            root_writes,
             helper_reads,
             helper_rendered,
             helper_dependency_rendered,
@@ -634,9 +623,7 @@ impl Effects {
             local_output_meta: BTreeMap::new(),
             local_source_paths: BTreeSet::new(),
             local_set_mutations,
-            root_set_mutations,
-            root_set_predicates,
-            root_set_value_dispatches,
+            root_writes,
             helper_reads,
             helper_rendered: Vec::new(),
             helper_dependency_rendered,

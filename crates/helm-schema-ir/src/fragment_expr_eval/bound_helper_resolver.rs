@@ -73,9 +73,7 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_, '_> {
             std::mem::take(&mut observed_facts.shape_erased_paths);
         let mut effects = Effects {
             chart_default_paths: summary.chart_defaults.clone(),
-            root_set_mutations: summary.root_set_mutations.clone(),
-            root_set_predicates: summary.root_set_predicates.clone(),
-            root_set_value_dispatches: summary.root_set_value_dispatches.clone(),
+            root_writes: summary.root_writes.clone(),
             observed_facts,
             parsed_yaml_input_paths: summary.parsed_yaml_input_paths.clone(),
             yaml_serialized_paths: summary.yaml_serialized_paths.clone(),
@@ -110,19 +108,13 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_, '_> {
         effects.merge(call.argument_effects);
         // Helper arguments execute first, so a body mutation of the same root
         // field is the value visible after the call returns.
-        for key in summary.root_set_mutations.keys() {
-            effects.root_set_predicates.remove(key);
-            effects.root_set_value_dispatches.remove(key);
+        for (name, slot) in &summary.root_writes {
+            effects
+                .root_writes
+                .entry(name.clone())
+                .or_default()
+                .merge(slot.clone());
         }
-        effects
-            .root_set_mutations
-            .extend(summary.root_set_mutations.clone());
-        effects
-            .root_set_predicates
-            .extend(summary.root_set_predicates.clone());
-        effects
-            .root_set_value_dispatches
-            .extend(summary.root_set_value_dispatches.clone());
         let mut result = EvalResult::with_effects(summary.value.clone(), effects);
         result.json_payload_truth = summary.json_payload_truth.clone();
         Some(

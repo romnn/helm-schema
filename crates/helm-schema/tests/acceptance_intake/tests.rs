@@ -1,4 +1,6 @@
-use color_eyre::eyre::{self, OptionExt as _};
+use color_eyre::eyre;
+#[cfg(unix)]
+use color_eyre::eyre::OptionExt as _;
 use test_util::prelude::sim_assert_eq;
 
 use super::{INTAKE_DIR, load, read_baseline, read_entry, select};

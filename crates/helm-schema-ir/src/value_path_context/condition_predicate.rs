@@ -264,11 +264,7 @@ impl ValuePathContext<'_> {
         // not when its input identities are falsy: a truthy stand-in
         // over the flowing paths would let negation fire on states the
         // branch never reaches (bitnami `validateValues` aggregators).
-        if let Some(predicate) = self.eval_env.local_truthy_reductions.get(name).or_else(|| {
-            self.eval_env
-                .local_truthy_reductions
-                .get(name.trim_start_matches('$'))
-        }) {
+        if let Some(predicate) = self.variable_truthy_reduction(name) {
             let usable = !matches!(predicate.kind(), helm_schema_core::PredicateKind::False);
             return Decoded::classified(Some(predicate.clone()), usable, usable);
         }
@@ -291,11 +287,12 @@ impl ValuePathContext<'_> {
 
     fn variable_path_fallback_is_faithful(&self, expr: &TemplateExpr, name: &str) -> bool {
         let paths = self.paths_for_expr(expr);
-        let metas = self.eval_env.local_output_meta.get(name).or_else(|| {
-            self.eval_env
-                .local_output_meta
-                .get(name.trim_start_matches('$'))
-        });
+        let metas = self
+            .eval_env
+            .local_slots
+            .variable_slots(name)
+            .into_iter()
+            .find_map(|slot| slot.output_meta.as_ref());
         !paths.is_empty()
             && !paths.iter().any(|path| {
                 metas
@@ -1140,18 +1137,21 @@ impl ValuePathContext<'_> {
     }
 
     fn variable_truthy_reduction(&self, name: &str) -> Option<&Predicate> {
-        self.eval_env.local_truthy_reductions.get(name).or_else(|| {
-            self.eval_env
-                .local_truthy_reductions
-                .get(name.trim_start_matches('$'))
-        })
+        self.eval_env
+            .local_slots
+            .variable_slots(name)
+            .into_iter()
+            .find_map(|slot| slot.truthy_reduction.as_ref())
     }
 
     fn truthiness_abstains(&self, name: &str) -> bool {
-        self.template_truthiness_abstentions.contains(name)
+        self.template_truthiness_abstentions
+            .get(name)
+            .is_some_and(|slot| slot.truthiness_abstained)
             || self
                 .template_truthiness_abstentions
-                .contains(name.trim_start_matches('$'))
+                .get(name.trim_start_matches('$'))
+                .is_some_and(|slot| slot.truthiness_abstained)
     }
 
     pub(crate) fn condition_uses_truthiness_abstention(&self, expr: &TemplateExpr) -> bool {
@@ -1342,8 +1342,10 @@ impl ValuePathContext<'_> {
         };
         let name = name.trim_start_matches('$');
         self.eval_env
-            .local_output_meta
-            .get(name)
+            .local_slots
+            .slot(name)
+            .output_meta
+            .as_ref()
             .and_then(|by_path| by_path.get(&helm_schema_core::ValuesPath::parse(path)))
             .is_some_and(|meta| meta.derived_text || meta.shape_erased)
     }
@@ -1749,11 +1751,7 @@ impl ValuePathContext<'_> {
             if self.truthiness_abstains(name) {
                 return None;
             }
-            if let Some(predicate) = self.eval_env.local_truthy_reductions.get(name).or_else(|| {
-                self.eval_env
-                    .local_truthy_reductions
-                    .get(name.trim_start_matches('$'))
-            }) {
+            if let Some(predicate) = self.variable_truthy_reduction(name) {
                 return Some(predicate.clone());
             }
         }
@@ -1833,11 +1831,13 @@ impl ValuePathContext<'_> {
         let [field] = field else {
             return None;
         };
-        if let Some(predicate) = self.eval_env.root_truthy_predicates.get(field) {
-            return Some(predicate.clone());
-        }
-        if self.eval_env.root_fields.contains_key(field) {
-            return None;
+        if let Some(slot) = self.eval_env.root_slots.get(field) {
+            if let Some(predicate) = &slot.truth {
+                return Some(predicate.clone());
+            }
+            if slot.value.is_some() {
+                return None;
+            }
         }
         // `.Values` IS the values document, so its truthiness is the
         // document's own: a mapping is Helm-falsy only when empty. Naming
@@ -1875,7 +1875,7 @@ impl ValuePathContext<'_> {
                 _ => return None,
             },
         };
-        let dispatch = self.eval_env.root_value_dispatches.get(field)?;
+        let dispatch = self.eval_env.root_slots.get(field)?.dispatch.as_ref()?;
         let selected = dispatch
             .condition_equals_with_memo(&value, self.eval_env.predicate_memo.as_ref())
             .predicate()?
@@ -1903,8 +1903,11 @@ impl ValuePathContext<'_> {
                 _ => return None,
             },
         };
-        if self.eval_env.root_fields.contains_key(field)
-            || self.eval_env.root_value_dispatches.contains_key(field)
+        if self
+            .eval_env
+            .root_slots
+            .get(field)
+            .is_some_and(|slot| slot.value.is_some() || slot.dispatch.is_some())
             || matches!(
                 field,
                 "Capabilities"
@@ -1933,16 +1936,20 @@ impl ValuePathContext<'_> {
         }
         let field = single_root_field(expr)?;
         self.eval_env
-            .root_value_dispatches
-            .contains_key(field)
+            .root_slots
+            .get(field)
+            .and_then(|slot| slot.dispatch.as_ref())
+            .is_some()
             .then_some(field)
     }
 
     fn get_binding_truthy_predicate(&self, name: &str) -> Option<Predicate> {
-        let (binding, keys) = self
-            .eval_env
-            .bound_values
-            .get_binding_domain(name.trim_start_matches('$'))?;
+        let slots = &self.eval_env.local_slots;
+        let binding = slots
+            .slot(name.trim_start_matches('$'))
+            .get_binding
+            .as_ref()?;
+        let keys = slots.slot(&binding.key_var).range_domain.as_ref()?;
         let predicates = keys
             .iter()
             .map(|key| {
@@ -2524,7 +2531,12 @@ impl ValuePathContext<'_> {
             return self
                 .int_cast_bindings
                 .get(name)
-                .or_else(|| self.int_cast_bindings.get(name.trim_start_matches('$')))
+                .and_then(|slot| slot.int_cast_source.as_ref())
+                .or_else(|| {
+                    self.int_cast_bindings
+                        .get(name.trim_start_matches('$'))
+                        .and_then(|slot| slot.int_cast_source.as_ref())
+                })
                 .cloned();
         }
         let (function, [], operand) = call_with_final_operand(expr)? else {
@@ -2559,11 +2571,7 @@ impl ValuePathContext<'_> {
             return Some(predicate);
         }
         if let TemplateExpr::Variable(name) = expr.deparen()
-            && let Some(predicate) = self.eval_env.local_truthy_reductions.get(name).or_else(|| {
-                self.eval_env
-                    .local_truthy_reductions
-                    .get(name.trim_start_matches('$'))
-            })
+            && let Some(predicate) = self.variable_truthy_reduction(name)
         {
             return Some(predicate.clone());
         }
@@ -2634,9 +2642,11 @@ impl ValuePathContext<'_> {
         // `eq (toString .Values.kubeProxyReplacement) "disabled"`).
         let direct_selector = |expr: &TemplateExpr| match expr.deparen() {
             TemplateExpr::Field(_) | TemplateExpr::Selector { .. } => true,
-            TemplateExpr::Variable(name) => !self
+            TemplateExpr::Variable(name) => self
                 .typeof_bindings
-                .contains_key(name.trim_start_matches('$')),
+                .get(name.trim_start_matches('$'))
+                .and_then(|slot| slot.typeof_source.as_ref())
+                .is_none(),
             TemplateExpr::Call { function, args } if function == "index" => {
                 args.split_first().is_some_and(|(base, keys)| {
                     !keys.is_empty()
@@ -2763,13 +2773,10 @@ impl ValuePathContext<'_> {
                 return None;
             };
             self.eval_env
-                .local_output_meta
-                .get(name)
-                .or_else(|| {
-                    self.eval_env
-                        .local_output_meta
-                        .get(name.trim_start_matches('$'))
-                })
+                .local_slots
+                .variable_slots(name)
+                .into_iter()
+                .find_map(|slot| slot.output_meta.as_ref())
                 .and_then(|by_path| by_path.get(&helm_schema_core::ValuesPath::parse(path)))
         };
         let comparison_for = |path: String| {
@@ -2831,11 +2838,12 @@ impl ValuePathContext<'_> {
             }
         };
         if let TemplateExpr::Variable(name) = subject.deparen() {
-            let meta = self.eval_env.local_output_meta.get(name).or_else(|| {
-                self.eval_env
-                    .local_output_meta
-                    .get(name.trim_start_matches('$'))
-            });
+            let meta = self
+                .eval_env
+                .local_slots
+                .variable_slots(name)
+                .into_iter()
+                .find_map(|slot| slot.output_meta.as_ref());
             // A binding qualified by lexical escape tokens is not the raw
             // value for every input (a replace/split chain rewrote some
             // strings): an equality on it cannot lower to a raw-path
@@ -2923,6 +2931,7 @@ impl ValuePathContext<'_> {
             TemplateExpr::Variable(name) => self
                 .typeof_bindings
                 .get(name.trim_start_matches('$'))
+                .and_then(|slot| slot.typeof_source.as_ref())
                 .cloned(),
             _ => None,
         }
@@ -2948,8 +2957,10 @@ impl ValuePathContext<'_> {
             let local_meta = match subject {
                 TemplateExpr::Variable(name) => self
                     .eval_env
-                    .local_output_meta
-                    .get(name.trim_start_matches('$')),
+                    .local_slots
+                    .slot(name.trim_start_matches('$'))
+                    .output_meta
+                    .as_ref(),
                 _ => None,
             };
             return Some(

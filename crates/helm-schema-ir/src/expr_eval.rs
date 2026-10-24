@@ -249,8 +249,9 @@ pub(crate) fn eval_expr_with_helper_calls(
                     return None;
                 }
                 let (head, tail) = path.split_first()?;
-                env.root_fields
+                env.root_slots
                     .get(head)
+                    .and_then(|slot| slot.value.as_ref())
                     .and_then(|value| value.apply_to_path(tail))
             });
             let mut result = value
@@ -279,9 +280,10 @@ pub(crate) fn eval_expr_with_helper_calls(
                 EvalResult::none()
                     .with_scalar_dispatch_with_memo(dispatch.clone(), env.predicate_memo.as_ref())
             } else if let Some(predicate) = env
-                .local_truthy_reductions
-                .get(var)
-                .or_else(|| env.local_truthy_reductions.get(var.trim_start_matches('$')))
+                .local_slots
+                .variable_slots(var)
+                .into_iter()
+                .find_map(|slot| slot.truthy_reduction.as_ref())
             {
                 EvalResult::none()
                     .with_truth_with_memo(predicate.clone(), env.predicate_memo.as_ref())
@@ -339,7 +341,7 @@ pub(crate) fn eval_expr_with_helper_calls(
             effects.output_paths.clear();
             effects
                 .bound_output_paths
-                .extend(env.bound_values.selector_paths(expr));
+                .extend(env.local_slots.selector_paths(expr));
             match value {
                 Some(value) => {
                     let mut result =
@@ -424,7 +426,8 @@ fn root_values_selector_result(segments: &[String], env: &EvalEnv) -> EvalResult
 }
 
 fn values_path_value(tail: &[String], env: &EvalEnv) -> AbstractValue {
-    if let Some(root) = env.root_fields.get("Values")
+    if let Some(slot) = env.root_slots.get("Values")
+        && let Some(root) = &slot.value
         && let Some(value) = root.apply_to_path(tail)
     {
         return value;
@@ -458,8 +461,7 @@ pub(crate) fn eval_helper_exprs_direct_effects(
 }
 
 pub(crate) struct HelperArgBindings {
-    pub(crate) bindings: HashMap<String, AbstractValue>,
-    pub(crate) scalar_dispatches: BTreeMap<String, ScalarValueDispatch>,
+    pub(crate) scalar_dispatches: BTreeMap<String, crate::value::RootSlot>,
     /// Whole-arg evaluated value when `bindings` derived from one evaluation
     /// (the non-dot, non-merge arm). Callers reuse it as the helper body dot
     /// instead of evaluating the same expression a second time.
@@ -473,7 +475,6 @@ pub(crate) fn bindings_for_helper_arg_with(
 ) -> HelperArgBindings {
     let Some(arg) = arg else {
         return HelperArgBindings {
-            bindings: HashMap::new(),
             scalar_dispatches: BTreeMap::new(),
             value: None,
         };
@@ -516,17 +517,32 @@ pub(crate) fn bindings_for_helper_arg_with(
             let result = eval_binding(arg);
             let value = result.value;
             return HelperArgBindings {
-                bindings: bindings_from_helper_arg_value(value.clone(), outer),
-                scalar_dispatches: result.field_scalar_dispatches,
+                scalar_dispatches: helper_arg_slots(
+                    bindings_from_helper_arg_value(value.clone(), outer),
+                    result.field_scalar_dispatches,
+                ),
                 value,
             };
         }
     };
     HelperArgBindings {
-        bindings,
-        scalar_dispatches,
+        scalar_dispatches: helper_arg_slots(bindings, scalar_dispatches),
         value: None,
     }
+}
+
+fn helper_arg_slots(
+    bindings: HashMap<String, AbstractValue>,
+    dispatches: BTreeMap<String, ScalarValueDispatch>,
+) -> BTreeMap<String, crate::value::RootSlot> {
+    let mut slots = BTreeMap::<String, crate::value::RootSlot>::new();
+    for (name, value) in bindings {
+        slots.entry(name).or_default().value = Some(value);
+    }
+    for (name, dispatch) in dispatches {
+        slots.entry(name).or_default().dispatch = Some(dispatch);
+    }
+    slots
 }
 
 fn bindings_from_helper_arg_value(
@@ -640,8 +656,9 @@ fn local_binding_result(var: &str, binding: &LocalBinding, env: &EvalEnv) -> Eva
 fn bound_values_member(value: &AbstractValue, env: &EvalEnv) -> Option<AbstractValue> {
     match value {
         AbstractValue::RootContext => Some(
-            env.root_fields
+            env.root_slots
                 .get("Values")
+                .and_then(|slot| slot.value.as_ref())
                 .cloned()
                 .unwrap_or_else(AbstractValue::values_root),
         ),
@@ -832,7 +849,7 @@ fn local_value_result(
     result.effects.local_source_paths = source_paths;
     let default_paths = leaf_metadata
         .map(|metadata| &metadata.default_paths)
-        .or_else(|| env.local_default_paths.get(var));
+        .or_else(|| env.local_slots.slot(var).default_paths.as_ref());
     if let Some(default_paths) = default_paths {
         result
             .effects
@@ -847,7 +864,7 @@ fn local_value_result(
     }
     let output_meta = leaf_metadata
         .map(|metadata| &metadata.output_meta)
-        .or_else(|| env.local_output_meta.get(var));
+        .or_else(|| env.local_slots.slot(var).output_meta.as_ref());
     if let Some(meta_by_path) = output_meta {
         match selected_paths {
             Some(paths) => result.effects.merge_local_output_meta(
@@ -862,9 +879,10 @@ fn local_value_result(
         if let Some(dispatch) = local_scalar_dispatch(var, env) {
             result.set_scalar_dispatch_with_memo(dispatch.clone(), env.predicate_memo.as_ref());
         } else if let Some(predicate) = env
-            .local_truthy_reductions
-            .get(var)
-            .or_else(|| env.local_truthy_reductions.get(var.trim_start_matches('$')))
+            .local_slots
+            .variable_slots(var)
+            .into_iter()
+            .find_map(|slot| slot.truthy_reduction.as_ref())
         {
             result.set_truth_condition_with_memo(
                 TruthCondition::exact_with_memo(predicate.clone(), env.predicate_memo.as_ref()),
@@ -877,9 +895,10 @@ fn local_value_result(
 }
 
 fn local_scalar_dispatch<'a>(var: &str, env: &'a EvalEnv) -> Option<&'a ScalarValueDispatch> {
-    env.local_scalar_dispatches
-        .get(var)
-        .or_else(|| env.local_scalar_dispatches.get(var.trim_start_matches('$')))
+    env.local_slots
+        .variable_slots(var)
+        .into_iter()
+        .find_map(|slot| slot.scalar_dispatch.as_ref())
 }
 
 fn literal_result(literal: &Literal, env: &EvalEnv) -> EvalResult {
@@ -936,9 +955,12 @@ fn attach_root_field_semantics(result: &mut EvalResult, path: &[String], env: &E
 }
 
 fn attach_named_root_field_semantics(result: &mut EvalResult, field: &str, env: &EvalEnv) {
-    if let Some(dispatch) = env.root_value_dispatches.get(field) {
+    let Some(slot) = env.root_slots.get(field) else {
+        return;
+    };
+    if let Some(dispatch) = &slot.dispatch {
         result.set_scalar_dispatch_with_memo(dispatch.clone(), env.predicate_memo.as_ref());
-    } else if let Some(predicate) = env.root_truthy_predicates.get(field) {
+    } else if let Some(predicate) = &slot.truth {
         result.set_truth_condition_with_memo(
             TruthCondition::exact_with_memo(predicate.clone(), env.predicate_memo.as_ref()),
             crate::eval_effect::SelectionTruthSource::RenderedScalar,
@@ -955,7 +977,7 @@ fn with_bound_selector_paths(
     result
         .effects
         .bound_output_paths
-        .extend(env.bound_values.selector_paths(expr));
+        .extend(env.local_slots.selector_paths(expr));
     result
 }
 
