@@ -328,9 +328,11 @@ fn live_group_control_failure_affects_only_its_applicable_document() -> eyre::Re
                 .err()
                 .ok_or_eyre("bad context was accepted")?;
             assert!(
-                err.contains("unusable defaults/context render control"),
+                err.message
+                    .contains("unusable defaults/context render control"),
                 "{err}"
             );
+            sim_assert_eq!(have: err.kind, want: super::FailureKind::Undecided);
         } else {
             let (verdict, directory) = result.outcome.map_err(|err| eyre::eyre!("{err}"))?;
             sim_assert_eq!(have: verdict, want: super::HelmFlipVerdict::LooseningMatchedLintValidation);
@@ -533,7 +535,7 @@ fn live_grouped_outcomes_fold_in_original_probe_order() -> eyre::Result<()> {
                     document_kind: Some(AcceptanceDocument::LintRaw),
                     kubernetes_version: "1.29.0".into(),
                     input: None,
-                    outcome: Err(case),
+                    outcome: Err(super::AdjudicationFailure::infrastructure(case)),
                     adjudication_ms: 0,
                 })),
             )
@@ -2223,6 +2225,7 @@ fn schema_only_lint(baseline_bytes: Vec<u8>, candidate: &Value) -> eyre::Result<
                 candidate_bytes: serde_json::to_vec(candidate)?,
                 defaults: json!({"child": {"first": 1, "second": 2}}),
             },
+            annotation: None,
         },
         false,
         None,

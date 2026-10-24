@@ -11,10 +11,7 @@ use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 use test_util::scratch::ScratchDir;
 
-#[path = "common/helm_pool.rs"]
-mod helm_pool;
-
-use helm_pool::{Ordinal, PoolLimits, run_ordered};
+use helm_schema_test_support::acceptance::pool::{Ordinal, PoolLimits, run_ordered};
 use helm_schema_test_support::helm::cache_policy::render_cacheability;
 use helm_schema_test_support::helm::invocation::{
     Cacheability, HelmExecution, HelmRunner, InvocationRequest, Outcome, PreparedTree,

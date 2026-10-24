@@ -40,6 +40,7 @@ fn screen_external(
                 candidate_bytes: b"{}".to_vec(),
                 defaults: json!({"enabled":false}),
             },
+            annotation: None,
         },
         false,
         roster,

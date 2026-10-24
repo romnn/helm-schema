@@ -16,15 +16,16 @@ use color_eyre::eyre::{self, WrapErr as _};
 const WORKERS_VAR: &str = "SCHEMA_HELM_WORKERS";
 
 /// A job's place in the result order: its chart, then its probe.
-pub(crate) type Ordinal = (usize, usize);
+pub type Ordinal = (usize, usize);
 
 /// How much work may run at once.
 #[derive(Clone, Copy, Debug)]
-pub(crate) struct PoolLimits {
-    pub(crate) workers: usize,
+pub struct PoolLimits {
+    /// Worker threads.
+    pub workers: usize,
     /// The sum of admitted reservations, in bytes. A job reserving more than
     /// this runs alone.
-    pub(crate) memory_bytes: u64,
+    pub memory_bytes: u64,
 }
 
 impl PoolLimits {
@@ -32,13 +33,13 @@ impl PoolLimits {
     /// cores and at least one, sharing `SCHEMA_HELM_MEMORY_MIB` mebibytes of
     /// child memory.
     /// Both default to the host's size (see
-    /// [`helm_schema_test_support::machine::Machine`]).
+    /// [`crate::machine::Machine`]).
     ///
     /// # Errors
     ///
     /// Returns an error when either variable is not a number.
-    pub(crate) fn from_env() -> eyre::Result<Self> {
-        let machine = helm_schema_test_support::machine::Machine::detect();
+    pub fn from_env() -> eyre::Result<Self> {
+        let machine = crate::machine::Machine::detect();
         let workers: usize = match std::env::var(WORKERS_VAR) {
             Ok(workers) => workers.parse().wrap_err(WORKERS_VAR)?,
             Err(_) => machine.helm_workers(),
@@ -54,9 +55,11 @@ impl PoolLimits {
 
 /// The most the pool ever ran at once.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, serde::Serialize)]
-pub(crate) struct PoolPeaks {
-    pub(crate) running: usize,
-    pub(crate) reserved_bytes: u64,
+pub struct PoolPeaks {
+    /// Jobs running at once.
+    pub running: usize,
+    /// Bytes reserved at once.
+    pub reserved_bytes: u64,
 }
 
 struct State<J> {
@@ -67,13 +70,14 @@ struct State<J> {
 }
 
 /// Lets a running job submit further jobs.
-pub(crate) struct Submitter<'a, J> {
+pub struct Submitter<'a, J> {
     state: &'a Mutex<State<J>>,
     changed: &'a Condvar,
 }
 
 impl<J> Submitter<'_, J> {
-    pub(crate) fn submit(&self, ordinal: Ordinal, job: J) {
+    /// Queues `job` at `ordinal`.
+    pub fn submit(&self, ordinal: Ordinal, job: J) {
         self.state
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
@@ -87,7 +91,7 @@ impl<J> Submitter<'_, J> {
 /// job with its ordinal. The job with the least ordinal is admitted once a
 /// worker is free and its `reservation` fits beside the admitted ones.
 /// Returns the results in ordinal order.
-pub(crate) fn run_ordered<J, R>(
+pub fn run_ordered<J, R>(
     limits: PoolLimits,
     jobs: Vec<(Ordinal, J)>,
     reservation: impl Fn(&J) -> u64 + Sync,

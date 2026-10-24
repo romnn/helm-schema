@@ -3,10 +3,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 
+use crate::{helm::invocation::tree_sha256, manifest, source_digest::sha256_hex};
 use color_eyre::eyre::{self, OptionExt as _, WrapErr as _};
-use helm_schema_test_support::{
-    helm::invocation::tree_sha256, manifest, source_digest::sha256_hex,
-};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use test_util::helm_values::{
@@ -14,44 +12,74 @@ use test_util::helm_values::{
 };
 use test_util::scratch::ScratchDir;
 
-use crate::harness::ProfileSchemas;
+use super::discovery::{
+    HelmChartDir, MAX_PROBES_PER_CHART, ProbeCoverage, ProbeInstance, ProbeValuesFile,
+    ProfileSchemas, UnreachableProbe, structural_probe_battery_with_coverage,
+};
+use super::{ChartCost, ComparedChart, LiveChart, LoadedInputs, ScreenedChart, elapsed_ms};
 
-pub(crate) const CONTEXT_ROSTER_VAR: &str = "SCHEMA_ACCEPTANCE_CONTEXT_ROSTER";
+/// Names the imported context roster file in the ordinary battery.
+pub const CONTEXT_ROSTER_VAR: &str = "SCHEMA_ACCEPTANCE_CONTEXT_ROSTER";
 const MAX_OVERLAYS: usize = 8_192;
 const MAX_ROSTER_BYTES: u64 = 64 * 1024 * 1024;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
-pub(crate) struct ContextRow {
-    pub(crate) id: String,
-    pub(crate) chart: String,
-    pub(crate) overlay: Value,
-    pub(crate) transport: String,
-    pub(crate) kubernetes_version: String,
-    pub(crate) chart_sha256: String,
-    pub(crate) baseline_sha256: String,
-    pub(crate) candidate_sha256: String,
-    pub(crate) canonical_overlay_sha256: String,
-    pub(crate) values_file: String,
-    pub(crate) values_file_sha256: String,
-    pub(crate) context_overlay: Value,
-    pub(crate) context_overlay_sha256: String,
+/// One imported context row: a tested overlay and its context-only overlay.
+pub struct ContextRow {
+    /// The row's identity within its chart.
+    pub id: String,
+    /// The chart's label.
+    pub chart: String,
+    /// The tested overlay.
+    pub overlay: Value,
+    /// How it reaches Helm; only `values-file`.
+    pub transport: String,
+    /// The Kubernetes version to render for.
+    pub kubernetes_version: String,
+    /// SHA-256 of the chart tree the row was recorded for.
+    pub chart_sha256: String,
+    /// SHA-256 of the installed baseline schema.
+    pub baseline_sha256: String,
+    /// SHA-256 of the installed candidate schema.
+    pub candidate_sha256: String,
+    /// SHA-256 of the canonical tested overlay.
+    pub canonical_overlay_sha256: String,
+    /// The original values-file text.
+    pub values_file: String,
+    /// SHA-256 of that text.
+    pub values_file_sha256: String,
+    /// The context-only overlay.
+    pub context_overlay: Value,
+    /// SHA-256 of the canonical context-only overlay.
+    pub context_overlay_sha256: String,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
-pub(crate) struct ContextRoster {
-    pub(crate) version: u32,
-    pub(crate) rows: Vec<ContextRow>,
+/// A version-2 context roster file.
+pub struct ContextRoster {
+    /// The format version; only 2.
+    pub version: u32,
+    /// Its rows.
+    pub rows: Vec<ContextRow>,
 }
 
-pub(crate) struct ImportedRoster {
-    pub(crate) sha256: String,
-    pub(crate) rows: BTreeMap<String, Vec<ContextRow>>,
+/// A verified context roster, grouped by chart.
+pub struct ImportedRoster {
+    /// SHA-256 of the roster file's exact bytes.
+    pub sha256: String,
+    /// Each chart's rows, sorted by identity.
+    pub rows: BTreeMap<String, Vec<ContextRow>>,
 }
 
 impl ImportedRoster {
-    pub(crate) fn read(path: &Path, charts: &BTreeSet<String>) -> eyre::Result<Self> {
+    /// Reads and verifies the roster at `path` for exactly the selected `charts`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the file is too large, malformed, or a row is inconsistent or names an unselected chart.
+    pub fn read(path: &Path, charts: &BTreeSet<String>) -> eyre::Result<Self> {
         eyre::ensure!(
             std::fs::metadata(path)?.len() <= MAX_ROSTER_BYTES,
             "context roster exceeds byte cap"
@@ -141,15 +169,24 @@ impl ImportedRoster {
 }
 
 /// The exact root schemas installed for lint, derived without rerunning inference.
-pub(crate) struct LintSchemas {
-    pub(crate) baseline: Vec<u8>,
-    pub(crate) candidate: Vec<u8>,
-    pub(crate) profiles: ProfileSchemas,
-    pub(crate) manifest_sha256: Option<String>,
+pub struct LintSchemas {
+    /// The installed baseline schema bytes.
+    pub baseline: Vec<u8>,
+    /// The installed candidate schema bytes.
+    pub candidate: Vec<u8>,
+    /// Both schemas compiled for screening.
+    pub profiles: ProfileSchemas,
+    /// SHA-256 of the candidate's producer manifest.
+    pub manifest_sha256: Option<String>,
 }
 
 impl LintSchemas {
-    pub(crate) fn compile(
+    /// Compiles `baseline` and `candidate` as installed for lint.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when a schema cannot be serialized, compiled or verified.
+    pub fn compile(
         baseline: &Value,
         candidate: &Value,
         candidate_path: Option<&Path>,
@@ -157,7 +194,12 @@ impl LintSchemas {
         Self::compile_bytes(&serde_json::to_vec(baseline)?, candidate, candidate_path)
     }
 
-    pub(crate) fn compile_bytes(
+    /// Compiles the shipped `baseline` bytes and `candidate`, verifying the candidate's companion when it comes from a dump.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when a schema cannot be parsed, compiled or verified against its manifest.
+    pub fn compile_bytes(
         baseline: &[u8],
         candidate: &Value,
         candidate_path: Option<&Path>,
@@ -201,7 +243,12 @@ impl LintSchemas {
     }
 }
 
-pub(crate) fn helm_ready(schema: &Value) -> eyre::Result<Vec<u8>> {
+/// `schema` with shortened definition names, as Helm reads it.
+///
+/// # Errors
+///
+/// Returns an error when the schema cannot be serialized.
+pub fn helm_ready(schema: &Value) -> eyre::Result<Vec<u8>> {
     let shortened = helm_schema_json_schema_minify::shorten_definition_names(schema);
     let mut bytes = serde_json::to_vec(&shortened.schema)?;
     bytes.push(b'\n');
@@ -264,55 +311,92 @@ fn verified_companion(path: &Path, candidate: &Value) -> eyre::Result<Vec<u8>> {
 }
 
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Eq, Serialize)]
-pub(crate) struct DocumentCoverage {
-    pub(crate) composed: usize,
-    pub(crate) not_validated: usize,
-    pub(crate) errors: usize,
-    pub(crate) screened: usize,
-    pub(crate) flips: usize,
-    pub(crate) adjudicated: usize,
-    pub(crate) adjudication_failures: usize,
+/// One document kind's accounting in a chart's lint lane.
+pub struct DocumentCoverage {
+    /// Documents composed.
+    pub composed: usize,
+    /// Documents Helm would not validate.
+    pub not_validated: usize,
+    /// Documents that failed to compose.
+    pub errors: usize,
+    /// Documents screened.
+    pub screened: usize,
+    /// Documents screened as flips.
+    pub flips: usize,
+    /// Flips adjudicated.
+    pub adjudicated: usize,
+    /// Flips whose adjudication failed.
+    pub adjudication_failures: usize,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Eq, Serialize)]
-pub(crate) struct LintCoverage {
-    pub(crate) builtin_rows: usize,
-    pub(crate) imported_rows: usize,
-    pub(crate) rows_screened: usize,
-    pub(crate) distinct_overlays: usize,
-    pub(crate) documents: BTreeMap<String, DocumentCoverage>,
-    pub(crate) roster_sha256: Option<String>,
-    pub(crate) chart_sha256: String,
-    pub(crate) baseline_sha256: String,
-    pub(crate) candidate_sha256: String,
-    pub(crate) candidate_manifest_sha256: Option<String>,
-    pub(crate) failures: Vec<String>,
-    pub(crate) inapplicable: Vec<String>,
-    pub(crate) rows: Vec<RowEvidence>,
+/// A chart's lint lane accounting and its input identities.
+pub struct LintCoverage {
+    /// Built-in dependency rows.
+    pub builtin_rows: usize,
+    /// Imported context rows.
+    pub imported_rows: usize,
+    /// Row origins screened.
+    pub rows_screened: usize,
+    /// Distinct values-file inputs.
+    pub distinct_overlays: usize,
+    /// Each document kind's accounting.
+    pub documents: BTreeMap<String, DocumentCoverage>,
+    /// SHA-256 of the imported roster.
+    pub roster_sha256: Option<String>,
+    /// SHA-256 of the chart tree.
+    pub chart_sha256: String,
+    /// SHA-256 of the installed baseline schema.
+    pub baseline_sha256: String,
+    /// SHA-256 of the installed candidate schema.
+    pub candidate_sha256: String,
+    /// SHA-256 of the candidate's producer manifest.
+    pub candidate_manifest_sha256: Option<String>,
+    /// Why the lane is incomplete.
+    pub failures: Vec<String>,
+    /// Documents Helm would not validate, and why.
+    pub inapplicable: Vec<String>,
+    /// Each distinct input's evidence.
+    pub rows: Vec<RowEvidence>,
     /// Forced raw-lint audits both schemas judge alike: no transition, so a
     /// schema-only run defers them to live adjudication instead of flipping.
     #[serde(default)]
-    pub(crate) deferred_live_audits: Vec<String>,
+    pub deferred_live_audits: Vec<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq, Serialize)]
-pub(crate) struct RowEvidence {
-    pub(crate) origins: Vec<String>,
-    pub(crate) canonical_overlay_sha256: String,
-    pub(crate) values_file_sha256: String,
-    pub(crate) kubernetes_version: String,
-    pub(crate) contexts: Vec<ContextEvidence>,
+/// One distinct values-file input and its origins.
+pub struct RowEvidence {
+    /// Every row origin it serves.
+    pub origins: Vec<String>,
+    /// SHA-256 of its canonical overlay.
+    pub canonical_overlay_sha256: String,
+    /// SHA-256 of its exact values-file bytes.
+    pub values_file_sha256: String,
+    /// The Kubernetes version to render for.
+    pub kubernetes_version: String,
+    /// Its context controls.
+    pub contexts: Vec<ContextEvidence>,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq, Serialize)]
-pub(crate) struct ContextEvidence {
-    pub(crate) origin: String,
-    pub(crate) overlay: Value,
-    pub(crate) canonical_overlay_sha256: String,
+/// One context control of an input.
+pub struct ContextEvidence {
+    /// The row origin it came from.
+    pub origin: String,
+    /// The context-only overlay.
+    pub overlay: Value,
+    /// SHA-256 of the canonical overlay.
+    pub canonical_overlay_sha256: String,
 }
 
 impl LintCoverage {
-    pub(crate) fn validate(&self) -> eyre::Result<()> {
+    /// Checks that every row and document is accounted for.
+    ///
+    /// # Errors
+    ///
+    /// Returns the first incomplete row or document count.
+    pub fn validate(&self) -> eyre::Result<()> {
         eyre::ensure!(
             self.failures.is_empty(),
             "incomplete lint lane: {:?}",
@@ -353,7 +437,12 @@ impl LintCoverage {
         Ok(())
     }
 
-    pub(crate) fn validate_live(&self) -> eyre::Result<()> {
+    /// Checks [`Self::validate`] and that every flip was adjudicated.
+    ///
+    /// # Errors
+    ///
+    /// Returns the first incomplete count.
+    pub fn validate_live(&self) -> eyre::Result<()> {
         self.validate()?;
         for (kind, counts) in &self.documents {
             eyre::ensure!(
@@ -364,30 +453,43 @@ impl LintCoverage {
         Ok(())
     }
 
-    pub(crate) fn probes(&self) -> usize {
+    /// Documents screened across every kind.
+    #[must_use]
+    pub fn probes(&self) -> usize {
         self.documents.values().map(|counts| counts.screened).sum()
     }
 }
 
 #[derive(Clone)]
-pub(crate) struct ScreenedProbe {
-    pub(crate) name: String,
-    pub(crate) overlay: Value,
+/// One screened flip handed to Helm.
+pub struct ScreenedProbe {
+    /// The probe's name.
+    pub name: String,
+    /// The overlay Helm receives.
+    pub overlay: Value,
     /// `None` retains the legacy exact-template adjudication path.
-    pub(crate) document: Option<ScreenedDocument>,
+    pub document: Option<ScreenedDocument>,
 }
 
 #[derive(Clone)]
-pub(crate) struct ScreenedDocument {
-    pub(crate) kind: AcceptanceDocument,
+/// A screened document of the lint lane.
+pub struct ScreenedDocument {
+    /// Which of Helm's documents it is.
+    pub kind: AcceptanceDocument,
     /// Audit a rejected raw lint control even when both schemas reject it alike.
-    pub(crate) lint_control: bool,
-    pub(crate) values: Value,
-    pub(crate) defaults: Option<Value>,
-    pub(crate) kubernetes_version: String,
-    pub(crate) origins: Vec<String>,
-    pub(crate) values_file: Vec<u8>,
-    pub(crate) control_overlays: Vec<Value>,
+    pub lint_control: bool,
+    /// The composed document.
+    pub values: Value,
+    /// The same kind of document for the chart's defaults.
+    pub defaults: Option<Value>,
+    /// The Kubernetes version to render for.
+    pub kubernetes_version: String,
+    /// Every row origin it serves.
+    pub origins: Vec<String>,
+    /// The exact values-file bytes.
+    pub values_file: Vec<u8>,
+    /// Applicable context-only overlays, defaults included.
+    pub control_overlays: Vec<Value>,
 }
 
 struct OverlayRow {
@@ -399,21 +501,36 @@ struct OverlayRow {
     lint_control: bool,
 }
 
-pub(crate) struct LintScreen {
-    pub(crate) coverage: LintCoverage,
-    pub(crate) flips: Vec<ScreenedProbe>,
+/// A chart's lint lane screening.
+pub struct LintScreen {
+    /// Its accounting.
+    pub coverage: LintCoverage,
+    /// The documents screened as flips.
+    pub flips: Vec<ScreenedProbe>,
 }
 
-pub(crate) struct ScreenRequest<'a> {
-    pub(crate) chart: &'a Path,
-    pub(crate) schemas: &'a LintSchemas,
-    pub(crate) kubernetes_version: &'a str,
-    pub(crate) imported: &'a [ContextRow],
-    pub(crate) roster_sha256: Option<String>,
-    pub(crate) available_probes: usize,
+/// What the lint lane screens.
+pub struct ScreenRequest<'a> {
+    /// The staged chart.
+    pub chart: &'a Path,
+    /// Both schemas as installed for lint.
+    pub schemas: &'a LintSchemas,
+    /// The chart's Kubernetes version.
+    pub kubernetes_version: &'a str,
+    /// The chart's imported context rows.
+    pub imported: &'a [ContextRow],
+    /// SHA-256 of the imported roster.
+    pub roster_sha256: Option<String>,
+    /// Documents the chart may still screen.
+    pub available_probes: usize,
 }
 
-pub(crate) fn screen(request: &ScreenRequest<'_>) -> eyre::Result<LintScreen> {
+/// Screens the chart's dependency and context documents.
+///
+/// # Errors
+///
+/// Returns an error when the chart's inputs cannot be loaded or composed.
+pub fn screen(request: &ScreenRequest<'_>) -> eyre::Result<LintScreen> {
     let mut coverage = LintCoverage {
         imported_rows: request.imported.len(),
         roster_sha256: request.roster_sha256.clone(),
@@ -592,4 +709,281 @@ fn default_documents(
         defaults.insert(kind, document);
     }
     Ok(defaults)
+}
+
+/// How a chart's screened lint documents are accounted.
+#[derive(Clone, Copy)]
+pub enum LintAccounting {
+    /// Helm adjudicates every screened document, forced audits included.
+    Live,
+    /// The schemas alone judge.
+    SchemaOnly {
+        /// Whether the baseline and candidate artifacts are byte-identical.
+        identical_schemas: bool,
+    },
+}
+
+impl LintAccounting {
+    /// The accounting for a run that adjudicates live or not.
+    #[must_use]
+    pub fn new(adjudicate_live: bool, identical_schemas: bool) -> Self {
+        if adjudicate_live {
+            Self::Live
+        } else {
+            Self::SchemaOnly { identical_schemas }
+        }
+    }
+}
+
+/// A chart's screened probes so far.
+pub struct ScreenedProbes {
+    /// Probes and documents screened.
+    pub probes_checked: usize,
+    /// Flips judged by the schemas alone.
+    pub flips: Vec<String>,
+    /// Probes whose values file could not be composed.
+    pub failures: Vec<String>,
+    /// Flips handed to Helm.
+    pub screened: Vec<ScreenedProbe>,
+}
+
+impl ScreenedProbes {
+    /// Adds the lint lane's screening under `accounting`.
+    pub fn append_lint(
+        &mut self,
+        lint: eyre::Result<LintScreen>,
+        schemas: &LintSchemas,
+        coverage: &mut ProbeCoverage,
+        mode: LintAccounting,
+    ) {
+        let mut lint = match lint {
+            Ok(lint) => lint,
+            Err(err) => {
+                coverage.lint = Some(LintCoverage {
+                    failures: vec![err.to_string()],
+                    ..Default::default()
+                });
+                return;
+            }
+        };
+        self.probes_checked += lint.coverage.probes();
+        for probe in lint.flips {
+            let LintAccounting::SchemaOnly { identical_schemas } = mode else {
+                self.screened.push(probe);
+                continue;
+            };
+            if let Some(document) = probe.document {
+                // Byte-identical schemas give every document identical verdicts, so a forced
+                // audit is no transition; only live mode can run it.
+                if document.lint_control && identical_schemas {
+                    lint.coverage.deferred_live_audits.push(probe.name);
+                    continue;
+                }
+                let (before, after) = schemas.profiles.document_verdicts(&document.values);
+                self.flips.push(format!(
+                    "{}: {}: before={before}, after={after}",
+                    coverage.label, probe.name
+                ));
+            }
+        }
+        coverage.lint = Some(lint.coverage);
+    }
+}
+
+/// Screens the structural probe battery against both schemas.
+pub fn screen_template_probes(
+    chart_dir: &std::path::Path,
+    profiles: &ProfileSchemas,
+    defaults: &serde_json::Value,
+    probes: Vec<(String, ProbeInstance)>,
+    coverage: &mut ProbeCoverage,
+    adjudicate_live: bool,
+) -> ScreenedProbes {
+    let label = &coverage.label;
+    let probes_checked = probes.len();
+    let mut flips = Vec::new();
+    let mut failures = Vec::new();
+    let mut screened = Vec::new();
+    for (probe_name, probe) in probes {
+        if matches!(probe, ProbeInstance::Coalesced(_)) {
+            coverage.composed_probes += 1;
+        }
+        let (overlay, probe) = match probe.helm_values_file(chart_dir, defaults) {
+            Ok(ProbeValuesFile::Reachable(overlay)) => (overlay, probe),
+            Ok(ProbeValuesFile::ReachableAs { values, document }) => {
+                (values, ProbeInstance::Coalesced(document))
+            }
+            Ok(ProbeValuesFile::Unreachable(reason)) => {
+                coverage.unreachable_probes.push(UnreachableProbe {
+                    probe: probe_name,
+                    reason,
+                });
+                continue;
+            }
+            Err(error) => {
+                failures.push(format!("{label}: {probe_name}: {error}"));
+                continue;
+            }
+        };
+        if !profiles.screens_a_flip(&probe) {
+            continue;
+        }
+        if adjudicate_live {
+            // Screening proposes an overlay; only Helm can establish its coalesced document.
+            screened.push(ScreenedProbe {
+                name: probe_name,
+                overlay,
+                document: None,
+            });
+        } else {
+            let (before, after) = profiles.verdicts(&probe);
+            flips.push(format!(
+                "{label}: {probe_name}: before={before}, after={after}"
+            ));
+        }
+    }
+    ScreenedProbes {
+        probes_checked,
+        flips,
+        failures,
+        screened,
+    }
+}
+
+/// Compiles both profiles, generates the chart's probe battery and screens
+/// it, returning the screened flips for Helm when `adjudicate_live`.
+#[tracing::instrument(
+    target = "helm_schema::acceptance",
+    skip_all,
+    fields(chart = %chart.label, lane = "screen", adjudicate_live)
+)]
+/// # Errors
+///
+/// Returns an error when the chart's inputs cannot be loaded, compiled or staged.
+pub fn screen_chart(
+    chart: ComparedChart,
+    adjudicate_live: bool,
+    roster: Option<&ImportedRoster>,
+) -> eyre::Result<(ScreenedChart, Option<LiveChart>)> {
+    let started = std::time::Instant::now();
+    let ComparedChart {
+        label,
+        chart_relative_path,
+        inputs,
+        annotation,
+    } = chart;
+    let candidate_path = inputs.candidate_path().map(Path::to_path_buf);
+    let LoadedInputs {
+        baseline,
+        baseline_bytes,
+        candidate: current,
+        candidate_bytes,
+        defaults,
+    } = inputs.load()?;
+    let profiles = ProfileSchemas::compile(&baseline, &current, defaults.clone())?;
+    let lint_compilation = std::time::Instant::now();
+    let lint_schemas =
+        LintSchemas::compile_bytes(&baseline_bytes, &current, candidate_path.as_deref())?;
+    let lint_compilation_ms = elapsed_ms(lint_compilation);
+    let (probes, mut coverage) = structural_probe_battery_with_coverage(
+        &chart_relative_path,
+        &defaults,
+        &[&baseline, &current],
+    )?;
+    coverage.label = label.clone();
+    let chart_dir = HelmChartDir::stage(&chart_relative_path)?;
+    let mut cost = ChartCost {
+        label: label.clone(),
+        context_ms: elapsed_ms(started),
+        screening_ms: 0,
+        lint_screening_ms: 0,
+        lint_compilation_ms,
+        preparation_ms: 0,
+        adjudication_ms: 0,
+        prepared_trees: None,
+        helm: std::collections::BTreeMap::new(),
+    };
+    let screening = std::time::Instant::now();
+    let mut result = screen_template_probes(
+        chart_dir.path(),
+        &profiles,
+        &defaults,
+        probes,
+        &mut coverage,
+        adjudicate_live,
+    );
+    let lint_started = std::time::Instant::now();
+    let version = crate::helm::kubernetes_version::chart_kubernetes_version(chart_dir.path())?;
+    let imported = roster
+        .and_then(|roster| roster.rows.get(&label))
+        .map_or(&[][..], Vec::as_slice);
+    let lint = screen(&ScreenRequest {
+        chart: chart_dir.path(),
+        schemas: &lint_schemas,
+        kubernetes_version: version,
+        imported,
+        roster_sha256: roster.map(|roster| roster.sha256.clone()),
+        available_probes: MAX_PROBES_PER_CHART.saturating_sub(result.probes_checked),
+    });
+    let accounting = LintAccounting::new(adjudicate_live, baseline_bytes == candidate_bytes);
+    result.append_lint(lint, &lint_schemas, &mut coverage, accounting);
+    cost.lint_screening_ms = elapsed_ms(lint_started);
+    cost.screening_ms = elapsed_ms(screening);
+    let ScreenedProbes {
+        probes_checked,
+        flips,
+        failures,
+        screened,
+    } = result;
+    let live = (!screened.is_empty()).then(|| LiveChart {
+        label: label.clone(),
+        path: test_util::workspace_testdata()
+            .join("charts")
+            .join(&chart_relative_path),
+        profiles,
+        flips: screened,
+        lint_schemas,
+        helm: std::sync::Arc::default(),
+        annotation,
+    });
+    let screened = ScreenedChart {
+        label,
+        coverage,
+        probes_checked,
+        flips,
+        failures,
+        screened_flips: live.as_ref().map_or(0, |live| live.flips.len()),
+        helm: live.as_ref().map(|live| live.helm.clone()),
+        cost,
+    };
+    Ok((screened, live))
+}
+
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+struct DocumentInput<'a> {
+    values: &'a [u8],
+    kubernetes_version: &'a str,
+}
+
+/// One lint invocation observes both lint documents, even when templates are nondeterministic.
+/// Chart and schema bytes are fixed by the owning `LiveChart`; imported values retain exact bytes.
+pub fn probe_groups(live: &LiveChart) -> Vec<Vec<usize>> {
+    let mut documents = std::collections::BTreeMap::<DocumentInput<'_>, Vec<usize>>::new();
+    let mut groups = Vec::new();
+    for (flip, probe) in live.flips.iter().enumerate() {
+        if let Some(document) = &probe.document {
+            documents
+                .entry(DocumentInput {
+                    values: &document.values_file,
+                    kubernetes_version: &document.kubernetes_version,
+                })
+                .or_default()
+                .push(flip);
+        } else {
+            groups.push(vec![flip]);
+        }
+    }
+    groups.extend(documents.into_values());
+    groups.sort_by_key(|group| group.first().copied());
+    groups
 }
