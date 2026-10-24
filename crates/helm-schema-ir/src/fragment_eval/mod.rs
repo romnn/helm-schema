@@ -24,6 +24,7 @@ mod project;
 pub(crate) mod summary;
 
 #[cfg(test)]
+#[path = "../tests/fragment_eval_header.rs"]
 mod tests;
 
 #[cfg(test)]

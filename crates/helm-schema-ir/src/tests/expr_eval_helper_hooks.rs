@@ -1,5 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
+use color_eyre::eyre;
 use helm_schema_ast::{TemplateExpr, parse_action_expressions};
 use helm_schema_core::{Guard, GuardValue, Predicate};
 use test_util::prelude::sim_assert_eq;
@@ -147,4 +148,80 @@ fn partial_helper_truth_marks_later_short_circuit_member_access_incomplete() {
             Predicate::truthy_path("host.member"),
         ]),
     );
+}
+
+struct CountingResolver {
+    calls: usize,
+    result: EvalResult,
+}
+
+impl HelperCallValueResolver for CountingResolver {
+    fn resolve_helper_call(
+        &mut self,
+        _name: &str,
+        _argument: Option<&TemplateExpr>,
+    ) -> Option<EvalResult> {
+        self.calls += 1;
+        Some(self.result.clone())
+    }
+}
+
+/// Fold misses preserve the ordinary semver transfer and evaluate the version once.
+#[test]
+fn semver_selector_misses_evaluate_the_version_once() -> eyre::Result<()> {
+    struct Case {
+        version: Option<GuardValue>,
+        field: &'static str,
+    }
+
+    for Case { version, field } in [
+        Case {
+            version: Some(GuardValue::string("not-a-version")),
+            field: "Major",
+        },
+        Case {
+            version: Some(GuardValue::string("1.2.3")),
+            field: "Unknown",
+        },
+        Case {
+            version: Some(GuardValue::string("18446744073709551615.0.0")),
+            field: "Major",
+        },
+        Case {
+            version: None,
+            field: "Major",
+        },
+        Case {
+            version: Some(GuardValue::Bool(false)),
+            field: "Major",
+        },
+    ] {
+        let result = version.as_ref().map_or_else(
+            || EvalResult::from_value(values_path!("version")),
+            |value| {
+                EvalResult::none()
+                    .with_scalar_dispatch(ScalarValueDispatch::constant(value.clone()))
+            },
+        );
+        let expression = single_expr(&format!("(semver (include \"version\" .)).{field}"));
+        let mut resolver = CountingResolver {
+            calls: 0,
+            result: result.clone(),
+        };
+        let actual = eval_expr_with_helper_calls(&expression, &EvalEnv::default(), &mut resolver);
+        let TemplateExpr::Selector { operand, path } = expression else {
+            eyre::bail!("expected semver selector");
+        };
+        // A one-stage pipeline preserves the call while bypassing the selector fold.
+        let control_expression = TemplateExpr::Selector {
+            operand: Box::new(TemplateExpr::Pipeline(vec![*operand])),
+            path,
+        };
+        let mut control = CountingResolver { calls: 0, result };
+        let expected =
+            eval_expr_with_helper_calls(&control_expression, &EvalEnv::default(), &mut control);
+        sim_assert_eq!(have: actual, want: expected);
+        sim_assert_eq!(have: resolver.calls, want: 1, "version={version:?} field={field}");
+    }
+    Ok(())
 }

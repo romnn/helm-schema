@@ -284,9 +284,6 @@ pub(crate) fn eval_expr_with_helper_calls(
             }
         }
         TemplateExpr::Selector { operand, path } => {
-            if let Some(result) = static_semver_numeric_selector(operand, path, env, resolver) {
-                return result;
-            }
             if let TemplateExpr::Variable(var) = operand.as_ref()
                 && let Some(binding) = env.locals.get(var)
             {
@@ -300,7 +297,31 @@ pub(crate) fn eval_expr_with_helper_calls(
                 let result = local_selector_result(var, &binding, path, env);
                 return with_bound_selector_paths(result, expr, env);
             }
-            let base = eval_expr_with_helper_calls(operand, env, resolver);
+            let base = if let TemplateExpr::Call { function, args } = operand.deparen()
+                && function == "semver"
+                && let [version] = args.as_slice()
+            {
+                let version = eval_expr_with_helper_calls(version, env, resolver);
+                if let Some(component) = semver_numeric_component(&version, path) {
+                    let mut result = EvalResult::with_effects(None, version.effects)
+                        .with_scalar_dispatch_with_memo(
+                            ScalarValueDispatch::constant(helm_schema_core::GuardValue::Int(
+                                component,
+                            )),
+                            env.predicate_memo.as_ref(),
+                        );
+                    result.refine_go_type(GoType::Uint64);
+                    return result;
+                }
+                let mut effects = Effects::default();
+                effects.merge(version.effects);
+                EvalResult::with_effects(
+                    AbstractValue::widened(effects.output_paths.clone()),
+                    effects,
+                )
+            } else {
+                eval_expr_with_helper_calls(operand, env, resolver)
+            };
             let grouped_receiver = matches!(operand.as_ref(), TemplateExpr::Parenthesized(_))
                 .then(|| {
                     base.value
@@ -359,25 +380,10 @@ pub(crate) fn eval_expr_with_helper_calls(
     }
 }
 
-fn static_semver_numeric_selector(
-    operand: &TemplateExpr,
-    path: &[String],
-    env: &EvalEnv,
-    resolver: &mut impl HelperCallValueResolver,
-) -> Option<EvalResult> {
+fn semver_numeric_component(version: &EvalResult, path: &[String]) -> Option<i64> {
     let [field] = path else {
         return None;
     };
-    let TemplateExpr::Call { function, args } = operand.deparen() else {
-        return None;
-    };
-    let [version] = args.as_slice() else {
-        return None;
-    };
-    if function != "semver" {
-        return None;
-    }
-    let version = eval_expr_with_helper_calls(version, env, resolver);
     let helm_schema_core::GuardValue::String(text) = version.scalar_dispatch()?.constant_value()?
     else {
         return None;
@@ -389,14 +395,7 @@ fn static_semver_numeric_selector(
         "Patch" => parsed.patch,
         _ => return None,
     };
-    let component = i64::try_from(component).ok()?;
-    let mut result = EvalResult::with_effects(None, version.effects)
-        .with_scalar_dispatch_with_memo(
-            ScalarValueDispatch::constant(helm_schema_core::GuardValue::Int(component)),
-            env.predicate_memo.as_ref(),
-        );
-    result.refine_go_type(GoType::Uint64);
-    Some(result)
+    i64::try_from(component).ok()
 }
 
 /// Evaluate `.Values`-rooted selector segments (the part after `Values`),

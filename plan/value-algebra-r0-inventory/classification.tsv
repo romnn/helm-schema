@@ -402,7 +402,7 @@ fn:expr_call_eval/mod.rs:merge_arg_effects	V	transfer: first evaluation of its o
 fn:expr_call_eval/mod.rs:merge_arg_values	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
 fn:expr_call_eval/mod.rs:split_length_dispatch	E	AST-only argument fact	V fact	R3b		rework2	
 fn:expr_call_eval/root_mutation.rs:eval_set_call	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
-fn:expr_call_eval/root_mutation.rs:root_values_default_source	E	merge operands evaluated again (:316, :320)	one evaluation	R3a		rework2	
+fn:expr_call_eval/root_mutation.rs:root_values_default_source	E	merge operands evaluated again (:316, :320)	one evaluation	R3b		R3a resolver/order boundary: assigned RHS uses the caller resolver; source queries use NoHelperCallResolver on original operands in precedence order; merge_all can flatten that operand structure, so reuse requires R3b invocation operands	
 fn:expr_call_eval/serialization.rs:eval_cat	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
 fn:expr_call_eval/serialization.rs:eval_from_json	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
 fn:expr_call_eval/serialization.rs:eval_from_yaml	V	transfer: first evaluation of its operands	receives owned operands (R3b migration)	keep		rework3	
@@ -441,14 +441,14 @@ fn:helper_literal_dispatch.rs:helper_literal_dispatch	E	syntactic helper-output 
 fn:resource_identity.rs:static_literal_outputs	E	apiVersion helper-output evaluator	O buffer of executed helper	R3b		rework3	
 fn:resource_identity.rs:with_helper_body	E	apiVersion helper-output evaluator	O buffer of executed helper	R3b		rework3	
 fn:static_file_template.rs:collect_template_requests_from_helper	E	syntactic helper walk	evaluator	R3b		rework2	
-fn:value_path_context/condition_predicate.rs:constant_scalar	E	condition re-evaluation	consume hole EvalResult where env/resolver identical, else R3b	R3a		rework3	
-fn:value_path_context/condition_predicate.rs:decoded_field_condition_predicate	E	condition re-evaluation	consume hole EvalResult where env/resolver identical, else R3b	R3a		rework3	
-fn:value_path_context/condition_predicate.rs:decoded_variable_condition_predicate	E	condition re-evaluation	consume hole EvalResult where env/resolver identical, else R3b	R3a		rework3	
-fn:value_path_context/condition_predicate.rs:exact_evaluated_truth_predicate	E	condition re-evaluation	consume hole EvalResult where env/resolver identical, else R3b	R3a		rework3	
-fn:value_path_context/condition_predicate.rs:len_comparison_sound_subset	E	condition re-evaluation	consume hole EvalResult where env/resolver identical, else R3b	R3a		rework3	
-fn:value_path_context/condition_predicate.rs:negated_merged_layers_sound_subset	E	condition re-evaluation	consume hole EvalResult where env/resolver identical, else R3b	R3a		rework3	
-fn:value_path_context/condition_predicate.rs:selected_value_predicate	E	condition re-evaluation	consume hole EvalResult where env/resolver identical, else R3b	R3a		rework3	
-fn:value_path_context/condition_predicate.rs:truthy_predicate	E	condition re-evaluation	consume hole EvalResult where env/resolver identical, else R3b	R3a		rework3	
+fn:value_path_context/condition_predicate.rs:constant_scalar	E	condition re-evaluation	consume hole EvalResult where env/resolver identical, else R3b	R3b		R3a context audit: operand result is not retained in enclosing hole result; context evaluator has no bound-helper resolver; defer to R3b	
+fn:value_path_context/condition_predicate.rs:decoded_field_condition_predicate	E	condition re-evaluation	consume hole EvalResult where env/resolver identical, else R3b	R3b		R3a context audit: context dot may prefer a fragment value; hole uses current_value_dot; context env omits active predicates and member-host conversions; defer to R3b	
+fn:value_path_context/condition_predicate.rs:decoded_variable_condition_predicate	E	condition re-evaluation	consume hole EvalResult where env/resolver identical, else R3b	R3b		R3a context audit: context env and bound-helper hole env differ; consumes condition-local binding policy before fallback; defer to R3b	
+fn:value_path_context/condition_predicate.rs:exact_evaluated_truth_predicate	E	condition re-evaluation	consume hole EvalResult where env/resolver identical, else R3b	R3b		R3a context audit: NoHelperCallResolver; context env omits active predicates and member-host conversions; hole uses bound helpers and current value dot; defer to R3b	
+fn:value_path_context/condition_predicate.rs:len_comparison_sound_subset	E	condition re-evaluation	consume hole EvalResult where env/resolver identical, else R3b	R3b		R3a context audit: operand result is not retained in enclosing comparison result; context evaluator has no bound-helper resolver; defer to R3b	
+fn:value_path_context/condition_predicate.rs:negated_merged_layers_sound_subset	E	condition re-evaluation	consume hole EvalResult where env/resolver identical, else R3b	R3b		R3a context audit: operand result is not retained in enclosing hole result; context evaluator has no bound-helper resolver; defer to R3b	
+fn:value_path_context/condition_predicate.rs:selected_value_predicate	E	condition re-evaluation	consume hole EvalResult where env/resolver identical, else R3b	R3b		R3a context audit: context uses NoHelperCallResolver and with_body_fragment_value_expr fallback; hole resolves bound helpers; defer to R3b	
+fn:value_path_context/condition_predicate.rs:truthy_predicate	E	condition re-evaluation	consume hole EvalResult where env/resolver identical, else R3b	R3b		R3a context audit: context eval env and dot can differ from hole; operand results are not retained in enclosing result; defer to R3b	
 fn:value_path_context/condition_predicate.rs:type_descriptor_subject_sources	E	condition re-evaluation	consume hole EvalResult where env/resolver identical, else R3b	R3a		rework3	
 fn:value_path_context/condition_predicate.rs:type_is_predicate	E	condition re-evaluation	consume hole EvalResult where env/resolver identical, else R3b	R3a		rework3	
 fn:value_path_context/path_resolution.rs:resolved_values_paths_from_expr	E	paths re-derived by evaluation	V provenance	R3b		rework3	
