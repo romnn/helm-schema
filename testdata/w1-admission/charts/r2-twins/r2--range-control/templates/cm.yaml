@@ -1,0 +1,1 @@
+{{ $_ := set (dict) "unrelated" true }}v: {{ range $x := list true (dict) }}{{ if kindIs "bool" $x }}{{ $_ := ternary "a" "b" $x }}{{ end }}{{ end }}ok
