@@ -2368,6 +2368,89 @@ fn schema_only_keeps_a_forced_audit_rejected_at_a_changed_limit_as_a_flip() -> e
     )
 }
 
+/// A child schema whose `first` property is `first`, under a root that is an
+/// object and holds `definitions`.
+fn first_with_definitions(first: &Value, definitions: &Value) -> Value {
+    json!({
+        "type": "object",
+        "$defs": definitions,
+        "properties": {"child": {"properties": {"first": first}}}
+    })
+}
+
+/// A type reached through an anchor changes; its keyword location is no root
+/// pointer, so it never reads the root's own `type`.
+#[test]
+fn schema_only_keeps_a_forced_audit_rejected_through_an_anchor_as_a_flip() -> eyre::Result<()> {
+    let anchored = |kind: &str| {
+        first_with_definitions(
+            &json!({"$ref": "#first"}),
+            &json!({"a": {"$anchor": "first", "type": kind}}),
+        )
+    };
+    assert_forced_audit_flips(
+        &anchored("string"),
+        &anchored("boolean"),
+        "before=false, after=false",
+    )
+}
+
+/// A dynamic reference is never inlined, so its changed target stays a flip.
+#[test]
+fn schema_only_keeps_a_forced_audit_rejected_through_a_dynamic_ref_as_a_flip() -> eyre::Result<()> {
+    let dynamic = |kind: &str| {
+        first_with_definitions(
+            &json!({"anyOf": [{"$dynamicRef": "#/$defs/a"}, {"type": "boolean"}]}),
+            &json!({"a": {"type": kind}}),
+        )
+    };
+    assert_forced_audit_flips(
+        &dynamic("string"),
+        &dynamic("array"),
+        "before=false, after=false",
+    )
+}
+
+/// A `const` payload is a literal: a `$ref`-shaped value inside it is data,
+/// so two different payloads stay different.
+/// Helm-ready shortening renames the definitions under the lint lane, so the
+/// profiles judge the payload directly too.
+#[test]
+fn a_const_payload_is_never_inlined_as_a_reference() -> eyre::Result<()> {
+    let constant = |name: &str| {
+        first_with_definitions(
+            &json!({"const": {"$ref": format!("#/$defs/{name}")}}),
+            &json!({"left": {"type": "string"}, "right": {"type": "string"}}),
+        )
+    };
+    let document = json!({"child": {"first": 1}});
+    for (candidate, alike) in [("left", true), ("right", false)] {
+        let profiles = super::harness::ProfileSchemas::compile(
+            &constant("left"),
+            &constant(candidate),
+            json!({}),
+        )?;
+        sim_assert_eq!(have: profiles.rejects_for_the_same_assertions(&document), want: alike);
+    }
+    Ok(())
+}
+
+#[test]
+fn schema_only_keeps_a_forced_audit_rejected_by_a_changed_const_payload_as_a_flip()
+-> eyre::Result<()> {
+    let constant = |name: &str| {
+        first_with_definitions(
+            &json!({"const": {"$ref": format!("#/$defs/{name}")}}),
+            &json!({"left": {"type": "string"}, "right": {"type": "string"}}),
+        )
+    };
+    assert_forced_audit_flips(
+        &constant("left"),
+        &constant("right"),
+        "before=false, after=false",
+    )
+}
+
 #[test]
 fn partial_override_restriction_is_matched_only_when_schema_free_lint_rejects() -> eyre::Result<()>
 {
