@@ -9307,4 +9307,16 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   P2 (non-exhaustive projections) fixed → 77,053 (main 77,061); 205 fixtures byte-identical, 1,502 W1 cells identical, 58 schema-only
   audit rows identical to main; 60 declarations deleted, 56 F/S rows → 25 slot fields; sol LAND. Landing 11 (= R1a) chain STARTED
   on main 4b19f2b6 (runner env landing-11.env, E=round8-landing11-run1). Orchestrator.
-Next: watch landing 11; start R1b (per-fact moves onto the leaf) once R1a merges; collect w1/stage1-min, sol review, landing 10e; then R0 of `plan/value-algebra-interpreter.md`.
+- 14:0x (Oct 24) — **LANDED: landing 11 = value-algebra L1 (R1a) merged into main as 67ce9e9a (chain green run 1, clause 2b).**
+  LocalSlot/RootSlot transposition; 60 declarations deleted; 0 fixtures adopted; production LOC 77,061 → 77,053. Steps: dump 11:45,
+  unit 11:50, lint 11:58, battery 12:01, integration 13:09, sweep 13:20, finalize 13:59. Receipt
+  /Volumes/T7/dev/round8-landing11-run1/receipt.json sha256 7e7d0364…. `task test:all` on main started (network gates the Codex sandbox
+  could not run). R1b (Codex run 20261024T094803-6eb22423, clone round8-r1b, commit 43eacf58): only `default_paths` moved onto the
+  leaf, 12 fields re-tagged R3b with per-fact contracts (output_meta post-binding mutations; scalar_dispatch guarded join, complete
+  flag, 128-arm cap; typeof/int_cast provenance across exits; truthy_reduction control-exit accumulator; range_domain, get_binding,
+  range_member_value, definite_range_member_value need iterable/member identity); −10 LOC; sol review REWORK: P1 source-derived
+  counterexample (range activation without a slot default fact: old join drops default_paths, new leaf fold keeps them), P2 stage
+  moved earlier (R3b → R1b) against monotonicity. Builder verifying with a regression test; fallback = revert the move (R1b then lands
+  nothing; all 13 fields residual to R3b). User asked why R1b moved so little: these fields are execution-history and identity facts
+  the current model has no other home for — evidence for R3b's heap, not a failed refactor. Orchestrator.
+Next: R1b outcome (land as landing 12 or record as no-landing); `task test:all` result on main; then R2 per plan/value-algebra-r0.md §5.3, sol review, landing 10e; then R0 of `plan/value-algebra-interpreter.md`.
