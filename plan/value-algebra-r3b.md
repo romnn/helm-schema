@@ -9,6 +9,7 @@ preceded by one independently landable differential-tool commit; one final seman
 
 Both reviews are accepted in full; no finding is refuted. A = architecture review
 `20261024T165622-b3c569a6`; S = semantics review `20261024T165630-5cac3e07`.
+Turn-2 re-review: semantics ACCEPT; architecture ACCEPT WITH CHANGES, both items accepted below.
 The probe receipt is in §9; analysis-only tests are explicitly future builder obligations.
 
 | Finding | Disposition and resolution |
@@ -18,7 +19,7 @@ The probe receipt is in §9; analysis-only tests are explicitly future builder o
 | A P1-3: battery reads committed fixtures | §6 standalone spec §1 extracts test-support comparison core with verified dump pairs and separate construction/landing policies |
 | A P1-4: cap displacement hides regressions | Standalone spec §4 persists every discovered witness and chains versioned receipts; union replay/backfill is outside discovery caps |
 | A P2-5: unlisted semantic producers | §5.1 and deletion map add fail-syntax producer/four consumer edges and five resource selector/guard producers/two consumer edges |
-| A P2-6: recognizer result ownership | §7 four typed SourceSummaryPlan variants, sole completion seam; pair-merge recognizer deleted, not retained as proposed |
+| A P2-6: recognizer result ownership | §7 two executable SourceSummaryPlan variants, embedded typed-YAML proof and executed-invocation wrapper metadata; pair-merge deleted |
 | A P2-7: allocation collapse mutates history | §2.2 preserves old exact IDs/versions; only future allocations use summaries; cap widening is current-version-only |
 | A performance note | §2.1/§8 charge page-index copying, fields copied and snapshot-pinned bytes explicitly |
 | S P1-1: scalar-slot consumption | §3.1/§3.3 materialize ordinary-call scalars at consumption; retain builtin index/and/or slots; sem-call-copy/live-slot |
@@ -28,6 +29,8 @@ The probe receipt is in §9; analysis-only tests are explicitly future builder o
 | S P2-2: empty definitions | §4.1/§4.2 syntax-empty replacement rule, runtime-empty distinction; sem-namespace |
 | S P2-3: library parse filtering | §4.1 excludes ordinary library files before parsing; all three sem-library probes run |
 | S admission-family table | §9 maps every requested family to concrete Helm evidence and additional interpreter/admission tests; suffix-write widening fixed in §4.3 |
+| A turn 2 P1: executable non-schema controls | Tool spec §2.1 defines versioned queries/evaluators, private same-revision libtest runner, exact/unknown/unsupported/infrastructure results and historical replay; §5 tests output-only regression |
+| A turn 2 P2: supporting recognizer roles | §7 embeds TypedYamlMatchProof only in ParsedMapListMergePlan; ProgramWrapperMetadata attaches only to executed invocation records; C02 exposes just two executable summaries |
 
 ## 1. Contract and inputs
 
@@ -592,7 +595,7 @@ I = byte/verdict identical; H = Helm-adjudicated closure/change; R = exact track
 | C04 `fix(ir): execute the shared Helm render graph` | Whole-tree init, dependency/global alias graph, file frames/schedule, library pre-parse filter, namespace empty-definition rules and NOTES effects | static_root_fields initialization representation | R↓/H: dependency-null, Airflow, sem-file-boundary/library/namespace; existing d29–d44/d61 controls |
 | C05 `fix(ir): preserve loop outcomes through widening` | Precise range entry snapshots, integer range, bounded summaries; remaining-body may-write footprints; snapshot-safe allocation collapse | None; old control/header/range carriers removed atomically in C02 | R↓/H: header10, guarded-writes, reviewer42, supplement3, sem-range-integer/loop-bounds/summary-loop |
 | C06 `fix(ir): project executed output and provenance` | Complete text/YAML placement, current-origin/member/default transforms and resource selectors from frozen executed records | Source-derived resource selector/guard/capability producers and two consumer edges | R↓/H: frozen614, comparisons, output snapshots, coalesce emitters; six local_default_join controls; sem-output-boundary |
-| C07 `refactor(ir): seal bounded source summary plans` | Complete certificates/transfers for four typed plans already wired through completion; preserve recursive helper behavior via execution/approved plans | None; pair-merge recognizer/consumer removed in C02; no deletion credit for four E/two K relocations | R↓/H: Airflow/Bitnami/NATS; renamed positives, near misses and over-cap negatives |
+| C07 `refactor(ir): seal bounded source summary plans` | Complete certificates/transfers for two executable plans; audit embedded renderer proof and invocation metadata already separated in C02; preserve recursive helper behavior via execution/approved plans | None; pair-merge recognizer/consumer removed in C02; no deletion credit for four E/two K relocations | R↓/H: Airflow/Bitnami/NATS; renamed positives, near misses and over-cap negatives |
 | C08 `perf(ir): memoize certified helper executions` | Determinism facet, full path/seen/snapshot/namespace keys, bounded no-escape read-only complete memo | None; old cache removed in C02 | I vs C07, R unchanged; cold/hit/disabled full artifacts, sem-cache controls |
 | C09 `refactor(ir): remove legacy value adapters` | Finish lowering consumers to opaque executed views and seal Rule 1 everywhere | All 19 AbstractValue variants, SelectionChainIdentities, ScalarValueDispatch arms; every temporary adapter | I vs C08; all lanes; AST ownership/inventory/privacy audit |
 | C10 `fix(ir): close value algebra admission obligations` | Resolve remaining tracked losses, adjudicate every semantic change, freeze bounds and final evidence | Any reconciled R3a carries/temporary rows must already have a named earlier owner; none may remain | R=∅, strict H>0; all agreed R3b lanes; complete ordinary landing gates |
@@ -605,7 +608,9 @@ Flow exits propagate; bindings live in frames. Unsupported transfers widen with 
 coverage. Basic control may widen a loop using its whole-body footprint until C05 adds precision.
 It must not call the old helper interpreter, replay a transported write or defer emission while
 waiting for C03–C07. Later commits improve precision; they do not supply missing owners. The completion seam and
-four typed-plan interfaces are wired in C02; a not-yet-certified plan declines to normal execution.
+two executable-plan interfaces, embedded typed-YAML proof and executed-invocation wrapper metadata
+are separated in C02; a not-yet-certified executable plan declines to normal execution.
+Neither supporting recognizer has a dispatchable plan variant, even temporarily in C02.
 No legacy recognizer may produce runtime values while awaiting C07. At this point static_root_fields
 is initialization-only; all live roots/dot are State-owned even before C04 joins render sessions.
 
@@ -670,6 +675,11 @@ roster/baseline policy. Both modes share discovery, composition, screening and a
 The context roster, exact input bytes, modes, Helm/build/provider identities and coverage are
 explicit immutable inputs. CLI schema, producer artifacts and companion ContractDocument
 exports are captured from each revision; schema/IR/output changes all need linked evidence.
+The same-revision test-only control runner is captured too (tool spec §2.1): versioned output,
+termination and observable-alias queries read actual interpreter results, with exact, abstract-
+unknown, unsupported and infrastructure outcomes. Helm grounding-only probes earn no candidate
+coverage. Runner binaries, descriptors, inputs and results are retained for historical replay;
+an output-only change must be detected even when schema bytes are identical.
 
 Every discovered witness enters a persistent union, independently replayed outside fresh-probe
 caps. Versioned receipts bind their predecessor, baseline, suite, tool, universe and checkpoint;
@@ -689,18 +699,24 @@ sole evaluator, conservatively widening recursion. If the Airflow/pair-merge con
 landing blocks: do not silently reinstate the recognizer or drop the controls. A future exact
 pair plan would need a separate reviewed transfer carrying its full overwrite-key policy.
 
-| Retained E recognizer | Obligation | Typed plan |
+| Retained E recognizer | Obligation | Approved role |
 |---|---|---|
-| program_wrapper_sentinels | r3b-shape-program-wrapper | ProgramWrapperPlan with recognized wrapper/program relation |
+| program_wrapper_sentinels | r3b-shape-program-wrapper | ProgramWrapperMetadata on an executed invocation record; never executable |
 | classify_nil_scrub_helper | r3b-shape-nil-scrub | NilScrubPlan with recursive field-preservation/removal rule |
 | classify_parsed_map_list_merge_helper | r3b-shape-parsed-map-list | ParsedMapListMergePlan with ordered render/decode/merge composition |
-| classify_typed_yaml_renderer | r3b-shape-typed-yaml-renderer | TypedYamlPlan with structural source/render relation |
+| classify_typed_yaml_renderer | r3b-shape-typed-yaml-renderer | Private TypedYamlMatchProof embedded in ParsedMapListMergePlan; never independently executable |
 
 ```rust
 enum SourceSummaryPlan {
-    ProgramWrapper(ProgramWrapperPlan), NilScrub(NilScrubPlan),
-    ParsedMapListMerge(ParsedMapListMergePlan), TypedYaml(TypedYamlPlan),
+    NilScrub(NilScrubPlan), ParsedMapListMerge(ParsedMapListMergePlan),
 }
+struct ParsedMapListMergePlan {
+    operands: ParsedMapListOperands, renderer: TypedYamlMatchProof, transfer: ParsedMapListTransfer,
+}
+struct TypedYamlMatchProof { renderer: ProgramId, namespace: NamespaceId, shape: ShapeProof }
+struct ProgramWrapperMetadata { family: Vec<ProgramId>, sentinels: Vec<WrapperSentinelSite> }
+struct WrapperSentinelSite { key: String, lookup: SiteId, tpl: SiteId, guard: SiteId }
+struct ExecutedInvocationRecord { invocation: InvocationId, wrapper: Option<ProgramWrapperMetadata> }
 struct CertifiedSourcePlan { program: ProgramId, namespace: NamespaceId, proof: ShapeProof, plan: SourceSummaryPlan }
 enum CompletionInput {
     Executed(Execution),
@@ -709,9 +725,17 @@ enum CompletionInput {
 fn complete(input: CompletionInput) -> CallOutcome;
 ```
 
-Each private plan contains typed operand roles, transfer policy and completeness/applicability
+Only nil-scrub and parsed-map-list can enter CompletionInput::Summarized. There is no conversion
+from TypedYamlMatchProof or ProgramWrapperMetadata to SourceSummaryPlan. The renderer proof is
+constructed/consumed privately by the parsed-map-list matcher; it proves composition applicability,
+not a separate renderer transfer. Renderer/tpl execution and effects still use the sole executor.
+Wrapper metadata attaches only after its invocation executes, identifies source-family sites,
+and is for discovery/diagnostics; it cannot supply constraints, value/origin facts, truth, output
+or termination, nor replace an invocation. These distinctions apply in C02, before certification.
+Each executable plan contains typed operand roles, transfer policy and completeness/applicability
 proof, never an already-constructed Value, Predicate or raw source string to execute later.
-`shape_summary` can construct plans only. `value/invoke::complete` is the **sole result-construction
+`shape_summary` constructs only these plans, supporting proofs and metadata, never runtime values.
+`value/invoke::complete` is the **sole result-construction
 seam** for ordinary transfers, executed helper bodies and certified summaries; it applies a plan
 to evaluated operands and current State, using the same private operations/queries and freezing
 rules. Completion publishes one CallOutcome; it never returns a value alongside a parallel abort
@@ -729,7 +753,9 @@ recognizer strengthening. Move all four together under `value/shape_summary.rs`.
 
 T0/C07 tests include full-schema Airflow/Bitnami/NATS controls, renamed minimal positives, one-action
 near misses, over-cap inputs, actual side effects and plan-vs-executed completion equivalence on
-bounded cases. Inventory records retained E/K, never deletion credit for relocation. If execution
+bounded cases. Tests must reject standalone typed-YAML/wrapper dispatch and show that wrapper
+metadata cannot alter an executed result; renderer/tpl writes remain visible in composed summaries.
+Inventory records all four retained E roles and two K, never deletion credit for relocation. If execution
 fully replaces a recognizer, delete it and its unused cache; expanding the approved set requires
 review. An unproved transfer must decline, and any resulting required-control loss blocks landing.
 
