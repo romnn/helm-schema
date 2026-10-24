@@ -578,7 +578,7 @@ impl Interpreter<'_> {
             };
             let output_effects = self.value_path_context().expression_output_effects(rhs);
             let hole = self.eval_hole_exprs(rhs);
-            let scalar_dispatch = hole.scalar_dispatch.clone();
+            let scalar_dispatch = hole.scalar_dispatch().cloned();
             // The binding is the hole value without widened members (an
             // unknown call result is influence, not a values-backed
             // fragment).

@@ -11,12 +11,12 @@ use helm_schema_syntax::{BlockScalar, ScalarPart, ScalarParts, Span};
 
 use crate::ValueKind;
 use crate::abstract_value::AbstractValue;
-use crate::eval_effect::{Effects, ProvenOperands, SelectionReachability};
+use crate::eval_effect::Effects;
 use crate::expr_eval::literal_helper_call_callee;
 use crate::fragment_assignment::parse_helper_assignment_from_exprs;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_meta::merge_rendered_row_meta;
-use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
+use crate::scalar_value::TruthCondition;
 use helm_schema_core::{Predicate, ValuesPath};
 
 use super::domain::{
@@ -30,16 +30,6 @@ use super::lower::{
     lower_scalar_dispatch_arms, lower_value, lower_value_scalar_arms, over_cap_scalar_taint,
 };
 use super::summary::splice_summary;
-
-pub(super) struct HoleEval {
-    pub(super) value: Option<AbstractValue>,
-    pub(super) effects: Effects,
-    pub(super) truth: TruthCondition,
-    pub(super) truth_reachability: SelectionReachability,
-    pub(super) json_payload_truth: TruthCondition,
-    pub(super) scalar_dispatch: Option<ScalarValueDispatch>,
-    pub(super) proven_operands: Option<ProvenOperands>,
-}
 
 /// Whether an expression invokes `fail` anywhere: evaluating it terminates
 /// template rendering unconditionally.
@@ -329,7 +319,7 @@ impl Interpreter<'_> {
             self.restore_site(previous_site);
             return (out, width);
         }
-        let hole = self.eval_hole_exprs(&exprs);
+        let mut hole = self.eval_hole_exprs(&exprs);
         if self.helper_scope && hole.json_payload_truth != TruthCondition::Unknown {
             self.json_payload_truth_outputs.push((
                 Predicate::all(self.active_predicates.clone()),
@@ -338,7 +328,7 @@ impl Interpreter<'_> {
         }
         self.absorb_hole_effects(&hole.effects, RenderedDemotion::None);
         let (value, extra_paths) =
-            prepare_hole_value(hole.value, &hole.effects, kind == ValueKind::Scalar);
+            prepare_hole_value(hole.value.take(), &hole.effects, kind == ValueKind::Scalar);
         if document_root
             && kind == ValueKind::Fragment
             && let Some(path) = value
@@ -386,8 +376,7 @@ impl Interpreter<'_> {
         };
         let mut out =
             if kind == ValueKind::Scalar && (self.scalar_output_projection || self.helper_scope) {
-                hole.scalar_dispatch
-                    .as_ref()
+                hole.scalar_dispatch()
                     .and_then(|dispatch| lower_scalar_dispatch(dispatch, kind, &scope))
             } else {
                 None
@@ -688,12 +677,15 @@ impl Interpreter<'_> {
         } else {
             ValueKind::PartialScalar
         };
-        let hole = self.eval_hole_exprs(&exprs);
+        let mut hole = self.eval_hole_exprs(&exprs);
         self.absorb_hole_effects(&hole.effects, RenderedDemotion::None);
         self.run_templated_text_paths
             .extend(hole.effects.templated_text_identity_paths.iter().cloned());
-        let (value, extra_paths) =
-            prepare_hole_value(hole.value, &hole.effects, kind != ValueKind::Fragment);
+        let (value, extra_paths) = prepare_hole_value(
+            hole.value.take(),
+            &hole.effects,
+            kind != ValueKind::Fragment,
+        );
         let defaulted = hole.effects.default_paths_with_local();
         // Direct helper flows collapsed by transfer functions (printf over
         // include) keep their per-path branch meta: the summary's rendered
@@ -723,7 +715,7 @@ impl Interpreter<'_> {
             local_output_meta: &hole_meta,
         };
         let mut arms = (self.scalar_output_projection || self.helper_scope)
-            .then_some(hole.scalar_dispatch.as_ref())
+            .then_some(hole.scalar_dispatch())
             .flatten()
             .and_then(|dispatch| lower_scalar_dispatch_arms(dispatch, kind, &scope))
             .unwrap_or_else(|| match &value {

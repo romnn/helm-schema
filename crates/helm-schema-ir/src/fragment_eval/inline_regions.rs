@@ -729,7 +729,7 @@ impl Interpreter<'_> {
                     local_output_meta: &hole_meta,
                 };
                 self.scalar_output_projection
-                    .then_some(hole.scalar_dispatch.as_ref())
+                    .then_some(hole.scalar_dispatch())
                     .flatten()
                     .and_then(|dispatch| lower_scalar_dispatch_arms(dispatch, kind, &scope))
                     .unwrap_or_else(|| match &hole.value {

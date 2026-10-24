@@ -12,7 +12,7 @@ use helm_schema_ast::TemplateExpr;
 
 use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::BoundValueContext;
-use crate::eval_effect::Effects;
+use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
 use crate::fragment_expr_eval::{FragmentEvalContext, document_result_from_expr};
 use crate::observed_facts::{HintGrade, HintIntent, HintScope, ObservedFacts};
@@ -21,7 +21,6 @@ use crate::{Guard, ValueKind};
 use helm_schema_core::{Predicate, ValuesPath};
 
 use super::eval::Interpreter;
-use super::holes::HoleEval;
 
 fn encoded_paths(
     paths: &std::collections::BTreeSet<ValuesPath>,
@@ -215,7 +214,7 @@ pub(super) fn helper_claim_paths(effects: &Effects) -> std::collections::BTreeSe
 }
 
 fn header_value_facts(
-    hole: &HoleEval,
+    hole: &EvalResult,
     memo: &helm_schema_core::PredicateMemo,
 ) -> (
     std::collections::BTreeSet<String>,
@@ -224,7 +223,8 @@ fn header_value_facts(
     let truth_reachability =
         crate::eval_effect::SelectionTruthReachability::from_condition_with_memo(
             &hole.truth,
-            hole.truth_reachability.truth_source(),
+            hole.output_reachability_with_memo(crate::eval_effect::SelectionPolarity::Truthy, memo)
+                .truth_source(),
             memo,
         );
     let has_helper_claims = !hole.effects.helper_reads.is_empty()
@@ -281,7 +281,7 @@ impl Interpreter<'_> {
     /// Evaluate one condition expression through the shared value lattice
     /// with bound-helper resolution (guard-read derivation for conditions
     /// over helper calls).
-    pub(super) fn eval_hole_exprs_for_condition(&mut self, expr: &TemplateExpr) -> HoleEval {
+    pub(super) fn eval_hole_exprs_for_condition(&mut self, expr: &TemplateExpr) -> EvalResult {
         self.eval_hole_exprs(std::slice::from_ref(expr))
     }
 
@@ -391,23 +391,16 @@ impl Interpreter<'_> {
 
     /// Evaluate the expressions of one output hole through the shared value
     /// lattice, resolving bound helper calls via the memoized summaries.
-    pub(super) fn eval_hole_exprs(&mut self, exprs: &[TemplateExpr]) -> HoleEval {
+    pub(super) fn eval_hole_exprs(&mut self, exprs: &[TemplateExpr]) -> EvalResult {
         let current_dot = self.current_value_dot();
         let env = self.hole_eval_env(current_dot.as_ref());
         let context = FragmentEvalContext::new(self.db);
         let mut seen = self.helper_seen.clone();
         let mut values = Vec::new();
         let mut effects = Effects::default();
-        let mut truth = TruthCondition::Unknown;
-        let mut truth_reachability = crate::eval_effect::SelectionReachability::approximate(
-            None,
-            crate::eval_effect::SelectionTruthSource::RawInput,
-        );
-        let mut json_payload_truth = TruthCondition::Unknown;
-        let mut scalar_dispatch = None;
-        let mut proven_operands = None;
+        let mut hole = EvalResult::none();
         for expr in exprs {
-            let result = document_result_from_expr(
+            let mut result = document_result_from_expr(
                 expr,
                 &env,
                 Some(&crate::value::root_values(&self.root_slots)),
@@ -415,28 +408,15 @@ impl Interpreter<'_> {
                 context,
                 &mut seen,
             );
+            values.extend(result.value.take());
+            effects.merge(std::mem::take(&mut result.effects));
             if exprs.len() == 1 {
-                truth = result.truth.clone();
-                truth_reachability = result.output_reachability_with_memo(
-                    crate::eval_effect::SelectionPolarity::Truthy,
-                    env.predicate_memo.as_ref(),
-                );
-                json_payload_truth = result.json_payload_truth.clone();
-                scalar_dispatch = result.scalar_transport().cloned();
-                proven_operands = result.proven_operands.clone();
+                hole = result;
             }
-            values.extend(result.value);
-            effects.merge(result.effects);
         }
-        HoleEval {
-            value: AbstractValue::choice(values).map(|value| value.to_context_value()),
-            effects,
-            truth,
-            truth_reachability,
-            json_payload_truth,
-            scalar_dispatch,
-            proven_operands,
-        }
+        hole.value = AbstractValue::choice(values).map(|value| value.to_context_value());
+        hole.effects = effects;
+        hole
     }
 
     pub(super) fn hole_eval_env(&self, current_dot: Option<&AbstractValue>) -> EvalEnv {
@@ -661,7 +641,7 @@ impl Interpreter<'_> {
     /// Ancestor paths with a more specific path in the same hole are dropped
     /// (the most-specific-path rule for scalar sites), and paths already
     /// covered by rendered helper rows read through those rows instead.
-    pub(super) fn push_effects_reads(&mut self, hole: &HoleEval, kind: ValueKind) {
+    pub(super) fn push_effects_reads(&mut self, hole: &EvalResult, kind: ValueKind) {
         let row_sources: std::collections::BTreeSet<String> = hole
             .effects
             .helper_rendered
