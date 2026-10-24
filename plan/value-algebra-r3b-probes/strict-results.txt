@@ -1,0 +1,39 @@
+command: env -u GOROOT GOTOOLCHAIN=local GOPROXY=off GOSUMDB=off /Users/roman/.local/share/mise/installs/go/1.26.5/bin/go run -mod=mod .
+cwd: $SCRATCH (unique directory under target/probes)
+source_sha256: 74b2c8cf006a896b0ec0ddbdafc7c21ec54764963f073e6e0af87e731ee856e7
+upstream_go_mod_sha256: 73ec334d97d1e23b11463fc2f4981a1af42a46ff188be71bf9ac483838ead354
+Helm module: v4.2.3
+Go: go1.26.5
+mode: engine.Engine{Strict:true}
+
+### s01-strict-field
+values: {}
+template: {{ .Values.absent }}
+engine status: 1
+expected: error=true; contains "map has no entry for key \"absent\""
+check: PASS
+output:
+  probe/templates/cm.yaml:1:10
+  executing "probe/templates/cm.yaml" at <.Values.absent>:
+    map has no entry for key "absent"
+
+### s02-strict-index
+values: {}
+template: {{ index .Values "absent" | printf "%T" }}
+engine status: 0
+expected: error=false; contains "<nil>"
+check: PASS
+output:
+  <nil>
+
+### s03-strict-get
+values: {}
+template: {{ get .Values "absent" | printf "%q" }}
+engine status: 0
+expected: error=false; contains "\"\""
+check: PASS
+output:
+  ""
+
+TOTAL: 3; passed: 3; failed: 0
+command exit: 0
