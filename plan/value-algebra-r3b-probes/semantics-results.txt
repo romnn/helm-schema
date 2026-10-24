@@ -1,0 +1,1610 @@
+version.BuildInfo{Version:"v4.2.3", GitCommit:"43e8b7feece8beb0fcba47059ec9b522fd929a64", GitTreeState:"clean", GoVersion:"go1.26.5", KubeClientVersion:"v1.36"}
+helm_sha256: e8fe1a6caf4091026ad776eb2fe059a2d7a82fc69c22bd08cbcb3689d93e5c0d
+script_sha256: b13c4da49d37aac766eafa3b4b635c22c4c0010327d428766f427636828f5412
+command: bash plan/value-algebra-r3b-probes/semantics.sh
+scratch: $SCRATCH (unique directory under target/probes)
+
+### sem-call-copy-ternary
+values.yaml: '{}'
+template: v: {{ $s := splitList "," "b,a" }}{{ $x := ternary (index $s 0) "unused" true }}{{ $_ := sortAlpha $s }}{{ $x }}/{{ index $s 0 }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-call-copy-ternary --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: b/a']
+check: PASS
+output:
+  ---
+  # Source: sem-call-copy-ternary/templates/cm.yaml
+  v: b/a
+
+
+### sem-call-copy-default
+values.yaml: '{}'
+template: v: {{ $s := splitList "," "b,a" }}{{ $x := default "unused" (index $s 0) }}{{ $_ := sortAlpha $s }}{{ $x }}/{{ index $s 0 }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-call-copy-default --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: b/a']
+check: PASS
+output:
+  ---
+  # Source: sem-call-copy-default/templates/cm.yaml
+  v: b/a
+
+
+### sem-call-copy-coalesce
+values.yaml: '{}'
+template: v: {{ $s := splitList "," "b,a" }}{{ $x := coalesce (index $s 0) }}{{ $_ := sortAlpha $s }}{{ $x }}/{{ index $s 0 }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-call-copy-coalesce --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: b/a']
+check: PASS
+output:
+  ---
+  # Source: sem-call-copy-coalesce/templates/cm.yaml
+  v: b/a
+
+
+### sem-call-copy-required
+values.yaml: '{}'
+template: v: {{ $s := splitList "," "b,a" }}{{ $x := required "r" (index $s 0) }}{{ $_ := sortAlpha $s }}{{ $x }}/{{ index $s 0 }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-call-copy-required --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: b/a']
+check: PASS
+output:
+  ---
+  # Source: sem-call-copy-required/templates/cm.yaml
+  v: b/a
+
+
+### sem-call-copy-first
+values.yaml: '{}'
+template: v: {{ $s := splitList "," "b,a" }}{{ $x := first $s }}{{ $_ := sortAlpha $s }}{{ $x }}/{{ index $s 0 }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-call-copy-first --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: b/a']
+check: PASS
+output:
+  ---
+  # Source: sem-call-copy-first/templates/cm.yaml
+  v: b/a
+
+
+### sem-call-copy-last
+values.yaml: '{}'
+template: v: {{ $s := splitList "," "b,a" }}{{ $x := last $s }}{{ $_ := sortAlpha $s }}{{ $x }}/{{ index $s 0 }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-call-copy-last --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: a/a']
+check: PASS
+output:
+  ---
+  # Source: sem-call-copy-last/templates/cm.yaml
+  v: a/a
+
+
+### sem-call-copy-stores
+values.yaml: '{}'
+template: v: {{ $s := splitList "," "b,a" }}{{ $d := dict "x" (index $s 0) }}{{ $l := list (index $s 0) }}{{ $_ := set $d "y" (index $s 0) }}{{ $_ := sortAlpha $s }}{{ $d.x }}/{{ index $l 0 }}/{{ $d.y }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-call-copy-stores --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: b/b/b']
+check: PASS
+output:
+  ---
+  # Source: sem-call-copy-stores/templates/cm.yaml
+  v: b/b/b
+
+
+### sem-call-copy-shallow-map
+values.yaml: '{}'
+template: v: {{ $m := dict "x" "old" }}{{ $d := dict "m" $m }}{{ $l := list $m }}{{ $r := default (dict) $m }}{{ $_ := set $m "x" "new" }}{{ $d.m.x }}/{{ (index $l 0).x }}/{{ $r.x }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-call-copy-shallow-map --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: new/new/new']
+check: PASS
+output:
+  ---
+  # Source: sem-call-copy-shallow-map/templates/cm.yaml
+  v: new/new/new
+
+
+### sem-live-slot-index
+values.yaml: '{}'
+template: v: {{ $s := splitList "," "b,a" }}{{ $x := index $s 0 }}{{ $text := printf "%s" $x }}{{ $_ := sortAlpha $s }}{{ $x }}/{{ $text }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-live-slot-index --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: a/b']
+check: PASS
+output:
+  ---
+  # Source: sem-live-slot-index/templates/cm.yaml
+  v: a/b
+
+
+### sem-live-slot-and
+values.yaml: '{}'
+template: v: {{ $s := splitList "," "b,a" }}{{ $x := and true (index $s 0) }}{{ $text := printf "%s" $x }}{{ $_ := sortAlpha $s }}{{ $x }}/{{ $text }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-live-slot-and --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: a/b']
+check: PASS
+output:
+  ---
+  # Source: sem-live-slot-and/templates/cm.yaml
+  v: a/b
+
+
+### sem-live-slot-or
+values.yaml: '{}'
+template: v: {{ $s := splitList "," "b,a" }}{{ $x := or "" (index $s 0) }}{{ $text := printf "%s" $x }}{{ $_ := sortAlpha $s }}{{ $x }}/{{ $text }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-live-slot-or --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: a/b']
+check: PASS
+output:
+  ---
+  # Source: sem-live-slot-or/templates/cm.yaml
+  v: a/b
+
+
+### sem-live-slot-consumption
+values.yaml: '{}'
+template: v: {{ $s := splitList "," "b,a" }}{{ $x := ternary (index $s 0) "unused" (eq (join "," (sortAlpha $s)) "a,b") }}{{ $x }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-live-slot-consumption --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: a']
+check: PASS
+output:
+  ---
+  # Source: sem-live-slot-consumption/templates/cm.yaml
+  v: a
+
+
+### sem-map-view-set
+values.yaml: 'x: old'
+template: v: {{ $r := set .Values "x" "new" }}{{ $_ := set $r "alias" "yes" }}{{ typeOf $r }}/{{ .Values.alias }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-map-view-set --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: map[string]interface {}/yes']
+check: PASS
+output:
+  ---
+  # Source: sem-map-view-set/templates/cm.yaml
+  v: map[string]interface {}/yes
+
+
+### sem-map-view-unset
+values.yaml: 'x: old'
+template: v: {{ $r := unset .Values "x" }}{{ $_ := set $r "alias" "yes" }}{{ typeOf $r }}/{{ .Values.alias }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-map-view-unset --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: map[string]interface {}/yes']
+check: PASS
+output:
+  ---
+  # Source: sem-map-view-unset/templates/cm.yaml
+  v: map[string]interface {}/yes
+
+
+### sem-map-view-merge
+values.yaml: 'x: old'
+template: v: {{ $r := merge .Values (dict "y" "new") }}{{ $_ := set $r "alias" "yes" }}{{ typeOf $r }}/{{ .Values.alias }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-map-view-merge --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: map[string]interface {}/yes']
+check: PASS
+output:
+  ---
+  # Source: sem-map-view-merge/templates/cm.yaml
+  v: map[string]interface {}/yes
+
+
+### sem-map-view-default
+values.yaml: 'x: old'
+template: v: {{ $r := default (dict) .Values }}{{ $_ := set $r "alias" "yes" }}{{ typeOf $r }}/{{ .Values.alias }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-map-view-default --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: common.Values/yes']
+check: PASS
+output:
+  ---
+  # Source: sem-map-view-default/templates/cm.yaml
+  v: common.Values/yes
+
+
+### sem-slice-empty
+values.yaml: '{}'
+template: v: {{ $v := slice (list) -1 99 }}{{ typeOf $v }}/{{ eq $v nil }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-slice-empty --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: <nil>/true']
+check: PASS
+output:
+  ---
+  # Source: sem-slice-empty/templates/cm.yaml
+  v: <nil>/true
+
+
+### sem-slice-nil
+values.yaml: '{}'
+template: v: {{ $v := slice (fromJsonArray "null") -1 99 }}{{ typeOf $v }}/{{ eq $v nil }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-slice-nil --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: <nil>/true']
+check: PASS
+output:
+  ---
+  # Source: sem-slice-nil/templates/cm.yaml
+  v: <nil>/true
+
+
+### sem-slice-empty-string-slice
+values.yaml: '{}'
+template: v: {{ $v := slice (slice (splitList "," "a,b") 0 0) 0 2 }}{{ typeOf $v }}/{{ eq $v nil }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-slice-empty-string-slice --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: <nil>/true']
+check: PASS
+output:
+  ---
+  # Source: sem-slice-empty-string-slice/templates/cm.yaml
+  v: <nil>/true
+
+
+### sem-slice-nil-interface
+values.yaml: '{}'
+template: v: {{ slice .Values.absent 0 }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-slice-nil-interface --show-only templates/cm.yaml
+exit: 1
+expected: exit 1; contains ['slice']
+check: PASS
+output:
+  Error: template: sem-slice-nil-interface/templates/cm.yaml:1:6: executing "sem-slice-nil-interface/templates/cm.yaml" at <slice .Values.absent 0>: error calling slice: runtime error: invalid memory address or nil pointer dereference
+
+  Use --debug flag to render out invalid YAML
+
+### sem-slice-extra-cap
+values.yaml: '{}'
+template: v: {{ $s := splitList "," "c,b,a" }}{{ $v := slice $s 0 1 1 }}{{ join "," (slice $v 0 3) }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-slice-extra-cap --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: c,b,a']
+check: PASS
+output:
+  ---
+  # Source: sem-slice-extra-cap/templates/cm.yaml
+  v: c,b,a
+
+
+### sem-slice-extra-type-ignored
+values.yaml: '{}'
+template: v: {{ join "," (slice (splitList "," "a,b") "0" "1" (dict)) }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-slice-extra-type-ignored --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: a']
+check: PASS
+output:
+  ---
+  # Source: sem-slice-extra-type-ignored/templates/cm.yaml
+  v: a
+
+
+### sem-slice-extra-side-effect
+values.yaml: '{}'
+template: v: {{ $d := dict }}{{ $_ := slice (list) -1 99 (set $d "x" "yes") }}{{ $d.x }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-slice-extra-side-effect --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: yes']
+check: PASS
+output:
+  ---
+  # Source: sem-slice-extra-side-effect/templates/cm.yaml
+  v: yes
+
+
+### sem-slice-extra-abort
+values.yaml: '{}'
+template: v: {{ slice (list) 0 0 (fail "extra evaluated") }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-slice-extra-abort --show-only templates/cm.yaml
+exit: 1
+expected: exit 1; contains ['extra evaluated']
+check: PASS
+output:
+  Error: execution error at (sem-slice-extra-abort/templates/cm.yaml:1:24): extra evaluated
+
+  Use --debug flag to render out invalid YAML
+
+### sem-slice-nonempty-invalid
+values.yaml: '{}'
+template: v: {{ slice (list 1) -1 99 }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-slice-nonempty-invalid --show-only templates/cm.yaml
+exit: 1
+expected: exit 1; contains ['slice']
+check: PASS
+output:
+  Error: template: sem-slice-nonempty-invalid/templates/cm.yaml:1:6: executing "sem-slice-nonempty-invalid/templates/cm.yaml" at <slice (list 1) -1 99>: error calling slice: reflect.Value.Slice: slice index out of bounds
+
+  Use --debug flag to render out invalid YAML
+
+### sem-slice-empty-skips-coercion
+values.yaml: '{}'
+template: v: {{ typeOf (slice (list) (dict) (dict)) }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-slice-empty-skips-coercion --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: <nil>']
+check: PASS
+output:
+  ---
+  # Source: sem-slice-empty-skips-coercion/templates/cm.yaml
+  v: <nil>
+
+
+### sem-merge-nil-merge-none
+values.yaml: '{}'
+template: v: {{ $d := fromJson "null" }}{{ $r := merge $d }}{{ eq $d nil }}/{{ eq $r nil }}/{{ len $r }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-nil-merge-none --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: true/true/0']
+check: PASS
+output:
+  ---
+  # Source: sem-merge-nil-merge-none/templates/cm.yaml
+  v: true/true/0
+
+
+### sem-merge-nil-merge-nil
+values.yaml: '{}'
+template: v: {{ $d := fromJson "null" }}{{ $r := merge $d (fromJson "null") }}{{ eq $d nil }}/{{ eq $r nil }}/{{ len $r }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-nil-merge-nil --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: true/true/0']
+check: PASS
+output:
+  ---
+  # Source: sem-merge-nil-merge-nil/templates/cm.yaml
+  v: true/true/0
+
+
+### sem-merge-nil-merge-empty
+values.yaml: '{}'
+template: v: {{ $d := fromJson "null" }}{{ $r := merge $d (dict) }}{{ eq $d nil }}/{{ eq $r nil }}/{{ len $r }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-nil-merge-empty --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: true/false/0']
+check: PASS
+output:
+  ---
+  # Source: sem-merge-nil-merge-empty/templates/cm.yaml
+  v: true/false/0
+
+
+### sem-merge-nil-merge-populated
+values.yaml: '{}'
+template: v: {{ $d := fromJson "null" }}{{ $r := merge $d (dict "x" 1) }}{{ eq $d nil }}/{{ eq $r nil }}/{{ len $r }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-nil-merge-populated --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: true/false/1']
+check: PASS
+output:
+  ---
+  # Source: sem-merge-nil-merge-populated/templates/cm.yaml
+  v: true/false/1
+
+
+### sem-merge-nil-mustmerge-none
+values.yaml: '{}'
+template: v: {{ $d := fromJson "null" }}{{ $r := mustMerge $d }}{{ eq $d nil }}/{{ eq $r nil }}/{{ len $r }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-nil-mustmerge-none --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: true/true/0']
+check: PASS
+output:
+  ---
+  # Source: sem-merge-nil-mustmerge-none/templates/cm.yaml
+  v: true/true/0
+
+
+### sem-merge-nil-mustmerge-nil
+values.yaml: '{}'
+template: v: {{ $d := fromJson "null" }}{{ $r := mustMerge $d (fromJson "null") }}{{ eq $d nil }}/{{ eq $r nil }}/{{ len $r }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-nil-mustmerge-nil --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: true/true/0']
+check: PASS
+output:
+  ---
+  # Source: sem-merge-nil-mustmerge-nil/templates/cm.yaml
+  v: true/true/0
+
+
+### sem-merge-nil-mustmerge-empty
+values.yaml: '{}'
+template: v: {{ $d := fromJson "null" }}{{ $r := mustMerge $d (dict) }}{{ eq $d nil }}/{{ eq $r nil }}/{{ len $r }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-nil-mustmerge-empty --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: true/false/0']
+check: PASS
+output:
+  ---
+  # Source: sem-merge-nil-mustmerge-empty/templates/cm.yaml
+  v: true/false/0
+
+
+### sem-merge-nil-mustmerge-populated
+values.yaml: '{}'
+template: v: {{ $d := fromJson "null" }}{{ $r := mustMerge $d (dict "x" 1) }}{{ eq $d nil }}/{{ eq $r nil }}/{{ len $r }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-nil-mustmerge-populated --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: true/false/1']
+check: PASS
+output:
+  ---
+  # Source: sem-merge-nil-mustmerge-populated/templates/cm.yaml
+  v: true/false/1
+
+
+### sem-merge-nil-mergeoverwrite-none
+values.yaml: '{}'
+template: v: {{ $d := fromJson "null" }}{{ $r := mergeOverwrite $d }}{{ eq $d nil }}/{{ eq $r nil }}/{{ len $r }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-nil-mergeoverwrite-none --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: true/true/0']
+check: PASS
+output:
+  ---
+  # Source: sem-merge-nil-mergeoverwrite-none/templates/cm.yaml
+  v: true/true/0
+
+
+### sem-merge-nil-mergeoverwrite-nil
+values.yaml: '{}'
+template: v: {{ $d := fromJson "null" }}{{ $r := mergeOverwrite $d (fromJson "null") }}{{ eq $d nil }}/{{ eq $r nil }}/{{ len $r }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-nil-mergeoverwrite-nil --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: true/true/0']
+check: PASS
+output:
+  ---
+  # Source: sem-merge-nil-mergeoverwrite-nil/templates/cm.yaml
+  v: true/true/0
+
+
+### sem-merge-nil-mergeoverwrite-empty
+values.yaml: '{}'
+template: v: {{ $d := fromJson "null" }}{{ $r := mergeOverwrite $d (dict) }}{{ eq $d nil }}/{{ eq $r nil }}/{{ len $r }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-nil-mergeoverwrite-empty --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: true/false/0']
+check: PASS
+output:
+  ---
+  # Source: sem-merge-nil-mergeoverwrite-empty/templates/cm.yaml
+  v: true/false/0
+
+
+### sem-merge-nil-mergeoverwrite-populated
+values.yaml: '{}'
+template: v: {{ $d := fromJson "null" }}{{ $r := mergeOverwrite $d (dict "x" 1) }}{{ eq $d nil }}/{{ eq $r nil }}/{{ len $r }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-nil-mergeoverwrite-populated --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: true/false/1']
+check: PASS
+output:
+  ---
+  # Source: sem-merge-nil-mergeoverwrite-populated/templates/cm.yaml
+  v: true/false/1
+
+
+### sem-merge-nil-mustmergeoverwrite-none
+values.yaml: '{}'
+template: v: {{ $d := fromJson "null" }}{{ $r := mustMergeOverwrite $d }}{{ eq $d nil }}/{{ eq $r nil }}/{{ len $r }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-nil-mustmergeoverwrite-none --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: true/true/0']
+check: PASS
+output:
+  ---
+  # Source: sem-merge-nil-mustmergeoverwrite-none/templates/cm.yaml
+  v: true/true/0
+
+
+### sem-merge-nil-mustmergeoverwrite-nil
+values.yaml: '{}'
+template: v: {{ $d := fromJson "null" }}{{ $r := mustMergeOverwrite $d (fromJson "null") }}{{ eq $d nil }}/{{ eq $r nil }}/{{ len $r }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-nil-mustmergeoverwrite-nil --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: true/true/0']
+check: PASS
+output:
+  ---
+  # Source: sem-merge-nil-mustmergeoverwrite-nil/templates/cm.yaml
+  v: true/true/0
+
+
+### sem-merge-nil-mustmergeoverwrite-empty
+values.yaml: '{}'
+template: v: {{ $d := fromJson "null" }}{{ $r := mustMergeOverwrite $d (dict) }}{{ eq $d nil }}/{{ eq $r nil }}/{{ len $r }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-nil-mustmergeoverwrite-empty --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: true/false/0']
+check: PASS
+output:
+  ---
+  # Source: sem-merge-nil-mustmergeoverwrite-empty/templates/cm.yaml
+  v: true/false/0
+
+
+### sem-merge-nil-mustmergeoverwrite-populated
+values.yaml: '{}'
+template: v: {{ $d := fromJson "null" }}{{ $r := mustMergeOverwrite $d (dict "x" 1) }}{{ eq $d nil }}/{{ eq $r nil }}/{{ len $r }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-nil-mustmergeoverwrite-populated --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: true/false/1']
+check: PASS
+output:
+  ---
+  # Source: sem-merge-nil-mustmergeoverwrite-populated/templates/cm.yaml
+  v: true/false/1
+
+
+allowed alternatives: [1, 2] observed: [1, 2]
+### sem-merge-order-merge
+values.yaml: '{}'
+template: v: [{{ range $i := until 128 }}{{ if $i }},{{ end }}{{ $m := dict "x" 0 }}{{ $d := dict "a" $m "b" $m }}{{ $_ := merge $d (dict "a" (dict "x" 1) "b" (dict "x" 2)) }}{{ $m.x }}{{ end }}]
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-order-merge --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains []
+check: PASS
+output:
+  ---
+  # Source: sem-merge-order-merge/templates/cm.yaml
+  v: [1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,2,2,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,2,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+
+
+allowed alternatives: [1, 2] observed: [1, 2]
+### sem-merge-order-mergeoverwrite
+values.yaml: '{}'
+template: v: [{{ range $i := until 128 }}{{ if $i }},{{ end }}{{ $m := dict "x" 0 }}{{ $d := dict "a" $m "b" $m }}{{ $_ := mergeOverwrite $d (dict "a" (dict "x" 1) "b" (dict "x" 2)) }}{{ $m.x }}{{ end }}]
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-order-mergeoverwrite --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains []
+check: PASS
+output:
+  ---
+  # Source: sem-merge-order-mergeoverwrite/templates/cm.yaml
+  v: [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,2,2,2,2,2,2,2,2,2,2,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,2,2,2,2,2,2,2,2,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,2,2,2,2,2,1,2,2,2,2,2,2,2,1,2,2,2,2,2,1,2,2,2,2,2,2,2,2,1,2,2,2,1,2,2,1,1,2]
+
+
+allowed alternatives: [1, 2] observed: [1, 2]
+### sem-merge-order-mustmerge
+values.yaml: '{}'
+template: v: [{{ range $i := until 128 }}{{ if $i }},{{ end }}{{ $m := dict "x" 0 }}{{ $d := dict "a" $m "b" $m }}{{ $_ := mustMerge $d (dict "a" (dict "x" 1) "b" (dict "x" 2)) }}{{ $m.x }}{{ end }}]
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-order-mustmerge --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains []
+check: PASS
+output:
+  ---
+  # Source: sem-merge-order-mustmerge/templates/cm.yaml
+  v: [1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,1,1,1,1,1,1,1,1,2,1,1,1,1,2,1,1,1,1,1,1,2,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,1,1,1,1,2,1,1,1,2,1,1,1,1,2]
+
+
+allowed alternatives: [1, 2] observed: [1, 2]
+### sem-merge-order-mustmergeoverwrite
+values.yaml: '{}'
+template: v: [{{ range $i := until 128 }}{{ if $i }},{{ end }}{{ $m := dict "x" 0 }}{{ $d := dict "a" $m "b" $m }}{{ $_ := mustMergeOverwrite $d (dict "a" (dict "x" 1) "b" (dict "x" 2)) }}{{ $m.x }}{{ end }}]
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-order-mustmergeoverwrite --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains []
+check: PASS
+output:
+  ---
+  # Source: sem-merge-order-mustmergeoverwrite/templates/cm.yaml
+  v: [2,2,2,2,2,1,2,2,2,2,2,2,2,2,2,2,2,2,1,2,2,2,2,2,2,2,2,2,2,2,2,2,1,2,1,2,2,2,2,2,2,2,2,1,2,2,2,2,2,2,2,1,2,2,2,2,2,2,2,2,2,2,2,1,2,2,2,2,2,1,1,1,1,2,2,2,2,1,2,2,2,2,2,2,2,2,2,2,1,2,2,2,2,2,2,2,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]
+
+
+allowed alternatives: [1] observed: [1]
+### sem-merge-order-overlap
+values.yaml: '{}'
+template: v: [{{ range $i := until 128 }}{{ if $i }},{{ end }}{{ $m := dict "x" 0 }}{{ $d := dict "a" $m "b" $m }}{{ $src := dict "a" (dict "x" 1) "b" $m }}{{ $_ := mergeOverwrite $d $src }}{{ $m.x }}{{ end }}]
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-order-overlap --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains []
+check: PASS
+output:
+  ---
+  # Source: sem-merge-order-overlap/templates/cm.yaml
+  v: [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+
+
+### sem-namespace-tpl-whitespace
+values.yaml: '{}'
+template: v: {{ define "h" }}old{{ end }}{{ tpl "{{ define \"h\" }}  {{ end }}{{ include \"h\" . }}" . | quote }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-namespace-tpl-whitespace --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: "old"']
+check: PASS
+output:
+  ---
+  # Source: sem-namespace-tpl-whitespace/templates/cm.yaml
+  v: "old"
+
+
+### sem-namespace-file-whitespace
+values.yaml: '{}'
+template: v: {{ include "h" . | quote }}
+file templates/_h.tpl: {{ define "h" }}  {{ end }}
+file templates/deep/_h.tpl: {{ define "h" }}old{{ end }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-namespace-file-whitespace --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: "old"']
+check: PASS
+output:
+  ---
+  # Source: sem-namespace-file-whitespace/templates/cm.yaml
+  v: "old"
+
+
+### sem-namespace-tpl-comment
+values.yaml: '{}'
+template: v: {{ define "h" }}old{{ end }}{{ tpl "{{ define \"h\" }}{{/* empty */}}{{ end }}{{ include \"h\" . }}" . | quote }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-namespace-tpl-comment --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: "old"']
+check: PASS
+output:
+  ---
+  # Source: sem-namespace-tpl-comment/templates/cm.yaml
+  v: "old"
+
+
+### sem-namespace-file-comment
+values.yaml: '{}'
+template: v: {{ include "h" . | quote }}
+file templates/_h.tpl: {{ define "h" }}{{/* empty */}}{{ end }}
+file templates/deep/_h.tpl: {{ define "h" }}old{{ end }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-namespace-file-comment --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: "old"']
+check: PASS
+output:
+  ---
+  # Source: sem-namespace-file-comment/templates/cm.yaml
+  v: "old"
+
+
+### sem-namespace-tpl-runtime-empty
+values.yaml: '{}'
+template: v: {{ define "h" }}old{{ end }}{{ tpl "{{ define \"h\" }}{{ print \"\" }}{{ end }}{{ include \"h\" . }}" . | quote }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-namespace-tpl-runtime-empty --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: ""']
+check: PASS
+output:
+  ---
+  # Source: sem-namespace-tpl-runtime-empty/templates/cm.yaml
+  v: ""
+
+
+### sem-namespace-file-runtime-empty
+values.yaml: '{}'
+template: v: {{ include "h" . | quote }}
+file templates/_h.tpl: {{ define "h" }}{{ print "" }}{{ end }}
+file templates/deep/_h.tpl: {{ define "h" }}old{{ end }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-namespace-file-runtime-empty --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: ""']
+check: PASS
+output:
+  ---
+  # Source: sem-namespace-file-runtime-empty/templates/cm.yaml
+  v: ""
+
+
+### sem-namespace-duplicate-nonempty
+values.yaml: '{}'
+template: v: {{ define "h" }}a{{ end }}{{ define "h" }}b{{ end }}ok
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-namespace-duplicate-nonempty --show-only templates/cm.yaml
+exit: 1
+expected: exit 1; contains ['multiple definition of template "h"']
+check: PASS
+output:
+  Error: parse error at (sem-namespace-duplicate-nonempty/templates/cm.yaml:1): multiple definition of template "h"
+
+  Use --debug flag to render out invalid YAML
+
+### sem-namespace-nested-clone
+values.yaml: '{}'
+template: v: {{ define "h" }}old{{ end }}{{ tpl "{{define \"h\"}}outer{{end}}{{tpl \"{{define \\\"h\\\"}}inner{{end}}{{include \\\"h\\\" .}}\" .}}/{{include \"h\" .}}" . }}/{{ include "h" . }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-namespace-nested-clone --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: inner/outer/old']
+check: PASS
+output:
+  ---
+  # Source: sem-namespace-nested-clone/templates/cm.yaml
+  v: inner/outer/old
+
+
+### sem-library-ordinary-parse-excluded
+values.yaml: '{}'
+template: v: ok
+file charts/lib/Chart.yaml: apiVersion: v2
+name: lib
+version: 0.1.0
+type: library
+file charts/lib/templates/bad.yaml: {{ definitelyNotAFunction }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-library-ordinary-parse-excluded --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: ok']
+check: PASS
+output:
+  ---
+  # Source: sem-library-ordinary-parse-excluded/templates/cm.yaml
+  v: ok
+
+
+### sem-library-partial-parse-error
+values.yaml: '{}'
+template: v: ok
+file charts/lib/Chart.yaml: apiVersion: v2
+name: lib
+version: 0.1.0
+type: library
+file charts/lib/templates/_bad.tpl: {{ definitelyNotAFunction }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-library-partial-parse-error --show-only templates/cm.yaml
+exit: 1
+expected: exit 1; contains ['function "definitelyNotAFunction" not defined']
+check: PASS
+output:
+  Error: parse error at (sem-library-partial-parse-error/charts/lib/templates/_bad.tpl:1): function "definitelyNotAFunction" not defined
+
+  Use --debug flag to render out invalid YAML
+
+### sem-library-ordinary-definition-excluded
+values.yaml: '{}'
+template: v: {{ include "ordinary" . }}
+file charts/lib/Chart.yaml: apiVersion: v2
+name: lib
+version: 0.1.0
+type: library
+file charts/lib/templates/ordinary.yaml: {{ define "ordinary" }}bad{{ end }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-library-ordinary-definition-excluded --show-only templates/cm.yaml
+exit: 1
+expected: exit 1; contains ['no template "ordinary"']
+check: PASS
+output:
+  Error: sem-library-ordinary-definition-excluded/templates/cm.yaml:1:6
+    executing "sem-library-ordinary-definition-excluded/templates/cm.yaml" at <include "ordinary" .>:
+      error calling include:
+  template: no template "ordinary" associated with template "gotpl"
+
+  Use --debug flag to render out invalid YAML
+
+### sem-file-boundary-fresh-frame
+values.yaml: 'x: original'
+template: v: {{ $.Values.x }}/{{ .Values.x }}/{{ .Release.Name }}
+file templates/z.yaml: {{ $_ := set .Release "Name" "shared" }}{{ $ = dict "Values" (dict "x" "rebound") }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-file-boundary-fresh-frame --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: original/original/shared']
+check: PASS
+output:
+  ---
+  # Source: sem-file-boundary-fresh-frame/templates/cm.yaml
+  v: original/original/shared
+
+
+### sem-file-boundary-captured-chart-root
+values.yaml: '{}'
+template: v: {{ $old := .Subcharts.child.Values }}{{ $_ := set .Values "child" (dict "x" "new") }}{{ $old.x }}/{{ .Subcharts.child.Values.x }}/{{ .Values.child.x }}
+file charts/child/Chart.yaml: apiVersion: v2
+name: child
+version: 0.1.0
+file charts/child/values.yaml: x: old
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-file-boundary-captured-chart-root --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: old/old/new']
+check: PASS
+output:
+  ---
+  # Source: sem-file-boundary-captured-chart-root/templates/cm.yaml
+  v: old/old/new
+
+
+### sem-range-integer-negative-zero
+values.yaml: '{}'
+template: v: {{ range -1 }}x{{ else }}e{{ end }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-range-integer-negative-zero --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: e']
+check: PASS
+output:
+  ---
+  # Source: sem-range-integer-negative-zero/templates/cm.yaml
+  v: e
+
+
+### sem-range-integer-negative-one
+values.yaml: '{}'
+template: v: {{ range $i := -1 }}x{{ else }}e{{ end }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-range-integer-negative-one --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: e']
+check: PASS
+output:
+  ---
+  # Source: sem-range-integer-negative-one/templates/cm.yaml
+  v: e
+
+
+### sem-range-integer-0-zero
+values.yaml: '{}'
+template: v: {{ range 0 }}x{{ else }}e{{ end }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-range-integer-0-zero --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: e']
+check: PASS
+output:
+  ---
+  # Source: sem-range-integer-0-zero/templates/cm.yaml
+  v: e
+
+
+### sem-range-integer-0-one
+values.yaml: '{}'
+template: v: {{ range $i := 0 }}x{{ else }}e{{ end }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-range-integer-0-one --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: e']
+check: PASS
+output:
+  ---
+  # Source: sem-range-integer-0-one/templates/cm.yaml
+  v: e
+
+
+### sem-range-integer-3-zero
+values.yaml: '{}'
+template: v: {{ range 3 }}x{{ else }}e{{ end }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-range-integer-3-zero --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: xxx']
+check: PASS
+output:
+  ---
+  # Source: sem-range-integer-3-zero/templates/cm.yaml
+  v: xxx
+
+
+### sem-range-integer-3-one
+values.yaml: '{}'
+template: v: {{ range $i := 3 }}x{{ else }}e{{ end }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-range-integer-3-one --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: xxx']
+check: PASS
+output:
+  ---
+  # Source: sem-range-integer-3-one/templates/cm.yaml
+  v: xxx
+
+
+### sem-range-integer-two-variables
+values.yaml: '{}'
+template: v: {{ range $i,$v := 0 }}x{{ end }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-range-integer-two-variables --show-only templates/cm.yaml
+exit: 1
+expected: exit 1; contains ["can't use 0 to iterate over more than one variable"]
+check: PASS
+output:
+  Error: sem-range-integer-two-variables/templates/cm.yaml:1:21
+    executing "sem-range-integer-two-variables/templates/cm.yaml" at <0>:
+      can't use 0 to iterate over more than one variable
+
+  Use --debug flag to render out invalid YAML
+
+### sem-range-integer-float
+values.yaml: '{}'
+template: v: {{ range get (fromJson `{"n":3}`) "n" }}x{{ end }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-range-integer-float --show-only templates/cm.yaml
+exit: 1
+expected: exit 1; contains ["range can't iterate over 3"]
+check: PASS
+output:
+  Error: sem-range-integer-float/templates/cm.yaml:1:37
+    executing "sem-range-integer-float/templates/cm.yaml" at <"n">:
+      range can't iterate over 3
+
+  Use --debug flag to render out invalid YAML
+
+### sem-range-integer-int64
+values.yaml: '{}'
+template: v: {{ range int64 3 }}x{{ end }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-range-integer-int64 --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: xxx']
+check: PASS
+output:
+  ---
+  # Source: sem-range-integer-int64/templates/cm.yaml
+  v: xxx
+
+
+### sem-loop-bounds-31
+values.yaml: '{}'
+template: v: {{ $d := dict "x" "old" }}{{ range $i := until 31 }}{{ if eq $i 30 }}{{ $_ := set $d "x" "new" }}{{ end }}{{ end }}{{ if ne $d.x "new" }}{{ required "suffix write missing" $.Values.need }}{{ end }}{{ $d.x }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-loop-bounds-31 --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: new']
+check: PASS
+output:
+  ---
+  # Source: sem-loop-bounds-31/templates/cm.yaml
+  v: new
+
+
+### sem-loop-bounds-32
+values.yaml: '{}'
+template: v: {{ $d := dict "x" "old" }}{{ range $i := until 32 }}{{ if eq $i 31 }}{{ $_ := set $d "x" "new" }}{{ end }}{{ end }}{{ if ne $d.x "new" }}{{ required "suffix write missing" $.Values.need }}{{ end }}{{ $d.x }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-loop-bounds-32 --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: new']
+check: PASS
+output:
+  ---
+  # Source: sem-loop-bounds-32/templates/cm.yaml
+  v: new
+
+
+### sem-loop-bounds-33
+values.yaml: '{}'
+template: v: {{ $d := dict "x" "old" }}{{ range $i := until 33 }}{{ if eq $i 32 }}{{ $_ := set $d "x" "new" }}{{ end }}{{ end }}{{ if ne $d.x "new" }}{{ required "suffix write missing" $.Values.need }}{{ end }}{{ $d.x }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-loop-bounds-33 --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: new']
+check: PASS
+output:
+  ---
+  # Source: sem-loop-bounds-33/templates/cm.yaml
+  v: new
+
+
+### sem-summary-loop-0-normal
+values.yaml: 'items: []'
+template: v: {{ define "write" }}{{ $_ := set .d "x" .v }}{{ end }}{{ $d := dict "x" -1 }}{{ range $i := .Values.items }}{{ $_ := include "write" (dict "d" $d "v" $i) }}{{ end }}{{ $d.x }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-summary-loop-0-normal --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: -1']
+check: PASS
+output:
+  ---
+  # Source: sem-summary-loop-0-normal/templates/cm.yaml
+  v: -1
+
+
+### sem-summary-loop-0-break
+values.yaml: 'items: []'
+template: v: {{ define "write" }}{{ $_ := set .d "x" .v }}{{ end }}{{ $d := dict "x" -1 }}{{ range $i := .Values.items }}{{ $_ := include "write" (dict "d" $d "v" $i) }}{{ break }}{{ end }}{{ $d.x }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-summary-loop-0-break --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: -1']
+check: PASS
+output:
+  ---
+  # Source: sem-summary-loop-0-break/templates/cm.yaml
+  v: -1
+
+
+### sem-summary-loop-0-continue
+values.yaml: 'items: []'
+template: v: {{ define "write" }}{{ $_ := set .d "x" .v }}{{ end }}{{ $d := dict "x" -1 }}{{ range $i := .Values.items }}{{ $_ := include "write" (dict "d" $d "v" $i) }}{{ continue }}{{ end }}{{ $d.x }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-summary-loop-0-continue --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: -1']
+check: PASS
+output:
+  ---
+  # Source: sem-summary-loop-0-continue/templates/cm.yaml
+  v: -1
+
+
+### sem-summary-loop-0-overwrite
+values.yaml: 'items: []'
+template: v: {{ define "write" }}{{ $_ := set .d "x" .v }}{{ end }}{{ $d := dict "x" -1 }}{{ range $i := .Values.items }}{{ $_ := include "write" (dict "d" $d "v" $i) }}{{ end }}{{ $_ := set $d "x" 9 }}{{ $d.x }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-summary-loop-0-overwrite --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: 9']
+check: PASS
+output:
+  ---
+  # Source: sem-summary-loop-0-overwrite/templates/cm.yaml
+  v: 9
+
+
+### sem-summary-loop-1-normal
+values.yaml: 'items: [0]'
+template: v: {{ define "write" }}{{ $_ := set .d "x" .v }}{{ end }}{{ $d := dict "x" -1 }}{{ range $i := .Values.items }}{{ $_ := include "write" (dict "d" $d "v" $i) }}{{ end }}{{ $d.x }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-summary-loop-1-normal --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: 0']
+check: PASS
+output:
+  ---
+  # Source: sem-summary-loop-1-normal/templates/cm.yaml
+  v: 0
+
+
+### sem-summary-loop-1-break
+values.yaml: 'items: [0]'
+template: v: {{ define "write" }}{{ $_ := set .d "x" .v }}{{ end }}{{ $d := dict "x" -1 }}{{ range $i := .Values.items }}{{ $_ := include "write" (dict "d" $d "v" $i) }}{{ break }}{{ end }}{{ $d.x }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-summary-loop-1-break --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: 0']
+check: PASS
+output:
+  ---
+  # Source: sem-summary-loop-1-break/templates/cm.yaml
+  v: 0
+
+
+### sem-summary-loop-1-continue
+values.yaml: 'items: [0]'
+template: v: {{ define "write" }}{{ $_ := set .d "x" .v }}{{ end }}{{ $d := dict "x" -1 }}{{ range $i := .Values.items }}{{ $_ := include "write" (dict "d" $d "v" $i) }}{{ continue }}{{ end }}{{ $d.x }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-summary-loop-1-continue --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: 0']
+check: PASS
+output:
+  ---
+  # Source: sem-summary-loop-1-continue/templates/cm.yaml
+  v: 0
+
+
+### sem-summary-loop-1-overwrite
+values.yaml: 'items: [0]'
+template: v: {{ define "write" }}{{ $_ := set .d "x" .v }}{{ end }}{{ $d := dict "x" -1 }}{{ range $i := .Values.items }}{{ $_ := include "write" (dict "d" $d "v" $i) }}{{ end }}{{ $_ := set $d "x" 9 }}{{ $d.x }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-summary-loop-1-overwrite --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: 9']
+check: PASS
+output:
+  ---
+  # Source: sem-summary-loop-1-overwrite/templates/cm.yaml
+  v: 9
+
+
+### sem-summary-loop-3-normal
+values.yaml: 'items: [0, 1, 2]'
+template: v: {{ define "write" }}{{ $_ := set .d "x" .v }}{{ end }}{{ $d := dict "x" -1 }}{{ range $i := .Values.items }}{{ $_ := include "write" (dict "d" $d "v" $i) }}{{ end }}{{ $d.x }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-summary-loop-3-normal --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: 2']
+check: PASS
+output:
+  ---
+  # Source: sem-summary-loop-3-normal/templates/cm.yaml
+  v: 2
+
+
+### sem-summary-loop-3-break
+values.yaml: 'items: [0, 1, 2]'
+template: v: {{ define "write" }}{{ $_ := set .d "x" .v }}{{ end }}{{ $d := dict "x" -1 }}{{ range $i := .Values.items }}{{ $_ := include "write" (dict "d" $d "v" $i) }}{{ break }}{{ end }}{{ $d.x }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-summary-loop-3-break --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: 0']
+check: PASS
+output:
+  ---
+  # Source: sem-summary-loop-3-break/templates/cm.yaml
+  v: 0
+
+
+### sem-summary-loop-3-continue
+values.yaml: 'items: [0, 1, 2]'
+template: v: {{ define "write" }}{{ $_ := set .d "x" .v }}{{ end }}{{ $d := dict "x" -1 }}{{ range $i := .Values.items }}{{ $_ := include "write" (dict "d" $d "v" $i) }}{{ continue }}{{ end }}{{ $d.x }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-summary-loop-3-continue --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: 2']
+check: PASS
+output:
+  ---
+  # Source: sem-summary-loop-3-continue/templates/cm.yaml
+  v: 2
+
+
+### sem-summary-loop-3-overwrite
+values.yaml: 'items: [0, 1, 2]'
+template: v: {{ define "write" }}{{ $_ := set .d "x" .v }}{{ end }}{{ $d := dict "x" -1 }}{{ range $i := .Values.items }}{{ $_ := include "write" (dict "d" $d "v" $i) }}{{ end }}{{ $_ := set $d "x" 9 }}{{ $d.x }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-summary-loop-3-overwrite --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: 9']
+check: PASS
+output:
+  ---
+  # Source: sem-summary-loop-3-overwrite/templates/cm.yaml
+  v: 9
+
+
+### sem-output-boundary-within-file
+values.yaml: '{}'
+template: v: <no {{ print "value>" }}ok
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-output-boundary-within-file --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: ok']
+check: PASS
+output:
+  ---
+  # Source: sem-output-boundary-within-file/templates/cm.yaml
+  v: ok
+
+
+### sem-output-boundary-files
+values.yaml: '{}'
+template: v: value>ok
+file templates/z.yaml: v: <no
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-output-boundary-files --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: value>ok']
+check: PASS
+output:
+  ---
+  # Source: sem-output-boundary-files/templates/cm.yaml
+  v: value>ok
+
+### sem-output-boundary-discarded-include
+values.yaml: '{}'
+template: v: {{ define "h" }}{{ $_ := set .Values "x" "yes" }}TEXT{{ end }}{{ $_ := include "h" . }}{{ .Values.x }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-output-boundary-discarded-include --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: yes']
+check: PASS
+output:
+  ---
+  # Source: sem-output-boundary-discarded-include/templates/cm.yaml
+  v: yes
+
+
+### sem-output-boundary-notes-effects
+values.yaml: '{}'
+template: v: ok
+file templates/00.yaml: v: {{ .Values.x }}
+file templates/NOTES.txt: {{ $_ := set .Values "x" "yes" }}NOTES-TEXT
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-output-boundary-notes-effects --show-only templates/cm.yaml --show-only templates/00.yaml
+exit: 0
+expected: exit 0; contains ['v: yes']
+check: PASS
+output:
+  ---
+  # Source: sem-output-boundary-notes-effects/templates/cm.yaml
+  v: ok
+
+  ---
+  # Source: sem-output-boundary-notes-effects/templates/00.yaml
+  v: yes
+
+allowed alternatives: ['one', 'two'] observed: ['one', 'two']
+### sem-cache-host-collision-asconfig
+values.yaml: '{}'
+template: v: [{{ range until 128 }}{{ end }}{{ $root := . }}{{ range $i := until 128 }}{{ if $i }},{{ end }}{{ with $root }}{{ $m := fromYaml ((.Files.Glob "files/*/same").AsConfig) }}{{ (index $m "same") | trim | quote }}{{ end }}{{ end }}]
+file files/a/same: one
+file files/b/same: two
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-cache-host-collision-asconfig --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains []
+check: PASS
+output:
+  ---
+  # Source: sem-cache-host-collision-asconfig/templates/cm.yaml
+  v: ["two","two","two","two","one","one","two","one","two","one","two","two","two","two","two","two","two","one","two","two","two","two","one","two","two","one","two","two","two","two","two","two","two","two","two","two","one","two","two","two","two","one","two","two","two","two","one","two","one","two","two","two","two","two","two","one","two","one","one","two","one","two","two","two","two","two","two","one","two","two","two","one","one","two","two","two","two","one","two","two","two","two","two","one","one","two","one","two","two","two","one","two","two","two","two","two","two","two","one","two","two","two","two","two","one","two","two","two","two","one","two","one","two","two","two","two","two","two","two","two","two","one","two","two","two","two","two","one"]
+
+
+allowed alternatives: ['one', 'two'] observed: ['one', 'two']
+### sem-cache-host-collision-assecrets
+values.yaml: '{}'
+template: v: [{{ range until 128 }}{{ end }}{{ $root := . }}{{ range $i := until 128 }}{{ if $i }},{{ end }}{{ with $root }}{{ $m := fromYaml ((.Files.Glob "files/*/same").AsSecrets) }}{{ (index $m "same" | b64dec) | trim | quote }}{{ end }}{{ end }}]
+file files/a/same: one
+file files/b/same: two
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-cache-host-collision-assecrets --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains []
+check: PASS
+output:
+  ---
+  # Source: sem-cache-host-collision-assecrets/templates/cm.yaml
+  v: ["two","two","two","one","one","two","two","one","two","two","two","one","one","two","two","one","two","two","two","two","two","two","two","one","one","two","two","two","two","two","two","two","two","two","two","two","two","two","two","two","two","two","two","two","two","two","two","two","one","one","two","two","one","two","one","two","one","two","one","one","two","two","two","two","one","two","two","two","two","two","two","one","two","two","two","one","two","one","two","two","one","two","two","one","two","two","one","two","two","one","two","two","one","two","one","two","two","two","two","two","two","two","two","two","two","two","two","two","two","two","two","two","two","two","two","two","two","two","two","two","two","one","two","one","one","two","two","two"]
+
+
+### sem-call-copy-guard-ternary
+values.yaml: '{}'
+template: v: {{ $s := splitList "," "b,a" }}{{ $x := ternary (index $s 0) "unused" true }}{{ $_ := sortAlpha $s }}{{ if ne $x "b" }}{{ required "need" .Values.need }}{{ end }}ok
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-call-copy-guard-ternary --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: ok']
+check: PASS
+output:
+  ---
+  # Source: sem-call-copy-guard-ternary/templates/cm.yaml
+  v: ok
+
+
+### sem-call-copy-guard-default
+values.yaml: '{}'
+template: v: {{ $s := splitList "," "b,a" }}{{ $x := default "unused" (index $s 0) }}{{ $_ := sortAlpha $s }}{{ if ne $x "b" }}{{ required "need" .Values.need }}{{ end }}ok
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-call-copy-guard-default --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: ok']
+check: PASS
+output:
+  ---
+  # Source: sem-call-copy-guard-default/templates/cm.yaml
+  v: ok
+
+
+### sem-call-copy-guard-coalesce
+values.yaml: '{}'
+template: v: {{ $s := splitList "," "b,a" }}{{ $x := coalesce (index $s 0) }}{{ $_ := sortAlpha $s }}{{ if ne $x "b" }}{{ required "need" .Values.need }}{{ end }}ok
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-call-copy-guard-coalesce --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: ok']
+check: PASS
+output:
+  ---
+  # Source: sem-call-copy-guard-coalesce/templates/cm.yaml
+  v: ok
+
+
+### sem-call-copy-guard-required
+values.yaml: '{}'
+template: v: {{ $s := splitList "," "b,a" }}{{ $x := required "r" (index $s 0) }}{{ $_ := sortAlpha $s }}{{ if ne $x "b" }}{{ required "need" .Values.need }}{{ end }}ok
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-call-copy-guard-required --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: ok']
+check: PASS
+output:
+  ---
+  # Source: sem-call-copy-guard-required/templates/cm.yaml
+  v: ok
+
+
+### sem-call-copy-guard-first
+values.yaml: '{}'
+template: v: {{ $s := splitList "," "b,a" }}{{ $x := first $s }}{{ $_ := sortAlpha $s }}{{ if ne $x "b" }}{{ required "need" .Values.need }}{{ end }}ok
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-call-copy-guard-first --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: ok']
+check: PASS
+output:
+  ---
+  # Source: sem-call-copy-guard-first/templates/cm.yaml
+  v: ok
+
+
+### sem-slice-empty-guard
+values.yaml: '{}'
+template: v: {{ $v := slice (list) -1 99 }}{{ if ne $v nil }}{{ required "need" .Values.need }}{{ end }}ok
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-slice-empty-guard --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: ok']
+check: PASS
+output:
+  ---
+  # Source: sem-slice-empty-guard/templates/cm.yaml
+  v: ok
+
+
+### sem-cache-opposite-path-false
+values.yaml: '{"flag": false}'
+template: v: {{ define "h" }}{{ if .Values.flag }}{{ required "need" .Values.need }}{{ end }}ok{{ end }}{{ if .Values.flag }}{{ include "h" . }}{{ else }}{{ include "h" . }}{{ end }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-cache-opposite-path-false --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: ok']
+check: PASS
+output:
+  ---
+  # Source: sem-cache-opposite-path-false/templates/cm.yaml
+  v: ok
+
+
+### sem-cache-opposite-path-true
+values.yaml: '{"flag": true}'
+template: v: {{ define "h" }}{{ if .Values.flag }}{{ required "need" .Values.need }}{{ end }}ok{{ end }}{{ if .Values.flag }}{{ include "h" . }}{{ else }}{{ include "h" . }}{{ end }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-cache-opposite-path-true --show-only templates/cm.yaml
+exit: 1
+expected: exit 1; contains ['need']
+check: PASS
+output:
+  Error: execution error at (sem-cache-opposite-path-true/templates/cm.yaml:1:118): need
+
+  Use --debug flag to render out invalid YAML
+
+### sem-summary-loop-final-reassign-0
+values.yaml: '{"items": []}'
+template: v: {{ $x := "before" }}{{ range $v := .Values.items }}{{ $x = $v }}{{ end }}{{ $x }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-summary-loop-final-reassign-0 --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: before']
+check: PASS
+output:
+  ---
+  # Source: sem-summary-loop-final-reassign-0/templates/cm.yaml
+  v: before
+
+
+### sem-summary-loop-final-reassign-1
+values.yaml: '{"items": [0]}'
+template: v: {{ $x := "before" }}{{ range $v := .Values.items }}{{ $x = $v }}{{ end }}{{ $x }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-summary-loop-final-reassign-1 --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: 0']
+check: PASS
+output:
+  ---
+  # Source: sem-summary-loop-final-reassign-1/templates/cm.yaml
+  v: 0
+
+
+### sem-summary-loop-final-reassign-3
+values.yaml: '{"items": [0, 1, 2]}'
+template: v: {{ $x := "before" }}{{ range $v := .Values.items }}{{ $x = $v }}{{ end }}{{ $x }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-summary-loop-final-reassign-3 --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: 2']
+check: PASS
+output:
+  ---
+  # Source: sem-summary-loop-final-reassign-3/templates/cm.yaml
+  v: 2
+
+
+### sem-source-fail-short-circuit-false
+values.yaml: '{"flag": false}'
+template: v: {{ or .Values.flag (fail "reached") }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-source-fail-short-circuit-false --show-only templates/cm.yaml
+exit: 1
+expected: exit 1; contains ['reached']
+check: PASS
+output:
+  Error: execution error at (sem-source-fail-short-circuit-false/templates/cm.yaml:1:23): reached
+
+  Use --debug flag to render out invalid YAML
+
+### sem-source-fail-short-circuit-true
+values.yaml: '{"flag": true}'
+template: v: {{ or .Values.flag (fail "reached") }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-source-fail-short-circuit-true --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: true']
+check: PASS
+output:
+  ---
+  # Source: sem-source-fail-short-circuit-true/templates/cm.yaml
+  v: true
+
+
+### sem-source-selector-after-write
+values.yaml: 'kind: Secret'
+template: v: {{ $_ := set .Values "kind" "ConfigMap" }}{{ if eq .Values.kind "ConfigMap" }}ok{{ else }}{{ required "unreachable" .Values.need }}{{ end }}
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-source-selector-after-write --show-only templates/cm.yaml
+exit: 0
+expected: exit 0; contains ['v: ok']
+check: PASS
+output:
+  ---
+  # Source: sem-source-selector-after-write/templates/cm.yaml
+  v: ok
+
+
+allowed outcomes: [(0, 'v: ok'), (1, 'alias order needs value')] observed exit: 0
+### sem-merge-order-guard-0
+values.yaml: '{}'
+template: v: {{ $m := dict "x" 0 }}{{ $dst := dict "a" $m "b" $m }}{{ $_ := mergeOverwrite $dst (dict "a" (dict "x" 1) "b" (dict "x" 2)) }}{{ if ne $m.x 1 }}{{ required "alias order needs value" .Values.need }}{{ end }}ok
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-order-guard-0 --show-only templates/cm.yaml
+exit: 0
+expected: one of [(0, 'v: ok'), (1, 'alias order needs value')]
+check: PASS
+output:
+  ---
+  # Source: sem-merge-order-guard-0/templates/cm.yaml
+  v: ok
+
+
+allowed outcomes: [(0, 'v: ok'), (1, 'alias order needs value')] observed exit: 1
+### sem-merge-order-guard-1
+values.yaml: '{}'
+template: v: {{ $m := dict "x" 0 }}{{ $dst := dict "a" $m "b" $m }}{{ $_ := mergeOverwrite $dst (dict "a" (dict "x" 1) "b" (dict "x" 2)) }}{{ if ne $m.x 1 }}{{ required "alias order needs value" .Values.need }}{{ end }}ok
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-order-guard-1 --show-only templates/cm.yaml
+exit: 1
+expected: one of [(0, 'v: ok'), (1, 'alias order needs value')]
+check: PASS
+output:
+  Error: execution error at (sem-merge-order-guard-1/templates/cm.yaml:1:150): alias order needs value
+
+  Use --debug flag to render out invalid YAML
+
+allowed outcomes: [(0, 'v: ok'), (1, 'alias order needs value')] observed exit: 1
+### sem-merge-order-guard-2
+values.yaml: '{}'
+template: v: {{ $m := dict "x" 0 }}{{ $dst := dict "a" $m "b" $m }}{{ $_ := mergeOverwrite $dst (dict "a" (dict "x" 1) "b" (dict "x" 2)) }}{{ if ne $m.x 1 }}{{ required "alias order needs value" .Values.need }}{{ end }}ok
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-order-guard-2 --show-only templates/cm.yaml
+exit: 1
+expected: one of [(0, 'v: ok'), (1, 'alias order needs value')]
+check: PASS
+output:
+  Error: execution error at (sem-merge-order-guard-2/templates/cm.yaml:1:150): alias order needs value
+
+  Use --debug flag to render out invalid YAML
+
+allowed outcomes: [(0, 'v: ok'), (1, 'alias order needs value')] observed exit: 0
+### sem-merge-order-guard-3
+values.yaml: '{}'
+template: v: {{ $m := dict "x" 0 }}{{ $dst := dict "a" $m "b" $m }}{{ $_ := mergeOverwrite $dst (dict "a" (dict "x" 1) "b" (dict "x" 2)) }}{{ if ne $m.x 1 }}{{ required "alias order needs value" .Values.need }}{{ end }}ok
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-order-guard-3 --show-only templates/cm.yaml
+exit: 0
+expected: one of [(0, 'v: ok'), (1, 'alias order needs value')]
+check: PASS
+output:
+  ---
+  # Source: sem-merge-order-guard-3/templates/cm.yaml
+  v: ok
+
+
+allowed outcomes: [(0, 'v: ok'), (1, 'alias order needs value')] observed exit: 0
+### sem-merge-order-guard-4
+values.yaml: '{}'
+template: v: {{ $m := dict "x" 0 }}{{ $dst := dict "a" $m "b" $m }}{{ $_ := mergeOverwrite $dst (dict "a" (dict "x" 1) "b" (dict "x" 2)) }}{{ if ne $m.x 1 }}{{ required "alias order needs value" .Values.need }}{{ end }}ok
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-order-guard-4 --show-only templates/cm.yaml
+exit: 0
+expected: one of [(0, 'v: ok'), (1, 'alias order needs value')]
+check: PASS
+output:
+  ---
+  # Source: sem-merge-order-guard-4/templates/cm.yaml
+  v: ok
+
+
+allowed outcomes: [(0, 'v: ok'), (1, 'alias order needs value')] observed exit: 1
+### sem-merge-order-guard-5
+values.yaml: '{}'
+template: v: {{ $m := dict "x" 0 }}{{ $dst := dict "a" $m "b" $m }}{{ $_ := mergeOverwrite $dst (dict "a" (dict "x" 1) "b" (dict "x" 2)) }}{{ if ne $m.x 1 }}{{ required "alias order needs value" .Values.need }}{{ end }}ok
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-order-guard-5 --show-only templates/cm.yaml
+exit: 1
+expected: one of [(0, 'v: ok'), (1, 'alias order needs value')]
+check: PASS
+output:
+  Error: execution error at (sem-merge-order-guard-5/templates/cm.yaml:1:150): alias order needs value
+
+  Use --debug flag to render out invalid YAML
+
+allowed outcomes: [(0, 'v: ok'), (1, 'alias order needs value')] observed exit: 1
+### sem-merge-order-guard-6
+values.yaml: '{}'
+template: v: {{ $m := dict "x" 0 }}{{ $dst := dict "a" $m "b" $m }}{{ $_ := mergeOverwrite $dst (dict "a" (dict "x" 1) "b" (dict "x" 2)) }}{{ if ne $m.x 1 }}{{ required "alias order needs value" .Values.need }}{{ end }}ok
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-order-guard-6 --show-only templates/cm.yaml
+exit: 1
+expected: one of [(0, 'v: ok'), (1, 'alias order needs value')]
+check: PASS
+output:
+  Error: execution error at (sem-merge-order-guard-6/templates/cm.yaml:1:150): alias order needs value
+
+  Use --debug flag to render out invalid YAML
+
+allowed outcomes: [(0, 'v: ok'), (1, 'alias order needs value')] observed exit: 1
+### sem-merge-order-guard-7
+values.yaml: '{}'
+template: v: {{ $m := dict "x" 0 }}{{ $dst := dict "a" $m "b" $m }}{{ $_ := mergeOverwrite $dst (dict "a" (dict "x" 1) "b" (dict "x" 2)) }}{{ if ne $m.x 1 }}{{ required "alias order needs value" .Values.need }}{{ end }}ok
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-order-guard-7 --show-only templates/cm.yaml
+exit: 1
+expected: one of [(0, 'v: ok'), (1, 'alias order needs value')]
+check: PASS
+output:
+  Error: execution error at (sem-merge-order-guard-7/templates/cm.yaml:1:150): alias order needs value
+
+  Use --debug flag to render out invalid YAML
+
+allowed outcomes: [(0, 'v: ok'), (1, 'alias order needs value')] observed exit: 1
+### sem-merge-order-guard-8
+values.yaml: '{}'
+template: v: {{ $m := dict "x" 0 }}{{ $dst := dict "a" $m "b" $m }}{{ $_ := mergeOverwrite $dst (dict "a" (dict "x" 1) "b" (dict "x" 2)) }}{{ if ne $m.x 1 }}{{ required "alias order needs value" .Values.need }}{{ end }}ok
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-order-guard-8 --show-only templates/cm.yaml
+exit: 1
+expected: one of [(0, 'v: ok'), (1, 'alias order needs value')]
+check: PASS
+output:
+  Error: execution error at (sem-merge-order-guard-8/templates/cm.yaml:1:150): alias order needs value
+
+  Use --debug flag to render out invalid YAML
+
+allowed outcomes: [(0, 'v: ok'), (1, 'alias order needs value')] observed exit: 1
+### sem-merge-order-guard-9
+values.yaml: '{}'
+template: v: {{ $m := dict "x" 0 }}{{ $dst := dict "a" $m "b" $m }}{{ $_ := mergeOverwrite $dst (dict "a" (dict "x" 1) "b" (dict "x" 2)) }}{{ if ne $m.x 1 }}{{ required "alias order needs value" .Values.need }}{{ end }}ok
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-order-guard-9 --show-only templates/cm.yaml
+exit: 1
+expected: one of [(0, 'v: ok'), (1, 'alias order needs value')]
+check: PASS
+output:
+  Error: execution error at (sem-merge-order-guard-9/templates/cm.yaml:1:150): alias order needs value
+
+  Use --debug flag to render out invalid YAML
+
+allowed outcomes: [(0, 'v: ok'), (1, 'alias order needs value')] observed exit: 1
+### sem-merge-order-guard-10
+values.yaml: '{}'
+template: v: {{ $m := dict "x" 0 }}{{ $dst := dict "a" $m "b" $m }}{{ $_ := mergeOverwrite $dst (dict "a" (dict "x" 1) "b" (dict "x" 2)) }}{{ if ne $m.x 1 }}{{ required "alias order needs value" .Values.need }}{{ end }}ok
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-order-guard-10 --show-only templates/cm.yaml
+exit: 1
+expected: one of [(0, 'v: ok'), (1, 'alias order needs value')]
+check: PASS
+output:
+  Error: execution error at (sem-merge-order-guard-10/templates/cm.yaml:1:150): alias order needs value
+
+  Use --debug flag to render out invalid YAML
+
+allowed outcomes: [(0, 'v: ok'), (1, 'alias order needs value')] observed exit: 1
+### sem-merge-order-guard-11
+values.yaml: '{}'
+template: v: {{ $m := dict "x" 0 }}{{ $dst := dict "a" $m "b" $m }}{{ $_ := mergeOverwrite $dst (dict "a" (dict "x" 1) "b" (dict "x" 2)) }}{{ if ne $m.x 1 }}{{ required "alias order needs value" .Values.need }}{{ end }}ok
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-order-guard-11 --show-only templates/cm.yaml
+exit: 1
+expected: one of [(0, 'v: ok'), (1, 'alias order needs value')]
+check: PASS
+output:
+  Error: execution error at (sem-merge-order-guard-11/templates/cm.yaml:1:150): alias order needs value
+
+  Use --debug flag to render out invalid YAML
+
+allowed outcomes: [(0, 'v: ok'), (1, 'alias order needs value')] observed exit: 1
+### sem-merge-order-guard-12
+values.yaml: '{}'
+template: v: {{ $m := dict "x" 0 }}{{ $dst := dict "a" $m "b" $m }}{{ $_ := mergeOverwrite $dst (dict "a" (dict "x" 1) "b" (dict "x" 2)) }}{{ if ne $m.x 1 }}{{ required "alias order needs value" .Values.need }}{{ end }}ok
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-order-guard-12 --show-only templates/cm.yaml
+exit: 1
+expected: one of [(0, 'v: ok'), (1, 'alias order needs value')]
+check: PASS
+output:
+  Error: execution error at (sem-merge-order-guard-12/templates/cm.yaml:1:150): alias order needs value
+
+  Use --debug flag to render out invalid YAML
+
+allowed outcomes: [(0, 'v: ok'), (1, 'alias order needs value')] observed exit: 1
+### sem-merge-order-guard-13
+values.yaml: '{}'
+template: v: {{ $m := dict "x" 0 }}{{ $dst := dict "a" $m "b" $m }}{{ $_ := mergeOverwrite $dst (dict "a" (dict "x" 1) "b" (dict "x" 2)) }}{{ if ne $m.x 1 }}{{ required "alias order needs value" .Values.need }}{{ end }}ok
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-order-guard-13 --show-only templates/cm.yaml
+exit: 1
+expected: one of [(0, 'v: ok'), (1, 'alias order needs value')]
+check: PASS
+output:
+  Error: execution error at (sem-merge-order-guard-13/templates/cm.yaml:1:150): alias order needs value
+
+  Use --debug flag to render out invalid YAML
+
+allowed outcomes: [(0, 'v: ok'), (1, 'alias order needs value')] observed exit: 1
+### sem-merge-order-guard-14
+values.yaml: '{}'
+template: v: {{ $m := dict "x" 0 }}{{ $dst := dict "a" $m "b" $m }}{{ $_ := mergeOverwrite $dst (dict "a" (dict "x" 1) "b" (dict "x" 2)) }}{{ if ne $m.x 1 }}{{ required "alias order needs value" .Values.need }}{{ end }}ok
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-order-guard-14 --show-only templates/cm.yaml
+exit: 1
+expected: one of [(0, 'v: ok'), (1, 'alias order needs value')]
+check: PASS
+output:
+  Error: execution error at (sem-merge-order-guard-14/templates/cm.yaml:1:150): alias order needs value
+
+  Use --debug flag to render out invalid YAML
+
+allowed outcomes: [(0, 'v: ok'), (1, 'alias order needs value')] observed exit: 0
+### sem-merge-order-guard-15
+values.yaml: '{}'
+template: v: {{ $m := dict "x" 0 }}{{ $dst := dict "a" $m "b" $m }}{{ $_ := mergeOverwrite $dst (dict "a" (dict "x" 1) "b" (dict "x" 2)) }}{{ if ne $m.x 1 }}{{ required "alias order needs value" .Values.need }}{{ end }}ok
+command: /Users/roman/.local/share/mise/installs/helm/4.2.3/darwin-arm64/helm template p $SCRATCH/sem-merge-order-guard-15 --show-only templates/cm.yaml
+exit: 0
+expected: one of [(0, 'v: ok'), (1, 'alias order needs value')]
+check: PASS
+output:
+  ---
+  # Source: sem-merge-order-guard-15/templates/cm.yaml
+  v: ok
+
+
+TOTAL: 120; passed: 120; failed: 0

@@ -1,114 +1,120 @@
 key	baseline_class	input_stage	checkpoint	disposition	replacement
-alias:fragment_eval/control.rs:IterationAlternatives	R	R3b	C06	delete	Flow exits, frozen iteration plan and value decisions
-alias:fragment_eval/control.rs:IterationEntries	F	R3b	C06	delete	Flow exits, frozen iteration plan and value decisions
-alias:value/mod.rs:LocalSlots	R	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:analysis_db.rs:BoundHelperCallCacheKey.dot	K	R3b	C01	delete	disable legacy memo; certified HelperCacheKey introduced only at C10
-field:analysis_db.rs:BoundHelperCallCacheKey.root_slots	K	R3b	C01	delete	disable legacy memo; certified HelperCacheKey introduced only at C10
-field:analysis_db.rs:BoundHelperCallResolution.dot	S	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:analysis_db.rs:BoundHelperCallResolution.root_slots	S	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:analysis_db.rs:DotFrame.fragment	F	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:analysis_db.rs:DotFrame.helper	F	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:analysis_db.rs:IrAnalysisDb.bound_helper_calls	K	R3b	C01	delete	disable legacy memo; certified HelperCacheKey introduced only at C10
-field:analysis_db.rs:IrAnalysisDb.custom_merge_helpers	K	R3b	C11	retain-K	namespace/program-keyed shape classification cache; no deletion credit
-field:analysis_db.rs:IrAnalysisDb.nil_scrub_helpers	K	R3b	C11	retain-K	namespace/program-keyed shape classification cache; no deletion credit
-field:analysis_db.rs:IrAnalysisDb.static_root_fields	S	R3b	C05	delete	one render-tree State initial graph and context root references
-field:analysis_db.rs:ResolvedBoundHelperCall.resolution	S	R3b	C07	delete	same-executor helper/tpl frame with caller State
-field:bound_value_analysis.rs:BoundValueContext.slots	S	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:bound_value_analysis.rs:GetBinding.base	R	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:bound_value_analysis.rs:GetBindingPlan.binding	D	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:eval_effect.rs:Effects.local_default_paths	S	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:eval_effect.rs:Effects.local_output_meta	S	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:eval_effect.rs:Effects.local_set_mutations	F	R3b	C03	delete	heap updates with current value origins
-field:eval_effect.rs:Effects.local_source_paths	S	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:eval_effect.rs:Effects.member_host_conversions	F	R3b	C03	delete	heap updates with current value origins
-field:eval_effect.rs:Effects.root_writes	F	R3b	C03	delete	heap updates with current value origins
-field:eval_effect.rs:EvalResult.field_scalar_dispatches	F	R3b	C01	delete	value/query.rs borrowed views; no companion fact stores
-field:eval_effect.rs:EvalResult.json_payload_truth	F	R3b	C01	delete	value/query.rs borrowed views; no companion fact stores
+alias:fragment_eval/control.rs:IterationAlternatives	R	R3b	C02	delete	Flow exits, frozen iteration plan and value decisions
+alias:fragment_eval/control.rs:IterationEntries	F	R3b	C02	delete	Flow exits, frozen iteration plan and value decisions
+alias:value/mod.rs:LocalSlots	R	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+edge:fragment_eval/holes.rs:eval_hole_parts->expr_contains_fail_call	E	review	C02	delete	remove syntax-fail terminal claim; consume executed Flow
+edge:fragment_eval/holes.rs:eval_output_action->expr_contains_fail_call	E	review	C02	delete	remove syntax-fail terminal claim; consume executed Flow
+edge:fragment_eval/holes.rs:eval_suppressed_fragment_hole->expr_contains_fail_call	E	review	C02	delete	remove syntax-fail terminal claim; consume executed Flow
+edge:fragment_eval/inline_regions.rs:inline_child_arms->expr_contains_fail_call	E	review	C02	delete	remove syntax-fail terminal claim; consume executed Flow
+edge:resource_identity.rs:collect_if_region->source-selector-and-guard	E	review	C06	delete	remove source-derived selector/guard/partition inference; consume executed records
+edge:resource_identity.rs:collect_window_spans->collect_kind_partition_literals	E	review	C06	delete	remove source-derived selector/guard/partition inference; consume executed records
+field:analysis_db.rs:BoundHelperCallCacheKey.dot	K	R3b	C02	delete	disable legacy memo; certified HelperCacheKey introduced only at C08
+field:analysis_db.rs:BoundHelperCallCacheKey.root_slots	K	R3b	C02	delete	disable legacy memo; certified HelperCacheKey introduced only at C08
+field:analysis_db.rs:BoundHelperCallResolution.dot	S	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+field:analysis_db.rs:BoundHelperCallResolution.root_slots	S	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+field:analysis_db.rs:DotFrame.fragment	F	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+field:analysis_db.rs:DotFrame.helper	F	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+field:analysis_db.rs:IrAnalysisDb.bound_helper_calls	K	R3b	C02	delete	disable legacy memo; certified HelperCacheKey introduced only at C08
+field:analysis_db.rs:IrAnalysisDb.custom_merge_helpers	K	R3b	C07	retain-K	namespace/program-keyed shape classification cache; no deletion credit
+field:analysis_db.rs:IrAnalysisDb.nil_scrub_helpers	K	R3b	C07	retain-K	namespace/program-keyed shape classification cache; no deletion credit
+field:analysis_db.rs:IrAnalysisDb.static_root_fields	S	R3b	C04	delete	one render-tree State initial graph and context root references
+field:analysis_db.rs:ResolvedBoundHelperCall.resolution	S	R3b	C02	delete	same-executor helper/tpl frame with caller State
+field:bound_value_analysis.rs:BoundValueContext.slots	S	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+field:bound_value_analysis.rs:GetBinding.base	R	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+field:bound_value_analysis.rs:GetBindingPlan.binding	D	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+field:eval_effect.rs:Effects.local_default_paths	S	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+field:eval_effect.rs:Effects.local_output_meta	S	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+field:eval_effect.rs:Effects.local_set_mutations	F	R3b	C02	delete	heap updates with current value origins
+field:eval_effect.rs:Effects.local_source_paths	S	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+field:eval_effect.rs:Effects.member_host_conversions	F	R3b	C02	delete	heap updates with current value origins
+field:eval_effect.rs:Effects.root_writes	F	R3b	C02	delete	heap updates with current value origins
+field:eval_effect.rs:EvalResult.field_scalar_dispatches	F	R3b	C02	delete	value/query.rs borrowed views; no companion fact stores
+field:eval_effect.rs:EvalResult.json_payload_truth	F	R3b	C02	delete	value/query.rs borrowed views; no companion fact stores
 field:eval_effect.rs:EvalResult.proven_operands	F	R3b	C02	delete	evaluated operands, frozen decisions and universal flow query
-field:eval_effect.rs:EvalResult.scalar_dispatch	F	R3b	C01	delete	value/query.rs borrowed views; no companion fact stores
-field:eval_effect.rs:EvalResult.selection_reachability	F	R3b	C01	delete	value/query.rs borrowed views; no companion fact stores
-field:eval_effect.rs:EvalResult.truth	F	R3b	C01	delete	value/query.rs borrowed views; no companion fact stores
-field:eval_effect.rs:MemberHostConversion.path	R	R3b	C03	delete	heap updates with current value origins
+field:eval_effect.rs:EvalResult.scalar_dispatch	F	R3b	C02	delete	value/query.rs borrowed views; no companion fact stores
+field:eval_effect.rs:EvalResult.selection_reachability	F	R3b	C02	delete	value/query.rs borrowed views; no companion fact stores
+field:eval_effect.rs:EvalResult.truth	F	R3b	C02	delete	value/query.rs borrowed views; no companion fact stores
+field:eval_effect.rs:MemberHostConversion.path	R	R3b	C02	delete	heap updates with current value origins
 field:eval_effect.rs:ProvenOperand.condition	R	R3b	C02	delete	evaluated operands, frozen decisions and universal flow query
 field:eval_effect.rs:ProvenOperand.result	R	R3b	C02	delete	evaluated operands, frozen decisions and universal flow query
 field:eval_effect.rs:ProvenOperands.known	R	R3b	C02	delete	evaluated operands, frozen decisions and universal flow query
 field:eval_effect.rs:SelectionReachability.state	R	R3b	C02	delete	evaluated operands, frozen decisions and universal flow query
 field:eval_effect.rs:SelectionTruthReachability.when_false	F	R3b	C02	delete	evaluated operands, frozen decisions and universal flow query
 field:eval_effect.rs:SelectionTruthReachability.when_true	F	R3b	C02	delete	evaluated operands, frozen decisions and universal flow query
-field:eval_env.rs:EvalEnv.local_slots	F	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:eval_env.rs:EvalEnv.member_host_conversions	F	R3b	C03	delete	heap updates with current value origins
-field:eval_env.rs:EvalEnv.root_slots	F	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:expr_eval.rs:HelperArgBindings.scalar_dispatches	F	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:expr_eval.rs:HelperArgBindings.value	F	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:fragment_eval/control.rs:ControlHeaderTransition.after_scope	S	R3b	C06	delete	Flow exits, frozen iteration plan and value decisions
-field:fragment_eval/control.rs:ControlHeaderTransition.in_scope	S	R3b	C06	delete	Flow exits, frozen iteration plan and value decisions
-field:fragment_eval/control.rs:RangeIterationAlternative.items	F	R3b	C06	delete	Flow exits, frozen iteration plan and value decisions
-field:fragment_eval/control.rs:RangeIterationAlternative.truth	F	R3b	C06	delete	Flow exits, frozen iteration plan and value decisions
-field:fragment_eval/control.rs:RangeIterations.alternatives	F	R3b	C06	delete	Flow exits, frozen iteration plan and value decisions
-field:fragment_eval/control.rs:RootSetState.observed	S	R3b	C06	delete	Flow exits, frozen iteration plan and value decisions
-field:fragment_eval/control.rs:RootSetState.root	S	R3b	C06	delete	Flow exits, frozen iteration plan and value decisions
-field:fragment_eval/eval.rs:Contributions.loop_control	S	R3b	C06	delete	Flow exits, frozen iteration plan and value decisions
-field:fragment_eval/eval.rs:Interpreter.chart_defaults_observed	F	R3b	C03	delete	heap updates with current value origins
-field:fragment_eval/eval.rs:Interpreter.json_payload_truth_outputs	F	R3b	C08	delete	frozen in-walk text and executed site projection
-field:fragment_eval/eval.rs:Interpreter.member_host_conversions	F	R3b	C03	delete	heap updates with current value origins
-field:fragment_eval/eval.rs:Interpreter.root_slots	F	R3b	C05	delete	one render-tree State initial graph and context root references
-field:fragment_eval/eval.rs:Interpreter.root_value_dot	F	R3b	C05	delete	one render-tree State initial graph and context root references
-field:fragment_eval/eval.rs:Interpreter.root_writes	S	R3b	C03	delete	heap updates with current value origins
-field:fragment_eval/eval.rs:LoopControl.breaks	S	R3b	C06	delete	Flow exits, frozen iteration plan and value decisions
-field:fragment_eval/eval.rs:LoopControl.continues	S	R3b	C06	delete	Flow exits, frozen iteration plan and value decisions
-field:fragment_eval/summary.rs:DeferredScalarProjection.resolution	E	R3b	C07	delete	same-executor helper/tpl frame with caller State
-field:fragment_eval/summary.rs:DeferredScalarProjection.seen	E	R3b	C07	delete	same-executor helper/tpl frame with caller State
-field:fragment_eval/summary.rs:DeferredScalarProjection.structural	E	R3b	C07	delete	same-executor helper/tpl frame with caller State
-field:fragment_eval/summary.rs:FragmentSummary.chart_defaults	F	R3b	C03	delete	heap updates with current value origins
-field:fragment_eval/summary.rs:FragmentSummary.deferred_scalar_projection	E	R3b	C07	delete	same-executor helper/tpl frame with caller State
-field:fragment_eval/summary.rs:FragmentSummary.json_payload_truth	S	R3b	C08	delete	frozen in-walk text and executed site projection
-field:fragment_eval/summary.rs:FragmentSummary.member_host_conversions	F	R3b	C03	delete	heap updates with current value origins
-field:fragment_eval/summary.rs:FragmentSummary.root_writes	S	R3b	C03	delete	heap updates with current value origins
-field:fragment_eval/summary.rs:FragmentSummary.scalar_dispatch	K	R3b	C08	delete	frozen in-walk text and executed site projection
-field:fragment_eval/summary.rs:FragmentSummary.value	S	R3b	C08	delete	frozen in-walk text and executed site projection
-field:resource_identity.rs:HelperOutputEvaluator.seen	E	R3b	C08	delete	frozen in-walk text and executed site projection
-field:scalar_value.rs:ScalarValueDispatch.arms	R	R3b	C12	delete	Value decision DAG, typed leaves, heap fields and Origin
-field:symbolic_local_state/mod.rs:ControlOutcome.condition	S	R3b	C06	delete	Flow exits, frozen iteration plan and value decisions
-field:symbolic_local_state/mod.rs:ControlOutcome.state	S	R3b	C06	delete	Flow exits, frozen iteration plan and value decisions
-field:symbolic_local_state/mod.rs:ControlOutcome.truth	S	R3b	C06	delete	Flow exits, frozen iteration plan and value decisions
-field:symbolic_local_state/mod.rs:IntCastSource.path	R	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:symbolic_local_state/mod.rs:SymbolicLocalState.chart_value_defaults	F	R3b	C03	delete	heap updates with current value origins
-field:symbolic_local_state/mod.rs:SymbolicLocalState.scopes	S	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:symbolic_local_state/mod.rs:SymbolicLocalState.slots	F	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:value/mod.rs:LocalSlot.binding	F	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:value/mod.rs:LocalSlot.default_paths	F	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:value/mod.rs:LocalSlot.definite_range_member_value	F	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:value/mod.rs:LocalSlot.get_binding	F	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:value/mod.rs:LocalSlot.int_cast_source	F	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:value/mod.rs:LocalSlot.output_meta	F	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:value/mod.rs:LocalSlot.range_domain	F	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:value/mod.rs:LocalSlot.range_member_value	F	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:value/mod.rs:LocalSlot.scalar_dispatch	F	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:value/mod.rs:LocalSlot.truthiness_abstained	F	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:value/mod.rs:LocalSlot.truthiness_cleared	F	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:value/mod.rs:LocalSlot.truthy_reduction	F	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:value/mod.rs:LocalSlot.typeof_source	F	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:value/mod.rs:RootSlot.dispatch	F	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:value/mod.rs:RootSlot.truth	F	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:value/mod.rs:RootSlot.value	F	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:value_path_context/mod.rs:RangeSubject.influence_paths	F	R3b	C06	delete	Flow exits, frozen iteration plan and value decisions
-field:value_path_context/mod.rs:RangeSubject.input_identity	F	R3b	C06	delete	Flow exits, frozen iteration plan and value decisions
-field:value_path_context/mod.rs:RangeSubject.member_identity	F	R3b	C06	delete	Flow exits, frozen iteration plan and value decisions
-field:value_path_context/mod.rs:RangeSubject.member_value	F	R3b	C06	delete	Flow exits, frozen iteration plan and value decisions
-field:value_path_context/mod.rs:RangeSubject.output_meta	F	R3b	C06	delete	Flow exits, frozen iteration plan and value decisions
-field:value_path_context/mod.rs:RangeSubject.truth_reachability	F	R3b	C06	delete	Flow exits, frozen iteration plan and value decisions
-field:value_path_context/mod.rs:RangeSubject.value	F	R3b	C06	delete	Flow exits, frozen iteration plan and value decisions
-field:value_path_context/mod.rs:RangeSubject.value_alternatives	F	R3b	C06	delete	Flow exits, frozen iteration plan and value decisions
-field:value_path_context/mod.rs:RangeValueAlternative.condition	F	R3b	C06	delete	Flow exits, frozen iteration plan and value decisions
-field:value_path_context/mod.rs:RangeValueAlternative.value	F	R3b	C06	delete	Flow exits, frozen iteration plan and value decisions
-field:value_path_context/mod.rs:RangeValueAlternatives.known	F	R3b	C06	delete	Flow exits, frozen iteration plan and value decisions
-field:value_path_context/mod.rs:ValuePathContext.current_dot_fragment	S	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-field:value_path_context/mod.rs:ValuePathContext.eval_env	S	R3b	C04	delete	private Frame bindings, Origin, heap and argument Value
-fn:analysis_db.rs:classify_nil_scrub_helper	E	R3b	C11	retain-E	value/shape_summary.rs; exact named exception in design section 7
-fn:analysis_db.rs:classify_pair_merge_helper	E	R3b	C11	retain-E	value/shape_summary.rs; exact named exception in design section 7
-fn:analysis_db.rs:classify_parsed_map_list_merge_helper	E	R3b	C11	retain-E	value/shape_summary.rs; exact named exception in design section 7
-fn:analysis_db.rs:classify_typed_yaml_renderer	E	R3b	C11	retain-E	value/shape_summary.rs; exact named exception in design section 7
-fn:analysis_db.rs:program_wrapper_sentinels	E	R3b	C11	retain-E	value/shape_summary.rs; exact named exception in design section 7
+field:eval_env.rs:EvalEnv.local_slots	F	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+field:eval_env.rs:EvalEnv.member_host_conversions	F	R3b	C02	delete	heap updates with current value origins
+field:eval_env.rs:EvalEnv.root_slots	F	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+field:expr_eval.rs:HelperArgBindings.scalar_dispatches	F	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+field:expr_eval.rs:HelperArgBindings.value	F	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+field:fragment_eval/control.rs:ControlHeaderTransition.after_scope	S	R3b	C02	delete	Flow exits, frozen iteration plan and value decisions
+field:fragment_eval/control.rs:ControlHeaderTransition.in_scope	S	R3b	C02	delete	Flow exits, frozen iteration plan and value decisions
+field:fragment_eval/control.rs:RangeIterationAlternative.items	F	R3b	C02	delete	Flow exits, frozen iteration plan and value decisions
+field:fragment_eval/control.rs:RangeIterationAlternative.truth	F	R3b	C02	delete	Flow exits, frozen iteration plan and value decisions
+field:fragment_eval/control.rs:RangeIterations.alternatives	F	R3b	C02	delete	Flow exits, frozen iteration plan and value decisions
+field:fragment_eval/control.rs:RootSetState.observed	S	R3b	C02	delete	Flow exits, frozen iteration plan and value decisions
+field:fragment_eval/control.rs:RootSetState.root	S	R3b	C02	delete	Flow exits, frozen iteration plan and value decisions
+field:fragment_eval/eval.rs:Contributions.loop_control	S	R3b	C02	delete	Flow exits, frozen iteration plan and value decisions
+field:fragment_eval/eval.rs:Interpreter.chart_defaults_observed	F	R3b	C02	delete	heap updates with current value origins
+field:fragment_eval/eval.rs:Interpreter.json_payload_truth_outputs	F	R3b	C02	delete	frozen in-walk text and executed site projection
+field:fragment_eval/eval.rs:Interpreter.member_host_conversions	F	R3b	C02	delete	heap updates with current value origins
+field:fragment_eval/eval.rs:Interpreter.root_slots	F	R3b	C02	delete	one render-tree State initial graph and context root references
+field:fragment_eval/eval.rs:Interpreter.root_value_dot	F	R3b	C02	delete	one render-tree State initial graph and context root references
+field:fragment_eval/eval.rs:Interpreter.root_writes	S	R3b	C02	delete	heap updates with current value origins
+field:fragment_eval/eval.rs:LoopControl.breaks	S	R3b	C02	delete	Flow exits, frozen iteration plan and value decisions
+field:fragment_eval/eval.rs:LoopControl.continues	S	R3b	C02	delete	Flow exits, frozen iteration plan and value decisions
+field:fragment_eval/summary.rs:DeferredScalarProjection.resolution	E	R3b	C02	delete	same-executor helper/tpl frame with caller State
+field:fragment_eval/summary.rs:DeferredScalarProjection.seen	E	R3b	C02	delete	same-executor helper/tpl frame with caller State
+field:fragment_eval/summary.rs:DeferredScalarProjection.structural	E	R3b	C02	delete	same-executor helper/tpl frame with caller State
+field:fragment_eval/summary.rs:FragmentSummary.chart_defaults	F	R3b	C02	delete	heap updates with current value origins
+field:fragment_eval/summary.rs:FragmentSummary.deferred_scalar_projection	E	R3b	C02	delete	same-executor helper/tpl frame with caller State
+field:fragment_eval/summary.rs:FragmentSummary.json_payload_truth	S	R3b	C02	delete	frozen in-walk text and executed site projection
+field:fragment_eval/summary.rs:FragmentSummary.member_host_conversions	F	R3b	C02	delete	heap updates with current value origins
+field:fragment_eval/summary.rs:FragmentSummary.root_writes	S	R3b	C02	delete	heap updates with current value origins
+field:fragment_eval/summary.rs:FragmentSummary.scalar_dispatch	K	R3b	C02	delete	frozen in-walk text and executed site projection
+field:fragment_eval/summary.rs:FragmentSummary.value	S	R3b	C02	delete	frozen in-walk text and executed site projection
+field:resource_identity.rs:HelperOutputEvaluator.seen	E	R3b	C02	delete	frozen in-walk text and executed site projection
+field:scalar_value.rs:ScalarValueDispatch.arms	R	R3b	C09	delete	Value decision DAG, typed leaves, heap fields and Origin
+field:symbolic_local_state/mod.rs:ControlOutcome.condition	S	R3b	C02	delete	Flow exits, frozen iteration plan and value decisions
+field:symbolic_local_state/mod.rs:ControlOutcome.state	S	R3b	C02	delete	Flow exits, frozen iteration plan and value decisions
+field:symbolic_local_state/mod.rs:ControlOutcome.truth	S	R3b	C02	delete	Flow exits, frozen iteration plan and value decisions
+field:symbolic_local_state/mod.rs:IntCastSource.path	R	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+field:symbolic_local_state/mod.rs:SymbolicLocalState.chart_value_defaults	F	R3b	C02	delete	heap updates with current value origins
+field:symbolic_local_state/mod.rs:SymbolicLocalState.scopes	S	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+field:symbolic_local_state/mod.rs:SymbolicLocalState.slots	F	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+field:value/mod.rs:LocalSlot.binding	F	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+field:value/mod.rs:LocalSlot.default_paths	F	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+field:value/mod.rs:LocalSlot.definite_range_member_value	F	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+field:value/mod.rs:LocalSlot.get_binding	F	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+field:value/mod.rs:LocalSlot.int_cast_source	F	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+field:value/mod.rs:LocalSlot.output_meta	F	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+field:value/mod.rs:LocalSlot.range_domain	F	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+field:value/mod.rs:LocalSlot.range_member_value	F	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+field:value/mod.rs:LocalSlot.scalar_dispatch	F	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+field:value/mod.rs:LocalSlot.truthiness_abstained	F	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+field:value/mod.rs:LocalSlot.truthiness_cleared	F	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+field:value/mod.rs:LocalSlot.truthy_reduction	F	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+field:value/mod.rs:LocalSlot.typeof_source	F	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+field:value/mod.rs:RootSlot.dispatch	F	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+field:value/mod.rs:RootSlot.truth	F	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+field:value/mod.rs:RootSlot.value	F	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+field:value_path_context/mod.rs:RangeSubject.influence_paths	F	R3b	C02	delete	Flow exits, frozen iteration plan and value decisions
+field:value_path_context/mod.rs:RangeSubject.input_identity	F	R3b	C02	delete	Flow exits, frozen iteration plan and value decisions
+field:value_path_context/mod.rs:RangeSubject.member_identity	F	R3b	C02	delete	Flow exits, frozen iteration plan and value decisions
+field:value_path_context/mod.rs:RangeSubject.member_value	F	R3b	C02	delete	Flow exits, frozen iteration plan and value decisions
+field:value_path_context/mod.rs:RangeSubject.output_meta	F	R3b	C02	delete	Flow exits, frozen iteration plan and value decisions
+field:value_path_context/mod.rs:RangeSubject.truth_reachability	F	R3b	C02	delete	Flow exits, frozen iteration plan and value decisions
+field:value_path_context/mod.rs:RangeSubject.value	F	R3b	C02	delete	Flow exits, frozen iteration plan and value decisions
+field:value_path_context/mod.rs:RangeSubject.value_alternatives	F	R3b	C02	delete	Flow exits, frozen iteration plan and value decisions
+field:value_path_context/mod.rs:RangeValueAlternative.condition	F	R3b	C02	delete	Flow exits, frozen iteration plan and value decisions
+field:value_path_context/mod.rs:RangeValueAlternative.value	F	R3b	C02	delete	Flow exits, frozen iteration plan and value decisions
+field:value_path_context/mod.rs:RangeValueAlternatives.known	F	R3b	C02	delete	Flow exits, frozen iteration plan and value decisions
+field:value_path_context/mod.rs:ValuePathContext.current_dot_fragment	S	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+field:value_path_context/mod.rs:ValuePathContext.eval_env	S	R3b	C02	delete	private Frame bindings, Origin, heap and argument Value
+fn:analysis_db.rs:classify_nil_scrub_helper	E	R3b	C07	retain-E	private CertifiedSourcePlan applied only by value/invoke::complete; section 7
+fn:analysis_db.rs:classify_pair_merge_helper	E	R3b	C02	delete	same-executor body; delete lossy bound_helper_resolver consumer; any required-control regression blocks landing
+fn:analysis_db.rs:classify_parsed_map_list_merge_helper	E	R3b	C07	retain-E	private CertifiedSourcePlan applied only by value/invoke::complete; section 7
+fn:analysis_db.rs:classify_typed_yaml_renderer	E	R3b	C07	retain-E	private CertifiedSourcePlan applied only by value/invoke::complete; section 7
+fn:analysis_db.rs:program_wrapper_sentinels	E	R3b	C07	retain-E	private CertifiedSourcePlan applied only by value/invoke::complete; section 7
 fn:expr_call_eval/mod.rs:direct_quoted_falsy_pattern_condition	E	R3b	C02	delete	value/invoke.rs evaluates once; operations receive Operand
 fn:expr_call_eval/mod.rs:direct_stringified_dispatch	E	R3b	C02	delete	value/invoke.rs evaluates once; operations receive Operand
 fn:expr_call_eval/mod.rs:split_length_dispatch	E	R3b	C02	delete	value/invoke.rs evaluates once; operations receive Operand
@@ -117,56 +123,63 @@ fn:expr_call_eval/strict_operands.rs:record_strict_kind_operands	E	R3b	C02	delet
 fn:expr_call_eval/strict_operands.rs:record_strict_parser_invocation	E	R3b	C02	delete	value/invoke.rs evaluates once; operations receive Operand
 fn:expr_call_eval/strict_operands.rs:record_string_call_consumers	E	R3b	C02	delete	value/invoke.rs evaluates once; operations receive Operand
 fn:expr_call_eval/strict_operands.rs:string_invocation_operand_facts	E	R3b	C02	delete	value/invoke.rs evaluates once; operations receive Operand
-fn:expr_eval.rs:apply_local_set_mutations_expr	E	R3b	C03	delete	Heap::write at invocation; no effectful replay
-fn:fragment_eval/assignments.rs:apply_context_copy_value_mutations	E	R3b	C03	delete	Heap::write at invocation; no effectful replay
-fn:fragment_eval/files.rs:eval_static_template_program	E	R3b	C07	delete	same-executor helper/tpl frame with caller State
-fn:fragment_eval/summary.rs:bound_helper_interpreter	E	R3b	C07	delete	same-executor helper/tpl frame with caller State
-fn:fragment_eval/summary.rs:eval_bound_helper_fragment	E	R3b	C07	delete	same-executor helper/tpl frame with caller State
-fn:fragment_eval/summary.rs:evaluate	E	R3b	C07	delete	same-executor helper/tpl frame with caller State
-fn:helper_literal_dispatch.rs:helper_literal_dispatch	E	R3b	C08	delete	frozen in-walk text and executed site projection
-fn:resource_identity.rs:static_literal_outputs	E	R3b	C08	delete	frozen in-walk text and executed site projection
-fn:resource_identity.rs:with_helper_body	E	R3b	C08	delete	frozen in-walk text and executed site projection
-fn:static_file_template.rs:collect_template_requests_from_helper	E	R3b	C07	delete	same-executor helper/tpl frame with caller State
-fn:value_path_context/path_resolution.rs:resolved_values_paths_from_expr	E	R3b	C09	delete	executed Origin view or parser-only discovery
-needle:eval_env.rs:pub(crate) fn apply_local_set_mutations(	E	R3b	C03	delete	Heap::write at invocation; no effectful replay
-"needle:expr_call_eval/mod.rs:""required"" if matches!(args, [_, _]) => {"	E	R2	C09	delete	value/kinds.rs required_subject over evaluated operands
+fn:expr_eval.rs:apply_local_set_mutations_expr	E	R3b	C02	delete	Heap::write at invocation; no effectful replay
+fn:fragment_eval/assignments.rs:apply_context_copy_value_mutations	E	R3b	C02	delete	Heap::write at invocation; no effectful replay
+fn:fragment_eval/files.rs:eval_static_template_program	E	R3b	C02	delete	same-executor helper/tpl frame with caller State
+fn:fragment_eval/holes.rs:expr_contains_fail_call	E	review	C02	delete	executed Flow::Abort; source presence is not termination
+fn:fragment_eval/summary.rs:bound_helper_interpreter	E	R3b	C02	delete	same-executor helper/tpl frame with caller State
+fn:fragment_eval/summary.rs:eval_bound_helper_fragment	E	R3b	C02	delete	same-executor helper/tpl frame with caller State
+fn:fragment_eval/summary.rs:evaluate	E	R3b	C02	delete	same-executor helper/tpl frame with caller State
+fn:fragment_expr_eval/bound_helper_resolver.rs:custom_pair_merge_call	E	review	C02	delete	same-executor body; remove CustomMergeHelper::Pair and legacy consumer; no discarded overwrite policy
+fn:helper_literal_dispatch.rs:helper_literal_dispatch	E	R3b	C02	delete	frozen in-walk text and executed site projection
+fn:resource_identity.rs:branch_condition_header	E	review	C06	delete	executed frozen guard/output/origin record; source-only placement cannot produce semantics
+fn:resource_identity.rs:capability_ternary_body	E	review	C06	delete	executed frozen guard/output/origin record; source-only placement cannot produce semantics
+fn:resource_identity.rs:collect_kind_partition_literals	E	review	C06	delete	executed frozen guard/output/origin record; source-only placement cannot produce semantics
+fn:resource_identity.rs:kind_equality_selector	E	review	C06	delete	executed frozen guard/output/origin record; source-only placement cannot produce semantics
+fn:resource_identity.rs:static_literal_outputs	E	R3b	C02	delete	frozen in-walk text and executed site projection
+fn:resource_identity.rs:values_path_literal_comparison	E	review	C06	delete	executed frozen guard/output/origin record; source-only placement cannot produce semantics
+fn:resource_identity.rs:with_helper_body	E	R3b	C02	delete	frozen in-walk text and executed site projection
+fn:static_file_template.rs:collect_template_requests_from_helper	E	R3b	C02	delete	same-executor helper/tpl frame with caller State
+fn:value_path_context/path_resolution.rs:resolved_values_paths_from_expr	E	R3b	C03	delete	executed Origin view or parser-only discovery
+needle:eval_env.rs:pub(crate) fn apply_local_set_mutations(	E	R3b	C02	delete	Heap::write at invocation; no effectful replay
+"needle:expr_call_eval/mod.rs:""required"" if matches!(args, [_, _]) => {"	E	R2	C03	delete	value/kinds.rs required_subject over evaluated operands
 needle:expr_call_eval/mod.rs:fn scalar_pattern_condition(	E	R3b	C02	delete	value/invoke.rs evaluates once; operations receive Operand
-needle:expr_call_eval/root_mutation.rs:pub(super) fn root_set_literal_is_truthy(literal: &Literal) -> bool {	E	R3b	C03	delete	Heap::write at invocation; no effectful replay
-needle:expr_call_eval/root_mutation.rs:pub(super) fn root_set_predicate_any(predicates: Vec<Predicate>) -> Predicate {	E	R3b	C03	delete	Heap::write at invocation; no effectful replay
-needle:expr_call_eval/root_mutation.rs:pub(super) fn root_set_string_literal(expr: &TemplateExpr) -> Option<&str> {	E	R3b	C03	delete	Heap::write at invocation; no effectful replay
-needle:expr_call_eval/root_mutation.rs:pub(super) fn root_set_stringified_comparison(	E	R3b	C03	delete	Heap::write at invocation; no effectful replay
-needle:expr_call_eval/root_mutation.rs:pub(super) fn root_set_truthy_predicate(expr: &TemplateExpr, env: &EvalEnv) -> Option<Predicate> {	E	R3b	C03	delete	Heap::write at invocation; no effectful replay
-needle:fragment_eval/assignments.rs:pub(super) fn apply_helper_scope_set_mutations(&mut self, exprs: &[TemplateExpr]) -> bool {	E	R3b	C03	delete	Heap::write at invocation; no effectful replay
-needle:fragment_eval/eval.rs:pub(super) fn record_required_condition(&mut self, subject_path: &str) {	E	R2	C09	delete	value/kinds.rs required_subject over evaluated operands
-needle:fragment_eval/hole_effects.rs:pub(super) fn apply_root_set_mutations(	E	R3b	C03	delete	Heap::write at invocation; no effectful replay
-needle:fragment_eval/hole_effects.rs:pub(super) fn collect_required_subjects<'e>(	E	R2	C09	delete	value/kinds.rs required_subject over evaluated operands
-needle:fragment_eval/hole_effects.rs:pub(super) fn record_required_subjects(&mut self, exprs: &[TemplateExpr]) {	E	R2	C09	delete	value/kinds.rs required_subject over evaluated operands
-needle:fragment_eval/hole_effects.rs:pub(super) fn required_call_subjects(expr: &TemplateExpr) -> Vec<&TemplateExpr> {	E	R2	C09	delete	value/kinds.rs required_subject over evaluated operands
-needle:fragment_eval/hole_effects.rs:pub(super) fn subject_is_statically_helm_empty(expr: &TemplateExpr) -> bool {	E	R2	C09	delete	value/kinds.rs required_subject over evaluated operands
-needle:fragment_eval/summary.rs:fn scalar_dispatch_from_fragment(	E	R3b	C08	delete	frozen in-walk text and executed site projection
-needle:resource_identity.rs:pub(crate) struct HelperOutputEvaluator {	E	R3b	C08	delete	frozen in-walk text and executed site projection
-needle:value_path_context/path_resolution.rs:pub(crate) fn paths_for_expr(&self, expr: &TemplateExpr) -> BTreeSet<String> {	E	R3b	C09	delete	executed Origin view or parser-only discovery
-variant:abstract_value.rs:AbstractValue::Choice	R	R3b	C12	delete	Value decision DAG, typed leaves, heap fields and Origin
-variant:abstract_value.rs:AbstractValue::DerivedBoolean	R	R3b	C12	delete	Value decision DAG, typed leaves, heap fields and Origin
-variant:abstract_value.rs:AbstractValue::Dict	R	R3b	C12	delete	Value decision DAG, typed leaves, heap fields and Origin
-variant:abstract_value.rs:AbstractValue::FirstTruthy	R	R3b	C12	delete	Value decision DAG, typed leaves, heap fields and Origin
-variant:abstract_value.rs:AbstractValue::JsonDecodedPath	R	R3b	C12	delete	Value decision DAG, typed leaves, heap fields and Origin
-variant:abstract_value.rs:AbstractValue::KeysList	R	R3b	C12	delete	Value decision DAG, typed leaves, heap fields and Origin
-variant:abstract_value.rs:AbstractValue::List	R	R3b	C12	delete	Value decision DAG, typed leaves, heap fields and Origin
-variant:abstract_value.rs:AbstractValue::MergedLayers	R	R3b	C12	delete	Value decision DAG, typed leaves, heap fields and Origin
-variant:abstract_value.rs:AbstractValue::OutputPath	R	R3b	C12	delete	Value decision DAG, typed leaves, heap fields and Origin
-variant:abstract_value.rs:AbstractValue::Overlay	R	R3b	C12	delete	Value decision DAG, typed leaves, heap fields and Origin
-variant:abstract_value.rs:AbstractValue::RangeKey	R	R3b	C12	delete	Value decision DAG, typed leaves, heap fields and Origin
-variant:abstract_value.rs:AbstractValue::RootContext	R	R3b	C12	delete	Value decision DAG, typed leaves, heap fields and Origin
-variant:abstract_value.rs:AbstractValue::SplitList	R	R3b	C12	delete	Value decision DAG, typed leaves, heap fields and Origin
-variant:abstract_value.rs:AbstractValue::SplitSegment	R	R3b	C12	delete	Value decision DAG, typed leaves, heap fields and Origin
-variant:abstract_value.rs:AbstractValue::StringSet	R	R3b	C12	delete	Value decision DAG, typed leaves, heap fields and Origin
-variant:abstract_value.rs:AbstractValue::Top	R	R3b	C12	delete	Value decision DAG, typed leaves, heap fields and Origin
-variant:abstract_value.rs:AbstractValue::Unknown	R	R3b	C12	delete	Value decision DAG, typed leaves, heap fields and Origin
-variant:abstract_value.rs:AbstractValue::ValuesPath	R	R3b	C12	delete	Value decision DAG, typed leaves, heap fields and Origin
-variant:abstract_value.rs:AbstractValue::Widened	R	R3b	C12	delete	Value decision DAG, typed leaves, heap fields and Origin
-variant:abstract_value.rs:SelectionChainIdentities::Complete	R	R3b	C12	delete	Value decision DAG, typed leaves, heap fields and Origin
-variant:abstract_value.rs:SelectionChainIdentities::Prefix	R	R3b	C12	delete	Value decision DAG, typed leaves, heap fields and Origin
+needle:expr_call_eval/root_mutation.rs:pub(super) fn root_set_literal_is_truthy(literal: &Literal) -> bool {	E	R3b	C02	delete	Heap::write at invocation; no effectful replay
+needle:expr_call_eval/root_mutation.rs:pub(super) fn root_set_predicate_any(predicates: Vec<Predicate>) -> Predicate {	E	R3b	C02	delete	Heap::write at invocation; no effectful replay
+needle:expr_call_eval/root_mutation.rs:pub(super) fn root_set_string_literal(expr: &TemplateExpr) -> Option<&str> {	E	R3b	C02	delete	Heap::write at invocation; no effectful replay
+needle:expr_call_eval/root_mutation.rs:pub(super) fn root_set_stringified_comparison(	E	R3b	C02	delete	Heap::write at invocation; no effectful replay
+needle:expr_call_eval/root_mutation.rs:pub(super) fn root_set_truthy_predicate(expr: &TemplateExpr, env: &EvalEnv) -> Option<Predicate> {	E	R3b	C02	delete	Heap::write at invocation; no effectful replay
+needle:fragment_eval/assignments.rs:pub(super) fn apply_helper_scope_set_mutations(&mut self, exprs: &[TemplateExpr]) -> bool {	E	R3b	C02	delete	Heap::write at invocation; no effectful replay
+needle:fragment_eval/eval.rs:pub(super) fn record_required_condition(&mut self, subject_path: &str) {	E	R2	C03	delete	value/kinds.rs required_subject over evaluated operands
+needle:fragment_eval/hole_effects.rs:pub(super) fn apply_root_set_mutations(	E	R3b	C02	delete	Heap::write at invocation; no effectful replay
+needle:fragment_eval/hole_effects.rs:pub(super) fn collect_required_subjects<'e>(	E	R2	C03	delete	value/kinds.rs required_subject over evaluated operands
+needle:fragment_eval/hole_effects.rs:pub(super) fn record_required_subjects(&mut self, exprs: &[TemplateExpr]) {	E	R2	C03	delete	value/kinds.rs required_subject over evaluated operands
+needle:fragment_eval/hole_effects.rs:pub(super) fn required_call_subjects(expr: &TemplateExpr) -> Vec<&TemplateExpr> {	E	R2	C03	delete	value/kinds.rs required_subject over evaluated operands
+needle:fragment_eval/hole_effects.rs:pub(super) fn subject_is_statically_helm_empty(expr: &TemplateExpr) -> bool {	E	R2	C03	delete	value/kinds.rs required_subject over evaluated operands
+needle:fragment_eval/summary.rs:fn scalar_dispatch_from_fragment(	E	R3b	C02	delete	frozen in-walk text and executed site projection
+needle:resource_identity.rs:pub(crate) struct HelperOutputEvaluator {	E	R3b	C02	delete	frozen in-walk text and executed site projection
+needle:value_path_context/path_resolution.rs:pub(crate) fn paths_for_expr(&self, expr: &TemplateExpr) -> BTreeSet<String> {	E	R3b	C03	delete	executed Origin view or parser-only discovery
+variant:abstract_value.rs:AbstractValue::Choice	R	R3b	C09	delete	Value decision DAG, typed leaves, heap fields and Origin
+variant:abstract_value.rs:AbstractValue::DerivedBoolean	R	R3b	C09	delete	Value decision DAG, typed leaves, heap fields and Origin
+variant:abstract_value.rs:AbstractValue::Dict	R	R3b	C09	delete	Value decision DAG, typed leaves, heap fields and Origin
+variant:abstract_value.rs:AbstractValue::FirstTruthy	R	R3b	C09	delete	Value decision DAG, typed leaves, heap fields and Origin
+variant:abstract_value.rs:AbstractValue::JsonDecodedPath	R	R3b	C09	delete	Value decision DAG, typed leaves, heap fields and Origin
+variant:abstract_value.rs:AbstractValue::KeysList	R	R3b	C09	delete	Value decision DAG, typed leaves, heap fields and Origin
+variant:abstract_value.rs:AbstractValue::List	R	R3b	C09	delete	Value decision DAG, typed leaves, heap fields and Origin
+variant:abstract_value.rs:AbstractValue::MergedLayers	R	R3b	C09	delete	Value decision DAG, typed leaves, heap fields and Origin
+variant:abstract_value.rs:AbstractValue::OutputPath	R	R3b	C09	delete	Value decision DAG, typed leaves, heap fields and Origin
+variant:abstract_value.rs:AbstractValue::Overlay	R	R3b	C09	delete	Value decision DAG, typed leaves, heap fields and Origin
+variant:abstract_value.rs:AbstractValue::RangeKey	R	R3b	C09	delete	Value decision DAG, typed leaves, heap fields and Origin
+variant:abstract_value.rs:AbstractValue::RootContext	R	R3b	C09	delete	Value decision DAG, typed leaves, heap fields and Origin
+variant:abstract_value.rs:AbstractValue::SplitList	R	R3b	C09	delete	Value decision DAG, typed leaves, heap fields and Origin
+variant:abstract_value.rs:AbstractValue::SplitSegment	R	R3b	C09	delete	Value decision DAG, typed leaves, heap fields and Origin
+variant:abstract_value.rs:AbstractValue::StringSet	R	R3b	C09	delete	Value decision DAG, typed leaves, heap fields and Origin
+variant:abstract_value.rs:AbstractValue::Top	R	R3b	C09	delete	Value decision DAG, typed leaves, heap fields and Origin
+variant:abstract_value.rs:AbstractValue::Unknown	R	R3b	C09	delete	Value decision DAG, typed leaves, heap fields and Origin
+variant:abstract_value.rs:AbstractValue::ValuesPath	R	R3b	C09	delete	Value decision DAG, typed leaves, heap fields and Origin
+variant:abstract_value.rs:AbstractValue::Widened	R	R3b	C09	delete	Value decision DAG, typed leaves, heap fields and Origin
+variant:abstract_value.rs:SelectionChainIdentities::Complete	R	R3b	C09	delete	Value decision DAG, typed leaves, heap fields and Origin
+variant:abstract_value.rs:SelectionChainIdentities::Prefix	R	R3b	C09	delete	Value decision DAG, typed leaves, heap fields and Origin
 variant:eval_effect.rs:SelectionState::Approximate	R	R3b	C02	delete	evaluated operands, frozen decisions and universal flow query
 variant:eval_effect.rs:SelectionState::Exact	R	R3b	C02	delete	evaluated operands, frozen decisions and universal flow query
-variant:fragment_eval/summary.rs:StructuralDispatch::Known	E	R3b	C08	delete	frozen in-walk text and executed site projection
+variant:fragment_eval/summary.rs:StructuralDispatch::Known	E	R3b	C02	delete	frozen in-walk text and executed site projection
