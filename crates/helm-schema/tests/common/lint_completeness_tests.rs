@@ -41,6 +41,7 @@ fn screen_external(
                 defaults: json!({"enabled":false}),
             },
             annotation: None,
+            replay: Vec::new(),
         },
         false,
         roster,

@@ -66,11 +66,11 @@ use known_undecided_acceptances::{
 };
 
 use harness::{
-    ContractVerdict, ControlCategory, GuardSamplingStrategy, HelmChartDir, ProbeCoverage,
-    ProbeInstance, ProbeValuesFile, ProfileSchemas, SemanticControl, Transport, UnreachableProbe,
-    generate_profile_outputs, generate_profile_schemas, read_chart_schema_fixture,
-    read_coalesced_defaults, round_robin_base_probes, sparse_override,
-    sparse_override_for_composed, structural_probe_battery, structural_probe_battery_with_coverage,
+    ContractVerdict, ControlCategory, HelmChartDir, ProbeCoverage, ProbeInstance, ProbeValuesFile,
+    ProfileSchemas, SemanticControl, Transport, UnreachableProbe, generate_profile_outputs,
+    generate_profile_schemas, read_chart_schema_fixture, read_coalesced_defaults,
+    round_robin_base_probes, sparse_override, sparse_override_for_composed,
+    structural_probe_battery, structural_probe_battery_with_coverage, validate_probe_coverage,
 };
 
 // The roster's case matcher is this battery's own naming rule: the witness
@@ -548,62 +548,6 @@ fn known_undecided_acceptances_are_matched_exactly() -> eyre::Result<()> {
         probes: PROBES,
     }];
     assert!(validate_helm_adjudication_coverage(&coverage, &false_acceptances, &[]).is_err());
-    Ok(())
-}
-
-fn validate_probe_coverage(chart: &ProbeCoverage) -> eyre::Result<()> {
-    eyre::ensure!(
-        chart.base_emitted > 0,
-        "targeted probes consumed the base-probe budget: {chart:?}"
-    );
-    eyre::ensure!(
-        chart.base_dropped == 0,
-        "base probes were truncated: {chart:?}"
-    );
-    eyre::ensure!(
-        chart.third_level_dropped == 0,
-        "depth-three probes were truncated: {chart:?}"
-    );
-    eyre::ensure!(
-        chart.base_candidates == chart.base_emitted,
-        "base probe accounting mismatch: {chart:?}"
-    );
-    eyre::ensure!(
-        chart.third_level_candidates == chart.third_level_emitted,
-        "depth-three probe accounting mismatch: {chart:?}"
-    );
-    eyre::ensure!(
-        chart.guards_discovered == chart.guards_attempted + chart.guards_skipped_by_cap,
-        "guard accounting mismatch: {chart:?}"
-    );
-    eyre::ensure!(
-        chart.guards_attempted == chart.guard_pairs_emitted + chart.guards_without_witness_pair,
-        "guard witness accounting mismatch: {chart:?}"
-    );
-    eyre::ensure!(
-        chart.composite_targets
-            == chart.composite_pairs_emitted
-                + chart.composite_targets_without_payload
-                + chart.composite_pairs_dropped_by_cap,
-        "composite probe accounting mismatch: {chart:?}"
-    );
-    eyre::ensure!(
-        chart.guard_sampling_strategy == GuardSamplingStrategy::SchemaOrderPrefix,
-        "undisclosed guard sampling strategy: {chart:?}"
-    );
-    eyre::ensure!(chart.total_emitted > 0, "empty probe battery: {chart:?}");
-    // Reachable coverage floor: at least half of a chart's composed probes
-    // (rounded down) must be documents Helm composes. The known
-    // unreachable case is the single "all declared keys deleted" probe of a
-    // chart whose parent `global` reaches its dependencies.
-    let reachable = chart
-        .composed_probes
-        .saturating_sub(chart.unreachable_probes.len());
-    eyre::ensure!(
-        chart.unreachable_probes.len() <= chart.composed_probes
-            && reachable >= chart.composed_probes / 2,
-        "too few composed probes are reachable through a values file: {chart:?}"
-    );
     Ok(())
 }
 
@@ -1994,6 +1938,8 @@ fn round73_fixture_flips_are_adjudicated_and_probe_caps_are_disclosed() -> eyre:
         helm_adjudication,
         costs: _,
         pool: _,
+        witnesses: _,
+        adjudications: _,
     } = corpus_acceptance_comparison()?;
     let baseline_ref = baseline_ref()?;
     let report = ProbeCoverageReport {
@@ -2146,6 +2092,8 @@ fn round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced() -> eyre::
         helm_adjudication,
         costs,
         pool,
+        witnesses: _,
+        adjudications: _,
     } = corpus_acceptance_comparison()?;
     write_invocation_report(&costs, pool.as_ref())?;
     let baseline_ref = baseline_ref()?;
@@ -2257,6 +2205,7 @@ fn external_schema_pair_flips_are_helm_adjudicated() -> eyre::Result<()> {
             defaults,
         },
         annotation: None,
+        replay: Vec::new(),
     }];
     let config = battery_config(&charts)?;
     let comparison = compare_charts(charts, &config)?;
@@ -2403,6 +2352,7 @@ fn fixture_chart(
             candidate_path,
         },
         annotation,
+        replay: Vec::new(),
     }
 }
 
@@ -2432,6 +2382,7 @@ fn battery_config(charts: &[ComparedChart]) -> eyre::Result<ComparisonConfig> {
         kubernetes,
         contexts,
         pool: PoolLimits::from_env()?,
+        record_witnesses: false,
     })
 }
 

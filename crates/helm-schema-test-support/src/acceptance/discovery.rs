@@ -464,6 +464,13 @@ impl ProfileSchemas {
         Ok(())
     }
 
+    /// The document both schemas judge for `probe`: the defaults, the
+    /// defaults coalesced with a sparse override, or a coalesced document.
+    #[must_use]
+    pub fn composed(&self, probe: &ProbeInstance) -> Value {
+        self.compose(probe)
+    }
+
     fn compose(&self, probe: &ProbeInstance) -> Value {
         match probe {
             ProbeInstance::Defaults => self.defaults.clone(),
@@ -1432,4 +1439,66 @@ fn value_shape(value: &Value) -> &'static str {
         Value::Object(value) if value.is_empty() => "empty object",
         Value::Object(_) => "unknown object member",
     }
+}
+
+/// Checks a chart's probe battery for truncation, accounting gaps and the
+/// reachable-probe floor.
+///
+/// # Errors
+///
+/// Returns the first violated rule.
+pub fn validate_probe_coverage(chart: &ProbeCoverage) -> eyre::Result<()> {
+    eyre::ensure!(
+        chart.base_emitted > 0,
+        "targeted probes consumed the base-probe budget: {chart:?}"
+    );
+    eyre::ensure!(
+        chart.base_dropped == 0,
+        "base probes were truncated: {chart:?}"
+    );
+    eyre::ensure!(
+        chart.third_level_dropped == 0,
+        "depth-three probes were truncated: {chart:?}"
+    );
+    eyre::ensure!(
+        chart.base_candidates == chart.base_emitted,
+        "base probe accounting mismatch: {chart:?}"
+    );
+    eyre::ensure!(
+        chart.third_level_candidates == chart.third_level_emitted,
+        "depth-three probe accounting mismatch: {chart:?}"
+    );
+    eyre::ensure!(
+        chart.guards_discovered == chart.guards_attempted + chart.guards_skipped_by_cap,
+        "guard accounting mismatch: {chart:?}"
+    );
+    eyre::ensure!(
+        chart.guards_attempted == chart.guard_pairs_emitted + chart.guards_without_witness_pair,
+        "guard witness accounting mismatch: {chart:?}"
+    );
+    eyre::ensure!(
+        chart.composite_targets
+            == chart.composite_pairs_emitted
+                + chart.composite_targets_without_payload
+                + chart.composite_pairs_dropped_by_cap,
+        "composite probe accounting mismatch: {chart:?}"
+    );
+    eyre::ensure!(
+        chart.guard_sampling_strategy == GuardSamplingStrategy::SchemaOrderPrefix,
+        "undisclosed guard sampling strategy: {chart:?}"
+    );
+    eyre::ensure!(chart.total_emitted > 0, "empty probe battery: {chart:?}");
+    // Reachable coverage floor: at least half of a chart's composed probes
+    // (rounded down) must be documents Helm composes. The known
+    // unreachable case is the single "all declared keys deleted" probe of a
+    // chart whose parent `global` reaches its dependencies.
+    let reachable = chart
+        .composed_probes
+        .saturating_sub(chart.unreachable_probes.len());
+    eyre::ensure!(
+        chart.unreachable_probes.len() <= chart.composed_probes
+            && reachable >= chart.composed_probes / 2,
+        "too few composed probes are reachable through a values file: {chart:?}"
+    );
+    Ok(())
 }

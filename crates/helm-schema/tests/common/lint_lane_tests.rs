@@ -2226,6 +2226,7 @@ fn schema_only_lint(baseline_bytes: Vec<u8>, candidate: &Value) -> eyre::Result<
                 defaults: json!({"child": {"first": 1, "second": 2}}),
             },
             annotation: None,
+            replay: Vec::new(),
         },
         false,
         None,
