@@ -16,7 +16,7 @@ use crate::expr_eval::{HelperCallValueResolver, direct_values_path, eval_expr_wi
 use crate::scalar_value::{ScalarValueDispatch, TruthCondition, conjoin_predicates_with_memo};
 
 use crate::function_semantics::{
-    ArgumentEvaluationMode, CollectionShape, OutputSemantics, PredicateSemantics,
+    ArgumentEvaluationMode, CollectionShape, OutputBehavior, PredicateSemantics,
     ProvenanceBehavior, function_semantics, strict_collection_item_pattern,
 };
 
@@ -169,6 +169,19 @@ fn eval_invocation(
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
+    let success = function_semantics(invocation.function).success;
+    let mut result = eval_invocation_inner(invocation, env, resolver);
+    if let crate::function_semantics::SuccessType::Fixed(go_type) = success {
+        result.refine_go_type(go_type, env.predicate_memo.as_ref());
+    }
+    result
+}
+
+fn eval_invocation_inner(
+    invocation: CallInvocation<'_>,
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
     let CallInvocation {
         function,
         args,
@@ -183,7 +196,7 @@ fn eval_invocation(
     let operand_count = args.len() + usize::from(piped.is_some());
     match function {
         function
-            if function_semantics(function).output == OutputSemantics::NonEmptyString
+            if function_semantics(function).behavior == OutputBehavior::NonEmpty
                 && operand_count == 0 =>
         {
             return EvalResult::from_value_with_memo(
@@ -568,7 +581,7 @@ fn eval_direct_invocation(
         // an `include … | sha256sum` annotation's serialized placement
         // intact while the subject gains its strict-string contract.
         function
-            if function_semantics(function).output == OutputSemantics::Checksum
+            if function_semantics(function).behavior == OutputBehavior::Checksum
                 && args.len() == 1 =>
         {
             let mut result = eval_unknown_call(args, Effects::default(), env, resolver);
@@ -627,7 +640,7 @@ fn eval_direct_invocation(
         // about the raw operand's kind (a numeric string or junk that
         // coerces to zero all render); the result is derived numeric
         // content. Traefik's `goMemLimitPercentage` reaches `mulf` this way.
-        function if function_semantics(function).output == OutputSemantics::CoercingArithmetic => {
+        function if function_semantics(function).behavior == OutputBehavior::Arithmetic => {
             let mut result = eval_all_args(args, env, resolver);
             for arg in args {
                 let operand = eval_expr_with_helper_calls(arg, env, resolver);
@@ -879,7 +892,7 @@ fn eval_direct_invocation(
         }
         "regexSplit" if args.len() == 3 => eval_regex_split(args, env, resolver),
         function
-            if function_semantics(function).output == OutputSemantics::TotalNumericCast
+            if function_semantics(function).behavior == OutputBehavior::NumericCast
                 && args.len() == 1 =>
         {
             let result = eval_all_args(args, env, resolver);
@@ -901,7 +914,7 @@ fn eval_direct_invocation(
             let scalar_truth = args.last().and_then(|subject_expr| {
                 let subject = eval_expr_with_helper_calls(subject_expr, env, resolver);
                 let dispatch = subject
-                    .scalar_transport()
+                    .scalar_dispatch()
                     .cloned()
                     .or_else(|| direct_stringified_dispatch(subject_expr, env, resolver));
                 scalar_pattern_condition(function, args, dispatch.as_ref(), env).or_else(|| {
@@ -1057,7 +1070,7 @@ fn eval_piped_invocation(
         // strict-string contract (redis' sentinel
         // `coalesce … | sha256sum` lane).
         function
-            if function_semantics(function).output == OutputSemantics::Checksum
+            if function_semantics(function).behavior == OutputBehavior::Checksum
                 && args.is_empty() =>
         {
             // The digest shares no text or shape with its subject —
@@ -1076,7 +1089,7 @@ fn eval_piped_invocation(
             result
         }
         "printf" => {
-            let piped_dispatch = current.scalar_transport().cloned();
+            let piped_dispatch = current.scalar_dispatch().cloned();
             let piped_scalar = piped_dispatch
                 .as_ref()
                 .and_then(ScalarValueDispatch::constant_value);
@@ -1133,7 +1146,7 @@ fn eval_piped_invocation(
                 None => result,
             }
         }
-        function if function_semantics(function).output == OutputSemantics::TotalNumericCast => {
+        function if function_semantics(function).behavior == OutputBehavior::NumericCast => {
             let mut effects = current.effects;
             record_total_conversion_effects(
                 identity_value_paths(current.value.as_ref()),
@@ -1145,7 +1158,7 @@ fn eval_piped_invocation(
         // The piped operand and every explicit operand of a coercing
         // arithmetic stage are coerced before the computation: their raw
         // kinds are unconstrained (`… | mulf $percentage`).
-        function if function_semantics(function).output == OutputSemantics::CoercingArithmetic => {
+        function if function_semantics(function).behavior == OutputBehavior::Arithmetic => {
             let mut effects = current.effects;
             record_total_conversion_effects(
                 identity_value_paths(current.value.as_ref()),

@@ -11,7 +11,7 @@ use crate::eval_effect::{
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
 use crate::function_semantics::{
-    ArgumentEvaluationMode, OutputSemantics, PredicateSemantics, function_semantics,
+    ArgumentEvaluationMode, OutputBehavior, PredicateSemantics, function_semantics,
     type_is_schema_type,
 };
 use crate::scalar_value::{
@@ -147,7 +147,7 @@ fn eval_ternary_condition(
         ) => true,
         TemplateExpr::Call { function, .. } => {
             let semantics = function_semantics(function);
-            semantics.output == OutputSemantics::TotalNumericCast
+            semantics.behavior == OutputBehavior::NumericCast
                 || semantics.predicate == PredicateSemantics::TypeDescriptor
         }
         _ => false,
@@ -313,14 +313,7 @@ fn scalar_dispatch_type_is(
     };
     let mut complete = dispatch.complete;
     for (condition, value) in dispatch.arms() {
-        let value_truth = match value.legacy_type() {
-            crate::value::kinds::LegacyTypeView::Identity(path) => {
-                input_identity_type_is(path, schema_type, type_name, memo)
-            }
-            crate::value::kinds::LegacyTypeView::Schema(class) => {
-                TruthCondition::exact_with_memo(bool_predicate(class == schema_type), memo)
-            }
-        };
+        let value_truth = legacy_type_truth(value.legacy_type(), schema_type, type_name, memo);
         complete &= value_truth.predicate().is_some();
         if let Some(predicate) =
             conjoin_predicates_with_memo(condition.clone(), value_truth.when_true(), memo)
@@ -370,45 +363,33 @@ fn abstract_value_type_is(
     type_name: &str,
     memo: &PredicateMemo,
 ) -> TruthCondition {
-    match value {
-        AbstractValue::ValuesPath(path) => {
+    legacy_type_truth(value.legacy_type(), schema_type, type_name, memo)
+}
+
+fn legacy_type_truth(
+    view: crate::value::kinds::LegacyTypeView<'_>,
+    schema_type: &str,
+    type_name: &str,
+    memo: &PredicateMemo,
+) -> TruthCondition {
+    use crate::value::kinds::LegacyTypeView;
+    match view {
+        LegacyTypeView::Schema(class) => {
+            TruthCondition::exact_with_memo(bool_predicate(class == schema_type), memo)
+        }
+        LegacyTypeView::Identity(path) => {
             input_identity_type_is(path, schema_type, type_name, memo)
         }
-        AbstractValue::OutputPath(path, meta) if meta.is_input_identity() => {
-            input_identity_type_is(path, schema_type, type_name, memo)
-        }
-        AbstractValue::JsonDecodedPath(path) => {
+        LegacyTypeView::JsonDecoded(path) => {
             json_decoded_numeric_type_truth(&path.encode(), schema_type, type_name, memo)
         }
-        AbstractValue::OutputPath(path, meta) if meta.json_decoded => {
-            json_decoded_numeric_type_truth(&path.encode(), schema_type, type_name, memo)
-        }
-        AbstractValue::Dict(_)
-        | AbstractValue::Overlay { .. }
-        | AbstractValue::MergedLayers(_)
-        | AbstractValue::RootContext => {
-            TruthCondition::exact_with_memo(bool_predicate(schema_type == "object"), memo)
-        }
-        AbstractValue::List(_) | AbstractValue::KeysList(_) | AbstractValue::SplitList { .. } => {
-            TruthCondition::exact_with_memo(bool_predicate(schema_type == "array"), memo)
-        }
-        AbstractValue::StringSet(_) | AbstractValue::SplitSegment { .. } => {
-            TruthCondition::exact_with_memo(bool_predicate(schema_type == "string"), memo)
-        }
-        AbstractValue::DerivedBoolean(_) => {
-            TruthCondition::exact_with_memo(bool_predicate(schema_type == "boolean"), memo)
-        }
-        AbstractValue::Choice(choices) => {
+        LegacyTypeView::Alternatives(choices) => {
             type_is_for_alternatives(choices.iter(), schema_type, type_name, memo)
         }
-        AbstractValue::FirstTruthy(candidates) => {
+        LegacyTypeView::FirstTruthy(candidates) => {
             type_is_for_first_truthy(candidates, schema_type, type_name, memo)
         }
-        AbstractValue::Top
-        | AbstractValue::Unknown
-        | AbstractValue::RangeKey(_)
-        | AbstractValue::OutputPath(_, _)
-        | AbstractValue::Widened(_) => TruthCondition::Unknown,
+        LegacyTypeView::Unknown => TruthCondition::Unknown,
     }
 }
 

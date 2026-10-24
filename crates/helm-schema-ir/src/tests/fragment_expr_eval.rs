@@ -2311,7 +2311,7 @@ fn bound_helper_range_break_retains_scalar_candidate_selection() {
             lexical_escapes: BTreeSet::new(),
         }])
     };
-    let expected = ScalarValueDispatch::bind_content(
+    let mut expected = ScalarValueDispatch::bind_content(
         vec![
             (
                 Predicate::And(vec![invalid("fallback"), invalid("primary")]).normalize_boolean(),
@@ -2324,6 +2324,10 @@ fn bound_helper_range_break_retains_scalar_candidate_selection() {
             (present("primary"), rendered_identity("primary")),
         ],
         true,
+    );
+    expected.refine_type(
+        crate::value::kinds::GoType::String,
+        &helm_schema_core::PredicateMemo::new(),
     );
     sim_assert_eq!(
         have: result.scalar_transport().cloned(),

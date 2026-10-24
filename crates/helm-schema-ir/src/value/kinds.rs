@@ -165,6 +165,10 @@ impl ScalarValueDispatch {
 pub(crate) enum LegacyTypeView<'a> {
     Schema(&'static str),
     Identity(&'a helm_schema_core::ValuesPath),
+    JsonDecoded(&'a helm_schema_core::ValuesPath),
+    Alternatives(&'a std::collections::BTreeSet<crate::abstract_value::AbstractValue>),
+    FirstTruthy(&'a [crate::abstract_value::AbstractValue]),
+    Unknown,
 }
 
 impl ScalarContent {
@@ -182,5 +186,30 @@ impl ScalarContent {
             Self::Literal(GuardValue::Null) => "null",
             Self::Identity(path) => return LegacyTypeView::Identity(path),
         })
+    }
+}
+
+impl crate::abstract_value::AbstractValue {
+    pub(crate) fn legacy_type(&self) -> LegacyTypeView<'_> {
+        use LegacyTypeView::{Alternatives, FirstTruthy, Identity, JsonDecoded, Schema, Unknown};
+        match self {
+            Self::ValuesPath(path) => Identity(path),
+            Self::OutputPath(path, meta) if meta.is_input_identity() => Identity(path),
+            Self::JsonDecodedPath(path) => JsonDecoded(path),
+            Self::OutputPath(path, meta) if meta.json_decoded => JsonDecoded(path),
+            Self::Dict(_) | Self::Overlay { .. } | Self::MergedLayers(_) | Self::RootContext => {
+                Schema("object")
+            }
+            Self::List(_) | Self::KeysList(_) | Self::SplitList { .. } => Schema("array"),
+            Self::StringSet(_) | Self::SplitSegment { .. } => Schema("string"),
+            Self::DerivedBoolean(_) => Schema("boolean"),
+            Self::Choice(choices) => Alternatives(choices),
+            Self::FirstTruthy(candidates) => FirstTruthy(candidates),
+            Self::Top
+            | Self::Unknown
+            | Self::RangeKey(_)
+            | Self::OutputPath(_, _)
+            | Self::Widened(_) => Unknown,
+        }
     }
 }

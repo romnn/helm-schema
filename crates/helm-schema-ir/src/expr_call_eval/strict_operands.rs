@@ -167,7 +167,7 @@ pub(super) fn record_evaluated_string_call_consumers(
     output_operand_index: usize,
     effects: &mut Effects,
 ) -> (BTreeSet<String>, BTreeSet<String>) {
-    let indices = function_semantics(function).string_operand_indices(operands.len());
+    let indices = function_semantics(function).legacy_operand_indices(operands.len());
     let mut paths = BTreeSet::new();
     let mut range_key_paths = BTreeSet::new();
     let mut consumer_effects = Effects::default();
@@ -227,7 +227,7 @@ pub(super) fn string_invocation_operand_facts(
     let mut paths = BTreeSet::new();
     let mut range_key_paths = BTreeSet::new();
     for index in function_semantics(function)
-        .string_operand_indices(args.len() + usize::from(piped.is_some()))
+        .legacy_operand_indices(args.len() + usize::from(piped.is_some()))
     {
         if index == args.len() {
             if let Some(piped) = piped {
@@ -262,7 +262,7 @@ pub(super) fn record_string_call_consumers(
     resolver: &mut impl HelperCallValueResolver,
     effects: &mut Effects,
 ) {
-    for index in function_semantics(function).string_operand_indices(args.len()) {
+    for index in function_semantics(function).legacy_operand_indices(args.len()) {
         let Some(arg) = args.get(index) else {
             continue;
         };
