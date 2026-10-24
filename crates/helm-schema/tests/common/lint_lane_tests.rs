@@ -2197,6 +2197,90 @@ fn partial_override_audits_unchanged_rejection_and_balances_document_coverage() 
     Ok(())
 }
 
+/// Folds one chart's lint screen through the schema-only accounting.
+fn schema_only_lint_accounting(
+    baseline: &Value,
+    candidate: &Value,
+) -> eyre::Result<(super::ScreenedProbes, super::ProbeCoverage)> {
+    let chart = partial_override_chart()?;
+    let schemas = LintSchemas::compile(baseline, candidate, None)?;
+    let lint = screen(&ScreenRequest {
+        chart: chart.path(),
+        schemas: &schemas,
+        kubernetes_version: "1.29.0",
+        imported: &[],
+        roster_sha256: None,
+        available_probes: usize::MAX,
+    })?;
+    let mut screened = super::ScreenedProbes {
+        probes_checked: 0,
+        flips: Vec::new(),
+        failures: Vec::new(),
+        screened: Vec::new(),
+    };
+    let mut coverage = super::ProbeCoverage {
+        label: "partial-override-control".to_string(),
+        ..Default::default()
+    };
+    screened.append_lint(Ok(lint), &schemas, &mut coverage, false);
+    Ok((screened, coverage))
+}
+
+/// Schema-only mode cannot run the forced audit, and identical verdicts are no
+/// transition, so the audit is deferred to live mode instead of read as a flip.
+#[test]
+fn schema_only_defers_an_unchanged_forced_partial_override_audit() -> eyre::Result<()> {
+    let restrictive = json!({"properties": {"child": {"required": ["second"]}}});
+    let (screened, coverage) = schema_only_lint_accounting(&restrictive, &restrictive)?;
+    sim_assert_eq!(have: screened.flips, want: Vec::<String>::new());
+    let lint = coverage.lint.ok_or_eyre("lint coverage absent")?;
+    lint.validate()?;
+    sim_assert_eq!(
+        have: lint.deferred_live_audits,
+        want: vec![
+            "document=LintRaw transport=values-file kube=1.29.0 overlay={\"child\":{\"first\":1}}"
+                .to_string()
+        ]
+    );
+    Ok(())
+}
+
+/// A forced audit whose verdict or violations change is a transition and
+/// stays a flip, which schema-only mode cannot adjudicate.
+#[test]
+fn schema_only_keeps_a_changed_forced_partial_override_audit_as_a_flip() -> eyre::Result<()> {
+    let restrictive = json!({"properties": {"child": {"required": ["second"]}}});
+    let stricter = json!({"properties": {"child": {"required": ["second", "third"]}}});
+    for (baseline, candidate, verdicts) in [
+        (json!({}), restrictive.clone(), "before=true, after=false"),
+        (
+            restrictive.clone(),
+            stricter.clone(),
+            "before=false, after=false",
+        ),
+        // Both reject, but the candidate drops a reason: still a transition.
+        (stricter, restrictive, "before=false, after=false"),
+    ] {
+        let (screened, coverage) = schema_only_lint_accounting(&baseline, &candidate)?;
+        let lint = coverage.lint.ok_or_eyre("lint coverage absent")?;
+        sim_assert_eq!(have: lint.deferred_live_audits, want: Vec::<String>::new());
+        // The stricter pair also flips coalesced documents; only the raw audit is under test.
+        let raw: Vec<_> = screened
+            .flips
+            .into_iter()
+            .filter(|flip| flip.contains("document=LintRaw"))
+            .collect();
+        sim_assert_eq!(
+            have: raw,
+            want: vec![format!(
+                "partial-override-control: document=LintRaw transport=values-file kube=1.29.0 \
+                 overlay={{\"child\":{{\"first\":1}}}}: {verdicts}"
+            )]
+        );
+    }
+    Ok(())
+}
+
 #[test]
 fn partial_override_restriction_is_matched_only_when_schema_free_lint_rejects() -> eyre::Result<()>
 {
