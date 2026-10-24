@@ -14,7 +14,7 @@ use crate::fragment_expr_eval::{
     FragmentEvalContext, context_value_from_outer_expr, document_result_from_expr,
 };
 use crate::helper_meta::HelperOutputMeta;
-use crate::scalar_value::{ScalarRenderPart, ScalarValue, ScalarValueDispatch, TruthCondition};
+use crate::scalar_value::{ScalarContent, ScalarRenderPart, ScalarValueDispatch, TruthCondition};
 use test_util::prelude::sim_assert_eq;
 
 /// A context read outside any analysis has no shared memo; each such read
@@ -1134,9 +1134,7 @@ fn exact_helper_arm_survives_an_unmodeled_sibling_branch() {
 
     sim_assert_eq!(
         have: result.scalar_dispatch().and_then(ScalarValueDispatch::content).map(|dispatch| (
-            dispatch
-                .arms
-                .iter()
+            dispatch.arms()
                 .map(|(condition, value)| (condition.clone(), value.clone()))
                 .collect::<Vec<_>>(),
             dispatch.complete,
@@ -1144,7 +1142,7 @@ fn exact_helper_arm_survives_an_unmodeled_sibling_branch() {
         want: Some((
             vec![(
                 Predicate::truthy_path("feature.enabled"),
-                ScalarValue::Rendered(vec![ScalarRenderPart::Text("enabled".to_string())]),
+                ScalarContent::Rendered(vec![ScalarRenderPart::Text("enabled".to_string())]),
             )],
             false,
         )),
@@ -2307,7 +2305,7 @@ fn bound_helper_range_break_retains_scalar_candidate_selection() {
     };
     let present = |path: &str| Predicate::Not(Box::new(invalid(path))).normalize_boolean();
     let rendered_identity = |path: &str| {
-        ScalarValue::Rendered(vec![ScalarRenderPart::Identity {
+        ScalarContent::Rendered(vec![ScalarRenderPart::Identity {
             path: helm_schema_core::ValuesPath::parse(path),
             stringified: true,
             lexical_escapes: BTreeSet::new(),
@@ -2317,7 +2315,7 @@ fn bound_helper_range_break_retains_scalar_candidate_selection() {
         vec![
             (
                 Predicate::And(vec![invalid("fallback"), invalid("primary")]).normalize_boolean(),
-                ScalarValue::Rendered(vec![ScalarRenderPart::Text(String::new())]),
+                ScalarContent::Rendered(vec![ScalarRenderPart::Text(String::new())]),
             ),
             (
                 Predicate::And(vec![present("fallback"), invalid("primary")]).normalize_boolean(),
@@ -2328,7 +2326,7 @@ fn bound_helper_range_break_retains_scalar_candidate_selection() {
         true,
     );
     sim_assert_eq!(
-        have: result.scalar_dispatch().cloned(),
+        have: result.scalar_transport().cloned(),
         want: Some(expected)
     );
 }
@@ -2683,12 +2681,12 @@ fn overlapping_unknown_arm_abstains_from_the_helper_dispatch_for_good() {
     let kyverno = summarize("kyverno.namespace");
     let dispatch = kyverno.summary.scalar_dispatch(&analysis_db).cloned();
     sim_assert_eq!(
-        have: dispatch.as_ref().and_then(ScalarValueDispatch::content).map(|dispatch| (dispatch.complete, dispatch.arms.len())),
+        have: dispatch.as_ref().and_then(ScalarValueDispatch::content).map(|dispatch| (dispatch.complete, dispatch.arms().count())),
         want: Some((false, 1)),
         "the head's exact arm survives beside the omitted tail: {dispatch:#?}"
     );
     sim_assert_eq!(
-        have: dispatch.as_ref().and_then(ScalarValueDispatch::content).and_then(|content| content.arms.first().map(|(condition, _)| condition.clone())),
+        have: dispatch.as_ref().and_then(ScalarValueDispatch::content).and_then(|content| content.arms().next().map(|(condition, _)| condition.clone())),
         want: Some(Predicate::truthy_path("namespaceOverride")),
     );
 }

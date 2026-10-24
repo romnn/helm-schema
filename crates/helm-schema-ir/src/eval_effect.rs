@@ -1345,6 +1345,11 @@ impl EvalResult {
 
     #[cfg(test)]
     pub(crate) fn set_scalar_dispatch(&mut self, dispatch: ScalarValueDispatch) {
+        if dispatch.content().is_none() {
+            self.scalar_dispatch = Some(dispatch);
+            return;
+        }
+
         self.selection_reachability = Some(SelectionReachability::from((
             &dispatch,
             SelectionPolarity::Truthy,
@@ -1358,6 +1363,11 @@ impl EvalResult {
         dispatch: ScalarValueDispatch,
         memo: &helm_schema_core::PredicateMemo,
     ) {
+        if dispatch.content().is_none() {
+            self.scalar_dispatch = Some(dispatch);
+            return;
+        }
+
         self.selection_reachability = Some(SelectionReachability::from_dispatch_with_memo(
             &dispatch,
             SelectionPolarity::Truthy,
@@ -1472,7 +1482,24 @@ fn truth_for_value_with_memo(
 
 impl EvalResult {
     pub(crate) fn scalar_dispatch(&self) -> Option<&ScalarValueDispatch> {
+        self.scalar_dispatch
+            .as_ref()
+            .filter(|dispatch| dispatch.content().is_some())
+    }
+
+    pub(crate) fn scalar_transport(&self) -> Option<&ScalarValueDispatch> {
         self.scalar_dispatch.as_ref()
+    }
+
+    pub(crate) fn refine_go_type(
+        &mut self,
+        go_type: crate::value::kinds::GoType,
+        memo: &helm_schema_core::PredicateMemo,
+    ) {
+        match &mut self.scalar_dispatch {
+            Some(dispatch) => dispatch.refine_type(go_type, memo),
+            None => self.scalar_dispatch = Some(ScalarValueDispatch::typed(go_type)),
+        }
     }
 
     pub(crate) fn clear_scalar_dispatch(&mut self) {

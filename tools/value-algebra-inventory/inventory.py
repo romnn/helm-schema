@@ -6,7 +6,7 @@ Candidates (enumerated with ast-grep over crates/helm-schema-ir/src, tests exclu
            carriers (BASE) under "a struct, enum or alias whose body names a semantic type", so new
            wrappers, aliases and variants are enumerated, never silently skipped.
   variant: enum variants whose payload names a semantic type, plus every variant of AbstractValue and
-           ScalarValue.
+           ScalarValue, ScalarContent and GoType.
   alias:   type aliases whose target names a semantic type.
   fn:      functions that evaluate syntax or helper bodies (eval_expr*, parsed_helper_body,
            Interpreter::for_source/with_body_facts).
@@ -39,7 +39,7 @@ HERE = ROOT / "plan/value-algebra-r0-inventory"
 SRC = "crates/helm-schema-ir/src"
 BASE = {"Predicate", "TruthCondition", "ScalarValueDispatch", "ScalarValue", "AbstractValue", "ValuesPath",
         "HelperOutputMeta", "GoType"}
-ALL_VARIANTS = {"AbstractValue", "ScalarValue"}
+ALL_VARIANTS = {"AbstractValue", "ScalarValue", "ScalarContent", "GoType"}
 # Semantic landings use the admission ratchet rather than consolidation-only producer counts.
 SEMANTIC_STAGES = {"R2"}
 REEXEC = (r"^(crate::expr_eval::)?(eval_expr|eval_expr_with_helper_calls|eval_expr_with_[a-z_]+)\(|"

@@ -89,11 +89,13 @@ impl SymbolicLocalState {
         }
         for variable in variables {
             if let Some(entry_dispatch) = entry.slot(variable).scalar_dispatch.as_ref()
-                && outcomes.iter().all(|(_, state)| {
-                    state.slot(variable).scalar_dispatch.as_ref() == Some(entry_dispatch)
-                })
+                && let Some(dispatches) = outcomes
+                    .iter()
+                    .map(|(_, state)| state.slot(variable).scalar_dispatch.as_ref())
+                    .collect::<Option<Vec<_>>>()
+                && let Some(joined) = entry_dispatch.join_equal_content(dispatches)
             {
-                self.slot_mut(variable).scalar_dispatch = Some(entry_dispatch.clone());
+                self.slot_mut(variable).scalar_dispatch = Some(joined);
                 continue;
             }
             let mut dispatch_arms = Vec::new();
@@ -117,19 +119,32 @@ impl SymbolicLocalState {
                         memo,
                     ) {
                         dispatch_arms.push((condition, value.clone()));
-                        if dispatch_arms.len() > MAX_JOINED_SCALAR_ARMS {
+                        if dispatch_arms
+                            .iter()
+                            .filter(|(_, value)| value.content.is_some())
+                            .count()
+                            > MAX_JOINED_SCALAR_ARMS
+                        {
                             break 'outcomes;
                         }
                     }
                 }
             }
-            if dispatch_arms.is_empty() || dispatch_arms.len() > MAX_JOINED_SCALAR_ARMS {
+            if dispatch_arms.is_empty()
+                || dispatch_arms
+                    .iter()
+                    .filter(|(_, value)| value.content.is_some())
+                    .count()
+                    > MAX_JOINED_SCALAR_ARMS
+            {
                 continue;
             }
-            self.slot_mut(variable).scalar_dispatch = Some(ScalarValueDispatch {
+            let mut dispatch = ScalarValueDispatch {
                 arms: dispatch_arms,
                 complete,
-            });
+            };
+            dispatch.bound_type_arms();
+            self.slot_mut(variable).scalar_dispatch = Some(dispatch);
         }
     }
 

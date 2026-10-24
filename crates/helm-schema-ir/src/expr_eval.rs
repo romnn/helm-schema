@@ -276,19 +276,10 @@ pub(crate) fn eval_expr_with_helper_calls(
         TemplateExpr::Variable(var) if !var.is_empty() => {
             if let Some(binding) = env.locals.get(var) {
                 local_binding_result(var, binding, env)
-            } else if let Some(dispatch) = local_scalar_dispatch(var, env) {
-                EvalResult::none()
-                    .with_scalar_dispatch_with_memo(dispatch.clone(), env.predicate_memo.as_ref())
-            } else if let Some(predicate) = env
-                .local_slots
-                .variable_slots(var)
-                .into_iter()
-                .find_map(|slot| slot.truthy_reduction.as_ref())
-            {
-                EvalResult::none()
-                    .with_truth_with_memo(predicate.clone(), env.predicate_memo.as_ref())
             } else {
-                EvalResult::none()
+                let mut result = EvalResult::none();
+                attach_local_scalar_facts(&mut result, var, env);
+                result
             }
         }
         TemplateExpr::Selector { operand, path } => {
@@ -398,12 +389,16 @@ fn static_semver_numeric_selector(
         _ => return None,
     };
     let component = i64::try_from(component).ok()?;
-    Some(
-        EvalResult::with_effects(None, version.effects).with_scalar_dispatch_with_memo(
+    let mut result = EvalResult::with_effects(None, version.effects)
+        .with_scalar_dispatch_with_memo(
             ScalarValueDispatch::constant(helm_schema_core::GuardValue::Int(component)),
             env.predicate_memo.as_ref(),
-        ),
-    )
+        );
+    result.refine_go_type(
+        crate::value::kinds::GoType::Uint64,
+        env.predicate_memo.as_ref(),
+    );
+    Some(result)
 }
 
 /// Evaluate `.Values`-rooted selector segments (the part after `Values`),
@@ -861,29 +856,33 @@ fn local_value_result(
         }
     }
     if selected_paths.is_none() {
-        if let Some(dispatch) = local_scalar_dispatch(var, env) {
-            result.set_scalar_dispatch_with_memo(dispatch.clone(), env.predicate_memo.as_ref());
-        } else if let Some(predicate) = env
-            .local_slots
-            .variable_slots(var)
-            .into_iter()
-            .find_map(|slot| slot.truthy_reduction.as_ref())
-        {
-            result.set_truth_condition_with_memo(
-                TruthCondition::exact_with_memo(predicate.clone(), env.predicate_memo.as_ref()),
-                crate::eval_effect::SelectionTruthSource::RenderedScalar,
-                env.predicate_memo.as_ref(),
-            );
-        }
+        attach_local_scalar_facts(&mut result, var, env);
     }
     result
 }
 
-fn local_scalar_dispatch<'a>(var: &str, env: &'a EvalEnv) -> Option<&'a ScalarValueDispatch> {
-    env.local_slots
-        .variable_slots(var)
-        .into_iter()
-        .find_map(|slot| slot.scalar_dispatch.as_ref())
+fn attach_local_scalar_facts(result: &mut EvalResult, var: &str, env: &EvalEnv) {
+    let slots = env.local_slots.variable_slots(var);
+    let dispatch = slots
+        .iter()
+        .find_map(|slot| {
+            slot.scalar_dispatch
+                .as_ref()
+                .filter(|dispatch| dispatch.content().is_some())
+        })
+        .or_else(|| slots.iter().find_map(|slot| slot.scalar_dispatch.as_ref()));
+    if dispatch.is_none_or(|dispatch| dispatch.content().is_none())
+        && let Some(predicate) = slots.iter().find_map(|slot| slot.truthy_reduction.as_ref())
+    {
+        result.set_truth_condition_with_memo(
+            TruthCondition::exact_with_memo(predicate.clone(), env.predicate_memo.as_ref()),
+            crate::eval_effect::SelectionTruthSource::RenderedScalar,
+            env.predicate_memo.as_ref(),
+        );
+    }
+    if let Some(dispatch) = dispatch {
+        result.set_scalar_dispatch_with_memo(dispatch.clone(), env.predicate_memo.as_ref());
+    }
 }
 
 fn literal_result(literal: &Literal, env: &EvalEnv) -> EvalResult {
@@ -917,13 +916,23 @@ fn literal_result(literal: &Literal, env: &EvalEnv) -> EvalResult {
         Literal::Nil => Some(helm_schema_core::GuardValue::Null),
         Literal::Float(_) => None,
     };
-    match scalar {
+    let mut result = match scalar {
         Some(scalar) => result.with_scalar_dispatch_with_memo(
             ScalarValueDispatch::constant(scalar),
             env.predicate_memo.as_ref(),
         ),
         None => result,
-    }
+    };
+    use crate::value::kinds::GoType;
+    let go_type = match literal {
+        Literal::String(_) | Literal::RawString(_) => GoType::String,
+        Literal::Bool(_) => GoType::Bool,
+        Literal::Int(_) => GoType::Int,
+        Literal::Float(_) => GoType::Float64,
+        Literal::Nil => GoType::Nil,
+    };
+    result.refine_go_type(go_type, env.predicate_memo.as_ref());
+    result
 }
 
 fn attach_root_field_semantics(result: &mut EvalResult, path: &[String], env: &EvalEnv) {
@@ -943,14 +952,21 @@ fn attach_named_root_field_semantics(result: &mut EvalResult, field: &str, env: 
     let Some(slot) = env.root_slots.get(field) else {
         return;
     };
-    if let Some(dispatch) = &slot.binding().dispatch {
-        result.set_scalar_dispatch_with_memo(dispatch.clone(), env.predicate_memo.as_ref());
-    } else if let Some(predicate) = &slot.binding().truth {
+    let view = slot.binding();
+    if view
+        .dispatch
+        .as_ref()
+        .is_none_or(|dispatch| dispatch.content().is_none())
+        && let Some(predicate) = view.truth
+    {
         result.set_truth_condition_with_memo(
             TruthCondition::exact_with_memo(predicate.clone(), env.predicate_memo.as_ref()),
             crate::eval_effect::SelectionTruthSource::RenderedScalar,
             env.predicate_memo.as_ref(),
         );
+    }
+    if let Some(dispatch) = view.dispatch {
+        result.set_scalar_dispatch_with_memo(dispatch.clone(), env.predicate_memo.as_ref());
     }
 }
 

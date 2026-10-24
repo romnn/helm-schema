@@ -29,7 +29,7 @@ pub(super) fn eval_default(
 ) -> EvalResult {
     let memo = env.predicate_memo.as_ref();
     let primary_selection = primary.clone();
-    let primary_dispatch = primary.scalar_dispatch().cloned();
+    let primary_dispatch = primary.scalar_transport().cloned();
     let fallback_reachability = default_primary_selection_with_memo(&primary, memo);
     let primary_reachability = fallback_reachability.complement_with_memo(memo);
     let primary_paths = identity_value_paths(primary.value.as_ref());
@@ -84,7 +84,7 @@ pub(super) fn eval_default(
             "default fallback after opaque primary",
             primary_paths.clone(),
         );
-        fallback_dispatch = result.scalar_dispatch().cloned();
+        fallback_dispatch = result.scalar_transport().cloned();
         fallback_paths.extend(identity_value_paths(result.value.as_ref()));
         effects.merge(result.effects);
         values.push(result.value.unwrap_or(AbstractValue::Unknown));
@@ -522,7 +522,7 @@ pub(super) fn eval_coalesce(
                 env.predicate_memo.as_ref(),
             )
         });
-        candidate_dispatches.push(result.scalar_dispatch().cloned());
+        candidate_dispatches.push(result.scalar_transport().cloned());
         candidates.push((result, reachability));
     }
     // `coalesce` selects only non-empty candidates. Downstream strict consumers therefore see

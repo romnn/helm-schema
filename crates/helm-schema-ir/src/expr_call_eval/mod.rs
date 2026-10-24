@@ -901,7 +901,7 @@ fn eval_direct_invocation(
             let scalar_truth = args.last().and_then(|subject_expr| {
                 let subject = eval_expr_with_helper_calls(subject_expr, env, resolver);
                 let dispatch = subject
-                    .scalar_dispatch()
+                    .scalar_transport()
                     .cloned()
                     .or_else(|| direct_stringified_dispatch(subject_expr, env, resolver));
                 scalar_pattern_condition(function, args, dispatch.as_ref(), env).or_else(|| {
@@ -1076,7 +1076,7 @@ fn eval_piped_invocation(
             result
         }
         "printf" => {
-            let piped_dispatch = current.scalar_dispatch().cloned();
+            let piped_dispatch = current.scalar_transport().cloned();
             let piped_scalar = piped_dispatch
                 .as_ref()
                 .and_then(ScalarValueDispatch::constant_value);

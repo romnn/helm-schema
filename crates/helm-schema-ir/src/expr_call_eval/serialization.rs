@@ -54,7 +54,7 @@ pub(super) fn eval_printf(
                 .scalar_dispatch()
                 .and_then(crate::scalar_value::ScalarValueDispatch::constant_value),
         );
-        scalar_dispatches.push(result.scalar_dispatch().cloned());
+        scalar_dispatches.push(result.scalar_transport().cloned());
         let identity_paths = identity_value_paths(result.value.as_ref());
         let plain_slot_format_paths = if token_initial_string_argument == Some(index) {
             identity_paths
@@ -910,7 +910,7 @@ pub(super) fn eval_trim_affix(
             return subject;
         }
     };
-    let subject_dispatch = subject.scalar_dispatch().cloned();
+    let subject_dispatch = subject.scalar_transport().cloned();
     let subject_effects = subject.effects.clone();
     let mut operands = [affix, subject];
     let mut effects = Effects::default();

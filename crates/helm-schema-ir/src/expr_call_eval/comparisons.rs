@@ -1,7 +1,7 @@
 use std::collections::BTreeSet;
 
 use helm_schema_ast::{Literal, TemplateExpr};
-use helm_schema_core::{Guard, GuardValue, Predicate, PredicateMemo};
+use helm_schema_core::{Guard, Predicate, PredicateMemo};
 
 use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{
@@ -15,7 +15,7 @@ use crate::function_semantics::{
     type_is_schema_type,
 };
 use crate::scalar_value::{
-    ScalarValue, ScalarValueDispatch, TruthCondition, any_predicates_with_memo, bool_predicate,
+    ScalarValueDispatch, TruthCondition, any_predicates_with_memo, bool_predicate,
     conjoin_predicates_with_memo,
 };
 
@@ -81,7 +81,7 @@ pub(super) fn eval_ternary(
             }
         }
         if index < 2 {
-            scalar_dispatches.push(result.scalar_dispatch().cloned());
+            scalar_dispatches.push(result.scalar_transport().cloned());
             if let Some(value) = result.value {
                 values.push(value);
             }
@@ -312,8 +312,15 @@ fn scalar_dispatch_type_is(
         return TruthCondition::Unknown;
     };
     let mut complete = dispatch.complete;
-    for (condition, value) in dispatch.arms {
-        let value_truth = scalar_value_type_is(value, schema_type, type_name, memo);
+    for (condition, value) in dispatch.arms() {
+        let value_truth = match value.legacy_type() {
+            crate::value::kinds::LegacyTypeView::Identity(path) => {
+                input_identity_type_is(path, schema_type, type_name, memo)
+            }
+            crate::value::kinds::LegacyTypeView::Schema(class) => {
+                TruthCondition::exact_with_memo(bool_predicate(class == schema_type), memo)
+            }
+        };
         complete &= value_truth.predicate().is_some();
         if let Some(predicate) =
             conjoin_predicates_with_memo(condition.clone(), value_truth.when_true(), memo)
@@ -334,27 +341,6 @@ fn scalar_dispatch_type_is(
         complete,
         memo,
     )
-}
-
-fn scalar_value_type_is(
-    value: &ScalarValue,
-    schema_type: &str,
-    type_name: &str,
-    memo: &PredicateMemo,
-) -> TruthCondition {
-    match value {
-        ScalarValue::Literal(value) => TruthCondition::exact_with_memo(
-            bool_predicate(guard_value_schema_type(value) == schema_type),
-            memo,
-        ),
-        ScalarValue::Identity(path) => input_identity_type_is(path, schema_type, type_name, memo),
-        ScalarValue::Rendered(_) | ScalarValue::PrintfStringIdentity(_) => {
-            TruthCondition::exact_with_memo(bool_predicate(schema_type == "string"), memo)
-        }
-        ScalarValue::SplitLength { .. } | ScalarValue::Length(_) => {
-            TruthCondition::exact_with_memo(bool_predicate(schema_type == "integer"), memo)
-        }
-    }
 }
 
 fn input_identity_type_is(
@@ -557,16 +543,6 @@ fn json_decoded_numeric_type_truth(
             }),
             memo,
         ),
-    }
-}
-
-fn guard_value_schema_type(value: &GuardValue) -> &'static str {
-    match value {
-        GuardValue::String(_) => "string",
-        GuardValue::Bool(_) => "boolean",
-        GuardValue::Int(_) => "integer",
-        GuardValue::Float(_) => "number",
-        GuardValue::Null => "null",
     }
 }
 

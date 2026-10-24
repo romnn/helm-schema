@@ -8,7 +8,7 @@ use crate::abstract_value::AbstractValue;
 use crate::eval_effect::EvalResult;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
-use crate::scalar_value::{ScalarValue, ScalarValueDispatch};
+use crate::scalar_value::{ScalarContent, ScalarValueDispatch};
 
 struct StaticResolver;
 
@@ -27,7 +27,7 @@ impl HelperCallValueResolver for StaticResolver {
                 ScalarValueDispatch::bind_content(
                     vec![(
                         Predicate::truthy_path("feature.gate"),
-                        ScalarValue::Literal(GuardValue::string("true")),
+                        ScalarContent::Literal(GuardValue::string("true")),
                     )],
                     false,
                 ),

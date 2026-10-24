@@ -52,7 +52,7 @@ fn default_retains_an_explicit_unknown_primary() -> eyre::Result<()> {
     );
     // The primary's runtime value is a `%q` rendering, not the raw path, so
     // the selection has no modeled scalar to dispatch on.
-    sim_assert_eq!(have: result.scalar_dispatch().cloned(), want: None);
+    sim_assert_eq!(have: result.scalar_transport().cloned(), want: None);
     Ok(())
 }
 

@@ -13,7 +13,7 @@ fn legacy_empty_dispatch_keeps_a_present_content_view() {
     // An empty projection still suppresses fragment fallback at legacy consumers.
     for dispatch in [stringified, trimmed] {
         sim_assert_eq!(
-            have: dispatch.content().map(|content| (content.arms.len(), content.complete)),
+            have: dispatch.content().map(|content| (content.arms().count(), content.complete)),
             want: Some((0, false)),
         );
     }

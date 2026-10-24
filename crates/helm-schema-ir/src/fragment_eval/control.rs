@@ -13,7 +13,7 @@ use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::{literal_dict_range_keys, parse_literal_list_range_expr};
 use crate::eval_effect::{SelectionTruthReachability, SelectionTruthSource};
 use crate::scalar_value::{
-    ScalarValue, ScalarValueDispatch, TruthCondition, any_predicates_with_memo,
+    ScalarContent, ScalarValueDispatch, TruthCondition, any_predicates_with_memo,
 };
 use crate::value::RootSlot;
 use crate::value_path_context::{guard_value_is_truthy, predicate_any};
@@ -3147,7 +3147,7 @@ impl Interpreter<'_> {
                 if guard_value_is_truthy(&literal) {
                     truthy_conditions.push(condition.clone());
                 }
-                dispatch_arms.push((condition.clone(), ScalarValue::Literal(literal)));
+                dispatch_arms.push((condition.clone(), ScalarContent::Literal(literal)));
                 joined_values.insert(value.clone());
             }
             let truthy = predicate_any(truthy_conditions);

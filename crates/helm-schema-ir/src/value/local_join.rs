@@ -47,7 +47,17 @@ impl LocalSlot {
                 |slot| slot.output_meta.as_ref(),
                 join_meta_by_path,
             ),
-            scalar_dispatch: join_equal(outcomes, |slot| &slot.scalar_dispatch),
+            scalar_dispatch: outcomes
+                .first()
+                .and_then(|slot| slot.scalar_dispatch.as_ref())
+                .and_then(|first| {
+                    let dispatches = outcomes
+                        .iter()
+                        .skip(1)
+                        .map(|slot| slot.scalar_dispatch.as_ref())
+                        .collect::<Option<Vec<_>>>()?;
+                    first.join_equal_content(dispatches)
+                }),
             truthy_reduction: join_field(
                 outcomes,
                 |slot| slot.truthy_reduction.as_ref(),

@@ -9,7 +9,7 @@ use crate::eval_effect::{
     SelectionTruthSource,
 };
 use crate::expr_call_eval::default_primary_selection;
-use crate::scalar_value::{ScalarValue, ScalarValueDispatch, TruthCondition};
+use crate::scalar_value::{ScalarContent, ScalarValueDispatch, TruthCondition};
 
 #[test]
 fn truth_and_dispatch_adapters_preserve_exactness_and_truth_source() {
@@ -67,7 +67,7 @@ fn condition_reachability_distinguishes_raw_identities_from_rendered_scalars() {
     let dispatch = ScalarValueDispatch::bind_content(
         vec![(
             Predicate::True,
-            ScalarValue::PrintfStringIdentity(helm_schema_core::ValuesPath::parse("alpha")),
+            ScalarContent::PrintfStringIdentity(helm_schema_core::ValuesPath::parse("alpha")),
         )],
         true,
     );
@@ -278,7 +278,7 @@ fn default_selection_adapter_exposes_all_states_with_owned_truth_sources() {
     let dispatch = ScalarValueDispatch::bind_content(
         vec![(
             Predicate::True,
-            ScalarValue::PrintfStringIdentity(helm_schema_core::ValuesPath::parse("alpha")),
+            ScalarContent::PrintfStringIdentity(helm_schema_core::ValuesPath::parse("alpha")),
         )],
         true,
     );

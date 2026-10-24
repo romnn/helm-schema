@@ -34,7 +34,7 @@ use crate::analysis_db::{BoundHelperCallResolution, IrAnalysisDb, ParsedHelperBo
 use crate::helper_meta::{HelperOutputMeta, RenderedRow, merge_provenance_sites};
 use crate::observed_facts::ObservedFacts;
 use crate::scalar_value::{
-    ScalarRenderPart, ScalarValue, ScalarValueDispatch, TruthCondition, any_predicates_with_memo,
+    ScalarContent, ScalarRenderPart, ScalarValueDispatch, TruthCondition, any_predicates_with_memo,
     conjoin_predicates_with_memo,
 };
 use crate::symbolic_local_state::SymbolicLocalState;
@@ -136,7 +136,7 @@ impl DeferredScalarProjection {
         let projected = interpreter
             .scalar_body_arms(&scalar_children)
             .and_then(|arms| scalar_dispatch_from_alternatives(arms, db.predicate_memo().as_ref()));
-        ScalarValueDispatch::merge_candidates(
+        ScalarValueDispatch::merge_helper_content(
             self.structural.clone(),
             projected,
             db.predicate_memo().as_ref(),
@@ -355,7 +355,7 @@ fn scalar_dispatch_from_fragment(
     StructuralDispatch::Known(ScalarValueDispatch::bind_content(
         merge_scalar_dispatch_states(states, predicate_memo)
             .into_iter()
-            .map(|(condition, rendered)| (condition, ScalarValue::Rendered(rendered)))
+            .map(|(condition, rendered)| (condition, ScalarContent::Rendered(rendered)))
             .collect(),
         complete,
     ))
@@ -397,7 +397,7 @@ fn scalar_dispatch_from_alternatives(
     Some(ScalarValueDispatch::bind_content(
         states
             .into_iter()
-            .map(|(condition, rendered)| (condition, ScalarValue::Rendered(rendered)))
+            .map(|(condition, rendered)| (condition, ScalarContent::Rendered(rendered)))
             .collect(),
         complete,
     ))

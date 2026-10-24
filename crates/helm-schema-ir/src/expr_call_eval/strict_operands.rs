@@ -6,7 +6,7 @@ use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
-use crate::scalar_value::ScalarValue;
+use crate::scalar_value::ScalarContent;
 use helm_schema_core::{Predicate, ValuesPath};
 
 use super::serialization::record_total_conversion_effects;
@@ -938,9 +938,9 @@ fn record_comparable_kind_result_one(
         for (condition, value) in dispatch
             .content()
             .into_iter()
-            .flat_map(|content| content.arms)
+            .flat_map(|content| content.arms())
         {
-            let ScalarValue::Identity(path) = value else {
+            let ScalarContent::Identity(path) = value else {
                 continue;
             };
             for mut conjunction in strict_operand_selection_conjunctions(operand, &path.encode()) {

@@ -199,11 +199,11 @@ fn evaluated_leaf_scalar_is_not_rederived_from_its_structural_source() {
         want: TruthCondition::exact(Predicate::truthy_path("cfg")),
     );
     sim_assert_eq!(
-        have: direct.scalar_dispatch().cloned(),
+        have: direct.scalar_transport().cloned(),
         want: Some(ScalarValueDispatch::identity(capture_path("cfg"))),
     );
     sim_assert_eq!(have: evaluated.truth, want: TruthCondition::Unknown);
-    sim_assert_eq!(have: evaluated.scalar_dispatch().cloned(), want: None);
+    sim_assert_eq!(have: evaluated.scalar_transport().cloned(), want: None);
     // Provenance survives the boundary; only the runtime claim does not.
     sim_assert_eq!(
         have: evaluated.value.as_ref().map(AbstractValue::paths),
@@ -488,7 +488,7 @@ fn pristine_root_values_selector_records_direct_hosts_in_both_binding_modes() {
             "mode={mode:?}",
         );
         sim_assert_eq!(
-            have: result.scalar_dispatch().cloned(),
+            have: result.scalar_transport().cloned(),
             want: Some(ScalarValueDispatch::identity(capture_path("a.b"))),
             "mode={mode:?}",
         );
@@ -683,7 +683,7 @@ fn grouped_selector_preserves_scalar_identity() {
     );
 
     sim_assert_eq!(
-        have: result.scalar_dispatch().cloned(),
+        have: result.scalar_transport().cloned(),
         want: Some(ScalarValueDispatch::identity(
             helm_schema_core::ValuesPath::parse("feature.mode")
         )),
@@ -748,7 +748,7 @@ fn named_root_alias_projects_values_only_from_its_typed_binding() {
 
     sim_assert_eq!(have: result.value, want: Some(values_path!("Y")));
     sim_assert_eq!(
-        have: result.scalar_dispatch().cloned(),
+        have: result.scalar_transport().cloned(),
         want: Some(ScalarValueDispatch::identity(capture_path("Y"))),
     );
 }
@@ -1411,10 +1411,9 @@ fn ternary_preserves_scalar_branch_dispatch() {
             .and_then(crate::scalar_value::ScalarValueDispatch::content)
             .is_some_and(|dispatch| {
                 dispatch.complete
-                    && dispatch.arms.len() == 2
+                    && dispatch.arms().count() == 2
                     && dispatch
-                        .arms
-                        .iter()
+                        .arms()
                         .all(|(condition, _)| !condition.contains_approximation())
             }),
         "the selected Boolean literals must remain an exact scalar dispatch: {result:#?}"

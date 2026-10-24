@@ -422,7 +422,7 @@ impl Interpreter<'_> {
                     env.predicate_memo.as_ref(),
                 );
                 json_payload_truth = result.json_payload_truth.clone();
-                scalar_dispatch = result.scalar_dispatch().cloned();
+                scalar_dispatch = result.scalar_transport().cloned();
                 proven_operands = result.proven_operands.clone();
             }
             values.extend(result.value);

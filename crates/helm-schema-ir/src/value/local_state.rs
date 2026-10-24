@@ -568,13 +568,23 @@ impl SymbolicLocalState {
         let binding = binding.or_else(|| {
             (helper_scope && kind == AssignmentKind::Assignment).then(LocalBinding::unknown)
         });
-        if binding.is_some() || scalar_dispatch.is_some() || !helper_scope {
+        let legacy_dispatch = scalar_dispatch
+            .as_ref()
+            .is_some_and(|dispatch| dispatch.content().is_some());
+        if binding.is_some() || legacy_dispatch || !helper_scope {
             self.bind_local_binding(kind, variable.to_string(), binding);
             if let Some(dispatch) = scalar_dispatch {
                 let slot = self.slot_mut(variable);
                 let binding = slot.binding.take();
                 slot.bind_runtime(binding, Some(dispatch));
             }
+        } else if self.slot(variable).has_current_value() {
+            // Untracked helper shadows keep their legacy domains; their runtime type must abstain.
+            if let Some(dispatch) = &mut self.slot_mut(variable).scalar_dispatch {
+                dispatch.widen_types();
+            }
+        } else {
+            self.slot_mut(variable).scalar_dispatch = scalar_dispatch;
         }
         let slot = self.slot_mut(variable);
         slot.truthiness_abstained = previously_abstained;

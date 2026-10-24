@@ -6,7 +6,7 @@ use crate::eval_env::{BindingDecision, BindingEvaluationMode, LeafSelection, Loc
 use crate::fragment_assignment::AssignmentKind;
 use crate::helper_meta::HelperOutputMeta;
 use crate::scalar_value::{
-    ScalarValue, ScalarValueDispatch, TruthCondition, conjoin_predicates_with_memo,
+    ScalarContent, ScalarValueDispatch, TruthCondition, conjoin_predicates_with_memo,
 };
 use crate::symbolic_local_state::SymbolicLocalState;
 use helm_schema_core::{GuardValue, Predicate, PredicateMemo, ValuesPath};
@@ -233,7 +233,7 @@ fn state_with_scalar_arm_count(count: usize) -> SymbolicLocalState {
                 .map(|index| {
                     (
                         Predicate::True,
-                        ScalarValue::Literal(GuardValue::String(index.to_string())),
+                        ScalarContent::Literal(GuardValue::String(index.to_string())),
                     )
                 })
                 .collect(),
@@ -299,7 +299,7 @@ fn joined_scalar_dispatches_without_unchanged_shortcut(
                 continue;
             };
             complete &= dispatch.complete;
-            for (inner_condition, value) in dispatch.arms {
+            for (inner_condition, value) in dispatch.arms() {
                 if let Some(condition) = conjoin_predicates_with_memo(
                     outer_condition.clone(),
                     inner_condition.clone(),
@@ -338,7 +338,7 @@ fn scalar_dispatch_join_keeps_128_arms_and_discards_129() {
         &memo,
     );
     sim_assert_eq!(
-        have: at_cap.binding("value").scalar_dispatch.as_ref().and_then(ScalarValueDispatch::content).map(|content| content.arms.len()),
+        have: at_cap.binding("value").scalar_dispatch.as_ref().and_then(ScalarValueDispatch::content).map(|content| content.arms().count()),
         want: Some(128)
     );
 
@@ -366,7 +366,13 @@ fn unchanged_partial_dispatch_survives_the_join_cap() {
         .as_ref()
         .and_then(ScalarValueDispatch::content)
     {
-        let dispatch = ScalarValueDispatch::bind_content(content.arms.to_vec(), false);
+        let dispatch = ScalarValueDispatch::bind_content(
+            content
+                .arms()
+                .map(|(condition, content)| (condition.clone(), content.clone()))
+                .collect(),
+            false,
+        );
         crate::tests::bind_test_dispatch(
             partial.slots.entry("value".to_string()).or_default(),
             Some(dispatch),
@@ -410,11 +416,11 @@ fn changed_nested_and_missing_dispatches_match_the_old_join() {
             vec![
                 (
                     inner.clone(),
-                    ScalarValue::Literal(GuardValue::String("nested-true".to_string())),
+                    ScalarContent::Literal(GuardValue::String("nested-true".to_string())),
                 ),
                 (
                     inner.negated(),
-                    ScalarValue::Literal(GuardValue::String("nested-false".to_string())),
+                    ScalarContent::Literal(GuardValue::String("nested-false".to_string())),
                 ),
             ],
             true,

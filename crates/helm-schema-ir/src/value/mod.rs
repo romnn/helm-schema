@@ -1,4 +1,5 @@
 mod branch_join;
+pub(crate) mod kinds;
 mod local_join;
 mod local_state;
 pub(crate) mod scalar_value;
@@ -12,7 +13,7 @@ use crate::bound_value_analysis::GetBinding;
 use crate::eval_env::LocalBinding;
 use crate::helper_meta::HelperOutputMeta;
 use crate::symbolic_local_state::IntCastSource;
-use scalar_value::ScalarValue;
+use scalar_value::ScalarContent;
 
 pub(crate) type LocalSlots = HashMap<String, LocalSlot>;
 
@@ -74,7 +75,7 @@ impl LocalSlot {
                 binding: None,
                 default_paths: None,
                 output_meta: None,
-                scalar_dispatch: None,
+                scalar_dispatch: _,
                 truthy_reduction: None,
                 truthiness_abstained: false,
                 truthiness_cleared: _,
@@ -83,7 +84,10 @@ impl LocalSlot {
                 range_member_value: None,
                 definite_range_member_value: _,
             }
-        )
+        ) || self
+            .scalar_dispatch
+            .as_ref()
+            .is_some_and(|dispatch| dispatch.content().is_some())
     }
 
     pub(crate) const EMPTY: Self = Self {
@@ -173,26 +177,53 @@ pub(crate) struct ScalarValueDispatch {
     complete: bool,
 }
 
-/// Borrowed content alternatives; ownership stays with the sealed dispatch.
+/// One sealed leaf carries independent runtime type and optional legacy content.
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub(crate) struct ScalarValue {
+    go_type: kinds::GoType,
+    content: Option<ScalarContent>,
+}
+
+/// Borrowed legacy content; type-only alternatives never become a transport projection.
 #[derive(Clone, Copy)]
 pub(crate) struct ContentView<'a> {
-    pub(crate) arms: &'a [(helm_schema_core::Predicate, ScalarValue)],
+    dispatch: &'a ScalarValueDispatch,
     pub(crate) complete: bool,
+}
+
+impl<'a> ContentView<'a> {
+    pub(crate) fn arms(self) -> impl Iterator<Item = (&'a Predicate, &'a ScalarContent)> {
+        self.dispatch.arms.iter().filter_map(|(condition, value)| {
+            value.content.as_ref().map(|content| (condition, content))
+        })
+    }
+
+    pub(crate) fn single(self) -> Option<(&'a Predicate, &'a ScalarContent)> {
+        let mut arms = self.arms();
+        let first = arms.next()?;
+        arms.next().is_none().then_some(first)
+    }
 }
 
 impl ScalarValueDispatch {
     pub(crate) fn content(&self) -> Option<ContentView<'_>> {
+        if !self.arms.is_empty() && self.arms.iter().all(|(_, value)| value.content.is_none()) {
+            return None;
+        }
         Some(ContentView {
-            arms: &self.arms,
-            complete: self.complete,
+            dispatch: self,
+            complete: self.complete && self.arms.iter().all(|(_, value)| value.content.is_some()),
         })
     }
 
-    pub(crate) fn bind_content(
-        arms: Vec<(helm_schema_core::Predicate, ScalarValue)>,
-        complete: bool,
-    ) -> Self {
-        Self { arms, complete }
+    pub(crate) fn bind_content(arms: Vec<(Predicate, ScalarContent)>, complete: bool) -> Self {
+        Self {
+            arms: arms
+                .into_iter()
+                .map(|(condition, content)| (condition, ScalarValue::untyped(content)))
+                .collect(),
+            complete,
+        }
     }
 }
 
