@@ -290,18 +290,22 @@ Recreate the 20-minute heartbeat (CronCreate) on start; `date` before every ledg
 
 10a fe36e909, 10b d7de4249, 10c 7c200618 (luup2 5/32 → 0/32), 10d 2a76012e (harness context-roster guard + intake containment, W4
 comparison-operands slice: 47 matrix cells improved, F34 closes), R0 design closure f1b1cb9e, ADR decisions 91b0f651, 10e 4b19f2b6
-(W1 admission suite). Receipts: `/Volumes/T7/dev/round8-landing10{a-run5,b-run1,c-run2,d-run1,e-run2}/receipt.json`.
+(W1 admission suite), **landing 11 = R1a 67ce9e9a** (value-algebra L1, clause 2b). Receipts:
+`/Volumes/T7/dev/round8-landing10{a-run5,b-run1,c-run2,d-run1,e-run2}/receipt.json`, `/Volumes/T7/dev/round8-landing11-run1/receipt.json`.
 
-### 7.3 In flight at hand-off time (see §7.6 for the final state)
+### 7.3 State at hand-off (2026-10-24 15:15) — nothing in flight
 
-- **Landing 11 = R1a** (value-algebra L1): branch `landing-11` in `/Volumes/T7/dev/round8-landing10a` = main 4b19f2b6 + merge of
-  `r1a/slot-transpose` (01ee3bb0, 054aba56; built in clone `/Volumes/T7/dev/round8-r1a` by Codex sol run 20261023T094530-11bc40ae;
-  sol review LAND). Env `/Volumes/T7/dev/round8/runner/landing-11.env`, E=`/Volumes/T7/dev/round8-landing11-run1`, chain log
-  `$E/chain.log`. Expected: zero fixture moves, production LOC 77,061 → 77,053.
-- **R1b** (L2, per-fact moves onto the leaf): Codex sol builder run 20261024T094803-6eb22423 in clone `/Volumes/T7/dev/round8-r1b`
-  (branch `r1b/leaf-facts` at 054aba56), brief `/Volumes/T7/dev/round8/brief-r1b-codex.md`. It exports transfer patches to
-  `.codex-evidence/` (it cannot write `.git`); the orchestrator commits them, rebases onto main after landing 11 merges, gets a sol
-  pre-landing review, and runs landing 12.
+- **main = 62950cf8**, clean, nothing pushed by the orchestrator this session (the user pushes). Landing 11 = **R1a landed**
+  (67ce9e9a, receipt `/Volumes/T7/dev/round8-landing11-run1/receipt.json` sha256 7e7d0364…; LOC 77,053). `task test:all` on main
+  67ce9e9a: exit 0 (unit, integration, network). luup2 last checked green on 73d1fa15 (0/32); 10e/11 are byte-identical.
+- **R1b: no consolidation landed.** Its one candidate move (`default_paths`) changed join semantics and was reverted; all thirteen
+  `LocalSlot` fields are R3b residuals with written contracts. Branch `r1b/leaf-facts` in clone `/Volumes/T7/dev/round8-r1b` holds
+  ONE net commit **c4e352e7** on main 6ad34205 (tests `crates/helm-schema/tests/local_default_join.rs`, contracts
+  `plan/value-algebra-r0-inventory/leaf-fact-contracts.md`, inventory re-tags; no production change). Carry it into the next landing.
+- No Codex run, Opus agent or landing chain is running. The heavy lock is free. Codex registry: `/Volumes/T7/dev/round8/codex-runs.tsv`
+  (the old W4 row 20261019T151643 shows a stale state; agentmux reports it failed — ignore).
+- Reviews of this session's landings: R1a `20261023T132928-8f6b6009`, R1b `20261024T115056-7a61c8e8`, 10e `20261023T103208-dd96ce76`,
+  R0 design `20261022T052728-edb2adc2` (sol) and `20261022T052741-f8a5b99b` (astra) — `follow_up` works only within 24 h of start.
 
 ### 7.4 Procedure (unchanged where not stated)
 
@@ -333,19 +337,42 @@ comparison-operands slice: 47 matrix cells improved, F34 closes), R0 design clos
 
 ### 7.5 Next work, in order
 
-1. Landing 11 (R1a): on chain green, merge + ledger; run `task test:all` once on main (network gates the Codex sandbox could not run).
-2. R1b: collect the hand-back, commit its transfer patches in `/Volumes/T7/dev/round8-r1b`, rebase onto main, sol review (clause 2b:
-   byte-identical, inventory, producer mappings, LOC below R1a's 77,053), landing 12.
-3. R2 (semantic, closes cells): brief from R0 §5.3 + the pre-R2 obligations (pipeline value fills a fixed parameter of a variadic
-   function; write-free certificate incl. recursive literal `tpl`; per-consumer-family no-regression; D4 scope; deferred arity checks).
-   Design review before coding (sol architecture + astra semantics), admission gate must show closures with 0 NEW.
-4. R3a (byte-identical, legacy evaluation order kept), then R3b (heap, single execution, frozen guards, in-walk output; one coupled
-   landing built on a branch with non-landable construction commits, checked by a main-vs-branch CLI differential on the admission
-   suite and the corpus).
-5. Low priority, outside the interpreter: CRD oracle + Track G fixtures (round8-guards), cross-platform script audit (only stage.sh
-   was converted), audit of the 99 `.not-found` bundle records, kyverno `tpl`-name constraint defect, 81 frozen lint-matrix
-   obligations without a home in code.
+1. **R2 (L3, semantic, closes cells)** — the next landing. Inputs: `plan/value-algebra-r0.md` §5.3 (sealed dispatch behind
+   `content()`/`kinds()` on every carrier, Go-kind leaf with concrete types §4.1, catalog return kinds, write-free certificate incl.
+   recursive literal `tpl`), the pre-R2 obligations recorded in R0 §0/§5.3 (pipeline value may fill a fixed parameter of a variadic
+   function; certificate does not prove legacy guards correct → per-consumer-family no-regression; fresh allocation is not closed),
+   the deferred `ternary`/`required` arity checks (landing 10e ablation in its merge message), D4's scope, and the 20 R2 seals in the
+   inventory. Steps: (a) design brief → sol (architecture) + astra (Helm semantics) design review; (b) builder (Codex sol clone or
+   Opus with the orchestrator doing branch ops); (c) admission gate must show closures with 0 NEW and every closure re-recorded with
+   `admission_refresh` (shrink-only); live battery + adjudicated fixture flips; (d) carry r1b/leaf-facts c4e352e7 into the landing.
+2. **R3a (L4, byte-identical, clause 2b):** remove proven-equivalent re-executions and carrier copies, KEEP legacy evaluation order and
+   effect composition (sol R0 review P1); 20 inventory rows; LOC strictly negative.
+3. **R3b (L5):** heap, single execution in Go order, frozen guards, in-walk output; one coupled landing built on a branch with
+   non-landable construction commits and a main-vs-branch CLI differential on the admission suite and the corpus. Owns ~95 baseline
+   rows + the 13 LocalSlot residuals (contracts in leaf-fact-contracts.md) + R1a's 3 residuals.
+4. Low priority, outside the interpreter: CRD oracle + Track G fixtures (round8-guards), cross-platform script audit (only stage.sh
+   converted), audit of the 99 `.not-found` bundle records, kyverno `tpl`-name constraint defect, 81 frozen lint-matrix obligations
+   without a home in code, disk cleanup per `/Volumes/T7/dev/round8/cleanup-plan.md` (session-6 list).
 
-### 7.6 Final state at session end
+### 7.6 Resume prompt for session 7 (copy verbatim)
 
-(filled in below at the end of the session)
+Resume as the ORCHESTRATOR of the helm-schema campaign (schema-bug-hunt-v1 round 8, now the value-algebra interpreter
+rearchitecture), session 7, in /Volumes/T7/dev/helm-schema. Read first, in order: plan/campaign-orchestration-playbook.md;
+plan/schema-bug-hunt-v1-round8-handoff.md §7 (this section); plan/value-algebra-interpreter.md; plan/value-algebra-r0.md (esp. §0,
+§1.4, §4, §5.3–§5.5); docs/adr/0066-landing-ratchet.md (clause 2b) and 0069; the ledger plan/schema-bug-hunt-v1-progress.md from the
+2026-10-21 entries to the end; CLAUDE.md; the skills landing-workflow, acceptance-battery, corpus-fixtures, verification-gates; the
+memory index. Session 6's agent ids are dead; Codex runs older than 24 h cannot take follow_ups — start fresh runs.
+MODEL POLICY (user 2026-10-23): mix Codex gpt-6.1-sol builders (agentmux start, workspace_write, keep true, xhigh, cwd = standalone
+clone; rules /Volumes/T7/dev/round8/codex-builder-sandbox.md; prebuild helmsweep in the clone; orchestrator commits transfer patches
+and runs network gates) with Opus subagent builders (orchestrator creates/checks out every branch and worktree itself; briefs forbid
+git checkout/switch/branch/worktree/stash). Codex sol reviews (read_only; high routine, xhigh semantic); gpt-6-astra only for the
+hardest Helm/Go-semantics questions. Keep it resourceful (follow_up for re-reviews). Register every Codex run in
+/Volumes/T7/dev/round8/codex-runs.tsv (3 tab columns).
+Do this first:
+(1) `git status --short; git log --oneline -5` (expect main 62950cf8 or later); `ls /Volumes/T7/dev/round8/heavy.lock` (must be
+    absent); `uptime; df -h /Volumes/T7; memory_pressure | tail -1`; `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
+(2) Recreate the 20-minute heartbeat (CronCreate, `7,27,47 * * * *`) covering watch-codex, uptime/df/memory_pressure, the live
+    chain.log, and builder evidence dirs.
+(3) Write the R2 design brief from R0 §5.3 + §7.5 item 1 above, get the two design reviews (sol architecture, astra semantics), then
+    start one R2 builder. Carry r1b/leaf-facts c4e352e7 (clone /Volumes/T7/dev/round8-r1b) into the R2 landing.
+(4) Landing loop per §7.4; ledger entry before the trailing `Next:` line after `date`; never push; never take/remove the heavy lock.
