@@ -271,8 +271,7 @@ fn eval_string_transform_invocation(
     };
     let scalar_dispatch = if function == "toString" {
         result
-            .scalar_dispatch
-            .as_ref()
+            .scalar_dispatch()
             .map(ScalarValueDispatch::stringified)
     } else {
         None
@@ -602,12 +601,8 @@ fn eval_direct_invocation(
                 return result;
             };
             let subject = eval_expr_with_helper_calls(subject_expr, env, resolver);
-            let scalar_dispatch = split_dispatch.or_else(|| {
-                subject
-                    .scalar_dispatch
-                    .as_ref()
-                    .map(ScalarValueDispatch::length)
-            });
+            let scalar_dispatch = split_dispatch
+                .or_else(|| subject.scalar_dispatch().map(ScalarValueDispatch::length));
             record_total_conversion_effects(
                 identity_value_paths(subject.value.as_ref()),
                 &mut result.effects,
@@ -906,7 +901,8 @@ fn eval_direct_invocation(
             let scalar_truth = args.last().and_then(|subject_expr| {
                 let subject = eval_expr_with_helper_calls(subject_expr, env, resolver);
                 let dispatch = subject
-                    .scalar_dispatch
+                    .scalar_dispatch()
+                    .cloned()
                     .or_else(|| direct_stringified_dispatch(subject_expr, env, resolver));
                 scalar_pattern_condition(function, args, dispatch.as_ref(), env).or_else(|| {
                     direct_quoted_falsy_pattern_condition(
@@ -1050,7 +1046,7 @@ fn eval_piped_invocation(
                     [length.to_string()].into_iter().collect(),
                 ));
             }
-            match &operand.scalar_dispatch {
+            match operand.scalar_dispatch() {
                 Some(dispatch) => result
                     .with_scalar_dispatch_with_memo(dispatch.length(), env.predicate_memo.as_ref()),
                 None => result,
@@ -1080,7 +1076,7 @@ fn eval_piped_invocation(
             result
         }
         "printf" => {
-            let piped_dispatch = current.scalar_dispatch.clone();
+            let piped_dispatch = current.scalar_dispatch().cloned();
             let piped_scalar = piped_dispatch
                 .as_ref()
                 .and_then(ScalarValueDispatch::constant_value);
@@ -1099,17 +1095,17 @@ fn eval_piped_invocation(
                 let mut result = eval_expr_with_helper_calls(arg, env, resolver);
                 let identity_paths = identity_value_paths(result.value.as_ref());
                 if token_initial_string_argument == Some(index) {
+                    let scalar_effects = result.scalar_effects();
                     conjoin_formatter_operand_selection(
                         &identity_paths,
-                        result.scalar_dispatch.as_ref(),
-                        &mut result.effects,
+                        scalar_effects.dispatch,
+                        scalar_effects.effects,
                     );
                 }
                 if index > 0 {
                     scalar_values.push(
                         result
-                            .scalar_dispatch
-                            .as_ref()
+                            .scalar_dispatch()
                             .and_then(ScalarValueDispatch::constant_value),
                     );
                 }
@@ -1180,7 +1176,7 @@ fn eval_piped_invocation(
                 || function_semantics(function).predicate == PredicateSemantics::String =>
         {
             let scalar_truth =
-                scalar_pattern_condition(function, args, current.scalar_dispatch.as_ref(), env);
+                scalar_pattern_condition(function, args, current.scalar_dispatch(), env);
             let piped = current.clone();
             let mut effects = current.effects;
             merge_arg_effects(args, env, resolver, &mut effects);
@@ -1476,7 +1472,7 @@ fn split_length_dispatch(
         return None;
     }
     let subject = eval_expr_with_helper_calls(subject, env, resolver);
-    Some(subject.scalar_dispatch?.split_length(separator))
+    Some(subject.scalar_dispatch().cloned()?.split_length(separator))
 }
 
 fn scalar_pattern_condition(
@@ -1538,7 +1534,7 @@ fn direct_stringified_dispatch(
         return None;
     };
     eval_expr_with_helper_calls(subject, env, resolver)
-        .scalar_dispatch
+        .scalar_dispatch()
         .map(|dispatch| dispatch.stringified())
 }
 

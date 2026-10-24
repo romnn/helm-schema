@@ -902,10 +902,10 @@ fn partial_helper_scalar_dispatch_is_deferred_and_cached() {
     );
 
     // A partial structural result leaves the second interpreter dormant until a value consumer.
-    sim_assert_eq!(have: call.summary.scalar_dispatch.get().is_none(), want: true);
+    sim_assert_eq!(have: call.summary.cached_scalar_dispatch().is_none(), want: true);
     let first = call.summary.scalar_dispatch(&analysis_db);
     sim_assert_eq!(have: first.is_some(), want: true);
-    sim_assert_eq!(have: call.summary.scalar_dispatch.get().is_some(), want: true);
+    sim_assert_eq!(have: call.summary.cached_scalar_dispatch().is_some(), want: true);
 
     // Repeated reads borrow the same summary-owned result instead of evaluating the body again.
     let second = call.summary.scalar_dispatch(&analysis_db);
@@ -1136,7 +1136,7 @@ fn exact_helper_arm_survives_an_unmodeled_sibling_branch() {
     );
 
     sim_assert_eq!(
-        have: result.scalar_dispatch.as_ref().map(|dispatch| (
+        have: result.scalar_dispatch().and_then(ScalarValueDispatch::content).map(|dispatch| (
             dispatch
                 .arms
                 .iter()
@@ -2316,8 +2316,8 @@ fn bound_helper_range_break_retains_scalar_candidate_selection() {
             lexical_escapes: BTreeSet::new(),
         }])
     };
-    let expected = ScalarValueDispatch {
-        arms: vec![
+    let expected = ScalarValueDispatch::bind_content(
+        vec![
             (
                 Predicate::And(vec![invalid("fallback"), invalid("primary")]).normalize_boolean(),
                 ScalarValue::Rendered(vec![ScalarRenderPart::Text(String::new())]),
@@ -2328,10 +2328,10 @@ fn bound_helper_range_break_retains_scalar_candidate_selection() {
             ),
             (present("primary"), rendered_identity("primary")),
         ],
-        complete: true,
-    };
+        true,
+    );
     sim_assert_eq!(
-        have: result.scalar_dispatch,
+        have: result.scalar_dispatch().cloned(),
         want: Some(expected)
     );
 }
@@ -2682,7 +2682,7 @@ fn overlapping_unknown_arm_abstains_from_the_helper_dispatch_for_good() {
 
     let nested = summarize("nested.ns");
     sim_assert_eq!(
-        have: nested.summary.scalar_dispatch.get().map(Option::is_none),
+        have: nested.summary.cached_scalar_dispatch().map(|cached| cached.is_none()),
         want: Some(true),
         "abstention is cached before any consumer asks: {:#?}",
         nested.summary
@@ -2692,12 +2692,12 @@ fn overlapping_unknown_arm_abstains_from_the_helper_dispatch_for_good() {
     let kyverno = summarize("kyverno.namespace");
     let dispatch = kyverno.summary.scalar_dispatch(&analysis_db).cloned();
     sim_assert_eq!(
-        have: dispatch.as_ref().map(|dispatch| (dispatch.complete, dispatch.arms.len())),
+        have: dispatch.as_ref().and_then(ScalarValueDispatch::content).map(|dispatch| (dispatch.complete, dispatch.arms.len())),
         want: Some((false, 1)),
         "the head's exact arm survives beside the omitted tail: {dispatch:#?}"
     );
     sim_assert_eq!(
-        have: dispatch.and_then(|dispatch| dispatch.arms.into_iter().next().map(|(condition, _)| condition)),
+        have: dispatch.as_ref().and_then(ScalarValueDispatch::content).and_then(|content| content.arms.first().map(|(condition, _)| condition.clone())),
         want: Some(Predicate::truthy_path("namespaceOverride")),
     );
 }

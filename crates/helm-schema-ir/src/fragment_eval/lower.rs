@@ -734,8 +734,9 @@ pub(crate) fn lower_scalar_dispatch_arms(
     kind: ValueKind,
     scope: &LowerScope<'_>,
 ) -> Option<Vec<(PathCondition, Vec<StringPart>)>> {
+    let dispatch = dispatch.content()?;
     let mut arms = Vec::with_capacity(dispatch.arms.len());
-    for (condition, value) in &dispatch.arms {
+    for (condition, value) in dispatch.arms {
         if *condition == Predicate::False {
             continue;
         }
@@ -751,8 +752,9 @@ pub(crate) fn lower_scalar_dispatch(
     kind: ValueKind,
     scope: &LowerScope<'_>,
 ) -> Option<Guarded<AbstractFragment>> {
+    let dispatch = dispatch.content()?;
     let mut out = Guarded::empty();
-    for (condition, value) in &dispatch.arms {
+    for (condition, value) in dispatch.arms {
         if *condition == Predicate::False {
             continue;
         }

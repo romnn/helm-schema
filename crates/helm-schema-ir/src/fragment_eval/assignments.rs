@@ -369,7 +369,8 @@ impl Interpreter<'_> {
             .slots
             .iter()
             .filter_map(|(name, slot)| {
-                slot.binding
+                slot.binding()
+                    .binding
                     .as_ref()
                     .map(|value| (name.clone(), value.clone()))
             })
@@ -382,10 +383,14 @@ impl Interpreter<'_> {
             &mut seen,
         );
         for slot in self.locals.slots.values_mut() {
-            slot.binding = None;
+            slot.bind(crate::value::LocalSlotUpdate::Binding(None));
         }
         for (name, binding) in bindings {
-            self.locals.slots.entry(name).or_default().binding = Some(binding);
+            self.locals
+                .slots
+                .entry(name)
+                .or_default()
+                .bind(crate::value::LocalSlotUpdate::Binding(Some(binding)));
         }
         if !applied {
             return false;
@@ -437,7 +442,7 @@ impl Interpreter<'_> {
                 if !entries.keys().all(|key| key == "Values") {
                     continue;
                 }
-                let Some(binding) = self.locals.slot(name).binding.as_ref() else {
+                let Some(binding) = self.locals.binding(name).binding.as_ref() else {
                     continue;
                 };
                 if !binding
@@ -452,7 +457,7 @@ impl Interpreter<'_> {
                     .slots
                     .entry(name.to_owned())
                     .or_default()
-                    .binding = Some(updated);
+                    .bind(crate::value::LocalSlotUpdate::Binding(Some(updated)));
             }
         }
     }
@@ -645,7 +650,7 @@ impl Interpreter<'_> {
                 None
             };
             let rhs_truthy_reduction = result_truth.or(condition_truthy_reduction);
-            let previous = self.locals.slot(&assignment.variable);
+            let previous = self.locals.binding(&assignment.variable);
             let previous_truthy_reduction = previous.truthy_reduction.clone();
             // Snapshot before the value binding below: its rebind clears
             // every per-variable fact, but a write-through's monotonicity
@@ -742,7 +747,9 @@ impl Interpreter<'_> {
                         .slots
                         .entry(assignment.variable.clone())
                         .or_default()
-                        .scalar_dispatch = Some(dispatch);
+                        .bind(crate::value::LocalSlotUpdate::ScalarDispatch(Some(
+                            dispatch,
+                        )));
                 }
             }
             if let Some(predicate) = truthy_reduction {
@@ -750,27 +757,27 @@ impl Interpreter<'_> {
                     .slots
                     .entry(assignment.variable.clone())
                     .or_default()
-                    .truthy_reduction = Some(predicate);
+                    .bind(crate::value::LocalSlotUpdate::TruthyReduction(Some(
+                        predicate,
+                    )));
             } else {
                 self.locals
                     .slot_mut(&assignment.variable)
-                    .truthy_reduction
-                    .take();
+                    .bind(crate::value::LocalSlotUpdate::TruthyReduction(None));
             }
             match assignment.kind {
                 crate::fragment_assignment::AssignmentKind::Declaration => {
                     self.locals
                         .slot_mut(&assignment.variable)
-                        .truthiness_abstained = false;
+                        .bind(crate::value::LocalSlotUpdate::TruthinessAbstained(false));
                 }
                 crate::fragment_assignment::AssignmentKind::Assignment if previously_abstained => {
                     self.locals
                         .slot_mut(&assignment.variable)
-                        .truthy_reduction
-                        .take();
+                        .bind(crate::value::LocalSlotUpdate::TruthyReduction(None));
                     self.locals
                         .slot_mut(&assignment.variable)
-                        .truthiness_abstained = true;
+                        .bind(crate::value::LocalSlotUpdate::TruthinessAbstained(true));
                 }
                 crate::fragment_assignment::AssignmentKind::Assignment => {}
             }
@@ -783,7 +790,7 @@ impl Interpreter<'_> {
                 crate::fragment_assignment::AssignmentKind::Declaration => {
                     self.locals
                         .slot_mut(&assignment.variable)
-                        .truthiness_cleared = false;
+                        .bind(crate::value::LocalSlotUpdate::TruthinessCleared(false));
                 }
                 crate::fragment_assignment::AssignmentKind::Assignment => {
                     let may_clear = !self_preserving_nonempty_accumulation(
@@ -791,14 +798,14 @@ impl Interpreter<'_> {
                         &assignment.variable,
                     ) && self
                         .locals
-                        .slot(&assignment.variable)
+                        .binding(&assignment.variable)
                         .truthy_reduction
                         .as_ref()
                         != Some(&Predicate::True);
                     if previously_cleared || may_clear {
                         self.locals
                             .slot_mut(&assignment.variable)
-                            .truthiness_cleared = true;
+                            .bind(crate::value::LocalSlotUpdate::TruthinessCleared(true));
                     }
                 }
             }
@@ -813,7 +820,7 @@ impl Interpreter<'_> {
                     .slots
                     .entry(assignment.variable.clone())
                     .or_default()
-                    .typeof_source = Some(sources);
+                    .bind(crate::value::LocalSlotUpdate::TypeofSource(Some(sources)));
             }
             // `$replicas := int (default 1 .Values.x)` binds an INTEGER
             // COERCION of the path: comparisons on the local strengthen
@@ -827,7 +834,7 @@ impl Interpreter<'_> {
                     .slots
                     .entry(assignment.variable.clone())
                     .or_default()
-                    .int_cast_source = Some(source);
+                    .bind(crate::value::LocalSlotUpdate::IntCastSource(Some(source)));
             }
             // Keep the (possibly empty) default and meta entries: the branch
             // join unions per-variable facts only for variables every outcome
@@ -837,12 +844,16 @@ impl Interpreter<'_> {
                 .slots
                 .entry(assignment.variable.clone())
                 .or_default()
-                .default_paths = Some(binding_metadata.default_paths);
+                .bind(crate::value::LocalSlotUpdate::DefaultPaths(Some(
+                    binding_metadata.default_paths,
+                )));
             self.locals
                 .slots
                 .entry(assignment.variable.clone())
                 .or_default()
-                .output_meta = Some(binding_metadata.output_meta);
+                .bind(crate::value::LocalSlotUpdate::OutputMeta(Some(
+                    binding_metadata.output_meta,
+                )));
             let demotion = if self.helper_scope {
                 RenderedDemotion::Dependency
             } else {

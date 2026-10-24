@@ -137,15 +137,15 @@ pub(super) fn eval_set_call(
                     .root_writes
                     .entry(key.clone())
                     .or_default()
-                    .truth
-                    .replace(predicate.clone());
+                    .bind(crate::value::RootSlotUpdate::Truth(Some(predicate.clone())));
             }
             effects
                 .root_writes
                 .entry(key)
                 .or_default()
-                .value
-                .replace(assigned_value.clone());
+                .bind(crate::value::RootSlotUpdate::Value(Some(
+                    assigned_value.clone(),
+                )));
         }
     }
     EvalResult::with_effects(value, effects)
@@ -163,7 +163,7 @@ pub(super) fn root_set_truthy_predicate(expr: &TemplateExpr, env: &EvalEnv) -> O
             .and_then(|field| {
                 env.root_slots
                     .get(field)
-                    .and_then(|slot| slot.truth.as_ref())
+                    .and_then(|slot| slot.binding().truth.as_ref())
             })
             .cloned(),
         TemplateExpr::Selector { operand, path }
@@ -174,7 +174,7 @@ pub(super) fn root_set_truthy_predicate(expr: &TemplateExpr, env: &EvalEnv) -> O
                 .and_then(|field| {
                     env.root_slots
                         .get(field)
-                        .and_then(|slot| slot.truth.as_ref())
+                        .and_then(|slot| slot.binding().truth.as_ref())
                 })
                 .cloned()
         }

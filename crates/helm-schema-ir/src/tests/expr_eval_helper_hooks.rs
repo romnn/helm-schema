@@ -24,13 +24,13 @@ impl HelperCallValueResolver for StaticResolver {
                 [("app".to_string(), values_path!("labels.app"))],
             )))),
             "partial.feature" => Some(EvalResult::none().with_scalar_dispatch(
-                ScalarValueDispatch {
-                    arms: vec![(
+                ScalarValueDispatch::bind_content(
+                    vec![(
                         Predicate::truthy_path("feature.gate"),
                         ScalarValue::Literal(GuardValue::string("true")),
                     )],
-                    complete: false,
-                },
+                    false,
+                ),
             )),
             _ => None,
         }

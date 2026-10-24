@@ -1197,7 +1197,7 @@ pub(crate) struct EvalResult {
     /// Truthiness of the typed payload retained across a JSON encode/decode
     /// round trip. The serialized text has different Helm truthiness.
     pub(crate) json_payload_truth: TruthCondition,
-    pub(crate) scalar_dispatch: Option<ScalarValueDispatch>,
+    scalar_dispatch: Option<ScalarValueDispatch>,
     /// Exact scalar values of fields in a statically constructed mapping.
     ///
     /// The mapping's fragment value carries provenance and shape; these
@@ -1467,5 +1467,29 @@ fn truth_for_value_with_memo(
             TruthCondition::exact_with_memo(helm_schema_core::Predicate::True, memo)
         }
         _ => TruthCondition::Unknown,
+    }
+}
+
+impl EvalResult {
+    pub(crate) fn scalar_dispatch(&self) -> Option<&ScalarValueDispatch> {
+        self.scalar_dispatch.as_ref()
+    }
+
+    pub(crate) fn clear_scalar_dispatch(&mut self) {
+        self.scalar_dispatch = None;
+    }
+}
+
+pub(crate) struct ScalarEffects<'a> {
+    pub(crate) dispatch: Option<&'a ScalarValueDispatch>,
+    pub(crate) effects: &'a mut Effects,
+}
+
+impl EvalResult {
+    pub(crate) fn scalar_effects(&mut self) -> ScalarEffects<'_> {
+        ScalarEffects {
+            dispatch: self.scalar_dispatch.as_ref(),
+            effects: &mut self.effects,
+        }
     }
 }

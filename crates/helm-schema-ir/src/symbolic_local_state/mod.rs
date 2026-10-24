@@ -53,27 +53,28 @@ impl ControlOutcome {
                     .state
                     .slots
                     .iter()
-                    .filter_map(|(name, slot)| slot.binding.is_some().then_some(name))
+                    .filter_map(|(name, slot)| slot.binding().binding.is_some().then_some(name))
             })
             .chain(
                 entry
                     .slots
                     .iter()
-                    .filter_map(|(name, slot)| slot.binding.is_some().then_some(name)),
+                    .filter_map(|(name, slot)| slot.binding().binding.is_some().then_some(name)),
             )
             .cloned()
             .collect::<BTreeSet<_>>();
         let mut state = entry.clone();
         for variable in variables {
             if known.iter().all(|outcome| {
-                outcome.state.slot(&variable).binding.as_ref()
-                    == entry.slot(&variable).binding.as_ref()
+                outcome.state.binding(&variable).binding.as_ref()
+                    == entry.binding(&variable).binding.as_ref()
             }) {
                 continue;
             }
             state.clear_current_binding(&variable);
-            state.slots.entry(variable.clone()).or_default().binding =
-                Some(LocalBinding::unknown());
+            state.slots.entry(variable.clone()).or_default().bind(
+                crate::value::LocalSlotUpdate::Binding(Some(LocalBinding::unknown())),
+            );
         }
         Self {
             condition: Predicate::False,

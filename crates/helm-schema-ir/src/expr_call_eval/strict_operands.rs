@@ -932,10 +932,14 @@ fn record_comparable_kind_result_one(
     schema_type: &str,
     effects: &mut Effects,
 ) {
-    if let Some(dispatch) = &operand.scalar_dispatch {
+    if let Some(dispatch) = operand.scalar_dispatch() {
         // Only identity arms consume the raw path. Literal and rendered arms
         // compare their produced value and therefore cannot type the source.
-        for (condition, value) in &dispatch.arms {
+        for (condition, value) in dispatch
+            .content()
+            .into_iter()
+            .flat_map(|content| content.arms)
+        {
             let ScalarValue::Identity(path) = value else {
                 continue;
             };

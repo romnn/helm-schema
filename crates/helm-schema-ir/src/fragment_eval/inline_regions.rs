@@ -330,15 +330,22 @@ impl Interpreter<'_> {
             helm_schema_ast::range_variable_name_expr(header.expr())
         };
         if let Some((variable, binding)) = value_variable.zip(dot.clone()) {
-            self.locals.slot_mut(&variable).range_member_value = Some(binding);
+            self.locals
+                .slot_mut(&variable)
+                .bind(crate::value::LocalSlotUpdate::RangeMemberValue(Some(
+                    binding,
+                )));
         }
         if destructured
             && let Some(variable) =
                 helm_schema_ast::range_destructured_key_variable(node, self.source)
             && let Some(path) = direct_path
         {
-            self.locals.slot_mut(&variable).range_member_value =
-                Some(AbstractValue::RangeKey(path));
+            self.locals
+                .slot_mut(&variable)
+                .bind(crate::value::LocalSlotUpdate::RangeMemberValue(Some(
+                    AbstractValue::RangeKey(path),
+                )));
         }
         self.push_dot(dot, crate::eval_env::BindingEvaluationMode::Direct);
         self.loop_depth += 1;

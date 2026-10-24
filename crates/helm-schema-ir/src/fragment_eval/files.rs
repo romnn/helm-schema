@@ -127,14 +127,11 @@ impl Interpreter<'_> {
         nested.helper_scope = self.helper_scope || textual_program;
         nested.helper_seen = self.helper_seen.clone();
         nested.locals.chart_value_defaults = self.locals.chart_value_defaults.clone();
-        nested
-            .locals
-            .slots
-            .entry(String::new())
-            .or_default()
-            .binding = Some(crate::eval_env::LocalBinding::evaluated(
-            request.dot.clone().unwrap_or(AbstractValue::Unknown),
-        ));
+        nested.locals.slots.entry(String::new()).or_default().bind(
+            crate::value::LocalSlotUpdate::Binding(Some(crate::eval_env::LocalBinding::evaluated(
+                request.dot.clone().unwrap_or(AbstractValue::Unknown),
+            ))),
+        );
         nested.push_dot(
             request.dot.clone(),
             crate::eval_env::BindingEvaluationMode::Evaluated,

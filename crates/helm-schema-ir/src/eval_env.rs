@@ -484,7 +484,7 @@ impl EvalEnv {
             return self
                 .root_slots
                 .get(head)
-                .and_then(|slot| slot.value.as_ref())?
+                .and_then(|slot| slot.binding().value.as_ref())?
                 .apply_to_path(tail);
         }
         value.apply_to_path(path)
@@ -516,16 +516,9 @@ impl EvalEnv {
             root_slots: locals
                 .iter()
                 .filter_map(|(name, binding)| {
-                    binding.value(predicate_memo).map(|value| {
-                        (
-                            name.clone(),
-                            RootSlot {
-                                value: Some(value),
-                                truth: None,
-                                dispatch: None,
-                            },
-                        )
-                    })
+                    binding
+                        .value(predicate_memo)
+                        .map(|value| (name.clone(), RootSlot::new(Some(value), None, None)))
                 })
                 .collect(),
             locals: locals.clone(),

@@ -187,7 +187,10 @@ impl SymbolicLocalState {
     pub(crate) fn apply_get_binding(&mut self, plan: GetBindingPlan) {
         self.record_binding_shadow(plan.kind, &plan.variable);
         self.clear_current_binding(&plan.variable);
-        self.slots.entry(plan.variable).or_default().get_binding = Some(plan.binding);
+        self.slots
+            .entry(plan.variable)
+            .or_default()
+            .bind(super::LocalSlotUpdate::GetBinding(Some(plan.binding)));
     }
 
     pub(crate) fn bind_fragment_value(
@@ -316,6 +319,10 @@ impl SymbolicLocalState {
                     .map(|binding| (name.clone(), binding))
             })
             .collect()
+    }
+
+    pub(crate) fn binding(&self, variable: &str) -> super::LocalSlotView<'_> {
+        self.slot(variable).binding()
     }
 
     pub(crate) fn slot(&self, variable: &str) -> &LocalSlot {

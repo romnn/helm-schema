@@ -180,7 +180,7 @@ fn condition_context_with_defines(
             .slots
             .entry(name)
             .or_default()
-            .output_meta = Some(metadata);
+            .bind(crate::value::LocalSlotUpdate::OutputMeta(Some(metadata)));
     }
     let template_truthiness_abstentions = Box::leak(Box::new(crate::value::LocalSlots::default()));
     let defines = Box::leak(Box::new(defines));

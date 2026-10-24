@@ -30,10 +30,20 @@ fn extract_bound_values(
 ) -> Vec<String> {
     let mut slots = crate::value::LocalSlots::default();
     for (name, domain) in range_domains {
-        slots.entry(name.clone()).or_default().range_domain = Some(domain.clone());
+        slots
+            .entry(name.clone())
+            .or_default()
+            .bind(crate::value::LocalSlotUpdate::RangeDomain(Some(
+                domain.clone(),
+            )));
     }
     for (name, binding) in get_bindings {
-        slots.entry(name.clone()).or_default().get_binding = Some(binding.clone());
+        slots
+            .entry(name.clone())
+            .or_default()
+            .bind(crate::value::LocalSlotUpdate::GetBinding(Some(
+                binding.clone(),
+            )));
     }
     let env = EvalEnv {
         local_slots: BoundValueContext::new(&slots),

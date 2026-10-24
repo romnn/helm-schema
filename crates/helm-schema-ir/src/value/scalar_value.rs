@@ -4,9 +4,11 @@
 //! truthiness, equality, pattern matching, and semantic-version comparison
 //! all consume one typed representation.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
-use helm_schema_core::PredicateMemo;
+use helm_schema_core::{Predicate, PredicateMemo};
+
+use super::MAX_SCALAR_DISPATCH_STATES;
 
 /// One exact scalar value carried by a dispatch arm.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -49,19 +51,7 @@ pub(crate) enum ScalarRenderPart {
     },
 }
 
-/// Known scalar alternatives for one evaluated value.
-///
-/// The arm conditions are mutually exclusive. [`Self::complete`] records
-/// whether they also cover the whole input domain; helper output can retain
-/// exact arms even when another branch remains unknown. Root-context fields
-/// assigned across a complete `if`/`else` chain and evaluated helper output
-/// both use this representation, so equality and truthiness consume the same
-/// semantic fact.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub(crate) struct ScalarValueDispatch {
-    pub(crate) arms: Vec<(helm_schema_core::Predicate, ScalarValue)>,
-    pub(crate) complete: bool,
-}
+pub(crate) use super::ScalarValueDispatch;
 
 impl ScalarValueDispatch {
     pub(crate) fn constant(value: helm_schema_core::GuardValue) -> Self {
@@ -1216,4 +1206,62 @@ fn conjoin_many(
         condition = joined;
     }
     condition
+}
+
+impl ScalarValueDispatch {
+    pub(crate) fn merge_candidates(
+        structural: Option<ScalarValueDispatch>,
+        projected: Option<ScalarValueDispatch>,
+        predicate_memo: &PredicateMemo,
+    ) -> Option<ScalarValueDispatch> {
+        let (structural, projected) = match (structural, projected) {
+            (Some(structural), Some(projected)) => (structural, projected),
+            (Some(dispatch), None) | (None, Some(dispatch)) => return Some(dispatch),
+            (None, None) => return None,
+        };
+        if structural.complete {
+            return Some(structural);
+        }
+        if projected.complete {
+            return Some(projected);
+        }
+
+        let fallback = structural.clone();
+        let mut conditions_by_value: BTreeMap<ScalarValue, Vec<Predicate>> = BTreeMap::new();
+        for (condition, value) in structural.arms.into_iter().chain(projected.arms) {
+            let condition =
+                TruthCondition::from_predicate_with_memo(condition, predicate_memo).when_true();
+            if condition != Predicate::False {
+                conditions_by_value
+                    .entry(value)
+                    .or_default()
+                    .push(condition);
+            }
+        }
+        if conditions_by_value.len() > MAX_SCALAR_DISPATCH_STATES {
+            return Some(fallback);
+        }
+        let arms = conditions_by_value
+            .into_iter()
+            .map(|(value, conditions)| {
+                (any_predicates_with_memo(conditions, predicate_memo), value)
+            })
+            .collect::<Vec<_>>();
+        for (index, (left, _)) in arms.iter().enumerate() {
+            if arms.iter().skip(index + 1).any(|(right, _)| {
+                conjoin_predicates_with_memo(left.clone(), right.clone(), predicate_memo).is_some()
+            }) {
+                return Some(fallback);
+            }
+        }
+        let complete = TruthCondition::any_with_memo(
+            arms.iter().map(|(condition, _)| {
+                TruthCondition::exact_with_memo(condition.clone(), predicate_memo)
+            }),
+            predicate_memo,
+        )
+        .predicate()
+            == Some(&Predicate::True);
+        Some(ScalarValueDispatch::bind_content(arms, complete))
+    }
 }

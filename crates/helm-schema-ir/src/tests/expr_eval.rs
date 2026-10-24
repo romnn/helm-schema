@@ -199,11 +199,11 @@ fn evaluated_leaf_scalar_is_not_rederived_from_its_structural_source() {
         want: TruthCondition::exact(Predicate::truthy_path("cfg")),
     );
     sim_assert_eq!(
-        have: direct.scalar_dispatch,
+        have: direct.scalar_dispatch().cloned(),
         want: Some(ScalarValueDispatch::identity(capture_path("cfg"))),
     );
     sim_assert_eq!(have: evaluated.truth, want: TruthCondition::Unknown);
-    sim_assert_eq!(have: evaluated.scalar_dispatch, want: None);
+    sim_assert_eq!(have: evaluated.scalar_dispatch().cloned(), want: None);
     // Provenance survives the boundary; only the runtime claim does not.
     sim_assert_eq!(
         have: evaluated.value.as_ref().map(AbstractValue::paths),
@@ -488,7 +488,7 @@ fn pristine_root_values_selector_records_direct_hosts_in_both_binding_modes() {
             "mode={mode:?}",
         );
         sim_assert_eq!(
-            have: result.scalar_dispatch,
+            have: result.scalar_dispatch().cloned(),
             want: Some(ScalarValueDispatch::identity(capture_path("a.b"))),
             "mode={mode:?}",
         );
@@ -619,9 +619,9 @@ fn helper_argument_projection_uses_shared_expression_eval() {
             result
         },
     )
-    .scalar_dispatches
+    .into_root_slots()
     .into_iter()
-    .filter_map(|(name, slot)| slot.value.clone().map(|value| (name, value)))
+    .filter_map(|(name, slot)| slot.binding().value.clone().map(|value| (name, value)))
     .collect::<HashMap<_, _>>();
 
     sim_assert_eq!(
@@ -654,9 +654,9 @@ fn defaulted_helper_root_descends_to_raw_member_paths() {
             result
         },
     )
-    .scalar_dispatches
+    .into_root_slots()
     .into_iter()
-    .filter_map(|(name, slot)| slot.value.clone().map(|value| (name, value)))
+    .filter_map(|(name, slot)| slot.binding().value.clone().map(|value| (name, value)))
     .collect::<HashMap<_, _>>();
     let selected = bindings
         .get("Values")
@@ -683,7 +683,7 @@ fn grouped_selector_preserves_scalar_identity() {
     );
 
     sim_assert_eq!(
-        have: result.scalar_dispatch,
+        have: result.scalar_dispatch().cloned(),
         want: Some(ScalarValueDispatch::identity(
             helm_schema_core::ValuesPath::parse("feature.mode")
         )),
@@ -748,7 +748,7 @@ fn named_root_alias_projects_values_only_from_its_typed_binding() {
 
     sim_assert_eq!(have: result.value, want: Some(values_path!("Y")));
     sim_assert_eq!(
-        have: result.scalar_dispatch,
+        have: result.scalar_dispatch().cloned(),
         want: Some(ScalarValueDispatch::identity(capture_path("Y"))),
     );
 }
@@ -1276,7 +1276,7 @@ fn invalid_kind_abstains_for_a_default_selected_subject_identity() {
             .slots
             .entry(name.clone())
             .or_default()
-            .default_paths = Some(paths);
+            .bind(crate::value::LocalSlotUpdate::DefaultPaths(Some(paths)));
     }
 
     let result = eval_expr(&expr(r#"kindIs "invalid" $selected"#), &env);
@@ -1407,14 +1407,17 @@ fn ternary_preserves_scalar_branch_dispatch() {
     let result = eval_expr(&expr, &EvalEnv::default());
 
     assert!(
-        result.scalar_dispatch.as_ref().is_some_and(|dispatch| {
-            dispatch.complete
-                && dispatch.arms.len() == 2
-                && dispatch
-                    .arms
-                    .iter()
-                    .all(|(condition, _)| !condition.contains_approximation())
-        }),
+        result
+            .scalar_dispatch()
+            .and_then(crate::scalar_value::ScalarValueDispatch::content)
+            .is_some_and(|dispatch| {
+                dispatch.complete
+                    && dispatch.arms.len() == 2
+                    && dispatch
+                        .arms
+                        .iter()
+                        .all(|(condition, _)| !condition.contains_approximation())
+            }),
         "the selected Boolean literals must remain an exact scalar dispatch: {result:#?}"
     );
     assert!(
@@ -2110,7 +2113,9 @@ fn truth_only_locals_drive_short_circuit_execution() {
         .slots
         .entry("shouldContinue".to_string())
         .or_default()
-        .truthy_reduction = Some(Predicate::True);
+        .bind(crate::value::LocalSlotUpdate::TruthyReduction(Some(
+            Predicate::True,
+        )));
 
     let result = eval_expr(
         &single_expr(r#"and $shouldContinue (hasKey .Values.cfg "a")"#),
@@ -2211,7 +2216,9 @@ fn local_selector_truth_comes_from_the_selected_value() {
         .slots
         .entry("plugin".to_string())
         .or_default()
-        .truthy_reduction = Some(Predicate::truthy_path("plugins.*"));
+        .bind(crate::value::LocalSlotUpdate::TruthyReduction(Some(
+            Predicate::truthy_path("plugins.*"),
+        )));
 
     let result = eval_expr(&single_expr("$plugin.hostPath"), &env);
 
@@ -2278,9 +2285,9 @@ fn project_helper_arg_expr(
         }
         _ => eval_expr(expr, &EvalEnv::default()),
     })
-    .scalar_dispatches
+    .into_root_slots()
     .into_iter()
-    .filter_map(|(name, slot)| slot.value.clone().map(|value| (name, value)))
+    .filter_map(|(name, slot)| slot.binding().value.clone().map(|value| (name, value)))
     .collect()
 }
 
@@ -2411,8 +2418,11 @@ fn root_values_replacement_is_exported_and_used_by_later_values_reads() {
         &env,
     );
     for (name, slot) in result.effects.root_writes {
-        if let Some(value) = slot.value.clone() {
-            env.root_slots.entry(name).or_default().value = Some(value);
+        if let Some(value) = slot.binding().value.clone() {
+            env.root_slots
+                .entry(name)
+                .or_default()
+                .bind(crate::value::RootSlotUpdate::Value(Some(value)));
         }
     }
 
@@ -2468,13 +2478,16 @@ fn root_set_truth_predicates_feed_later_root_field_assignments() {
         ]),
     ]);
     sim_assert_eq!(
-        have: server.effects.root_writes.get("serverEnabled").and_then(|slot| slot.truth.as_ref()),
+        have: server.effects.root_writes.get("serverEnabled").and_then(|slot| slot.binding().truth.as_ref()),
         want: Some(&enabled)
     );
 
     for (name, slot) in server.effects.root_writes {
-        if let Some(truth) = slot.truth.clone() {
-            env.root_slots.entry(name).or_default().truth = Some(truth);
+        if let Some(truth) = slot.binding().truth.clone() {
+            env.root_slots
+                .entry(name)
+                .or_default()
+                .bind(crate::value::RootSlotUpdate::Truth(Some(truth)));
         }
     }
     let server_enabled = eval_expr(&single_expr(".serverEnabled"), &env);
@@ -2484,18 +2497,16 @@ fn root_set_truth_predicates_feed_later_root_field_assignments() {
             .truth_source(),
         want: SelectionTruthSource::RenderedScalar
     );
-    env.root_slots
-        .entry("mode".to_string())
-        .or_default()
-        .value
-        .replace(AbstractValue::StringSet(BTreeSet::from([
-            "server".to_string()
-        ])));
-    env.root_slots
-        .entry("mode".to_string())
-        .or_default()
-        .dispatch
-        .replace(ScalarValueDispatch::constant(GuardValue::string("server")));
+    env.root_slots.entry("mode".to_string()).or_default().bind(
+        crate::value::RootSlotUpdate::Value(Some(AbstractValue::StringSet(BTreeSet::from([
+            "server".to_string(),
+        ])))),
+    );
+    env.root_slots.entry("mode".to_string()).or_default().bind(
+        crate::value::RootSlotUpdate::Dispatch(Some(ScalarValueDispatch::constant(
+            GuardValue::string("server"),
+        ))),
+    );
     let mode = eval_expr(&single_expr(".mode"), &env);
     sim_assert_eq!(
         have: mode
@@ -2511,7 +2522,7 @@ fn root_set_truth_predicates_feed_later_root_field_assignments() {
         &env,
     );
     sim_assert_eq!(
-        have: service.effects.root_writes.get("serverServiceEnabled").and_then(|slot| slot.truth.as_ref()),
+        have: service.effects.root_writes.get("serverServiceEnabled").and_then(|slot| slot.binding().truth.as_ref()),
         want: Some(&Predicate::And(vec![
             enabled,
             Predicate::Or(vec![

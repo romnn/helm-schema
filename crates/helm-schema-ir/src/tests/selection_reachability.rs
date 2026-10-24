@@ -64,13 +64,13 @@ fn condition_reachability_distinguishes_raw_identities_from_rendered_scalars() {
         want: SelectionTruthSource::RawInput
     );
 
-    let dispatch = ScalarValueDispatch {
-        arms: vec![(
+    let dispatch = ScalarValueDispatch::bind_content(
+        vec![(
             Predicate::True,
             ScalarValue::PrintfStringIdentity(helm_schema_core::ValuesPath::parse("alpha")),
         )],
-        complete: true,
-    };
+        true,
+    );
     let rendered =
         EvalResult::from_value(AbstractValue::Unknown).with_scalar_dispatch(dispatch.clone());
     sim_assert_eq!(
@@ -275,13 +275,13 @@ fn default_selection_adapter_exposes_all_states_with_owned_truth_sources() {
         want: SelectionReachability::approximate(None, SelectionTruthSource::RawInput)
     );
 
-    let dispatch = ScalarValueDispatch {
-        arms: vec![(
+    let dispatch = ScalarValueDispatch::bind_content(
+        vec![(
             Predicate::True,
             ScalarValue::PrintfStringIdentity(helm_schema_core::ValuesPath::parse("alpha")),
         )],
-        complete: true,
-    };
+        true,
+    );
     let rendered =
         EvalResult::from_value(values_path!("alpha")).with_scalar_dispatch(dispatch.clone());
     sim_assert_eq!(

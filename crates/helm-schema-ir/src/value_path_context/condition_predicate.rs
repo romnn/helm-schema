@@ -1147,11 +1147,11 @@ impl ValuePathContext<'_> {
     fn truthiness_abstains(&self, name: &str) -> bool {
         self.template_truthiness_abstentions
             .get(name)
-            .is_some_and(|slot| slot.truthiness_abstained)
+            .is_some_and(|slot| slot.binding().truthiness_abstained)
             || self
                 .template_truthiness_abstentions
                 .get(name.trim_start_matches('$'))
-                .is_some_and(|slot| slot.truthiness_abstained)
+                .is_some_and(|slot| slot.binding().truthiness_abstained)
     }
 
     pub(crate) fn condition_uses_truthiness_abstention(&self, expr: &TemplateExpr) -> bool {
@@ -1343,7 +1343,7 @@ impl ValuePathContext<'_> {
         let name = name.trim_start_matches('$');
         self.eval_env
             .local_slots
-            .slot(name)
+            .binding(name)
             .output_meta
             .as_ref()
             .and_then(|by_path| by_path.get(&helm_schema_core::ValuesPath::parse(path)))
@@ -1832,10 +1832,10 @@ impl ValuePathContext<'_> {
             return None;
         };
         if let Some(slot) = self.eval_env.root_slots.get(field) {
-            if let Some(predicate) = &slot.truth {
+            if let Some(predicate) = &slot.binding().truth {
                 return Some(predicate.clone());
             }
-            if slot.value.is_some() {
+            if slot.binding().value.is_some() {
                 return None;
             }
         }
@@ -1875,7 +1875,13 @@ impl ValuePathContext<'_> {
                 _ => return None,
             },
         };
-        let dispatch = self.eval_env.root_slots.get(field)?.dispatch.as_ref()?;
+        let dispatch = self
+            .eval_env
+            .root_slots
+            .get(field)?
+            .binding()
+            .dispatch
+            .as_ref()?;
         let selected = dispatch
             .condition_equals_with_memo(&value, self.eval_env.predicate_memo.as_ref())
             .predicate()?
@@ -1907,7 +1913,7 @@ impl ValuePathContext<'_> {
             .eval_env
             .root_slots
             .get(field)
-            .is_some_and(|slot| slot.value.is_some() || slot.dispatch.is_some())
+            .is_some_and(|slot| slot.binding().value.is_some() || slot.binding().dispatch.is_some())
             || matches!(
                 field,
                 "Capabilities"
@@ -1938,7 +1944,7 @@ impl ValuePathContext<'_> {
         self.eval_env
             .root_slots
             .get(field)
-            .and_then(|slot| slot.dispatch.as_ref())
+            .and_then(|slot| slot.binding().dispatch.as_ref())
             .is_some()
             .then_some(field)
     }
@@ -1946,10 +1952,10 @@ impl ValuePathContext<'_> {
     fn get_binding_truthy_predicate(&self, name: &str) -> Option<Predicate> {
         let slots = &self.eval_env.local_slots;
         let binding = slots
-            .slot(name.trim_start_matches('$'))
+            .binding(name.trim_start_matches('$'))
             .get_binding
             .as_ref()?;
-        let keys = slots.slot(&binding.key_var).range_domain.as_ref()?;
+        let keys = slots.binding(&binding.key_var).range_domain.as_ref()?;
         let predicates = keys
             .iter()
             .map(|key| {
@@ -2080,7 +2086,7 @@ impl ValuePathContext<'_> {
             return Vec::new();
         };
         eval_expr(length_expr, self.expression_eval_env())
-            .scalar_dispatch
+            .scalar_dispatch()
             .map(|dispatch| dispatch.length_exceeds_subset(bound))
             .unwrap_or_default()
     }
@@ -2531,11 +2537,11 @@ impl ValuePathContext<'_> {
             return self
                 .int_cast_bindings
                 .get(name)
-                .and_then(|slot| slot.int_cast_source.as_ref())
+                .and_then(|slot| slot.binding().int_cast_source.as_ref())
                 .or_else(|| {
                     self.int_cast_bindings
                         .get(name.trim_start_matches('$'))
-                        .and_then(|slot| slot.int_cast_source.as_ref())
+                        .and_then(|slot| slot.binding().int_cast_source.as_ref())
                 })
                 .cloned();
         }
@@ -2645,7 +2651,7 @@ impl ValuePathContext<'_> {
             TemplateExpr::Variable(name) => self
                 .typeof_bindings
                 .get(name.trim_start_matches('$'))
-                .and_then(|slot| slot.typeof_source.as_ref())
+                .and_then(|slot| slot.binding().typeof_source.as_ref())
                 .is_none(),
             TemplateExpr::Call { function, args } if function == "index" => {
                 args.split_first().is_some_and(|(base, keys)| {
@@ -2931,7 +2937,7 @@ impl ValuePathContext<'_> {
             TemplateExpr::Variable(name) => self
                 .typeof_bindings
                 .get(name.trim_start_matches('$'))
-                .and_then(|slot| slot.typeof_source.as_ref())
+                .and_then(|slot| slot.binding().typeof_source.as_ref())
                 .cloned(),
             _ => None,
         }
@@ -2958,7 +2964,7 @@ impl ValuePathContext<'_> {
                 TemplateExpr::Variable(name) => self
                     .eval_env
                     .local_slots
-                    .slot(name.trim_start_matches('$'))
+                    .binding(name.trim_start_matches('$'))
                     .output_meta
                     .as_ref(),
                 _ => None,

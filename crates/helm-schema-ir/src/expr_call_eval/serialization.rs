@@ -51,11 +51,10 @@ pub(super) fn eval_printf(
         let mut result = eval_expr_with_helper_calls(arg, env, resolver);
         scalar_values.push(
             result
-                .scalar_dispatch
-                .as_ref()
+                .scalar_dispatch()
                 .and_then(crate::scalar_value::ScalarValueDispatch::constant_value),
         );
-        scalar_dispatches.push(result.scalar_dispatch.clone());
+        scalar_dispatches.push(result.scalar_dispatch().cloned());
         let identity_paths = identity_value_paths(result.value.as_ref());
         let plain_slot_format_paths = if token_initial_string_argument == Some(index) {
             identity_paths
@@ -75,10 +74,11 @@ pub(super) fn eval_printf(
         } else {
             BTreeSet::new()
         };
+        let scalar_effects = result.scalar_effects();
         conjoin_formatter_operand_selection(
             &plain_slot_format_paths,
-            result.scalar_dispatch.as_ref(),
-            &mut result.effects,
+            scalar_effects.dispatch,
+            scalar_effects.effects,
         );
         widened_paths.extend(
             value_paths(result.value.as_ref())
@@ -953,7 +953,7 @@ pub(super) fn eval_trim_affix(
             return subject;
         }
     };
-    let subject_dispatch = subject.scalar_dispatch.clone();
+    let subject_dispatch = subject.scalar_dispatch().cloned();
     let subject_effects = subject.effects.clone();
     let mut operands = [affix, subject];
     let mut effects = Effects::default();

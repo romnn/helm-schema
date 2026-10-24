@@ -422,7 +422,7 @@ impl Interpreter<'_> {
                     env.predicate_memo.as_ref(),
                 );
                 json_payload_truth = result.json_payload_truth.clone();
-                scalar_dispatch = result.scalar_dispatch.clone();
+                scalar_dispatch = result.scalar_dispatch().cloned();
                 proven_operands = result.proven_operands.clone();
             }
             values.extend(result.value);
@@ -644,7 +644,7 @@ impl Interpreter<'_> {
         writes: &std::collections::BTreeMap<String, crate::value::RootSlot>,
     ) {
         for (key, write) in writes {
-            if write.value.as_ref().is_none() {
+            if write.binding().value.as_ref().is_none() {
                 continue;
             }
             // A plain overwrite invalidates any earlier joined dispatch for

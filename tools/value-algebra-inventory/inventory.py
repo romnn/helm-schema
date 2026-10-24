@@ -12,11 +12,12 @@ Candidates (enumerated with ast-grep over crates/helm-schema-ir/src, tests exclu
            Interpreter::for_source/with_body_facts).
   needle:  listed re-derivation sites that cannot be enumerated structurally (exactly one occurrence).
 
-Inputs (this directory):
+Inputs (plan/value-algebra-r0-inventory):
   classification.tsv   one reviewed row per declaration: key, class, fact, destination, delete, seal, review, replaces.
   baseline-65a6d6c7.tsv  the frozen R0 classification. Never edited.
   landed.txt           stages that have landed (one per line, `#` comments), e.g. R1a.
   producers.tsv        reviewed old->new producer mapping for every deleted baseline F/S/E row.
+  relocations.tsv      reviewed one-to-one declaration moves; logical keys retain their class and stages.
 
 Checks (exit 1 on any failure):
   1. every candidate has a classification row (no defaults);
@@ -27,6 +28,7 @@ Checks (exit 1 on any failure):
   5. a row not in the baseline with class F, S or E names in `replaces` baseline rows deleted by a landed stage;
   6. every deleted baseline F/S/E row has a producers.tsv mapping to a surviving producer: a key that is
      present in the scanned candidates (or a present needle) and whose delete stage has not landed.
+  7. every relocation names one present final declaration and one retained classification row.
 
 Usage: python3 -I plan/value-algebra-r0-inventory/inventory.py [--self-test]
 """
@@ -36,8 +38,10 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 HERE = ROOT / "plan/value-algebra-r0-inventory"
 SRC = "crates/helm-schema-ir/src"
 BASE = {"Predicate", "TruthCondition", "ScalarValueDispatch", "ScalarValue", "AbstractValue", "ValuesPath",
-        "HelperOutputMeta"}
+        "HelperOutputMeta", "GoType"}
 ALL_VARIANTS = {"AbstractValue", "ScalarValue"}
+# Semantic landings use the admission ratchet rather than consolidation-only producer counts.
+SEMANTIC_STAGES = {"R2"}
 REEXEC = (r"^(crate::expr_eval::)?(eval_expr|eval_expr_with_helper_calls|eval_expr_with_[a-z_]+)\(|"
           r"parsed_helper_body\(|Interpreter::(for_source|with_body_facts)\(")
 NAME_KEYED = re.compile(r"(HashMap|BTreeMap|HashSet|BTreeSet)<String")
@@ -89,7 +93,7 @@ def candidates(source=SRC):
     found = {}
     for r in parsed("  kind: field_declaration\n  inside:\n    kind: struct_item\n    stopBy: end"):
         struct = enclosing(r, r"\bstruct\s+(\w+)")
-        if struct == "LocalSlot" or rx.search(r["text"].split(":", 1)[1]) or NAME_KEYED.search(r["text"]):
+        if struct in {"LocalSlot", "ScalarValueDispatch"} or rx.search(r["text"].split(":", 1)[1]) or NAME_KEYED.search(r["text"]):
             field = re.match(r"\s*(?:pub(?:\([^)]*\))?\s+)?(\w+)\s*:", r["text"]).group(1)
             found[f"field:{rel(r)}:{struct}.{field}"] = r["text"]
     for r in parsed("  kind: enum_variant"):
@@ -120,8 +124,29 @@ def needle_count(key):
     return (ROOT / SRC / path).read_text().count(needle)
 
 
-def check(found, rows, baseline, landed, producers):
-    errors = []
+def relocate(found, rows, relocations):
+    relocated, errors = dict(found), []
+    classified = {row["key"] for row in rows}
+    sources, targets = set(), set()
+    for row in relocations:
+        old, new = row["old"], row["new"]
+        if old in sources or new in targets:
+            errors.append(f"relocation is not one-to-one: {old} -> {new}")
+        sources.add(old)
+        targets.add(new)
+        if not row.get("reviewer", "").strip():
+            errors.append(f"relocation has no reviewer: {old} -> {new}")
+        if old == new or old in found or new not in found or old not in classified or new in classified:
+            errors.append(f"invalid relocation: {old} -> {new}")
+            continue
+        relocated[old] = relocated.pop(new, found[new])
+    if sources & targets:
+        errors.append("relocations must name final declarations without chains")
+    return relocated, errors
+
+
+def check(found, rows, baseline, landed, producers, relocations=()):
+    found, errors = relocate(found, rows, relocations)
     by_key = {}
     for row in rows:
         if row["key"] in by_key:
@@ -178,7 +203,7 @@ def check(found, rows, baseline, landed, producers):
                 errors.append(f"deleted baseline row {key} has no producers.tsv mapping")
             elif not surviving(new):
                 errors.append(f"producers.tsv maps {key} to {new}, which is not a surviving producer")
-    for stage in landed:
+    for stage in landed - SEMANTIC_STAGES:
         deleted = [key for key, row in by_key.items()
                    if key in base and row["class"] in "FSE" and row["delete"] == stage]
         targets = {mapped[key] for key in deleted if key in mapped}
@@ -219,6 +244,22 @@ def self_test(found, rows, baseline):
     earlier = [dict(r, delete="R1a") for r in baseline if r["delete"] == "R3b"]
     assert any("stage moved earlier" in e for e in check(found, earlier, baseline, set(), []))
     print("self-test: parser closure, unclassified owner and stage monotonicity passed", file=sys.stderr)
+    old, new = "field:old.rs:Owner.arm", "field:new.rs:Owner.arm"
+    row = dict.fromkeys(COLUMNS, "") | {"key": old, "class": "R"}
+    relocation = {"old": old, "new": new, "reviewer": "fixture"}
+    moved = {new: "arm: Predicate"}
+    assert not check(moved, [row], [row], set(), [], [relocation]), "valid relocation failed"
+    assert any("one-to-one" in e for e in check(moved, [row], [row], set(), [], [relocation, relocation]))
+    assert any("invalid relocation" in e for e in check({}, [row], [row], set(), [], [relocation]))
+    target = dict(row, key="field:live.rs:Owner.arm")
+    deleted = dict(row, **{"class": "F", "delete": "R2"})
+    semantic = [deleted, target]
+    mapping = {"old": old, "new": target["key"], "reviewer": "fixture"}
+    live = {target["key"]: "arm: Predicate"}
+    assert not check(live, semantic, semantic, {"R2"}, [mapping]), "semantic sole-producer mapping failed"
+    assert any("not a surviving producer" in e for e in check(live, semantic, semantic, {"R2"}, [dict(mapping, new=old)]))
+    assert any("not a surviving producer" in e for e in check(live, semantic, semantic, {"R2"}, [dict(mapping, new="absent")]))
+    print("self-test: relocations and semantic deletion mappings passed", file=sys.stderr)
 
 
 def main():
@@ -227,7 +268,7 @@ def main():
     landed = {l.strip() for l in (HERE / "landed.txt").read_text().splitlines() if l.strip() and not l.startswith("#")}
     if "--self-test" in sys.argv:
         self_test(found, rows, baseline)
-    errors = check(found, rows, baseline, landed, read_tsv("producers.tsv"))
+    errors = check(found, rows, baseline, landed, read_tsv("producers.tsv"), read_tsv("relocations.tsv"))
     for e in errors:
         print(e, file=sys.stderr)
     counts = collections.Counter(r["class"] for r in rows)

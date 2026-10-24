@@ -26,6 +26,7 @@ mod ip_item_pattern;
 mod observed_facts;
 mod range_modes;
 mod resource_identity;
+mod scalar_content_view;
 mod selection_reachability;
 mod symbolic_local_state;
 mod url_parse_pattern;

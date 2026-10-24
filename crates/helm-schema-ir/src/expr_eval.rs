@@ -251,7 +251,7 @@ pub(crate) fn eval_expr_with_helper_calls(
                 let (head, tail) = path.split_first()?;
                 env.root_slots
                     .get(head)
-                    .and_then(|slot| slot.value.as_ref())
+                    .and_then(|slot| slot.binding().value.as_ref())
                     .and_then(|value| value.apply_to_path(tail))
             });
             let mut result = value
@@ -386,8 +386,7 @@ fn static_semver_numeric_selector(
         return None;
     }
     let version = eval_expr_with_helper_calls(version, env, resolver);
-    let helm_schema_core::GuardValue::String(text) =
-        version.scalar_dispatch.as_ref()?.constant_value()?
+    let helm_schema_core::GuardValue::String(text) = version.scalar_dispatch()?.constant_value()?
     else {
         return None;
     };
@@ -427,7 +426,7 @@ fn root_values_selector_result(segments: &[String], env: &EvalEnv) -> EvalResult
 
 fn values_path_value(tail: &[String], env: &EvalEnv) -> AbstractValue {
     if let Some(slot) = env.root_slots.get("Values")
-        && let Some(root) = &slot.value
+        && let Some(root) = &slot.binding().value
         && let Some(value) = root.apply_to_path(tail)
     {
         return value;
@@ -461,7 +460,7 @@ pub(crate) fn eval_helper_exprs_direct_effects(
 }
 
 pub(crate) struct HelperArgBindings {
-    pub(crate) scalar_dispatches: BTreeMap<String, crate::value::RootSlot>,
+    scalar_dispatches: BTreeMap<String, crate::value::RootSlot>,
     /// Whole-arg evaluated value when `bindings` derived from one evaluation
     /// (the non-dot, non-merge arm). Callers reuse it as the helper body dot
     /// instead of evaluating the same expression a second time.
@@ -537,10 +536,16 @@ fn helper_arg_slots(
 ) -> BTreeMap<String, crate::value::RootSlot> {
     let mut slots = BTreeMap::<String, crate::value::RootSlot>::new();
     for (name, value) in bindings {
-        slots.entry(name).or_default().value = Some(value);
+        slots
+            .entry(name)
+            .or_default()
+            .bind(crate::value::RootSlotUpdate::Value(Some(value)));
     }
     for (name, dispatch) in dispatches {
-        slots.entry(name).or_default().dispatch = Some(dispatch);
+        slots
+            .entry(name)
+            .or_default()
+            .bind(crate::value::RootSlotUpdate::Dispatch(Some(dispatch)));
     }
     slots
 }
@@ -658,7 +663,7 @@ fn bound_values_member(value: &AbstractValue, env: &EvalEnv) -> Option<AbstractV
         AbstractValue::RootContext => Some(
             env.root_slots
                 .get("Values")
-                .and_then(|slot| slot.value.as_ref())
+                .and_then(|slot| slot.binding().value.as_ref())
                 .cloned()
                 .unwrap_or_else(AbstractValue::values_root),
         ),
@@ -844,12 +849,12 @@ fn local_value_result(
         // truthiness or scalar dispatch for such a binding.
         result.truth = TruthCondition::Unknown;
         result.selection_reachability = None;
-        result.scalar_dispatch = None;
+        result.clear_scalar_dispatch();
     }
     result.effects.local_source_paths = source_paths;
     let default_paths = leaf_metadata
         .map(|metadata| &metadata.default_paths)
-        .or_else(|| env.local_slots.slot(var).default_paths.as_ref());
+        .or_else(|| env.local_slots.binding(var).default_paths.as_ref());
     if let Some(default_paths) = default_paths {
         result
             .effects
@@ -864,7 +869,7 @@ fn local_value_result(
     }
     let output_meta = leaf_metadata
         .map(|metadata| &metadata.output_meta)
-        .or_else(|| env.local_slots.slot(var).output_meta.as_ref());
+        .or_else(|| env.local_slots.binding(var).output_meta.as_ref());
     if let Some(meta_by_path) = output_meta {
         match selected_paths {
             Some(paths) => result.effects.merge_local_output_meta(
@@ -958,9 +963,9 @@ fn attach_named_root_field_semantics(result: &mut EvalResult, field: &str, env: 
     let Some(slot) = env.root_slots.get(field) else {
         return;
     };
-    if let Some(dispatch) = &slot.dispatch {
+    if let Some(dispatch) = &slot.binding().dispatch {
         result.set_scalar_dispatch_with_memo(dispatch.clone(), env.predicate_memo.as_ref());
-    } else if let Some(predicate) = &slot.truth {
+    } else if let Some(predicate) = &slot.binding().truth {
         result.set_truth_condition_with_memo(
             TruthCondition::exact_with_memo(predicate.clone(), env.predicate_memo.as_ref()),
             crate::eval_effect::SelectionTruthSource::RenderedScalar,
@@ -990,4 +995,10 @@ pub(crate) fn apply_local_set_mutations_expr(expr: &TemplateExpr, env: &mut Eval
     };
     let result = eval_expr(mutation_expr, env);
     env.apply_local_set_mutations(&result.effects.local_set_mutations)
+}
+
+impl HelperArgBindings {
+    pub(crate) fn into_root_slots(self) -> BTreeMap<String, crate::value::RootSlot> {
+        self.scalar_dispatches
+    }
 }

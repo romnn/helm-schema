@@ -29,7 +29,7 @@ pub(super) fn eval_default(
 ) -> EvalResult {
     let memo = env.predicate_memo.as_ref();
     let primary_selection = primary.clone();
-    let primary_dispatch = primary.scalar_dispatch.clone();
+    let primary_dispatch = primary.scalar_dispatch().cloned();
     let fallback_reachability = default_primary_selection_with_memo(&primary, memo);
     let primary_reachability = fallback_reachability.complement_with_memo(memo);
     let primary_paths = identity_value_paths(primary.value.as_ref());
@@ -84,7 +84,7 @@ pub(super) fn eval_default(
             "default fallback after opaque primary",
             primary_paths.clone(),
         );
-        fallback_dispatch = result.scalar_dispatch.clone();
+        fallback_dispatch = result.scalar_dispatch().cloned();
         fallback_paths.extend(identity_value_paths(result.value.as_ref()));
         effects.merge(result.effects);
         values.push(result.value.unwrap_or(AbstractValue::Unknown));
@@ -393,7 +393,7 @@ fn default_primary_selection_with_memo(
     result: &EvalResult,
     memo: &helm_schema_core::PredicateMemo,
 ) -> SelectionReachability {
-    if let Some(dispatch) = result.scalar_dispatch.as_ref()
+    if let Some(dispatch) = result.scalar_dispatch()
         && (dispatch.has_printf_string_identity()
             || result.value.as_ref().is_some_and(|value| {
                 value
@@ -522,7 +522,7 @@ pub(super) fn eval_coalesce(
                 env.predicate_memo.as_ref(),
             )
         });
-        candidate_dispatches.push(result.scalar_dispatch.clone());
+        candidate_dispatches.push(result.scalar_dispatch().cloned());
         candidates.push((result, reachability));
     }
     // `coalesce` selects only non-empty candidates. Downstream strict consumers therefore see
@@ -700,7 +700,7 @@ pub(super) fn eval_dict(
             continue;
         };
         let value = eval_expr_with_helper_calls(value, env, resolver);
-        if let Some(dispatch) = &value.scalar_dispatch {
+        if let Some(dispatch) = value.scalar_dispatch() {
             field_scalar_dispatches.insert(key.clone(), dispatch.clone());
         }
         effects.merge(value.effects);

@@ -1,9 +1,7 @@
 use super::*;
 use std::collections::HashMap;
 
-use crate::analysis_db::{
-    BOUND_HELPER_STRUCTURAL_WIDTH_LIMIT, widen_large_bound_value_ref, widen_large_bound_values,
-};
+use crate::analysis_db::{BOUND_HELPER_STRUCTURAL_WIDTH_LIMIT, widen_large_bound_value_ref};
 use test_util::prelude::sim_assert_eq;
 
 macro_rules! values_path {
@@ -410,4 +408,17 @@ fn selection_chain_identity_paths_report_a_truncated_chain() {
         have: path("a").selection_chain_identity_paths(),
         want: None,
     );
+}
+
+fn widen_large_bound_values<'a>(
+    bindings: impl IntoIterator<Item = &'a mut AbstractValue>,
+    helper_name: &str,
+    widened_paths: &mut BTreeSet<String>,
+) {
+    for binding in bindings {
+        let Some(widened) = widen_large_bound_value_ref(binding, helper_name, widened_paths) else {
+            continue;
+        };
+        *binding = widened;
+    }
 }

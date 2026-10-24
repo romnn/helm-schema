@@ -20,7 +20,7 @@ mod node_eval;
 mod observed_facts;
 mod range_modes;
 mod resource_identity;
-mod scalar_value;
+use value::scalar_value;
 mod static_file_template;
 mod symbolic;
 mod symbolic_local_state;

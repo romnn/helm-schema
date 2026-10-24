@@ -36,12 +36,15 @@ impl BoundValueContext {
         }
     }
 
-    pub(crate) fn slot(&self, name: &str) -> &LocalSlot {
-        self.slots.get(name).unwrap_or(&LocalSlot::EMPTY)
+    pub(crate) fn binding(&self, name: &str) -> crate::value::LocalSlotView<'_> {
+        self.slots.get(name).unwrap_or(&LocalSlot::EMPTY).binding()
     }
 
-    pub(crate) fn variable_slots(&self, name: &str) -> [&LocalSlot; 2] {
-        [self.slot(name), self.slot(name.trim_start_matches('$'))]
+    pub(crate) fn variable_slots(&self, name: &str) -> [crate::value::LocalSlotView<'_>; 2] {
+        [
+            self.binding(name),
+            self.binding(name.trim_start_matches('$')),
+        ]
     }
 
     pub(crate) fn slot_mut(&mut self, name: &str) -> &mut LocalSlot {
@@ -53,10 +56,13 @@ impl BoundValueContext {
         metadata: &HashMap<String, BTreeMap<ValuesPath, HelperOutputMeta>>,
     ) {
         for slot in self.slots.values_mut() {
-            slot.output_meta = None;
+            slot.bind(crate::value::LocalSlotUpdate::OutputMeta(None));
         }
         for (name, meta) in metadata {
-            self.slot_mut(name).output_meta = Some(meta.clone());
+            self.slot_mut(name)
+                .bind(crate::value::LocalSlotUpdate::OutputMeta(Some(
+                    meta.clone(),
+                )));
         }
     }
 
@@ -64,10 +70,10 @@ impl BoundValueContext {
         let Some((variable, rest)) = bound_selector_read(expr) else {
             return BTreeSet::new();
         };
-        let Some(binding) = self.slot(variable).get_binding.as_ref() else {
+        let Some(binding) = self.binding(variable).get_binding.as_ref() else {
             return BTreeSet::new();
         };
-        let Some(domain) = self.slot(&binding.key_var).range_domain.as_ref() else {
+        let Some(domain) = self.binding(&binding.key_var).range_domain.as_ref() else {
             return BTreeSet::new();
         };
 
@@ -100,7 +106,7 @@ pub(crate) fn output_metadata(
     slots
         .iter()
         .filter_map(|(name, slot)| {
-            let LocalSlot {
+            let crate::value::LocalSlotView {
                 range_domain: _,
                 get_binding: _,
                 binding: _,
@@ -112,9 +118,8 @@ pub(crate) fn output_metadata(
                 truthiness_cleared: _,
                 typeof_source: _,
                 int_cast_source: _,
-                range_member_value: _,
                 definite_range_member_value: _,
-            } = slot;
+            } = slot.binding();
             output_meta
                 .as_ref()
                 .map(|value| (name.clone(), value.clone()))

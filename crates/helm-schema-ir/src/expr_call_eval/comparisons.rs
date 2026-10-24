@@ -80,13 +80,13 @@ pub(super) fn eval_ternary(
                 });
             }
         }
-        effects.merge(result.effects);
         if index < 2 {
-            scalar_dispatches.push(result.scalar_dispatch);
+            scalar_dispatches.push(result.scalar_dispatch().cloned());
             if let Some(value) = result.value {
                 values.push(value);
             }
         }
+        effects.merge(result.effects);
     }
     effects.promote_tested_type_hints();
     let mut result = EvalResult::with_effects(AbstractValue::choice(values), effects);
@@ -289,7 +289,7 @@ pub(crate) fn selected_type_test_truth(
     let Some(schema_type) = schema_type else {
         return TruthCondition::Unknown;
     };
-    if let Some(dispatch) = &result.scalar_dispatch {
+    if let Some(dispatch) = result.scalar_dispatch() {
         return scalar_dispatch_type_is(dispatch, schema_type, type_name, memo);
     }
     result
@@ -308,8 +308,11 @@ fn scalar_dispatch_type_is(
 ) -> TruthCondition {
     let mut when_true = Vec::new();
     let mut when_false = Vec::new();
+    let Some(dispatch) = dispatch.content() else {
+        return TruthCondition::Unknown;
+    };
     let mut complete = dispatch.complete;
-    for (condition, value) in &dispatch.arms {
+    for (condition, value) in dispatch.arms {
         let value_truth = scalar_value_type_is(value, schema_type, type_name, memo);
         complete &= value_truth.predicate().is_some();
         if let Some(predicate) =
@@ -668,10 +671,7 @@ fn equality_condition(
     let [left_is_raw, right_is_raw] = raw_identity_operands else {
         return TruthCondition::Unknown;
     };
-    match (
-        left.scalar_dispatch.as_ref(),
-        right.scalar_dispatch.as_ref(),
-    ) {
+    match (left.scalar_dispatch(), right.scalar_dispatch()) {
         (Some(left), Some(right)) => match (left.constant_value(), right.constant_value()) {
             (Some(left), Some(right)) => {
                 return TruthCondition::exact_with_memo(

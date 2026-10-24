@@ -83,7 +83,7 @@ pub(crate) struct FragmentSummary {
     /// Truthiness of a typed value serialized as this helper's JSON output.
     pub(crate) json_payload_truth: TruthCondition,
     /// Known scalar output alternatives, initialized on demand when the structural pass is partial.
-    pub(crate) scalar_dispatch: OnceCell<Option<ScalarValueDispatch>>,
+    scalar_dispatch: OnceCell<Option<ScalarValueDispatch>>,
     deferred_scalar_projection: Option<DeferredScalarProjection>,
     /// Rendered splice/taint rows flattened from the tree: per-path branch
     /// conditions, defaultedness, encoding, and provenance. Value-position
@@ -103,6 +103,9 @@ struct DeferredScalarProjection {
 
 impl FragmentSummary {
     pub(crate) fn scalar_dispatch(&self, db: &IrAnalysisDb) -> Option<&ScalarValueDispatch> {
+        if let Some(cached) = self.cached_scalar_dispatch() {
+            return cached;
+        }
         self.scalar_dispatch
             .get_or_init(|| {
                 let deferred = self.deferred_scalar_projection.as_ref()?;
@@ -136,7 +139,7 @@ impl DeferredScalarProjection {
         let projected = interpreter
             .scalar_body_arms(&scalar_children)
             .and_then(|arms| scalar_dispatch_from_alternatives(arms, db.predicate_memo().as_ref()));
-        merge_scalar_dispatch_candidates(
+        ScalarValueDispatch::merge_candidates(
             self.structural.clone(),
             projected,
             db.predicate_memo().as_ref(),
@@ -180,7 +183,9 @@ pub(crate) fn eval_bound_helper_fragment(
     };
     let (scalar_dispatch, deferred_scalar_projection) =
         match scalar_dispatch_from_fragment(&root, predicate_memo) {
-            StructuralDispatch::Known(dispatch) if dispatch.complete => {
+            StructuralDispatch::Known(dispatch)
+                if dispatch.content().is_some_and(|content| content.complete) =>
+            {
                 (OnceCell::from(Some(dispatch)), None)
             }
             StructuralDispatch::Known(dispatch) => (OnceCell::new(), deferred(Some(dispatch))),
@@ -271,61 +276,7 @@ fn bound_helper_interpreter<'a>(
     interpreter
 }
 
-const MAX_SCALAR_DISPATCH_STATES: usize = 128;
-
-fn merge_scalar_dispatch_candidates(
-    structural: Option<ScalarValueDispatch>,
-    projected: Option<ScalarValueDispatch>,
-    predicate_memo: &PredicateMemo,
-) -> Option<ScalarValueDispatch> {
-    let (structural, projected) = match (structural, projected) {
-        (Some(structural), Some(projected)) => (structural, projected),
-        (Some(dispatch), None) | (None, Some(dispatch)) => return Some(dispatch),
-        (None, None) => return None,
-    };
-    if structural.complete {
-        return Some(structural);
-    }
-    if projected.complete {
-        return Some(projected);
-    }
-
-    let fallback = structural.clone();
-    let mut conditions_by_value: BTreeMap<ScalarValue, Vec<Predicate>> = BTreeMap::new();
-    for (condition, value) in structural.arms.into_iter().chain(projected.arms) {
-        let condition =
-            TruthCondition::from_predicate_with_memo(condition, predicate_memo).when_true();
-        if condition != Predicate::False {
-            conditions_by_value
-                .entry(value)
-                .or_default()
-                .push(condition);
-        }
-    }
-    if conditions_by_value.len() > MAX_SCALAR_DISPATCH_STATES {
-        return Some(fallback);
-    }
-    let arms = conditions_by_value
-        .into_iter()
-        .map(|(value, conditions)| (any_predicates_with_memo(conditions, predicate_memo), value))
-        .collect::<Vec<_>>();
-    for (index, (left, _)) in arms.iter().enumerate() {
-        if arms.iter().skip(index + 1).any(|(right, _)| {
-            conjoin_predicates_with_memo(left.clone(), right.clone(), predicate_memo).is_some()
-        }) {
-            return Some(fallback);
-        }
-    }
-    let complete = TruthCondition::any_with_memo(
-        arms.iter().map(|(condition, _)| {
-            TruthCondition::exact_with_memo(condition.clone(), predicate_memo)
-        }),
-        predicate_memo,
-    )
-    .predicate()
-        == Some(&Predicate::True);
-    Some(ScalarValueDispatch { arms, complete })
-}
+use crate::value::MAX_SCALAR_DISPATCH_STATES;
 
 /// The structural pass's scalar reading of a helper body.
 enum StructuralDispatch {
@@ -404,13 +355,13 @@ fn scalar_dispatch_from_fragment(
         )
         .predicate()
             == Some(&Predicate::True);
-    StructuralDispatch::Known(ScalarValueDispatch {
-        arms: merge_scalar_dispatch_states(states, predicate_memo)
+    StructuralDispatch::Known(ScalarValueDispatch::bind_content(
+        merge_scalar_dispatch_states(states, predicate_memo)
             .into_iter()
             .map(|(condition, rendered)| (condition, ScalarValue::Rendered(rendered)))
             .collect(),
         complete,
-    })
+    ))
 }
 
 fn scalar_dispatch_from_alternatives(
@@ -446,13 +397,13 @@ fn scalar_dispatch_from_alternatives(
     if states.is_empty() {
         return None;
     }
-    Some(ScalarValueDispatch {
-        arms: states
+    Some(ScalarValueDispatch::bind_content(
+        states
             .into_iter()
             .map(|(condition, rendered)| (condition, ScalarValue::Rendered(rendered)))
             .collect(),
         complete,
-    })
+    ))
 }
 
 fn scalar_render_contribution(parts: &[StringPart]) -> Option<Vec<ScalarRenderPart>> {
@@ -1250,4 +1201,10 @@ fn prune_sibling_conditions(reads: &mut Vec<ValueRead>, rendered: &[RenderedRow]
         }
     }
     *reads = pruned;
+}
+
+impl FragmentSummary {
+    pub(crate) fn cached_scalar_dispatch(&self) -> Option<Option<&ScalarValueDispatch>> {
+        self.scalar_dispatch.get().map(Option::as_ref)
+    }
 }

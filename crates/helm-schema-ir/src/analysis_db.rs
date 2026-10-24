@@ -1159,12 +1159,12 @@ fn resolve_bound_helper_call(
         result
     };
     let mut binding_seen = params.seen.clone();
-    let crate::expr_eval::HelperArgBindings {
-        scalar_dispatches,
-        value,
-    } = bindings_for_helper_arg_with(params.arg, params.outer_bindings, |expr| {
-        eval_arg(expr, &mut binding_seen)
-    });
+    let mut helper_bindings =
+        bindings_for_helper_arg_with(params.arg, params.outer_bindings, |expr| {
+            eval_arg(expr, &mut binding_seen)
+        });
+    let value = helper_bindings.value.take();
+    let scalar_dispatches = helper_bindings.into_root_slots();
     let mut slots = scalar_dispatches.into_iter().collect::<HashMap<_, _>>();
 
     // The binding resolution already evaluated the whole arg unless the arg
@@ -1193,11 +1193,11 @@ fn resolve_bound_helper_call(
     });
 
     let mut widened_paths = BTreeSet::new();
-    widen_large_bound_values(
-        slots.values_mut().filter_map(|slot| slot.value.as_mut()),
-        params.helper_name,
-        &mut widened_paths,
-    );
+    for slot in slots.values_mut() {
+        slot.map_value(|value| {
+            widen_large_bound_value_ref(value, params.helper_name, &mut widened_paths)
+        });
+    }
     helper_body_dot = helper_body_dot
         .map(|binding| widen_large_bound_value(binding, params.helper_name, &mut widened_paths));
     helper_fragment_dot = helper_fragment_dot
@@ -1223,25 +1223,19 @@ fn resolve_bound_helper_call(
     let root_passthrough = matches!(helper_body_dot, Some(AbstractValue::RootContext));
     if root_passthrough {
         for (field, value) in params.context.analysis_db.static_root_fields() {
-            slots
-                .entry(field.clone())
-                .or_default()
-                .value
-                .get_or_insert_with(|| value.clone());
+            slots.entry(field.clone()).or_default().seed_value(value);
         }
     }
     if root_passthrough {
         for slot in slots.values_mut() {
-            slot.truth = None;
-            slot.dispatch = None;
+            slot.clear_facts();
         }
         for (name, caller) in &params.eval_env.root_slots {
-            let truth = caller.truth.as_ref();
-            let dispatch = caller.dispatch.as_ref();
+            let truth = caller.binding().truth.as_ref();
+            let dispatch = caller.binding().dispatch.as_ref();
             if truth.is_some() || dispatch.is_some() {
                 let slot = slots.entry(name.clone()).or_default();
-                slot.truth = truth.cloned();
-                slot.dispatch = dispatch.cloned();
+                slot.inherit_facts(caller);
             }
         }
     }
@@ -1263,19 +1257,6 @@ fn resolve_bound_helper_call(
 /// width 58.
 /// A synthetic 256-leaf value reproduced the preflight blowup this bound prevents.
 pub(crate) const BOUND_HELPER_STRUCTURAL_WIDTH_LIMIT: usize = 32;
-
-pub(crate) fn widen_large_bound_values<'a>(
-    bindings: impl IntoIterator<Item = &'a mut AbstractValue>,
-    helper_name: &str,
-    widened_paths: &mut BTreeSet<String>,
-) {
-    for binding in bindings {
-        let Some(widened) = widen_large_bound_value_ref(binding, helper_name, widened_paths) else {
-            continue;
-        };
-        *binding = widened;
-    }
-}
 
 pub(crate) fn widen_large_bound_value_ref(
     binding: &AbstractValue,

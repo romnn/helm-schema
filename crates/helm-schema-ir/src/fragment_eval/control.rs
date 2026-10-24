@@ -1235,7 +1235,8 @@ impl Interpreter<'_> {
             .slots
             .iter()
             .filter_map(|(name, slot)| {
-                slot.definite_range_member_value
+                slot.binding()
+                    .definite_range_member_value
                     .as_ref()
                     .map(|value| (name, value))
             })
@@ -1253,8 +1254,7 @@ impl Interpreter<'_> {
                     .slots
                     .entry(variable.clone())
                     .or_default()
-                    .range_member_value
-                    .replace(value),
+                    .replace_range_member(value),
             ));
         }
         let (predicate, faithful) = {
@@ -1271,11 +1271,12 @@ impl Interpreter<'_> {
                         .slots
                         .entry(variable.clone())
                         .or_default()
-                        .range_member_value
-                        .replace(previous);
+                        .replace_range_member(previous);
                 }
                 None => {
-                    self.locals.slot_mut(&variable).range_member_value.take();
+                    self.locals
+                        .slot_mut(&variable)
+                        .bind(crate::value::LocalSlotUpdate::RangeMemberValue(None));
                 }
             }
         }
@@ -1517,7 +1518,7 @@ impl Interpreter<'_> {
         };
         let accumulator_is_empty = self
             .locals
-            .slot(name.trim_start_matches('$'))
+            .binding(name.trim_start_matches('$'))
             .binding
             .as_ref()
             .and_then(|binding| binding.value(self.db.predicate_memo()))
@@ -1726,7 +1727,7 @@ impl Interpreter<'_> {
                     .slots
                     .entry(variable.clone())
                     .or_default()
-                    .range_domain = Some(literals);
+                    .bind(crate::value::LocalSlotUpdate::RangeDomain(Some(literals)));
             } else {
                 self.locals.insert_range_domain(variable, literals);
             }
@@ -1741,7 +1742,7 @@ impl Interpreter<'_> {
                     .slots
                     .entry(variable.to_string())
                     .or_default()
-                    .range_domain = Some(keys);
+                    .bind(crate::value::LocalSlotUpdate::RangeDomain(Some(keys)));
             } else {
                 self.locals.insert_range_domain(variable.to_string(), keys);
             }
@@ -1998,8 +1999,7 @@ impl Interpreter<'_> {
                 .slots
                 .entry(variable.clone())
                 .or_default()
-                .range_member_value
-                .replace(binding);
+                .replace_range_member(binding);
         }
         // A local dict assembled by an unconditional `set` over a
         // values-backed map iterates its literal entries on EVERY render
@@ -2013,19 +2013,16 @@ impl Interpreter<'_> {
             && let Some(variable) = member_variable
             && let Some(entry) = entries.values().next()
         {
-            self.locals
-                .slots
-                .entry(variable.clone())
-                .or_default()
-                .definite_range_member_value = Some(entry.clone());
+            self.locals.slots.entry(variable.clone()).or_default().bind(
+                crate::value::LocalSlotUpdate::DefiniteRangeMemberValue(Some(entry.clone())),
+            );
         }
         if let Some((variable, path)) = key_variable.zip(range_binding_path) {
             self.locals
                 .slots
                 .entry(variable.to_string())
                 .or_default()
-                .range_member_value
-                .replace(AbstractValue::RangeKey(path));
+                .replace_range_member(AbstractValue::RangeKey(path));
         }
         self.push_dot(dot, crate::eval_env::BindingEvaluationMode::Direct);
         (Some(own_condition), extra, None, truth, post_header_locals)
@@ -2644,7 +2641,7 @@ impl Interpreter<'_> {
         let mut entry_identities: Vec<(&String, BTreeSet<helm_schema_core::ValuesPath>)> = entry
             .slots
             .iter()
-            .filter_map(|(name, slot)| slot.binding.as_ref().map(|value| (name, value)))
+            .filter_map(|(name, slot)| slot.binding().binding.as_ref().map(|value| (name, value)))
             .filter_map(|(name, value)| {
                 let paths = value.paths(self.db.predicate_memo());
                 (!paths.is_empty()).then_some((name, paths))
@@ -2659,7 +2656,7 @@ impl Interpreter<'_> {
             // one unexplained arm drops the record entirely.
             let mut fold_spellings: Option<BTreeSet<GuardValue>> = Some(BTreeSet::new());
             for (index, outcome) in outcomes.iter().enumerate() {
-                let Some(value) = outcome.slot(name).binding.as_ref() else {
+                let Some(value) = outcome.binding(name).binding.as_ref() else {
                     continue;
                 };
                 // A reassignment severs the identity when the arm's value
@@ -2700,7 +2697,7 @@ impl Interpreter<'_> {
             let fold_spellings = fold_spellings.filter(|spellings| !spellings.is_empty());
             for index in keeping {
                 if let Some(outcome) = outcomes.get_mut(index)
-                    && let Some(value) = outcome.slot(name).binding.clone()
+                    && let Some(value) = outcome.binding(name).binding.clone()
                 {
                     let mut excluded =
                         value.map_values(|value| attach_reassignment_exclusion(&value, &exclusion));
@@ -2708,7 +2705,11 @@ impl Interpreter<'_> {
                         excluded = excluded
                             .map_values(|value| attach_empty_fold_spellings(value, spellings));
                     }
-                    outcome.slots.entry(name.to_owned()).or_default().binding = Some(excluded);
+                    outcome
+                        .slots
+                        .entry(name.to_owned())
+                        .or_default()
+                        .bind(crate::value::LocalSlotUpdate::Binding(Some(excluded)));
                 }
             }
         }
@@ -2898,17 +2899,18 @@ impl Interpreter<'_> {
                 outcome
                     .slots
                     .iter()
-                    .filter_map(|(name, slot)| slot.output_meta.is_some().then_some(name))
+                    .filter_map(|(name, slot)| slot.binding().output_meta.is_some().then_some(name))
                     .cloned()
             })
             .collect();
         names.sort();
         names.dedup();
         for name in names {
-            let entry_omitted = binding_omitted_keys(entry.slot(&name).output_meta.as_ref());
+            let entry_omitted = binding_omitted_keys(entry.binding(&name).output_meta.as_ref());
             let mut additions: BTreeMap<String, Vec<Guard>> = BTreeMap::new();
             for (index, outcome) in outcomes.iter().enumerate() {
-                for (key, retain) in binding_omitted_keys(outcome.slot(&name).output_meta.as_ref())
+                for (key, retain) in
+                    binding_omitted_keys(outcome.binding(&name).output_meta.as_ref())
                 {
                     if entry_omitted.contains_key(&key) {
                         continue;
@@ -2942,12 +2944,7 @@ impl Interpreter<'_> {
             // Every arm's snapshot gets the post-join truth so the render
             // lowers as one unguarded splice.
             for outcome in outcomes.iter_mut() {
-                if let Some(metas) = outcome.slot_mut(&name).output_meta.as_mut() {
-                    for meta in metas.values_mut() {
-                        meta.predicates.clear();
-                        meta.omitted_keys.extend(additions.clone());
-                    }
-                }
+                outcome.slot_mut(&name).merge_omitted_keys(&additions);
             }
         }
     }
@@ -3085,9 +3082,14 @@ impl Interpreter<'_> {
             for (key, value) in state
                 .observed
                 .iter()
-                .filter_map(|(name, slot)| slot.value.as_ref().map(|value| (name, value)))
+                .filter_map(|(name, slot)| slot.binding().value.as_ref().map(|value| (name, value)))
             {
-                if entry.observed.get(key).and_then(|slot| slot.value.as_ref()) != Some(value) {
+                if entry
+                    .observed
+                    .get(key)
+                    .and_then(|slot| slot.binding().value.as_ref())
+                    != Some(value)
+                {
                     keys.insert(key.clone());
                 }
             }
@@ -3097,11 +3099,19 @@ impl Interpreter<'_> {
         }
         for (_, _, state) in arms {
             for key in &keys {
-                let Some(value) = state.observed.get(key).and_then(|slot| slot.value.as_ref())
+                let Some(value) = state
+                    .observed
+                    .get(key)
+                    .and_then(|slot| slot.binding().value.as_ref())
                 else {
                     continue;
                 };
-                if entry.observed.get(key).and_then(|slot| slot.value.as_ref()) == Some(value) {
+                if entry
+                    .observed
+                    .get(key)
+                    .and_then(|slot| slot.binding().value.as_ref())
+                    == Some(value)
+                {
                     continue;
                 }
                 if let Some(slot) = state.observed.get(key) {
@@ -3125,8 +3135,13 @@ impl Interpreter<'_> {
                 let value = state
                     .observed
                     .get(key)
-                    .and_then(|slot| slot.value.as_ref())
-                    .or_else(|| entry.observed.get(key).and_then(|slot| slot.value.as_ref()));
+                    .and_then(|slot| slot.binding().value.as_ref())
+                    .or_else(|| {
+                        entry
+                            .observed
+                            .get(key)
+                            .and_then(|slot| slot.binding().value.as_ref())
+                    });
                 let Some(value) = value else {
                     continue 'keys;
                 };
@@ -3148,15 +3163,8 @@ impl Interpreter<'_> {
             } else {
                 AbstractValue::Choice(joined_values)
             };
-            let dispatch = ScalarValueDispatch {
-                arms: dispatch_arms,
-                complete: true,
-            };
-            let slot = RootSlot {
-                value: Some(joined_value),
-                truth: Some(truthy),
-                dispatch: Some(dispatch),
-            };
+            let dispatch = ScalarValueDispatch::bind_content(dispatch_arms, true);
+            let slot = RootSlot::new(Some(joined_value), Some(truthy), Some(dispatch));
             self.root_slots.insert(key.clone(), slot.clone());
             self.root_writes.insert(key.clone(), slot);
         }
