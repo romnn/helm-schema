@@ -122,3 +122,65 @@ fn failed_refresh_preserves_prior_absence() -> eyre::Result<()> {
         },
     )
 }
+
+#[cfg(unix)]
+#[test]
+fn failed_marker_deletion_and_schema_write_do_not_restore_absence() -> eyre::Result<()> {
+    use std::fs;
+    use std::os::unix::fs::PermissionsExt as _;
+
+    let cache = ScratchDir::new("negative-cache-read-only-refresh")?;
+    let negative = Arc::new(NegativeCache::new());
+    let provider = || {
+        KubernetesJsonSchemaProvider::new("v1.35.0")
+            .with_cache_dir(cache.path())
+            .with_allow_download(true)
+            .with_negative_cache(Arc::clone(&negative))
+    };
+    let query = ApiPresenceQuery::GroupVersion {
+        api_version: "v1".to_string(),
+    };
+    let initial = provider().with_fetcher(Arc::new(MockFetcher::new()));
+    sim_assert_eq!(have: initial.capability_has_query_at_primary_version(&query), want: Some(false));
+
+    // A readable, unwritable directory keeps the old marker but prevents both
+    // its deletion and persistence of the successful response's valid schema.
+    let directory = cache.path().join("default/v1.35.0");
+    let original_permissions = fs::metadata(&directory)?.permissions();
+    let mut read_only = original_permissions.clone();
+    read_only.set_mode(read_only.mode() & !0o222);
+    fs::set_permissions(&directory, read_only)?;
+    let refresh = provider().with_use_cache(false).with_fetcher(Arc::new(
+        MockFetcher::new().with_default(MockResponse::Body(br#"{"type":"object"}"#.to_vec())),
+    ));
+    let refreshed = refresh.capability_has_query_at_primary_version(&query);
+    fs::set_permissions(&directory, original_permissions)?;
+
+    // A new provider sharing the evidence must ignore the surviving marker.
+    let offline = provider().with_allow_download(false);
+    sim_assert_eq!(
+        have: json!({
+            "refreshed": refreshed,
+            "disk_negative": directory.join("configmap-v1.json.not-found").is_file(),
+            "schema_persisted": directory.join("configmap-v1.json").exists(),
+            "shared_negative": negative.contains("default", "v1.35.0", "configmap-v1.json"),
+            "offline": offline.capability_has_query_at_primary_version(&query),
+        }),
+        want: json!({
+            "refreshed": null,
+            "disk_negative": true,
+            "schema_persisted": false,
+            "shared_negative": false,
+            "offline": null,
+        })
+    );
+
+    // Cache-enabled online probes retry contradicted markers, and a fresh 404
+    // establishes authoritative absence again.
+    let retry_fetcher = Arc::new(MockFetcher::new());
+    let retry = provider().with_fetcher(retry_fetcher.clone());
+    sim_assert_eq!(have: retry.capability_has_query_at_primary_version(&query), want: Some(false));
+    sim_assert_eq!(have: retry_fetcher.total_calls(), want: 1);
+    sim_assert_eq!(have: offline.capability_has_query_at_primary_version(&query), want: Some(false));
+    Ok(())
+}

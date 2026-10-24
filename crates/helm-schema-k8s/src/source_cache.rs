@@ -69,8 +69,8 @@ impl SchemaCachePolicy {
 ///     successful fetch).
 ///   - `AuthoritativelyAbsent`: the fetcher confirmed the schema
 ///     does not exist upstream (recorded in negative cache).
-///     Includes negative-cache hits from a prior online run, since
-///     those represent a confirmed past 404 — still authoritative.
+///     Includes negative-cache hits from a prior online run unless a
+///     successful response has superseded that confirmed past 404.
 ///   - `Uncertain`: no cache hit, no fetch attempted (offline AND
 ///     no negative-cache record), or fetch failed with a network
 ///     error. The probe gives no information either way.
@@ -104,17 +104,15 @@ where
             mem.write(mem_key, doc.clone());
             return SourceDocOutcome::Found(doc);
         }
-        // Negative cache / not-found marker is set ONLY when the fetcher
-        // returned a clean "not found" — treat as authoritative even
-        // offline. A prior online run already proved upstream doesn't
-        // have this file.
-        if request.negative_cache.contains(
+        // A clean "not found" remains authoritative offline until a successful
+        // response supersedes it, even if disk marker deletion failed.
+        if request.negative_cache.contains_or_marker(
             request.source_id,
             request.cache_namespace,
             request.cache_key,
-        ) || (request.cache_policy.use_not_found_marker()
-            && disk.is_some_and(|local| not_found_marker_exists(local.path())))
-        {
+            request.cache_policy.use_not_found_marker()
+                && disk.is_some_and(|local| not_found_marker_exists(local.path())),
+        ) {
             return SourceDocOutcome::AuthoritativelyAbsent;
         }
     }
@@ -129,7 +127,8 @@ where
         Ok(Some(bytes)) => {
             // A successful response supersedes absence before persistence or parsing
             // can fail.
-            request.negative_cache.remove(
+            // Shared evidence also vetoes a disk marker whose deletion fails.
+            request.negative_cache.supersede(
                 request.source_id,
                 request.cache_namespace,
                 request.cache_key,
