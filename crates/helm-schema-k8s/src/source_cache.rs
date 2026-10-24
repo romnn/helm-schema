@@ -127,6 +127,21 @@ where
 
     match request.fetcher.fetch(&request.url) {
         Ok(Some(bytes)) => {
+            // A successful response supersedes absence before persistence or parsing
+            // can fail.
+            request.negative_cache.remove(
+                request.source_id,
+                request.cache_namespace,
+                request.cache_key,
+            );
+            if let Some(local) = disk
+                && request.cache_policy.use_not_found_marker()
+            {
+                remove_cache_file_if_present(
+                    &not_found_marker_path(local.path()),
+                    "failed to remove stale schema not-found marker",
+                );
+            }
             let doc = if let Some(local) = disk {
                 write_fetched_schema_doc(
                     local,
@@ -145,14 +160,6 @@ where
                 // cache miss.
                 return SourceDocOutcome::Uncertain;
             };
-            if let Some(local) = disk
-                && request.cache_policy.use_not_found_marker()
-            {
-                remove_cache_file_if_present(
-                    &not_found_marker_path(local.path()),
-                    "failed to remove stale schema not-found marker",
-                );
-            }
             mem.write(mem_key, doc.clone());
             SourceDocOutcome::Found(doc)
         }

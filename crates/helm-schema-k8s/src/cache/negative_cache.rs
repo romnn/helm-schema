@@ -9,9 +9,9 @@ use std::sync::Mutex;
 ///     use the group, or an empty string when not relevant).
 ///   - `filename`: the resource file the provider tried to fetch.
 ///
-/// Entries persist for the lifetime of the process; we re-attempt
-/// across process boundaries because a transient remote 404 should not
-/// poison disk-level state.
+/// Entries record clean upstream not-found responses until a successful response
+/// supersedes them.
+/// Kubernetes also persists disk not-found markers; CRD catalog negatives stay in memory.
 #[derive(Debug, Default)]
 pub struct NegativeCache {
     inner: Mutex<HashSet<(String, String, String)>>,
@@ -35,7 +35,17 @@ impl NegativeCache {
         }
     }
 
-    /// True if this exact tuple has been seen as negative.
+    pub(crate) fn remove(&self, source_id: &str, bucket: &str, filename: &str) {
+        if let Ok(mut guard) = self.inner.lock() {
+            guard.remove(&(
+                source_id.to_string(),
+                bucket.to_string(),
+                filename.to_string(),
+            ));
+        }
+    }
+
+    /// True if this exact tuple currently records an upstream not-found response.
     #[must_use]
     pub fn contains(&self, source_id: &str, bucket: &str, filename: &str) -> bool {
         self.inner
