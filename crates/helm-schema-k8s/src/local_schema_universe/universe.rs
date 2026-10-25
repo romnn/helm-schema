@@ -137,7 +137,7 @@ pub fn resource_schemas_from_crd_document_with_source(
                 continue;
             };
             if prunes {
-                close_pruned_object_nodes(&mut schema, true);
+                close_pruned_object_nodes(&mut schema, PruneEntry::ResourceRoot);
             }
             resource_schemas.push(resource_schema_for_version(
                 group,
@@ -161,7 +161,7 @@ pub fn resource_schemas_from_crd_document_with_source(
         return resource_schemas;
     };
     if prunes {
-        close_pruned_object_nodes(&mut schema, true);
+        close_pruned_object_nodes(&mut schema, PruneEntry::ResourceRoot);
     }
     resource_schemas.push(resource_schema_for_version(
         group,
@@ -188,6 +188,17 @@ fn crd_prunes_unknown_fields(document: &Value, api_version: Option<&str>) -> boo
         == Some(false)
 }
 
+/// How the API server's pruning walk reaches a schema node.
+#[derive(Clone, Copy)]
+enum PruneEntry {
+    /// The resource root, which the server prunes as an embedded resource.
+    ResourceRoot,
+    /// A declared property or map value, pruned by its own schema.
+    Field,
+    /// An item of a preserving array, which inherits the preservation.
+    PreservedItem,
+}
+
 /// Stamps a pruning CRD's structural contract onto its object nodes.
 ///
 /// A pruned resource carries only the fields its schema declares, so an
@@ -197,47 +208,56 @@ fn crd_prunes_unknown_fields(document: &Value, api_version: Option<&str>) -> boo
 /// catalog closes, and which provider answered would decide what the values
 /// schema accepts.
 ///
-/// Three subtrees keep the open reading. `metadata` is validated by the API
-/// machinery rather than the structural schema and is never pruned; a
-/// subtree can opt out with `x-kubernetes-preserve-unknown-fields`; and an
-/// embedded resource carries a schema for a foreign object, which charts
-/// routinely declare only in part. Only the structural keywords are walked:
-/// a structural schema states its structure outside `allOf`/`anyOf`/`oneOf`/
-/// `not`, so a stamp inside a junctor arm would reject documents the sibling
-/// arm accepts.
-fn close_pruned_object_nodes(schema: &mut Value, root: bool) {
+/// The walk mirrors the API server's pruning algorithm. A node with
+/// `x-kubernetes-preserve-unknown-fields` keeps its own unknown fields (and
+/// those of its array items), yet its declared properties are pruned by their
+/// own schemas again. An embedded resource, like the resource root, never
+/// prunes `apiVersion`, `kind`, or `metadata`: the API machinery validates
+/// those rather than the structural schema, so those fields are not walked,
+/// and the node keeps its open reading because they reach it whether or not
+/// the CRD spells them. Only the structural keywords are walked: a structural
+/// schema states its structure outside `allOf`/`anyOf`/`oneOf`/`not`, so a
+/// stamp inside a junctor arm would reject documents the sibling arm accepts.
+fn close_pruned_object_nodes(schema: &mut Value, entry: PruneEntry) {
     let Some(object) = schema.as_object_mut() else {
         return;
     };
-    for opt_out in [
-        "x-kubernetes-preserve-unknown-fields",
-        "x-kubernetes-embedded-resource",
-    ] {
-        if object.get(opt_out).and_then(Value::as_bool) == Some(true) {
-            return;
-        }
-    }
+    let marks = |keyword: &str| object.get(keyword).and_then(Value::as_bool) == Some(true);
+    let (inherits_preservation, resource_root) = match entry {
+        PruneEntry::ResourceRoot => (false, true),
+        PruneEntry::Field => (false, false),
+        PruneEntry::PreservedItem => (true, false),
+    };
+    let preserves = inherits_preservation || marks("x-kubernetes-preserve-unknown-fields");
+    let embedded = resource_root || marks("x-kubernetes-embedded-resource");
 
     let mut declares_properties = false;
     if let Some(properties) = object.get_mut("properties").and_then(Value::as_object_mut) {
         declares_properties = !properties.is_empty();
         for (key, child) in properties.iter_mut() {
-            if root && key == "metadata" {
+            if embedded && matches!(key.as_str(), "apiVersion" | "kind" | "metadata") {
                 continue;
             }
-            close_pruned_object_nodes(child, false);
+            close_pruned_object_nodes(child, PruneEntry::Field);
         }
     }
-    for key in ["items", "additionalProperties"] {
-        if let Some(child) = object.get_mut(key) {
-            close_pruned_object_nodes(child, false);
-        }
+    if let Some(child) = object.get_mut("additionalProperties") {
+        close_pruned_object_nodes(child, PruneEntry::Field);
+    }
+    if let Some(child) = object.get_mut("items") {
+        let item_entry = if preserves {
+            PruneEntry::PreservedItem
+        } else {
+            PruneEntry::Field
+        };
+        close_pruned_object_nodes(child, item_entry);
     }
 
-    // The document root keeps its open reading, matching the catalog
-    // conversion: `apiVersion`, `kind`, and `metadata` reach every custom
-    // resource whether or not the CRD spells them.
-    if !root && declares_properties && !object.contains_key("additionalProperties") {
+    if !preserves
+        && !embedded
+        && declares_properties
+        && !object.contains_key("additionalProperties")
+    {
         object.insert("additionalProperties".to_string(), Value::Bool(false));
     }
 }
