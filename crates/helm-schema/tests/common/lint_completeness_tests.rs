@@ -37,6 +37,7 @@ fn screen_external(
                 baseline: json!({}),
                 baseline_bytes: b"{}".to_vec(),
                 candidate: json!({}),
+                candidate_bytes: b"{}".to_vec(),
                 defaults: json!({"enabled":false}),
             },
         },
