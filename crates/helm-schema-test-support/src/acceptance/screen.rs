@@ -592,6 +592,12 @@ pub fn screen_recording(
                     if !flip && witnesses.is_none() {
                         continue;
                     }
+                    let candidate_violations = witnesses.as_ref().map_or_else(Vec::new, |_| {
+                        request
+                            .schemas
+                            .profiles
+                            .candidate_violations(&values.root, transition)
+                    });
                     let probe = document_probe(&row, kind, lint_control, values.root, &defaults)?;
                     if let Some((chart, witnesses)) = witnesses.as_mut() {
                         witnesses.push(ScreenedWitness {
@@ -607,6 +613,7 @@ pub fn screen_recording(
                             candidate_accepts,
                             screened: flip,
                             transition,
+                            candidate_violations,
                         });
                     }
                     if flip {
@@ -950,6 +957,8 @@ pub fn screen_template_probes_recording(
                     overlay: overlay.clone(),
                     document: None,
                 },
+                candidate_violations: profiles
+                    .candidate_violations(&profiles.composed(&probe), flip),
                 composed: profiles.composed(&probe),
                 instance: Some(probe.clone()),
                 kubernetes_version: (*kubernetes_version).to_string(),
@@ -1164,6 +1173,8 @@ pub fn replay_witnesses(
                         "replayed witness {case} composes to another document"
                     );
                     let transition = profiles.screens_a_flip(instance);
+                    witness.candidate_violations =
+                        profiles.candidate_violations(&witness.composed, transition);
                     (profiles.verdicts(instance), transition, transition)
                 }
                 (None, Some(document)) => {
@@ -1181,6 +1192,9 @@ pub fn replay_witnesses(
                     document.defaults = default_documents(inputs)?.remove(&document.kind).flatten();
                     let verdicts = lint.profiles.document_verdicts(&document.values);
                     let transition = lint.profiles.screen_document(&document.values);
+                    witness.candidate_violations = lint
+                        .profiles
+                        .candidate_violations(&document.values, transition);
                     (
                         verdicts,
                         transition,

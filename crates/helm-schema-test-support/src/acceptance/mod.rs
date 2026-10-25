@@ -292,6 +292,9 @@ pub struct ScreenedWitness {
     /// Whether the verdicts differ or the candidate rejects for a new reason;
     /// a forced audit alone is no transition.
     pub transition: bool,
+    /// The candidate's violations, sorted, for a transition it rejects:
+    /// the assertions its answer fails. Empty otherwise.
+    pub candidate_violations: Vec<String>,
 }
 
 impl ScreenedWitness {
@@ -311,13 +314,24 @@ pub struct AdjudicationRecord {
     pub outcome: Result<(HelmFlipVerdict, PathBuf), AdjudicationFailure>,
 }
 
+/// Why the comparison core could not produce a complete comparison.
+#[derive(Debug, thiserror::Error)]
+pub enum AcceptanceError {
+    /// A chart could not be screened, or the Kubernetes bundles changed.
+    #[error("{0}")]
+    Comparison(String),
+    /// A lint lane is incomplete.
+    #[error("{0}")]
+    Coverage(String),
+}
+
 impl AcceptanceComparison {
     /// Checks every chart's lint lane for completeness.
     ///
     /// # Errors
     ///
     /// Returns an error when a lane is incomplete.
-    pub fn validate_lint_completeness(&self, live: bool) -> eyre::Result<()> {
+    pub fn validate_lint_completeness(&self, live: bool) -> Result<(), AcceptanceError> {
         Self::validate_lint_coverages(&self.coverage, live)
     }
 
@@ -326,7 +340,15 @@ impl AcceptanceComparison {
     /// # Errors
     ///
     /// Returns an error when no chart is given or a lane is incomplete.
-    pub fn validate_lint_coverages(charts: &[ProbeCoverage], live: bool) -> eyre::Result<()> {
+    pub fn validate_lint_coverages(
+        charts: &[ProbeCoverage],
+        live: bool,
+    ) -> Result<(), AcceptanceError> {
+        Self::lint_coverages(charts, live)
+            .map_err(|error| AcceptanceError::Coverage(format!("{error:#}")))
+    }
+
+    fn lint_coverages(charts: &[ProbeCoverage], live: bool) -> eyre::Result<()> {
         eyre::ensure!(
             !charts.is_empty(),
             "no charts checked for lint completeness"
@@ -595,6 +617,13 @@ pub struct AdjudicatedProbe {
 ///
 /// Returns an error when no chart is selected, a chart cannot be screened or the Kubernetes bundles changed.
 pub fn compare_charts(
+    charts: Vec<ComparedChart>,
+    config: &ComparisonConfig,
+) -> Result<AcceptanceComparison, AcceptanceError> {
+    compare(charts, config).map_err(|error| AcceptanceError::Comparison(format!("{error:#}")))
+}
+
+fn compare(
     charts: Vec<ComparedChart>,
     config: &ComparisonConfig,
 ) -> eyre::Result<AcceptanceComparison> {

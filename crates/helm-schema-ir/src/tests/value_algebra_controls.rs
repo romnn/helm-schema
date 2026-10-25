@@ -14,7 +14,6 @@
 //! an explicit representation gap.
 
 use std::collections::BTreeMap;
-use std::fmt::Write as _;
 
 use color_eyre::eyre;
 use helm_schema_ast::DefineIndex;
@@ -58,19 +57,67 @@ fn capabilities() -> Capabilities {
     }
 }
 
+/// What a template file's actions are, as its syntax tree shows them.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Actions {
+    /// No action: the file is its own output.
+    None,
+    /// Only top-level `{{ fail "literal" }}` actions: Go's parser accepts the
+    /// file, and executing it aborts unconditionally.
+    FailOnly,
+    /// Anything else, which the adapter cannot prove Go parses or completes.
+    Other,
+}
+
 /// One rendered template's execution.
 struct FileRun {
     source: String,
-    has_actions: bool,
+    actions: Actions,
     document: EvaluatedDocument,
 }
 
-/// The whole chart's execution: rendered files by chart-relative name, and
-/// why the result cannot prove completion.
+/// The whole chart's execution: rendered files by chart-relative name, the
+/// worst actions of any template file, partials included, and why the
+/// result cannot prove completion.
 struct Execution {
     files: BTreeMap<String, FileRun>,
+    partials: Actions,
     gaps: Vec<String>,
     result_sha256: String,
+}
+
+/// Classifies `source`'s actions from its syntax tree.
+fn actions_of(source: &str) -> Actions {
+    use helm_schema_ast::{Literal, TemplateExpr};
+    let Some(tree) = helm_schema_syntax::parse_go_template(source) else {
+        return Actions::Other;
+    };
+    let root = tree.root_node();
+    if root.has_error() {
+        return Actions::Other;
+    }
+    let mut actions = Actions::None;
+    let mut cursor = root.walk();
+    for child in root.children(&mut cursor) {
+        match child.kind() {
+            "text" | "{{" | "{{-" | "}}" | "-}}" => {}
+            "function_call" => {
+                let expressions = helm_schema_ast::node_expressions(child, source);
+                let fail = matches!(
+                    expressions.as_slice(),
+                    [TemplateExpr::Call { function, args }]
+                        if function == "fail"
+                            && matches!(args.as_slice(), [TemplateExpr::Literal(Literal::String(_))])
+                );
+                if !fail {
+                    return Actions::Other;
+                }
+                actions = Actions::FailOnly;
+            }
+            _ => return Actions::Other,
+        }
+    }
+    actions
 }
 
 /// Answers one query; the protocol already verified every blob.
@@ -178,6 +225,7 @@ fn execute(files: &BTreeMap<String, Vec<u8>>) -> Execution {
     }
     let mut index = DefineIndex::new();
     let mut sources = BTreeMap::new();
+    let mut partials = Actions::None;
     for (name, bytes) in files {
         if !name.starts_with("templates/") {
             continue;
@@ -191,7 +239,13 @@ fn execute(files: &BTreeMap<String, Vec<u8>>) -> Execution {
             .rsplit('/')
             .next()
             .is_some_and(|base| base.starts_with('_'));
-        if !partial {
+        if partial {
+            partials = match (partials, actions_of(source)) {
+                (Actions::Other, _) | (_, Actions::Other) => Actions::Other,
+                (Actions::FailOnly, _) | (_, Actions::FailOnly) => Actions::FailOnly,
+                (Actions::None, Actions::None) => Actions::None,
+            };
+        } else {
             sources.insert(name.clone(), source.to_string());
         }
     }
@@ -199,59 +253,84 @@ fn execute(files: &BTreeMap<String, Vec<u8>>) -> Execution {
     let mut runs = BTreeMap::new();
     let mut dump = String::new();
     for (name, source) in sources {
-        let has_actions = match helm_schema_ast::contains_template_action(&source) {
-            Ok(has_actions) => has_actions,
-            Err(error) => {
-                gaps.push(format!("{name} does not parse: {error}"));
-                true
-            }
-        };
+        let actions = actions_of(&source);
         let document = context.eval_document_fragment(&source);
-        let _ = writeln!(dump, "file {name}\n{}", dump_document(&document));
+        dump.push_str(&["file ", &name, "\n", &dump_document(&document), "\n"].concat());
         runs.insert(
             name,
             FileRun {
                 source,
-                has_actions,
+                actions,
                 document,
             },
         );
     }
     Execution {
         files: runs,
+        partials,
         gaps,
         result_sha256: helm_schema_test_support::source_digest::sha256_hex(dump.as_bytes()),
     }
 }
 
 /// The render's exit, or why the executed result cannot prove it.
+///
+/// Go parses every template file before executing any, so an exit is
+/// claimed only when every file's syntax is provably Go-parseable: action-
+/// free, or only literal `fail` actions. An abort additionally needs a
+/// rendered file's executed fail capture to hold unconditionally; a normal
+/// exit needs every rendered file to be action-free YAML whose documents are
+/// mappings Helm's manifest splitter accepts.
 fn termination(execution: &Execution) -> Result<Termination, String> {
     if let Some(gap) = execution.gaps.first() {
         return Err(gap.clone());
     }
+    if execution.partials == Actions::Other {
+        return Err("a partial template's actions are not provably Go-parseable".into());
+    }
+    if let Some((name, _)) = execution
+        .files
+        .iter()
+        .find(|(_, run)| run.actions == Actions::Other)
+    {
+        return Err(format!(
+            "{name} executes template actions; the legacy fragment does not record completion"
+        ));
+    }
     let unconditional_fail = execution.files.values().any(|run| {
-        run.document.observed_facts.captures.iter().any(|capture| {
-            matches!(capture.kind, CaptureKind::Fail)
-                && capture.conjunction.is_empty()
-                && capture.ranged.iter().next().is_none()
-        })
+        run.actions == Actions::FailOnly
+            && run.document.observed_facts.captures.iter().any(|capture| {
+                matches!(capture.kind, CaptureKind::Fail)
+                    && capture.conjunction.is_empty()
+                    && capture.ranged.iter().next().is_none()
+            })
     });
     if unconditional_fail {
         return Ok(Termination::Abort {
             phase: AbortPhase::TemplateEval,
         });
     }
-    if let Some((name, _)) = execution.files.iter().find(|(_, run)| run.has_actions) {
-        return Err(format!(
-            "{name} executes template actions; the legacy fragment does not record completion"
-        ));
+    if let Some((name, _)) = execution
+        .files
+        .iter()
+        .find(|(_, run)| run.actions != Actions::None)
+    {
+        return Err(format!("{name}: its fail captures do not prove an abort"));
     }
     for (name, run) in &execution.files {
         for document in serde_yaml::Deserializer::from_str(&run.source) {
-            if let Err(error) = serde_yaml::Value::deserialize(document) {
-                return Err(format!(
-                    "{name}: rendered YAML parity is unverified: {error}"
-                ));
+            match serde_yaml::Value::deserialize(document) {
+                Ok(serde_yaml::Value::Null | serde_yaml::Value::Mapping(_)) => {}
+                Ok(_) => {
+                    return Err(format!(
+                        "{name}: a document Helm's manifest splitter may refuse"
+                    ));
+                }
+                Err(error) => {
+                    return Err(format!(
+                        "{name}: rendered YAML parity is unverified: {error}"
+                    ));
+                }
             }
         }
     }
@@ -396,8 +475,6 @@ fn decode_plain_or_quoted(raw: &str) -> Result<serde_yaml::Value, String> {
     }
     Ok(value)
 }
-
-// ---- Adapter checks against pinned Helm observations ----
 
 /// Runs the adapter on `files` with defaults `{}`.
 fn run(files: &[(&str, &str)], query: &Value) -> eyre::Result<ControlResult> {
@@ -688,6 +765,71 @@ fn unmodeled_chart_file_selection_is_a_gap() -> eyre::Result<()> {
         )?;
         let ControlResult::AbstractUnknown { reason, .. } = have else {
             eyre::bail!("{}: expected abstract_unknown, have {have:?}", extra.0);
+        };
+        sim_assert_eq!(have: reason, want: UnknownReason::RepresentationGap);
+    }
+    Ok(())
+}
+
+/// Another file Go cannot parse turns the abort into a `template_parse`
+/// abort: the adapter must not claim `template_eval`. Helm 4.2.3 reports
+/// `parse error at (c/templates/bad.yaml:1): function "nope" not defined`.
+#[test]
+fn an_unparseable_file_beside_a_fail_is_a_gap() -> eyre::Result<()> {
+    let termination = json!({"kind": "termination_v1", "scope": "render"});
+    for other in [
+        ("templates/bad.yaml", "{{ nope }}\n"),
+        ("templates/_helpers.tpl", "{{ end }}\n"),
+        (
+            "templates/_helpers.tpl",
+            "{{/* a comment Go accepts but the adapter does not prove */}}\n",
+        ),
+    ] {
+        let files = [
+            CHART,
+            ("templates/fail.yaml", "{{ fail \"boom\" }}\n"),
+            other,
+        ];
+        let have = run(&files, &termination)?;
+        let ControlResult::AbstractUnknown { reason, .. } = have else {
+            eyre::bail!("{}: expected abstract_unknown, have {have:?}", other.0);
+        };
+        sim_assert_eq!(have: reason, want: UnknownReason::RepresentationGap);
+    }
+    Ok(())
+}
+
+/// A normal exit needs every template file, partials included, to be
+/// provably parseable and every rendered document a mapping: Helm 4.2.3
+/// aborts `list.yaml` with `YAML parse error on c/templates/list.yaml: ...
+/// cannot unmarshal array into Go value of type util.SimpleHead`.
+#[test]
+fn normal_needs_whole_chart_proof() -> eyre::Result<()> {
+    let termination = json!({"kind": "termination_v1", "scope": "render"});
+    let static_map = indoc! {"
+        apiVersion: v1
+        kind: ConfigMap
+        data:
+          a: b
+    "};
+    for other in [
+        (
+            "templates/_helpers.tpl",
+            "{{ define \"x\" }}{{ nope }}{{ end }}\n",
+        ),
+        (
+            "templates/list.yaml",
+            indoc! {"
+                - a
+                - b
+            "},
+        ),
+        ("templates/scalar.yaml", "just text\n"),
+    ] {
+        let files = [CHART, ("templates/cm.yaml", static_map), other];
+        let have = run(&files, &termination)?;
+        let ControlResult::AbstractUnknown { reason, .. } = have else {
+            eyre::bail!("{}: expected abstract_unknown, have {have:?}", other.0);
         };
         sim_assert_eq!(have: reason, want: UnknownReason::RepresentationGap);
     }

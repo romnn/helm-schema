@@ -14,6 +14,7 @@ use serde_json::{Value, json};
 use test_util::helm_values::AcceptanceDocument;
 
 use super::DiffError;
+use super::admission::AdmissionOutcome;
 use super::controls::ObservationOutcome;
 use super::history::{
     BlobStore, DocumentRecord, FORMAT_VERSION, InstanceRecord, SCHEMA_ACCEPTANCE, WitnessIdentity,
@@ -85,15 +86,38 @@ pub struct WitnessOutcome {
     pub direction: Option<String>,
     /// The adjudication's evidence directory or failure message.
     pub detail: Option<String>,
+    /// SHA-256 of the candidate's semantic answer: its verdict, the oracle's
+    /// answer and verdict, and the assertions it newly fails.
+    pub answer_sha256: String,
 }
 
-/// A regression's identity: its witness and its error direction.
+/// A regression's identity: its witness, its error direction and the
+/// candidate's exact answer, so a changed wrong answer is a new regression.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct RegressionKey {
     /// The witness id.
     pub witness: String,
     /// The error direction.
     pub direction: String,
+    /// SHA-256 of the candidate's semantic answer.
+    pub answer_sha256: String,
+}
+
+/// One outcome of any table, as the policies see it.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Entry<'a> {
+    /// The witness id.
+    pub witness: &'a str,
+    /// The human-readable case.
+    pub case: &'a str,
+    /// The class.
+    pub class: Class,
+    /// The error direction of a regression or closure.
+    pub direction: Option<&'a str>,
+    /// SHA-256 of the candidate's semantic answer.
+    pub answer_sha256: &'a str,
+    /// Evidence or failure detail.
+    pub detail: Option<&'a str>,
 }
 
 /// The oracle answer `verdict` implies, with the candidate verdict the
@@ -135,26 +159,35 @@ pub fn classify(
 ) -> WitnessOutcome {
     let (baseline, candidate) = (witness.baseline_accepts, witness.candidate_accepts);
     let unchanged = baseline == candidate && !witness.transition;
-    let (oracle, implied, detail, infrastructure) = match adjudication.map(|record| &record.outcome)
+    let (oracle, implied, detail, infrastructure, severity) = match adjudication
+        .map(|record| &record.outcome)
     {
-        None => (OracleAnswer::NotAsked, None, None, false),
+        None => (OracleAnswer::NotAsked, None, None, false, String::new()),
         Some(Ok((verdict, evidence))) => {
             let (oracle, implied) = verdict_answer(verdict);
-            (oracle, implied, Some(evidence.display().to_string()), false)
+            let detail = Some(evidence.display().to_string());
+            (oracle, implied, detail, false, format!("{verdict:?}"))
         }
-        Some(Err(AdjudicationFailure { kind, message })) => match kind {
-            FailureKind::UnattributedRejection => (
-                OracleAnswer::Accepts,
-                Some(false),
-                Some(message.clone()),
-                false,
-            ),
-            FailureKind::Undecided => (OracleAnswer::Undecided, None, Some(message.clone()), false),
-            FailureKind::Infrastructure => {
-                (OracleAnswer::Undecided, None, Some(message.clone()), true)
+        Some(Err(AdjudicationFailure { kind, message })) => {
+            let severity = format!("{kind:?}");
+            let detail = Some(message.clone());
+            match kind {
+                FailureKind::UnattributedRejection => {
+                    (OracleAnswer::Accepts, Some(false), detail, false, severity)
+                }
+                FailureKind::Undecided => (OracleAnswer::Undecided, None, detail, false, severity),
+                FailureKind::Infrastructure => {
+                    (OracleAnswer::Undecided, None, detail, true, severity)
+                }
             }
-        },
+        }
     };
+    let answer_sha256 = sha256_hex(&canonical_json(&json!({
+        "candidate_accepts": candidate,
+        "oracle": oracle,
+        "verdict": severity,
+        "candidate_violations": witness.candidate_violations,
+    })));
     let mut direction = None;
     let class = if infrastructure {
         Class::Infrastructure
@@ -217,6 +250,7 @@ pub fn classify(
         class,
         direction,
         detail,
+        answer_sha256,
     }
 }
 
@@ -226,8 +260,9 @@ pub struct OutcomeTable {
     /// Every schema witness's outcome, sorted by witness id.
     pub outcomes: Vec<WitnessOutcome>,
     /// Every scored observation's outcome, sorted by witness id.
-    #[serde(default)]
     pub observations: Vec<ObservationOutcome>,
+    /// Every admission cell's outcome, sorted by witness id.
+    pub admissions: Vec<AdmissionOutcome>,
 }
 
 impl OutcomeTable {
@@ -238,26 +273,51 @@ impl OutcomeTable {
         Self {
             outcomes,
             observations: Vec::new(),
+            admissions: Vec::new(),
         }
+    }
+
+    /// Every outcome of every table: schema witnesses, then observations,
+    /// then admission cells.
+    #[must_use]
+    pub fn entries(&self) -> Vec<Entry<'_>> {
+        let schema = self.outcomes.iter().map(|outcome| Entry {
+            witness: &outcome.witness,
+            case: &outcome.case,
+            class: outcome.class,
+            direction: outcome.direction.as_deref(),
+            answer_sha256: &outcome.answer_sha256,
+            detail: outcome.detail.as_deref(),
+        });
+        let observed = self.observations.iter().map(|outcome| Entry {
+            witness: &outcome.witness,
+            case: &outcome.case,
+            class: outcome.class,
+            direction: outcome.direction.as_deref(),
+            answer_sha256: &outcome.answer_sha256,
+            detail: None,
+        });
+        let admitted = self.admissions.iter().map(|outcome| Entry {
+            witness: &outcome.witness,
+            case: &outcome.cell,
+            class: outcome.class,
+            direction: outcome.direction.as_deref(),
+            answer_sha256: &outcome.answer_sha256,
+            detail: None,
+        });
+        schema.chain(observed).chain(admitted).collect()
     }
 
     /// The regression set.
     #[must_use]
     pub fn regressions(&self) -> BTreeSet<RegressionKey> {
-        let schema = self
-            .outcomes
-            .iter()
-            .map(|outcome| (outcome.class, &outcome.witness, &outcome.direction));
-        let observed = self
-            .observations
-            .iter()
-            .map(|outcome| (outcome.class, &outcome.witness, &outcome.direction));
-        schema
-            .chain(observed)
-            .filter(|(class, _, _)| *class == Class::Regression)
-            .map(|(_, witness, direction)| RegressionKey {
-                witness: witness.clone(),
-                direction: direction.clone().unwrap_or_default(),
+        self.entries()
+            .into_iter()
+            .filter(|entry| entry.class == Class::Regression)
+            .map(|entry| RegressionKey {
+                witness: entry.witness.to_string(),
+                direction: entry.direction.unwrap_or_default().to_string(),
+                answer_sha256: entry.answer_sha256.to_string(),
             })
             .collect()
     }
@@ -265,18 +325,10 @@ impl OutcomeTable {
     /// The earned closure set.
     #[must_use]
     pub fn closures(&self) -> BTreeSet<String> {
-        let schema = self
-            .outcomes
-            .iter()
-            .map(|outcome| (outcome.class, &outcome.witness));
-        let observed = self
-            .observations
-            .iter()
-            .map(|outcome| (outcome.class, &outcome.witness));
-        schema
-            .chain(observed)
-            .filter(|(class, _)| *class == Class::Closure)
-            .map(|(_, witness)| witness.clone())
+        self.entries()
+            .into_iter()
+            .filter(|entry| entry.class == Class::Closure)
+            .map(|entry| entry.witness.to_string())
             .collect()
     }
 
@@ -284,16 +336,47 @@ impl OutcomeTable {
     #[must_use]
     pub fn class_counts(&self) -> BTreeMap<Class, usize> {
         let mut counts = BTreeMap::new();
-        let observed = self.observations.iter().map(|outcome| outcome.class);
-        for class in self
-            .outcomes
-            .iter()
-            .map(|outcome| outcome.class)
-            .chain(observed)
-        {
-            *counts.entry(class).or_insert(0) += 1;
+        for entry in self.entries() {
+            *counts.entry(entry.class).or_insert(0) += 1;
         }
         counts
+    }
+
+    /// Why the table is not main compared with itself: every outcome must be
+    /// IDENTICAL or an unchanged INHERITED obligation.
+    #[must_use]
+    pub fn inequalities(&self) -> Vec<String> {
+        self.entries()
+            .into_iter()
+            .filter(|entry| !matches!(entry.class, Class::Identical | Class::Inherited))
+            .map(|entry| format!("{} is {:?}", entry.case, entry.class))
+            .collect()
+    }
+
+    /// The blocking outcomes: unadjudicated ones (semantic) and
+    /// infrastructure ones.
+    #[must_use]
+    pub fn blocking(&self) -> PolicyVerdict {
+        let mut verdict = PolicyVerdict::default();
+        for entry in self.entries() {
+            match entry.class {
+                Class::Infrastructure => verdict.infrastructure.push(format!(
+                    "{}: {}",
+                    entry.case,
+                    entry.detail.unwrap_or("infrastructure failure")
+                )),
+                Class::Unadjudicated => verdict
+                    .semantic
+                    .push(format!("UNADJUDICATED {}", entry.case)),
+                Class::Identical
+                | Class::Inherited
+                | Class::Policy
+                | Class::Closure
+                | Class::Regression
+                | Class::EquivalentChange => {}
+            }
+        }
+        verdict
     }
 }
 
@@ -310,6 +393,8 @@ pub struct LedgerRow {
     pub cause: String,
     /// The checkpoint ordinal planned to repair it.
     pub repair_checkpoint: u32,
+    /// The reviewed answer; a changed answer needs a fresh review.
+    pub answer_sha256: String,
 }
 
 /// A reviewed seed: the exact regression set C02 may establish.
@@ -395,38 +480,14 @@ pub fn construction_policy(request: &ConstructionRequest<'_>) -> Result<PolicyVe
             format!("only checkpoint {seed_ordinal} may supply --seed-review")
         }));
     }
-    let mut verdict = PolicyVerdict::default();
-    for outcome in &table.outcomes {
-        match outcome.class {
-            Class::Infrastructure => verdict.infrastructure.push(format!(
-                "{}: {}",
-                outcome.case,
-                outcome
-                    .detail
-                    .as_deref()
-                    .unwrap_or("infrastructure failure")
-            )),
-            Class::Unadjudicated => verdict
-                .semantic
-                .push(format!("UNADJUDICATED {}", outcome.case)),
-            Class::Identical
-            | Class::Inherited
-            | Class::Policy
-            | Class::Closure
-            | Class::Regression
-            | Class::EquivalentChange => {}
-        }
-    }
+    let mut verdict = table.blocking();
     let regressions = table.regressions();
     let closures = table.closures();
     if *ordinal == 1 {
-        for outcome in &table.outcomes {
-            if !matches!(outcome.class, Class::Identical | Class::Inherited) {
-                verdict.semantic.push(format!(
-                    "checkpoint 1 must equal main, but {} is {:?}",
-                    outcome.case, outcome.class
-                ));
-            }
+        for inequality in table.inequalities() {
+            verdict
+                .semantic
+                .push(format!("checkpoint 1 must equal main, but {inequality}"));
         }
     }
     if let Some(seed) = seed {
@@ -507,11 +568,14 @@ fn ledger_problems(ledger: &[LedgerRow], regressions: &BTreeSet<RegressionKey>) 
     problems
 }
 
-fn keys(rows: &[LedgerRow]) -> BTreeSet<RegressionKey> {
+/// The regression keys of reviewed `rows`.
+#[must_use]
+pub fn keys(rows: &[LedgerRow]) -> BTreeSet<RegressionKey> {
     rows.iter()
         .map(|row| RegressionKey {
             witness: row.witness.clone(),
             direction: row.direction.clone(),
+            answer_sha256: row.answer_sha256.clone(),
         })
         .collect()
 }
@@ -609,6 +673,7 @@ pub fn witness_record(
         defaults_blob,
         instance,
         document,
+        control: None,
         origins,
     })
 }
@@ -650,9 +715,9 @@ pub fn replay_witness(
                     WitnessMode::LintRaw => AcceptanceDocument::LintRaw,
                     WitnessMode::LintCoalescedTwice => AcceptanceDocument::LintCoalescedTwice,
                     WitnessMode::Template => AcceptanceDocument::Template,
-                    WitnessMode::TemplateProbe => {
+                    WitnessMode::TemplateProbe | WitnessMode::Observation => {
                         return Err(DiffError::Identity(format!(
-                            "witness {} is a document of the template-probe lane",
+                            "witness {} is no document-lane witness",
                             record.id
                         )));
                     }
@@ -701,6 +766,7 @@ pub fn replay_witness(
         candidate_accepts: false,
         screened: false,
         transition: false,
+        candidate_violations: Vec::new(),
     })
 }
 

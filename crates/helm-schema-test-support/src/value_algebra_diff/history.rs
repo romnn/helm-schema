@@ -124,6 +124,12 @@ impl BlobStore {
         Self { root }
     }
 
+    /// The store's directory.
+    #[must_use]
+    pub fn root(&self) -> &Path {
+        &self.root
+    }
+
     fn path(&self, sha256: &str) -> Result<PathBuf, DiffError> {
         let prefix = sha256
             .get(..2)
@@ -179,6 +185,8 @@ pub enum WitnessMode {
     LintCoalescedTwice,
     /// The once-coalesced document `helm template` validates.
     Template,
+    /// A version-1 non-schema observation control.
+    Observation,
 }
 
 /// Everything that makes two witnesses the same experiment, and nothing a
@@ -260,8 +268,47 @@ pub struct WitnessRecord {
     pub instance: Option<InstanceRecord>,
     /// The lint facts, for the document lane.
     pub document: Option<DocumentRecord>,
+    /// The control case, for an observation witness.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub control: Option<ControlRecord>,
     /// Where it came from: row origins and discovering attempts.
     pub origins: Vec<String>,
+}
+
+/// An observation witness's control case and every blob it needs.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ControlRecord {
+    /// Blob of the case's canonical JSON.
+    pub case_blob: String,
+    /// The case's closure: input, chart files and grounding evidence, sorted.
+    pub blobs: Vec<String>,
+}
+
+impl ControlRecord {
+    /// The case, rehashed and checked against `identity`.
+    ///
+    /// # Errors
+    ///
+    /// [`DiffError::Identity`] when the case, its identity or its closure
+    /// differ from the record.
+    pub fn case(
+        &self,
+        identity: &WitnessIdentity,
+        blobs: &BlobStore,
+    ) -> Result<super::controls::ControlCase, DiffError> {
+        let case: super::controls::ControlCase =
+            serde_json::from_slice(&blobs.get(&self.case_blob)?)
+                .map_err(|error| DiffError::Identity(format!("control case: {error}")))?;
+        case.validate()?;
+        let closure = case.closure(&super::controls::ControlBlobs::store(blobs.root()))?;
+        if case.identity()? != *identity || closure.into_iter().collect::<Vec<_>>() != self.blobs {
+            return Err(DiffError::Identity(format!(
+                "control case {} does not match its witness",
+                case.id
+            )));
+        }
+        Ok(case)
+    }
 }
 
 impl WitnessRecord {
@@ -290,6 +337,28 @@ impl WitnessRecord {
             )));
         }
         match (&self.instance, &self.document, &self.defaults_blob) {
+            _ if self.identity.mode == WitnessMode::Observation => {
+                let control = self.control.as_ref().ok_or_else(|| {
+                    DiffError::Identity(format!("observation witness {} has no case", self.id))
+                })?;
+                let case = control.case(&self.identity, blobs)?;
+                if self.instance.is_some()
+                    || self.document.is_some()
+                    || self.defaults_blob.is_some()
+                    || self.composed_sha256 != case.input.coalesced_document_sha256
+                {
+                    return Err(DiffError::Identity(format!(
+                        "observation witness {} carries schema-lane facts",
+                        self.id
+                    )));
+                }
+            }
+            _ if self.control.is_some() => {
+                return Err(DiffError::Identity(format!(
+                    "schema witness {} carries a control case",
+                    self.id
+                )));
+            }
             (Some(_), None, Some(defaults)) => {
                 blobs.get(defaults)?;
             }
@@ -811,6 +880,13 @@ pub struct Receipt {
     pub control_runner_manifest_hash: Option<String>,
     /// SHA-256 of the observation results, `None` before controls are captured.
     pub observation_results_hash: Option<String>,
+    /// [`super::build::dir_sha256`] of the admission suite.
+    pub admission_suite_hash: String,
+    /// SHA-256 of the history's sealed plan.
+    pub plan_sha256: String,
+    /// SHA-256 of the comparison's `payload.json`, the index of every table
+    /// and evidence file it published.
+    pub payload_index_sha256: String,
     /// `construction` or `landing`.
     pub gate_mode: String,
     /// Always `NON-LANDABLE` for a construction receipt.

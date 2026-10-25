@@ -343,6 +343,22 @@ impl ProfileSchemas {
             )
     }
 
+    /// The candidate's violations of `instance`, sorted, when it is a
+    /// transition the candidate rejects; empty otherwise.
+    #[must_use]
+    pub fn candidate_violations(&self, instance: &Value, transition: bool) -> Vec<String> {
+        if !transition || self.lean.is_valid(instance) {
+            return Vec::new();
+        }
+        let mut violations = violations(&self.lean, instance)
+            .iter()
+            .map(ToString::to_string)
+            .collect::<Vec<_>>();
+        violations.sort();
+        violations.dedup();
+        violations
+    }
+
     /// Both schemas' violations of Helm's coalesced `values`.
     #[must_use]
     pub fn coalesced_errors(

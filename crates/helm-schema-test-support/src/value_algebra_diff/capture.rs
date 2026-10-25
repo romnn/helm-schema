@@ -252,8 +252,10 @@ impl DumpPair {
         })
     }
 
-    /// The whole-chart and lean schema pairs the acceptance battery screens,
-    /// in registry order, optionally only `selection`'s labels.
+    /// The whole-chart and lean schema pairs the acceptance battery screens
+    /// that the dumps hold, in registry order, optionally only `selection`'s
+    /// labels. Both dumps hold the same keys ([`DumpPair::new`]), and the
+    /// key set is part of every capture's suite identity.
     ///
     /// # Errors
     ///
@@ -270,7 +272,8 @@ impl DumpPair {
                 continue;
             };
             known.insert(label.clone());
-            if selection.is_some_and(|selection| !selection.contains(&label)) {
+            let held = self.baseline.keys().any(|key| key == spec.id.key());
+            if !held || selection.is_some_and(|selection| !selection.contains(&label)) {
                 continue;
             }
             charts.push(self.compared_chart(&spec.id.key(), label, chart)?);
@@ -434,11 +437,12 @@ fn check_no_foreign_files(root: &Path, listed: &BTreeSet<String>) -> Result<(), 
     }
 }
 
-/// The registry key, recipe input digest and recipe hash of each screened chart label.
+/// The registry key, recipe input digest and recipe hash of each screened
+/// chart label `dump` holds.
 ///
 /// # Errors
 ///
-/// [`DiffError::Identity`] when a screened artifact is missing from `dump`.
+/// [`DiffError::Infrastructure`] when a recipe cannot be serialized.
 pub fn chart_keys(dump: &VerifiedDump) -> Result<BTreeMap<String, ChartKey>, DiffError> {
     let mut keys = BTreeMap::new();
     for spec in registry::registry() {
@@ -446,9 +450,9 @@ pub fn chart_keys(dump: &VerifiedDump) -> Result<BTreeMap<String, ChartKey>, Dif
             continue;
         };
         let key = spec.id.key();
-        let entry = dump.entries.get(&key).ok_or_else(|| {
-            DiffError::Identity(format!("{} does not list {key}", dump.root.display()))
-        })?;
+        let Some(entry) = dump.entries.get(&key) else {
+            continue;
+        };
         keys.insert(
             label,
             ChartKey {

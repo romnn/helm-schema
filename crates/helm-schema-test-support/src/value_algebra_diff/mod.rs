@@ -6,11 +6,14 @@
 //! manifest. The comparison itself is [`crate::acceptance`]'s policy-free
 //! core; this module adds witness identity, history and policy.
 
+pub mod admission;
+pub mod build;
 pub mod capture;
 pub mod commands;
 pub mod compare;
 pub mod controls;
 pub mod history;
+pub mod revision;
 
 /// Why a differential-gate command could not run to a verdict.
 ///
@@ -74,16 +77,21 @@ pub struct ComparisonRun {
     pub coverage: Value,
     /// The acceptance core's own report, its witnesses moved out.
     pub comparison: AcceptanceComparison,
+    /// Coverage, screening and replay failures found after discovery: they
+    /// fail the comparison, but only after its discoveries are journaled.
+    pub failures: Vec<String>,
 }
 
 /// Compares `pair` over fresh discovery and every universe witness of the
-/// selected charts, outside discovery caps.
+/// selected charts, outside discovery caps. Coverage and screening failures
+/// do not discard what was discovered: they are returned in
+/// [`ComparisonRun::failures`] beside every witness record.
 ///
 /// # Errors
 ///
 /// [`DiffError::Identity`] when a universe witness belongs to other chart
 /// inputs or no longer rebuilds; [`DiffError::Infrastructure`] when the
-/// comparison, its coverage or a replay fails.
+/// comparison cannot run at all.
 pub fn run_comparison(
     pair: &DumpPair,
     universe: &UniverseState,
@@ -112,18 +120,21 @@ pub fn run_comparison(
     let mut comparison = compare_charts(charts, &config)
         .map_err(|error| DiffError::Infrastructure(format!("compare: {error:#}")))?;
     comparison.charts_checked = comparison.coverage.len();
-    AcceptanceComparison::validate_lint_coverages(&comparison.coverage, live)
-        .map_err(|error| DiffError::Infrastructure(format!("lint coverage: {error:#}")))?;
+    let mut failures = Vec::new();
+    if let Err(error) = AcceptanceComparison::validate_lint_coverages(&comparison.coverage, live) {
+        failures.push(format!("lint coverage: {error:#}"));
+    }
     for chart in &comparison.coverage {
-        validate_probe_coverage(chart)
-            .map_err(|error| DiffError::Infrastructure(format!("probe coverage: {error:#}")))?;
+        if let Err(error) = validate_probe_coverage(chart) {
+            failures.push(format!("probe coverage: {error:#}"));
+        }
     }
-    if !comparison.screening_failures.is_empty() {
-        return Err(DiffError::Infrastructure(format!(
-            "screening failures: {}",
-            comparison.screening_failures.join("; ")
-        )));
-    }
+    failures.extend(
+        comparison
+            .screening_failures
+            .iter()
+            .map(|failure| format!("screening failure: {failure}")),
+    );
     let adjudications = comparison
         .adjudications
         .iter()
@@ -132,9 +143,10 @@ pub fn run_comparison(
     let mut witnesses = BTreeMap::new();
     let mut outcomes = Vec::new();
     for witness in &comparison.witnesses {
-        let identity = identities.get(&witness.chart).ok_or_else(|| {
-            DiffError::Infrastructure(format!("witness of unselected chart {}", witness.chart))
-        })?;
+        let Some(identity) = identities.get(&witness.chart) else {
+            failures.push(format!("witness of unselected chart {}", witness.chart));
+            continue;
+        };
         let record = witness_record(witness, identity, blobs, &origin)?;
         if witnesses.contains_key(&record.id) {
             continue;
@@ -151,9 +163,7 @@ pub fn run_comparison(
         .filter(|id| !witnesses.contains_key(*id))
         .collect::<Vec<_>>();
     if !missing.is_empty() {
-        return Err(DiffError::Infrastructure(format!(
-            "universe witnesses were not judged: {missing:?}"
-        )));
+        failures.push(format!("universe witnesses were not judged: {missing:?}"));
     }
     let new_witnesses = witnesses
         .values()
@@ -181,6 +191,7 @@ pub fn run_comparison(
         artifacts: pair.artifacts(),
         coverage,
         comparison,
+        failures,
     })
 }
 
@@ -205,11 +216,10 @@ fn attach_replay(
                 DiffError::Infrastructure(format!("{}: {error:#}", chart.label))
             })?,
         };
-        for record in universe
-            .witnesses
-            .values()
-            .filter(|record| record.identity.chart == chart.label)
-        {
+        for record in universe.witnesses.values().filter(|record| {
+            record.identity.chart == chart.label
+                && record.identity.mode != history::WitnessMode::Observation
+        }) {
             if record.identity.chart_input_sha256 != identity.chart_input_sha256
                 || record.identity.recipe_sha256 != identity.recipe_sha256
             {
@@ -226,10 +236,13 @@ fn attach_replay(
     Ok((identities, expected))
 }
 
-/// A reviewed certificate that changed artifact bytes are equivalent.
+/// A reviewed certificate for changed artifact bytes, bound to both hashes
+/// and every differing pointer; it may name the witnesses that prove the
+/// change, each of which must have a changed outcome.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct EquivalenceCertificate {
-    /// The registry key.
+    /// The artifact key.
     pub key: String,
     /// SHA-256 of main's bytes it certifies.
     pub baseline_sha256: String,
@@ -237,11 +250,17 @@ pub struct EquivalenceCertificate {
     pub candidate_sha256: String,
     /// Every JSON pointer that differs.
     pub pointers: Vec<String>,
+    /// Witnesses whose changed outcomes prove the change, if any.
+    #[serde(default)]
+    pub witnesses: Vec<String>,
     /// Who reviewed it.
     pub reviewer: String,
-    /// Why the change is equivalent.
+    /// Why the change is accounted for.
     pub reasoning: String,
 }
+
+/// Reads both sides of a changed artifact.
+pub type ArtifactBytes<'a> = dyn Fn(&ArtifactPair) -> Result<(Vec<u8>, Vec<u8>), DiffError> + 'a;
 
 /// One changed artifact and what accounts for its change.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -250,75 +269,81 @@ pub struct ArtifactChange {
     pub artifact: ArtifactPair,
     /// Every JSON pointer whose value differs.
     pub pointers: Vec<String>,
-    /// Witnesses of its chart whose outcome changed, as proof links.
-    pub proof: Vec<String>,
     /// The certificate that covers it, if any.
     pub certificate: Option<EquivalenceCertificate>,
-    /// Whether proof or a certificate accounts for it.
+    /// Why the certificate, if any, does not hold.
+    pub problems: Vec<String>,
+    /// Whether a holding certificate accounts for it.
     pub adjudicated: bool,
 }
 
-/// Every changed artifact with its structural diff and proof links; a
-/// change is adjudicated by a witness with a changed outcome in its chart
-/// or by a certificate bound to exactly both hashes and pointers.
+/// Every changed artifact with its structural diff. A change is accounted
+/// for only by a certificate bound to exactly both hashes and its pointers,
+/// reviewed by `reviewer` when one is required, whose named witnesses all
+/// have changed outcomes; an unrelated witness of the chart never is.
 ///
 /// # Errors
 ///
 /// [`DiffError::Identity`] when a changed artifact cannot be read.
 pub fn artifact_changes(
-    pair: &DumpPair,
-    run: &ComparisonRun,
+    artifacts: &[ArtifactPair],
+    bytes: &ArtifactBytes<'_>,
+    table: &OutcomeTable,
     certificates: &[EquivalenceCertificate],
+    reviewer: Option<&str>,
 ) -> Result<Vec<ArtifactChange>, DiffError> {
-    let keys = chart_keys(&pair.baseline)?;
-    let label_of = keys
-        .iter()
-        .map(|(label, key)| (key.key.clone(), label.clone()))
-        .collect::<BTreeMap<_, _>>();
+    let changed_outcomes = table
+        .entries()
+        .into_iter()
+        .filter(|entry| entry.class != Class::Identical)
+        .map(|entry| entry.witness.to_string())
+        .collect::<BTreeSet<_>>();
     let mut changes = Vec::new();
-    for artifact in &run.artifacts {
+    for artifact in artifacts {
         if artifact.baseline_sha256 == artifact.candidate_sha256 {
             continue;
         }
+        let (left, right) = bytes(artifact)?;
         let parse = |bytes: &[u8]| serde_json::from_slice::<Value>(bytes).ok();
-        let pointers = match (
-            parse(&pair.baseline.schema(&artifact.key)?.bytes),
-            parse(&pair.candidate.schema(&artifact.key)?.bytes),
-        ) {
+        let pointers = match (parse(&left), parse(&right)) {
             (Some(left), Some(right)) => json_diff(&left, &right),
             _ => vec![String::new()],
         };
-        let proof = label_of
-            .get(&artifact.key)
-            .map(|label| {
-                run.table
-                    .outcomes
-                    .iter()
-                    .filter(|outcome| {
-                        outcome.case.starts_with(&format!("{label}: "))
-                            && outcome.class != Class::Identical
-                    })
-                    .map(|outcome| outcome.witness.clone())
-                    .collect::<Vec<_>>()
-            })
-            .unwrap_or_default();
         let certificate = certificates
             .iter()
-            .find(|certificate| {
-                certificate.key == artifact.key
-                    && certificate.baseline_sha256 == artifact.baseline_sha256
-                    && certificate.candidate_sha256 == artifact.candidate_sha256
-                    && certificate.pointers == pointers
-                    && !certificate.reviewer.is_empty()
-                    && !certificate.reasoning.is_empty()
-            })
+            .find(|certificate| certificate.key == artifact.key)
             .cloned();
+        let mut problems = Vec::new();
+        match &certificate {
+            None => problems.push("no certificate".to_string()),
+            Some(certificate) => {
+                if certificate.baseline_sha256 != artifact.baseline_sha256
+                    || certificate.candidate_sha256 != artifact.candidate_sha256
+                {
+                    problems.push("the certificate names other bytes".into());
+                }
+                if certificate.pointers != pointers {
+                    problems.push("the certificate names other pointers".into());
+                }
+                if certificate.reasoning.trim().is_empty()
+                    || certificate.reviewer.trim().is_empty()
+                    || reviewer.is_some_and(|reviewer| certificate.reviewer != reviewer)
+                {
+                    problems.push("the certificate is not reviewed".into());
+                }
+                for witness in &certificate.witnesses {
+                    if !changed_outcomes.contains(witness) {
+                        problems.push(format!("proof witness {witness} has no changed outcome"));
+                    }
+                }
+            }
+        }
         changes.push(ArtifactChange {
             artifact: artifact.clone(),
-            adjudicated: !proof.is_empty() || certificate.is_some(),
+            adjudicated: problems.is_empty(),
             pointers,
-            proof,
             certificate,
+            problems,
         });
     }
     Ok(changes)

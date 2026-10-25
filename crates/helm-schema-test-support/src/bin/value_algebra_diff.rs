@@ -2,8 +2,8 @@
 //! [`helm_schema_test_support::value_algebra_diff`].
 //!
 //! ```text
-//! value_algebra_diff capture --producer PATH --checkout DIR --commit SHA --helmsweep PATH
-//!                            [--contexts FILE] [--controls DIR --control-runner PATH]
+//! value_algebra_diff capture --checkout DIR --commit SHA --helmsweep PATH --helm PATH
+//!                            --build-target DIR --controls DIR [--contexts FILE]
 //!                            [--synthetic] --out NEW_DIR
 //! value_algebra_diff compare --self-test --main CAPTURE --candidate CAPTURE --out NEW_DIR
 //!                            [--helmsweep PATH] [--contexts FILE] [--chart LABEL]... [--certificates FILE]
@@ -28,8 +28,9 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 use helm_schema_test_support::value_algebra_diff::commands::{
-    self, CaptureRequest, CompareRequest, ControlsRequest, LiveOptions, Verdict,
+    self, CompareRequest, LiveOptions, Verdict,
 };
+use helm_schema_test_support::value_algebra_diff::revision::{self, CaptureRequest};
 use helm_schema_test_support::value_algebra_diff::{DiffError, EquivalenceCertificate};
 
 const USAGE: &str = "usage: value_algebra_diff (capture|compare|init|amend|verify) [options]; \
@@ -138,27 +139,17 @@ impl Options {
 
     fn capture_request(&mut self) -> Result<CaptureRequest, DiffError> {
         Ok(CaptureRequest {
-            producer: self.path("--producer")?,
             checkout: self.path("--checkout")?,
             commit: self
                 .optional("--commit")?
                 .ok_or_else(|| DiffError::Request("--commit is required".into()))?,
             helmsweep: self.path("--helmsweep")?,
+            helm: self.path("--helm")?,
+            build_target: self.path("--build-target")?,
+            controls: self.path("--controls")?,
             contexts: self.optional_path("--contexts")?,
             out: self.path("--out")?,
             synthetic: self.flags.contains("--synthetic"),
-            controls: match (
-                self.optional_path("--controls")?,
-                self.optional_path("--control-runner")?,
-            ) {
-                (None, None) => None,
-                (Some(registry), Some(runner)) => Some(ControlsRequest { registry, runner }),
-                (Some(_), None) | (None, Some(_)) => {
-                    return Err(DiffError::Request(
-                        "--controls and --control-runner go together".into(),
-                    ));
-                }
-            },
         })
     }
 
@@ -179,7 +170,7 @@ fn run() -> Result<Verdict, DiffError> {
         "capture" => {
             let request = options.capture_request()?;
             options.finish()?;
-            commands::capture(&request).map(|_| Verdict::Pass)?
+            revision::capture(&request).map(|_| Verdict::Pass)?
         }
         "compare" if options.flags.contains("--self-test") => {
             let (main, candidate, out) = (

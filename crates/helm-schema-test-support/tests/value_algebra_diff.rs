@@ -12,16 +12,21 @@ use helm_schema_test_support::acceptance::{
     AdjudicationFailure, AdjudicationRecord, FailureKind, HelmFlipVerdict, ScreenedWitness,
 };
 use helm_schema_test_support::manifest::{MANIFEST_FILE, Manifest};
-use helm_schema_test_support::value_algebra_diff::DiffError;
-use helm_schema_test_support::value_algebra_diff::capture::{DumpPair, VerifiedDump};
+use helm_schema_test_support::value_algebra_diff::capture::{ArtifactPair, DumpPair, VerifiedDump};
 use helm_schema_test_support::value_algebra_diff::compare::{
     ChartIdentity, Class, ConstructionRequest, LedgerRow, OracleAnswer, OutcomeTable, PriorSets,
     RegressionKey, SeedReview, WitnessOutcome, classify, construction_policy, replay_witness,
     witness_record,
 };
+use helm_schema_test_support::value_algebra_diff::controls::{
+    ControlResult, EngineMode, ObservationOutcome, Score, UnsupportedReason,
+};
 use helm_schema_test_support::value_algebra_diff::history::{
     Attempt, BlobStore, HistoryPlan, Receipt, ReceiptKind, Universe, UniverseState, WitnessRecord,
     canonical_json,
+};
+use helm_schema_test_support::value_algebra_diff::{
+    DiffError, EquivalenceCertificate, artifact_changes,
 };
 use serde_json::{Value, json};
 use test_util::helm_values::AcceptanceDocument;
@@ -150,6 +155,7 @@ fn template_witness(name: &str, overlay: Value, defaults: &Value) -> ScreenedWit
         candidate_accepts: true,
         screened: false,
         transition: false,
+        candidate_violations: Vec::new(),
     }
 }
 
@@ -333,6 +339,9 @@ fn receipt() -> Receipt {
         full_outcome_table_hash: "outcomes".into(),
         control_runner_manifest_hash: None,
         observation_results_hash: None,
+        admission_suite_hash: "admission".into(),
+        plan_sha256: "plan".into(),
+        payload_index_sha256: "payload".into(),
         gate_mode: "construction".into(),
         landability: "NON-LANDABLE".into(),
         exit_code: 0,
@@ -576,6 +585,7 @@ fn outcome(witness: &str, class: Class, direction: Option<&str>) -> WitnessOutco
         class,
         direction: direction.map(str::to_string),
         detail: None,
+        answer_sha256: "answer".into(),
     }
 }
 
@@ -586,6 +596,7 @@ fn row(witness: &str, direction: &str) -> LedgerRow {
         owner: "owner".into(),
         cause: "cause".into(),
         repair_checkpoint: 5,
+        answer_sha256: "answer".into(),
     }
 }
 
@@ -593,6 +604,7 @@ fn key(witness: &str, direction: &str) -> RegressionKey {
     RegressionKey {
         witness: witness.into(),
         direction: direction.into(),
+        answer_sha256: "answer".into(),
     }
 }
 
@@ -785,5 +797,249 @@ fn an_unusable_kubernetes_control_is_undecided() -> eyre::Result<()> {
     };
     sim_assert_eq!(have: FailureKind::of(&error), want: FailureKind::Undecided);
     sim_assert_eq!(have: FailureKind::of(&eyre::eyre!("helm exited")), want: FailureKind::Infrastructure);
+    Ok(())
+}
+
+fn observation(witness: &str, class: Class, direction: Option<&str>) -> ObservationOutcome {
+    let unknown = ControlResult::Unsupported {
+        query_kind: "output_v1".into(),
+        mode: EngineMode::Render,
+        reason: UnsupportedReason::QueryNotImplemented,
+    };
+    ObservationOutcome {
+        witness: witness.into(),
+        case: format!("control {witness}"),
+        main: unknown.clone(),
+        candidate: unknown,
+        main_score: Score::Unsupported,
+        candidate_score: Score::Unsupported,
+        class,
+        direction: direction.map(str::to_string),
+        answer_sha256: "answer".into(),
+    }
+}
+
+/// Observation and admission outcomes face the same policy as schema
+/// witnesses: unadjudicated ones block, and checkpoint 1 must equal main.
+#[test]
+fn every_outcome_table_faces_the_construction_policy() -> eyre::Result<()> {
+    let genesis = PriorSets::default();
+    let mut unsupported = OutcomeTable::new(vec![outcome("a", Class::Identical, None)]);
+    unsupported.observations = vec![observation("o", Class::Unadjudicated, None)];
+    let have = problems(1, false, &unsupported, &genesis, &[], None)?;
+    sim_assert_eq!(
+        have: have,
+        want: vec![
+            "UNADJUDICATED control o".to_string(),
+            "checkpoint 1 must equal main, but control o is Unadjudicated".to_string(),
+        ]
+    );
+    let mut regressed = OutcomeTable::new(vec![outcome("a", Class::Identical, None)]);
+    regressed.observations = vec![observation(
+        "o",
+        Class::Regression,
+        Some("observation:correct-to-wrong"),
+    )];
+    let have = problems(
+        1,
+        false,
+        &regressed,
+        &genesis,
+        &[row("o", "observation:correct-to-wrong")],
+        None,
+    )?;
+    sim_assert_eq!(
+        have: have,
+        want: vec!["checkpoint 1 must equal main, but control o is Regression".to_string()]
+    );
+    // An unchanged inherited obligation is main equal to itself.
+    let mut inherited = OutcomeTable::new(vec![outcome("a", Class::Inherited, None)]);
+    inherited.observations = vec![observation("o", Class::Inherited, None)];
+    sim_assert_eq!(have: inherited.inequalities(), want: Vec::<String>::new());
+    Ok(())
+}
+
+/// A regression's identity binds the candidate's answer: the same witness
+/// and direction answered differently is a new regression needing review.
+#[test]
+fn a_changed_wrong_answer_is_a_new_regression() -> eyre::Result<()> {
+    let c02 = PriorSets {
+        ordinal: 2,
+        regressions: BTreeSet::from([key("r", "accepts-oracle-rejection")]),
+        closures: BTreeSet::new(),
+    };
+    let mut changed = outcome("r", Class::Regression, Some("accepts-oracle-rejection"));
+    changed.answer_sha256 = "another answer".into();
+    let table = OutcomeTable::new(vec![changed]);
+    let mut reviewed = row("r", "accepts-oracle-rejection");
+    reviewed.answer_sha256 = "another answer".into();
+    sim_assert_eq!(
+        have: problems(3, false, &table, &c02, &[reviewed], None)?,
+        want: vec!["new regression r (accepts-oracle-rejection)".to_string()]
+    );
+    let stale = problems(
+        3,
+        false,
+        &table,
+        &c02,
+        &[row("r", "accepts-oracle-rejection")],
+        None,
+    )?;
+    sim_assert_eq!(have: stale.len(), want: 3);
+    Ok(())
+}
+
+/// A changed artifact is accounted for only by a certificate bound to both
+/// hashes, its pointers and the reviewer; an unrelated witness never is.
+#[test]
+fn artifact_changes_need_a_bound_certificate() -> eyre::Result<()> {
+    let artifact = ArtifactPair {
+        key: "chart/x".into(),
+        kind: "chart".into(),
+        baseline_sha256: "b".into(),
+        candidate_sha256: "c".into(),
+    };
+    let bytes = |_: &ArtifactPair| -> Result<(Vec<u8>, Vec<u8>), DiffError> {
+        Ok((br#"{"a":1,"b":2}"#.to_vec(), br#"{"a":1,"b":3}"#.to_vec()))
+    };
+    let unrelated = OutcomeTable::new(vec![outcome("w", Class::Inherited, None)]);
+    let changes = artifact_changes(
+        std::slice::from_ref(&artifact),
+        &bytes,
+        &unrelated,
+        &[],
+        Some("reviewer"),
+    )?;
+    sim_assert_eq!(have: changes.iter().map(|change| change.adjudicated).collect::<Vec<_>>(), want: vec![false]);
+    sim_assert_eq!(have: changes[0].pointers.clone(), want: vec!["/b".to_string()]);
+    let certificate = EquivalenceCertificate {
+        key: "chart/x".into(),
+        baseline_sha256: "b".into(),
+        candidate_sha256: "c".into(),
+        pointers: vec!["/b".into()],
+        witnesses: vec!["w".into()],
+        reviewer: "reviewer".into(),
+        reasoning: "b moved".into(),
+    };
+    let adjudicated =
+        |certificate: &EquivalenceCertificate, reviewer: &str| -> eyre::Result<bool> {
+            Ok(artifact_changes(
+                std::slice::from_ref(&artifact),
+                &bytes,
+                &unrelated,
+                std::slice::from_ref(certificate),
+                Some(reviewer),
+            )?[0]
+                .adjudicated)
+        };
+    sim_assert_eq!(have: adjudicated(&certificate, "reviewer")?, want: true);
+    sim_assert_eq!(have: adjudicated(&certificate, "someone else")?, want: false);
+    let wrong_pointers = EquivalenceCertificate {
+        pointers: vec!["/a".into()],
+        ..certificate.clone()
+    };
+    sim_assert_eq!(have: adjudicated(&wrong_pointers, "reviewer")?, want: false);
+    let wrong_bytes = EquivalenceCertificate {
+        candidate_sha256: "d".into(),
+        ..certificate.clone()
+    };
+    sim_assert_eq!(have: adjudicated(&wrong_bytes, "reviewer")?, want: false);
+    let unproven = EquivalenceCertificate {
+        witnesses: vec!["missing".into()],
+        ..certificate
+    };
+    sim_assert_eq!(have: adjudicated(&unproven, "reviewer")?, want: false);
+    Ok(())
+}
+
+/// Universe witnesses that fresh discovery never proposes — displaced by a
+/// discovery cap, or found by another checkpoint — persist, replay over both
+/// schemas in both lanes and still flip.
+#[test]
+fn displaced_universe_witnesses_still_replay_and_flip() -> eyre::Result<()> {
+    use helm_schema_test_support::acceptance::discovery::read_coalesced_defaults;
+    use helm_schema_test_support::acceptance::pool::PoolLimits;
+    use helm_schema_test_support::value_algebra_diff::history::UniverseState;
+    use helm_schema_test_support::value_algebra_diff::{RunOptions, run_comparison};
+    use test_util::helm_values::AcceptanceInputs;
+
+    let scratch = ScratchDir::new("vad-displaced")?;
+    let (baseline, candidate) = (scratch.path().join("main"), scratch.path().join("cand"));
+    write_dump(&baseline, br#"{"type":"object"}"#)?;
+    write_dump(
+        &candidate,
+        br#"{"type":"object","properties":{"ingress":{"properties":{"enabled":{"const":false}}}}}"#,
+    )?;
+    let pair = DumpPair::new(
+        VerifiedDump::open(&baseline)?,
+        VerifiedDump::open(&candidate)?,
+        &test_util::workspace_testdata(),
+    )?;
+    let keys = helm_schema_test_support::value_algebra_diff::capture::chart_keys(&pair.baseline)?;
+    let key = keys.get(CHART).ok_or_eyre("dict-config is not screened")?;
+    let identity = ChartIdentity {
+        chart_input_sha256: key.inputs_sha256.clone(),
+        recipe_sha256: key.recipe_sha256.clone(),
+        defaults: read_coalesced_defaults(key.chart)?,
+    };
+    let blobs = BlobStore::new(scratch.path().join("blobs"));
+    let overlay = json!({"ingress": {"enabled": true}, "displaced-probe": {"never": "generated"}});
+    let template = template_witness("displaced", overlay.clone(), &identity.defaults);
+    let template = witness_record(&template, &identity, &blobs, "attempt:elsewhere")?;
+    let inputs = AcceptanceInputs::load(&helm_schema_test_support::generate::chart_dir(key.chart))?;
+    let composed = inputs
+        .compose(overlay.clone(), AcceptanceDocument::Template)?
+        .root;
+    let document = ScreenedWitness {
+        probe: ScreenedProbe {
+            name: "displaced document=Template".into(),
+            overlay: overlay.clone(),
+            document: Some(ScreenedDocument {
+                kind: AcceptanceDocument::Template,
+                lint_control: false,
+                values: composed.clone(),
+                defaults: None,
+                kubernetes_version: "1.29.0".into(),
+                origins: vec!["elsewhere".into()],
+                values_file: serde_yaml::to_string(&overlay)?.into_bytes(),
+                control_overlays: vec![json!({})],
+            }),
+        },
+        instance: None,
+        composed,
+        ..template_witness("displaced", overlay, &identity.defaults)
+    };
+    let document = witness_record(&document, &identity, &blobs, "attempt:elsewhere")?;
+    let mut universe = UniverseState::default();
+    for record in [&template, &document] {
+        universe.witnesses.insert(record.id.clone(), record.clone());
+    }
+    let run = run_comparison(
+        &pair,
+        &universe,
+        &blobs,
+        RunOptions {
+            kubernetes: None,
+            contexts: None,
+            pool: PoolLimits::from_env()?,
+            selection: None,
+            origin: "attempt:test".into(),
+            helm: None,
+        },
+    )?;
+    sim_assert_eq!(have: run.failures, want: Vec::<String>::new());
+    for record in [&template, &document] {
+        let outcome = run
+            .table
+            .outcomes
+            .iter()
+            .find(|outcome| outcome.witness == record.id)
+            .ok_or_eyre("the displaced witness was not replayed")?;
+        sim_assert_eq!(
+            have: (outcome.baseline_accepts, outcome.candidate_accepts, outcome.transition, outcome.class),
+            want: (true, false, true, Class::Unadjudicated)
+        );
+    }
+    sim_assert_eq!(have: run.coverage["replayed"].clone(), want: json!(2));
     Ok(())
 }

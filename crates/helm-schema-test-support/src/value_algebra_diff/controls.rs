@@ -22,7 +22,7 @@ use serde_json::{Value, json};
 
 use super::DiffError;
 use super::compare::Class;
-use super::history::{canonical_json, canonical_sha256, write_new};
+use super::history::{WitnessIdentity, WitnessMode, canonical_json, canonical_sha256, write_new};
 use crate::manifest::BuildProvenance;
 use crate::source_digest::sha256_hex;
 
@@ -364,16 +364,106 @@ impl ControlCase {
         }
     }
 
-    /// The observation witness id: input and query identity, nothing else.
+    /// The observation witness's identity: the input and the query,
+    /// nothing a candidate can move.
+    ///
+    /// # Errors
+    ///
+    /// [`DiffError::Request`] for a grounding-only case.
+    pub fn identity(&self) -> Result<WitnessIdentity, DiffError> {
+        let query = self.scored_query().ok_or_else(|| {
+            DiffError::Request(format!("{}: a grounding-only case is no witness", self.id))
+        })?;
+        Ok(WitnessIdentity {
+            chart: OBSERVATION_CHART.to_string(),
+            chart_input_sha256: self.input.chart_tree_sha256.clone(),
+            recipe_sha256: self.input.recipe_sha256.clone(),
+            values_sha256: self.input.original_values_sha256.clone(),
+            mode: WitnessMode::Observation,
+            kubernetes_version: self.input.kubernetes_version.clone(),
+            context_sha256: self.input.context_sha256.clone(),
+            observation: format!(
+                "observation_v1 input={} query={}",
+                self.input.sha256()?,
+                query.sha256()?
+            ),
+        })
+    }
+
+    /// The observation witness id: [`ControlCase::identity`]'s id.
     ///
     /// # Errors
     ///
     /// [`DiffError::Request`] for a grounding-only case.
     pub fn witness_id(&self) -> Result<String, DiffError> {
-        let query = self.scored_query().ok_or_else(|| {
-            DiffError::Request(format!("{}: a grounding-only case is no witness", self.id))
-        })?;
-        observation_witness_id(&self.input.sha256()?, &query.sha256()?)
+        self.identity()?.id()
+    }
+
+    /// The pinned Helm evidence the grounding names, bound to this case's
+    /// input and, for a scored case, reproducing its grounding.
+    ///
+    /// # Errors
+    ///
+    /// [`DiffError::Identity`] when the evidence is missing, belongs to
+    /// another input or invocation, or derives another answer;
+    /// [`DiffError::Request`] when its diagnostic is unrecognized.
+    pub fn check_grounding(&self, blobs: &ControlBlobs) -> Result<GroundingEvidence, DiffError> {
+        let problem = |message: String| DiffError::Identity(format!("{}: {message}", self.id));
+        let evidence: GroundingEvidence =
+            serde_json::from_slice(&blobs.read(&self.grounding.evidence_sha256)?)
+                .map_err(|error| problem(format!("grounding evidence: {error}")))?;
+        let show_only = match self.scored_query() {
+            Some(Query::OutputV1 { file, .. } | Query::AliasV1 { file, .. }) => Some(file.clone()),
+            Some(Query::TerminationV1 { .. }) => None,
+            None => evidence.show_only.clone(),
+        };
+        let has_values = !blobs.read(&self.input.original_values_sha256)?.is_empty();
+        let expected = grounding_argv(&self.input, show_only.as_deref(), has_values);
+        if evidence.format_version != PROTOCOL_VERSION
+            || evidence.chart_tree_sha256 != self.input.chart_tree_sha256
+            || evidence.original_values_sha256 != self.input.original_values_sha256
+            || evidence.release != self.input.release
+            || evidence.kubernetes_version != self.input.kubernetes_version
+            || evidence.show_only != show_only
+            || evidence.argv != expected
+            || self.input.mode != EngineMode::Render
+        {
+            return Err(problem(
+                "the grounding evidence is not the pinned render of this input".into(),
+            ));
+        }
+        let stdout = blobs.read(&evidence.stdout_sha256)?;
+        let stderr = blobs.read(&evidence.stderr_sha256)?;
+        if let Some(query) = self.scored_query() {
+            let derived = derive_observation(query, evidence.exit_code, &stdout, &stderr)
+                .map_err(|message| DiffError::Request(format!("{}: {message}", self.id)))?;
+            let reproduced = match self.grounding.coverage {
+                GroundCoverage::Complete => self.grounding.alternatives == vec![derived],
+                GroundCoverage::Sampled => self.grounding.alternatives.contains(&derived),
+            };
+            if !reproduced {
+                return Err(problem(
+                    "the grounding evidence derives another observation".into(),
+                ));
+            }
+        }
+        Ok(evidence)
+    }
+
+    /// Every blob the case needs: its input closure and its evidence.
+    ///
+    /// # Errors
+    ///
+    /// As [`ControlBlobs::input_closure`] and [`ControlCase::check_grounding`].
+    pub fn closure(&self, blobs: &ControlBlobs) -> Result<BTreeSet<String>, DiffError> {
+        let mut closure = blobs.input_closure(&self.input)?;
+        let evidence = self.check_grounding(blobs)?;
+        closure.extend([
+            self.grounding.evidence_sha256.clone(),
+            evidence.stdout_sha256,
+            evidence.stderr_sha256,
+        ]);
+        Ok(closure)
     }
 
     /// Checks the role shape and T0's supported scored domain.
@@ -421,15 +511,147 @@ impl ControlCase {
     }
 }
 
-/// The observation witness id of an input and query digest.
+/// The universe chart label of observation witnesses; no chart label holds
+/// a colon.
+pub const OBSERVATION_CHART: &str = "control:observation_v1";
+
+/// One pinned Helm invocation that grounds a control.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct GroundingEvidence {
+    /// [`PROTOCOL_VERSION`].
+    pub format_version: u32,
+    /// `helm version` of the binary that ran.
+    pub helm_version: String,
+    /// SHA-256 of that binary.
+    pub helm_sha256: String,
+    /// The arguments, `{chart}` and `{values}` standing for the staged chart
+    /// and values file: exactly [`grounding_argv`].
+    pub argv: Vec<String>,
+    /// The chart tree rendered.
+    pub chart_tree_sha256: String,
+    /// The values file rendered.
+    pub original_values_sha256: String,
+    /// The release.
+    pub release: Release,
+    /// The Kubernetes version.
+    pub kubernetes_version: String,
+    /// The `--show-only` file, if any.
+    pub show_only: Option<String>,
+    /// The exit code.
+    pub exit_code: i32,
+    /// Blob of stdout.
+    pub stdout_sha256: String,
+    /// Blob of stderr.
+    pub stderr_sha256: String,
+}
+
+/// The pinned render's arguments of `input`.
+#[must_use]
+pub fn grounding_argv(
+    input: &ControlInput,
+    show_only: Option<&str>,
+    has_values: bool,
+) -> Vec<String> {
+    let mut argv = [
+        "template",
+        &input.release.name,
+        "{chart}",
+        "--namespace",
+        &input.release.namespace,
+        "--kube-version",
+        &input.kubernetes_version,
+    ]
+    .map(str::to_string)
+    .to_vec();
+    if has_values {
+        argv.extend(["--values".to_string(), "{values}".to_string()]);
+    }
+    if let Some(file) = show_only {
+        argv.extend(["--show-only".to_string(), file.to_string()]);
+    }
+    argv
+}
+
+/// The abort phase pinned Helm's `stderr` names, or `None` for an
+/// unrecognized diagnostic.
+#[must_use]
+pub fn abort_phase(stderr: &str) -> Option<AbortPhase> {
+    if stderr.contains("execution error at (") {
+        Some(AbortPhase::TemplateEval)
+    } else if stderr.contains("parse error at (") {
+        Some(AbortPhase::TemplateParse)
+    } else if stderr.contains("YAML parse error on") {
+        Some(AbortPhase::RenderYaml)
+    } else {
+        None
+    }
+}
+
+/// The normalized observation of `query` in a pinned render's outcome.
 ///
 /// # Errors
 ///
-/// [`DiffError::Infrastructure`] when it cannot be serialized.
-pub fn observation_witness_id(input_sha256: &str, query_sha256: &str) -> Result<String, DiffError> {
-    canonical_sha256(&json!({
-        "observation_v1": {"input_sha256": input_sha256, "query_sha256": query_sha256}
-    }))
+/// A message when the diagnostic is unrecognized or the output is not one
+/// YAML document.
+pub fn derive_observation(
+    query: &Query,
+    exit_code: i32,
+    stdout: &[u8],
+    stderr: &[u8],
+) -> Result<Observation, String> {
+    let phase = if exit_code == 0 {
+        None
+    } else {
+        Some(
+            abort_phase(&String::from_utf8_lossy(stderr))
+                .ok_or_else(|| "unrecognized Helm diagnostic".to_string())?,
+        )
+    };
+    let selected = |pointer: &str| -> Result<Option<Value>, String> {
+        let text = std::str::from_utf8(stdout).map_err(|error| error.to_string())?;
+        let mut documents = Vec::new();
+        for document in serde_yaml::Deserializer::from_str(text) {
+            let value =
+                serde_yaml::Value::deserialize(document).map_err(|error| error.to_string())?;
+            if !value.is_null() {
+                documents.push(value);
+            }
+        }
+        let [document] = documents.as_slice() else {
+            return Err(format!("{} rendered documents, not one", documents.len()));
+        };
+        let json = serde_json::to_value(document).map_err(|error| error.to_string())?;
+        Ok(json.pointer(pointer).cloned())
+    };
+    Ok(match (query, phase) {
+        (Query::TerminationV1 { .. }, None) => Observation::Termination {
+            outcome: Termination::Normal,
+        },
+        (Query::TerminationV1 { .. }, Some(phase)) => Observation::Termination {
+            outcome: Termination::Abort { phase },
+        },
+        (Query::OutputV1 { .. }, Some(phase)) => Observation::Output {
+            selection: Selection::NotEmitted { phase },
+        },
+        (Query::AliasV1 { .. }, Some(phase)) => Observation::Alias {
+            selection: Selection::NotEmitted { phase },
+        },
+        (Query::OutputV1 { pointer, .. }, None) => Observation::Output {
+            selection: match selected(pointer)? {
+                None => Selection::Missing,
+                Some(Value::String(text)) => output_value(text.as_bytes()),
+                Some(other) => Selection::WrongType { value: other },
+            },
+        },
+        (Query::AliasV1 { pointer, .. }, None) => Observation::Alias {
+            selection: match selected(pointer)? {
+                None => Selection::Missing,
+                Some(Value::Bool(value)) => Selection::Value { value },
+                Some(other) => Selection::WrongType { value: other },
+            },
+        },
+    })
 }
 
 /// A chart tree blob: chart-relative file names to blob digests.
@@ -470,24 +692,46 @@ impl ChartTree {
 
 /// Whether `name` is a normalized relative `/`-separated path: no empty,
 /// `.` or `..` segment, no backslash and no leading or trailing slash.
-fn is_normal_relative(name: &str) -> bool {
+#[must_use]
+pub fn is_normal_relative(name: &str) -> bool {
     !name.contains('\\')
         && name
             .split('/')
             .all(|segment| !segment.is_empty() && segment != "." && segment != "..")
 }
 
-/// A content-addressed blob directory: `<root>/<sha256>`.
+/// A content-addressed blob directory: `<root>/<sha256>`, or a history
+/// blob store's `<root>/<first two>/<sha256>`.
 #[derive(Clone, Debug)]
 pub struct ControlBlobs {
     root: PathBuf,
+    nested: bool,
 }
 
 impl ControlBlobs {
-    /// The blobs under `root`.
+    /// The flat blob directory `root`.
     #[must_use]
     pub const fn new(root: PathBuf) -> Self {
-        Self { root }
+        Self {
+            root,
+            nested: false,
+        }
+    }
+
+    /// A history blob store's blobs under `root`.
+    #[must_use]
+    pub fn store(root: &Path) -> Self {
+        Self {
+            root: root.to_path_buf(),
+            nested: true,
+        }
+    }
+
+    fn path(&self, sha256: &str) -> PathBuf {
+        match (self.nested, sha256.get(..2)) {
+            (true, Some(prefix)) => self.root.join(prefix).join(sha256),
+            (true, None) | (false, _) => self.root.join(sha256),
+        }
     }
 
     /// The directory.
@@ -508,7 +752,7 @@ impl ControlBlobs {
                 "blob {sha256:?} is not a SHA-256"
             )));
         }
-        let bytes = std::fs::read(self.root.join(sha256))
+        let bytes = std::fs::read(self.path(sha256))
             .map_err(|error| DiffError::Identity(format!("blob {sha256}: {error}")))?;
         if sha256_hex(&bytes) != sha256 {
             return Err(DiffError::Identity(format!(
@@ -679,7 +923,7 @@ impl ControlRegistry {
                 )));
             }
             case.validate()?;
-            let needed = blobs.input_closure(&case.input)?;
+            let needed = case.closure(&blobs)?;
             if let Some(missing) = needed.iter().find(|blob| !blob_names.contains(blob)) {
                 return Err(DiffError::Identity(format!(
                     "{}: blob {missing} is not indexed",
@@ -1105,11 +1349,15 @@ impl Runner {
                     std::thread::sleep(Duration::from_millis(20));
                 }
                 Ok(None) => {
-                    let _ = child.kill();
-                    let _ = child.wait();
-                    return Err(infrastructure(format!(
-                        "runner timed out after {timeout:?}"
-                    )));
+                    let reaped = child.kill().and_then(|()| child.wait());
+                    return Err(infrastructure(match reaped {
+                        Ok(_) => format!("runner timed out after {timeout:?}"),
+                        Err(error) => {
+                            format!(
+                                "runner timed out after {timeout:?} and was not reaped: {error}"
+                            )
+                        }
+                    }));
                 }
                 Err(error) => return Err(infrastructure(error.to_string())),
             }
@@ -1314,6 +1562,19 @@ pub struct ObservationOutcome {
     pub class: Class,
     /// The error direction of a regression.
     pub direction: Option<String>,
+    /// SHA-256 of the candidate's semantic answer.
+    pub answer_sha256: String,
+}
+
+/// What an answer claims: an exact set, or a gap whose representation does
+/// not matter.
+fn semantic_answer(result: &ControlResult) -> Value {
+    match result {
+        ControlResult::Exact { alternatives, .. } => json!({"exact": alternatives}),
+        ControlResult::AbstractUnknown { .. } => json!("abstract_unknown"),
+        ControlResult::Unsupported { .. } => json!("unsupported"),
+        ControlResult::InfrastructureFailure { .. } => json!("infrastructure_failure"),
+    }
 }
 
 /// Classifies one scored observation from both answers and the grounding.
@@ -1335,12 +1596,8 @@ pub fn classify_observation(
         score(main, &case.grounding)?,
         score(candidate, &case.grounding)?,
     );
-    let same = serde_json::to_value(main)
-        .map(|value| canonical_json(&value))
-        .ok()
-        == serde_json::to_value(candidate)
-            .map(|value| canonical_json(&value))
-            .ok();
+    let answer = canonical_json(&semantic_answer(candidate));
+    let same = canonical_json(&semantic_answer(main)) == answer;
     let regression = |direction: &str| (Class::Regression, Some(direction.to_string()));
     let (class, direction) = match (main_score, candidate_score) {
         (Score::Correct, Score::Correct) => (Class::Identical, None),
@@ -1365,12 +1622,13 @@ pub fn classify_observation(
         candidate_score,
         class,
         direction,
+        answer_sha256: sha256_hex(&answer),
     })
 }
 
-/// Coverage counts over a registry and its answers, by score and role.
+/// Coverage counts over scored answers and the grounding-only cases.
 #[must_use]
-pub fn coverage(outcomes: &[ObservationOutcome], registry: &ControlRegistry) -> Value {
+pub fn coverage(outcomes: &[ObservationOutcome], grounding_only: usize) -> Value {
     let mut counts = BTreeMap::<String, usize>::new();
     for outcome in outcomes {
         let label = match outcome.candidate_score {
@@ -1382,11 +1640,6 @@ pub fn coverage(outcomes: &[ObservationOutcome], registry: &ControlRegistry) -> 
         };
         *counts.entry(label.to_string()).or_default() += 1;
     }
-    let grounding_only = registry
-        .cases
-        .values()
-        .filter(|case| case.role == Role::HelmGroundingOnly)
-        .count();
     json!({
         "scored": outcomes.len(),
         "grounding_only": grounding_only,
@@ -1412,6 +1665,68 @@ pub struct RegistryBuilder {
 }
 
 impl RegistryBuilder {
+    /// The builder's blobs.
+    #[must_use]
+    pub fn blobs(&self) -> ControlBlobs {
+        ControlBlobs::new(self.root.join("blobs"))
+    }
+
+    /// Runs the pinned Helm `helm` on `input` as [`grounding_argv`] says,
+    /// in the new directory `scratch`, stores the evidence and returns the
+    /// grounding of `query` it derives, complete.
+    ///
+    /// # Errors
+    ///
+    /// [`DiffError::Infrastructure`] when Helm cannot run; [`DiffError::Request`]
+    /// when its outcome derives no observation.
+    pub fn ground(
+        &mut self,
+        helm: &Path,
+        input: &ControlInput,
+        query: &Query,
+        scratch: &Path,
+    ) -> Result<Grounding, DiffError> {
+        let show_only = match query {
+            Query::OutputV1 { file, .. } | Query::AliasV1 { file, .. } => Some(file.as_str()),
+            Query::TerminationV1 { .. } => None,
+        };
+        let has_values = !self.blobs().read(&input.original_values_sha256)?.is_empty();
+        let argv = grounding_argv(input, show_only, has_values);
+        let staged = StagedChart::new(&self.blobs(), input, scratch)?;
+        let output = staged.run(helm, &argv)?;
+        let exit_code = output.status.code().ok_or_else(|| {
+            DiffError::Infrastructure("the pinned Helm was killed by a signal".into())
+        })?;
+        let version = staged.run(helm, &["version".to_string()])?;
+        let evidence = GroundingEvidence {
+            format_version: PROTOCOL_VERSION,
+            helm_version: String::from_utf8_lossy(&version.stdout).trim().to_string(),
+            helm_sha256: std::fs::read(helm)
+                .map(|bytes| sha256_hex(&bytes))
+                .map_err(|error| {
+                    DiffError::Infrastructure(format!("{}: {error}", helm.display()))
+                })?,
+            argv,
+            chart_tree_sha256: input.chart_tree_sha256.clone(),
+            original_values_sha256: input.original_values_sha256.clone(),
+            release: input.release.clone(),
+            kubernetes_version: input.kubernetes_version.clone(),
+            show_only: show_only.map(str::to_string),
+            exit_code,
+            stdout_sha256: self.blob(&output.stdout)?,
+            stderr_sha256: self.blob(&output.stderr)?,
+        };
+        let value = serde_json::to_value(&evidence)
+            .map_err(|error| DiffError::Infrastructure(format!("evidence: {error}")))?;
+        let observation = derive_observation(query, exit_code, &output.stdout, &output.stderr)
+            .map_err(DiffError::Request)?;
+        Ok(Grounding {
+            evidence_sha256: self.blob(&canonical_json(&value))?,
+            coverage: GroundCoverage::Complete,
+            alternatives: vec![observation],
+        })
+    }
+
     /// A builder for the new registry directory `root`.
     ///
     /// # Errors
@@ -1627,11 +1942,97 @@ pub fn stage_case_blobs(
     case: &ControlCase,
     blob_root: &Path,
 ) -> Result<(), DiffError> {
-    let source = registry.blobs();
+    stage_blobs(&registry.blobs(), case, blob_root)
+}
+
+/// Copies the blobs `case` needs from `source` into the new flat directory
+/// `blob_root`, so a replay sees nothing else.
+///
+/// # Errors
+///
+/// As [`ControlCase::closure`]; [`DiffError::Infrastructure`] when a blob
+/// cannot be written.
+pub fn stage_blobs(
+    source: &ControlBlobs,
+    case: &ControlCase,
+    blob_root: &Path,
+) -> Result<(), DiffError> {
     std::fs::create_dir_all(blob_root)
         .map_err(|error| DiffError::Infrastructure(format!("{}: {error}", blob_root.display())))?;
-    for blob in source.input_closure(&case.input)? {
+    for blob in case.closure(source)? {
         write_new(&blob_root.join(&blob), &source.read(&blob)?)?;
     }
     Ok(())
+}
+
+/// A control's chart and values staged into a scratch directory for the
+/// pinned Helm, with a private home.
+#[derive(Debug)]
+pub struct StagedChart {
+    chart: PathBuf,
+    values: PathBuf,
+    home: PathBuf,
+}
+
+impl StagedChart {
+    /// Stages `input`'s chart files and values from `blobs` into the new
+    /// directory `scratch`.
+    ///
+    /// # Errors
+    ///
+    /// As [`ControlBlobs::read`]; [`DiffError::Infrastructure`] when a file
+    /// cannot be written.
+    pub fn new(
+        blobs: &ControlBlobs,
+        input: &ControlInput,
+        scratch: &Path,
+    ) -> Result<Self, DiffError> {
+        let infrastructure = |path: &Path, error: std::io::Error| {
+            DiffError::Infrastructure(format!("{}: {error}", path.display()))
+        };
+        let chart = scratch.join("chart");
+        let tree = ChartTree::parse(&blobs.read(&input.chart_tree_sha256)?)?;
+        for (name, sha) in &tree.files {
+            let path = chart.join(name);
+            if let Some(parent) = path.parent() {
+                std::fs::create_dir_all(parent).map_err(|error| infrastructure(parent, error))?;
+            }
+            write_new(&path, &blobs.read(sha)?)?;
+        }
+        let values = scratch.join("values.yaml");
+        write_new(&values, &blobs.read(&input.original_values_sha256)?)?;
+        let home = scratch.join("home");
+        std::fs::create_dir_all(&home).map_err(|error| infrastructure(&home, error))?;
+        Ok(Self {
+            chart: std::path::absolute(&chart).map_err(|error| infrastructure(&chart, error))?,
+            values: std::path::absolute(&values).map_err(|error| infrastructure(&values, error))?,
+            home,
+        })
+    }
+
+    /// Runs `helm` with `argv`, `{chart}` and `{values}` substituted, in a
+    /// cleared environment.
+    ///
+    /// # Errors
+    ///
+    /// [`DiffError::Infrastructure`] when it cannot be spawned.
+    pub fn run(&self, helm: &Path, argv: &[String]) -> Result<std::process::Output, DiffError> {
+        let arguments = argv
+            .iter()
+            .map(|argument| {
+                argument
+                    .replace("{chart}", &self.chart.to_string_lossy())
+                    .replace("{values}", &self.values.to_string_lossy())
+            })
+            .collect::<Vec<_>>();
+        Command::new(helm)
+            .env_clear()
+            .env("HOME", &self.home)
+            .env("HELM_CACHE_HOME", self.home.join("cache"))
+            .env("HELM_CONFIG_HOME", self.home.join("config"))
+            .env("HELM_DATA_HOME", self.home.join("data"))
+            .args(&arguments)
+            .output()
+            .map_err(|error| DiffError::Infrastructure(format!("{}: {error}", helm.display())))
+    }
 }
