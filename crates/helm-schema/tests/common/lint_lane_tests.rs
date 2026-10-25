@@ -2197,6 +2197,166 @@ fn partial_override_audits_unchanged_rejection_and_balances_document_coverage() 
     Ok(())
 }
 
+/// One chart's lint lane after the schema-only accounting.
+struct SchemaOnlyLint {
+    /// Raw-lint flips; the coalesced documents a pair also flips are not under test.
+    raw_flips: Vec<String>,
+    deferred_live_audits: Vec<String>,
+}
+
+/// Screens the partial-override chart without Helm, the baseline given as
+/// exact artifact bytes and the candidate as its serialization.
+fn schema_only_lint(baseline_bytes: Vec<u8>, candidate: &Value) -> eyre::Result<SchemaOnlyLint> {
+    let chart = partial_override_chart()?;
+    let path = chart
+        .path()
+        .to_str()
+        .ok_or_eyre("chart path is not UTF-8")?;
+    let (screened, _) = super::screen_chart(
+        super::ComparedChart {
+            label: "partial-override-control".into(),
+            chart_relative_path: path.into(),
+            inputs: super::ChartInputs::Given {
+                baseline: serde_json::from_slice(&baseline_bytes)?,
+                baseline_bytes,
+                candidate: candidate.clone(),
+                candidate_bytes: serde_json::to_vec(candidate)?,
+                defaults: json!({"child": {"first": 1, "second": 2}}),
+            },
+        },
+        false,
+        None,
+    )?;
+    let lint = screened.coverage.lint.ok_or_eyre("lint coverage absent")?;
+    lint.validate()?;
+    Ok(SchemaOnlyLint {
+        raw_flips: screened
+            .flips
+            .into_iter()
+            .filter(|flip| flip.contains("document=LintRaw"))
+            .collect(),
+        deferred_live_audits: lint.deferred_live_audits,
+    })
+}
+
+/// The partial-override audit's schema-only flip with `verdicts`.
+fn forced_audit_flip(verdicts: &str) -> String {
+    format!(
+        "partial-override-control: document=LintRaw transport=values-file kube=1.29.0 \
+         overlay={{\"child\":{{\"first\":1}}}}: {verdicts}"
+    )
+}
+
+/// Schema-only mode cannot run a forced audit; byte-identical schemas judge
+/// every document alike, so the audit is deferred to live mode.
+#[test]
+fn schema_only_defers_a_forced_audit_only_for_byte_identical_schemas() -> eyre::Result<()> {
+    let restrictive = json!({"properties": {"child": {"required": ["second"]}}});
+    let lint = schema_only_lint(serde_json::to_vec(&restrictive)?, &restrictive)?;
+    sim_assert_eq!(have: lint.raw_flips, want: Vec::<String>::new());
+    sim_assert_eq!(
+        have: lint.deferred_live_audits,
+        want: vec![
+            "document=LintRaw transport=values-file kube=1.29.0 overlay={\"child\":{\"first\":1}}"
+                .to_string()
+        ]
+    );
+    // One changed byte, even one that changes no verdict, keeps the audit a flip.
+    let mut respelled = serde_json::to_vec(&restrictive)?;
+    respelled.push(b'\n');
+    let lint = schema_only_lint(respelled, &restrictive)?;
+    sim_assert_eq!(have: lint.deferred_live_audits, want: Vec::<String>::new());
+    sim_assert_eq!(
+        have: lint.raw_flips,
+        want: vec![forced_audit_flip("before=false, after=false")]
+    );
+    Ok(())
+}
+
+/// A child schema whose `first` property is `first`, beside `definitions`.
+fn first_property(first: &Value, definitions: &Value) -> Value {
+    json!({
+        "type": "object",
+        "$defs": definitions,
+        "properties": {"child": {"properties": {"first": first}}}
+    })
+}
+
+/// Every changed schema pair keeps the forced audit a flip, whatever the
+/// rejection reasons look like.
+#[test]
+fn schema_only_keeps_a_forced_audit_of_changed_schemas_as_a_flip() -> eyre::Result<()> {
+    let restrictive = json!({"properties": {"child": {"required": ["second"]}}});
+    let stricter = json!({"properties": {"child": {"required": ["second", "third"]}}});
+    let none = json!({});
+    let anchored = |kind: &str| {
+        first_property(
+            &json!({"$ref": "#first"}),
+            &json!({"a": {"$anchor": "first", "type": kind}}),
+        )
+    };
+    let dynamic = |kind: &str| {
+        first_property(
+            &json!({"anyOf": [{"$dynamicRef": "#/$defs/a"}, {"type": "boolean"}]}),
+            &json!({"a": {"type": kind}}),
+        )
+    };
+    let constant = |name: &str| {
+        first_property(
+            &json!({"const": {"$ref": format!("#/$defs/{name}")}}),
+            &json!({"left": {"type": "string"}, "right": {"type": "string"}}),
+        )
+    };
+    let contains = |item: i64| {
+        first_property(
+            &json!({"type": "array", "contains": {"const": item}, "minContains": 1}),
+            &none,
+        )
+    };
+    let typed = |assertion: Value| first_property(&assertion, &none);
+    let pairs = [
+        (json!({}), restrictive.clone(), "before=true, after=false"),
+        (
+            restrictive.clone(),
+            stricter.clone(),
+            "before=false, after=false",
+        ),
+        (stricter, restrictive, "before=false, after=false"),
+        (
+            typed(json!({"type": "string"})),
+            typed(json!({"type": "boolean"})),
+            "before=false, after=false",
+        ),
+        (
+            typed(json!({"minimum": 5})),
+            typed(json!({"minimum": 6})),
+            "before=false, after=false",
+        ),
+        (
+            anchored("string"),
+            anchored("boolean"),
+            "before=false, after=false",
+        ),
+        (
+            dynamic("string"),
+            dynamic("array"),
+            "before=false, after=false",
+        ),
+        (
+            constant("left"),
+            constant("right"),
+            "before=false, after=false",
+        ),
+        (contains(1), contains(2), "before=false, after=false"),
+    ];
+    for (baseline, candidate, verdicts) in pairs {
+        let lint = schema_only_lint(serde_json::to_vec(&baseline)?, &candidate)?;
+        sim_assert_eq!(have: lint.deferred_live_audits, want: Vec::<String>::new());
+        sim_assert_eq!(have: lint.raw_flips, want: vec![forced_audit_flip(verdicts)]);
+    }
+    Ok(())
+}
+
 #[test]
 fn partial_override_restriction_is_matched_only_when_schema_free_lint_rejects() -> eyre::Result<()>
 {

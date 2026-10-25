@@ -289,6 +289,10 @@ pub(crate) struct LintCoverage {
     pub(crate) failures: Vec<String>,
     pub(crate) inapplicable: Vec<String>,
     pub(crate) rows: Vec<RowEvidence>,
+    /// Forced raw-lint audits both schemas judge alike: no transition, so a
+    /// schema-only run defers them to live adjudication instead of flipping.
+    #[serde(default)]
+    pub(crate) deferred_live_audits: Vec<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq, Serialize)]

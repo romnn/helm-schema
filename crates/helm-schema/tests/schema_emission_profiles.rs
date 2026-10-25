@@ -2399,9 +2399,16 @@ fn round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced() -> eyre::
             evidence.join("\n")
         );
     }
+    let deferred_live_audits: usize = report
+        .charts
+        .iter()
+        .filter_map(|chart| chart.lint.as_ref())
+        .map(|lint| lint.deferred_live_audits.len())
+        .sum();
     eprintln!(
         "charts_checked={charts_checked} probes_checked={probes_checked} flips={} \
-         listed_false_acceptances={} listed_undecided_acceptances={} listed_inherited_failures={listed_inherited_failures}",
+         listed_false_acceptances={} listed_undecided_acceptances={} listed_inherited_failures={listed_inherited_failures} \
+         deferred_live_audits={deferred_live_audits}",
         flips.len(),
         report.helm_adjudication.false_acceptances.len() - inherited_oracle_false_acceptances,
         report
@@ -2431,14 +2438,13 @@ fn external_schema_pair_flips_are_helm_adjudicated() -> eyre::Result<()> {
     .wrap_err("read external baseline schema")?;
     let baseline: serde_json::Value =
         serde_json::from_slice(&baseline_bytes).wrap_err("parse external baseline schema")?;
-    let candidate: serde_json::Value = serde_json::from_str(
-        &std::fs::read_to_string(
-            std::env::var_os(CANDIDATE_SCHEMA_VAR)
-                .ok_or_else(|| eyre::eyre!("{CANDIDATE_SCHEMA_VAR} must name a schema"))?,
-        )
-        .wrap_err("read external candidate schema")?,
+    let candidate_bytes = std::fs::read(
+        std::env::var_os(CANDIDATE_SCHEMA_VAR)
+            .ok_or_else(|| eyre::eyre!("{CANDIDATE_SCHEMA_VAR} must name a schema"))?,
     )
-    .wrap_err("parse external candidate schema")?;
+    .wrap_err("read external candidate schema")?;
+    let candidate: serde_json::Value =
+        serde_json::from_slice(&candidate_bytes).wrap_err("parse external candidate schema")?;
     let defaults = test_util::helm_values::coalesce_chart_values(&chart, json!({}))?;
     let chart = chart
         .to_str()
@@ -2450,6 +2456,7 @@ fn external_schema_pair_flips_are_helm_adjudicated() -> eyre::Result<()> {
             baseline,
             baseline_bytes,
             candidate,
+            candidate_bytes,
             defaults,
         },
     }])?;
@@ -2593,14 +2600,6 @@ fn preservation_battery_requires_candidate_dump() {
     assert!(candidate_dump_dir(Some("/dump".into())).is_ok());
 }
 
-fn read_acceptance_candidate(candidate_path: &std::path::Path) -> eyre::Result<serde_json::Value> {
-    serde_json::from_str(
-        &std::fs::read_to_string(candidate_path)
-            .wrap_err_with(|| format!("read {}", candidate_path.display()))?,
-    )
-    .wrap_err_with(|| format!("parse {}", candidate_path.display()))
-}
-
 /// One chart whose baseline and candidate schemas are compared.
 struct ComparedChart {
     label: String,
@@ -2620,6 +2619,7 @@ enum ChartInputs {
         baseline: serde_json::Value,
         baseline_bytes: Vec<u8>,
         candidate: serde_json::Value,
+        candidate_bytes: Vec<u8>,
         defaults: serde_json::Value,
     },
 }
@@ -2628,6 +2628,8 @@ struct LoadedInputs {
     baseline: serde_json::Value,
     baseline_bytes: Vec<u8>,
     candidate: serde_json::Value,
+    /// The candidate artifact's exact bytes, not a Helm-ready spelling.
+    candidate_bytes: Vec<u8>,
     defaults: serde_json::Value,
 }
 
@@ -2668,12 +2670,16 @@ impl ChartInputs {
                 let baseline_bytes = read_schema_bytes_at_ref(&baseline_ref, &relative_path)?;
                 let mut baseline = serde_json::from_slice(&baseline_bytes)?;
                 helm_schema_core::normalize_schema_pattern_dialects(&mut baseline);
-                let candidate = read_acceptance_candidate(&candidate_path)?;
+                let candidate_bytes = std::fs::read(&candidate_path)
+                    .wrap_err_with(|| format!("read {}", candidate_path.display()))?;
+                let candidate = serde_json::from_slice(&candidate_bytes)
+                    .wrap_err_with(|| format!("parse {}", candidate_path.display()))?;
                 let defaults = read_coalesced_defaults(chart)?;
                 Ok(LoadedInputs {
                     baseline,
                     baseline_bytes,
                     candidate,
+                    candidate_bytes,
                     defaults,
                 })
             }
@@ -2681,11 +2687,13 @@ impl ChartInputs {
                 baseline,
                 baseline_bytes,
                 candidate,
+                candidate_bytes,
                 defaults,
             } => Ok(LoadedInputs {
                 baseline,
                 baseline_bytes,
                 candidate,
+                candidate_bytes,
                 defaults,
             }),
         }
@@ -2987,6 +2995,26 @@ struct PoolReport {
     wall_ms: u64,
 }
 
+/// How a chart's screened lint documents are accounted.
+#[derive(Clone, Copy)]
+enum LintAccounting {
+    /// Helm adjudicates every screened document, forced audits included.
+    Live,
+    /// The schemas alone judge; `identical_schemas` says whether the baseline
+    /// and candidate artifacts are byte-identical.
+    SchemaOnly { identical_schemas: bool },
+}
+
+impl LintAccounting {
+    fn new(adjudicate_live: bool, identical_schemas: bool) -> Self {
+        if adjudicate_live {
+            Self::Live
+        } else {
+            Self::SchemaOnly { identical_schemas }
+        }
+    }
+}
+
 struct ScreenedProbes {
     probes_checked: usize,
     flips: Vec<String>,
@@ -3000,9 +3028,9 @@ impl ScreenedProbes {
         lint: eyre::Result<lint_probes::LintScreen>,
         schemas: &LintSchemas,
         coverage: &mut ProbeCoverage,
-        adjudicate_live: bool,
+        mode: LintAccounting,
     ) {
-        let lint = match lint {
+        let mut lint = match lint {
             Ok(lint) => lint,
             Err(err) => {
                 coverage.lint = Some(lint_probes::LintCoverage {
@@ -3014,9 +3042,17 @@ impl ScreenedProbes {
         };
         self.probes_checked += lint.coverage.probes();
         for probe in lint.flips {
-            if adjudicate_live {
+            let LintAccounting::SchemaOnly { identical_schemas } = mode else {
                 self.screened.push(probe);
-            } else if let Some(document) = probe.document {
+                continue;
+            };
+            if let Some(document) = probe.document {
+                // Byte-identical schemas give every document identical verdicts, so a forced
+                // audit is no transition; only live mode can run it.
+                if document.lint_control && identical_schemas {
+                    lint.coverage.deferred_live_audits.push(probe.name);
+                    continue;
+                }
                 let (before, after) = schemas.profiles.document_verdicts(&document.values);
                 self.flips.push(format!(
                     "{}: {}: before={before}, after={after}",
@@ -3114,6 +3150,7 @@ fn screen_chart(
         baseline,
         baseline_bytes,
         candidate: current,
+        candidate_bytes,
         defaults,
     } = inputs.load(&chart_relative_path)?;
     let profiles = ProfileSchemas::compile(&baseline, &current, defaults.clone())?;
@@ -3163,7 +3200,8 @@ fn screen_chart(
         roster_sha256: roster.map(|roster| roster.sha256.clone()),
         available_probes: harness::MAX_PROBES_PER_CHART.saturating_sub(result.probes_checked),
     });
-    result.append_lint(lint, &lint_schemas, &mut coverage, adjudicate_live);
+    let accounting = LintAccounting::new(adjudicate_live, baseline_bytes == candidate_bytes);
+    result.append_lint(lint, &lint_schemas, &mut coverage, accounting);
     cost.lint_screening_ms = elapsed_ms(lint_started);
     cost.screening_ms = elapsed_ms(screening);
     let ScreenedProbes {
