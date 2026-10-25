@@ -44,7 +44,7 @@ Kubernetes 1.29.0.
 | r0-probes | 83 | `plan/value-algebra-r0-probes/{run,review}.sh` probes that take no extra Helm flags and are deterministic |
 | ternary-arity | 17 | `ternary` operand-count cells and their stale-guard controls |
 | r2 | 83 | Go parameter types, direct/grouped literals, method resolution, mutation, binding, reachability, and legacy projection/join controls |
-| r2-twins | 129 | The R2 controls and pre-registered closure witnesses with an unrelated `set (dict)` that refutes certification |
+| r2-twins | 129 | The R2 controls and pre-registered closure witnesses with an unrelated `set (dict)`, retained as R3b mutation controls |
 | r2-unconditional | 36 | Float-shadow and decoder reachability controls for all five families, plus conditional/uncertified twins; R3b owns their legacy verdicts |
 
 ## The gate
@@ -102,8 +102,8 @@ the lanes' `--no-k8s-schemas`, so the recorded verdicts belong to this protocol.
 
 Main gets 693 cells wrong: 356 false rejections and 337 false acceptances.
 
-- 672 cells belong to R1–R3.
-- 6 inherited reachability failures belong to R3b; all 36 R2-11 controls are listed in `reachability-controls.tsv`.
+- 536 cells belong to R1–R3.
+- 142 cells belong to R3b, including 6 inherited reachability failures; all 36 R2-11 controls are listed in `reachability-controls.tsv`.
 - 15 cells (`ternary127.selected-{0,2,3}-{4..8}.0`) belong to ADR 0042, not W1 (decision D2,
   2026-10-23). They render once the root's `additionalProperties: false` is lifted
   (`plan/value-algebra-r0-probes/selected.sh`). With them excluded, ternary127 has 38 W1
@@ -133,11 +133,18 @@ capture conjoins the call's guards, and those guards read the original inputs. T
 `stale-guard-after-write.1` and `stale-and-after-write.1` cells render because a prior `set` makes
 the guard false, yet a capture under the stale guard rejects them. Emitting only captures whose
 conjunction stays empty still rejects `stale-local-guard.0`, whose guard folds to a stale constant
-after a `with`-scoped reassignment and an aliased `set`. The check waits for R2's write-free
-certificate.
+after a `with`-scoped reassignment and an aliased `set`.
+The check belongs to R3b's coupled interpreter with exact heap and execution tracking.
+R2 stops at the sealed typed leaf, catalog and compatibility views; it adds no certificate or
+family rejection consumers.
 
-R2-11 permits each new R2 rejection only at a site with no ambient guards: no enclosing
+The R2-11 feasibility rule limited proposed rejections to sites with no ambient guards: no enclosing
 `if`/`else`/`with`/`range`, no skippable `and`/`or` operand, and unconditional helper ancestry.
 The float-shadow and `fromJson "[]"` controls expose inherited guard errors. R2 preserves
 main's verdict for all their variants; the six equivalent terminal-channel controls remain
 R3b false-rejection obligations. R2 does not repair scope snapshots or decoder truth.
+
+The pre-registered F1/F3–F6 obligations and their mutation twins are owned by R3b.
+Their verdicts and coalesced inputs remain unchanged.
+R2-11 was a feasibility preflight, not a shipped R2 rejection policy; the compatibility controls
+continue to pin main until R3b replaces the execution model and legacy queries together.

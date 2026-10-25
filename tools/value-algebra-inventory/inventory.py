@@ -41,7 +41,7 @@ BASE = {"Predicate", "TruthCondition", "ScalarValueDispatch", "ScalarValue", "Ab
         "HelperOutputMeta", "GoType"}
 ALL_VARIANTS = {"AbstractValue", "ScalarValue", "ScalarContent", "GoType"}
 # Semantic landings use the admission ratchet rather than consolidation-only producer counts.
-SEMANTIC_STAGES = {"R2"}
+SEMANTIC_STAGES = {"R3b"}
 REEXEC = (r"^(crate::expr_eval::)?(eval_expr|eval_expr_with_helper_calls|eval_expr_with_[a-z_]+)\(|"
           r"parsed_helper_body\(|Interpreter::(for_source|with_body_facts)\(")
 NAME_KEYED = re.compile(r"(HashMap|BTreeMap|HashSet|BTreeSet)<String")
@@ -252,13 +252,13 @@ def self_test(found, rows, baseline):
     assert any("one-to-one" in e for e in check(moved, [row], [row], set(), [], [relocation, relocation]))
     assert any("invalid relocation" in e for e in check({}, [row], [row], set(), [], [relocation]))
     target = dict(row, key="field:live.rs:Owner.arm")
-    deleted = dict(row, **{"class": "F", "delete": "R2"})
+    deleted = dict(row, **{"class": "F", "delete": "R3b"})
     semantic = [deleted, target]
     mapping = {"old": old, "new": target["key"], "reviewer": "fixture"}
     live = {target["key"]: "arm: Predicate"}
-    assert not check(live, semantic, semantic, {"R2"}, [mapping]), "semantic sole-producer mapping failed"
-    assert any("not a surviving producer" in e for e in check(live, semantic, semantic, {"R2"}, [dict(mapping, new=old)]))
-    assert any("not a surviving producer" in e for e in check(live, semantic, semantic, {"R2"}, [dict(mapping, new="absent")]))
+    assert not check(live, semantic, semantic, {"R3b"}, [mapping]), "semantic sole-producer mapping failed"
+    assert any("not a surviving producer" in e for e in check(live, semantic, semantic, {"R3b"}, [dict(mapping, new=old)]))
+    assert any("not a surviving producer" in e for e in check(live, semantic, semantic, {"R3b"}, [dict(mapping, new="absent")]))
     print("self-test: relocations and semantic deletion mappings passed", file=sys.stderr)
 
 
