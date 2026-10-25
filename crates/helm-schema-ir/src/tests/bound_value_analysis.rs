@@ -29,9 +29,7 @@ fn extract_bound_values(
 ) -> Vec<String> {
     let mut state = crate::value::State::default();
     for (name, domain) in range_domains {
-        state
-            .slot_mut(&name)
-            .record_iteration_domain(domain.clone());
+        state.slot_mut(name).record_iteration_domain(domain.clone());
     }
     for (name, binding) in get_bindings {
         state.apply_get_binding(GetBindingPlan {

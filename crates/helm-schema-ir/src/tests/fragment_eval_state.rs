@@ -66,7 +66,7 @@ fn semver_selector_holes_keep_the_unsigned_go_type() -> eyre::Result<()> {
     let result = interpreter.eval_hole_exprs(&parse_action_expressions(source));
     let mut expected =
         crate::scalar_value::ScalarValueDispatch::constant(helm_schema_core::GuardValue::Int(1));
-    expected.refine_type(crate::value::kinds::GoType::Uint64, db.predicate_memo());
+    expected.refine_type(crate::value::kinds::GoType::Uint64);
     sim_assert_eq!(have: result.scalar_transport(), want: Some(&expected));
     Ok(())
 }

@@ -2104,13 +2104,11 @@ fn short_circuit_calls_scope_later_runtime_failures_to_execution() {
 #[test]
 fn truth_only_locals_drive_short_circuit_execution() {
     let mut env = EvalEnv::default();
-    env.state
-        .slot_mut(&"shouldContinue".to_string())
-        .bind_truth(
-            crate::fragment_assignment::AssignmentKind::Declaration,
-            Some(Predicate::True),
-            false,
-        );
+    env.state.slot_mut("shouldContinue").bind_truth(
+        crate::fragment_assignment::AssignmentKind::Declaration,
+        Some(Predicate::True),
+        false,
+    );
 
     let result = eval_expr(
         &single_expr(r#"and $shouldContinue (hasKey .Values.cfg "a")"#),
@@ -2207,7 +2205,7 @@ fn local_selector_truth_comes_from_the_selected_value() {
         "plugin".to_string(),
         direct_binding(values_path!("plugins.*")),
     );
-    env.state.slot_mut(&"plugin".to_string()).bind_truth(
+    env.state.slot_mut("plugin").bind_truth(
         crate::fragment_assignment::AssignmentKind::Declaration,
         Some(Predicate::truthy_path("plugins.*")),
         false,
@@ -2517,16 +2515,12 @@ fn root_scalar_metadata_reports_rendered_selection_source() {
         dot: Some(AbstractValue::RootContext),
         ..EvalEnv::default()
     };
-    env.root_slots
-        .entry("mode".to_string())
-        .or_default()
-        .overwrite(
-            AbstractValue::StringSet(BTreeSet::from(["server".to_string()])),
-            None,
-        );
-    env.root_slots
-        .entry("mode".to_string())
-        .or_default()
+    env.state.write_field("mode".to_string()).overwrite(
+        AbstractValue::StringSet(BTreeSet::from(["server".to_string()])),
+        None,
+    );
+    env.state
+        .write_field("mode".to_string())
         .merge(crate::value::RootSlot::new(
             None,
             None,
