@@ -17,10 +17,9 @@ pub(crate) fn is_files_get(function: &str) -> bool {
 pub(crate) enum LegacySuppliedOperands {
     None,
     All,
-    First,
+    Declared { minimum: usize },
     Last,
     FirstAndLast,
-    FirstTwo,
 }
 
 /// Classifies whether a nil operand aborts, including the direct-access distinction.
@@ -123,17 +122,183 @@ const KNOWN: FunctionSemantics = FunctionSemantics {
     ..UNKNOWN
 };
 
+use CollectionShape::{Merge, StringSplit};
+use GoType::{Bool, Float64, Int, Int64, Map, Slice, String as Text, Unknown};
+use LegacySuppliedOperands::{All, Declared, FirstAndLast, Last};
+use NilBehavior::{AlwaysAborts, DirectAccessAborts};
+use OutputBehavior::{Arithmetic, Checksum, NonEmpty, NumericCast, Stringify, Transform};
+use PredicateSemantics::{String as StringPredicate, TypeDescriptor};
+use ProvenanceBehavior::Preserve;
+
+const ARITHMETIC: FunctionSemantics = FunctionSemantics {
+    behavior: Arithmetic,
+    ..KNOWN
+};
+
+const CHECKSUM: FunctionSemantics = FunctionSemantics {
+    legacy_operands: Last,
+    behavior: Checksum,
+    ..KNOWN
+};
+
+const STRICT: FunctionSemantics = FunctionSemantics {
+    nil_behavior: AlwaysAborts,
+    ..KNOWN
+};
+
+const TRANSFORM: FunctionSemantics = FunctionSemantics {
+    legacy_operands: All,
+    behavior: Transform,
+    ..KNOWN
+};
+
+const STRING_PREDICATE: FunctionSemantics = FunctionSemantics {
+    legacy_operands: All,
+    predicate: StringPredicate,
+    ..KNOWN
+};
+
+const PRESERVING_STRICT: FunctionSemantics = FunctionSemantics {
+    nil_behavior: AlwaysAborts,
+    provenance: Preserve,
+    ..KNOWN
+};
+
+const NUMERIC_CAST: FunctionSemantics = FunctionSemantics {
+    behavior: NumericCast,
+    ..KNOWN
+};
+
+const PRESERVING: FunctionSemantics = FunctionSemantics {
+    provenance: Preserve,
+    ..KNOWN
+};
+
+const IP_CERTIFICATE: FunctionSemantics = FunctionSemantics {
+    collection_items: CollectionItemSemantics::CertificateIpList,
+    ..KNOWN
+};
+
+const MAP_LOOKUP: FunctionSemantics = FunctionSemantics {
+    nil_behavior: DirectAccessAborts,
+    ..KNOWN
+};
+
+const INDENT: FunctionSemantics = FunctionSemantics {
+    legacy_operands: Last,
+    behavior: Transform,
+    provenance: Preserve,
+    ..KNOWN
+};
+
+const PRESERVING_CAST: FunctionSemantics = FunctionSemantics {
+    behavior: NumericCast,
+    provenance: Preserve,
+    ..KNOWN
+};
+
+const DESCRIPTOR: FunctionSemantics = FunctionSemantics {
+    predicate: TypeDescriptor,
+    ..KNOWN
+};
+
+const STRING_LOOKUP: FunctionSemantics = FunctionSemantics {
+    legacy_operands: All,
+    ..KNOWN
+};
+
+const LAST_TRANSFORM: FunctionSemantics = FunctionSemantics {
+    legacy_operands: Last,
+    behavior: Transform,
+    ..KNOWN
+};
+
+const MAP_MERGE: FunctionSemantics = FunctionSemantics {
+    nil_behavior: DirectAccessAborts,
+    collection: Merge,
+    ..KNOWN
+};
+
+const DURATION_PARSER: FunctionSemantics = FunctionSemantics {
+    legacy_operands: Declared { minimum: 1 },
+    predicate: StringPredicate,
+    parser: ParserSemantics::Duration,
+    ..KNOWN
+};
+
+const FORMATTER: FunctionSemantics = FunctionSemantics {
+    provenance: Preserve,
+    predicate: TypeDescriptor,
+    ..KNOWN
+};
+
+const STRINGIFIER: FunctionSemantics = FunctionSemantics {
+    legacy_operands: All,
+    behavior: Stringify,
+    ..KNOWN
+};
+
+const REGEX_SPLIT: FunctionSemantics = FunctionSemantics {
+    legacy_operands: Declared { minimum: 3 },
+    collection: StringSplit,
+    ..KNOWN
+};
+
+const SEMVER_PARSER: FunctionSemantics = FunctionSemantics {
+    legacy_operands: All,
+    predicate: StringPredicate,
+    parser: ParserSemantics::Semver,
+    ..KNOWN
+};
+
+const SPLIT: FunctionSemantics = FunctionSemantics {
+    legacy_operands: All,
+    collection: StringSplit,
+    ..KNOWN
+};
+
+const LIMITED_SPLIT: FunctionSemantics = FunctionSemantics {
+    legacy_operands: FirstAndLast,
+    collection: StringSplit,
+    ..KNOWN
+};
+
+const URL_PARSER: FunctionSemantics = FunctionSemantics {
+    legacy_operands: All,
+    predicate: StringPredicate,
+    parser: ParserSemantics::Url,
+    ..KNOWN
+};
+
+const NONEMPTY: FunctionSemantics = FunctionSemantics {
+    behavior: NonEmpty,
+    ..KNOWN
+};
+
 impl FunctionSemantics {
-    const fn signature(
-        self,
-        parameters: &'static [GoType],
-        variadic: Option<GoType>,
-        success: SuccessType,
-    ) -> Self {
+    const fn fixed(self, parameters: &'static [GoType], result: GoType) -> Self {
         Self {
+            success: SuccessType::Fixed(result),
+            parameters,
+            variadic: None,
+            ..self
+        }
+    }
+
+    const fn variadic(self, parameters: &'static [GoType], tail: GoType, result: GoType) -> Self {
+        Self {
+            success: SuccessType::Fixed(result),
+            parameters,
+            variadic: Some(tail),
+            ..self
+        }
+    }
+
+    const fn selected(self, parameters: &'static [GoType], variadic: Option<GoType>) -> Self {
+        Self {
+            success: SuccessType::Selected,
             parameters,
             variadic,
-            success,
             ..self
         }
     }
@@ -141,328 +306,113 @@ impl FunctionSemantics {
     pub(crate) fn parameter(self, index: usize) -> Option<GoType> {
         self.parameters.get(index).copied().or(self.variadic)
     }
-
-    const fn with_legacy_operands(self, legacy_operands: LegacySuppliedOperands) -> Self {
-        Self {
-            legacy_operands,
-            ..self
-        }
-    }
-
-    const fn with_nil(self, nil_behavior: NilBehavior) -> Self {
-        Self {
-            nil_behavior,
-            ..self
-        }
-    }
-
-    const fn with_behavior(self, behavior: OutputBehavior) -> Self {
-        Self { behavior, ..self }
-    }
-
-    const fn with_collection(self, collection: CollectionShape) -> Self {
-        Self { collection, ..self }
-    }
-
-    const fn with_provenance(self, provenance: ProvenanceBehavior) -> Self {
-        Self { provenance, ..self }
-    }
-
-    const fn with_predicate(self, predicate: PredicateSemantics) -> Self {
-        Self { predicate, ..self }
-    }
-
-    const fn with_parser(self, parser: ParserSemantics) -> Self {
-        Self { parser, ..self }
-    }
-
-    const fn with_collection_items(self, collection_items: CollectionItemSemantics) -> Self {
-        Self {
-            collection_items,
-            ..self
-        }
-    }
 }
+
+const STRING_MATCH: FunctionSemantics = STRING_PREDICATE.fixed(&[Text, Text], Bool);
 
 /// Returns the analyzer-owned semantics for one Helm or Sprig function.
 ///
-/// Each recognized name occurs in exactly one match arm. Facets that overlap
-/// therefore describe one intentional row instead of independent classifiers
-/// that can drift apart.
+/// Each recognized name has one row combining its signature and transfer facets.
 #[must_use]
 pub(crate) fn function_semantics(function: &str) -> FunctionSemantics {
-    use CollectionShape::{Merge, StringSplit};
-    use GoType::{Bool, Float64, Int, Int64, Map, Slice, String, Unknown};
-    use LegacySuppliedOperands::{All, First, FirstAndLast, FirstTwo, Last};
-    use NilBehavior::{AlwaysAborts, DirectAccessAborts};
-    use OutputBehavior::{Arithmetic, Checksum, NonEmpty, NumericCast, Stringify, Transform};
-    use PredicateSemantics::{String as StringPredicate, TypeDescriptor};
-    use ProvenanceBehavior::Preserve;
-    use SuccessType::{Fixed, Selected};
-
     match function {
-        "abbrev" | "wrap" => UNKNOWN.signature(&[Int, String], None, Fixed(String)),
-        "abbrevboth" => UNKNOWN.signature(&[Int, Int, String], None, Fixed(String)),
-        "add" => KNOWN
-            .with_behavior(Arithmetic)
-            .signature(&[], Some(Unknown), Fixed(Int64)),
-        "add1" => KNOWN
-            .with_behavior(Arithmetic)
-            .signature(&[Unknown], None, Fixed(Int64)),
-        "add1f" | "ceil" | "floor" => {
-            KNOWN
-                .with_behavior(Arithmetic)
-                .signature(&[Unknown], None, Fixed(Float64))
+        "abbrev" | "wrap" => UNKNOWN.fixed(&[Int, Text], Text),
+        "abbrevboth" => UNKNOWN.fixed(&[Int, Int, Text], Text),
+        "add" => ARITHMETIC.variadic(&[], Unknown, Int64),
+        "add1" => ARITHMETIC.fixed(&[Unknown], Int64),
+        "add1f" | "ceil" | "floor" => ARITHMETIC.fixed(&[Unknown], Float64),
+        "addf" => ARITHMETIC.variadic(&[], Unknown, Float64),
+        "adler32sum" | "sha1sum" | "sha256sum" | "sha512sum" => CHECKSUM.fixed(&[Text], Text),
+        "and" | "coalesce" | "dig" | "or" => UNKNOWN.selected(&[], Some(Unknown)),
+        "append" | "prepend" | "push" => STRICT.fixed(&[Unknown, Unknown], Slice),
+        "b64dec" | "b64enc" => TRANSFORM.fixed(&[Text], Text),
+        "chunk" | "mustChunk" => UNKNOWN.selected(&[Int, Unknown], None),
+        "compact" | "initial" | "rest" | "reverse" => STRICT.fixed(&[Unknown], Slice),
+        "concat" => STRICT.selected(&[], Some(Unknown)),
+        "contains" | "hasPrefix" | "hasSuffix" | "mustRegexMatch" | "regexMatch" => STRING_MATCH,
+        "deepCopy" | "mustDeepCopy" => PRESERVING_STRICT.selected(&[Unknown], None),
+        "default" => UNKNOWN.selected(&[Unknown], Some(Unknown)),
+        "dict" => UNKNOWN.variadic(&[], Unknown, Map),
+        "empty" | "not" => UNKNOWN.fixed(&[Unknown], Bool),
+        "eq" => UNKNOWN.variadic(&[Unknown], Unknown, Bool),
+        "fail" => UNKNOWN.fixed(&[Text], Text),
+        "first" | "last" => STRICT.selected(&[Unknown], None),
+        "float64" => NUMERIC_CAST.fixed(&[Unknown], Float64),
+        "fromJson" | "fromToml" => UNKNOWN.fixed(&[Text], Map),
+        "fromJsonArray" | "fromYamlArray" => UNKNOWN.fixed(&[Text], Slice),
+        "fromYaml" => PRESERVING.fixed(&[Text], Map),
+        "ge" | "gt" | "le" | "lt" | "ne" => UNKNOWN.fixed(&[Unknown, Unknown], Bool),
+        "genCA" => UNKNOWN.selected(&[Text, Int], None),
+        "genCAWithKey" => UNKNOWN.selected(&[Text, Int, Text], None),
+        "genSelfSignedCert" => IP_CERTIFICATE.selected(&[Text, Slice, Slice, Int], None),
+        "genSelfSignedCertWithKey" => UNKNOWN.selected(&[Text, Slice, Slice, Int, Text], None),
+        "genSignedCert" => IP_CERTIFICATE.selected(&[Text, Slice, Slice, Int, Unknown], None),
+        "genSignedCertWithKey" => UNKNOWN.selected(&[Text, Slice, Slice, Int, Unknown, Text], None),
+        "get" => MAP_LOOKUP.selected(&[Map, Text], None),
+        "hasKey" => MAP_LOOKUP.fixed(&[Map, Text], Bool),
+        "htpasswd" | "trimAll" | "trimPrefix" | "trimSuffix" => {
+            TRANSFORM.fixed(&[Text, Text], Text)
         }
-        "addf" => KNOWN
-            .with_behavior(Arithmetic)
-            .signature(&[], Some(Unknown), Fixed(Float64)),
-        "adler32sum" | "sha1sum" | "sha256sum" | "sha512sum" => KNOWN
-            .with_legacy_operands(Last)
-            .with_behavior(Checksum)
-            .signature(&[String], None, Fixed(String)),
-        "and" | "coalesce" | "dig" | "or" => UNKNOWN.signature(&[], Some(Unknown), Selected),
-        "append" | "prepend" | "push" => {
-            KNOWN
-                .with_nil(AlwaysAborts)
-                .signature(&[Unknown, Unknown], None, Fixed(Slice))
+        "include" | "template" => UNKNOWN.fixed(&[Text, Unknown], Text),
+        "indent" | "nindent" => INDENT.fixed(&[Int, Text], Text),
+        "index" | "mustSlice" | "slice" => STRICT.selected(&[Unknown], Some(Unknown)),
+        "int" => PRESERVING_CAST.fixed(&[Unknown], Int),
+        "int64" => NUMERIC_CAST.fixed(&[Unknown], Int64),
+        "keys" => MAP_LOOKUP.variadic(&[], Map, Slice),
+        "kindOf" | "typeOf" => DESCRIPTOR.fixed(&[Unknown], Text),
+        "len" => STRICT.fixed(&[Unknown], Int),
+        "list" | "tuple" => UNKNOWN.variadic(&[], Unknown, Slice),
+        "lookup" => STRING_LOOKUP.fixed(&[Text, Text, Text, Text], Map),
+        "lower" | "trim" | "upper" => LAST_TRANSFORM.fixed(&[Text], Text),
+        "max" | "min" | "mul" => ARITHMETIC.variadic(&[Unknown], Unknown, Int64),
+        "maxf" | "minf" | "mulf" | "subf" => ARITHMETIC.variadic(&[Unknown], Unknown, Float64),
+        "merge" | "mergeOverwrite" | "mustMerge" | "mustMergeOverwrite" => {
+            MAP_MERGE.selected(&[Map], Some(Map))
         }
-        "b64dec" | "b64enc" => KNOWN
-            .with_legacy_operands(All)
-            .with_behavior(Transform)
-            .signature(&[String], None, Fixed(String)),
-        "chunk" | "mustChunk" => UNKNOWN.signature(&[Int, Unknown], None, Selected),
-        "compact" | "initial" | "rest" | "reverse" => {
-            KNOWN
-                .with_nil(AlwaysAborts)
-                .signature(&[Unknown], None, Fixed(Slice))
-        }
-        "concat" => KNOWN
-            .with_nil(AlwaysAborts)
-            .signature(&[], Some(Unknown), Selected),
-        "contains" | "hasPrefix" | "hasSuffix" | "mustRegexMatch" | "regexMatch" => KNOWN
-            .with_legacy_operands(All)
-            .with_predicate(StringPredicate)
-            .signature(&[String, String], None, Fixed(Bool)),
-        "deepCopy" | "mustDeepCopy" => KNOWN
-            .with_nil(AlwaysAborts)
-            .with_provenance(Preserve)
-            .signature(&[Unknown], None, Selected),
-        "default" => UNKNOWN.signature(&[Unknown], Some(Unknown), Selected),
-        "dict" => UNKNOWN.signature(&[], Some(Unknown), Fixed(Map)),
-        "empty" | "not" => UNKNOWN.signature(&[Unknown], None, Fixed(Bool)),
-        "eq" => UNKNOWN.signature(&[Unknown], Some(Unknown), Fixed(Bool)),
-        "fail" => UNKNOWN.signature(&[String], None, Fixed(String)),
-        "first" | "last" => KNOWN
-            .with_nil(AlwaysAborts)
-            .signature(&[Unknown], None, Selected),
-        "float64" => KNOWN
-            .with_behavior(NumericCast)
-            .signature(&[Unknown], None, Fixed(Float64)),
-        "fromJson" | "fromToml" => UNKNOWN.signature(&[String], None, Fixed(Map)),
-        "fromJsonArray" | "fromYamlArray" => UNKNOWN.signature(&[String], None, Fixed(Slice)),
-        "fromYaml" => KNOWN
-            .with_provenance(Preserve)
-            .signature(&[String], None, Fixed(Map)),
-        "ge" | "gt" | "le" | "lt" | "ne" => {
-            UNKNOWN.signature(&[Unknown, Unknown], None, Fixed(Bool))
-        }
-        "genCA" => UNKNOWN.signature(&[String, Int], None, Selected),
-        "genCAWithKey" => UNKNOWN.signature(&[String, Int, String], None, Selected),
-        "genSelfSignedCert" => KNOWN
-            .with_collection_items(CollectionItemSemantics::CertificateIpList)
-            .signature(&[String, Slice, Slice, Int], None, Selected),
-        "genSelfSignedCertWithKey" => {
-            UNKNOWN.signature(&[String, Slice, Slice, Int, String], None, Selected)
-        }
-        "genSignedCert" => KNOWN
-            .with_collection_items(CollectionItemSemantics::CertificateIpList)
-            .signature(&[String, Slice, Slice, Int, Unknown], None, Selected),
-        "genSignedCertWithKey" => UNKNOWN.signature(
-            &[String, Slice, Slice, Int, Unknown, String],
-            None,
-            Selected,
-        ),
-        "get" => KNOWN
-            .with_nil(DirectAccessAborts)
-            .signature(&[Map, String], None, Selected),
-        "hasKey" => KNOWN
-            .with_nil(DirectAccessAborts)
-            .signature(&[Map, String], None, Fixed(Bool)),
-        "htpasswd" | "trimAll" | "trimPrefix" | "trimSuffix" => KNOWN
-            .with_legacy_operands(All)
-            .with_behavior(Transform)
-            .signature(&[String, String], None, Fixed(String)),
-        "include" | "template" => UNKNOWN.signature(&[String, Unknown], None, Fixed(String)),
-        "indent" | "nindent" => KNOWN
-            .with_legacy_operands(Last)
-            .with_behavior(Transform)
-            .with_provenance(Preserve)
-            .signature(&[Int, String], None, Fixed(String)),
-        "index" | "mustSlice" | "slice" => {
-            KNOWN
-                .with_nil(AlwaysAborts)
-                .signature(&[Unknown], Some(Unknown), Selected)
-        }
-        "int" => KNOWN
-            .with_behavior(NumericCast)
-            .with_provenance(Preserve)
-            .signature(&[Unknown], None, Fixed(Int)),
-        "int64" => KNOWN
-            .with_behavior(NumericCast)
-            .signature(&[Unknown], None, Fixed(Int64)),
-        "keys" => KNOWN
-            .with_nil(DirectAccessAborts)
-            .signature(&[], Some(Map), Fixed(Slice)),
-        "kindOf" | "typeOf" => {
-            KNOWN
-                .with_predicate(TypeDescriptor)
-                .signature(&[Unknown], None, Fixed(String))
-        }
-        "len" => KNOWN
-            .with_nil(AlwaysAborts)
-            .signature(&[Unknown], None, Fixed(Int)),
-        "list" | "tuple" => UNKNOWN.signature(&[], Some(Unknown), Fixed(Slice)),
-        "lookup" => KNOWN.with_legacy_operands(All).signature(
-            &[String, String, String, String],
-            None,
-            Fixed(Map),
-        ),
-        "lower" | "trim" | "upper" => KNOWN
-            .with_legacy_operands(Last)
-            .with_behavior(Transform)
-            .signature(&[String], None, Fixed(String)),
-        "max" | "min" | "mul" => {
-            KNOWN
-                .with_behavior(Arithmetic)
-                .signature(&[Unknown], Some(Unknown), Fixed(Int64))
-        }
-        "maxf" | "minf" | "mulf" | "subf" => {
-            KNOWN
-                .with_behavior(Arithmetic)
-                .signature(&[Unknown], Some(Unknown), Fixed(Float64))
-        }
-        "merge" | "mergeOverwrite" | "mustMerge" | "mustMergeOverwrite" => KNOWN
-            .with_nil(DirectAccessAborts)
-            .with_collection(Merge)
-            .signature(&[Map], Some(Map), Selected),
-        "mustDateModify" => KNOWN
-            .with_legacy_operands(First)
-            .with_predicate(StringPredicate)
-            .with_parser(ParserSemantics::Duration)
-            .signature(&[String, Unknown], None, Selected),
-        "mustFromJson" | "semver" => UNKNOWN.signature(&[String], None, Selected),
+        "mustDateModify" => DURATION_PARSER.selected(&[Text, Unknown], None),
+        "mustFromJson" | "semver" => UNKNOWN.selected(&[Text], None),
         "mustRegexFindAll" | "mustRegexSplit" | "regexFindAll" => {
-            UNKNOWN.signature(&[String, String, Int], None, Fixed(Slice))
+            UNKNOWN.fixed(&[Text, Text, Int], Slice)
         }
         "mustRegexReplaceAll"
         | "mustRegexReplaceAllLiteral"
         | "regexReplaceAll"
         | "regexReplaceAllLiteral"
-        | "replace" => KNOWN
-            .with_legacy_operands(All)
-            .with_behavior(Transform)
-            .signature(&[String, String, String], None, Fixed(String)),
-        "mustToJson" | "mustToRawJson" | "toJson" | "toRawJson" => {
-            UNKNOWN.signature(&[Unknown], None, Fixed(String))
-        }
-        "mustUniq" | "uniq" => KNOWN
-            .with_nil(AlwaysAborts)
-            .with_provenance(Preserve)
-            .signature(&[Unknown], None, Fixed(Slice)),
-        "omit" | "pick" => {
-            KNOWN
-                .with_nil(DirectAccessAborts)
-                .signature(&[Map], Some(String), Fixed(Map))
-        }
-        "pluck" => KNOWN
-            .with_nil(DirectAccessAborts)
-            .signature(&[String], Some(Map), Fixed(Slice)),
-        "plural" => UNKNOWN.signature(&[String, String, Int], None, Fixed(String)),
-        "print" | "println" => UNKNOWN.signature(&[], Some(Unknown), Fixed(String)),
-        "printf" => KNOWN
-            .with_provenance(Preserve)
-            .with_predicate(TypeDescriptor)
-            .signature(&[String], Some(Unknown), Fixed(String)),
-        "quote" | "squote" | "urlquery" => KNOWN
-            .with_legacy_operands(All)
-            .with_behavior(Stringify)
-            .signature(&[], Some(Unknown), Fixed(String)),
+        | "replace" => TRANSFORM.fixed(&[Text, Text, Text], Text),
+        "mustToJson" | "mustToRawJson" | "toJson" | "toRawJson" => UNKNOWN.fixed(&[Unknown], Text),
+        "mustUniq" | "uniq" => PRESERVING_STRICT.fixed(&[Unknown], Slice),
+        "omit" | "pick" => MAP_LOOKUP.variadic(&[Map], Text, Map),
+        "pluck" => MAP_LOOKUP.variadic(&[Text], Map, Slice),
+        "plural" => UNKNOWN.fixed(&[Text, Text, Int], Text),
+        "print" | "println" => UNKNOWN.variadic(&[], Unknown, Text),
+        "printf" => FORMATTER.variadic(&[Text], Unknown, Text),
+        "quote" | "squote" | "urlquery" => STRINGIFIER.variadic(&[], Unknown, Text),
         "randAlpha" | "randAlphaNum" | "randAscii" | "randBytes" | "randNumeric" => {
-            UNKNOWN.signature(&[Int], None, Fixed(String))
+            UNKNOWN.fixed(&[Int], Text)
         }
-        "randInt" => UNKNOWN.signature(&[Int, Int], None, Fixed(Int)),
-        "regexSplit" => KNOWN
-            .with_legacy_operands(FirstTwo)
-            .with_collection(StringSplit)
-            .signature(&[String, String, Int], None, Fixed(Slice)),
-        "repeat" | "trunc" => KNOWN
-            .with_legacy_operands(Last)
-            .with_behavior(Transform)
-            .signature(&[Int, String], None, Fixed(String)),
-        "required" => UNKNOWN.signature(&[String, Unknown], None, Selected),
-        "round" => KNOWN.with_behavior(Arithmetic).signature(
-            &[Unknown, Int],
-            Some(Float64),
-            Fixed(Float64),
-        ),
-        "semverCompare" => KNOWN
-            .with_legacy_operands(All)
-            .with_predicate(StringPredicate)
-            .with_parser(ParserSemantics::Semver)
-            .signature(&[String, String], None, Fixed(Bool)),
-        "seq" => UNKNOWN.signature(&[], Some(Int), Fixed(String)),
-        "split" => KNOWN
-            .with_legacy_operands(All)
-            .with_collection(StringSplit)
-            .signature(&[String, String], None, Fixed(Map)),
-        "splitList" => KNOWN
-            .with_legacy_operands(All)
-            .with_collection(StringSplit)
-            .signature(&[String, String], None, Fixed(Slice)),
-        "splitn" => KNOWN
-            .with_legacy_operands(FirstAndLast)
-            .with_collection(StringSplit)
-            .signature(&[String, Int, String], None, Fixed(Map)),
-        "sub" => KNOWN
-            .with_behavior(Arithmetic)
-            .signature(&[Unknown, Unknown], None, Fixed(Int64)),
-        "substr" => KNOWN
-            .with_legacy_operands(Last)
-            .with_behavior(Transform)
-            .signature(&[Int, Int, String], None, Fixed(String)),
-        "ternary" => {
-            KNOWN
-                .with_nil(AlwaysAborts)
-                .signature(&[Unknown, Unknown, Bool], None, Selected)
-        }
-        "toString" => KNOWN
-            .with_legacy_operands(All)
-            .with_behavior(Stringify)
-            .signature(&[Unknown], None, Fixed(String)),
-        "toYaml" => KNOWN
-            .with_provenance(Preserve)
-            .signature(&[Unknown], None, Fixed(String)),
-        "tpl" => KNOWN
-            .with_provenance(Preserve)
-            .signature(&[String, Unknown], None, Fixed(String)),
-        "unset" => KNOWN
-            .with_nil(DirectAccessAborts)
-            .signature(&[Map, String], None, Fixed(Map)),
-        "until" => UNKNOWN.signature(&[Int], None, Selected),
-        "untilStep" => UNKNOWN.signature(&[Int, Int, Int], None, Selected),
-        "urlParse" => KNOWN
-            .with_legacy_operands(All)
-            .with_predicate(StringPredicate)
-            .with_parser(ParserSemantics::Url)
-            .signature(&[String], None, Fixed(Map)),
-        "uuidv4" => KNOWN
-            .with_behavior(NonEmpty)
-            .signature(&[], None, Fixed(String)),
-        "values" => KNOWN
-            .with_nil(DirectAccessAborts)
-            .signature(&[Map], None, Fixed(Slice)),
-        "wrapWith" => UNKNOWN.signature(&[Int, String, String], None, Fixed(String)),
+        "randInt" => UNKNOWN.fixed(&[Int, Int], Int),
+        "regexSplit" => REGEX_SPLIT.fixed(&[Text, Text, Int], Slice),
+        "repeat" | "trunc" => LAST_TRANSFORM.fixed(&[Int, Text], Text),
+        "required" => UNKNOWN.selected(&[Text, Unknown], None),
+        "round" => ARITHMETIC.variadic(&[Unknown, Int], Float64, Float64),
+        "semverCompare" => SEMVER_PARSER.fixed(&[Text, Text], Bool),
+        "seq" => UNKNOWN.variadic(&[], Int, Text),
+        "split" => SPLIT.fixed(&[Text, Text], Map),
+        "splitList" => SPLIT.fixed(&[Text, Text], Slice),
+        "splitn" => LIMITED_SPLIT.fixed(&[Text, Int, Text], Map),
+        "sub" => ARITHMETIC.fixed(&[Unknown, Unknown], Int64),
+        "substr" => LAST_TRANSFORM.fixed(&[Int, Int, Text], Text),
+        "ternary" => STRICT.selected(&[Unknown, Unknown, Bool], None),
+        "toString" => STRINGIFIER.fixed(&[Unknown], Text),
+        "toYaml" => PRESERVING.fixed(&[Unknown], Text),
+        "tpl" => PRESERVING.fixed(&[Text, Unknown], Text),
+        "unset" => MAP_LOOKUP.fixed(&[Map, Text], Map),
+        "until" => UNKNOWN.selected(&[Int], None),
+        "untilStep" => UNKNOWN.selected(&[Int, Int, Int], None),
+        "urlParse" => URL_PARSER.fixed(&[Text], Map),
+        "uuidv4" => NONEMPTY.fixed(&[], Text),
+        "values" => MAP_LOOKUP.fixed(&[Map], Slice),
+        "wrapWith" => UNKNOWN.fixed(&[Int, Text, Text], Text),
         _ => UNKNOWN,
     }
 }
@@ -537,15 +487,17 @@ impl FunctionSemantics {
         }
         match self.legacy_operands {
             LegacySuppliedOperands::All => (0..argument_count).collect(),
-            LegacySuppliedOperands::First => vec![0],
             LegacySuppliedOperands::Last => vec![argument_count - 1],
             LegacySuppliedOperands::FirstAndLast if argument_count >= 3 => {
                 vec![0, argument_count - 1]
             }
-            LegacySuppliedOperands::FirstTwo if argument_count >= 3 => vec![0, 1],
+            LegacySuppliedOperands::Declared { minimum } if argument_count >= minimum => (0
+                ..argument_count)
+                .filter(|&index| self.parameter(index) == Some(Text))
+                .collect(),
             LegacySuppliedOperands::None
             | LegacySuppliedOperands::FirstAndLast
-            | LegacySuppliedOperands::FirstTwo => Vec::new(),
+            | LegacySuppliedOperands::Declared { .. } => Vec::new(),
         }
     }
 }

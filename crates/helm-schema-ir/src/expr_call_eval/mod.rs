@@ -1545,7 +1545,7 @@ fn direct_stringified_dispatch(
     };
     eval_expr_with_helper_calls(subject, env, resolver)
         .scalar_dispatch()
-        .map(|dispatch| dispatch.stringified())
+        .map(ScalarValueDispatch::stringified)
 }
 
 fn direct_quoted_falsy_pattern_condition(

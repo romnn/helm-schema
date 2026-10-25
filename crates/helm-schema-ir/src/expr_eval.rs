@@ -8,6 +8,7 @@ use crate::eval_env::{BindingEvaluationMode, BindingValue, EvalEnv, LocalBinding
 use crate::expr_call_eval::{eval_call_with_helper_calls, eval_pipeline_with_helper_calls};
 use crate::function_semantics::{CollectionShape, function_semantics};
 use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
+use crate::value::kinds::GoType;
 use helm_schema_core::Predicate;
 
 pub(crate) trait HelperCallValueResolver {
@@ -923,7 +924,6 @@ fn literal_result(literal: &Literal, env: &EvalEnv) -> EvalResult {
         ),
         None => result,
     };
-    use crate::value::kinds::GoType;
     let go_type = match literal {
         Literal::String(_) | Literal::RawString(_) => GoType::String,
         Literal::Bool(_) => GoType::Bool,

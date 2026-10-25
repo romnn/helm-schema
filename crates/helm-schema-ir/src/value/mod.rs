@@ -441,3 +441,7 @@ pub(crate) fn argument_slots(
     }
     slots
 }
+
+#[cfg(test)]
+#[path = "../tests/scalar_kinds.rs"]
+mod tests;

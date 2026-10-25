@@ -123,13 +123,13 @@ impl ScalarValueDispatch {
         let mut arms = Vec::new();
         for (condition, value) in &self.arms {
             let value = match &value.content {
-                Some(content) => match transform(content) {
-                    Some(content) => ScalarValue::untyped(content),
-                    None => {
+                Some(content) => {
+                    let Some(content) = transform(content) else {
                         complete = false;
                         continue;
-                    }
-                },
+                    };
+                    ScalarValue::untyped(content)
+                }
                 None => ScalarValue::type_only(GoType::Unknown),
             };
             arms.push((condition.clone(), value));

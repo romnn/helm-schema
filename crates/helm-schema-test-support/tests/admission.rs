@@ -42,7 +42,11 @@ fn suite(root: &Path, cells: &str, obligations: &str) -> eyre::Result<Suite> {
     fs::create_dir_all(root.join("charts/c"))?;
     fs::write(
         root.join("charts/c/Chart.yaml"),
-        "apiVersion: v2\nname: c\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: c
+            version: 0.1.0
+        "},
     )?;
     fs::write(root.join("charts/c/values.yaml"), "a: 1\n")?;
     fs::write(root.join("cells.tsv"), cells)?;

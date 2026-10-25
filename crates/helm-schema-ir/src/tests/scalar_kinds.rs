@@ -29,7 +29,7 @@ fn runtime_types_are_stamped_at_literal_and_semver_production() -> eyre::Result<
         let dispatch = result
             .scalar_transport()
             .ok_or_eyre("missing typed transport")?;
-        sim_assert_eq!(have: dispatch.kinds().map(|arm| arm.go_type).collect::<Vec<_>>(), want: vec![expected]);
+        sim_assert_eq!(have: dispatch.arms.iter().map(|(_, leaf)| leaf.go_type).collect::<Vec<_>>(), want: vec![expected]);
     }
     Ok(())
 }
@@ -74,7 +74,11 @@ fn conflicting_types_join_without_changing_equal_content() -> eyre::Result<()> {
         .join_equal_content([&component])
         .ok_or_eyre("content join failed")?;
     sim_assert_eq!(have: joined.content_eq(&literal), want: true);
-    let types = joined.kinds().map(|arm| arm.go_type).collect::<Vec<_>>();
+    let types = joined
+        .arms
+        .iter()
+        .map(|(_, leaf)| leaf.go_type)
+        .collect::<Vec<_>>();
     sim_assert_eq!(have: types, want: vec![GoType::Unknown]);
     sim_assert_eq!(have: joined.constant_value(), want: Some(GuardValue::Int(1)));
     Ok(())
@@ -91,7 +95,7 @@ fn mixed_projection_keeps_content_and_its_incomplete_coverage() {
     );
     dispatch.refine_type(GoType::Int, &PredicateMemo::default());
     sim_assert_eq!(have: dispatch.content().map(|content| (content.arms().count(), content.complete)), want: Some((1, false)));
-    sim_assert_eq!(have: dispatch.kinds().count(), want: 2);
+    sim_assert_eq!(have: dispatch.arms.len(), want: 2);
 }
 
 #[test]
@@ -136,7 +140,7 @@ fn exhausting_type_only_coverage_keeps_legacy_absence() -> eyre::Result<()> {
         .as_ref()
         .ok_or_eyre("missing widened type transport")?;
     sim_assert_eq!(have: dispatch.content().is_none(), want: true);
-    sim_assert_eq!(have: dispatch.kinds().map(|arm| arm.go_type).collect::<Vec<_>>(), want: vec![GoType::Unknown]);
+    sim_assert_eq!(have: dispatch.arms.iter().map(|(_, leaf)| leaf.go_type).collect::<Vec<_>>(), want: vec![GoType::Unknown]);
     Ok(())
 }
 

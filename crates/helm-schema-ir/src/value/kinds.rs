@@ -11,10 +11,8 @@ pub(crate) enum GoType {
     String,
     Int,
     Int64,
-    Uint8,
     Uint64,
     Float64,
-    Complex128,
     Map,
     Slice,
     Unknown,
@@ -24,12 +22,6 @@ impl GoType {
     pub(crate) fn joined(self, other: Self) -> Self {
         if self == other { self } else { Self::Unknown }
     }
-}
-
-pub(crate) struct KindArm<'a> {
-    pub(crate) condition: &'a Predicate,
-    pub(crate) go_type: GoType,
-    pub(crate) content: Option<&'a ScalarContent>,
 }
 
 impl ScalarValue {
@@ -49,17 +41,6 @@ impl ScalarValue {
 }
 
 impl ScalarValueDispatch {
-    pub(crate) fn kinds(&self) -> impl Iterator<Item = KindArm<'_>> {
-        self.arms.iter().map(|(condition, value)| {
-            let ScalarValue { go_type, content } = value;
-            KindArm {
-                condition,
-                go_type: *go_type,
-                content: content.as_ref(),
-            }
-        })
-    }
-
     /// Refines existing leaves without changing content, truth, selection, effects or content bounds.
     ///
     /// Unresolved coverage receives disjoint type-only arms with a separate bound.
@@ -162,6 +143,7 @@ impl ScalarValueDispatch {
     }
 }
 
+#[derive(Clone, Copy)]
 pub(crate) enum LegacyTypeView<'a> {
     Schema(&'static str),
     Identity(&'a helm_schema_core::ValuesPath),

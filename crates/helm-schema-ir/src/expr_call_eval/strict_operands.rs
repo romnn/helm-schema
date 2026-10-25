@@ -938,7 +938,7 @@ fn record_comparable_kind_result_one(
         for (condition, value) in dispatch
             .content()
             .into_iter()
-            .flat_map(|content| content.arms())
+            .flat_map(crate::value::ContentView::arms)
         {
             let ScalarContent::Identity(path) = value else {
                 continue;

@@ -2499,28 +2499,6 @@ fn root_set_truth_predicates_feed_later_root_field_assignments() {
             .truth_source(),
         want: SelectionTruthSource::RenderedScalar
     );
-    env.root_slots
-        .entry("mode".to_string())
-        .or_default()
-        .overwrite(
-            AbstractValue::StringSet(BTreeSet::from(["server".to_string()])),
-            None,
-        );
-    env.root_slots
-        .entry("mode".to_string())
-        .or_default()
-        .merge(crate::value::RootSlot::new(
-            None,
-            None,
-            Some(ScalarValueDispatch::constant(GuardValue::string("server"))),
-        ));
-    let mode = eval_expr(&single_expr(".mode"), &env);
-    sim_assert_eq!(
-        have: mode
-            .output_reachability(SelectionPolarity::Truthy)
-            .truth_source(),
-        want: SelectionTruthSource::RenderedScalar
-    );
     let service = eval_expr(
         &single_expr(indoc! {r#"
             set . "serverServiceEnabled"
@@ -2543,6 +2521,36 @@ fn root_set_truth_predicates_feed_later_root_field_assignments() {
                 }),
             ]),
         ]))
+    );
+}
+
+#[test]
+fn root_scalar_metadata_reports_rendered_selection_source() {
+    let mut env = EvalEnv {
+        dot: Some(AbstractValue::RootContext),
+        ..EvalEnv::default()
+    };
+    env.root_slots
+        .entry("mode".to_string())
+        .or_default()
+        .overwrite(
+            AbstractValue::StringSet(BTreeSet::from(["server".to_string()])),
+            None,
+        );
+    env.root_slots
+        .entry("mode".to_string())
+        .or_default()
+        .merge(crate::value::RootSlot::new(
+            None,
+            None,
+            Some(ScalarValueDispatch::constant(GuardValue::string("server"))),
+        ));
+    let mode = eval_expr(&single_expr(".mode"), &env);
+    sim_assert_eq!(
+        have: mode
+            .output_reachability(SelectionPolarity::Truthy)
+            .truth_source(),
+        want: SelectionTruthSource::RenderedScalar
     );
 }
 
