@@ -110,10 +110,10 @@ impl ContractIr {
     /// optional dependency defines aborts with "no template". The predicate
     /// lowers through the standard terminal-clause machinery.
     pub fn add_terminal_fail_condition(&mut self, condition: helm_schema_core::Predicate) {
-        let capture = crate::eval_effect::FailCapture {
+        let capture = crate::observed_facts::FailCapture {
             conjunction: vec![condition].into(),
             ranged: crate::range_modes::RangeModes::default(),
-            kind: crate::eval_effect::CaptureKind::Fail,
+            kind: crate::observed_facts::CaptureKind::Fail,
         };
         self.observed_facts.captures.insert(capture);
     }
@@ -203,7 +203,16 @@ impl ContractIr {
     /// unchanged.
     pub fn mark_rendered_output_textual(&mut self) {
         for contract_use in self.uses.iter_mut().chain(&mut self.dependency_uses) {
-            contract_use.kind = ValueKind::Serialized;
+            contract_use.kind = match contract_use.kind {
+                ValueKind::Scalar
+                | ValueKind::PartialScalar
+                | ValueKind::Fragment
+                | ValueKind::Serialized
+                | ValueKind::YamlSerialized
+                | ValueKind::TemplatedYamlSerialized => ValueKind::Serialized,
+                ValueKind::WidenedDependency => ValueKind::WidenedDependency,
+                ValueKind::WidenedRegion => ValueKind::WidenedRegion,
+            };
         }
     }
 
@@ -520,7 +529,7 @@ fn replace_value_path_prefix(
 }
 
 fn project_global_fail_captures(
-    captures: &mut BTreeSet<crate::eval_effect::FailCapture>,
+    captures: &mut BTreeSet<crate::observed_facts::FailCapture>,
     global_sources: &[String],
 ) {
     let Some(dependency_global) = global_sources.last() else {
@@ -547,7 +556,7 @@ fn project_global_fail_captures(
         if relative.is_empty() {
             if matches!(
                 dependency_capture.kind,
-                crate::eval_effect::CaptureKind::RangeInput { .. }
+                crate::observed_facts::CaptureKind::RangeInput { .. }
             ) {
                 for global_source in global_sources {
                     let mut selected_capture = dependency_capture.clone();

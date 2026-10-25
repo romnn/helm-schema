@@ -19,11 +19,11 @@ use super::{
 pub(super) fn record_fail_conjunction(
     paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
     terminal_clauses: &mut Vec<Vec<ConditionalGuard>>,
-    capture: &crate::eval_effect::FailCapture,
+    capture: &crate::observed_facts::FailCapture,
     range_modes: &crate::range_modes::RangeModes,
 ) {
     match &capture.kind {
-        crate::eval_effect::CaptureKind::RangeKeyStrings {
+        crate::observed_facts::CaptureKind::RangeKeyStrings {
             paths: range_key_string_paths,
         } => {
             let range_key_string_paths = range_key_string_paths
@@ -38,7 +38,7 @@ pub(super) fn record_fail_conjunction(
             );
             return;
         }
-        crate::eval_effect::CaptureKind::CollectionItems {
+        crate::observed_facts::CaptureKind::CollectionItems {
             paths: collection_paths,
             schema_type,
             pattern,
@@ -56,11 +56,11 @@ pub(super) fn record_fail_conjunction(
             );
             return;
         }
-        crate::eval_effect::CaptureKind::IndexAccess { path, index } => {
+        crate::observed_facts::CaptureKind::IndexAccess { path, index } => {
             record_index_access_requirement(paths, capture, &path.encode(), *index);
             return;
         }
-        crate::eval_effect::CaptureKind::SplitIndexAccess {
+        crate::observed_facts::CaptureKind::SplitIndexAccess {
             paths: source_paths,
             separator,
             index,
@@ -80,7 +80,7 @@ pub(super) fn record_fail_conjunction(
             );
             return;
         }
-        crate::eval_effect::CaptureKind::ValueType {
+        crate::observed_facts::CaptureKind::ValueType {
             path,
             schema_type,
             null_aborts,
@@ -97,14 +97,14 @@ pub(super) fn record_fail_conjunction(
             );
             return;
         }
-        crate::eval_effect::CaptureKind::StringRequirement {
+        crate::observed_facts::CaptureKind::StringRequirement {
             path,
             route,
             selection,
         } => {
             match route {
-                crate::eval_effect::StringRequirementRoute::Serialized => return,
-                crate::eval_effect::StringRequirementRoute::Selected => {
+                crate::observed_facts::StringRequirementRoute::Serialized => return,
+                crate::observed_facts::StringRequirementRoute::Selected => {
                     if let Some(requirement_capture) =
                         selected_member_requirement_capture(capture, &path.encode(), selection)
                     {
@@ -117,14 +117,14 @@ pub(super) fn record_fail_conjunction(
                         return;
                     }
                 }
-                crate::eval_effect::StringRequirementRoute::Direct
-                | crate::eval_effect::StringRequirementRoute::Scoped => {}
+                crate::observed_facts::StringRequirementRoute::Direct
+                | crate::observed_facts::StringRequirementRoute::Scoped => {}
             }
             let mut requirement_capture = capture.clone();
             requirement_capture
                 .conjunction
                 .extend(selection.iter().cloned());
-            if *route == crate::eval_effect::StringRequirementRoute::Direct
+            if *route == crate::observed_facts::StringRequirementRoute::Direct
                 && requirement_capture.conjunction.is_empty()
             {
                 record_unconditional_string_requirement_facts(paths, &path.encode());
@@ -157,7 +157,7 @@ pub(super) fn record_fail_conjunction(
             }
             return;
         }
-        crate::eval_effect::CaptureKind::RangeInput {
+        crate::observed_facts::CaptureKind::RangeInput {
             path,
             destructured,
             json_decoded,
@@ -171,7 +171,7 @@ pub(super) fn record_fail_conjunction(
             );
             return;
         }
-        crate::eval_effect::CaptureKind::RangeSelection {
+        crate::observed_facts::CaptureKind::RangeSelection {
             path,
             chain,
             allow_integer,
@@ -224,7 +224,7 @@ pub(super) fn record_fail_conjunction(
             );
             return;
         }
-        crate::eval_effect::CaptureKind::DigSubject { path } => {
+        crate::observed_facts::CaptureKind::DigSubject { path } => {
             record_value_requirement_capture(
                 paths,
                 capture,
@@ -233,7 +233,7 @@ pub(super) fn record_fail_conjunction(
             );
             return;
         }
-        crate::eval_effect::CaptureKind::RequiredPresence { path } => {
+        crate::observed_facts::CaptureKind::RequiredPresence { path } => {
             // The presence claim lands on the PARENT as a required member so
             // the arm fires when the subject itself is absent. A TOP-LEVEL
             // subject has no parent slot to carry that member, so it takes the
@@ -261,7 +261,7 @@ pub(super) fn record_fail_conjunction(
             );
             return;
         }
-        crate::eval_effect::CaptureKind::AbsenceAborts { path } => {
+        crate::observed_facts::CaptureKind::AbsenceAborts { path } => {
             // A ranged MEMBER FIELD's absence has no document-level spelling —
             // the clause would have to name one visited member — but the member's
             // own slot states it exactly, as a required member of every visited
@@ -308,7 +308,7 @@ pub(super) fn record_fail_conjunction(
             record_absence_abort_clause(terminal_clauses, capture, &path.encode());
             return;
         }
-        crate::eval_effect::CaptureKind::ComparableKind { path, schema_type } => {
+        crate::observed_facts::CaptureKind::ComparableKind { path, schema_type } => {
             record_value_requirement_capture(
                 paths,
                 capture,
@@ -317,7 +317,7 @@ pub(super) fn record_fail_conjunction(
             );
             return;
         }
-        crate::eval_effect::CaptureKind::ValuePattern {
+        crate::observed_facts::CaptureKind::ValuePattern {
             path,
             pattern,
             templated,
@@ -333,7 +333,7 @@ pub(super) fn record_fail_conjunction(
             );
             return;
         }
-        crate::eval_effect::CaptureKind::QuotedSerialization {
+        crate::observed_facts::CaptureKind::QuotedSerialization {
             path,
             style,
             templated,
@@ -349,7 +349,7 @@ pub(super) fn record_fail_conjunction(
             );
             return;
         }
-        crate::eval_effect::CaptureKind::PrintfStringOperand { path } => {
+        crate::observed_facts::CaptureKind::PrintfStringOperand { path } => {
             record_value_requirement_capture(
                 paths,
                 capture,
@@ -358,7 +358,7 @@ pub(super) fn record_fail_conjunction(
             );
             return;
         }
-        crate::eval_effect::CaptureKind::PlainSlotText {
+        crate::observed_facts::CaptureKind::PlainSlotText {
             path,
             token_initial,
             templated,
@@ -374,7 +374,7 @@ pub(super) fn record_fail_conjunction(
             );
             return;
         }
-        crate::eval_effect::CaptureKind::RangeKeyPlainSlot {
+        crate::observed_facts::CaptureKind::RangeKeyPlainSlot {
             paths: collection_paths,
         } => {
             let collection_paths = collection_paths
@@ -389,11 +389,11 @@ pub(super) fn record_fail_conjunction(
             );
             return;
         }
-        crate::eval_effect::CaptureKind::MemberAccess { handled_kinds } => {
+        crate::observed_facts::CaptureKind::MemberAccess { handled_kinds } => {
             record_member_access_capture(paths, capture, handled_kinds, range_modes);
             return;
         }
-        crate::eval_effect::CaptureKind::Fail => {}
+        crate::observed_facts::CaptureKind::Fail => {}
     }
     // An approximate enclosing condition abstains unless it admits a sound
     // positive strengthening (it can only ever be an OUTER guard — the
@@ -720,10 +720,10 @@ pub(super) fn record_fail_conjunction(
 }
 
 fn selected_member_requirement_capture(
-    capture: &crate::eval_effect::FailCapture,
+    capture: &crate::observed_facts::FailCapture,
     path: &str,
     selection: &[Predicate],
-) -> Option<crate::eval_effect::FailCapture> {
+) -> Option<crate::observed_facts::FailCapture> {
     let collection_path = member_range_path(path)?;
     // A range predicate naming this collection proves which input owns the
     // member. The other selection predicates describe the derived iterable's
@@ -757,7 +757,7 @@ fn member_range_path(path: &str) -> Option<String> {
 }
 
 fn string_requirement_has_execution_scope(
-    capture: &crate::eval_effect::FailCapture,
+    capture: &crate::observed_facts::FailCapture,
     path: &str,
     range_modes: &crate::range_modes::RangeModes,
 ) -> bool {
@@ -800,10 +800,10 @@ fn record_unconditional_string_requirement_facts(
 
 pub(super) fn record_range_key_prefix_requirement(
     paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
-    kind: &crate::eval_effect::CaptureKind,
+    kind: &crate::observed_facts::CaptureKind,
     conjunction: &[Predicate],
 ) -> bool {
-    if !matches!(kind, crate::eval_effect::CaptureKind::Fail) {
+    if !matches!(kind, crate::observed_facts::CaptureKind::Fail) {
         return false;
     }
     let prefixes = conjunction
@@ -892,7 +892,7 @@ pub(super) fn record_range_key_prefix_requirement(
 /// other member-scoped tests; anything richer abstains.
 pub(super) fn record_range_key_matches_requirement(
     paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
-    kind: &crate::eval_effect::CaptureKind,
+    kind: &crate::observed_facts::CaptureKind,
     conjunction: &[Predicate],
 ) -> bool {
     fn key_match(predicate: &Predicate) -> Option<(bool, &helm_schema_core::ValuesPath, &str)> {
@@ -911,7 +911,7 @@ pub(super) fn record_range_key_matches_requirement(
         }
     }
 
-    if !matches!(kind, crate::eval_effect::CaptureKind::Fail) {
+    if !matches!(kind, crate::observed_facts::CaptureKind::Fail) {
         return false;
     }
     let matches: Vec<(bool, &helm_schema_core::ValuesPath, &str)> =
@@ -981,7 +981,7 @@ pub(super) fn record_range_key_matches_requirement(
 }
 
 pub(super) fn capture_outer_guards(
-    capture: &crate::eval_effect::FailCapture,
+    capture: &crate::observed_facts::FailCapture,
 ) -> Option<Vec<ConditionalGuard>> {
     let conjunction = remove_redundant_approximate_conditions(&capture.conjunction);
     // A key-equality conjunct subsumes its companion iteration conjunct:
@@ -1160,7 +1160,7 @@ pub(super) fn complements_requirement(
 )]
 pub(super) fn record_value_requirement_capture(
     paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
-    capture: &crate::eval_effect::FailCapture,
+    capture: &crate::observed_facts::FailCapture,
     path: &str,
     mut requirement: FailValueRequirement,
 ) {
@@ -1464,7 +1464,7 @@ pub(super) fn record_value_requirement_capture(
 
 pub(super) fn record_collection_item_requirements(
     paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
-    capture: &crate::eval_effect::FailCapture,
+    capture: &crate::observed_facts::FailCapture,
     collection_paths: &BTreeSet<String>,
     schema_type: &str,
     pattern: Option<&str>,
@@ -1505,7 +1505,7 @@ pub(super) fn record_collection_item_requirements(
 /// `Absent` guard's ownership semantics.
 pub(super) fn record_absence_abort_clause(
     terminal_clauses: &mut Vec<Vec<ConditionalGuard>>,
-    capture: &crate::eval_effect::FailCapture,
+    capture: &crate::observed_facts::FailCapture,
     path: &str,
 ) {
     let segments = helm_schema_core::split_value_path(path);
@@ -1620,7 +1620,7 @@ fn predicate_truth_when_path_is_absent(
 
 pub(super) fn record_index_access_requirement(
     paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
-    capture: &crate::eval_effect::FailCapture,
+    capture: &crate::observed_facts::FailCapture,
     path: &str,
     index: usize,
 ) {
@@ -1644,7 +1644,7 @@ pub(super) fn record_index_access_requirement(
 
 pub(super) fn record_split_index_access_requirement(
     paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
-    capture: &crate::eval_effect::FailCapture,
+    capture: &crate::observed_facts::FailCapture,
     source_paths: &BTreeSet<String>,
     separator: &str,
     index: usize,
@@ -1691,7 +1691,7 @@ pub(super) fn record_split_index_access_requirement(
 
 pub(super) fn record_member_relative_split_requirement(
     paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
-    capture: &crate::eval_effect::FailCapture,
+    capture: &crate::observed_facts::FailCapture,
     source_path: &str,
     separator: &str,
     index: usize,
@@ -1786,7 +1786,7 @@ pub(super) fn record_member_relative_split_requirement(
 
 pub(super) fn record_range_key_string_requirements(
     paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
-    capture: &crate::eval_effect::FailCapture,
+    capture: &crate::observed_facts::FailCapture,
     range_key_string_paths: &BTreeSet<String>,
     range_modes: &crate::range_modes::RangeModes,
 ) {
@@ -1827,7 +1827,7 @@ pub(super) fn record_range_key_string_requirements(
 /// precondition (only a direct range has member key identities).
 pub(super) fn record_range_key_plain_slot_requirements(
     paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
-    capture: &crate::eval_effect::FailCapture,
+    capture: &crate::observed_facts::FailCapture,
     collection_paths: &BTreeSet<String>,
     range_modes: &crate::range_modes::RangeModes,
 ) {
@@ -2142,7 +2142,7 @@ pub(super) fn requirements_from_holding(
 )]
 pub(super) fn record_member_access_capture(
     paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
-    capture: &crate::eval_effect::FailCapture,
+    capture: &crate::observed_facts::FailCapture,
     handled_kinds: &BTreeSet<String>,
     range_modes: &crate::range_modes::RangeModes,
 ) {

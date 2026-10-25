@@ -1,106 +1,69 @@
-use helm_schema_core::{Predicate, PredicateMemo};
+use std::collections::BTreeSet;
+
+use color_eyre::eyre::{self, OptionExt as _};
+use helm_schema_ast::DefineIndex;
+use helm_schema_core::Predicate;
+use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
-use crate::abstract_value::AbstractValue;
-use crate::fragment_assignment::AssignmentKind;
-use crate::value::{RootSlot, State};
+use crate::analysis_db::IrAnalysisDb;
 
-fn root(value: &str) -> RootSlot {
-    RootSlot::new(
-        Some(AbstractValue::StringSet([value.to_owned()].into())),
-        None,
-        None,
-    )
-}
-
-fn bind(state: &mut State, value: &str) {
-    state.bind_fragment_value(
-        AssignmentKind::Declaration,
-        "local".to_owned(),
-        Some(AbstractValue::StringSet([value.to_owned()].into())),
-    );
+fn outputs(source: &str) -> eyre::Result<BTreeSet<(Predicate, String)>> {
+    let defines = DefineIndex::new();
+    let db = IrAnalysisDb::new(&defines);
+    crate::value::execute_document(source, None, &db)
+        .text()
+        .map(|(condition, text)| Ok((condition, text.exact_text().ok_or_eyre("unknown output")?)))
+        .collect()
 }
 
 #[test]
-fn local_and_root_restores_preserve_the_other_namespace() {
-    let mut entry = State::default();
-    bind(&mut entry, "before");
-    entry.write_root("field".to_owned(), root("before"));
-    let mut changed = entry.fork();
-    bind(&mut changed, "after");
-    changed.write_root("field".to_owned(), root("after"));
-
-    let mut expected = entry.fork();
-    expected.write_root("field".to_owned(), root("after"));
-    let mut local_restore = changed.fork();
-    local_restore.restore_locals(entry.fork_locals());
-    sim_assert_eq!(have: local_restore, want: expected);
-
-    let mut expected = entry.fork();
-    bind(&mut expected, "after");
-    changed.restore_roots(&entry.fork_roots());
-    sim_assert_eq!(have: changed, want: expected);
+fn local_and_root_restores_preserve_the_other_namespace() -> eyre::Result<()> {
+    let source = indoc! {r#"
+        {{- $local := "before" -}}
+        {{- $_ := set . "field" "before" -}}
+        {{- with true -}}
+          {{- $local := "after" -}}
+          {{- $_ := set $ "field" "after" -}}
+        {{- end -}}
+        {{- print $local "/" .field -}}
+    "#};
+    sim_assert_eq!(have: outputs(source)?, want: BTreeSet::from([(Predicate::True, "before/after".to_string())]));
+    Ok(())
 }
 
 #[test]
-fn local_join_and_scope_exit_preserve_root_writes() {
-    let mut entry = State::default();
-    bind(&mut entry, "before");
-    let mut state = entry.fork();
-    state.enter_local_scope();
-    bind(&mut state, "shadow");
-    state.write_root("field".to_owned(), root("after"));
-    state.exit_local_scope();
-    let mut expected = entry.fork();
-    expected.write_root("field".to_owned(), root("after"));
-    sim_assert_eq!(have: state.snapshot_id(), want: expected.snapshot_id());
-    state.join(&entry, &[entry.fork_locals()]);
-    sim_assert_eq!(have: state, want: expected);
+fn local_join_and_scope_exit_preserve_root_writes() -> eyre::Result<()> {
+    let source = indoc! {r#"
+        {{- $local := "before" -}}
+        {{- if .Values.enabled -}}
+          {{- $local := "shadow" -}}
+          {{- $_ := set . "field" "after" -}}
+        {{- else -}}
+          {{- $_ := set . "field" "after" -}}
+        {{- end -}}
+        {{- print $local "/" .field -}}
+    "#};
+    let outputs = outputs(source)?;
+    sim_assert_eq!(have: outputs.iter().map(|(_, text)| text.as_str()).collect::<BTreeSet<_>>(), want: BTreeSet::from(["before/after"]));
+    sim_assert_eq!(have: outputs.len(), want: 2);
+    Ok(())
 }
 
 #[test]
-fn root_join_retains_ordered_replay_and_exact_scalar_arms() {
-    let mut state = State::default();
-    let entry = state.fork_roots();
-    state.write_root("field".to_owned(), root("left"));
-    let left = state.fork_roots();
-    state.restore_roots(&entry);
-    state.write_root("field".to_owned(), root("right"));
-    let right = state.fork_roots();
-    state.restore_roots(&entry);
+fn root_join_retains_exact_scalar_arms() -> eyre::Result<()> {
+    let source = indoc! {r#"
+        {{- if .Values.enabled -}}
+          {{- $_ := set . "field" "left" -}}
+        {{- else -}}
+          {{- $_ := set . "field" "right" -}}
+        {{- end -}}
+        {{- .field -}}
+    "#};
     let condition = Predicate::truthy_path("enabled");
-    state.join_root_set_arms(
-        &entry,
-        &[
-            (condition.clone(), true, left),
-            (condition.negated(), true, right),
-        ],
-        true,
-    );
-    let memo = PredicateMemo::default();
-    let expected = crate::scalar_value::ScalarValueDispatch::bind_content(
-        vec![
-            (
-                Predicate::truthy_path("enabled"),
-                crate::scalar_value::ScalarContent::Literal(helm_schema_core::GuardValue::string(
-                    "left",
-                )),
-            ),
-            (
-                Predicate::truthy_path("enabled").negated(),
-                crate::scalar_value::ScalarContent::Literal(helm_schema_core::GuardValue::string(
-                    "right",
-                )),
-            ),
-        ],
-        true,
-    );
-    sim_assert_eq!(
-        have: state.read_root("field").and_then(|slot| slot.binding().dispatch.as_ref()),
-        want: Some(&expected)
-    );
-    sim_assert_eq!(
-        have: state.read_root("field").and_then(|slot| slot.binding().truth.clone()).map(|truth| memo.normalize(truth)),
-        want: Some(Predicate::True)
-    );
+    sim_assert_eq!(have: outputs(source)?, want: BTreeSet::from([
+        (condition.clone(), "left".to_string()),
+        (condition.negated(), "right".to_string()),
+    ]));
+    Ok(())
 }

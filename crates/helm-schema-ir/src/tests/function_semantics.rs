@@ -1,13 +1,10 @@
 use std::collections::BTreeSet;
 
-use helm_schema_ast::TemplateExpr;
 use test_util::prelude::sim_assert_eq;
 
-use crate::eval_env::{BindingEvaluationMode, EvalEnv};
-use crate::expr_call_eval::{INTENTIONAL_DISPATCH_EXCEPTIONS, has_catalog_or_dispatch_exception};
 use crate::function_semantics::{
-    ArgumentEvaluationMode, CollectionShape, LegacySuppliedOperands, NilBehavior, OutputBehavior,
-    PredicateSemantics, ProvenanceBehavior, function_semantics, strict_collection_item_pattern,
+    CollectionShape, LegacySuppliedOperands, NilBehavior, OutputBehavior, PredicateSemantics,
+    ProvenanceBehavior, function_semantics, strict_collection_item_pattern,
     strict_parser_operand_pattern,
 };
 
@@ -123,84 +120,41 @@ fn every_known_function_has_one_catalog_row() {
 }
 
 #[test]
-fn dispatcher_special_forms_are_catalogued_or_intentional_exceptions() {
-    let mut seen = BTreeSet::new();
-    for function in KNOWN_FUNCTIONS {
-        sim_assert_eq!(
-            have: has_catalog_or_dispatch_exception(function),
-            want: true
-        );
+fn dispatcher_special_forms_share_the_value_executor() {
+    let db = crate::analysis_db::IrAnalysisDb::new(&helm_schema_ast::DefineIndex::new());
+    for (source, expected) in [
+        ("{{ and true \"kept\" }}", "kept"),
+        ("{{ or false \"kept\" }}", "kept"),
+        ("{{ default \"fallback\" \"kept\" }}", "kept"),
+        ("{{ coalesce \"\" \"kept\" }}", "kept"),
+        ("{{ required \"message\" \"kept\" }}", "kept"),
+    ] {
+        let execution = crate::value::execute_document(source, None, &db);
+        sim_assert_eq!(have: execution.text().map(|(_, text)| text.exact_text()).collect::<Vec<_>>(), want: vec![Some(expected.to_owned())]);
     }
-    for function in INTENTIONAL_DISPATCH_EXCEPTIONS {
-        sim_assert_eq!(have: seen.insert(*function), want: true);
-        sim_assert_eq!(have: function_semantics(function).is_known(), want: false);
-        sim_assert_eq!(
-            have: has_catalog_or_dispatch_exception(function),
-            want: true
-        );
-    }
-    sim_assert_eq!(
-        have: has_catalog_or_dispatch_exception("notCatalogued"),
-        want: false
-    );
 }
 
 #[test]
 fn argument_evaluation_mode_preserves_grouping() {
-    let mut env = EvalEnv::default();
-    let field = TemplateExpr::Field(vec!["Values".to_string(), "subject".to_string()]);
-    sim_assert_eq!(
-        have: env.argument_evaluation_mode(&field),
-        want: ArgumentEvaluationMode::DirectLookup
-    );
-    let selector = TemplateExpr::Selector {
-        operand: Box::new(TemplateExpr::Parenthesized(Box::new(field.clone()))),
-        path: vec!["child".to_string()],
-    };
-    sim_assert_eq!(
-        have: env.argument_evaluation_mode(&selector),
-        want: ArgumentEvaluationMode::GroupedReceiverLookup {
-            selected_segments: 1
-        }
-    );
-    sim_assert_eq!(
-        have: env.argument_evaluation_mode(&TemplateExpr::Parenthesized(Box::new(field))),
-        want: ArgumentEvaluationMode::Evaluated
-    );
-    sim_assert_eq!(
-        have: env.argument_evaluation_mode(&TemplateExpr::Parenthesized(Box::new(selector))),
-        want: ArgumentEvaluationMode::Evaluated
-    );
-
-    let root_selector = TemplateExpr::Selector {
-        operand: Box::new(TemplateExpr::Variable(String::new())),
-        path: vec!["child".to_string()],
-    };
-    sim_assert_eq!(
-        have: env.argument_evaluation_mode(&root_selector),
-        want: ArgumentEvaluationMode::DirectLookup
-    );
-
-    let local = TemplateExpr::Variable("member".to_string());
-    sim_assert_eq!(
-        have: env.argument_evaluation_mode(&local),
-        want: ArgumentEvaluationMode::DirectLookup
-    );
-    let local_selector = TemplateExpr::Selector {
-        operand: Box::new(local),
-        path: vec!["db".to_string()],
-    };
-    sim_assert_eq!(
-        have: env.argument_evaluation_mode(&local_selector),
-        want: ArgumentEvaluationMode::DirectLookup
-    );
-
-    let dot = TemplateExpr::Field(Vec::new());
-    env.dot_binding_mode = BindingEvaluationMode::Evaluated;
-    sim_assert_eq!(
-        have: env.argument_evaluation_mode(&dot),
-        want: ArgumentEvaluationMode::Evaluated
-    );
+    let db = crate::analysis_db::IrAnalysisDb::new(&helm_schema_ast::DefineIndex::new());
+    for expression in [
+        ".subject.child",
+        "(.subject).child",
+        "((.subject).child)",
+        "$.subject.child",
+        "$member.child",
+        ".",
+    ] {
+        let source = if expression == "." {
+            "{{ with \"kept\" }}{{ . }}{{ end }}".to_owned()
+        } else {
+            format!(
+                "{{{{ with dict \"subject\" (dict \"child\" \"kept\") }}}}{{{{ $ := . }}}}{{{{ $member := .subject }}}}{{{{ {expression} }}}}{{{{ end }}}}"
+            )
+        };
+        let execution = crate::value::execute_document(&source, None, &db);
+        sim_assert_eq!(have: execution.text().map(|(_, text)| text.exact_text()).collect::<Vec<_>>(), want: vec![Some("kept".to_owned())]);
+    }
 }
 
 #[test]

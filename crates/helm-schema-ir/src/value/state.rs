@@ -1,299 +1,421 @@
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::collections::BTreeMap;
+use std::rc::Rc;
 
-use helm_schema_ast::TemplateExpr;
-use helm_schema_core::{GuardValue, Predicate, ValuesPath};
+use super::{DecisionEdge, Frame, FrameBoundary, FrozenTest, Heap, LoopId, State, Value};
 
-use crate::abstract_value::AbstractValue;
-use crate::bound_value_analysis::{
-    DomainConstraints, bound_selector_read, predicate_domain_constraints,
-};
-use crate::value_path_context::{guard_value_is_truthy, predicate_any};
+impl State {
+    pub(super) fn new(argument: Value) -> Self {
+        let heap = Heap::new();
+        let frame = Frame::call(argument, heap.arena.call());
+        Self {
+            heap,
+            frames: vec![frame],
+            active: Vec::new(),
+            output: super::TextBuffer::default(),
+            output_widened: false,
+            sites: Vec::new(),
+            text_sites: Vec::new(),
+            reads: Default::default(),
+            calls: Vec::new(),
+            program: 0,
+            namespace_unknown: false,
+            invocations: Vec::new(),
+            invocation_records_complete: true,
+            loops: Vec::new(),
+        }
+    }
 
-use super::{LocalSlot, LocalSlotView, LocalSlots, RootSlot, ScalarContent, ScalarValueDispatch};
+    pub(super) fn bind(&mut self, name: String, value: Value) {
+        if let Some(frame) = self.frames.last_mut() {
+            frame.bindings.insert(name, value);
+        }
+    }
 
-/// Slot owner shared by expression and fragment evaluation.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub(crate) struct State {
-    pub(super) slots: LocalSlots,
-    pub(crate) chart_value_defaults: BTreeSet<ValuesPath>,
-    pub(super) scopes: Vec<HashMap<String, LocalSlot>>,
-    pub(super) roots: HashMap<String, RootSlot>,
-    pub(super) observed: BTreeMap<String, RootSlot>,
-    pub(super) constraints: DomainConstraints,
+    pub(super) fn assign(&mut self, name: &str, value: Value) -> bool {
+        for frame in self.frames.iter_mut().rev() {
+            if let Some(binding) = frame.bindings.get_mut(name) {
+                *binding = value;
+                return true;
+            }
+            if matches!(frame.boundary, FrameBoundary::Call(_)) {
+                break;
+            }
+        }
+        false
+    }
+
+    pub(super) fn read_local(&self, name: &str) -> Option<&Value> {
+        for frame in self.frames.iter().rev() {
+            if let Some(value) = frame.bindings.get(name) {
+                return Some(value);
+            }
+            if matches!(frame.boundary, FrameBoundary::Call(_)) {
+                break;
+            }
+        }
+        None
+    }
+
+    pub(super) fn read_root(&self) -> Option<&Value> {
+        self.read_local("$")
+    }
+
+    pub(super) fn dot(&self) -> Option<&Value> {
+        for frame in self.frames.iter().rev() {
+            if let Some(dot) = &frame.dot {
+                return Some(dot);
+            }
+            if matches!(frame.boundary, FrameBoundary::Call(_)) {
+                break;
+            }
+        }
+        None
+    }
+
+    pub(super) fn enter_scope(&mut self, dot: Option<Value>) {
+        self.frames.push(Frame {
+            bindings: BTreeMap::new(),
+            dot,
+            boundary: FrameBoundary::Lexical,
+        });
+    }
+
+    pub(super) fn leave_scope(&mut self) -> bool {
+        if self
+            .frames
+            .last()
+            .is_some_and(|frame| frame.boundary == FrameBoundary::Lexical)
+        {
+            self.frames.pop();
+            true
+        } else {
+            false
+        }
+    }
+
+    pub(super) fn enter_call(&mut self, argument: Value) {
+        self.frames
+            .push(Frame::call(argument, self.heap.arena.call()));
+    }
+
+    pub(super) fn leave_call(&mut self) -> bool {
+        let Some(boundary) = self
+            .frames
+            .iter()
+            .rposition(|frame| matches!(frame.boundary, FrameBoundary::Call(_)))
+        else {
+            return false;
+        };
+        if boundary == 0 {
+            return false;
+        }
+        self.frames.truncate(boundary);
+        true
+    }
+
+    pub(super) fn loop_id(&self, ordinal: u64) -> Option<LoopId> {
+        self.frames
+            .iter()
+            .rev()
+            .find_map(|frame| match frame.boundary {
+                FrameBoundary::Call(call) => Some(LoopId { call, ordinal }),
+                FrameBoundary::Lexical => None,
+            })
+    }
+
+    #[tracing::instrument(skip_all)]
+    pub(super) fn fork(&self, test: Rc<FrozenTest>, taken: bool) -> Self {
+        let mut active = self.active.clone();
+        let forced = test.coverage == super::Coverage::Exact
+            && if taken {
+                test.when_true == helm_schema_core::Predicate::True
+                    && test.when_false == helm_schema_core::Predicate::False
+            } else {
+                test.when_false == helm_schema_core::Predicate::True
+                    && test.when_true == helm_schema_core::Predicate::False
+            };
+        if !forced {
+            active.push(DecisionEdge { test, taken });
+        }
+        Self {
+            heap: self.heap.fork(),
+            frames: self.frames.clone(),
+            active,
+            output: self.output.clone(),
+            output_widened: self.output_widened,
+            sites: self.sites.clone(),
+            text_sites: self.text_sites.clone(),
+            reads: self.reads.clone(),
+            calls: self.calls.clone(),
+            program: self.program,
+            namespace_unknown: self.namespace_unknown,
+            invocations: self.invocations.clone(),
+            invocation_records_complete: self.invocation_records_complete,
+            loops: self.loops.clone(),
+        }
+    }
 }
 
-/// Root-only snapshot: local scope restores must not rewind root writes.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub(crate) struct RootSnapshot {
-    root: HashMap<String, RootSlot>,
-    pub(super) observed: BTreeMap<String, RootSlot>,
+impl Frame {
+    pub(super) fn call(argument: Value, call: u64) -> Self {
+        Self {
+            bindings: BTreeMap::from([("$".to_owned(), argument.clone())]),
+            dot: Some(argument),
+            boundary: FrameBoundary::Call(call),
+        }
+    }
+}
+
+impl super::Arena {
+    fn call(&self) -> u64 {
+        let call = self.next_call.get();
+        self.next_call.set(call + 1);
+        call
+    }
 }
 
 impl State {
-    pub(crate) fn from_roots(roots: HashMap<String, RootSlot>) -> Self {
-        Self {
-            roots,
-            ..Self::default()
+    #[tracing::instrument(skip_all)]
+    pub(super) fn join_branches(decision: Rc<FrozenTest>, yes: &Self, no: &Self) -> Option<Self> {
+        let State {
+            heap: yes_heap,
+            frames: yes_frames,
+            active: yes_active,
+            reads: yes_reads,
+            calls: yes_calls,
+            program: yes_program,
+            namespace_unknown: yes_namespace,
+            loops: yes_loops,
+            output: _,
+            output_widened: _,
+            sites: _,
+            text_sites: _,
+            invocations: _,
+            invocation_records_complete: _,
+        } = yes;
+        let State {
+            heap: no_heap,
+            frames: no_frames,
+            active: no_active,
+            reads: no_reads,
+            calls: no_calls,
+            program: no_program,
+            namespace_unknown: no_namespace,
+            loops: no_loops,
+            output: _,
+            output_widened: _,
+            sites: _,
+            text_sites: _,
+            invocations: _,
+            invocation_records_complete: _,
+        } = no;
+        if !Rc::ptr_eq(&yes_heap.arena, &no_heap.arena)
+            || yes_program != no_program
+            || yes_calls != no_calls
+            || yes_loops != no_loops
+            || yes_frames.len() != no_frames.len()
+            || yes_active.len() != no_active.len()
+        {
+            return None;
         }
-    }
-
-    pub(crate) fn with_roots(mut self, roots: HashMap<String, RootSlot>) -> Self {
-        self.roots = roots;
-        self
-    }
-
-    /// R3a identifies snapshots by their complete immutable contents.
-    pub(crate) fn snapshot_id(&self) -> &Self {
-        self
-    }
-
-    pub(crate) fn fork(&self) -> Self {
-        self.snapshot_id().clone()
-    }
-
-    pub(crate) fn fork_locals(&self) -> Self {
-        Self {
-            slots: self.slots.clone(),
-            chart_value_defaults: self.chart_value_defaults.clone(),
-            scopes: self.scopes.clone(),
-            ..Self::default()
-        }
-    }
-
-    pub(crate) fn restore_locals(&mut self, state: Self) {
-        let Self {
-            slots,
-            chart_value_defaults,
-            scopes,
-            roots: _,
-            observed: _,
-            constraints: _,
-        } = state;
-        self.slots = slots;
-        self.chart_value_defaults = chart_value_defaults;
-        self.scopes = scopes;
-    }
-
-    pub(crate) fn expression_state(&self) -> Self {
-        Self {
-            slots: self.slots.clone(),
-            roots: self.roots.clone(),
-            ..Self::default()
-        }
-    }
-
-    pub(crate) fn fork_roots(&self) -> RootSnapshot {
-        RootSnapshot {
-            root: self.roots.clone(),
-            observed: self.observed.clone(),
-        }
-    }
-
-    pub(crate) fn restore_roots(&mut self, state: &RootSnapshot) {
-        self.roots = state.root.clone();
-        self.observed = state.observed.clone();
-    }
-
-    pub(crate) fn read_local(&self, name: &str) -> LocalSlotView<'_> {
-        self.slot(name).binding()
-    }
-
-    pub(crate) fn iter_locals(&self) -> impl Iterator<Item = (&String, &LocalSlot)> {
-        self.slots.iter()
-    }
-
-    pub(crate) fn read_root(&self, name: &str) -> Option<&RootSlot> {
-        self.roots.get(name)
-    }
-
-    pub(crate) fn roots(&self) -> &HashMap<String, RootSlot> {
-        &self.roots
-    }
-
-    pub(crate) fn replace_roots(&mut self, roots: HashMap<String, RootSlot>) {
-        self.roots = roots;
-    }
-
-    pub(crate) fn root_values(&self) -> HashMap<String, AbstractValue> {
-        self.roots
-            .iter()
-            .filter_map(|(name, slot)| {
-                let super::RootSlotView {
-                    value,
-                    truth: _,
-                    dispatch: _,
-                } = slot.binding();
-                value.clone().map(|value| (name.clone(), value))
-            })
-            .collect()
-    }
-
-    pub(crate) fn root_writes(&self) -> &BTreeMap<String, RootSlot> {
-        &self.observed
-    }
-
-    pub(crate) fn into_root_writes(self) -> BTreeMap<String, RootSlot> {
-        self.observed
-    }
-
-    pub(crate) fn write_root(&mut self, name: String, slot: RootSlot) {
-        *self.write_field(name.clone()) = slot.clone();
-        self.observed.insert(name, slot);
-    }
-
-    pub(crate) fn write_field(&mut self, name: String) -> &mut RootSlot {
-        self.roots.entry(name).or_default()
-    }
-    pub(crate) fn variable_slots(&self, name: &str) -> [crate::value::LocalSlotView<'_>; 2] {
-        [
-            self.read_local(name),
-            self.read_local(name.trim_start_matches('$')),
-        ]
-    }
-
-    pub(crate) fn selector_paths(&self, expr: &TemplateExpr) -> BTreeSet<ValuesPath> {
-        let Some((variable, rest)) = bound_selector_read(expr) else {
-            return BTreeSet::new();
-        };
-        let Some(binding) = self.read_local(variable).get_binding.as_ref() else {
-            return BTreeSet::new();
-        };
-        let Some(domain) = self.read_local(&binding.key_var).range_domain.as_ref() else {
-            return BTreeSet::new();
-        };
-
-        domain
-            .iter()
-            .filter(|value| self.constraints.allows(&binding.key_var, value))
-            .map(|value| {
-                let mut path = binding.base.clone();
-                path.push(value.clone());
-                let rest = ValuesPath::parse(&rest);
-                ValuesPath::from_segments(path.segments().chain(rest.segments()))
-            })
-            .collect()
-    }
-
-    pub(crate) fn apply_predicate_constraints(&mut self, expr: &TemplateExpr, truthy: bool) {
-        let Some(next_constraints) = predicate_domain_constraints(expr, truthy) else {
-            return;
-        };
-        self.constraints = self.constraints.and(&next_constraints);
-    }
-    /// Join per-arm root `set` outcomes after an if/else region.
-    ///
-    /// The replay applies each arm's changed keys in source order, matching
-    /// the last-write-wins accumulation the pipeline had before the per-arm
-    /// entry restore. When the chain is COMPLETE — an unconditional else and
-    /// every arm condition decoded without approximation — and every arm
-    /// leaves a key holding one scalar string literal, the key additionally
-    /// joins into an exact [`ScalarValueDispatch`]: root-field equalities
-    /// decode as the disjunction of the arms assigning the compared literal,
-    /// and the key's truthiness becomes the disjunction of the arms assigning
-    /// a truthy literal.
-    pub(crate) fn join_root_set_arms(
-        &mut self,
-        entry: &RootSnapshot,
-        arms: &[(Predicate, bool, RootSnapshot)],
-        has_unconditional_else: bool,
-    ) {
-        let mut keys: BTreeSet<String> = BTreeSet::new();
-        for (_, _, state) in arms {
-            for (key, value) in state
-                .observed
+        let (yes_edge, yes_prefix) = yes_active.split_last()?;
+        let (no_edge, no_prefix) = no_active.split_last()?;
+        if yes_edge.test != decision
+            || no_edge.test != decision
+            || !yes_edge.taken
+            || no_edge.taken
+            || !yes_prefix
                 .iter()
-                .filter_map(|(name, slot)| slot.binding().value.as_ref().map(|value| (name, value)))
+                .zip(no_prefix)
+                .all(|(yes, no)| yes.test == no.test && yes.taken == no.taken)
+        {
+            return None;
+        }
+        for (yes, no) in yes_frames.iter().zip(no_frames) {
+            let Frame {
+                bindings: yes_bindings,
+                dot: yes_dot,
+                boundary: yes_boundary,
+            } = yes;
+            let Frame {
+                bindings: no_bindings,
+                dot: no_dot,
+                boundary: no_boundary,
+            } = no;
+            if yes_boundary != no_boundary
+                || !yes_bindings.keys().eq(no_bindings.keys())
+                || yes_dot.is_some() != no_dot.is_some()
             {
-                if entry
-                    .observed
-                    .get(key)
-                    .and_then(|slot| slot.binding().value.as_ref())
-                    != Some(value)
-                {
-                    keys.insert(key.clone());
-                }
+                return None;
             }
         }
-        if keys.is_empty() {
-            return;
+        let mut heap = yes_heap.clone();
+        if let Err(err) = heap.join(Rc::clone(&decision), yes_heap, no_heap) {
+            tracing::trace!(?err, "decline incompatible branch heap join");
+            return None;
         }
-        for (_, _, state) in arms {
-            for key in &keys {
-                let Some(value) = state
-                    .observed
-                    .get(key)
-                    .and_then(|slot| slot.binding().value.as_ref())
-                else {
-                    continue;
+        let mut widened_inputs = std::collections::BTreeSet::new();
+        let frames = yes_frames
+            .iter()
+            .zip(no_frames)
+            .map(|(yes, no)| {
+                let Frame {
+                    bindings: yes_bindings,
+                    dot: yes_dot,
+                    boundary,
+                } = yes;
+                let Frame {
+                    bindings: no_bindings,
+                    dot: no_dot,
+                    boundary: _,
+                } = no;
+                let bindings = yes_bindings
+                    .iter()
+                    .filter_map(|(name, yes)| {
+                        no_bindings.get(name).map(|no| {
+                            (
+                                name.clone(),
+                                join_frame_value(
+                                    Rc::clone(&decision),
+                                    yes,
+                                    no,
+                                    yes_heap,
+                                    no_heap,
+                                    &mut widened_inputs,
+                                ),
+                            )
+                        })
+                    })
+                    .collect();
+                let dot = match (yes_dot, no_dot) {
+                    (Some(yes), Some(no)) => Some(join_frame_value(
+                        Rc::clone(&decision),
+                        yes,
+                        no,
+                        yes_heap,
+                        no_heap,
+                        &mut widened_inputs,
+                    )),
+                    (None, None) => None,
+                    (Some(_), None) | (None, Some(_)) => return None,
                 };
-                if entry
-                    .observed
-                    .get(key)
-                    .and_then(|slot| slot.binding().value.as_ref())
-                    == Some(value)
-                {
-                    continue;
-                }
-                if let Some(slot) = state.observed.get(key) {
-                    self.write_root(key.clone(), slot.clone());
-                }
-            }
+                Some(Frame {
+                    bindings,
+                    dot,
+                    boundary: *boundary,
+                })
+            })
+            .collect::<Option<Vec<_>>>()?;
+        let mut joined = State {
+            heap,
+            frames,
+            active: yes_prefix.to_vec(),
+            output: Default::default(),
+            output_widened: false,
+            sites: Vec::new(),
+            text_sites: Vec::new(),
+            reads: yes_reads.union(no_reads).cloned().collect(),
+            calls: yes_calls.clone(),
+            program: *yes_program,
+            namespace_unknown: *yes_namespace || *no_namespace,
+            invocations: Vec::new(),
+            invocation_records_complete: true,
+            loops: yes_loops.clone(),
+        };
+        let condition = joined.path_predicate();
+        for path in widened_inputs {
+            joined.reads.insert(super::RuntimeRead {
+                path,
+                condition: condition.clone(),
+                coverage: super::ReadCoverage::UnknownRegion,
+            });
         }
-        let complete = has_unconditional_else
-            && arms
-                .iter()
-                .all(|(condition, decoded, _)| *decoded && !condition.contains_approximation());
-        if !complete {
-            return;
-        }
-        'keys: for key in &keys {
-            let mut dispatch_arms = Vec::new();
-            let mut joined_values: BTreeSet<AbstractValue> = BTreeSet::new();
-            let mut truthy_conditions = Vec::new();
-            for (condition, _, state) in arms {
-                let value = state
-                    .observed
-                    .get(key)
-                    .and_then(|slot| slot.binding().value.as_ref())
-                    .or_else(|| {
-                        entry
-                            .observed
-                            .get(key)
-                            .and_then(|slot| slot.binding().value.as_ref())
+        for object in joined
+            .heap
+            .version
+            .pages
+            .values()
+            .flat_map(|page| page.values())
+        {
+            if let super::ObjectData::Widened { inputs } = &object.data {
+                for path in inputs {
+                    joined.reads.insert(super::RuntimeRead {
+                        path: path.clone(),
+                        condition: condition.clone(),
+                        coverage: super::ReadCoverage::UnknownRegion,
                     });
-                let Some(value) = value else {
-                    continue 'keys;
-                };
-                let Some(literal) = root_dispatch_literal(value) else {
-                    continue 'keys;
-                };
-                if guard_value_is_truthy(&literal) {
-                    truthy_conditions.push(condition.clone());
                 }
-                dispatch_arms.push((condition.clone(), ScalarContent::Literal(literal)));
-                joined_values.insert(value.clone());
             }
-            let truthy = predicate_any(truthy_conditions);
-            let joined_value = if joined_values.len() == 1 {
-                joined_values
-                    .into_iter()
-                    .next()
-                    .unwrap_or(AbstractValue::Unknown)
-            } else {
-                AbstractValue::Choice(joined_values)
-            };
-            let dispatch = ScalarValueDispatch::bind_content(dispatch_arms, true);
-            let slot = RootSlot::new(Some(joined_value), Some(truthy), Some(dispatch));
-            self.write_root(key.clone(), slot);
         }
+        for (id, path) in joined.heap.arena.input_paths.borrow().iter() {
+            if matches!(
+                joined.heap.version.object(id).map(|object| &object.data),
+                Some(
+                    super::ObjectData::Widened { inputs: _ }
+                        | super::ObjectData::Map {
+                            fields: _,
+                            remainder: super::Remainder::Open
+                        }
+                )
+            ) {
+                joined.reads.insert(super::RuntimeRead {
+                    path: path.clone(),
+                    condition: condition.clone(),
+                    coverage: super::ReadCoverage::UnknownRegion,
+                });
+            }
+        }
+        joined.merge_observations(decision, yes, no);
+        Some(joined)
     }
 }
 
-fn root_dispatch_literal(value: &AbstractValue) -> Option<GuardValue> {
-    match value {
-        AbstractValue::StringSet(values) if values.len() == 1 => {
-            values.first().map(GuardValue::string)
-        }
-        _ => None,
+pub(super) fn value_join_fits(yes: &Value, no: &Value) -> bool {
+    if Rc::ptr_eq(&yes.node, &no.node) {
+        return true;
     }
+    let mut pending = vec![yes, no];
+    let mut leaves = 0;
+    while let Some(value) = pending.pop() {
+        match value.node.as_ref() {
+            super::ValueNode::Leaf(super::Leaf {
+                datum: _,
+                origin: _,
+            }) => {
+                leaves += 1;
+                if leaves > 128 {
+                    return false;
+                }
+            }
+            super::ValueNode::Select {
+                decision: _,
+                yes,
+                no,
+            } => {
+                pending.push(yes);
+                pending.push(no);
+            }
+        }
+    }
+    true
+}
+pub(super) fn join_frame_value(
+    decision: Rc<FrozenTest>,
+    yes: &Value,
+    no: &Value,
+    yes_heap: &Heap,
+    no_heap: &Heap,
+    widened: &mut std::collections::BTreeSet<helm_schema_core::ValuesPath>,
+) -> Value {
+    if Rc::ptr_eq(&yes.node, &no.node) {
+        return yes.clone();
+    }
+    if value_join_fits(yes, no) {
+        return Value::select(decision, yes.clone(), no.clone());
+    }
+    let mut inputs = yes_heap.freeze(yes).inputs();
+    inputs.extend(no_heap.freeze(no).inputs());
+    widened.extend(inputs.iter().cloned());
+    tracing::debug!(reason = "value_fanout", "widen joined binding");
+    Value::influenced(inputs)
 }

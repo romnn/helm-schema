@@ -11,7 +11,8 @@ fn collect_spans(src: &str, analysis_db: &IrAnalysisDb) -> Vec<helm_schema_ast::
         return Vec::new();
     };
     let document = helm_schema_syntax::TemplatedDocument::parse_with_root(src, tree.root_node());
-    crate::resource_identity::collect_resource_spans(&document, tree.root_node(), analysis_db)
+    let execution = crate::value::execute_document(src, None, analysis_db);
+    crate::resource_identity::collect_resource_spans(&document, tree.root_node(), &execution, None)
 }
 
 fn detect(src: &str, defines: &DefineIndex) -> Option<crate::ResourceRef> {
@@ -20,6 +21,28 @@ fn detect(src: &str, defines: &DefineIndex) -> Option<crate::ResourceRef> {
         .into_iter()
         .next()
         .map(|span| span.resource)
+}
+
+#[test]
+fn unresolved_executed_kind_cannot_recover_a_dead_source_comparison() {
+    let source = indoc! {r#"
+        {{- if .Values.choose -}}
+        {{- $_ := set .Values "workloadKind" "Pod" -}}
+        {{- else -}}
+        {{- $_ := set .Values "workloadKind" "Endpoints" -}}
+        {{- end }}
+        apiVersion: v1
+        kind: {{ .Values.workloadKind }}
+        metadata:
+          name: witness
+        spec:
+          type: {{ .Values.mode }}
+        {{- if eq .Values.workloadKind "Service" }}
+          unused: true
+        {{- end }}
+    "#};
+
+    sim_assert_eq!(have: detect(source, &DefineIndex::new()), want: None);
 }
 
 #[test]

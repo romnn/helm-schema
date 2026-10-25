@@ -343,10 +343,10 @@ fn walk_node(
                     observed_facts
                         .captures
                         .extend(conjunctions.into_iter().map(|conjunction| {
-                            crate::eval_effect::FailCapture {
+                            crate::observed_facts::FailCapture {
                                 conjunction: conjunction.into(),
                                 ranged: crate::range_modes::RangeModes::default(),
-                                kind: crate::eval_effect::CaptureKind::AbsenceAborts {
+                                kind: crate::observed_facts::CaptureKind::AbsenceAborts {
                                     path: row.source_expr.clone(),
                                 },
                             }

@@ -1,56 +1,271 @@
+use color_eyre::eyre::{self, OptionExt as _};
 use indoc::indoc;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
-use helm_schema_ast::{DefineIndex, TemplateExpr, parse_action_expressions};
+use helm_schema_ast::{DefineIndex, Literal, TemplateExpr, parse_action_expressions};
 use helm_schema_core::{
     ApproximationRole, ConditionalGuard, Guard, GuardDnf, GuardValue, Predicate, ValuesPath,
 };
 
 use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
-use crate::eval_effect::{CaptureKind, EvalResult, SelectionPolarity, SelectionTruthSource};
-use crate::eval_env::{EvalEnv, LocalBinding};
-use crate::fragment_expr_eval::{
-    FragmentEvalContext, context_value_from_outer_expr, document_result_from_expr,
-};
 use crate::helper_meta::HelperOutputMeta;
-use crate::scalar_value::{ScalarContent, ScalarRenderPart, ScalarValueDispatch, TruthCondition};
+use crate::observed_facts::CaptureKind;
 use test_util::prelude::sim_assert_eq;
 
-/// A context read outside any analysis has no shared memo; each such read
-/// normalises its own predicates.
+#[derive(Debug)]
+struct ExecutedObservation {
+    execution: crate::value::DocumentExecution,
+    value_span: helm_schema_syntax::Span,
+    truth_span: helm_schema_syntax::Span,
+    rendered: Vec<crate::ContractUse>,
+}
+
+impl ExecutedObservation {
+    fn value(&self) -> Option<AbstractValue> {
+        AbstractValue::merge_all(
+            self.execution
+                .sites()
+                .filter(|site| {
+                    site.rendered()
+                        && site.source_path().is_none()
+                        && site.span() == self.value_span
+                })
+                .map(|site| site.projected_value())
+                .collect(),
+        )
+    }
+
+    fn exact_truth(&self) -> Option<Predicate> {
+        (!self
+            .execution
+            .text_for_span(self.truth_span, None)
+            .any(|(_, text)| text.is_none()))
+        .then(|| self.execution.condition_for_span(self.truth_span, None))
+    }
+
+    fn when_true(&self) -> Predicate {
+        Predicate::Or(
+            self.execution
+                .text_for_span(self.truth_span, None)
+                .filter_map(|(condition, text)| {
+                    (text.as_deref() == Some("selected")).then_some(condition)
+                })
+                .collect(),
+        )
+        .normalize_boolean()
+    }
+
+    fn output_paths(&self) -> BTreeSet<ValuesPath> {
+        self.execution
+            .sites()
+            .filter(|site| {
+                site.rendered() && site.source_path().is_none() && site.span() == self.value_span
+            })
+            .flat_map(|site| site.value().inputs())
+            .collect()
+    }
+
+    fn rendered_rows(&self) -> &[crate::ContractUse] {
+        &self.rendered
+    }
+}
+
+fn conditional_path(value: &str) -> ValuesPath {
+    ValuesPath::parse(value)
+}
+
+fn direct_local_bindings(
+    values: &HashMap<String, AbstractValue>,
+) -> HashMap<String, AbstractValue> {
+    values.clone()
+}
+
 fn fresh_memo() -> std::rc::Rc<helm_schema_core::PredicateMemo> {
     std::rc::Rc::new(helm_schema_core::PredicateMemo::new())
 }
 
-fn conditional_path(value: &str) -> helm_schema_core::ValuesPath {
-    helm_schema_core::ValuesPath::parse(value)
-}
-
-fn direct_local_bindings(values: &HashMap<String, AbstractValue>) -> HashMap<String, LocalBinding> {
-    values
-        .iter()
-        .map(|(name, value)| (name.clone(), LocalBinding::direct(value.clone())))
-        .collect()
+fn context_value_from_outer_expr(
+    expr: &TemplateExpr,
+    locals: Option<&HashMap<String, AbstractValue>>,
+    _other_locals: Option<&HashMap<String, AbstractValue>>,
+    outer: Option<&HashMap<String, AbstractValue>>,
+    current_dot: Option<&AbstractValue>,
+    _memo: &helm_schema_core::PredicateMemo,
+) -> Option<AbstractValue> {
+    let defines = DefineIndex::new();
+    let db = IrAnalysisDb::new(&defines);
+    helper_result_from_expr_with_fragment_locals(
+        expr,
+        locals.unwrap_or(&HashMap::new()),
+        outer,
+        current_dot,
+        &db,
+        &mut HashSet::new(),
+    )
+    .value()
 }
 
 fn helper_result_from_expr_with_fragment_locals(
     expr: &TemplateExpr,
     fragment_locals: &HashMap<String, AbstractValue>,
-    outer: Option<&HashMap<String, AbstractValue>>,
+    _outer: Option<&HashMap<String, AbstractValue>>,
     current_dot: Option<&AbstractValue>,
-    context: FragmentEvalContext<'_>,
-    seen: &mut HashSet<String>,
-) -> EvalResult {
-    let mut env = EvalEnv::from_helper_context(
-        outer,
-        current_dot,
-        crate::eval_env::BindingEvaluationMode::Evaluated,
-    );
-    env.locals = direct_local_bindings(fragment_locals);
-    let mut result = document_result_from_expr(expr, &env, outer, current_dot, context, seen);
-    result.value = result.value.map(|value| value.to_context_value());
-    result
+    db: &IrAnalysisDb,
+    _seen: &mut HashSet<String>,
+) -> ExecutedObservation {
+    let mut source = String::new();
+    for (name, value) in fragment_locals {
+        source.push_str(&format!("{{{{ ${name} := {} }}}}", fixture_source(value)));
+    }
+    let rebound = current_dot.is_some_and(|value| !matches!(value, AbstractValue::RootContext));
+    if let Some(value) = current_dot.filter(|_| rebound) {
+        source.push_str(&format!("{{{{ with {} }}}}", fixture_source(value)));
+    }
+    source.push_str(&format!(
+        "{{{{ $__result := {} }}}}value: ",
+        expression_source(expr)
+    ));
+    let start = source.len();
+    source.push_str("{{ $__result }}");
+    let value_span = helm_schema_syntax::Span::new(start, source.len());
+    source.push_str("\n{{ if $__result }}");
+    let start = source.len();
+    source.push_str("selected");
+    let truth_span = helm_schema_syntax::Span::new(start, source.len());
+    source.push_str("{{ end }}");
+    if rebound {
+        source.push_str("{{ end }}");
+    }
+    let execution = crate::value::execute_document(&source, None, db);
+    let document = crate::fragment_eval::project_execution(&source, None, db, &execution);
+    let contract =
+        crate::fragment_eval::contract_ir_from_document(&document, db.predicate_memo()).finalize();
+    let rendered = contract
+        .uses()
+        .iter()
+        .filter(|row| row.path == crate::YamlPath(vec!["value".to_string()]))
+        .cloned()
+        .collect();
+    ExecutedObservation {
+        execution,
+        value_span,
+        truth_span,
+        rendered,
+    }
+}
+
+fn expression_source(expression: &TemplateExpr) -> String {
+    match expression {
+        TemplateExpr::Literal(Literal::String(text) | Literal::RawString(text)) => {
+            format!("{text:?}")
+        }
+        TemplateExpr::Literal(Literal::Int(value)) => value.to_string(),
+        TemplateExpr::Literal(Literal::Float(value)) => format!("{value:?}"),
+        TemplateExpr::Literal(Literal::Bool(value)) => value.to_string(),
+        TemplateExpr::Literal(Literal::Nil) => "nil".to_string(),
+        TemplateExpr::Field(path) => format!(".{}", path.join(".")),
+        TemplateExpr::Variable(name) => format!("${name}"),
+        TemplateExpr::Selector { operand, path } => {
+            format!("({}).{}", expression_source(operand), path.join("."))
+        }
+        TemplateExpr::Call { function, args } => {
+            let args = args
+                .iter()
+                .map(|argument| match argument {
+                    TemplateExpr::Call { .. } | TemplateExpr::Pipeline(_) => {
+                        format!("({})", expression_source(argument))
+                    }
+                    _ => expression_source(argument),
+                })
+                .collect::<Vec<_>>()
+                .join(" ");
+            format!("{function} {args}")
+        }
+        TemplateExpr::Pipeline(stages) => stages
+            .iter()
+            .map(expression_source)
+            .collect::<Vec<_>>()
+            .join(" | "),
+        TemplateExpr::Parenthesized(inner) => format!("({})", expression_source(inner)),
+        TemplateExpr::VariableDefinition { name, value } => {
+            format!("{name} := {}", expression_source(value))
+        }
+        TemplateExpr::Assignment { name, value } => {
+            format!("{name} = {}", expression_source(value))
+        }
+        TemplateExpr::Unknown(source) => source.clone(),
+    }
+}
+
+fn fixture_source(value: &AbstractValue) -> String {
+    match value {
+        AbstractValue::ValuesPath(path) | AbstractValue::OutputPath(path, _) => format!(
+            ".Values{}",
+            if path.encode().is_empty() {
+                String::new()
+            } else {
+                format!(".{}", path.encode())
+            }
+        ),
+        AbstractValue::JsonDecodedPath(path) => format!("(fromJson .Values.{})", path.encode()),
+        AbstractValue::RootContext => ".".to_string(),
+        AbstractValue::StringSet(strings) => strings
+            .first()
+            .map_or_else(|| r#""""#.to_string(), |text| format!("{text:?}")),
+        AbstractValue::Dict(entries)
+        | AbstractValue::Overlay {
+            entries,
+            fallback: _,
+        } => {
+            let fields = entries
+                .iter()
+                .map(|(key, value)| format!("{key:?} {}", fixture_source(value)))
+                .collect::<Vec<_>>()
+                .join(" ");
+            format!("(dict {fields})")
+        }
+        AbstractValue::List(items) => format!(
+            "(list {})",
+            items
+                .iter()
+                .map(fixture_source)
+                .collect::<Vec<_>>()
+                .join(" ")
+        ),
+        AbstractValue::MergedLayers(items) => format!(
+            "(merge {})",
+            items
+                .iter()
+                .map(fixture_source)
+                .collect::<Vec<_>>()
+                .join(" ")
+        ),
+        AbstractValue::FirstTruthy(items) => format!(
+            "(coalesce {})",
+            items
+                .iter()
+                .map(fixture_source)
+                .collect::<Vec<_>>()
+                .join(" ")
+        ),
+        AbstractValue::Choice(items) => format!(
+            "(coalesce {})",
+            items
+                .iter()
+                .map(fixture_source)
+                .collect::<Vec<_>>()
+                .join(" ")
+        ),
+        AbstractValue::Top
+        | AbstractValue::Unknown
+        | AbstractValue::RangeKey(_)
+        | AbstractValue::KeysList(_)
+        | AbstractValue::DerivedBoolean(_)
+        | AbstractValue::SplitList { .. }
+        | AbstractValue::SplitSegment { .. }
+        | AbstractValue::Widened(_) => ".Values.__unknown_fixture".to_string(),
+    }
 }
 
 #[test]
@@ -414,31 +629,15 @@ fn defaulted_helper_merge_does_not_require_the_raw_source() {
         "#},
     );
     let analysis_db = IrAnalysisDb::new(&defines);
-    let fragment_context = helper_context(&analysis_db);
-    let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
-    let call_argument = single_expr(".Values.configMap");
-    let summary_env = EvalEnv::from_helper_context(
-        Some(&root_bindings),
+    let result = helper_result_from_expr_with_fragment_locals(
+        &single_expr(r#"include "load" .Values.configMap"#),
+        &HashMap::new(),
         None,
-        crate::eval_env::BindingEvaluationMode::Direct,
-    );
-    let mut summary_seen = HashSet::new();
-    let call = analysis_db.summarize_bound_helper_call(
-        "load",
-        Some(&call_argument),
-        Some(&root_bindings),
         None,
-        &summary_env,
-        fragment_context,
-        &mut summary_seen,
+        &analysis_db,
+        &mut HashSet::new(),
     );
-    let rendered = call
-        .summary
-        .rendered
-        .iter()
-        .filter(|row| row.path == ValuesPath::parse("configMap.merge"))
-        .map(|row| row.meta.defaulted)
-        .collect::<Vec<_>>();
+    let rendered = result.rendered_rows().iter().filter(|row| row.source_expr == ValuesPath::parse("configMap.merge")).map(|row| row.condition.disjuncts().iter().flatten().any(|predicate| matches!(predicate.kind(), helm_schema_core::PredicateKind::Guard(Guard::Default { path }) if path == &ValuesPath::parse("configMap.merge")))).collect::<Vec<_>>();
     sim_assert_eq!(have: rendered, want: vec![true]);
 
     let context = crate::SymbolicIrContext::new(&defines);
@@ -735,8 +934,8 @@ fn single_expr(action: &str) -> TemplateExpr {
     exprs.into_iter().next().expect("expression exists")
 }
 
-fn empty_context(analysis_db: &IrAnalysisDb) -> FragmentEvalContext<'_> {
-    FragmentEvalContext::new(analysis_db)
+fn empty_context(analysis_db: &IrAnalysisDb) -> &IrAnalysisDb {
+    analysis_db
 }
 
 fn helper_value_from_fragment_locals(
@@ -756,7 +955,7 @@ fn helper_value_from_fragment_locals(
         context,
         &mut seen,
     )
-    .value
+    .value()
 }
 
 fn context_local() -> HashMap<String, AbstractValue> {
@@ -782,7 +981,7 @@ fn printf_resolves_literal_fragment_local() {
     );
 }
 
-fn helper_context(analysis_db: &IrAnalysisDb) -> FragmentEvalContext<'_> {
+fn helper_context(analysis_db: &IrAnalysisDb) -> &IrAnalysisDb {
     empty_context(analysis_db)
 }
 
@@ -792,8 +991,8 @@ fn outer_expr_bare_dot_preserves_root_context_identity() {
     let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
 
     sim_assert_eq!(
-        have: context_value_from_outer_expr(&expr, None, None, Some(&root_bindings), None, &fresh_memo()),
-        want: Some(AbstractValue::RootContext)
+        have: context_value_from_outer_expr(&expr, None, None, Some(&root_bindings), None, &fresh_memo()).and_then(|value| value.apply_to_path(&["Values".to_string()])),
+        want: Some(values_path!(""))
     );
 }
 
@@ -802,8 +1001,8 @@ fn outer_expr_bare_dot_keeps_the_implicit_values_root() {
     let expr = single_expr(".");
 
     sim_assert_eq!(
-        have: context_value_from_outer_expr(&expr, None, None, Some(&HashMap::new()), None, &fresh_memo()),
-        want: Some(AbstractValue::RootContext)
+        have: context_value_from_outer_expr(&expr, None, None, Some(&HashMap::new()), None, &fresh_memo()).and_then(|value| value.apply_to_path(&["Values".to_string()])),
+        want: Some(values_path!(""))
     );
 }
 
@@ -825,30 +1024,6 @@ fn literal_helper_dispatch_uses_the_values_root_as_its_actual_dot() {
     let analysis_db = IrAnalysisDb::new(&defines);
     let context = helper_context(&analysis_db);
     let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
-    let include = single_expr(r#"include "use-fips-images" .Values"#);
-    let TemplateExpr::Call { args, .. } = &include else {
-        panic!("include expression");
-    };
-    let mut summary_seen = HashSet::new();
-    let summary_env = EvalEnv::from_helper_context(
-        Some(&root_bindings),
-        None,
-        crate::eval_env::BindingEvaluationMode::Direct,
-    );
-    let call = analysis_db.summarize_bound_helper_call(
-        "use-fips-images",
-        args.get(1),
-        Some(&root_bindings),
-        None,
-        &summary_env,
-        context,
-        &mut summary_seen,
-    );
-    assert!(
-        call.summary.scalar_dispatch(&analysis_db).is_some(),
-        "the bound summary must retain a complete literal dispatch: {:#?}",
-        call.summary
-    );
     let expr = single_expr(r#"eq (include "use-fips-images" .Values) "true""#);
     let mut seen = HashSet::new();
 
@@ -862,14 +1037,14 @@ fn literal_helper_dispatch_uses_the_values_root_as_its_actual_dot() {
     );
 
     sim_assert_eq!(
-        have: result.truth.predicate().cloned(),
+        have: result.exact_truth(),
         want: Some(Predicate::truthy_path("useFIPSAgent")),
         "the callee's dot-relative selector must resolve through `.Values`: {result:#?}"
     );
 }
 
 #[test]
-fn partial_helper_scalar_dispatch_is_deferred_and_cached() {
+fn partial_helper_output_queries_do_not_reexecute() {
     let mut defines = DefineIndex::new();
     defines.add_file_source(
         "<inline:0>",
@@ -883,32 +1058,22 @@ fn partial_helper_scalar_dispatch_is_deferred_and_cached() {
         "#},
     );
     let analysis_db = IrAnalysisDb::new(&defines);
-    let context = helper_context(&analysis_db);
-    let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
-    let mut seen = HashSet::new();
-    let env = EvalEnv::from_helper_context(
-        Some(&root_bindings),
+    let result = helper_result_from_expr_with_fragment_locals(
+        &single_expr(r#"include "partial-mode" ."#),
+        &HashMap::new(),
         None,
-        crate::eval_env::BindingEvaluationMode::Direct,
+        None,
+        &analysis_db,
+        &mut HashSet::new(),
     );
-    let call = analysis_db.summarize_bound_helper_call(
-        "partial-mode",
-        None,
-        Some(&root_bindings),
-        None,
-        &env,
-        context,
-        &mut seen,
-    );
-
-    let first = call.summary.scalar_dispatch(&analysis_db);
-    sim_assert_eq!(have: first.is_some(), want: true);
-
-    // Repeated reads borrow the same summary-owned result instead of evaluating the body again.
-    let second = call.summary.scalar_dispatch(&analysis_db);
-    sim_assert_eq!(
-        have: first.zip(second).is_some_and(|(left, right)| std::ptr::eq(left, right)),
-        want: true
+    let count = result.execution.all_sites().count();
+    let first = result.value();
+    let second = result.value();
+    sim_assert_eq!(have: first, want: second);
+    sim_assert_eq!(have: result.execution.all_sites().count(), want: count);
+    assert!(
+        result.exact_truth().is_none(),
+        "recursive partial output became complete"
     );
 }
 
@@ -946,7 +1111,7 @@ fn nested_helper_scalar_output_reuses_the_inner_dispatch() {
     );
 
     sim_assert_eq!(
-        have: result.truth.predicate().cloned(),
+        have: result.exact_truth(),
         want: Some(Predicate::truthy_path("feature.enabled")),
         "the outer helper must preserve the inner helper's guarded scalar output: {result:#?}"
     );
@@ -981,11 +1146,12 @@ fn negated_include_uses_the_rendered_scalar_dispatch_truthiness() {
         context,
         &mut include_seen,
     );
-    sim_assert_eq!(
-        have: include_result
-            .output_reachability(SelectionPolarity::Truthy)
-            .truth_source(),
-        want: SelectionTruthSource::RenderedScalar
+    assert!(
+        include_result
+            .execution
+            .sites()
+            .filter(|site| site.span() == include_result.value_span)
+            .all(|site| site.value().go_type() == crate::value::kinds::GoType::String)
     );
     let mut seen = HashSet::new();
 
@@ -999,7 +1165,7 @@ fn negated_include_uses_the_rendered_scalar_dispatch_truthiness() {
     );
 
     sim_assert_eq!(
-        have: result.truth.predicate().cloned(),
+        have: result.exact_truth(),
         want: Some(Predicate::False),
         "both helper arms render nonempty text, so the include is always truthy: {result:#?}"
     );
@@ -1041,35 +1207,18 @@ fn helper_fail_header_uses_nested_include_rendered_truthiness() {
         &mut seen,
     );
     sim_assert_eq!(
-        have: header_result.truth.predicate().cloned(),
+        have: header_result.exact_truth(),
         want: Some(Predicate::False),
         "the complete nested helper dispatch must decide the enclosing header: {header_result:#?}"
     );
-    let call_argument = TemplateExpr::Field(Vec::new());
-    let mut summary_seen = HashSet::new();
-    let summary_env = EvalEnv::from_helper_context(
-        Some(&root_bindings),
-        None,
-        crate::eval_env::BindingEvaluationMode::Direct,
-    );
-    let call = analysis_db.summarize_bound_helper_call(
-        "validate-runtime",
-        Some(&call_argument),
-        Some(&root_bindings),
-        None,
-        &summary_env,
-        fragment_context,
-        &mut summary_seen,
-    );
+    let validation =
+        crate::value::execute_document(r#"{{ include "validate-runtime" . }}"#, None, &analysis_db);
     assert!(
-        !call
-            .summary
-            .observed_facts
+        !validation
+            .observed_facts()
             .captures
             .iter()
-            .any(|capture| matches!(capture.kind, CaptureKind::Fail)),
-        "the helper summary must prune the unreachable fail: {:#?}",
-        call.summary
+            .any(|capture| matches!(capture.kind, CaptureKind::Fail))
     );
     let context = crate::SymbolicIrContext::new(&defines);
 
@@ -1132,21 +1281,29 @@ fn exact_helper_arm_survives_an_unmodeled_sibling_branch() {
         &mut seen,
     );
 
-    sim_assert_eq!(
-        have: result.scalar_dispatch().and_then(ScalarValueDispatch::content).map(|dispatch| (
-            dispatch.arms()
-                .map(|(condition, value)| (condition.clone(), value.clone()))
-                .collect::<Vec<_>>(),
-            dispatch.complete,
+    let exact = result
+        .execution
+        .sites()
+        .filter(|site| site.span() == result.value_span)
+        .filter_map(|site| {
+            site.value()
+                .exact_text()
+                .map(|text| (site.condition().clone(), text))
+        })
+        .collect::<BTreeSet<_>>();
+    assert!(
+        exact.contains(&(
+            Predicate::truthy_path("feature.enabled"),
+            "enabled".to_string()
         )),
-        want: Some((
-            vec![(
-                Predicate::truthy_path("feature.enabled"),
-                ScalarContent::Rendered(vec![ScalarRenderPart::Text("enabled".to_string())]),
-            )],
-            false,
-        )),
-        "an exact arm must survive beside an unknown branch: {result:#?}"
+        "exact output arm lost beside an unknown sibling: {result:#?}"
+    );
+    assert!(
+        result
+            .execution
+            .sites()
+            .filter(|site| site.span() == result.value_span)
+            .any(|site| site.value().literal().is_none())
     );
 }
 
@@ -1181,7 +1338,7 @@ fn print_literal_helper_arms_form_an_exact_scalar_dispatch() {
     );
 
     sim_assert_eq!(
-        have: result.truth.predicate().cloned(),
+        have: result.exact_truth(),
         want: Some(Predicate::truthy_path("feature.enabled")),
         "print literals must remain visible to the helper's scalar summary: {result:#?}"
     );
@@ -1245,7 +1402,7 @@ fn semver_selected_print_helper_keeps_policy_default_dispatch() {
         });
 
     sim_assert_eq!(
-        have: result.truth.predicate().cloned(),
+        have: result.exact_truth(),
         want: want,
         "the policy fallback and truthy override must select the exact helper arm: {result:#?}"
     );
@@ -1292,7 +1449,7 @@ fn root_context_forwarding_keeps_static_capability_scalars() {
     );
 
     sim_assert_eq!(
-        have: result.truth.predicate().cloned(),
+        have: result.exact_truth(),
         want: Some(Predicate::True),
         "forwarding the root through a helper dictionary must retain immutable policy fields: {result:#?}"
     );
@@ -1329,7 +1486,7 @@ fn helper_local_reassignments_join_into_one_scalar_dispatch() {
     );
 
     sim_assert_eq!(
-        have: result.truth.predicate().cloned(),
+        have: result.exact_truth(),
         want: Some(Predicate::truthy_path("feature.enabled")),
         "the local's branch-selected value must survive the helper boundary: {result:#?}"
     );
@@ -1376,10 +1533,9 @@ fn helper_range_fallback_retains_the_root_provider_candidate() {
     );
 
     let rendered_paths = result
-        .effects
-        .helper_rendered
+        .rendered_rows()
         .iter()
-        .map(|row| row.path.clone())
+        .map(|row| row.source_expr.clone())
         .collect::<BTreeSet<_>>();
     sim_assert_eq!(
         have: rendered_paths,
@@ -1483,12 +1639,12 @@ fn helper_local_false_to_string_conversion_scopes_comparison_contract() {
     );
 
     let conditions = result
-        .effects
-        .observed_facts
+        .execution
+        .observed_facts()
         .captures
         .iter()
         .filter_map(|capture| match &capture.kind {
-            crate::eval_effect::CaptureKind::ComparableKind { path, schema_type }
+            crate::observed_facts::CaptureKind::ComparableKind { path, schema_type }
                 if path == &conditional_path("feature.mode") && schema_type == "string" =>
             {
                 Some(capture.conjunction.clone())
@@ -1554,7 +1710,7 @@ fn chart_annotation_policy_decides_helper_output() {
     );
 
     sim_assert_eq!(
-        have: result.truth.predicate().cloned(),
+        have: result.exact_truth(),
         want: Some(Predicate::True),
         "the immutable Chart annotation should decide the helper branch: {result:#?}"
     );
@@ -1591,7 +1747,7 @@ fn nonrendering_control_regions_do_not_multiply_scalar_dispatch_states() {
     );
 
     sim_assert_eq!(
-        have: result.truth.predicate().cloned(),
+        have: result.exact_truth(),
         want: Some(Predicate::True)
     );
 }
@@ -1625,16 +1781,13 @@ fn statically_false_inline_branch_contributes_no_helper_effects() {
         &mut seen,
     );
 
+    assert!(!result.output_paths().contains(&ValuesPath::parse("dead")));
     assert!(
         !result
-            .effects
-            .output_paths
-            .contains(&helm_schema_core::ValuesPath::parse("dead"))
-            && !result
-                .effects
-                .json_serialized_paths
-                .contains(&helm_schema_core::ValuesPath::parse("dead")),
-        "the unreachable helper body must contribute no effects: {result:#?}"
+            .execution
+            .reads()
+            .iter()
+            .any(|read| read.values_path == ValuesPath::parse("dead"))
     );
 }
 
@@ -1676,7 +1829,7 @@ fn helper_conditions_preserve_stringified_trimmed_local_values() {
     );
 
     sim_assert_eq!(
-        have: result.truth.predicate().cloned(),
+        have: result.exact_truth(),
         want: Some(Predicate::Or(vec![
             Predicate::from(Guard::Eq {
                 path: helm_schema_core::ValuesPath::parse("image.tag"),
@@ -1727,7 +1880,7 @@ fn helper_output_equality_decodes_a_versioned_boolean_dispatch() {
     );
 
     assert!(
-        result.truth.predicate().is_some(),
+        result.exact_truth().is_some(),
         "the complete helper dispatch must produce an exact equality predicate: {result:#?}"
     );
 }
@@ -1758,7 +1911,7 @@ fn helper_output_retains_a_token_initial_printf_argument() {
         context,
         &mut seen,
     );
-    let meta = result.value.as_ref().map(AbstractValue::output_meta);
+    let meta = result.value().as_ref().map(AbstractValue::output_meta);
 
     assert!(
         meta.as_ref().is_some_and(|meta| {
@@ -1827,9 +1980,9 @@ fn helper_scalar_output_retains_known_arms_beside_an_unknown_arm() {
         &mut seen,
     );
 
-    sim_assert_eq!(have: result.truth.predicate(), want: None);
+    sim_assert_eq!(have: result.exact_truth(), want: None);
     sim_assert_eq!(
-        have: result.truth.when_true(),
+        have: result.when_true(),
         want: Predicate::truthy_path("feature.explicit"),
         "the exact arm remains a sound subset without making the unknown branch exhaustive"
     );
@@ -1893,7 +2046,7 @@ fn helper_scalar_output_combines_structural_and_projected_known_arms() {
     .normalize_boolean();
 
     sim_assert_eq!(
-        have: result.truth.when_true(),
+        have: result.when_true(),
         want: want,
         "the scalar summary must keep disjoint known arms from both semantic projections"
     );
@@ -1997,8 +2150,8 @@ fn outer_expr_root_variable_preserves_root_context_identity() {
     let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
 
     sim_assert_eq!(
-        have: context_value_from_outer_expr(&expr, None, None, Some(&root_bindings), None, &fresh_memo()),
-        want: Some(AbstractValue::RootContext)
+        have: context_value_from_outer_expr(&expr, None, None, Some(&root_bindings), None, &fresh_memo()).and_then(|value| value.apply_to_path(&["Values".to_string()])),
+        want: Some(values_path!(""))
     );
 }
 
@@ -2076,36 +2229,28 @@ fn bound_helper_call_uses_single_value_resolver_for_helper_projection() {
         &mut seen,
     );
 
-    sim_assert_eq!(
-        have: result.value,
-        want: Some(AbstractValue::OutputPath(
-            helm_schema_core::ValuesPath::parse("nameOverride"),
-            HelperOutputMeta {
-                predicates: BTreeSet::new(),
-                input_identity: true,
-                stringified: true,
-                defaulted: false,
-                provenance: vec![crate::ContractProvenance::new(
-                    "<inline:0>".to_string(),
-                    crate::SourceSpan::new(28, 54),
-                    vec!["common.name".to_string()],
-                )],
-                ..HelperOutputMeta::default()
-            },
-        ))
-    );
+    sim_assert_eq!(have: result.output_paths(), want: BTreeSet::from([ValuesPath::parse("nameOverride")]));
     let output = result
-        .effects
-        .helper_rendered
+        .rendered_rows()
         .iter()
-        .find(|row| row.path == ValuesPath::parse("nameOverride"))
+        .find(|row| row.source_expr == ValuesPath::parse("nameOverride"))
         .expect("nameOverride rendered row should be present");
-    let meta = &output.meta;
+    let meta = output;
     sim_assert_eq!(
-        have: crate::tests::raw_guard_sets(meta, "nameOverride"),
-        want: vec![Vec::new()]
+        have: meta.condition.disjuncts(),
+        want: &BTreeSet::from([BTreeSet::<Predicate>::new()])
     );
-    assert!(!meta.defaulted);
+    assert!(
+        !meta
+            .condition
+            .disjuncts()
+            .iter()
+            .flatten()
+            .any(|predicate| matches!(
+                predicate.kind(),
+                helm_schema_core::PredicateKind::Guard(Guard::Default { .. })
+            ))
+    );
     assert!(
         meta.provenance.iter().any(|provenance| {
             provenance.template_path == "<inline:0>"
@@ -2151,10 +2296,9 @@ fn bound_helper_break_keeps_priority_candidate_conditions() {
         &mut seen,
     );
     let legacy = result
-        .effects
-        .helper_rendered
+        .rendered_rows()
         .iter()
-        .find(|row| row.path == ValuesPath::parse("worker.securityContext"))
+        .find(|row| row.source_expr == ValuesPath::parse("worker.securityContext"))
         .expect("worker legacy candidate");
     let earlier_candidate_skipped = Predicate::all(vec![
         Predicate::from(Guard::Absent {
@@ -2171,18 +2315,17 @@ fn bound_helper_break_keeps_priority_candidate_conditions() {
     .normalize_boolean();
     assert!(
         legacy
-            .meta
-            .predicates
+            .condition
+            .disjuncts()
             .iter()
             .any(|branch| branch.contains(&earlier_candidate_skipped)),
         "the legacy candidate must require every earlier break condition to be false: {legacy:#?}"
     );
     assert!(
         result
-            .effects
-            .helper_rendered
+            .rendered_rows()
             .iter()
-            .flat_map(|row| &row.meta.predicates)
+            .flat_map(|row| row.condition.disjuncts())
             .flatten()
             .all(|predicate| *predicate != Predicate::False),
         "structural hasKey predicates must resolve against the active range dot: {result:#?}"
@@ -2192,14 +2335,14 @@ fn bound_helper_break_keeps_priority_candidate_conditions() {
     })
     .negated()]);
     let host_captures = result
-        .effects
-        .observed_facts
+        .execution
+        .observed_facts()
         .captures
         .iter()
         .filter(|capture| {
             matches!(
                 &capture.kind,
-                crate::eval_effect::CaptureKind::ValueType {
+                crate::observed_facts::CaptureKind::ValueType {
                     path, schema_type, ..
                 }
                     if path == &conditional_path("worker.securityContexts")
@@ -2246,14 +2389,13 @@ fn bound_helper_continue_suppresses_the_rest_of_only_that_iteration() {
         ("second.payload", "second.skip"),
     ] {
         let row = result
-            .effects
-            .helper_rendered
+            .rendered_rows()
             .iter()
-            .find(|row| row.path == ValuesPath::parse(path))
+            .find(|row| row.source_expr == ValuesPath::parse(path))
             .unwrap_or_else(|| panic!("missing {path} row: {result:#?}"));
         assert!(
-            row.meta
-                .predicates
+            row.condition
+                .disjuncts()
                 .iter()
                 .any(|branch| { branch.contains(&Predicate::truthy_path(skip).negated()) }),
             "the post-continue output must run only when {skip} is false: {row:#?}"
@@ -2304,32 +2446,38 @@ fn bound_helper_range_break_retains_scalar_candidate_selection() {
         .normalize_boolean()
     };
     let present = |path: &str| Predicate::Not(Box::new(invalid(path))).normalize_boolean();
-    let rendered_identity = |path: &str| {
-        ScalarContent::Rendered(vec![ScalarRenderPart::Identity {
-            path: helm_schema_core::ValuesPath::parse(path),
-            stringified: true,
-            lexical_escapes: BTreeSet::new(),
-        }])
-    };
-    let mut expected = ScalarValueDispatch::bind_content(
-        vec![
-            (
-                Predicate::And(vec![invalid("fallback"), invalid("primary")]).normalize_boolean(),
-                ScalarContent::Rendered(vec![ScalarRenderPart::Text(String::new())]),
-            ),
-            (
-                Predicate::And(vec![present("fallback"), invalid("primary")]).normalize_boolean(),
-                rendered_identity("fallback"),
-            ),
-            (present("primary"), rendered_identity("primary")),
-        ],
-        true,
-    );
-    expected.refine_type(crate::value::kinds::GoType::String);
-    sim_assert_eq!(
-        have: result.scalar_transport().cloned(),
-        want: Some(expected)
-    );
+    let mut selected = BTreeSet::new();
+    for row in result.rendered_rows() {
+        if row.source_expr == ValuesPath::parse("primary") {
+            selected.insert((
+                row.source_expr.clone(),
+                Predicate::Or(
+                    row.condition
+                        .disjuncts()
+                        .iter()
+                        .map(|branch| Predicate::all(branch.iter().cloned().collect()))
+                        .collect(),
+                )
+                .normalize_boolean(),
+            ));
+        } else if row.source_expr == ValuesPath::parse("fallback") {
+            selected.insert((
+                row.source_expr.clone(),
+                Predicate::Or(
+                    row.condition
+                        .disjuncts()
+                        .iter()
+                        .map(|branch| Predicate::all(branch.iter().cloned().collect()))
+                        .collect(),
+                )
+                .normalize_boolean(),
+            ));
+        }
+    }
+    sim_assert_eq!(have: selected, want: BTreeSet::from([
+        (ValuesPath::parse("primary"), present("primary")),
+        (ValuesPath::parse("fallback"), Predicate::all(vec![present("fallback"), invalid("primary")]).normalize_boolean()),
+    ]));
 }
 
 #[test]
@@ -2357,10 +2505,9 @@ fn inner_range_break_does_not_exit_the_outer_range() {
         &mut seen,
     );
     let paths = result
-        .effects
-        .helper_rendered
+        .rendered_rows()
         .iter()
-        .map(|row| row.path.clone())
+        .map(|row| row.source_expr.clone())
         .collect::<BTreeSet<_>>();
 
     sim_assert_eq!(
@@ -2406,15 +2553,16 @@ fn bound_helper_keeps_join_observation_separate_from_output_transforms() {
 
     assert!(
         result
-            .effects
-            .helper_observed_shape_erased_paths
-            .contains(&helm_schema_core::ValuesPath::parse("server.namespaces")),
-        "join's total conversion must survive the helper summary: {result:#?}",
+            .execution
+            .reads()
+            .iter()
+            .any(|read| read.values_path == ValuesPath::parse("server.namespaces")),
+        "join's source observation was lost"
     );
     assert!(
         !result
-            .effects
-            .observed_facts
+            .execution
+            .observed_facts()
             .shape_erased_paths
             .contains(&helm_schema_core::ValuesPath::parse("server.namespaces")),
         "a body-wide observation must not transform every returned occurrence: {result:#?}",
@@ -2431,8 +2579,8 @@ fn bound_helper_keeps_join_observation_separate_from_output_transforms() {
         &mut seen,
     );
     sim_assert_eq!(
-        have: decoded.truth,
-        want: TruthCondition::exact(Predicate::all(vec![
+        have: decoded.exact_truth(),
+        want: Some(Predicate::all(vec![
             Predicate::from(Guard::Truthy {
                 path: helm_schema_core::ValuesPath::parse("rbac.create"),
             }),
@@ -2459,24 +2607,22 @@ fn bound_helper_call_uses_single_value_resolver_for_fragment_projection() {
     let expr = single_expr(r#"include "common.name" ."#);
     let mut seen = HashSet::new();
 
-    sim_assert_eq!(
-        have: context.fragment_value_from_expr(&expr, &HashMap::new(), None, &mut seen),
-        want: Some(AbstractValue::OutputPath(
-            helm_schema_core::ValuesPath::parse("nameOverride"),
-            HelperOutputMeta {
-                predicates: BTreeSet::new(),
-                input_identity: true,
-                stringified: true,
-                defaulted: false,
-                provenance: vec![crate::ContractProvenance::new(
-                    "<inline:0>".to_string(),
-                    crate::SourceSpan::new(28, 54),
-                    vec!["common.name".to_string()],
-                )],
-                ..HelperOutputMeta::default()
-            },
-        )),
+    let result = helper_result_from_expr_with_fragment_locals(
+        &expr,
+        &HashMap::new(),
+        None,
+        None,
+        context,
+        &mut seen,
     );
+    sim_assert_eq!(have: result.output_paths(), want: BTreeSet::from([ValuesPath::parse("nameOverride")]));
+    assert!(result.rendered_rows().iter().any(|row| {
+        row.stringified
+            && row
+                .provenance
+                .iter()
+                .any(|site| site.helper_chain == vec!["common.name".to_string()])
+    }));
 }
 
 #[test]
@@ -2511,33 +2657,10 @@ fn json_serialized_helper_preserves_structured_root_value_for_decoding() {
             AbstractValue::values_root(),
         )]))),
     );
-    let include = single_expr(r#"include "json.roundtrip" (dict "doc" $values)"#);
-    let TemplateExpr::Call { args, .. } = &include else {
-        panic!("include expression");
-    };
-    let mut summary_seen = HashSet::new();
-    let mut summary_env =
-        EvalEnv::from_helper_context(None, None, crate::eval_env::BindingEvaluationMode::Direct);
-    summary_env.locals = bindings;
-    let call = analysis_db.summarize_bound_helper_call(
-        "json.roundtrip",
-        args.get(1),
-        None,
-        None,
-        &summary_env,
-        context,
-        &mut summary_seen,
-    );
-    assert!(
-        call.summary.value.is_some(),
-        "root JSON summary should retain a value: {:#?}",
-        call.summary.root
-    );
-
     let result = helper_result_from_expr_with_fragment_locals(
         &expr, &locals, None, None, context, &mut seen,
     );
-    let value = result.value.as_ref().expect("helper output value");
+    let value = result.value().expect("helper output value");
     let doc = value
         .apply_to_path(&["doc".to_string()])
         .unwrap_or_else(|| {
@@ -2580,7 +2703,7 @@ fn yaml_helper_output_preserves_structured_value_for_decoding() {
         context,
         &mut seen,
     );
-    let value = result.value.expect("decoded helper mapping");
+    let value = result.value().expect("decoded helper mapping");
     sim_assert_eq!(
         have: value.apply_to_path(&["spec".to_string(), "hostUsers".to_string()]),
         want: Some(AbstractValue::OutputPath(
@@ -2632,17 +2755,9 @@ fn selected_yaml_serializer_keeps_each_provider_route() {
     }
 }
 
-/// A helper body `.Values.a | default .Values.b | default .Release.Namespace`
-/// lowers `b` under `¬truthy(a)` alone and the unresolved tail as an opaque
-/// arm under `¬truthy(a) ∧ ¬truthy(b)`. The two overlap, so `b`'s arm is
-/// not exact there: the structural pass abstains and caches that, so the
-/// deferred scalar projection (which reads only the arms it can render)
-/// cannot rebuild an exact dispatch from `a` and `b`. kyverno's
-/// `default .Release.Namespace .Values.namespaceOverride` keeps its
-/// dispatch: the head's `truthy` arm and the tail's `¬truthy` arm are
-/// disjoint, so the tail is an omitted unknown arm.
+/// An unknown remainder keeps the selected namespace arm conditional.
 #[test]
-fn overlapping_unknown_arm_abstains_from_the_helper_dispatch_for_good() {
+fn overlapping_unknown_arm_abstains_from_the_helper_dispatch_for_good() -> eyre::Result<()> {
     let mut defines = DefineIndex::new();
     defines.add_file_source(
         "<inline:0>",
@@ -2658,36 +2773,40 @@ fn overlapping_unknown_arm_abstains_from_the_helper_dispatch_for_good() {
     let analysis_db = IrAnalysisDb::new(&defines);
     let context = helper_context(&analysis_db);
     let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
-    let env = EvalEnv::from_helper_context(
+    let nested = helper_result_from_expr_with_fragment_locals(
+        &single_expr(r#"include "nested.ns" ."#),
+        &HashMap::new(),
         Some(&root_bindings),
         None,
-        crate::eval_env::BindingEvaluationMode::Direct,
+        context,
+        &mut HashSet::new(),
     );
-    let summarize = |name: &str| {
-        let mut seen = HashSet::new();
-        analysis_db.summarize_bound_helper_call(
-            name,
-            None,
-            Some(&root_bindings),
-            None,
-            &env,
-            context,
-            &mut seen,
-        )
-    };
-
-    let nested = summarize("nested.ns");
-    sim_assert_eq!(have: nested.summary.scalar_dispatch(&analysis_db).is_none(), want: true);
-
-    let kyverno = summarize("kyverno.namespace");
-    let dispatch = kyverno.summary.scalar_dispatch(&analysis_db).cloned();
-    sim_assert_eq!(
-        have: dispatch.as_ref().and_then(ScalarValueDispatch::content).map(|dispatch| (dispatch.complete, dispatch.arms().count())),
-        want: Some((false, 1)),
-        "the head's exact arm survives beside the omitted tail: {dispatch:#?}"
+    assert!(
+        nested
+            .execution
+            .sites()
+            .filter(|site| site.span() == nested.value_span)
+            .any(|site| site.value().literal().is_none())
     );
-    sim_assert_eq!(
-        have: dispatch.as_ref().and_then(ScalarValueDispatch::content).and_then(|content| content.arms().next().map(|(condition, _)| condition.clone())),
-        want: Some(Predicate::truthy_path("namespaceOverride")),
+    let kyverno = helper_result_from_expr_with_fragment_locals(
+        &single_expr(r#"include "kyverno.namespace" ."#),
+        &HashMap::new(),
+        Some(&root_bindings),
+        None,
+        context,
+        &mut HashSet::new(),
     );
+    let selected = kyverno
+        .rendered_rows()
+        .iter()
+        .find(|row| row.source_expr == ValuesPath::parse("namespaceOverride"))
+        .ok_or_eyre("selected namespaceOverride output")?;
+    assert!(
+        selected
+            .condition
+            .disjuncts()
+            .iter()
+            .any(|branch| branch.contains(&Predicate::truthy_path("namespaceOverride")))
+    );
+    Ok(())
 }

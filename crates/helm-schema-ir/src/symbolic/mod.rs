@@ -112,18 +112,6 @@ impl SymbolicIrContext {
             &document,
             self.analysis_db.predicate_memo().as_ref(),
         );
-        for name in &document.observed_facts.values_root_helper_includes {
-            contract.extend_values_program_wrappers(
-                self.analysis_db
-                    .program_wrapper_sentinels(name)
-                    .into_iter()
-                    .map(|(key, spread)| helm_schema_core::ValuesProgramWrapper {
-                        scope_path: helm_schema_core::ValuesPath::default(),
-                        key,
-                        spread,
-                    }),
-            );
-        }
         contract.extend_values_program_wrapper_exclusions(
             document.pre_rewrite_strict_paths.iter().cloned(),
         );

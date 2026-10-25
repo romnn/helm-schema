@@ -712,3 +712,120 @@ fn open_root_omits_only_the_generated_root_closure() {
         want: Some(&serde_json::json!({}))
     );
 }
+
+fn read_footprint(kind: ValueKind, path: &str) -> ContractIr {
+    ContractIr::from_contract_uses(vec![ContractUse::new(
+        helm_schema_core::ValuesPath::parse(path),
+        YamlPath(Vec::new()),
+        kind,
+        Vec::new(),
+        None,
+    )])
+}
+
+#[test]
+fn unknown_root_read_region_withdraws_only_inferred_root_closure() {
+    let contract = read_footprint(ValueKind::WidenedRegion, "");
+    sim_assert_eq!(
+        have: schema_with_policy(contract, "{}", STRICT, SchemaProfile::Full),
+        want: serde_json::json!({
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": { "global": {} }
+        })
+    );
+}
+
+#[test]
+fn rebased_unknown_region_keeps_its_scope_without_a_member_kind() {
+    let mut contract = read_footprint(ValueKind::WidenedRegion, "");
+    contract.map_value_paths(|path| {
+        helm_schema_core::ValuesPath::from_segments(
+            std::iter::once(helm_schema_core::Segment::Literal("dependency".to_string()))
+                .chain(path.segments().cloned()),
+        )
+    });
+    let signals = contract.finalize().into_schema_signals();
+    assert!(
+        signals
+            .evidence_for(&helm_schema_core::ValuesPath::parse("dependency"))
+            .is_some_and(|evidence| evidence.facts.has_unknown_read_region)
+    );
+    sim_assert_eq!(
+        have: schema_with_policy(signals, "{}", STRICT, SchemaProfile::Full),
+        want: serde_json::json!({
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": { "dependency": {}, "global": {} },
+            "additionalProperties": false
+        })
+    );
+}
+
+#[test]
+fn exact_read_dependency_keeps_inferred_root_closure() {
+    sim_assert_eq!(
+        have: schema_with_policy(read_footprint(ValueKind::WidenedDependency, "choose"), "{}", STRICT, SchemaProfile::Full),
+        want: serde_json::json!({
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": { "choose": {}, "global": {} },
+            "additionalProperties": false
+        })
+    );
+}
+
+#[test]
+fn unknown_root_read_preserves_independent_provider_closure() {
+    #[derive(Debug)]
+    struct ClosedMapProvider;
+
+    impl ResourceSchemaOracle for ClosedMapProvider {
+        fn schema_fragment_for_use(
+            &self,
+            _use: &ProviderSchemaUse,
+        ) -> Option<ProviderSchemaFragment> {
+            Some(ProviderSchemaFragment::new(serde_json::json!({
+                "type": "object",
+                "properties": { "known": { "type": "string" } },
+                "additionalProperties": false
+            })))
+        }
+    }
+
+    let contract = ContractIr::from_contract_uses(vec![
+        ContractUse::new(
+            helm_schema_core::ValuesPath::default(),
+            YamlPath(Vec::new()),
+            ValueKind::WidenedRegion,
+            Vec::new(),
+            None,
+        ),
+        ContractUse::new(
+            helm_schema_core::ValuesPath::parse("config"),
+            YamlPath(vec!["spec".to_string()]),
+            ValueKind::YamlSerialized,
+            Vec::new(),
+            Some(ResourceRef::concrete(
+                "example.io/v1".to_string(),
+                "Example".to_string(),
+            )),
+        ),
+    ]);
+    let signals = contract.finalize().into_schema_signals();
+    sim_assert_eq!(
+        have: generate_values_schema(ValuesSchemaInput::new(&signals, &ClosedMapProvider)),
+        want: serde_json::json!({
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+                "config": {
+                    "type": "object",
+                    "properties": { "known": { "type": "string" } },
+                    "additionalProperties": false
+                },
+                "global": {}
+            }
+        })
+    );
+}

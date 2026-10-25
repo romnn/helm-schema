@@ -11,12 +11,16 @@ fn conditional_path(value: &str) -> helm_schema_core::ValuesPath {
 }
 
 mod binding_leaf_selection;
+mod bound_value_analysis;
+#[path = "value_path_context/condition_predicate.rs"]
+mod condition_predicate;
 mod contract;
 mod contract_signals;
 mod evaluated_value_ownership;
 mod expr_eval;
 mod expr_eval_helper_hooks;
 mod fragment_dict_config_guards;
+mod fragment_eval_header;
 mod fragment_expr_eval;
 mod fragment_fanout;
 mod fragment_golden;
@@ -27,6 +31,7 @@ mod observed_facts;
 mod range_modes;
 mod resource_identity;
 mod scalar_content_view;
+mod scalar_kinds;
 mod selection_reachability;
 mod state;
 mod symbolic_local_state;
@@ -1024,47 +1029,4 @@ fn checksum_include_rows_stay_serialized_at_the_annotation_slot() {
         !annotation_kinds.is_empty(),
         "the checksum include must still attribute its file's paths"
     );
-}
-
-pub(crate) fn bind_test_fragment(
-    slot: &mut crate::value::LocalSlot,
-    binding: Option<crate::eval_env::LocalBinding>,
-) {
-    let dispatch = slot.binding().scalar_dispatch.clone();
-    slot.bind_runtime(binding, dispatch);
-}
-
-pub(crate) fn bind_test_dispatch(
-    slot: &mut crate::value::LocalSlot,
-    dispatch: Option<crate::scalar_value::ScalarValueDispatch>,
-) {
-    let binding = slot.binding().binding.clone();
-    slot.bind_runtime(binding, dispatch);
-}
-
-pub(crate) fn bind_test_defaults(
-    slot: &mut crate::value::LocalSlot,
-    defaults: Option<std::collections::BTreeSet<helm_schema_core::ValuesPath>>,
-) {
-    let output_meta = slot.binding().output_meta.clone();
-    slot.bind_metadata(defaults, output_meta);
-}
-
-pub(crate) fn bind_test_output_meta(
-    slot: &mut crate::value::LocalSlot,
-    output_meta: Option<
-        std::collections::BTreeMap<
-            helm_schema_core::ValuesPath,
-            crate::helper_meta::HelperOutputMeta,
-        >,
-    >,
-) {
-    let defaults = slot.binding().default_paths.clone();
-    slot.bind_metadata(defaults, output_meta);
-}
-
-impl crate::eval_env::LocalBinding {
-    pub(crate) fn evaluated(value: crate::abstract_value::AbstractValue) -> Self {
-        Self::new(value, crate::eval_env::BindingEvaluationMode::Evaluated)
-    }
 }

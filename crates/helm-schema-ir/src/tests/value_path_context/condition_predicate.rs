@@ -6,13 +6,11 @@ use test_util::prelude::sim_assert_eq;
 
 use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
-use crate::eval_env::{BindingDecision, EvalEnv, LocalBinding};
-use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_meta::HelperOutputMeta;
-use crate::scalar_value::TruthCondition;
 use crate::{Guard, GuardValue};
 
-use super::*;
+use helm_schema_ast::{Literal, TemplateExpr};
+use helm_schema_core::Predicate;
 
 macro_rules! values_path {
     ($path:expr $(,)?) => {
@@ -100,13 +98,8 @@ fn invalid_kind_guard_abstains_for_a_meta_selected_subject() {
 fn selected_binding_type_test_keeps_its_decision_condition() {
     let use_b = Predicate::truthy_path("useB");
     let mut context = condition_context(HashMap::new());
-    context.eval_env.locals.insert(
-        "selected".to_string(),
-        LocalBinding::select(
-            BindingDecision::new(TruthCondition::exact(use_b.clone())),
-            LocalBinding::evaluated(values_path!("b")),
-            LocalBinding::evaluated(values_path!("a")),
-        ),
+    context.source.push_str(
+        "{{ $selected := .Values.a }}{{ if .Values.useB }}{{ $selected = .Values.b }}{{ end }}",
     );
     let expression = parse_action_expressions(r#"{{ kindIs "string" $selected }}"#)
         .into_iter()
@@ -120,13 +113,10 @@ fn selected_binding_type_test_keeps_its_decision_condition() {
         path: helm_schema_core::ValuesPath::parse("b"),
         schema_type: "string".to_string(),
     });
-    let expected = context
-        .eval_env
-        .predicate_memo
-        .normalize(Predicate::Or(vec![
-            Predicate::all(vec![use_b.clone(), string_b]),
-            Predicate::all(vec![use_b.negated(), string_a]),
-        ]));
+    let expected = helm_schema_core::PredicateMemo::new().normalize(Predicate::Or(vec![
+        Predicate::all(vec![use_b.clone(), string_b]),
+        Predicate::all(vec![use_b.negated(), string_a]),
+    ]));
 
     sim_assert_eq!(
         have: context.condition_predicate_expr(&expression),
@@ -149,16 +139,195 @@ fn parse_condition_with_template_facts(
         .unwrap_or_default()
 }
 
-fn condition_context(
-    template_bindings: HashMap<String, AbstractValue>,
-) -> ValuePathContext<'static> {
+struct ConditionContext {
+    source: String,
+    defines: DefineIndex,
+}
+
+impl ConditionContext {
+    fn execution(
+        &self,
+        expression: &TemplateExpr,
+    ) -> (crate::value::DocumentExecution, helm_schema_syntax::Span) {
+        let mut source = self.source.clone();
+        source.push_str(&format!("{{{{ if {} }}}}", expression_source(expression)));
+        let start = source.len();
+        source.push_str("selected{{ end }}");
+        let db = IrAnalysisDb::new(&self.defines);
+        (
+            crate::value::execute_document(&source, None, &db),
+            helm_schema_syntax::Span::new(start, start + "selected".len()),
+        )
+    }
+
+    fn condition_predicate_expr(&self, expression: &TemplateExpr) -> Predicate {
+        let (execution, span) = self.execution(expression);
+        execution.condition_for_span(span, None)
+    }
+
+    fn condition_lowering_is_faithful(&self, expression: &TemplateExpr) -> bool {
+        let (execution, span) = self.execution(expression);
+        !execution
+            .text_for_span(span, None)
+            .any(|(_, text)| text.is_none())
+            && !execution
+                .condition_for_span(span, None)
+                .contains_approximation()
+    }
+
+    fn condition_lowering_is_usable_for_control(&self, expression: &TemplateExpr) -> bool {
+        let (execution, _) = self.execution(expression);
+        execution.text().next().is_some()
+    }
+}
+
+fn expression_source(expression: &TemplateExpr) -> String {
+    match expression {
+        TemplateExpr::Literal(Literal::String(text) | Literal::RawString(text)) => {
+            format!("{text:?}")
+        }
+        TemplateExpr::Literal(Literal::Int(value)) => value.to_string(),
+        TemplateExpr::Literal(Literal::Float(value)) => format!("{value:?}"),
+        TemplateExpr::Literal(Literal::Bool(value)) => value.to_string(),
+        TemplateExpr::Literal(Literal::Nil) => "nil".to_string(),
+        TemplateExpr::Field(path) => format!(".{}", path.join(".")),
+        TemplateExpr::Variable(name) => format!("${name}"),
+        TemplateExpr::Selector { operand, path } => {
+            format!("({}).{}", expression_source(operand), path.join("."))
+        }
+        TemplateExpr::Call { function, args } => {
+            let args = args
+                .iter()
+                .map(|argument| match argument {
+                    TemplateExpr::Call { .. } | TemplateExpr::Pipeline(_) => {
+                        format!("({})", expression_source(argument))
+                    }
+                    _ => expression_source(argument),
+                })
+                .collect::<Vec<_>>()
+                .join(" ");
+            format!("{function} {args}")
+        }
+        TemplateExpr::Pipeline(stages) => stages
+            .iter()
+            .map(expression_source)
+            .collect::<Vec<_>>()
+            .join(" | "),
+        TemplateExpr::Parenthesized(inner) => format!("({})", expression_source(inner)),
+        TemplateExpr::VariableDefinition { name, value } => {
+            format!("{name} := {}", expression_source(value))
+        }
+        TemplateExpr::Assignment { name, value } => {
+            format!("{name} = {}", expression_source(value))
+        }
+        TemplateExpr::Unknown(source) => source.clone(),
+    }
+}
+
+fn fixture_source(value: &AbstractValue) -> String {
+    match value {
+        AbstractValue::ValuesPath(path) | AbstractValue::OutputPath(path, _) => format!(
+            ".Values{}",
+            if path.encode().is_empty() {
+                String::new()
+            } else {
+                format!(".{}", path.encode())
+            }
+        ),
+        AbstractValue::JsonDecodedPath(path) => format!("(fromJson .Values.{})", path.encode()),
+        AbstractValue::RootContext => ".".to_string(),
+        AbstractValue::StringSet(strings) => strings
+            .first()
+            .map_or_else(|| r#""""#.to_string(), |text| format!("{text:?}")),
+        AbstractValue::Dict(entries)
+        | AbstractValue::Overlay {
+            entries,
+            fallback: _,
+        } => {
+            let fields = entries
+                .iter()
+                .map(|(key, value)| format!("{key:?} {}", fixture_source(value)))
+                .collect::<Vec<_>>()
+                .join(" ");
+            format!("(dict {fields})")
+        }
+        AbstractValue::List(items) => format!(
+            "(list {})",
+            items
+                .iter()
+                .map(fixture_source)
+                .collect::<Vec<_>>()
+                .join(" ")
+        ),
+        AbstractValue::MergedLayers(items) => format!(
+            "(merge {})",
+            items
+                .iter()
+                .map(fixture_source)
+                .collect::<Vec<_>>()
+                .join(" ")
+        ),
+        AbstractValue::FirstTruthy(items) => format!(
+            "(coalesce {})",
+            items
+                .iter()
+                .map(fixture_source)
+                .collect::<Vec<_>>()
+                .join(" ")
+        ),
+        AbstractValue::Choice(items) => format!(
+            "(coalesce {})",
+            items
+                .iter()
+                .map(fixture_source)
+                .collect::<Vec<_>>()
+                .join(" ")
+        ),
+        AbstractValue::Top
+        | AbstractValue::Unknown
+        | AbstractValue::RangeKey(_)
+        | AbstractValue::KeysList(_)
+        | AbstractValue::DerivedBoolean(_)
+        | AbstractValue::SplitList { .. }
+        | AbstractValue::SplitSegment { .. }
+        | AbstractValue::Widened(_) => ".Values.__unknown_fixture".to_string(),
+    }
+}
+
+fn fixture_condition(predicate: &Predicate) -> Option<String> {
+    use helm_schema_core::PredicateKind;
+    match predicate.kind() {
+        PredicateKind::True => Some("true".to_string()),
+        PredicateKind::False => Some("false".to_string()),
+        PredicateKind::Guard(Guard::Truthy { path }) => Some(format!(".Values.{}", path.encode())),
+        PredicateKind::Not(inner) => Some(format!("(not {})", fixture_condition(inner)?)),
+        PredicateKind::And(parts) | PredicateKind::Or(parts) => {
+            let function = if matches!(predicate.kind(), PredicateKind::And(_)) {
+                "and"
+            } else {
+                "or"
+            };
+            Some(format!(
+                "({function} {})",
+                parts
+                    .iter()
+                    .map(fixture_condition)
+                    .collect::<Option<Vec<_>>>()?
+                    .join(" ")
+            ))
+        }
+        PredicateKind::Guard(_) | PredicateKind::Approximate { .. } => None,
+    }
+}
+
+fn condition_context(template_bindings: HashMap<String, AbstractValue>) -> ConditionContext {
     condition_context_with_output_meta(template_bindings, HashMap::new())
 }
 
 fn condition_context_with_output_meta(
     template_bindings: HashMap<String, AbstractValue>,
     template_output_meta: HashMap<String, BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>,
-) -> ValuePathContext<'static> {
+) -> ConditionContext {
     condition_context_with_defines(template_bindings, template_output_meta, DefineIndex::new())
 }
 
@@ -166,33 +335,53 @@ fn condition_context_with_defines(
     template_bindings: HashMap<String, AbstractValue>,
     template_output_meta: HashMap<String, BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>,
     defines: DefineIndex,
-) -> ValuePathContext<'static> {
-    let mut eval_env =
-        EvalEnv::from_helper_context(None, None, crate::eval_env::BindingEvaluationMode::Direct)
-            .without_helper_call_args();
-    eval_env.locals = template_bindings
-        .into_iter()
-        .map(|(name, value)| (name, LocalBinding::evaluated(value)))
-        .collect();
-    for (name, metadata) in template_output_meta {
-        crate::tests::bind_test_output_meta(eval_env.state.slot_mut(&name), Some(metadata));
+) -> ConditionContext {
+    let mut source = String::new();
+    for (name, value) in template_bindings {
+        let mut value = fixture_source(&value);
+        if let Some(metadata) = template_output_meta.get(&name) {
+            if let Some(fallback) = metadata
+                .values()
+                .find_map(|meta| meta.default_fallback.as_ref())
+            {
+                let fallback = match fallback {
+                    GuardValue::String(text) => format!("{text:?}"),
+                    value => value.to_string(),
+                };
+                value = format!("(default {fallback} {value})");
+            } else if !metadata.is_empty() {
+                let paths = metadata
+                    .keys()
+                    .map(|path| format!(".Values.{}", path.encode()))
+                    .collect::<Vec<_>>();
+                value = if paths.len() == 1 {
+                    paths[0].clone()
+                } else {
+                    format!("(coalesce {})", paths.join(" "))
+                };
+                let branches = metadata
+                    .values()
+                    .flat_map(|meta| &meta.predicates)
+                    .map(|branch| {
+                        Some(format!(
+                            "(and {})",
+                            branch
+                                .iter()
+                                .map(fixture_condition)
+                                .collect::<Option<Vec<_>>>()?
+                                .join(" ")
+                        ))
+                    })
+                    .collect::<Option<Vec<_>>>();
+                if let Some(branches) = branches.filter(|branches| !branches.is_empty()) {
+                    source.push_str(&format!("{{{{ ${name} := .Values.__unknown_fixture }}}}{{{{ if or {} }}}}{{{{ ${name} = {value} }}}}{{{{ end }}}}", branches.join(" ")));
+                    continue;
+                }
+            }
+        }
+        source.push_str(&format!("{{{{ ${name} := {value} }}}}"));
     }
-    let template_truthiness_abstentions = Box::leak(Box::new(crate::value::State::default()));
-    let defines = Box::leak(Box::new(defines));
-    let analysis_db = Box::leak(Box::new(IrAnalysisDb::new(defines)));
-
-    let typeof_bindings = Box::leak(Box::new(crate::value::State::default()));
-
-    ValuePathContext {
-        helper_dispatch_depth: std::cell::Cell::new(0),
-        eval_env,
-        template_truthiness_abstentions,
-        typeof_bindings,
-        int_cast_bindings: Box::leak(Box::new(crate::value::State::default())),
-        fragment_context: FragmentEvalContext::new(analysis_db),
-        current_dot_fragment: None,
-        root_dot_identity: RootDotIdentity::Unresolved,
-    }
+    ConditionContext { source, defines }
 }
 
 #[test]
@@ -244,9 +433,7 @@ fn absent_custom_root_field_is_false_until_set() {
         .into_iter()
         .next()
         .expect("parsed root-field condition");
-    let mut context = condition_context(HashMap::new());
-    context.eval_env.dot = Some(AbstractValue::RootContext);
-    context.root_dot_identity = RootDotIdentity::ExplicitRoot;
+    let context = condition_context(HashMap::new());
 
     assert!(context.condition_lowering_is_faithful(&expr));
     sim_assert_eq!(
@@ -879,21 +1066,7 @@ fn files_get_printf_condition_decodes_to_finite_name_disjunction() {
     defines.add_file_source("files/profile-demo.yaml", "a: 1\n");
     defines.add_file_source("files/profile-ambient.yaml", "b: 2\n");
     defines.add_file_source("templates/other.yaml", "kind: ConfigMap\n");
-    let defines = Box::leak(Box::new(defines));
-    let analysis_db = Box::leak(Box::new(IrAnalysisDb::new(defines)));
-    let eval_env =
-        EvalEnv::from_helper_context(None, None, crate::eval_env::BindingEvaluationMode::Direct)
-            .without_helper_call_args();
-    let context = ValuePathContext {
-        helper_dispatch_depth: std::cell::Cell::new(0),
-        eval_env,
-        template_truthiness_abstentions: Box::leak(Box::new(crate::value::State::default())),
-        typeof_bindings: Box::leak(Box::new(crate::value::State::default())),
-        int_cast_bindings: Box::leak(Box::new(crate::value::State::default())),
-        fragment_context: FragmentEvalContext::new(analysis_db),
-        current_dot_fragment: None,
-        root_dot_identity: RootDotIdentity::Unresolved,
-    };
+    let context = condition_context_with_defines(HashMap::new(), HashMap::new(), defines);
 
     let wrapped = r#"{{ .Files.Get (printf "files/profile-%s.yaml" .Values.profile) }}"#;
     let top = parse_action_expressions(wrapped)

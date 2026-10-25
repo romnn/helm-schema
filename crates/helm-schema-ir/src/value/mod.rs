@@ -1,154 +1,393 @@
-mod branch_join;
+mod algebra;
+mod control;
+mod eval;
+mod heap;
+mod helpers;
+mod invoke;
 pub(crate) mod kinds;
-mod local_join;
-mod local_state;
-mod state;
-pub(crate) use state::{RootSnapshot, State};
+mod operations;
+mod output;
+mod query;
 pub(crate) mod scalar_value;
+mod session;
+mod shape_summary;
+mod state;
+pub(crate) use session::execute_document;
 
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::cell::{Cell, RefCell};
+use std::collections::{BTreeMap, BTreeSet};
+use std::rc::Rc;
 
-use helm_schema_core::Predicate;
+use helm_schema_core::{Predicate, ValuesPath};
 
-use crate::abstract_value::AbstractValue;
-use crate::bound_value_analysis::GetBinding;
-use crate::eval_env::LocalBinding;
-use crate::helper_meta::HelperOutputMeta;
-use crate::symbolic_local_state::IntCastSource;
-use scalar_value::ScalarContent;
+use crate::value::scalar_value::ScalarContent;
 
-pub(crate) type LocalSlots = HashMap<String, LocalSlot>;
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct Value {
+    node: Rc<ValueNode>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+enum ValueNode {
+    Leaf(Leaf),
+    Select {
+        decision: Rc<FrozenTest>,
+        yes: Value,
+        no: Value,
+    },
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct Leaf {
+    datum: Datum,
+    origin: Origin,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+enum Datum {
+    Scalar {
+        go_type: ScalarType,
+        content: Option<ScalarContent>,
+    },
+    Map {
+        view: MapType,
+        target: Option<ObjectId>,
+    },
+    Sequence(Option<Rc<Vec<Value>>>),
+    Strings(ObjectId),
+    Slot {
+        backing: ObjectId,
+        index: usize,
+    },
+    Unknown(UnknownValue),
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum ScalarType {
+    Nil,
+    Bool,
+    String,
+    Int,
+    Int64,
+    Uint8,
+    Uint64,
+    Float64,
+    Complex128,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum MapType {
+    Interface,
+    String,
+    Values,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+enum AliasSet {
+    Known(BTreeSet<ObjectId>),
+    RenderGraph,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct FrozenTest {
+    id: u64,
+    when_true: Predicate,
+    when_false: Predicate,
+    coverage: Coverage,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Coverage {
+    Exact,
+    Partial,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct DecisionEdge {
+    test: Rc<FrozenTest>,
+    taken: bool,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+struct ObjectId {
+    ordinal: u64,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct SnapshotId {
+    ordinal: u64,
+}
+
+/// Forks share only the allocator; immutable versions own every semantic fact.
+#[derive(Debug, Default)]
+struct Arena {
+    next_object: Cell<u64>,
+    next_snapshot: Cell<u64>,
+    next_decision: Cell<u64>,
+    next_call: Cell<u64>,
+    next_program: Cell<u64>,
+    next_invocation: Cell<u64>,
+    aggregate_summary: Cell<Option<u64>>,
+    input_objects: RefCell<BTreeMap<ValuesPath, ObjectId>>,
+    input_paths: RefCell<BTreeMap<ObjectId, ValuesPath>>,
+}
+
+#[derive(Clone, Debug)]
+struct Heap {
+    version: Rc<HeapVersion>,
+    arena: Rc<Arena>,
+}
+
+#[derive(Clone, Debug)]
+struct HeapVersion {
+    id: SnapshotId,
+    pages: BTreeMap<u64, Rc<ObjectPage>>,
+}
+
+type ObjectPage = BTreeMap<ObjectId, Rc<ObjectVersion>>;
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct ObjectVersion {
+    revision: SnapshotId,
+    multiplicity: Multiplicity,
+    data: ObjectData,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Multiplicity {
+    Singleton,
+    Summary,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+enum ObjectData {
+    Map {
+        fields: BTreeMap<String, Field>,
+        remainder: Remainder,
+    },
+    Strings(Vec<Value>),
+    Opaque {
+        reachable: AliasSet,
+    },
+    Widened {
+        inputs: BTreeSet<ValuesPath>,
+    },
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+enum Field {
+    Absent,
+    Present(Value),
+    Select {
+        decision: Rc<FrozenTest>,
+        yes: Box<Field>,
+        no: Box<Field>,
+    },
+    Unknown,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Remainder {
+    Closed,
+    Open,
+    Input,
+}
+
+#[derive(Clone, Debug)]
+pub(crate) struct FrozenValue {
+    heap: Rc<HeapVersion>,
+    value: Value,
+}
+
+#[derive(Clone, Debug)]
+struct FrozenField {
+    heap: Rc<HeapVersion>,
+    field: Field,
+}
+
+#[derive(Clone, Debug)]
+pub(crate) struct State {
+    heap: Heap,
+    frames: Vec<Frame>,
+    active: Vec<DecisionEdge>,
+    output: TextBuffer,
+    output_widened: bool,
+    sites: Vec<ExecutedSite>,
+    text_sites: Vec<ExecutedText>,
+    reads: BTreeSet<RuntimeRead>,
+    calls: Vec<String>,
+    program: u64,
+    namespace_unknown: bool,
+    invocations: Vec<ExecutedInvocationRecord>,
+    invocation_records_complete: bool,
+    loops: Vec<LoopId>,
+}
+
+#[derive(Clone, Debug)]
+struct Frame {
+    bindings: BTreeMap<String, Value>,
+    dot: Option<Value>,
+    boundary: FrameBoundary,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum FrameBoundary {
+    Call(u64),
+    Lexical,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct LoopId {
+    call: u64,
+    ordinal: u64,
+}
+
+#[derive(Clone, Debug)]
+struct Exit {
+    state: State,
+    flow: Flow,
+}
+
+#[derive(Clone, Debug)]
+enum Flow {
+    Normal(Normal),
+    Abort(AbortReason),
+    Break(LoopId),
+    Continue(LoopId),
+}
+
+#[derive(Clone, Debug)]
+struct Normal {
+    value: Value,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum AbortReason {
+    Arity,
+    Type,
+    Required,
+    Fail,
+}
+
+#[derive(Debug)]
+struct Invocation {
+    callee: Callee,
+    operands: Vec<Operand>,
+    site: u64,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+enum Callee {
+    Function(String),
+}
+
+#[derive(Clone, Debug)]
+struct Operand {
+    value: Value,
+    site: u64,
+    form: ArgumentForm,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum ArgumentForm {
+    DirectLiteral,
+    Evaluated,
+}
+
+#[derive(Clone, Debug, Default)]
+pub(crate) struct TextBuffer {
+    parts: Vec<TextPart>,
+}
+#[derive(Clone, Debug)]
+enum TextPart {
+    Bytes(String),
+    Frozen(FrozenValue),
+    Unknown(BTreeSet<ValuesPath>),
+    Select {
+        decision: Rc<FrozenTest>,
+        yes: Rc<TextBuffer>,
+        no: Rc<TextBuffer>,
+    },
+}
+#[derive(Clone, Debug)]
+pub(crate) struct ExecutedSite {
+    program: u64,
+    coverage_exact: bool,
+    ordinal: usize,
+    span: helm_schema_syntax::Span,
+    source_path: Option<String>,
+    condition: Predicate,
+    value: FrozenValue,
+    rendered: bool,
+}
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct ExecutedText {
+    program: u64,
+    coverage_exact: bool,
+    ordinal: usize,
+    bytes: String,
+    span: helm_schema_syntax::Span,
+    source_path: Option<String>,
+    condition: Predicate,
+}
+#[derive(Debug)]
+pub(crate) struct DocumentExecution {
+    exits: Vec<Exit>,
+    observed_facts: crate::observed_facts::ObservedFacts,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+struct RuntimeRead {
+    coverage: ReadCoverage,
+    path: ValuesPath,
+    condition: Predicate,
+}
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub(crate) struct LocalSlot {
-    range_domain: Option<Vec<String>>,
-    get_binding: Option<GetBinding>,
-    binding: Option<LocalBinding>,
-    default_paths: Option<BTreeSet<helm_schema_core::ValuesPath>>,
-    output_meta: Option<BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>,
-    /// Runtime scalar values retained independently of fragment provenance.
-    /// Branch joins guard each alternative by the branch that assigned it,
-    /// so later helper conditions consume the same value semantics Helm does.
-    scalar_dispatch: Option<ScalarValueDispatch>,
-    /// Sufficient conditions under which a monotone local accumulator is
-    /// nonempty. An explicit [`Predicate::False`] is the empty seed; a
-    /// missing entry means the local's truthiness is not structurally known.
-    truthy_reduction: Option<Predicate>,
-    /// Locals whose branch predicate exceeded the bounded stamping budget.
-    /// Their truthiness must abstain instead of falling back to the local's
-    /// unguarded value paths.
-    truthiness_abstained: bool,
-    /// Locals that received a reassignment which does not imply truthiness
-    /// (an explicit falsy write, or a condition-valued write). Such a write
-    /// makes the accumulator last-write-wins instead of monotone, so a
-    /// range exit must drop the local's reduction rather than read it
-    /// existentially. Straight-line `if`/`else` joins stay exact and keep
-    /// consuming the reduction. A declaration seeds a fresh accumulator and
-    /// resets the mark.
-    truthiness_cleared: bool,
-    /// Locals bound to a type descriptor. Each described path retains the
-    /// predicates under which that path supplied the selected value.
-    typeof_source: Option<BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>,
-    /// Locals bound to a total integer cast of one values path
-    /// (`$replicas := int (default 1 .Values.controller.replicas)`):
-    /// comparisons on the local may strengthen through the raw-integer
-    /// sound subsets exactly as the inline cast expression would.
-    int_cast_source: Option<IntCastSource>,
-    /// Range variables bound to the MEMBER identity of a directly ranged
-    /// path (`$v` in `range $k, $v := .Values.x` holds each `x.*` value).
-    /// Conditions and assignments resolve through these; hole rendering
-    /// does not, so member reads do not manufacture placed rows.
-    range_member_value: Option<AbstractValue>,
-    /// For a range variable bound over a local-dict OVERLAY (`$services :=
-    /// .Values.service.additionalServices` + `set $services "default"
-    /// (omit …)`): one literal entry the range DEFINITELY iterates on
-    /// every render. Unfaithful member conditions re-decode under this
-    /// binding as a sound subset (positive-polarity consumers only).
-    definite_range_member_value: Option<AbstractValue>,
+struct Origin {
+    identity: Option<ValuesPath>,
+    influences: BTreeSet<ValuesPath>,
+}
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct UnknownValue {
+    types: TypeCoverage,
+    aliases: AliasSet,
+}
+#[derive(Clone, Debug, PartialEq, Eq)]
+enum TypeCoverage {
+    Unresolved,
+    Scalar(ScalarType),
+    Map(MapType),
+    Sequence,
 }
 
-impl LocalSlot {
-    pub(crate) fn has_current_value(&self) -> bool {
-        !matches!(
-            self,
-            Self {
-                range_domain: None,
-                get_binding: None,
-                binding: None,
-                default_paths: None,
-                output_meta: None,
-                scalar_dispatch: _,
-                truthy_reduction: None,
-                truthiness_abstained: false,
-                truthiness_cleared: _,
-                typeof_source: None,
-                int_cast_source: None,
-                range_member_value: None,
-                definite_range_member_value: _,
-            }
-        ) || self
-            .scalar_dispatch
-            .as_ref()
-            .is_some_and(|dispatch| dispatch.content().is_some())
-    }
-
-    pub(crate) const EMPTY: Self = Self {
-        range_domain: None,
-        get_binding: None,
-        binding: None,
-        default_paths: None,
-        output_meta: None,
-        scalar_dispatch: None,
-        truthy_reduction: None,
-        truthiness_abstained: false,
-        truthiness_cleared: false,
-        typeof_source: None,
-        int_cast_source: None,
-        range_member_value: None,
-        definite_range_member_value: None,
-    };
+#[derive(Clone, Debug)]
+struct CertifiedSourcePlan {
+    proof: ShapeProof,
+    plan: SourceSummaryPlan,
 }
-
-#[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
-pub(crate) struct RootSlot {
-    value: Option<AbstractValue>,
-    truth: Option<Predicate>,
-    dispatch: Option<ScalarValueDispatch>,
+#[derive(Clone, Debug)]
+struct ShapeProof {
+    complete: bool,
 }
-
-impl RootSlot {
-    pub(crate) fn is_empty(&self) -> bool {
-        matches!(
-            self,
-            Self {
-                value: None,
-                truth: None,
-                dispatch: None
-            }
-        )
-    }
-
-    pub(crate) fn merge(&mut self, incoming: Self) {
-        let Self {
-            value,
-            truth,
-            dispatch,
-        } = incoming;
-        if let Some(value) = value {
-            self.truth = None;
-            self.dispatch = None;
-            self.value = Some(value);
-        }
-        self.truth = truth.or(self.truth.take());
-        self.dispatch = dispatch.or(self.dispatch.take());
-    }
+#[derive(Clone, Debug)]
+enum SourceSummaryPlan {
+    NilScrub(NilScrubPlan),
+    ParsedMapListMerge(ParsedMapListMergePlan),
 }
-
-pub(crate) fn root_slots(values: HashMap<String, AbstractValue>) -> HashMap<String, RootSlot> {
-    values
-        .into_iter()
-        .map(|(name, value)| (name, RootSlot::new(Some(value), None, None)))
-        .collect()
+#[derive(Clone, Debug)]
+struct NilScrubPlan {
+    operand: usize,
+}
+#[derive(Clone, Debug)]
+struct ParsedMapListMergePlan {
+    operands: Vec<usize>,
+    renderer: TypedYamlMatchProof,
+    overwrite: bool,
+}
+#[derive(Clone, Debug)]
+struct TypedYamlMatchProof {
+    proof: ShapeProof,
 }
 
 /// Known scalar alternatives for one evaluated value.
@@ -217,219 +456,94 @@ impl ScalarValueDispatch {
 
 pub(crate) const MAX_SCALAR_DISPATCH_STATES: usize = 128;
 
-#[derive(Clone, Copy)]
-pub(crate) struct LocalSlotView<'a> {
-    pub(crate) range_domain: &'a Option<Vec<String>>,
-    pub(crate) get_binding: &'a Option<GetBinding>,
-    pub(crate) binding: &'a Option<LocalBinding>,
-    pub(crate) default_paths: &'a Option<BTreeSet<helm_schema_core::ValuesPath>>,
-    pub(crate) output_meta: &'a Option<BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>,
-    pub(crate) scalar_dispatch: &'a Option<ScalarValueDispatch>,
-    pub(crate) truthy_reduction: &'a Option<Predicate>,
-    pub(crate) truthiness_abstained: bool,
-    pub(crate) typeof_source: &'a Option<BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>,
-    pub(crate) int_cast_source: &'a Option<IntCastSource>,
-    pub(crate) definite_range_member_value: &'a Option<AbstractValue>,
-}
-
-impl LocalSlot {
-    pub(crate) fn binding(&self) -> LocalSlotView<'_> {
-        LocalSlotView {
-            range_domain: &self.range_domain,
-            get_binding: &self.get_binding,
-            binding: &self.binding,
-            default_paths: &self.default_paths,
-            output_meta: &self.output_meta,
-            scalar_dispatch: &self.scalar_dispatch,
-            truthy_reduction: &self.truthy_reduction,
-            truthiness_abstained: self.truthiness_abstained,
-            typeof_source: &self.typeof_source,
-            int_cast_source: &self.int_cast_source,
-            definite_range_member_value: &self.definite_range_member_value,
-        }
-    }
-}
-
-impl LocalSlot {
-    pub(crate) fn merge_omitted_keys(
-        &mut self,
-        additions: &BTreeMap<String, Vec<helm_schema_core::Guard>>,
-    ) {
-        if let Some(metas) = self.output_meta.as_mut() {
-            for meta in metas.values_mut() {
-                meta.predicates.clear();
-                meta.omitted_keys.extend(additions.clone());
-            }
-        }
-    }
-}
-
-impl LocalSlot {
-    pub(crate) fn replace_range_member(
-        &mut self,
-        value: Option<AbstractValue>,
-    ) -> Option<AbstractValue> {
-        std::mem::replace(&mut self.range_member_value, value)
-    }
-}
-
-#[derive(Clone, Copy)]
-pub(crate) struct RootSlotView<'a> {
-    pub(crate) value: &'a Option<AbstractValue>,
-    pub(crate) truth: &'a Option<Predicate>,
-    pub(crate) dispatch: &'a Option<ScalarValueDispatch>,
-}
-
-impl RootSlot {
-    pub(crate) fn binding(&self) -> RootSlotView<'_> {
-        RootSlotView {
-            value: &self.value,
-            truth: &self.truth,
-            dispatch: &self.dispatch,
-        }
-    }
-
-    pub(crate) fn new(
-        value: Option<AbstractValue>,
-        truth: Option<Predicate>,
-        dispatch: Option<ScalarValueDispatch>,
-    ) -> Self {
-        Self {
-            value,
-            truth,
-            dispatch,
-        }
-    }
-
-    pub(crate) fn map_value(
-        &mut self,
-        transform: impl FnOnce(&AbstractValue) -> Option<AbstractValue>,
-    ) {
-        if let Some(value) = &self.value
-            && let Some(replacement) = transform(value)
-        {
-            self.value = Some(replacement);
-        }
-    }
-
-    pub(crate) fn seed_value(&mut self, value: &AbstractValue) {
-        self.value.get_or_insert_with(|| value.clone());
-    }
-
-    pub(crate) fn clear_facts(&mut self) {
-        self.truth = None;
-        self.dispatch = None;
-    }
-}
-
-pub(crate) struct AssignmentBinding {
-    pub(crate) binding: Option<LocalBinding>,
-    pub(crate) scalar_dispatch: Option<ScalarValueDispatch>,
-    pub(crate) truthy_reduction: Option<Predicate>,
-    pub(crate) helper_scope: bool,
-    pub(crate) self_preserving: bool,
-}
-
-impl LocalSlot {
-    pub(crate) fn bind_runtime(
-        &mut self,
-        binding: Option<LocalBinding>,
-        dispatch: Option<ScalarValueDispatch>,
-    ) {
-        self.binding = binding;
-        self.scalar_dispatch = dispatch;
-    }
-
-    /// Preserves reassignment poison across reductions and resets it for a fresh declaration.
-    ///
-    /// A falsy-capable write makes range accumulation last-write-wins;
-    /// self-preserving nonempty accumulation remains monotone.
-    pub(crate) fn bind_truth(
-        &mut self,
-        kind: crate::fragment_assignment::AssignmentKind,
-        reduction: Option<Predicate>,
-        self_preserving: bool,
-    ) {
-        self.truthy_reduction = reduction;
-        match kind {
-            crate::fragment_assignment::AssignmentKind::Declaration => {
-                self.truthiness_abstained = false;
-                self.truthiness_cleared = false;
-            }
-            crate::fragment_assignment::AssignmentKind::Assignment => {
-                if self.truthiness_abstained {
-                    self.truthy_reduction = None;
-                }
-                self.truthiness_cleared |=
-                    !self_preserving && self.truthy_reduction.as_ref() != Some(&Predicate::True);
-            }
-        }
-    }
-
-    pub(crate) fn bind_metadata(
-        &mut self,
-        default_paths: Option<BTreeSet<helm_schema_core::ValuesPath>>,
-        output_meta: Option<BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>,
-    ) {
-        self.default_paths = default_paths;
-        self.output_meta = output_meta;
-    }
-
-    /// Keeps present empty metadata distinct from absent facts at every-exit joins.
-    pub(crate) fn record_assignment_metadata(
-        &mut self,
-        source: Option<IntCastSource>,
-        metadata: crate::eval_env::BindingValueMetadata,
-    ) {
-        if let Some(source) = source {
-            self.int_cast_source = Some(source);
-        }
-        let crate::eval_env::BindingValueMetadata {
-            default_paths,
-            output_meta,
-        } = metadata;
-        self.bind_metadata(Some(default_paths), Some(output_meta));
-    }
-
-    pub(crate) fn record_type_source(
-        &mut self,
-        sources: BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>,
-    ) {
-        self.typeof_source = Some(sources);
-    }
-
-    pub(crate) fn record_iteration_domain(&mut self, domain: Vec<String>) {
-        self.range_domain = Some(domain);
-    }
-    pub(crate) fn record_definite_member(&mut self, member: AbstractValue) {
-        self.definite_range_member_value = Some(member);
-    }
-}
-
-impl RootSlot {
-    /// Writes truth before value while retaining an earlier dispatch, as direct root writes do.
-    pub(crate) fn overwrite(&mut self, value: AbstractValue, truth: Option<Predicate>) {
-        if let Some(truth) = truth {
-            self.truth = Some(truth);
-        }
-        self.value = Some(value);
-    }
-}
-
-pub(crate) fn argument_slots(
-    bindings: HashMap<String, AbstractValue>,
-    dispatches: BTreeMap<String, ScalarValueDispatch>,
-) -> BTreeMap<String, RootSlot> {
-    let mut slots = BTreeMap::<String, RootSlot>::new();
-    for (name, value) in bindings {
-        slots.entry(name).or_default().value = Some(value);
-    }
-    for (name, dispatch) in dispatches {
-        slots.entry(name).or_default().dispatch = Some(dispatch);
-    }
-    slots
-}
-
 #[cfg(test)]
-#[path = "../tests/scalar_kinds.rs"]
+#[path = "../tests/runtime_execution.rs"]
 mod tests;
+
+#[derive(Clone, Debug)]
+pub(crate) struct ValueAlternative {
+    condition: Predicate,
+    value: FrozenValue,
+    coverage_exact: bool,
+}
+
+#[derive(Clone, Copy, Debug)]
+enum BoundReason {
+    ObjectClasses,
+    ObjectFields,
+    StringSlots,
+    OutputTerms,
+    ExecutionAlternatives,
+    LoopMembers,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+enum ReadCoverage {
+    ExactPath,
+    UnknownRegion,
+}
+
+#[derive(Default)]
+struct ExitBuffer {
+    exits: Vec<Exit>,
+    summarized: bool,
+}
+
+struct Execution {
+    exits: Vec<Exit>,
+}
+struct CallOutcome {
+    execution: Execution,
+}
+enum CompletionInput {
+    Invocation {
+        invocation: Invocation,
+        state: State,
+    },
+    Executed {
+        invocation: Invocation,
+        execution: Execution,
+        helper_return: Option<HelperReturn>,
+    },
+    Summarized {
+        plan: CertifiedSourcePlan,
+        invocation: Invocation,
+        state: State,
+    },
+}
+struct HelperReturn {
+    program: u64,
+    output: TextBuffer,
+    loops: Vec<LoopId>,
+    wrapper: Option<ProgramWrapperMetadata>,
+}
+struct CompletedExecution {
+    invocation: Invocation,
+    execution: Execution,
+    helper_return: Option<HelperReturn>,
+}
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct ExecutedInvocationRecord {
+    invocation: u64,
+    program: u64,
+    site: u64,
+    function: String,
+    wrapper: Option<ProgramWrapperMetadata>,
+}
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct ProgramWrapperMetadata {
+    family: Vec<u64>,
+    sentinels: Vec<WrapperSentinelSite>,
+}
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct WrapperSentinelSite {
+    key: String,
+    lookup: u64,
+    tpl: u64,
+    guard: u64,
+}
+
+#[derive(Default)]
+struct StateBuffer {
+    exits: ExitBuffer,
+}

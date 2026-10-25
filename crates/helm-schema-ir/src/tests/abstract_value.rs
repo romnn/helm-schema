@@ -209,11 +209,20 @@ fn guard_metadata_preserves_raw_identity_through_member_selection() {
     );
 
     sim_assert_eq!(have: selected.as_ref(), want: Some(&expected));
+    let db = crate::analysis_db::IrAnalysisDb::new(&helm_schema_ast::DefineIndex::new());
+    let execution = crate::value::execute_document(
+        r#"{{ if hasKey (index .Values.workers.celery.sets "*" "securityContexts" "pod") "runAsUser" }}{{ "selected" }}{{ end }}"#,
+        None,
+        &db,
+    );
+    let selected = execution
+        .sites()
+        .find(|site| site.value().exact_text().as_deref() == Some("selected"));
     sim_assert_eq!(
-        have: crate::value_path_context::value_has_key(&expected, "runAsUser"),
+        have: selected.map(|site| site.condition().clone()),
         want: Some(
             Predicate::from(helm_schema_core::Guard::Absent {
-                path: helm_schema_core::ValuesPath::parse("workers.celery.sets.*.securityContexts.pod.runAsUser"),
+                path: helm_schema_core::ValuesPath::parse(r"workers.celery.sets.\*.securityContexts.pod.runAsUser"),
             })
             .negated()
         )

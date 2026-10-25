@@ -113,23 +113,23 @@ fn yaml_serialized_paths(uses: &[ContractUse]) -> BTreeSet<&helm_schema_core::Va
 }
 
 fn string_requirement_routes(
-    fail_conditions: &BTreeSet<crate::eval_effect::FailCapture>,
+    fail_conditions: &BTreeSet<crate::observed_facts::FailCapture>,
 ) -> BTreeMap<
     helm_schema_core::ValuesPath,
     Vec<(
-        crate::eval_effect::StringRequirementRoute,
+        crate::observed_facts::StringRequirementRoute,
         helm_schema_core::Conjunction,
     )>,
 > {
     let mut routes = BTreeMap::<
         helm_schema_core::ValuesPath,
         BTreeSet<(
-            crate::eval_effect::StringRequirementRoute,
+            crate::observed_facts::StringRequirementRoute,
             helm_schema_core::Conjunction,
         )>,
     >::new();
     for capture in fail_conditions {
-        let crate::eval_effect::CaptureKind::StringRequirement {
+        let crate::observed_facts::CaptureKind::StringRequirement {
             path,
             route,
             selection,
@@ -137,7 +137,7 @@ fn string_requirement_routes(
         else {
             continue;
         };
-        if *route == crate::eval_effect::StringRequirementRoute::Serialized {
+        if *route == crate::observed_facts::StringRequirementRoute::Serialized {
             continue;
         }
         let mut predicates = capture.conjunction.clone();
@@ -159,7 +159,7 @@ fn string_requirement_routes(
             let mut routes = routes.into_iter().collect::<Vec<_>>();
             routes.sort_by(|left, right| left.1.len().cmp(&right.1.len()).then(left.cmp(right)));
             let mut minimal = Vec::<(
-                crate::eval_effect::StringRequirementRoute,
+                crate::observed_facts::StringRequirementRoute,
                 helm_schema_core::Conjunction,
             )>::new();
             for route in routes {

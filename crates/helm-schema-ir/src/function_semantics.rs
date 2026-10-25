@@ -303,6 +303,20 @@ impl FunctionSemantics {
         }
     }
 
+    /// Checks only the Go call signature; builtin transfer preconditions remain separate.
+    pub(crate) fn accepts_arity(self, count: usize) -> Option<bool> {
+        if self.parameters.is_empty()
+            && self.variadic.is_none()
+            && self.success == SuccessType::Selected
+        {
+            return None;
+        }
+        Some(match self.variadic {
+            Some(_) => count >= self.parameters.len(),
+            None => count == self.parameters.len(),
+        })
+    }
+
     pub(crate) fn parameter(self, index: usize) -> Option<GoType> {
         self.parameters.get(index).copied().or(self.variadic)
     }

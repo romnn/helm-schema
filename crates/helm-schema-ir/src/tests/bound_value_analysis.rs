@@ -1,25 +1,19 @@
-use std::collections::HashMap;
+use color_eyre::eyre::{self, OptionExt as _};
+use helm_schema_ast::{DefineIndex, TemplateExpr, parse_action_expressions};
+use std::collections::{BTreeSet, HashMap};
 use test_util::prelude::sim_assert_eq;
 
-use super::{
-    GetBinding, GetBindingPlan, parse_get_binding_from_exprs, parse_literal_list_range_expr,
-};
-use crate::eval_env::EvalEnv;
-use crate::expr_eval::eval_exprs_effects;
-use crate::fragment_assignment::AssignmentKind;
-use helm_schema_ast::parse_expr_text;
+use crate::analysis_db::IrAnalysisDb;
 
-fn parse_literal_list_range(header: &str) -> Option<(String, Vec<String>)> {
-    let header = header.trim();
-    let exprs = parse_expr_text(header);
-    let [expr] = exprs.as_slice() else {
-        return None;
-    };
-    parse_literal_list_range_expr(expr)
+struct GetBinding {
+    base: helm_schema_core::ValuesPath,
+    key_var: String,
 }
 
-fn parse_get_binding(text: &str) -> Option<GetBindingPlan> {
-    parse_get_binding_from_exprs(&parse_expr_text(text))
+fn execute(source: &str) -> crate::value::DocumentExecution {
+    let defines = DefineIndex::new();
+    let db = IrAnalysisDb::new(&defines);
+    crate::value::execute_document(source, None, &db)
 }
 
 fn extract_bound_values(
@@ -27,66 +21,81 @@ fn extract_bound_values(
     range_domains: &HashMap<String, Vec<String>>,
     get_bindings: &HashMap<String, GetBinding>,
 ) -> Vec<String> {
-    let mut state = crate::value::State::default();
+    let mut source = String::new();
     for (name, domain) in range_domains {
-        state.slot_mut(name).record_iteration_domain(domain.clone());
+        source.push_str(&format!("{{{{- range ${name} := list"));
+        for member in domain {
+            source.push_str(&format!(" {member:?}"));
+        }
+        source.push_str(" -}}");
     }
     for (name, binding) in get_bindings {
-        state.apply_get_binding(GetBindingPlan {
-            variable: name.clone(),
-            kind: crate::fragment_assignment::AssignmentKind::Assignment,
-            binding: binding.clone(),
-        });
+        source.push_str(&format!(
+            "{{{{- ${name} := get .Values.{} ${} -}}}}",
+            binding.base.encode(),
+            binding.key_var
+        ));
     }
-    let env = EvalEnv {
-        state: state.expression_state(),
-        ..EvalEnv::default()
-    };
-    eval_exprs_effects(&parse_expr_text(text), &env)
-        .bound_output_paths
-        .into_iter()
+    if text.trim_start().starts_with("{{") {
+        source.push_str(text);
+    } else {
+        source.push_str(&format!("{{{{ {text} }}}}"));
+    }
+    for _ in range_domains {
+        source.push_str("{{- end -}}");
+    }
+    execute(&source)
+        .sites()
+        .filter(|site| site.rendered())
+        .flat_map(|site| site.value().inputs())
         .map(|path| path.encode())
+        .collect::<BTreeSet<_>>()
+        .into_iter()
         .collect()
 }
 
 #[test]
-fn parse_get_binding_detects_declaration_from_ast() {
-    sim_assert_eq!(
-        have: parse_get_binding(r"{{- $value := get $.Values.config $key -}}"),
-        want: Some(GetBindingPlan {
-            variable: "value".to_string(),
-            kind: AssignmentKind::Declaration,
-            binding: GetBinding {
-                base: helm_schema_core::ValuesPath::parse("config"),
-                key_var: "key".to_string(),
-            },
-        })
+fn parse_get_binding_detects_declaration_from_ast() -> eyre::Result<()> {
+    let execution = execute(
+        r#"{{- $key := "frontend" -}}{{- $value := get $.Values.config $key -}}{{- $value -}}"#,
     );
+    let site = execution
+        .sites()
+        .filter(|site| site.rendered())
+        .last()
+        .ok_or_eyre("missing bound output")?;
+    sim_assert_eq!(have: site.value().identity().map(|path| path.encode()), want: Some("config.frontend".to_string()));
+    Ok(())
 }
 
 #[test]
-fn parse_get_binding_detects_assignment_from_ast() {
-    sim_assert_eq!(
-        have: parse_get_binding(r"{{- $value = get .Values.config $key -}}"),
-        want: Some(GetBindingPlan {
-            variable: "value".to_string(),
-            kind: AssignmentKind::Assignment,
-            binding: GetBinding {
-                base: helm_schema_core::ValuesPath::parse("config"),
-                key_var: "key".to_string(),
-            },
-        })
+fn parse_get_binding_detects_assignment_from_ast() -> eyre::Result<()> {
+    let execution = execute(
+        r#"{{- $key := "frontend" -}}{{- $value := nil -}}{{- $value = get .Values.config $key -}}{{- $value -}}"#,
     );
+    let site = execution
+        .sites()
+        .filter(|site| site.rendered())
+        .last()
+        .ok_or_eyre("missing assigned output")?;
+    sim_assert_eq!(have: site.value().identity().map(|path| path.encode()), want: Some("config.frontend".to_string()));
+    Ok(())
 }
 
 #[test]
 fn parse_literal_list_range_detects_variable_definition_from_ast() {
     sim_assert_eq!(
-        have: parse_literal_list_range(r#"$scope := list "frontend" "backend""#),
-        want: Some((
-            "scope".to_string(),
-            vec!["frontend".to_string(), "backend".to_string()]
-        ))
+        have: parse_action_expressions(r#"{{ $scope := list "frontend" "backend" }}"#),
+        want: vec![TemplateExpr::VariableDefinition {
+            name: "$scope".to_string(),
+            value: Box::new(TemplateExpr::Call {
+                function: "list".to_string(),
+                args: vec![
+                    TemplateExpr::Literal(helm_schema_ast::Literal::String("frontend".to_string())),
+                    TemplateExpr::Literal(helm_schema_ast::Literal::String("backend".to_string())),
+                ],
+            }),
+        }]
     );
 }
 

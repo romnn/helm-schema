@@ -22,12 +22,13 @@ fn index_with(src: &str) -> DefineIndex {
 
 fn evaluate_helper(name: &str, helpers: &DefineIndex) -> HelperBranchBody {
     let analysis_db = crate::analysis_db::IrAnalysisDb::new(helpers);
-    let Some(body) = analysis_db.parsed_helper_body(name) else {
-        return HelperBranchBody::literals(Vec::new());
-    };
-    crate::resource_identity::HelperOutputEvaluator::default()
-        .body_parts(body.source, body.tree.root_node(), &analysis_db, 0)
-        .into_body()
+    let source = format!("{{{{ include {name:?} . }}}}");
+    let execution = crate::value::execute_document(&source, None, &analysis_db);
+    crate::resource_identity::executed_scalar_body(
+        &execution,
+        helm_schema_syntax::Span::new(0, source.len()),
+        None,
+    )
 }
 
 #[test]
@@ -641,5 +642,21 @@ fn quoted_text_literals_decode_as_yaml_scalars() {
     sim_assert_eq!(
         have: literals_of(&branches[1]),
         want: vec!["policy/v1beta1".to_string()]
+    );
+}
+
+#[test]
+fn helper_output_freezes_each_read_before_later_mutation() {
+    let helpers = index_with(indoc! {r#"
+        {{- define "x.apiVersion" -}}
+        {{- $version := dict "value" "apps" -}}
+        {{- print $version.value -}}
+        {{- $_ := set $version "value" "v1" -}}
+        {{- print "/" $version.value -}}
+        {{- end -}}
+    "#});
+    sim_assert_eq!(
+        have: evaluate_helper("x.apiVersion", &helpers),
+        want: HelperBranchBody::literals(vec!["apps/v1".to_string()])
     );
 }

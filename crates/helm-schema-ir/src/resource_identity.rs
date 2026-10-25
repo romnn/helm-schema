@@ -10,50 +10,42 @@
 //! are the `items:` sequence entries, whose emitted paths rebase below
 //! `items[*]`.
 //!
-//! Helper-resolved apiVersion values (`apiVersion: {{ include "x" . }}`)
-//! evaluate the helper body's Go-template tree directly instead of the
-//! fragment summary: the branch trees need each `if` header's raw
-//! capability condition ([`CapabilityGuard`], including `Opaque` texts),
-//! which the fragment domain's `PathCondition` lattice intentionally does
-//! not carry.
+//! Scalar identity comes from frozen records of the document's execution.
+//! Source syntax supplies layout and the remaining structural selector metadata.
 
 use std::collections::HashSet;
 
 use helm_schema_ast::{
-    KindBranchSource, Literal, ResourceSpan, TemplateExpr, TemplateHeader, children_with_field,
-    decode_guard_expr, decode_header_guard, span_expressions, unquote_yaml_scalar,
+    KindBranchSource, Literal, ResourceSpan, TemplateExpr, TemplateHeader, decode_header_guard,
+    span_expressions, unquote_yaml_scalar,
 };
 use helm_schema_core::{CapabilityGuard, HelperBranch, HelperBranchBody, ResourceRef, ValuesPath};
 use helm_schema_syntax::{
-    ControlKind, ControlRegion, MappingEntry, Node as CstNode, ScalarPart, ScalarParts, Span,
-    TemplatedDocument,
+    ControlKind, ControlRegion, MappingEntry, Node as CstNode, ScalarParts, Span, TemplatedDocument,
 };
 
-use crate::analysis_db::IrAnalysisDb;
-use crate::eval_env::EvalEnv;
-use crate::expr_eval::{eval_expr, literal_helper_call_callee};
-use crate::node_eval::{NodeAction, else_if_pairs, node_action};
+use crate::value::DocumentExecution;
 
-const MAX_RECURSION_DEPTH: usize = 12;
-
-/// One parsed template body as identity recovery reads it: the source text,
-/// its Go-template tree, and the analysis database that resolves helpers.
+/// Source layout and frozen execution used to recover one document identity.
 #[derive(Clone, Copy)]
 struct IdentitySource<'a> {
     text: &'a str,
     root: tree_sitter::Node<'a>,
-    db: &'a IrAnalysisDb,
+    execution: &'a DocumentExecution,
+    source_path: Option<&'a str>,
 }
 
 pub(crate) fn collect_resource_spans(
     document: &TemplatedDocument<'_>,
     root: tree_sitter::Node<'_>,
-    analysis_db: &IrAnalysisDb,
+    execution: &DocumentExecution,
+    source_path: Option<&str>,
 ) -> Vec<ResourceSpan> {
     let source = IdentitySource {
         text: document.source(),
         root,
-        db: analysis_db,
+        execution,
+        source_path,
     };
     let roots = sorted_nodes(document.roots());
     let mut spans = Vec::new();
@@ -97,9 +89,9 @@ fn collect_window_spans(
     };
     let mut parts = HeaderParts::default();
     collect_header_parts(nodes, window, top_indent, source, &mut parts);
-    // Some arm writes a kind no literal covers, beside resolved ones: the
-    // resolved kinds are not exhaustive, so identity proves no kind.
-    if parts.kind_unresolved && parts.kind.is_some() {
+    // An unresolved executed kind cannot be recovered from source comparisons:
+    // those comparisons may belong to an unreachable branch.
+    if parts.kind_unresolved {
         return;
     }
     let mut kind_selector = None;
@@ -160,47 +152,6 @@ fn collect_window_spans(
         path_prefix,
         kind_branch_sources,
     });
-}
-
-/// The per-arm sources of an inline-conditional `kind:` value. Only
-/// complete literal chains qualify: every arm yields exactly one kind
-/// literal, guarded arms carry their parsed condition bound in the
-/// document's own dot (see [`HelperArm`]), and the chain ends
-/// in an unguarded `else` — without it some render states produce no kind
-/// at all and the recorded partition would be incomplete. Capability-guarded
-/// arms abstain: their liveness is an oracle question, not a values
-/// predicate.
-fn inline_kind_branch_sources(arms: &[HelperArm]) -> Vec<KindBranchSource> {
-    if arms.len() < 2 {
-        return Vec::new();
-    }
-    let mut sources = Vec::new();
-    for (index, arm) in arms.iter().enumerate() {
-        let HelperBranchBody::Literals { values } = &arm.branch.body else {
-            return Vec::new();
-        };
-        let [kind] = values.as_slice() else {
-            return Vec::new();
-        };
-        if kind.is_empty() {
-            return Vec::new();
-        }
-        let last = index == arms.len() - 1;
-        let condition = match (&arm.branch.guard, &arm.condition, last) {
-            (Some(CapabilityGuard::Opaque { text }), Some(condition), false)
-                if !text.trim().is_empty() =>
-            {
-                Some(condition.clone())
-            }
-            (None, _, true) => None,
-            _ => return Vec::new(),
-        };
-        sources.push(KindBranchSource {
-            condition,
-            kind: kind.clone(),
-        });
-    }
-    sources
 }
 
 /// The document's header indent: the shallowest mapping-entry indent among
@@ -436,7 +387,7 @@ fn values_path_literal_comparison(args: &[TemplateExpr]) -> Option<(String, &Str
     match (left.deparen(), right.deparen()) {
         (path, TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)))
         | (TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)), path) => {
-            Some((crate::expr_eval::direct_values_path(path)?, value))
+            Some((direct_values_path(path)?, value))
         }
         _ => None,
     }
@@ -458,10 +409,6 @@ fn capture_header_entry(entry: &MappingEntry, source: IdentitySource<'_>, parts:
         "apiVersion" => parts.append_body(scalar_value_body(value, source).0),
         "kind" => {
             let (body, kind_branch_sources) = scalar_value_body(value, source);
-            // An inline conditional selecting between literal kinds
-            // keeps its per-arm parsed guards beside the flat candidate
-            // list: the evaluator later lowers them into predicates the
-            // builder can match row conjunctions against.
             if parts.kind.is_none()
                 && matches!(body, HelperBranchBody::Nested { .. })
                 && !in_rebinding_action(source, entry.span.start)
@@ -485,7 +432,7 @@ fn capture_header_entry(entry: &MappingEntry, source: IdentitySource<'_>, parts:
             if parts.kind.is_none() && !in_rebinding_action(source, entry.span.start) {
                 parts.kind_selector = span_expressions(source.root, source.text, value.span)
                     .iter()
-                    .find_map(crate::expr_eval::direct_values_path);
+                    .find_map(direct_values_path);
             }
         }
         _ => {}
@@ -540,40 +487,146 @@ fn collect_kind_partition_literals(
     }
 }
 
-/// A header scalar's output, with the per-arm sources of an inline kind
-/// conditional: a plain scalar is its own unquoted literal, and a templated
-/// one evaluates the template nodes inside its span.
+/// Projects a header scalar from the successful execution's frozen text alternatives.
 fn scalar_value_body(
     value: &ScalarParts,
     source: IdentitySource<'_>,
 ) -> (HelperBranchBody, Vec<KindBranchSource>) {
-    let templated = value
-        .parts
-        .iter()
-        .any(|part| matches!(part, ScalarPart::Hole(_)));
-    if !templated {
-        let text = source
-            .text
-            .get(value.span.start..value.span.end)
-            .unwrap_or_default();
-        return (
-            HelperBranchBody::literals(vec![unquote_yaml_scalar(text).to_string()]),
-            Vec::new(),
-        );
+    let span = quoted_scalar_content(value.span, source.text);
+    if source
+        .execution
+        .text_for_span(span, source.source_path)
+        .any(|(_, text)| text.is_none())
+    {
+        return (HelperBranchBody::literals(Vec::new()), Vec::new());
     }
-    let mut parts = HelperParts::default();
-    HelperOutputEvaluator::default().collect_span_parts(
-        source,
-        source.root,
-        quoted_scalar_content(value.span, source.text),
-        &mut parts,
-    );
-    let kind_branch_sources = inline_kind_branch_sources(&parts.arms);
-    (parts.into_body(), kind_branch_sources)
+    inline_scalar_body(source, span).unwrap_or_else(|| {
+        (
+            executed_scalar_body(source.execution, span, source.source_path),
+            Vec::new(),
+        )
+    })
+}
+
+/// Keeps structural inline guards beside the corresponding executed scalar output.
+fn inline_scalar_body(
+    source: IdentitySource<'_>,
+    span: Span,
+) -> Option<(HelperBranchBody, Vec<KindBranchSource>)> {
+    let mut pending = vec![source.root];
+    let node = loop {
+        let node = pending.pop()?;
+        if node.end_byte() <= span.start || span.end <= node.start_byte() {
+            continue;
+        }
+        if node.kind() == "if_action"
+            && span.start <= node.start_byte()
+            && node.end_byte() <= span.end
+        {
+            break node;
+        }
+        let mut cursor = node.walk();
+        pending.extend(node.children(&mut cursor));
+    };
+    if !source
+        .text
+        .get(span.start..node.start_byte())?
+        .trim()
+        .is_empty()
+        || !source
+            .text
+            .get(node.end_byte()..span.end)?
+            .trim()
+            .is_empty()
+    {
+        return None;
+    }
+    let mut arms: Vec<(Option<TemplateHeader>, Vec<tree_sitter::Node<'_>>)> = Vec::new();
+    let mut cursor = node.walk();
+    if cursor.goto_first_child() {
+        loop {
+            let child = cursor.node();
+            match cursor.field_name() {
+                Some("condition") => arms.push((
+                    Some(TemplateHeader::from_node(child, source.text)),
+                    Vec::new(),
+                )),
+                Some("consequence" | "option") => arms.last_mut()?.1.push(child),
+                Some("alternative") => {
+                    if arms.last()?.0.is_some() {
+                        arms.push((None, Vec::new()));
+                    }
+                    arms.last_mut()?.1.push(child);
+                }
+                _ => {}
+            }
+            if !cursor.goto_next_sibling() {
+                break;
+            }
+        }
+    }
+    let mut branches = Vec::new();
+    let mut sources = Vec::new();
+    let mut complete = arms.len() >= 2 && arms.last()?.0.is_none();
+    for (condition, children) in arms {
+        let body_span = Span::new(children.first()?.start_byte(), children.last()?.end_byte());
+        let body = executed_scalar_body(source.execution, body_span, source.source_path);
+        let guard = condition.as_ref().map(decode_header_guard);
+        let literals = body.all_literals();
+        match literals.as_slice() {
+            [kind] if !kind.is_empty() => {
+                complete &= guard.as_ref().is_none_or(|guard| {
+                    matches!(guard, CapabilityGuard::Opaque { text } if !text.trim().is_empty())
+                });
+                sources.push(KindBranchSource {
+                    condition: condition.map(|header| header.expr().clone()),
+                    kind: kind.clone(),
+                });
+            }
+            _ => complete = false,
+        }
+        branches.push(HelperBranch { guard, body });
+    }
+    if !complete {
+        sources.clear();
+    }
+    Some((HelperBranchBody::Nested { branches }, sources))
+}
+
+/// Projects exact scalar alternatives without evaluating their source expressions.
+pub(crate) fn executed_scalar_body(
+    execution: &DocumentExecution,
+    span: Span,
+    source_path: Option<&str>,
+) -> HelperBranchBody {
+    let mut literals = Vec::new();
+    for (_, text) in execution.text_for_span(span, source_path) {
+        let Some(text) = text else {
+            return HelperBranchBody::literals(Vec::new());
+        };
+        let text = unquote_yaml_scalar(text.trim()).to_string();
+        if !text.is_empty() && !literals.contains(&text) {
+            literals.push(text);
+        }
+    }
+    HelperBranchBody::literals(literals)
+}
+
+/// Recognizes only syntactic access to the document's original values root.
+fn direct_values_path(expr: &TemplateExpr) -> Option<String> {
+    let path = match expr.deparen() {
+        TemplateExpr::Field(path) => path.clone(),
+        TemplateExpr::Selector { operand, path } if matches!(operand.deparen(), TemplateExpr::Variable(name) if name.is_empty()) => {
+            path.clone()
+        }
+        _ => return None,
+    };
+    let (head, tail) = path.split_first()?;
+    (head == "Values").then(|| ValuesPath::from_segments(tail.iter().cloned()).encode())
 }
 
 /// The content of a quoted scalar: its quotes delimit the scalar and render
-/// nothing, so `"{{ .Values.apiVersion }}"` evaluates only the action they
+/// nothing, so `"{{ .Values.apiVersion }}"` projects only the action they
 /// enclose. A plain scalar is its own content.
 fn quoted_scalar_content(span: Span, text: &str) -> Span {
     let Some(raw) = text.get(span.start..span.end) else {
@@ -707,283 +760,6 @@ fn insert_api_versions(values: impl IntoIterator<Item = String>, versions: &mut 
     }
 }
 
-/// Helper-body output evaluation for apiVersion values: literal text runs
-/// and statically resolvable expression outputs, with `if` chains preserved
-/// as guarded branch trees and nested helper calls resolved recursively
-/// (cycle-guarded, depth-capped).
-#[derive(Default)]
-pub(crate) struct HelperOutputEvaluator {
-    seen: HashSet<String>,
-}
-
-/// An evaluated template's output: candidate literals and guarded arms.
-#[derive(Default)]
-pub(crate) struct HelperParts {
-    literals: Vec<String>,
-    arms: Vec<HelperArm>,
-}
-
-/// One guarded branch of an evaluated output. An `if` arm keeps its parsed
-/// condition beside the decoded guard while that condition binds in the
-/// evaluated template's own dot: also through a helper called with that
-/// dot (`include "kind" .`), but not through one handed another context,
-/// nor inside a `with`/`range` body that rebinds the dot. Nested and
-/// ternary branches carry none.
-struct HelperArm {
-    branch: HelperBranch,
-    condition: Option<TemplateExpr>,
-}
-
-impl HelperParts {
-    fn append_body(&mut self, body: HelperBranchBody) {
-        match body {
-            HelperBranchBody::Literals { values } => self.literals.extend(values),
-            HelperBranchBody::Nested { branches } => {
-                self.arms
-                    .extend(branches.into_iter().map(|branch| HelperArm {
-                        branch,
-                        condition: None,
-                    }));
-            }
-        }
-    }
-
-    /// Append a called helper's whole output. A mixed-content body (literal
-    /// text around branches) is not a pure delegation, so it flattens to
-    /// candidate literals; a branch-only body keeps its arms.
-    fn append_helper_output(&mut self, output: HelperParts) {
-        if output.arms.is_empty() {
-            self.literals.extend(dedup_preserve_order(output.literals));
-        } else if output.literals.is_empty() {
-            self.arms.extend(output.arms);
-        } else {
-            self.append_body(output.into_body());
-        }
-    }
-
-    fn extend(&mut self, other: HelperParts) {
-        self.literals.extend(other.literals);
-        self.arms.extend(other.arms);
-    }
-
-    /// Forget the arms' conditions: they bind in a dot other than the
-    /// consuming template's.
-    fn unbind_conditions(&mut self) {
-        for arm in &mut self.arms {
-            arm.condition = None;
-        }
-    }
-
-    /// Record one template text run: it lands in a YAML scalar position of
-    /// the consuming document, so a literal written as `"policy/v1"`
-    /// (quotes included) denotes the unquoted scalar once the composed
-    /// manifest is parsed.
-    fn push_text(&mut self, text: &str) {
-        let trimmed = unquote_yaml_scalar(text.trim());
-        if !trimmed.is_empty() {
-            self.literals.push(trimmed.to_string());
-        }
-    }
-
-    fn is_empty(&self) -> bool {
-        self.literals.is_empty() && self.arms.is_empty()
-    }
-
-    fn into_branches(self) -> (Vec<String>, Vec<HelperBranch>) {
-        let branches = self.arms.into_iter().map(|arm| arm.branch).collect();
-        (self.literals, branches)
-    }
-
-    pub(crate) fn into_body(self) -> HelperBranchBody {
-        let (literals, branches) = self.into_branches();
-        body_from_helper_parts(literals, branches)
-    }
-}
-
-impl HelperOutputEvaluator {
-    /// A template body's output parts; depth-capped (empty at the cap).
-    pub(crate) fn body_parts(
-        &mut self,
-        source: &str,
-        node: tree_sitter::Node<'_>,
-        analysis_db: &IrAnalysisDb,
-        depth: usize,
-    ) -> HelperParts {
-        let mut parts = HelperParts::default();
-        if depth < MAX_RECURSION_DEPTH {
-            self.collect_body_parts(source, node, analysis_db, depth, &mut parts);
-        }
-        parts
-    }
-
-    fn collect_body_parts(
-        &mut self,
-        source: &str,
-        node: tree_sitter::Node<'_>,
-        analysis_db: &IrAnalysisDb,
-        depth: usize,
-        parts: &mut HelperParts,
-    ) {
-        match node_action(source, node) {
-            NodeAction::Text => {
-                if let Ok(text) = node.utf8_text(source.as_bytes()) {
-                    parts.push_text(text);
-                }
-            }
-            // Assignment right-hand sides render nothing; nested defines are
-            // suppressed bodies.
-            NodeAction::Suppressed | NodeAction::Assignment(_) => {}
-            NodeAction::Output(exprs) => {
-                let output = self.action_parts(&exprs, analysis_db, depth);
-                parts.extend(output);
-            }
-            NodeAction::If(header) => {
-                let mut arms = vec![(header, children_with_field(node, "consequence"))];
-                arms.extend(else_if_pairs(node, source));
-                arms.push((None, children_with_field(node, "alternative")));
-                for (arm_header, children) in arms {
-                    let mut sub = HelperParts::default();
-                    for child in children {
-                        self.collect_body_parts(source, child, analysis_db, depth, &mut sub);
-                    }
-                    if sub.is_empty() {
-                        continue;
-                    }
-                    parts.arms.push(HelperArm {
-                        branch: HelperBranch {
-                            guard: arm_header.as_ref().map(decode_header_guard),
-                            body: sub.into_body(),
-                        },
-                        condition: arm_header.map(|header| header.expr().clone()),
-                    });
-                }
-            }
-            // `with`/`range` branch bodies contribute unguarded; the bodies
-            // that rebind the dot unbind their arms' conditions, while the
-            // `else` alternative runs in the enclosing dot.
-            NodeAction::With(_) => {
-                let mut rebound = HelperParts::default();
-                for child in children_with_field(node, "consequence") {
-                    self.collect_body_parts(source, child, analysis_db, depth, &mut rebound);
-                }
-                for (_, children) in else_if_pairs(node, source) {
-                    for child in children {
-                        self.collect_body_parts(source, child, analysis_db, depth, &mut rebound);
-                    }
-                }
-                rebound.unbind_conditions();
-                parts.extend(rebound);
-                for child in children_with_field(node, "alternative") {
-                    self.collect_body_parts(source, child, analysis_db, depth, parts);
-                }
-            }
-            NodeAction::Range(_) => {
-                let mut rebound = HelperParts::default();
-                for child in children_with_field(node, "body") {
-                    self.collect_body_parts(source, child, analysis_db, depth, &mut rebound);
-                }
-                rebound.unbind_conditions();
-                parts.extend(rebound);
-                for child in children_with_field(node, "alternative") {
-                    self.collect_body_parts(source, child, analysis_db, depth, parts);
-                }
-            }
-            NodeAction::Descend => {
-                let mut cursor = node.walk();
-                let children: Vec<_> = node.children(&mut cursor).collect();
-                for child in children {
-                    self.collect_body_parts(source, child, analysis_db, depth, parts);
-                }
-            }
-        }
-    }
-
-    /// Evaluate the template nodes inside `span` of the tree below `node`: a
-    /// text run crossing the span contributes the part inside it, and a node
-    /// enclosing the span contributes its children inside it.
-    fn collect_span_parts(
-        &mut self,
-        source: IdentitySource<'_>,
-        node: tree_sitter::Node<'_>,
-        span: Span,
-        parts: &mut HelperParts,
-    ) {
-        let mut cursor = node.walk();
-        let children: Vec<_> = node.children(&mut cursor).collect();
-        for child in children {
-            if child.end_byte() <= span.start || child.start_byte() >= span.end {
-                continue;
-            }
-            if span.start <= child.start_byte() && child.end_byte() <= span.end {
-                self.collect_body_parts(source.text, child, source.db, 0, parts);
-            } else if matches!(child.kind(), "text" | "yaml_no_injection_text") {
-                let start = child.start_byte().max(span.start);
-                let end = child.end_byte().min(span.end);
-                parts.push_text(source.text.get(start..end).unwrap_or_default());
-            } else {
-                self.collect_span_parts(source, child, span, parts);
-            }
-        }
-    }
-
-    /// One output action's parts. Called helpers contribute their whole
-    /// outputs; once any of them branches, their literals drop out.
-    fn action_parts(
-        &mut self,
-        exprs: &[TemplateExpr],
-        analysis_db: &IrAnalysisDb,
-        depth: usize,
-    ) -> HelperParts {
-        let mut parts = HelperParts::default();
-        let calls = helper_calls(exprs);
-        if !calls.is_empty() {
-            for call in calls {
-                if let Some(mut output) =
-                    self.with_helper_body(&call.name, analysis_db, |this, body| {
-                        this.body_parts(body.source, body.tree.root_node(), analysis_db, depth + 1)
-                    })
-                {
-                    if !call.passes_dot {
-                        output.unbind_conditions();
-                    }
-                    parts.append_helper_output(output);
-                }
-            }
-            if parts.arms.is_empty() {
-                parts.literals = dedup_preserve_order(parts.literals);
-            } else {
-                parts.literals.clear();
-            }
-            return parts;
-        }
-
-        if let Some(body) = capability_ternary_body(exprs) {
-            parts.append_body(body);
-            return parts;
-        }
-
-        parts.literals =
-            dedup_preserve_order(exprs.iter().flat_map(static_literal_outputs).collect());
-        parts
-    }
-
-    fn with_helper_body<T>(
-        &mut self,
-        name: &str,
-        analysis_db: &IrAnalysisDb,
-        f: impl FnOnce(&mut Self, crate::analysis_db::ParsedHelperBody<'_>) -> T,
-    ) -> Option<T> {
-        if !self.seen.insert(name.to_string()) {
-            return None;
-        }
-        let result = analysis_db
-            .parsed_helper_body(name)
-            .map(|body| f(self, body));
-        self.seen.remove(name);
-        result
-    }
-}
-
 fn body_from_parts(literals: Vec<String>, mut branches: Vec<HelperBranch>) -> HelperBranchBody {
     let literals = dedup_preserve_order(literals);
     if branches.is_empty() {
@@ -1001,61 +777,6 @@ fn body_from_parts(literals: Vec<String>, mut branches: Vec<HelperBranch>) -> He
     HelperBranchBody::Nested { branches }
 }
 
-/// A whole helper's output: a mixed-content body (literal text around
-/// branches) is not a pure delegation, so it flattens to candidate
-/// literals; branch-only bodies keep their typed structure.
-fn body_from_helper_parts(literals: Vec<String>, branches: Vec<HelperBranch>) -> HelperBranchBody {
-    if literals.is_empty() || branches.is_empty() {
-        return body_from_parts(literals, branches);
-    }
-
-    let mut out = dedup_preserve_order(literals);
-    let mut seen = out.iter().cloned().collect();
-    for branch in branches {
-        branch.body.append_all_literals(&mut out, &mut seen);
-    }
-    HelperBranchBody::literals(out)
-}
-
-/// One called helper of an output action.
-struct HelperCall {
-    name: String,
-    /// Every call of this helper in the action hands it the caller's own
-    /// dot (`include "kind" .`), so the helper's dot-relative reads bind as
-    /// the caller's do.
-    passes_dot: bool,
-}
-
-/// The helpers an output action calls, once each, in first-call order.
-fn helper_calls(exprs: &[TemplateExpr]) -> Vec<HelperCall> {
-    let mut out: Vec<HelperCall> = Vec::new();
-    for expr in exprs {
-        expr.walk(|node| {
-            let TemplateExpr::Call { function, args } = node else {
-                return;
-            };
-            let Some(name) = literal_helper_call_callee(function, args) else {
-                return;
-            };
-            if name.is_empty() {
-                return;
-            }
-            let passes_dot = matches!(
-                args.as_slice(),
-                [_, context] if *context.deparen() == TemplateExpr::Field(Vec::new())
-            );
-            match out.iter_mut().find(|call| call.name == name) {
-                Some(call) => call.passes_dot &= passes_dot,
-                None => out.push(HelperCall {
-                    name: name.to_string(),
-                    passes_dot,
-                }),
-            }
-        });
-    }
-    out
-}
-
 fn dedup_preserve_order(items: Vec<String>) -> Vec<String> {
     let mut out = Vec::new();
     let mut seen = HashSet::new();
@@ -1066,80 +787,4 @@ fn dedup_preserve_order(items: Vec<String>) -> Vec<String> {
         }
     }
     out
-}
-
-/// `COND | ternary "on" "off"` (and `ternary "on" "off" COND`) selects one
-/// of two literal scalars exactly like an `if COND`/`else` pair, so a
-/// decodable capability condition yields guard-qualified branch literals
-/// instead of an unresolvable two-way choice (signoz's HPA apiVersion
-/// pipeline). An undecodable condition abstains — the identity stays
-/// unresolved rather than fabricating an unguarded candidate pair.
-fn capability_ternary_body(exprs: &[TemplateExpr]) -> Option<HelperBranchBody> {
-    let [expr] = exprs else {
-        return None;
-    };
-    let literal_string = |expr: &TemplateExpr| match expr.deparen() {
-        TemplateExpr::Literal(Literal::String(text) | Literal::RawString(text)) => {
-            Some(text.clone())
-        }
-        _ => None,
-    };
-    let (condition, on_true, on_false) = match expr.deparen() {
-        TemplateExpr::Pipeline(stages) => {
-            let (last, condition_stages) = stages.split_last()?;
-            let TemplateExpr::Call { function, args } = last.deparen() else {
-                return None;
-            };
-            let [on_true, on_false] = args.as_slice() else {
-                return None;
-            };
-            if function != "ternary" || condition_stages.is_empty() {
-                return None;
-            }
-            (
-                TemplateExpr::Pipeline(condition_stages.to_vec()),
-                literal_string(on_true)?,
-                literal_string(on_false)?,
-            )
-        }
-        TemplateExpr::Call { function, args } if function == "ternary" => {
-            let [on_true, on_false, condition] = args.as_slice() else {
-                return None;
-            };
-            (
-                condition.clone(),
-                literal_string(on_true)?,
-                literal_string(on_false)?,
-            )
-        }
-        _ => return None,
-    };
-    let guard = decode_guard_expr(&condition, "")?;
-    if matches!(guard, CapabilityGuard::Opaque { .. }) {
-        return None;
-    }
-    Some(HelperBranchBody::Nested {
-        branches: vec![
-            HelperBranch {
-                guard: Some(guard),
-                body: HelperBranchBody::literals(vec![on_true]),
-            },
-            HelperBranch {
-                guard: None,
-                body: HelperBranchBody::literals(vec![on_false]),
-            },
-        ],
-    })
-}
-
-fn static_literal_outputs(expr: &TemplateExpr) -> Vec<String> {
-    let Some(value) = eval_expr(expr, &EvalEnv::default()).value else {
-        return Vec::new();
-    };
-    let strings = value.strings();
-    if strings.len() == 1 {
-        strings.into_iter().collect()
-    } else {
-        Vec::new()
-    }
 }

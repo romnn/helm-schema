@@ -31,6 +31,10 @@ pub enum ValueKind {
     /// This admits the path beneath closed roots without claiming a rendered
     /// shape, serialization transform, or non-control use.
     WidenedDependency = 6,
+    /// Execution may read unnamed inputs below this region.
+    ///
+    /// This withdraws inferred member closure without claiming a container kind.
+    WidenedRegion = 7,
 }
 
 /// One arm of a values-predicate-selected `kind:` chain

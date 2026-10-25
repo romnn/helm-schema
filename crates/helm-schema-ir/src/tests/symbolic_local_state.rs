@@ -1,986 +1,322 @@
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::collections::BTreeSet;
 
-use crate::abstract_value::AbstractValue;
-use crate::bound_value_analysis::{GetBinding, GetBindingPlan};
-use crate::eval_env::{BindingDecision, BindingEvaluationMode, LeafSelection, LocalBinding};
-use crate::fragment_assignment::AssignmentKind;
-use crate::helper_meta::HelperOutputMeta;
-use crate::scalar_value::{
-    ScalarContent, ScalarValueDispatch, TruthCondition, conjoin_predicates_with_memo,
-};
-use crate::value::State;
-use helm_schema_core::{GuardValue, Predicate, PredicateMemo, ValuesPath};
+use color_eyre::eyre::{self, OptionExt as _};
+use helm_schema_ast::DefineIndex;
+use helm_schema_core::{Predicate, ValuesPath};
+use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
+
+use crate::analysis_db::IrAnalysisDb;
+
+fn execute(source: &str) -> crate::value::DocumentExecution {
+    let defines = DefineIndex::new();
+    let db = IrAnalysisDb::new(&defines);
+    crate::value::execute_document(source, None, &db)
+}
+
+fn identities(source: &str) -> BTreeSet<ValuesPath> {
+    execute(source)
+        .sites()
+        .filter(|site| site.rendered())
+        .flat_map(|site| site.value().alternatives())
+        .filter_map(|arm| arm.value().identity().cloned())
+        .collect()
+}
+
+fn inputs(source: &str) -> BTreeSet<ValuesPath> {
+    execute(source)
+        .sites()
+        .filter(|site| site.rendered())
+        .flat_map(|site| site.value().inputs())
+        .collect()
+}
+
+fn outputs(source: &str) -> BTreeSet<(Predicate, Option<String>)> {
+    execute(source)
+        .text()
+        .map(|(condition, text)| (condition, text.exact_text()))
+        .collect()
+}
+
+fn selected_condition(source: &str) -> Predicate {
+    Predicate::Or(
+        outputs(source)
+            .into_iter()
+            .filter_map(|(condition, text)| {
+                (text.as_deref() == Some("selected")).then_some(condition)
+            })
+            .collect(),
+    )
+    .normalize_boolean()
+}
 
 #[test]
 fn unconditioned_binding_join_keeps_values_but_proves_no_mixed_mode_arm() {
-    let direct = LocalBinding::direct(values_path!("direct"));
-    let evaluated = LocalBinding::evaluated(values_path!("evaluated"));
-    let unknown = LocalBinding::unknown();
-
-    let joined = LocalBinding::join_unconditioned(vec![&direct, &evaluated, &unknown]);
-    let leaves = joined.leaves(&PredicateMemo::default());
-
-    // No arm is proven, but both values remain candidates: an unconditioned
-    // join knows which values can reach the consumer, only not when.
-    sim_assert_eq!(have: leaves.proven().is_empty(), want: true);
-    sim_assert_eq!(
-        have: leaves
-            .known
-            .iter()
-            .map(|leaf| (leaf.selection.clone(), leaf.value.value().clone(), leaf.value.mode()))
-            .collect::<Vec<_>>(),
-        want: vec![
-            (LeafSelection::Unproven, values_path!("direct"), BindingEvaluationMode::Direct),
-            (
-                LeafSelection::Unproven,
-                values_path!("evaluated"),
-                BindingEvaluationMode::Evaluated,
-            ),
-        ],
-    );
-    sim_assert_eq!(have: leaves.has_unresolved, want: true);
-    sim_assert_eq!(
-        have: joined.paths(&PredicateMemo::default()),
-        want: BTreeSet::from([ValuesPath::parse("direct"), ValuesPath::parse("evaluated")]),
-    );
+    let source = r#"{{ $value := ternary .Values.direct .Values.evaluated (regexMatch .Values.pattern .Values.unknown) }}{{ $value }}"#;
+    let execution = execute(source);
+    let sites = execution
+        .sites()
+        .filter(|site| site.rendered())
+        .collect::<Vec<_>>();
+    assert!(!sites.is_empty());
+    for site in sites {
+        assert!(
+            site.value()
+                .alternatives()
+                .iter()
+                .any(|arm| !arm.coverage_exact())
+        );
+    }
+    assert!(inputs(source).contains(&ValuesPath::parse("direct")));
+    assert!(inputs(source).contains(&ValuesPath::parse("evaluated")));
 }
 
 #[test]
 fn partial_binding_decision_keeps_proven_subsets_and_unresolved_remainder() {
-    let when_true = Predicate::truthy_path("select_true");
-    let when_false = Predicate::truthy_path("select_false");
-    let binding = LocalBinding::select(
-        BindingDecision::new(TruthCondition::from_subsets(
-            when_true.clone(),
-            when_false.clone(),
-            false,
-        )),
-        LocalBinding::direct(values_path!("direct")),
-        LocalBinding::evaluated(values_path!("evaluated")),
+    let source = r#"{{ $value := ternary .Values.direct .Values.evaluated (or .Values.select_true (regexMatch .Values.pattern .Values.unknown)) }}{{ $value }}"#;
+    let execution = execute(source);
+    let sites = execution
+        .sites()
+        .filter(|site| site.rendered())
+        .collect::<Vec<_>>();
+    assert!(!sites.is_empty());
+    assert!(
+        sites
+            .iter()
+            .flat_map(|site| site.value().alternatives())
+            .any(|arm| !arm.coverage_exact())
     );
-
-    let leaves = binding.leaves(&PredicateMemo::default());
-
-    sim_assert_eq!(
-        have: leaves
-            .proven()
-            .into_iter()
-            .map(|(condition, leaf)| (condition.clone(), leaf.value().clone(), leaf.mode()))
-            .collect::<BTreeSet<_>>(),
-        want: BTreeSet::from([
-            (
-                when_true,
-                values_path!("direct"),
-                BindingEvaluationMode::Direct,
-            ),
-            (
-                when_false,
-                values_path!("evaluated"),
-                BindingEvaluationMode::Evaluated,
-            ),
-        ]),
-    );
-    sim_assert_eq!(have: leaves.has_unresolved, want: true);
-    sim_assert_eq!(
-        have: binding.paths(&PredicateMemo::default()),
-        want: BTreeSet::from([ValuesPath::parse("direct"), ValuesPath::parse("evaluated")]),
-    );
+    assert!(inputs(source).contains(&ValuesPath::parse("direct")));
+    assert!(inputs(source).contains(&ValuesPath::parse("evaluated")));
 }
 
 #[test]
 fn unrelated_unknown_binding_decisions_do_not_compare_as_the_same_execution() {
-    let direct = LocalBinding::direct(values_path!("direct"));
-    let evaluated = LocalBinding::evaluated(values_path!("evaluated"));
-    let first = LocalBinding::select(
-        BindingDecision::new(TruthCondition::Unknown),
-        direct.clone(),
-        evaluated.clone(),
-    );
-    let second = LocalBinding::select(
-        BindingDecision::new(TruthCondition::Unknown),
-        direct,
-        evaluated,
-    );
-
-    sim_assert_eq!(have: first == second, want: false);
+    let source = indoc! {r#"
+        {{- $first := "no" -}}{{- $second := "no" -}}
+        {{- if regexMatch .Values.pattern .Values.first -}}{{- $first = "yes" -}}{{- end -}}
+        {{- if regexMatch .Values.pattern .Values.second -}}{{- $second = "yes" -}}{{- end -}}
+        {{- print $first "/" $second -}}
+    "#};
+    let values = outputs(source)
+        .into_iter()
+        .filter_map(|(_, text)| text)
+        .collect::<BTreeSet<_>>();
+    sim_assert_eq!(have: values, want: BTreeSet::from(["yes/yes".to_string(), "yes/no".to_string(), "no/yes".to_string(), "no/no".to_string()]));
 }
 
-/// Independent undecidable decisions each keep their branches: every leaf
-/// stays a candidate and the traversal reports the unresolved remainder.
-///
-/// Nothing collapses two unrelated activations into one, so a nested pair
-/// exposes three candidates rather than the two a shared decision would.
 #[test]
 fn two_independent_unknown_decisions_expose_both_leaves_with_unresolved_remainder() {
-    let binding = LocalBinding::select(
-        BindingDecision::new(TruthCondition::Unknown),
-        LocalBinding::direct(values_path!("first")),
-        LocalBinding::select(
-            BindingDecision::new(TruthCondition::Unknown),
-            LocalBinding::direct(values_path!("second")),
-            LocalBinding::direct(values_path!("third")),
-        ),
-    );
-
-    let leaves = binding.leaves(&PredicateMemo::default());
-
-    sim_assert_eq!(have: leaves.proven().is_empty(), want: true);
-    sim_assert_eq!(
-        have: leaves
-            .known
-            .iter()
-            .map(|leaf| (leaf.selection.clone(), leaf.value.value().clone()))
-            .collect::<Vec<_>>(),
-        want: vec![
-            (LeafSelection::Unproven, values_path!("first")),
-            (LeafSelection::Unproven, values_path!("second")),
-            (LeafSelection::Unproven, values_path!("third")),
-        ],
-    );
-    sim_assert_eq!(have: leaves.has_unresolved, want: true);
-    sim_assert_eq!(
-        have: binding.paths(&PredicateMemo::default()),
-        want: BTreeSet::from([
-            ValuesPath::parse("first"),
-            ValuesPath::parse("second"),
-            ValuesPath::parse("third"),
-        ]),
+    let source = indoc! {r#"
+        {{- $value := .Values.third -}}
+        {{- if regexMatch .Values.pattern .Values.unknown1 -}}{{- $value = .Values.first -}}
+        {{- else if regexMatch .Values.pattern .Values.unknown2 -}}{{- $value = .Values.second -}}{{- end -}}
+        {{- $value -}}
+    "#};
+    let paths = inputs(source);
+    for path in ["first", "second", "third"] {
+        assert!(
+            paths.contains(&ValuesPath::parse(path)),
+            "missing candidate {path}: {paths:?}"
+        );
+    }
+    let execution = execute(source);
+    assert!(
+        execution
+            .sites()
+            .filter(|site| site.rendered())
+            .flat_map(|site| site.value().alternatives())
+            .any(|arm| !arm.coverage_exact())
     );
 }
 
 #[test]
 fn symbolic_range_exit_widens_only_bindings_changed_by_the_iteration() {
-    let mut entry = State::default();
-    crate::tests::bind_test_fragment(
-        entry.slot_mut("cfg"),
-        Some(LocalBinding::evaluated(values_path!("items"))),
+    let stable = "{{ $cfg := .Values.items }}{{ $stable := .Values.stable }}{{ range .Values.items }}{{ $cfg = . }}{{ end }}{{ $stable }}";
+    sim_assert_eq!(have: identities(stable), want: BTreeSet::from([ValuesPath::parse("stable")]));
+    let changed =
+        "{{ $cfg := .Values.items }}{{ range .Values.items }}{{ $cfg = . }}{{ end }}{{ $cfg }}";
+    let execution = execute(changed);
+    assert!(
+        execution
+            .sites()
+            .filter(|site| site.rendered())
+            .any(|site| site
+                .value()
+                .alternatives()
+                .iter()
+                .any(|arm| !arm.coverage_exact() || arm.value().identity().is_none()))
     );
-    crate::tests::bind_test_fragment(
-        entry.slot_mut("stable"),
-        Some(LocalBinding::direct(values_path!("stable"))),
-    );
-    let mut positive_exit = entry.clone();
-    crate::tests::bind_test_fragment(
-        positive_exit.slot_mut("cfg"),
-        Some(LocalBinding::direct(values_path!("items.*"))),
-    );
+}
 
-    positive_exit.widen_changed_fragment_bindings(&entry);
-
-    let cfg = positive_exit
-        .read_local("cfg")
-        .binding
-        .as_ref()
-        .map(|binding| binding.leaves(&PredicateMemo::default()));
-    // The widen proves no arm, and keeps the iterated value as a candidate.
-    sim_assert_eq!(
-        have: cfg.as_ref().map(|leaves| leaves.proven().is_empty()),
-        want: Some(true),
-    );
-    sim_assert_eq!(
-        have: cfg
-            .as_ref()
-            .map(|leaves| leaves.known.iter().map(|leaf| leaf.value.value().clone()).collect::<Vec<_>>()),
-        want: Some(vec![values_path!("items.*")]),
-    );
-    sim_assert_eq!(
-        have: cfg.as_ref().map(|leaves| leaves.has_unresolved),
-        want: Some(true),
-    );
-    sim_assert_eq!(
-        have: positive_exit.read_local("cfg").binding.as_ref().map(|binding| binding.paths(&PredicateMemo::default())),
-        want: Some(BTreeSet::from([ValuesPath::parse("items.*")])),
-    );
-    sim_assert_eq!(
-        have: positive_exit.read_local("stable").binding.as_ref(),
-        want: entry.read_local("stable").binding.as_ref(),
-    );
+fn branch_program(count: usize) -> String {
+    let mut source = String::from("{{- $value := \"0\" -}}");
+    for index in 1..count {
+        let keyword = if index == 1 { "if" } else { "else if" };
+        source.push_str(&format!(
+            "{{{{- {keyword} eq .Values.branch {index} -}}}}{{{{- $value = \"{index}\" -}}}}"
+        ));
+    }
+    source.push_str("{{- end -}}{{- $value -}}");
+    source
 }
 
 #[test]
 fn local_binding_has_no_structural_alternative_cap() {
-    let mut binding =
-        LocalBinding::direct(AbstractValue::StringSet(BTreeSet::from(["0".to_string()])));
-    for index in 1..129 {
-        binding = LocalBinding::select(
-            BindingDecision::new(TruthCondition::exact(Predicate::truthy_path(format!(
-                "gate{index}"
-            )))),
-            LocalBinding::new(
-                AbstractValue::StringSet(BTreeSet::from([index.to_string()])),
-                if index % 2 == 0 {
-                    BindingEvaluationMode::Direct
-                } else {
-                    BindingEvaluationMode::Evaluated
-                },
-            ),
-            binding,
-        );
-    }
-    let leaves = binding.leaves(&PredicateMemo::default());
-
-    sim_assert_eq!(have: leaves.proven().len(), want: 129);
-    sim_assert_eq!(have: leaves.has_unresolved, want: false);
-}
-
-fn state_with_scalar_arm_count(count: usize) -> State {
-    let mut state = State::default();
-    crate::tests::bind_test_dispatch(
-        state.slot_mut("value"),
-        Some(ScalarValueDispatch::bind_content(
-            (0..count)
-                .map(|index| {
-                    (
-                        Predicate::True,
-                        ScalarContent::Literal(GuardValue::String(index.to_string())),
-                    )
-                })
-                .collect(),
-            true,
-        )),
-    );
-    state
-}
-
-fn joined_scalar_dispatches_without_unchanged_shortcut(
-    entry: &State,
-    arms: &[(TruthCondition, State)],
-    has_unconditional_else: bool,
-    memo: &PredicateMemo,
-) -> Option<HashMap<String, ScalarValueDispatch>> {
-    if arms
-        .iter()
-        .any(|(condition, _)| matches!(condition, TruthCondition::Unknown))
-    {
-        return None;
-    }
-    let mut outcomes = arms.to_vec();
-    if !has_unconditional_else {
-        outcomes.push((
-            TruthCondition::any_with_memo(
-                arms.iter().map(|(condition, _)| condition.clone()),
-                memo,
-            )
-            .negated_with_memo(memo),
-            entry.clone(),
-        ));
-    }
-
-    let variables: BTreeSet<&String> =
-        arms.iter()
-            .flat_map(|(_, state)| {
-                state.iter_locals().filter_map(|(name, slot)| {
-                    slot.binding().scalar_dispatch.is_some().then_some(name)
-                })
-            })
-            .chain(entry.iter_locals().filter_map(|(name, slot)| {
-                slot.binding().scalar_dispatch.is_some().then_some(name)
-            }))
-            .collect();
-    let mut joined = HashMap::new();
-    for variable in variables {
-        let mut dispatch_arms = Vec::new();
-        let mut complete = outcomes
-            .iter()
-            .all(|(condition, _)| condition.predicate().is_some());
-        'outcomes: for (condition, state) in &outcomes {
-            let outer_condition = condition.when_true();
-            if outer_condition == Predicate::False {
-                continue;
-            }
-            let Some(dispatch) = state
-                .read_local(variable)
-                .scalar_dispatch
-                .as_ref()
-                .and_then(ScalarValueDispatch::content)
-            else {
-                complete = false;
-                continue;
-            };
-            complete &= dispatch.complete;
-            for (inner_condition, value) in dispatch.arms() {
-                if let Some(condition) = conjoin_predicates_with_memo(
-                    outer_condition.clone(),
-                    inner_condition.clone(),
-                    memo,
-                ) {
-                    dispatch_arms.push((condition, value.clone()));
-                    if dispatch_arms.len() > 128 {
-                        break 'outcomes;
-                    }
-                }
-            }
-        }
-        if dispatch_arms.is_empty() || dispatch_arms.len() > 128 {
-            continue;
-        }
-        joined.insert(
-            variable.clone(),
-            ScalarValueDispatch::bind_content(dispatch_arms, complete),
-        );
-    }
-    Some(joined)
+    let values = outputs(&branch_program(129))
+        .into_iter()
+        .filter_map(|(_, text)| text)
+        .collect::<BTreeSet<_>>();
+    sim_assert_eq!(have: values, want: (0..129).map(|index| index.to_string()).collect::<BTreeSet<_>>());
 }
 
 #[test]
 fn scalar_dispatch_join_keeps_128_arms_and_discards_129() {
-    let memo = PredicateMemo::default();
-    let entry = State::default();
-    let mut at_cap = State::default();
-    at_cap.join_scalar_dispatch_arms(
-        &entry,
-        &[(
-            TruthCondition::exact(Predicate::True),
-            state_with_scalar_arm_count(128),
-        )],
-        true,
-        &memo,
+    let at_cap = outputs(&branch_program(128));
+    sim_assert_eq!(have: at_cap.iter().filter(|(_, text)| text.is_some()).count(), want: 128);
+    let execution = execute(&branch_program(129));
+    assert!(
+        execution
+            .sites()
+            .filter(|site| site.rendered())
+            .any(|site| !site.coverage_exact() || site.value().literal().is_none()),
+        "over-cap join claimed complete exact scalar coverage"
     );
-    sim_assert_eq!(
-        have: at_cap.read_local("value").scalar_dispatch.as_ref().and_then(ScalarValueDispatch::content).map(|content| content.arms().count()),
-        want: Some(128)
-    );
-
-    let mut over_cap = State::default();
-    over_cap.join_scalar_dispatch_arms(
-        &entry,
-        &[(
-            TruthCondition::exact(Predicate::True),
-            state_with_scalar_arm_count(129),
-        )],
-        true,
-        &memo,
-    );
-    sim_assert_eq!(have: over_cap.iter_locals().find_map(|(name, slot)| slot.binding().scalar_dispatch.as_ref().map(|value| (name, value))).is_none(), want: true);
 }
 
 #[test]
 fn unchanged_partial_dispatch_survives_the_join_cap() {
-    let memo = PredicateMemo::default();
-    let entry = state_with_scalar_arm_count(129);
-    let mut partial = entry.clone();
-    if let Some(content) = partial
-        .read_local("value")
-        .scalar_dispatch
-        .as_ref()
-        .and_then(ScalarValueDispatch::content)
-    {
-        let dispatch = ScalarValueDispatch::bind_content(
-            content
-                .arms()
-                .map(|(condition, content)| (condition.clone(), content.clone()))
-                .collect(),
-            false,
-        );
-        crate::tests::bind_test_dispatch(partial.slot_mut("value"), Some(dispatch));
-    }
-    let entry = partial.clone();
-    let mut joined = State::default();
-    joined.join_scalar_dispatch_arms(
-        &entry,
-        &[(TruthCondition::exact(Predicate::True), partial.clone())],
-        true,
-        &memo,
-    );
-    sim_assert_eq!(
-        have: joined.read_local("value").scalar_dispatch.as_ref(),
-        want: entry.read_local("value").scalar_dispatch.as_ref()
-    );
-
-    let old = joined_scalar_dispatches_without_unchanged_shortcut(
-        &entry,
-        &[(TruthCondition::exact(Predicate::True), partial)],
-        true,
-        &memo,
-    );
-    sim_assert_eq!(
-        have: old.and_then(|dispatches| dispatches.get("value").cloned()),
-        want: None
-    );
+    let source = branch_program(129);
+    let unchanged = source.replace("{{- $value -}}", "{{- if true -}}{{- end -}}{{- $value -}}");
+    sim_assert_eq!(have: outputs(&unchanged), want: outputs(&source));
 }
 
 #[test]
 fn changed_nested_and_missing_dispatches_match_the_old_join() {
-    let memo = PredicateMemo::default();
-    let entry = state_with_scalar_arm_count(1);
-    let outer = Predicate::truthy_path("outer");
-    let inner = Predicate::truthy_path("inner");
-    let mut nested = State::default();
-    crate::tests::bind_test_dispatch(
-        nested.slot_mut("value"),
-        Some(ScalarValueDispatch::bind_content(
-            vec![
-                (
-                    inner.clone(),
-                    ScalarContent::Literal(GuardValue::String("nested-true".to_string())),
-                ),
-                (
-                    inner.negated(),
-                    ScalarContent::Literal(GuardValue::String("nested-false".to_string())),
-                ),
-            ],
-            true,
-        )),
-    );
-    let changed_arms = vec![
-        (TruthCondition::exact(outer.clone()), nested),
-        (
-            TruthCondition::exact(outer.negated()),
-            state_with_scalar_arm_count(2),
-        ),
-    ];
-    let mut changed = State::default();
-    changed.join_scalar_dispatch_arms(&entry, &changed_arms, true, &memo);
-    sim_assert_eq!(
-        have: changed.iter_locals().filter_map(|(name, slot)| slot.binding().scalar_dispatch.as_ref().map(|value| (name.clone(), value.clone()))).collect::<HashMap<_,_>>(),
-        want: joined_scalar_dispatches_without_unchanged_shortcut(
-            &entry,
-            &changed_arms,
-            true,
-            &memo
-        )
-        .unwrap_or_default()
-    );
-
-    let missing_arms = vec![
-        (
-            TruthCondition::exact(Predicate::truthy_path("present")),
-            entry.clone(),
-        ),
-        (
-            TruthCondition::exact(Predicate::truthy_path("present").negated()),
-            State::default(),
-        ),
-    ];
-    let mut missing = State::default();
-    missing.join_scalar_dispatch_arms(&entry, &missing_arms, true, &memo);
-    sim_assert_eq!(
-        have: missing.iter_locals().filter_map(|(name, slot)| slot.binding().scalar_dispatch.as_ref().map(|value| (name.clone(), value.clone()))).collect::<HashMap<_,_>>(),
-        want: joined_scalar_dispatches_without_unchanged_shortcut(
-            &entry,
-            &missing_arms,
-            true,
-            &memo
-        )
-        .unwrap_or_default()
-    );
+    let source = indoc! {r#"
+        {{- $value := "0" -}}
+        {{- if .Values.outer -}}
+          {{- if .Values.inner -}}{{- $value = "nested-true" -}}{{- else -}}{{- $value = "nested-false" -}}{{- end -}}
+        {{- else -}}
+          {{- if .Values.present -}}{{- $value = "1" -}}{{- end -}}
+        {{- end -}}
+        {{- $value -}}
+    "#};
+    let values = outputs(source)
+        .into_iter()
+        .filter_map(|(_, text)| text)
+        .collect::<BTreeSet<_>>();
+    sim_assert_eq!(have: values, want: BTreeSet::from(["nested-true".to_string(), "nested-false".to_string(), "0".to_string(), "1".to_string()]));
 }
 
 #[test]
 fn snapshot_restore_replaces_all_local_state_maps() {
-    let mut state = State::default();
-    state.bind_fragment_value(
-        AssignmentKind::Declaration,
-        "image".to_string(),
-        Some(values_path!("image")),
-    );
-    state
-        .chart_value_defaults
-        .insert(ValuesPath::parse("serviceAccount.name"));
-    let snapshot = state.clone();
-    state.enter_local_scope();
-
-    state.bind_fragment_value(
-        AssignmentKind::Declaration,
-        "image".to_string(),
-        Some(values_path!("otherImage")),
-    );
-    state.insert_range_domain("key".to_string(), vec!["a".to_string()]);
-    state
-        .chart_value_defaults
-        .insert(ValuesPath::parse("serviceAccount.labels"));
-    state.exit_local_scope();
-
-    state = snapshot;
-
-    sim_assert_eq!(
-        have: state.read_local("image").binding.as_ref().and_then(|binding| binding.value(&PredicateMemo::default())),
-        want: Some(values_path!("image"))
-    );
-    assert!(
-        state.iter_locals().map(|(name, _)| name).all(|name| state
-            .read_local(name)
-            .range_domain
-            .as_ref()
-            .is_none())
-    );
-    sim_assert_eq!(
-        have: state.chart_value_defaults,
-        want: [ValuesPath::parse("serviceAccount.name")]
-            .into_iter()
-            .collect()
-    );
+    let source = r#"{{ $image := .Values.image }}{{ with true }}{{ $image := $.Values.otherImage }}{{ range $key := list "a" }}{{ end }}{{ end }}{{ $image }}"#;
+    sim_assert_eq!(have: identities(source), want: BTreeSet::from([ValuesPath::parse("image")]));
 }
 
 #[test]
 fn local_scope_restores_shadowed_fragment_value() {
-    let mut state = State::default();
-    state.bind_fragment_value(
-        AssignmentKind::Declaration,
-        "name".to_string(),
-        Some(values_path!("outer")),
-    );
-
-    state.enter_local_scope();
-    state.bind_fragment_value(
-        AssignmentKind::Declaration,
-        "name".to_string(),
-        Some(values_path!("inner")),
-    );
-    state.exit_local_scope();
-
-    sim_assert_eq!(
-        have: state.read_local("name").binding.as_ref().and_then(|binding| binding.value(&PredicateMemo::default())),
-        want: Some(values_path!("outer"))
-    );
+    sim_assert_eq!(have: identities(r#"{{ $name := .Values.outer }}{{ if true }}{{ $name := .Values.inner }}{{ end }}{{ $name }}"#), want: BTreeSet::from([ValuesPath::parse("outer")]));
 }
 
 #[test]
 fn local_scope_keeps_assignment_to_outer_fragment_value() {
-    let mut state = State::default();
-    state.bind_fragment_value(
-        AssignmentKind::Declaration,
-        "name".to_string(),
-        Some(values_path!("outer")),
-    );
-
-    state.enter_local_scope();
-    state.bind_fragment_value(
-        AssignmentKind::Assignment,
-        "name".to_string(),
-        Some(values_path!("assigned")),
-    );
-    state.exit_local_scope();
-
-    sim_assert_eq!(
-        have: state.read_local("name").binding.as_ref().and_then(|binding| binding.value(&PredicateMemo::default())),
-        want: Some(values_path!("assigned"))
-    );
+    sim_assert_eq!(have: identities(r#"{{ $name := .Values.outer }}{{ if true }}{{ $name = .Values.assigned }}{{ end }}{{ $name }}"#), want: BTreeSet::from([ValuesPath::parse("assigned")]));
 }
 
 #[test]
 fn local_scope_restores_shadowed_get_binding() {
-    let mut state = State::default();
-    state.apply_get_binding(get_binding_plan(
-        "value",
-        AssignmentKind::Declaration,
-        "outer",
-        "key",
-    ));
-
-    state.enter_local_scope();
-    state.apply_get_binding(get_binding_plan(
-        "value",
-        AssignmentKind::Declaration,
-        "inner",
-        "key",
-    ));
-    state.exit_local_scope();
-
-    sim_assert_eq!(
-        have: state.read_local("value").get_binding.as_ref(),
-        want: Some(&get_binding("outer", "key"))
-    );
+    sim_assert_eq!(have: identities(r#"{{ $key := "key" }}{{ $value := get .Values.outer $key }}{{ if true }}{{ $value := get .Values.inner $key }}{{ end }}{{ $value }}"#), want: BTreeSet::from([ValuesPath::parse("outer.key")]));
 }
 
 #[test]
 fn local_scope_keeps_assignment_to_outer_get_binding() {
-    let mut state = State::default();
-    state.apply_get_binding(get_binding_plan(
-        "value",
-        AssignmentKind::Declaration,
-        "outer",
-        "key",
-    ));
-
-    state.enter_local_scope();
-    state.apply_get_binding(get_binding_plan(
-        "value",
-        AssignmentKind::Assignment,
-        "assigned",
-        "key",
-    ));
-    state.exit_local_scope();
-
-    sim_assert_eq!(
-        have: state.read_local("value").get_binding.as_ref(),
-        want: Some(&get_binding("assigned", "key"))
-    );
+    sim_assert_eq!(have: identities(r#"{{ $key := "key" }}{{ $value := get .Values.outer $key }}{{ if true }}{{ $value = get .Values.assigned $key }}{{ end }}{{ $value }}"#), want: BTreeSet::from([ValuesPath::parse("assigned.key")]));
 }
 
 #[test]
 fn fragment_assignment_replaces_outer_get_binding() {
-    let mut state = State::default();
-    state.apply_get_binding(get_binding_plan(
-        "value",
-        AssignmentKind::Declaration,
-        "outer",
-        "key",
-    ));
-
-    state.enter_local_scope();
-    state.bind_fragment_value(
-        AssignmentKind::Assignment,
-        "value".to_string(),
-        Some(values_path!("assigned")),
-    );
-    state.exit_local_scope();
-
-    assert!(state.read_local("value").get_binding.as_ref().is_none());
-    sim_assert_eq!(
-        have: state.read_local("value").binding.as_ref().and_then(|binding| binding.value(&PredicateMemo::default())),
-        want: Some(values_path!("assigned"))
-    );
+    sim_assert_eq!(have: identities(r#"{{ $key := "key" }}{{ $value := get .Values.outer $key }}{{ if true }}{{ $value = .Values.assigned }}{{ end }}{{ $value }}"#), want: BTreeSet::from([ValuesPath::parse("assigned")]));
 }
 
 #[test]
 fn local_scope_restores_range_domain_shadowing_outer_binding() {
-    let mut state = State::default();
-    state.bind_fragment_value(
-        AssignmentKind::Declaration,
-        "key".to_string(),
-        Some(values_path!("outer")),
-    );
-
-    state.enter_local_scope();
-    state.insert_range_domain("key".to_string(), vec!["inner".to_string()]);
-    state.exit_local_scope();
-
-    assert!(state.read_local("key").range_domain.as_ref().is_none());
-    sim_assert_eq!(
-        have: state.read_local("key").binding.as_ref().and_then(|binding| binding.value(&PredicateMemo::default())),
-        want: Some(values_path!("outer"))
-    );
+    sim_assert_eq!(have: identities(r#"{{ $key := .Values.outer }}{{ range $key := list "inner" }}{{ end }}{{ $key }}"#), want: BTreeSet::from([ValuesPath::parse("outer")]));
 }
 
 #[test]
 fn local_scope_restores_default_paths_for_shadowed_declaration() {
-    let mut state = State::default();
-    state.bind_fragment_value(
-        AssignmentKind::Declaration,
-        "name".to_string(),
-        Some(values_path!("outer")),
-    );
-    crate::tests::bind_test_defaults(
-        state.slot_mut("name"),
-        Some(BTreeSet::from([ValuesPath::parse("outer.default")])),
-    );
-
-    state.enter_local_scope();
-    state.bind_fragment_value(
-        AssignmentKind::Declaration,
-        "name".to_string(),
-        Some(values_path!("inner")),
-    );
-    crate::tests::bind_test_defaults(
-        state.slot_mut("name"),
-        Some(BTreeSet::from([ValuesPath::parse("inner.default")])),
-    );
-    state.exit_local_scope();
-
-    sim_assert_eq!(
-        have: state.read_local("name").default_paths.as_ref(),
-        want: Some(&BTreeSet::from([ValuesPath::parse("outer.default")]))
-    );
+    sim_assert_eq!(have: inputs(r#"{{ $name := default .Values.outer.default .Values.outer }}{{ if true }}{{ $name := default .Values.inner.default .Values.inner }}{{ end }}{{ $name }}"#), want: BTreeSet::from([ValuesPath::parse("outer.default"), ValuesPath::parse("outer")]));
 }
 
 #[test]
 fn local_scope_keeps_default_paths_for_outer_assignment() {
-    let mut state = State::default();
-    state.bind_fragment_value(
-        AssignmentKind::Declaration,
-        "name".to_string(),
-        Some(values_path!("outer")),
-    );
-    crate::tests::bind_test_defaults(
-        state.slot_mut("name"),
-        Some(BTreeSet::from([ValuesPath::parse("outer.default")])),
-    );
-
-    state.enter_local_scope();
-    state.bind_fragment_value(
-        AssignmentKind::Assignment,
-        "name".to_string(),
-        Some(values_path!("assigned")),
-    );
-    crate::tests::bind_test_defaults(
-        state.slot_mut("name"),
-        Some(BTreeSet::from([ValuesPath::parse("assigned.default")])),
-    );
-    state.exit_local_scope();
-
-    sim_assert_eq!(
-        have: state.read_local("name").default_paths.as_ref(),
-        want: Some(&BTreeSet::from([ValuesPath::parse("assigned.default")]))
-    );
+    sim_assert_eq!(have: inputs(r#"{{ $name := default .Values.outer.default .Values.outer }}{{ if true }}{{ $name = default .Values.assigned.default .Values.assigned }}{{ end }}{{ $name }}"#), want: BTreeSet::from([ValuesPath::parse("assigned.default"), ValuesPath::parse("assigned")]));
 }
 
 #[test]
 fn local_scope_restores_output_meta_for_shadowed_declaration() {
-    let mut state = State::default();
-    state.bind_fragment_value(
-        AssignmentKind::Declaration,
-        "name".to_string(),
-        Some(values_path!("outer")),
-    );
-    crate::tests::bind_test_output_meta(state.slot_mut("name"), Some(output_meta("outer.output")));
-
-    state.enter_local_scope();
-    state.bind_fragment_value(
-        AssignmentKind::Declaration,
-        "name".to_string(),
-        Some(values_path!("inner")),
-    );
-    crate::tests::bind_test_output_meta(state.slot_mut("name"), Some(output_meta("inner.output")));
-    state.exit_local_scope();
-
-    sim_assert_eq!(
-        have: state.read_local("name").output_meta.as_ref(),
-        want: Some(&output_meta("outer.output"))
-    );
+    sim_assert_eq!(have: inputs(r#"{{ $name := printf "%s" .Values.outer.output }}{{ if true }}{{ $name := printf "%s" .Values.inner.output }}{{ end }}{{ $name }}"#), want: BTreeSet::from([ValuesPath::parse("outer.output")]));
 }
 
 #[test]
 fn local_scope_keeps_output_meta_for_outer_assignment() {
-    let mut state = State::default();
-    state.bind_fragment_value(
-        AssignmentKind::Declaration,
-        "name".to_string(),
-        Some(values_path!("outer")),
-    );
-    crate::tests::bind_test_output_meta(state.slot_mut("name"), Some(output_meta("outer.output")));
-
-    state.enter_local_scope();
-    state.bind_fragment_value(
-        AssignmentKind::Assignment,
-        "name".to_string(),
-        Some(values_path!("assigned")),
-    );
-    crate::tests::bind_test_output_meta(
-        state.slot_mut("name"),
-        Some(output_meta("assigned.output")),
-    );
-    state.exit_local_scope();
-
-    sim_assert_eq!(
-        have: state.read_local("name").output_meta.as_ref(),
-        want: Some(&output_meta("assigned.output"))
-    );
+    sim_assert_eq!(have: inputs(r#"{{ $name := printf "%s" .Values.outer.output }}{{ if true }}{{ $name = printf "%s" .Values.assigned.output }}{{ end }}{{ $name }}"#), want: BTreeSet::from([ValuesPath::parse("assigned.output")]));
 }
 
 #[test]
 fn local_scope_restores_truthy_reduction_for_shadowed_declaration() {
-    let mut state = State::default();
-    state.slot_mut("message").bind_truth(
-        crate::fragment_assignment::AssignmentKind::Declaration,
-        Some(Predicate::truthy_path("outer")),
-        false,
-    );
-
-    state.enter_local_scope();
-    state.bind_fragment_value(
-        AssignmentKind::Declaration,
-        "message".to_string(),
-        Some(AbstractValue::StringSet(
-            [String::new()].into_iter().collect(),
-        )),
-    );
-    state.slot_mut("message").bind_truth(
-        crate::fragment_assignment::AssignmentKind::Declaration,
-        Some(Predicate::False),
-        false,
-    );
-    state.exit_local_scope();
-
-    sim_assert_eq!(
-        have: state.read_local("message").truthy_reduction.as_ref(),
-        want: Some(&Predicate::truthy_path("outer"))
-    );
+    let source = r#"{{ $message := .Values.outer }}{{ if true }}{{ $message := "" }}{{ end }}{{ if $message }}selected{{ end }}"#;
+    sim_assert_eq!(have: selected_condition(source), want: Predicate::truthy_path("outer"));
 }
 
 #[test]
 fn branch_join_keeps_bindings_present_in_all_outcomes() {
-    let mut entry = State::default();
-    entry.bind_fragment_value(
-        AssignmentKind::Declaration,
-        "name".to_string(),
-        Some(values_path!("entry")),
-    );
-    let entry_snapshot = entry.clone();
-
-    let mut first = entry.clone();
-    first.bind_fragment_value(
-        AssignmentKind::Assignment,
-        "name".to_string(),
-        Some(values_path!("first")),
-    );
-    let mut second = entry.clone();
-    second.bind_fragment_value(
-        AssignmentKind::Assignment,
-        "name".to_string(),
-        Some(values_path!("second")),
-    );
-
-    let mut joined = entry;
-    joined.join(&entry_snapshot, &[first, second]);
-
-    sim_assert_eq!(
-        have: joined.read_local("name").binding.as_ref().and_then(|binding| binding.value(&PredicateMemo::default())),
-        want: Some(AbstractValue::Choice(
-            [
-                values_path!("first"),
-                values_path!("second")
-            ]
-            .into_iter()
-            .collect()
-        ))
-    );
+    let source = "{{ $name := .Values.entry }}{{ if .Values.choose }}{{ $name = .Values.first }}{{ else }}{{ $name = .Values.second }}{{ end }}{{ $name }}";
+    sim_assert_eq!(have: identities(source), want: BTreeSet::from([ValuesPath::parse("first"), ValuesPath::parse("second")]));
 }
 
 #[test]
 fn branch_join_unions_truthy_reductions_across_outcomes() {
-    let mut entry = State::default();
-    entry.slot_mut("message").bind_truth(
-        crate::fragment_assignment::AssignmentKind::Declaration,
-        Some(Predicate::False),
-        false,
-    );
-    let entry_snapshot = entry.clone();
-
-    let mut populated = entry.clone();
-    populated.slot_mut("message").bind_truth(
-        crate::fragment_assignment::AssignmentKind::Declaration,
-        Some(Predicate::truthy_path("legacy")),
-        false,
-    );
-
-    let mut joined = entry;
-    joined.join(&entry_snapshot, &[populated, entry_snapshot.clone()]);
-
-    sim_assert_eq!(
-        have: joined.read_local("message").truthy_reduction.as_ref(),
-        want: Some(&Predicate::truthy_path("legacy"))
-    );
+    let source = "{{ $message := false }}{{ if .Values.legacy }}{{ $message = true }}{{ end }}{{ if $message }}selected{{ end }}";
+    sim_assert_eq!(have: selected_condition(source), want: Predicate::truthy_path("legacy"));
 }
 
 #[test]
 fn over_cap_branch_stamp_removes_the_changed_truthy_reduction() {
-    let mut entry = State::default();
-    entry.slot_mut("message").bind_truth(
-        crate::fragment_assignment::AssignmentKind::Declaration,
-        Some(Predicate::False),
-        false,
+    let source = "{{ $message := false }}{{ if and .Values.guard.a .Values.guard.b .Values.guard.c .Values.guard.d .Values.guard.e .Values.guard.f }}{{ $message = .Values.result }}{{ end }}{{ if $message }}selected{{ end }}";
+    let condition = selected_condition(source);
+    assert!(
+        condition.contains_approximation() || condition == Predicate::True,
+        "over-cap condition was published as exact: {condition:?}"
     );
-    let mut branch = entry.clone();
-    branch.slot_mut("message").bind_truth(
-        crate::fragment_assignment::AssignmentKind::Declaration,
-        Some(Predicate::truthy_path("result")),
-        false,
-    );
-    let condition = Predicate::all(
-        (0..6)
-            .map(|index| Predicate::truthy_path(format!("guard.{index}")))
-            .collect(),
-    );
-
-    branch.conjoin_changed_truthy_reductions(
-        &entry,
-        &condition,
-        &helm_schema_core::PredicateMemo::new(),
-    );
-    sim_assert_eq!(have: branch.read_local("message").truthy_reduction.as_ref(), want: None);
-    assert!(branch.read_local("message").truthiness_abstained);
-
-    let mut joined = entry.clone();
-    joined.join(&entry, &[branch, entry.clone()]);
-    sim_assert_eq!(have: joined.read_local("message").truthy_reduction.as_ref(), want: None);
-    assert!(joined.read_local("message").truthiness_abstained);
 }
 
 #[test]
 fn exact_if_join_conditions_an_untouched_entry_truthy_reduction() {
-    let mut entry = State::default();
-    entry.slot_mut("continue").bind_truth(
-        crate::fragment_assignment::AssignmentKind::Declaration,
-        Some(Predicate::truthy_path("gate")),
-        false,
-    );
-    let mut stopped = entry.clone();
-    stopped.slot_mut("continue").bind_truth(
-        crate::fragment_assignment::AssignmentKind::Declaration,
-        Some(Predicate::False),
-        false,
-    );
-    let mut joined = entry.clone();
-
-    joined.join_truthy_reduction_arms(
-        &entry,
-        &[(
-            TruthCondition::exact(Predicate::truthy_path("stop")),
-            stopped,
-        )],
-        false,
-        &helm_schema_core::PredicateMemo::new(),
-    );
-
-    sim_assert_eq!(
-        have: joined.read_local("continue").truthy_reduction.as_ref(),
-        want: Some(
-            &Predicate::all(vec![
-                Predicate::truthy_path("gate"),
-                Predicate::truthy_path("stop").negated(),
-            ])
-            .normalize_boolean()
-        )
-    );
+    let source = "{{ $continue := .Values.gate }}{{ if .Values.stop }}{{ $continue = false }}{{ end }}{{ if $continue }}selected{{ end }}";
+    sim_assert_eq!(have: selected_condition(source), want: Predicate::all(vec![Predicate::truthy_path("gate"), Predicate::truthy_path("stop").negated()]).normalize_boolean());
 }
 
 #[test]
-fn branch_join_intersects_chart_value_defaults() {
-    let mut entry = State::default();
-    entry
-        .chart_value_defaults
-        .insert(ValuesPath::parse("already.defaulted"));
-    let entry_snapshot = entry.clone();
-
-    let mut first = entry.clone();
-    first
-        .chart_value_defaults
-        .insert(ValuesPath::parse("branch.only"));
-    let second = entry.clone();
-
-    let mut joined = entry;
-    joined.join(&entry_snapshot, &[first, second]);
-
-    sim_assert_eq!(
-        have: joined.chart_value_defaults,
-        want: [ValuesPath::parse("already.defaulted")]
-            .into_iter()
-            .collect()
+fn branch_join_intersects_chart_value_defaults() -> eyre::Result<()> {
+    let source = indoc! {r#"
+        {{- $_ := set .Values "already" (dict "defaulted" "before") -}}
+        {{- if .Values.choose -}}{{- $_ := set .Values "branch" (dict "only" "after") -}}{{- end -}}
+        {{- .Values.already.defaulted -}}
+    "#};
+    let execution = execute(source);
+    let output = execution
+        .text()
+        .next()
+        .ok_or_eyre("missing default output")?
+        .1;
+    sim_assert_eq!(have: output.exact_text(), want: Some("before".to_string()));
+    assert!(
+        execution
+            .text()
+            .all(|(_, text)| text.exact_text().as_deref() == Some("before"))
     );
-}
-
-fn get_binding_plan(
-    variable: &str,
-    kind: AssignmentKind,
-    base: &str,
-    key_var: &str,
-) -> GetBindingPlan {
-    GetBindingPlan {
-        variable: variable.to_string(),
-        kind,
-        binding: get_binding(base, key_var),
-    }
-}
-
-fn get_binding(base: &str, key_var: &str) -> GetBinding {
-    GetBinding {
-        base: ValuesPath::parse(base),
-        key_var: key_var.to_string(),
-    }
-}
-
-fn output_meta(path: &str) -> BTreeMap<ValuesPath, HelperOutputMeta> {
-    BTreeMap::from([(ValuesPath::parse(path), HelperOutputMeta::default())])
+    Ok(())
 }

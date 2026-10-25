@@ -13,7 +13,7 @@ use helm_schema_core::Predicate;
 pub(crate) fn normalize_contract_uses(
     mut uses: Vec<ContractUse>,
     mut dependency_uses: Vec<ContractUse>,
-    fail_conditions: &[crate::eval_effect::FailCapture],
+    fail_conditions: &[crate::observed_facts::FailCapture],
 ) -> Vec<ContractUse> {
     canonicalize_contract_use_inputs(&mut uses);
     canonicalize_contract_use_inputs(&mut dependency_uses);
@@ -381,12 +381,12 @@ fn extra_predicates_are_truthy_parents(
 }
 
 fn string_requirements_by_ancestor(
-    fail_conditions: &[crate::eval_effect::FailCapture],
+    fail_conditions: &[crate::observed_facts::FailCapture],
 ) -> BTreeMap<String, BTreeSet<(String, helm_schema_core::Conjunction)>> {
     let mut requirements: BTreeMap<String, BTreeSet<(String, helm_schema_core::Conjunction)>> =
         BTreeMap::new();
     for capture in fail_conditions {
-        let crate::eval_effect::CaptureKind::StringRequirement {
+        let crate::observed_facts::CaptureKind::StringRequirement {
             path,
             route,
             selection,
@@ -394,7 +394,7 @@ fn string_requirements_by_ancestor(
         else {
             continue;
         };
-        if *route == crate::eval_effect::StringRequirementRoute::Serialized {
+        if *route == crate::observed_facts::StringRequirementRoute::Serialized {
             continue;
         }
         let mut predicates = capture.conjunction.clone();
@@ -417,7 +417,7 @@ fn string_requirements_by_ancestor(
 
 fn lower_string_requirement_merge_sources(
     uses: &mut [ContractUse],
-    fail_conditions: &[crate::eval_effect::FailCapture],
+    fail_conditions: &[crate::observed_facts::FailCapture],
 ) {
     let requirements_by_ancestor = string_requirements_by_ancestor(fail_conditions);
     let mut overlap_cache = BTreeMap::new();

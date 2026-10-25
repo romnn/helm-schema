@@ -112,6 +112,7 @@ impl PathSchemaFactsAccumulator {
     pub(super) fn record_facts(&mut self, facts: ContractValuePathFacts) {
         self.facts.merge_render_use_facts(facts);
         let ContractValuePathFacts {
+            has_unknown_read_region,
             has_referenced_descendants: _,
             has_item_descendants: _,
             has_structured_item_descendants: _,
@@ -141,6 +142,7 @@ impl PathSchemaFactsAccumulator {
             has_self_range_guard_render_use: _,
             is_nullable,
         } = facts;
+        self.facts.has_unknown_read_region |= has_unknown_read_region;
         self.facts.used_as_fragment |= used_as_fragment;
         self.facts.used_as_serialized |= used_as_serialized;
         self.facts.used_as_yaml_serialized |= used_as_yaml_serialized;
@@ -251,7 +253,7 @@ pub(super) fn record_contract_use(
     contract_use: &ContractUse,
     range_modes: &crate::range_modes::RangeModes,
     string_requirement_routes: &[(
-        crate::eval_effect::StringRequirementRoute,
+        crate::observed_facts::StringRequirementRoute,
         helm_schema_core::Conjunction,
     )],
     has_yaml_serialized_use: bool,
@@ -481,7 +483,7 @@ pub(super) fn record_contract_use_conjunction(
     predicates: &[Predicate],
     range_modes: &crate::range_modes::RangeModes,
     string_requirement_routes: &[(
-        crate::eval_effect::StringRequirementRoute,
+        crate::observed_facts::StringRequirementRoute,
         helm_schema_core::Conjunction,
     )],
     has_yaml_serialized_use: bool,
@@ -491,9 +493,16 @@ pub(super) fn record_contract_use_conjunction(
     let source_expr = source_path.encode();
     let kind_resolved = kind_branch_resolved_use(contract_use, predicates);
     let contract_use = kind_resolved.as_ref().unwrap_or(contract_use);
-    if contract_use.kind == ValueKind::WidenedDependency {
-        if source_path.segments().next().is_some() {
-            path_accumulator(paths, &source_path).referenced = true;
+    if matches!(
+        contract_use.kind,
+        ValueKind::WidenedDependency | ValueKind::WidenedRegion
+    ) {
+        if contract_use.kind == ValueKind::WidenedRegion || source_path.segments().next().is_some()
+        {
+            let acc = path_accumulator(paths, &source_path);
+            acc.referenced = true;
+            acc.facts.facts.has_unknown_read_region |=
+                contract_use.kind == ValueKind::WidenedRegion;
         }
         return;
     }
@@ -848,11 +857,11 @@ pub(super) fn record_contract_use_conjunction(
             .collect::<BTreeSet<_>>();
         let provider_route_consumes_raw_string = matching_string_routes
             .iter()
-            .any(|route| *route != crate::eval_effect::StringRequirementRoute::Serialized);
+            .any(|route| *route != crate::observed_facts::StringRequirementRoute::Serialized);
         let serialized_sibling_owns_scalar_preimage =
             provider_route_consumes_raw_string && has_yaml_serialized_use;
         let scoped_consumer_owns_raw_domain =
-            matching_string_routes.contains(&crate::eval_effect::StringRequirementRoute::Scoped);
+            matching_string_routes.contains(&crate::observed_facts::StringRequirementRoute::Scoped);
         let provider_use = (!type_dispatched || complement_dispatched || structural_dispatch_arm)
             .then(|| provider_schema_use(contract_use, self_range_guarded, source_null_tolerant))
             .flatten()
@@ -1054,7 +1063,7 @@ pub(super) fn lowerable_range_outer_guards(
 
 pub(super) fn record_range_input_capture(
     paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
-    capture: &crate::eval_effect::FailCapture,
+    capture: &crate::observed_facts::FailCapture,
     path: &str,
     destructured: bool,
     json_decoded: bool,

@@ -2,7 +2,9 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use helm_schema_core::ValuesPath;
 
-use crate::eval_effect::FailCapture;
+mod captures;
+
+pub(crate) use captures::{CaptureKind, FailCapture, StringRequirementRoute};
 
 pub(crate) type TypeHints = BTreeMap<ValuesPath, BTreeSet<String>>;
 

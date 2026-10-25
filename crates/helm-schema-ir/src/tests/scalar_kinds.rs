@@ -1,18 +1,18 @@
 use color_eyre::eyre::{self, OptionExt as _};
-use helm_schema_ast::{TemplateExpr, parse_action_expressions};
-use helm_schema_core::{GuardValue, Predicate, PredicateMemo};
+use helm_schema_ast::DefineIndex;
+use helm_schema_core::{GuardValue, Predicate, ValuesPath};
+use indoc::indoc;
+use std::collections::BTreeSet;
 use test_util::prelude::sim_assert_eq;
 
-use crate::eval_env::EvalEnv;
-use crate::expr_eval::eval_expr;
+use crate::analysis_db::IrAnalysisDb;
 use crate::scalar_value::{ScalarContent, ScalarValueDispatch};
 use crate::value::kinds::GoType;
 
-fn expression(source: &str) -> eyre::Result<TemplateExpr> {
-    parse_action_expressions(&format!("{{{{ {source} }}}}"))
-        .into_iter()
-        .next()
-        .ok_or_eyre("missing expression")
+fn execute(source: &str) -> crate::value::DocumentExecution {
+    let defines = DefineIndex::new();
+    let db = IrAnalysisDb::new(&defines);
+    crate::value::execute_document(source, None, &db)
 }
 
 #[test]
@@ -25,11 +25,13 @@ fn runtime_types_are_stamped_at_literal_and_semver_production() -> eyre::Result<
         ("nil", GoType::Nil),
         ("(semver \"1.2.3\").Major", GoType::Uint64),
     ] {
-        let result = eval_expr(&expression(source)?, &EvalEnv::default());
-        let dispatch = result
-            .scalar_transport()
-            .ok_or_eyre("missing typed transport")?;
-        sim_assert_eq!(have: dispatch.arms.iter().map(|(_, leaf)| leaf.go_type).collect::<Vec<_>>(), want: vec![expected]);
+        let execution = execute(&format!("{{{{ {source} }}}}"));
+        let site = execution
+            .sites()
+            .filter(|site| site.rendered())
+            .last()
+            .ok_or_eyre("missing typed output")?;
+        sim_assert_eq!(have: site.value().go_type(), want: expected);
     }
     Ok(())
 }
@@ -44,21 +46,18 @@ fn type_only_projection_is_absent_but_legacy_empty_projection_stays_present() {
 }
 
 #[test]
-fn type_refinement_preserves_all_non_type_result_facts() {
-    let memo = PredicateMemo::default();
-    let mut result =
-        crate::eval_effect::EvalResult::none().with_truth_with_memo(Predicate::True, &memo);
-    let before = result.clone();
-    result.refine_go_type(GoType::Float64);
-    sim_assert_eq!(have: &result.value, want: &before.value);
-    sim_assert_eq!(have: &result.effects, want: &before.effects);
-    sim_assert_eq!(have: &result.truth, want: &before.truth);
-    sim_assert_eq!(have: &result.selection_reachability, want: &before.selection_reachability);
-    sim_assert_eq!(have: &result.json_payload_truth, want: &before.json_payload_truth);
-    sim_assert_eq!(have: &result.field_scalar_dispatches, want: &before.field_scalar_dispatches);
-    sim_assert_eq!(have: &result.proven_operands, want: &before.proven_operands);
-    sim_assert_eq!(have: result.scalar_dispatch().is_none(), want: true);
-    sim_assert_eq!(have: result.scalar_transport().is_some(), want: true);
+fn type_refinement_preserves_all_non_type_result_facts() -> eyre::Result<()> {
+    let execution = execute("{{ float64 .Values.input }}");
+    let site = execution
+        .sites()
+        .filter(|site| site.rendered())
+        .last()
+        .ok_or_eyre("missing converted output")?;
+    sim_assert_eq!(have: site.value().go_type(), want: GoType::Float64);
+    sim_assert_eq!(have: site.value().inputs(), want: BTreeSet::from([ValuesPath::parse("input")]));
+    sim_assert_eq!(have: site.value().literal(), want: None);
+    sim_assert_eq!(have: execution.reads().iter().map(|read| read.values_path.clone()).collect::<BTreeSet<_>>(), want: BTreeSet::from([ValuesPath::parse("input")]));
+    Ok(())
 }
 
 #[test]
@@ -73,12 +72,9 @@ fn conflicting_types_join_without_changing_equal_content() -> eyre::Result<()> {
         .join_equal_content([&component])
         .ok_or_eyre("content join failed")?;
     sim_assert_eq!(have: joined.content_eq(&literal), want: true);
-    let types = joined
-        .arms
-        .iter()
-        .map(|(_, leaf)| leaf.go_type)
-        .collect::<Vec<_>>();
-    sim_assert_eq!(have: types, want: vec![GoType::Unknown]);
+    let mut expected = literal.clone();
+    expected.refine_type(GoType::Unknown);
+    sim_assert_eq!(have: joined, want: expected);
     sim_assert_eq!(have: joined.constant_value(), want: Some(GuardValue::Int(1)));
     Ok(())
 }
@@ -94,19 +90,7 @@ fn type_refinement_keeps_content_and_its_incomplete_coverage() {
     );
     dispatch.refine_type(GoType::Int);
     sim_assert_eq!(have: dispatch.content().map(|content| (content.arms().count(), content.complete)), want: Some((1, false)));
-    sim_assert_eq!(
-        have: dispatch,
-        want: ScalarValueDispatch {
-            arms: vec![(
-                Predicate::truthy_path("enabled"),
-                super::ScalarValue {
-                    go_type: GoType::Int,
-                    content: Some(ScalarContent::Literal(GuardValue::Int(1))),
-                },
-            )],
-            complete: false,
-        }
-    );
+    sim_assert_eq!(have: dispatch.constant_value(), want: None);
 }
 
 #[test]
@@ -125,114 +109,77 @@ fn refining_partial_content_does_not_change_an_exhausted_transform_projection() 
     sim_assert_eq!(have: dispatch.printf_string("%s").is_none(), want: true);
 }
 
-#[test]
-fn exhausting_type_only_coverage_keeps_legacy_absence() -> eyre::Result<()> {
-    let memo = PredicateMemo::default();
-    let outcomes = (0..129)
-        .map(|index| {
-            let mut state = crate::value::State::default();
-            crate::tests::bind_test_dispatch(
-                state.slot_mut("value"),
-                Some(ScalarValueDispatch::typed(GoType::Int)),
-            );
-            let condition = Predicate::from(helm_schema_core::Guard::Eq {
-                path: helm_schema_core::ValuesPath::parse("branch"),
-                value: GuardValue::Int(index),
-            });
-            (crate::scalar_value::TruthCondition::exact(condition), state)
-        })
-        .collect::<Vec<_>>();
-    let entry = crate::value::State::default();
-    let mut joined = entry.clone();
-    joined.join_scalar_dispatch_arms(&entry, &outcomes, true, &memo);
-    let view = joined.read_local("value");
-    let dispatch = view
-        .scalar_dispatch
-        .as_ref()
-        .ok_or_eyre("missing widened type transport")?;
-    sim_assert_eq!(have: dispatch.content().is_none(), want: true);
-    sim_assert_eq!(have: dispatch.arms.iter().map(|(_, leaf)| leaf.go_type).collect::<Vec<_>>(), want: vec![GoType::Unknown]);
-    Ok(())
+fn branch_program(count: usize, literal_first: bool) -> String {
+    let mut source = String::from("{{- $value := float64 .Values.input -}}");
+    for index in 0..count {
+        let keyword = if index == 0 { "if" } else { "else if" };
+        source.push_str(&format!("{{{{- {keyword} eq .Values.branch {index} -}}}}"));
+        if index == 0 && literal_first {
+            source.push_str("{{- $value = 1 -}}");
+        } else {
+            source.push_str("{{- $value = float64 .Values.input -}}");
+        }
+    }
+    source.push_str("{{- end -}}{{- $value -}}");
+    source
 }
 
 #[test]
-fn exhausting_type_only_coverage_retains_content_guards() -> eyre::Result<()> {
-    let memo = PredicateMemo::default();
-    let outcomes = (0..130)
-        .map(|index| {
-            let mut state = crate::value::State::default();
-            let dispatch = if index == 0 {
-                ScalarValueDispatch::constant(GuardValue::Int(1))
-            } else {
-                ScalarValueDispatch::typed(GoType::Float64)
-            };
-            crate::tests::bind_test_dispatch(state.slot_mut("value"), Some(dispatch));
-            let condition = Predicate::from(helm_schema_core::Guard::Eq {
-                path: helm_schema_core::ValuesPath::parse("branch"),
-                value: GuardValue::Int(index),
-            });
-            (crate::scalar_value::TruthCondition::exact(condition), state)
-        })
+fn exhausting_type_only_coverage_keeps_legacy_absence() {
+    let execution = execute(&branch_program(129, false));
+    let sites = execution
+        .sites()
+        .filter(|site| site.rendered())
         .collect::<Vec<_>>();
-    let entry = crate::value::State::default();
-    let mut joined = entry.clone();
-    joined.join_scalar_dispatch_arms(&entry, &outcomes, true, &memo);
-    let view = joined.read_local("value");
-    let dispatch = view
-        .scalar_dispatch
-        .as_ref()
-        .ok_or_eyre("missing retained content")?;
-    let content = dispatch
-        .content()
-        .ok_or_eyre("missing content projection")?;
-    sim_assert_eq!(have: content.complete, want: false);
-    sim_assert_eq!(
-        have: content.arms().map(|(condition, content)| (condition.clone(), content.clone())).collect::<Vec<_>>(),
-        want: vec![(Predicate::from(helm_schema_core::Guard::Eq { path: helm_schema_core::ValuesPath::parse("branch"), value: GuardValue::Int(0) }), ScalarContent::Literal(GuardValue::Int(1)))],
-    );
-    Ok(())
+    assert!(!sites.is_empty(), "no completed output after bounded join");
+    for site in sites {
+        sim_assert_eq!(have: site.value().literal(), want: None);
+        assert!(site.value().inputs().contains(&ValuesPath::parse("input")));
+    }
+}
+
+#[test]
+fn exhausting_type_only_coverage_retains_content_guards() {
+    let execution = execute(&branch_program(130, true));
+    let expected = Predicate::from(helm_schema_core::Guard::Eq {
+        path: ValuesPath::parse("branch"),
+        value: GuardValue::Int(0),
+    });
+    let mut found = false;
+    for site in execution.sites().filter(|site| site.rendered()) {
+        for alternative in site.value().alternatives() {
+            if alternative.value().literal() == Some(&GuardValue::Int(1)) {
+                let condition = Predicate::all(vec![
+                    site.condition().clone(),
+                    alternative.condition().clone(),
+                ])
+                .normalize_boolean();
+                sim_assert_eq!(have: condition, want: expected);
+                assert!(alternative.coverage_exact());
+                found = true;
+            }
+        }
+    }
+    assert!(found, "bounded joins lost the exact literal arm");
 }
 
 #[test]
 fn a_type_only_helper_shadow_preserves_legacy_binding_and_scope_updates() {
-    use crate::fragment_assignment::AssignmentKind;
-    use crate::value::State;
-    let mut entry = State::default();
-    entry.bind_fragment_value(
-        AssignmentKind::Declaration,
-        "value".to_string(),
-        Some(crate::abstract_value::AbstractValue::Dict(
-            std::collections::BTreeMap::from([(
-                "a".to_string(),
-                crate::abstract_value::AbstractValue::Unknown,
-            )]),
-        )),
-    );
-    entry
-        .slot_mut("value")
-        .bind_truth(AssignmentKind::Declaration, Some(Predicate::True), false);
-    let mut expected = entry.clone();
-    let mut actual = entry;
-    for (state, scalar_dispatch) in [
-        (&mut expected, None),
-        (
-            &mut actual,
-            Some(ScalarValueDispatch::typed(GoType::Float64)),
-        ),
-    ] {
-        state.enter_local_scope();
-        state.bind(
-            AssignmentKind::Declaration,
-            "value",
-            crate::value::AssignmentBinding {
-                binding: None,
-                scalar_dispatch,
-                truthy_reduction: Some(Predicate::False),
-                helper_scope: true,
-                self_preserving: false,
-            },
-        );
-        state.exit_local_scope();
-    }
-    sim_assert_eq!(have: actual, want: expected);
+    let baseline = execute(r#"{{- $value := dict "a" .Values.input -}}{{- $value -}}"#);
+    let actual = execute(indoc! {r#"
+        {{- $value := dict "a" .Values.input -}}
+        {{- if true -}}
+          {{- $value := float64 .Values.number -}}
+        {{- end -}}
+        {{- $value -}}
+    "#});
+    let output = |execution: &crate::value::DocumentExecution| {
+        execution
+            .sites()
+            .filter(|site| site.rendered())
+            .last()
+            .map(|site| site.projected_value())
+    };
+    sim_assert_eq!(have: output(&actual), want: output(&baseline));
+    assert!(output(&actual).is_some());
 }

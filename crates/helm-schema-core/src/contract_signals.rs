@@ -1402,6 +1402,8 @@ impl std::ops::BitAndAssign<Self> for AllUses {
 /// lower-level projections.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ContractValuePathFacts {
+    /// Execution may read unnamed members in this region.
+    pub has_unknown_read_region: bool,
     /// Whether analysis observed referenced paths below this path.
     pub has_referenced_descendants: bool,
     /// Descendant rows that continue through a `*` item segment. Item rows
@@ -1502,6 +1504,7 @@ pub struct ContractValuePathFacts {
 impl Default for ContractValuePathFacts {
     fn default() -> Self {
         Self {
+            has_unknown_read_region: false,
             has_referenced_descendants: false,
             has_item_descendants: false,
             has_structured_item_descendants: false,
@@ -1560,6 +1563,7 @@ impl ContractValuePathFacts {
     /// Merges rendering facts collected by another analysis branch.
     pub fn merge_render_use_facts(&mut self, other: Self) {
         let Self {
+            has_unknown_read_region: _,
             has_referenced_descendants: _,
             has_item_descendants: _,
             has_structured_item_descendants: _,

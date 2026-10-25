@@ -6,7 +6,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use helm_schema_core::{Predicate, PredicateMemo};
+use helm_schema_core::{GuardValue, Predicate, PredicateMemo};
 
 use super::kinds::GoType;
 use super::{MAX_SCALAR_DISPATCH_STATES, ScalarValue};
@@ -680,9 +680,7 @@ impl ScalarContent {
 
     fn truth_condition(&self) -> Option<helm_schema_core::Predicate> {
         match self {
-            Self::Literal(value) => Some(bool_predicate(
-                crate::value_path_context::guard_value_is_truthy(value),
-            )),
+            Self::Literal(value) => Some(bool_predicate(guard_value_is_truthy(value))),
             Self::Identity(path) => Some(helm_schema_core::Predicate::from(
                 helm_schema_core::Guard::Truthy { path: path.clone() },
             )),
@@ -905,7 +903,7 @@ fn rendered_identity_equals(
         }
     }
     for text in &candidate_texts {
-        let preimage = crate::value_path_context::stringified_equality_preimage(text);
+        let preimage = stringified_equality_preimage(text);
         let covered_number = preimage
             .iter()
             .any(|value| matches!(value, GuardValue::Int(_) | GuardValue::Float(_)));
@@ -1033,7 +1031,12 @@ impl TruthCondition {
             return Self::exact_with_memo(predicate, memo);
         }
         match predicate.kind() {
-            helm_schema_core::PredicateKind::Approximate { sound_subset, .. } => {
+            helm_schema_core::PredicateKind::Approximate {
+                marker: _,
+                paths: _,
+                role: _,
+                sound_subset,
+            } => {
                 let when_true = sound_subset.cloned().unwrap_or(Predicate::False);
                 Self::from_subsets_with_memo(when_true, Predicate::False, false, memo)
             }
@@ -1054,7 +1057,9 @@ impl TruthCondition {
                     .map(|predicate| Self::from_predicate_with_memo(predicate, memo)),
                 memo,
             ),
-            _ => Self::Exact(predicate),
+            helm_schema_core::PredicateKind::True
+            | helm_schema_core::PredicateKind::False
+            | helm_schema_core::PredicateKind::Guard(_) => Self::Exact(predicate),
         }
     }
 
@@ -1288,5 +1293,33 @@ impl ScalarValueDispatch {
         .predicate()
             == Some(&Predicate::True);
         Some(ScalarValueDispatch::bind_content(arms, complete))
+    }
+}
+
+pub(crate) fn stringified_equality_preimage(text: &str) -> Vec<GuardValue> {
+    let mut values = vec![GuardValue::string(text)];
+    match text {
+        "true" => values.push(GuardValue::Bool(true)),
+        "false" => values.push(GuardValue::Bool(false)),
+        "<nil>" => values.push(GuardValue::Null),
+        _ => {
+            if let Ok(value) = text.parse::<i64>()
+                && value.to_string() == text
+                && (-1_000_000..1_000_000).contains(&value)
+            {
+                values.push(GuardValue::Int(value));
+            }
+        }
+    }
+    values
+}
+
+pub(crate) fn guard_value_is_truthy(value: &GuardValue) -> bool {
+    match value {
+        GuardValue::String(text) => !text.is_empty(),
+        GuardValue::Bool(value) => *value,
+        GuardValue::Int(value) => *value != 0,
+        GuardValue::Float(text) => text.parse::<f64>().is_ok_and(|value| value != 0.0),
+        GuardValue::Null => false,
     }
 }
