@@ -2,6 +2,8 @@ mod branch_join;
 pub(crate) mod kinds;
 mod local_join;
 mod local_state;
+mod state;
+pub(crate) use state::{RootSnapshot, State};
 pub(crate) mod scalar_value;
 
 use std::collections::{BTreeMap, BTreeSet, HashMap};
@@ -140,20 +142,6 @@ impl RootSlot {
         self.truth = truth.or(self.truth.take());
         self.dispatch = dispatch.or(self.dispatch.take());
     }
-}
-
-pub(crate) fn root_values(slots: &HashMap<String, RootSlot>) -> HashMap<String, AbstractValue> {
-    slots
-        .iter()
-        .filter_map(|(name, slot)| {
-            let RootSlot {
-                value,
-                truth: _,
-                dispatch: _,
-            } = slot;
-            value.clone().map(|value| (name.clone(), value))
-        })
-        .collect()
 }
 
 pub(crate) fn root_slots(values: HashMap<String, AbstractValue>) -> HashMap<String, RootSlot> {

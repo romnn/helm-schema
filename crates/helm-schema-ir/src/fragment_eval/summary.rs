@@ -37,8 +37,8 @@ use crate::scalar_value::{
     ScalarContent, ScalarRenderPart, ScalarValueDispatch, TruthCondition, any_predicates_with_memo,
     conjoin_predicates_with_memo,
 };
-use crate::symbolic_local_state::SymbolicLocalState;
 use crate::value::RootSlot;
+use crate::value::State;
 use crate::{ContractProvenance, ValueKind};
 use helm_schema_core::{GuardDnf, Predicate, PredicateMemo};
 
@@ -229,7 +229,7 @@ pub(crate) fn eval_bound_helper_fragment(
         text_captures: interpreter.text_captures.into_iter().collect(),
         member_host_conversions: interpreter.member_host_conversions,
         chart_defaults: interpreter.chart_defaults_observed,
-        root_writes: interpreter.root_writes,
+        root_writes: interpreter.state.into_root_writes(),
         pre_rewrite_strict_paths: interpreter.pre_rewrite_strict_paths,
     }
 }
@@ -255,13 +255,15 @@ fn bound_helper_interpreter<'a>(
     interpreter.inline_files = vec![format!("define:{name}")];
     interpreter.helper_scope = true;
     interpreter.helper_seen = seen.clone();
-    interpreter.root_slots = resolution.root_slots.clone();
+    interpreter
+        .state
+        .replace_roots(resolution.root_slots.clone());
     interpreter.root_value_dot = resolution.dot.helper.clone();
     interpreter.push_dot(
         resolution.dot.fragment.clone(),
         crate::eval_env::BindingEvaluationMode::Evaluated,
     );
-    interpreter.locals = SymbolicLocalState::with_root(
+    interpreter.state.restore_locals(State::with_root(
         resolution
             .dot
             .fragment
@@ -269,7 +271,7 @@ fn bound_helper_interpreter<'a>(
             .or_else(|| resolution.dot.helper.clone())
             .unwrap_or(AbstractValue::Unknown),
         crate::eval_env::BindingEvaluationMode::Evaluated,
-    );
+    ));
     interpreter
 }
 

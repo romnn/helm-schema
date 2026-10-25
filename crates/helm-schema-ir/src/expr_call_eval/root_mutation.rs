@@ -152,8 +152,8 @@ pub(super) fn root_set_truthy_predicate(expr: &TemplateExpr, env: &EvalEnv) -> O
         TemplateExpr::Field(path) if path.len() == 1 => path
             .first()
             .and_then(|field| {
-                env.root_slots
-                    .get(field)
+                env.state
+                    .read_root(field)
                     .and_then(|slot| slot.binding().truth.as_ref())
             })
             .cloned(),
@@ -163,8 +163,8 @@ pub(super) fn root_set_truthy_predicate(expr: &TemplateExpr, env: &EvalEnv) -> O
         {
             path.first()
                 .and_then(|field| {
-                    env.root_slots
-                        .get(field)
+                    env.state
+                        .read_root(field)
                         .and_then(|slot| slot.binding().truth.as_ref())
                 })
                 .cloned()

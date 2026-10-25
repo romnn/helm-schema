@@ -11,7 +11,6 @@
 use helm_schema_ast::TemplateExpr;
 
 use crate::abstract_value::AbstractValue;
-use crate::bound_value_analysis::BoundValueContext;
 use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
 use crate::fragment_expr_eval::{FragmentEvalContext, document_result_from_expr};
@@ -402,7 +401,7 @@ impl Interpreter<'_> {
             let mut result = document_result_from_expr(
                 expr,
                 &env,
-                Some(&crate::value::root_values(&self.root_slots)),
+                Some(&self.state.root_values()),
                 current_dot.as_ref(),
                 context,
                 &mut seen,
@@ -424,17 +423,16 @@ impl Interpreter<'_> {
                 .without_helper_call_args()
                 .with_predicate_memo(std::rc::Rc::clone(self.db.predicate_memo()));
         // Locals (`$x`) and root bindings (`.x`) are distinct namespaces:
-        // roots stay in `root_slots` so a helper-arg key never shadows a
+        // roots stay in the root slots so a helper-arg key never shadows a
         // same-named body local. Range VALUE variables resolve to member
         // identity (`$arg` in `range $arg := .Values.args` is `args.*`),
         // the same identity the range dot already carries, so member
         // consumers (`tpl $arg`) bind their contracts per member;
         // explicit fragment values shadow them where both exist.
-        env.locals = self.locals.evaluation_bindings();
-        env.local_slots = BoundValueContext::new(&self.locals.slots);
+        env.locals = self.state.evaluation_bindings();
+        env.state = self.state.expression_state();
         env.member_host_conversions = self.member_host_conversions.clone();
         env.active_predicates = self.active_predicates.clone();
-        env.root_slots = self.root_slots.clone();
         env.root_field_semantics_on_current_dot =
             self.root_value_dot.is_some() && self.dot_stack.len() <= 1;
 
@@ -525,7 +523,7 @@ impl Interpreter<'_> {
         self.chart_defaults_observed
             .extend(effects.chart_default_paths.iter().cloned());
         let mut chart_defaults = effects.chart_default_paths.clone();
-        self.locals.chart_value_defaults.append(&mut chart_defaults);
+        self.state.chart_value_defaults.append(&mut chart_defaults);
 
         self.parsed_yaml_input_paths
             .extend(effects.parsed_yaml_input_paths.iter().cloned());
@@ -628,9 +626,7 @@ impl Interpreter<'_> {
             }
             // A plain overwrite invalidates any earlier joined dispatch for
             // the key; an incoming joined dispatch is installed with the value.
-            let slot = write.clone();
-            self.root_slots.insert(key.clone(), slot.clone());
-            self.root_writes.insert(key.clone(), slot);
+            self.state.write_root(key.clone(), write.clone());
         }
     }
 

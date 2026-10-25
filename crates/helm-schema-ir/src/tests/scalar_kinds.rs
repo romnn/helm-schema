@@ -130,9 +130,9 @@ fn exhausting_type_only_coverage_keeps_legacy_absence() -> eyre::Result<()> {
     let memo = PredicateMemo::default();
     let outcomes = (0..129)
         .map(|index| {
-            let mut state = crate::symbolic_local_state::SymbolicLocalState::default();
+            let mut state = crate::value::State::default();
             crate::tests::bind_test_dispatch(
-                state.slots.entry("value".to_string()).or_default(),
+                state.slot_mut("value"),
                 Some(ScalarValueDispatch::typed(GoType::Int)),
             );
             let condition = Predicate::from(helm_schema_core::Guard::Eq {
@@ -142,10 +142,10 @@ fn exhausting_type_only_coverage_keeps_legacy_absence() -> eyre::Result<()> {
             (crate::scalar_value::TruthCondition::exact(condition), state)
         })
         .collect::<Vec<_>>();
-    let entry = crate::symbolic_local_state::SymbolicLocalState::default();
+    let entry = crate::value::State::default();
     let mut joined = entry.clone();
     joined.join_scalar_dispatch_arms(&entry, &outcomes, true, &memo);
-    let view = joined.binding("value");
+    let view = joined.read_local("value");
     let dispatch = view
         .scalar_dispatch
         .as_ref()
@@ -160,16 +160,13 @@ fn exhausting_type_only_coverage_retains_content_guards() -> eyre::Result<()> {
     let memo = PredicateMemo::default();
     let outcomes = (0..130)
         .map(|index| {
-            let mut state = crate::symbolic_local_state::SymbolicLocalState::default();
+            let mut state = crate::value::State::default();
             let dispatch = if index == 0 {
                 ScalarValueDispatch::constant(GuardValue::Int(1))
             } else {
                 ScalarValueDispatch::typed(GoType::Float64)
             };
-            crate::tests::bind_test_dispatch(
-                state.slots.entry("value".to_string()).or_default(),
-                Some(dispatch),
-            );
+            crate::tests::bind_test_dispatch(state.slot_mut("value"), Some(dispatch));
             let condition = Predicate::from(helm_schema_core::Guard::Eq {
                 path: helm_schema_core::ValuesPath::parse("branch"),
                 value: GuardValue::Int(index),
@@ -177,10 +174,10 @@ fn exhausting_type_only_coverage_retains_content_guards() -> eyre::Result<()> {
             (crate::scalar_value::TruthCondition::exact(condition), state)
         })
         .collect::<Vec<_>>();
-    let entry = crate::symbolic_local_state::SymbolicLocalState::default();
+    let entry = crate::value::State::default();
     let mut joined = entry.clone();
     joined.join_scalar_dispatch_arms(&entry, &outcomes, true, &memo);
-    let view = joined.binding("value");
+    let view = joined.read_local("value");
     let dispatch = view
         .scalar_dispatch
         .as_ref()
@@ -199,8 +196,8 @@ fn exhausting_type_only_coverage_retains_content_guards() -> eyre::Result<()> {
 #[test]
 fn a_type_only_helper_shadow_preserves_legacy_binding_and_scope_updates() {
     use crate::fragment_assignment::AssignmentKind;
-    use crate::symbolic_local_state::SymbolicLocalState;
-    let mut entry = SymbolicLocalState::default();
+    use crate::value::State;
+    let mut entry = State::default();
     entry.bind_fragment_value(
         AssignmentKind::Declaration,
         "value".to_string(),
@@ -224,7 +221,7 @@ fn a_type_only_helper_shadow_preserves_legacy_binding_and_scope_updates() {
         ),
     ] {
         state.enter_local_scope();
-        state.bind_assignment(
+        state.bind(
             AssignmentKind::Declaration,
             "value",
             crate::value::AssignmentBinding {
@@ -237,5 +234,5 @@ fn a_type_only_helper_shadow_preserves_legacy_binding_and_scope_updates() {
         );
         state.exit_local_scope();
     }
-    sim_assert_eq!(have: actual.slots, want: expected.slots);
+    sim_assert_eq!(have: actual, want: expected);
 }

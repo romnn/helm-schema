@@ -95,14 +95,14 @@ impl Interpreter<'_> {
         arm_specs.push((None, children_with_field(action, "alternative")));
 
         let entry_scope = self.mark_scope();
-        let entry_locals = self.locals.clone();
+        let entry_locals = self.state.fork_locals();
         let mut prior_conditions: Vec<PathCondition> = Vec::new();
         let mut prior_reachability: Vec<SelectionTruthReachability> = Vec::new();
         let mut arms = Vec::new();
         let mut local_arm_states = Vec::new();
         let mut binding_decisions = Vec::new();
         for (branch_index, (header, children)) in arm_specs.into_iter().enumerate() {
-            self.locals = entry_locals.clone();
+            self.state.restore_locals(entry_locals.fork());
             self.rewind(entry_scope);
             let mut arm_condition = Predicate::True;
             for predicate in &prior_conditions {
@@ -141,7 +141,7 @@ impl Interpreter<'_> {
                     self.push_predicate(arm_condition.clone());
                 }
             }
-            self.locals.enter_local_scope();
+            self.state.enter_local_scope();
             let body_arms = if arm_condition == Predicate::False {
                 Vec::new()
             } else if self.scalar_output_projection {
@@ -160,19 +160,19 @@ impl Interpreter<'_> {
                     parts,
                 ));
             }
-            self.locals.exit_local_scope();
-            local_arm_states.push((semantic_arm_truth, self.locals.clone()));
+            self.state.exit_local_scope();
+            local_arm_states.push((semantic_arm_truth, self.state.fork_locals()));
         }
         self.rewind(entry_scope);
-        self.locals = entry_locals.clone();
+        self.state.restore_locals(entry_locals.fork());
         let outcomes = local_arm_states
             .iter()
             .map(|(_, state)| state.clone())
             .collect::<Vec<_>>();
-        self.locals.join_branch_outcomes(&entry_locals, &outcomes);
-        self.locals
+        self.state.join(&entry_locals, &outcomes);
+        self.state
             .join_binding_decisions(&entry_locals, &binding_decisions, &outcomes);
-        self.locals.join_scalar_dispatch_arms(
+        self.state.join_scalar_dispatch_arms(
             &entry_locals,
             &local_arm_states,
             true,
@@ -189,14 +189,14 @@ impl Interpreter<'_> {
         action: tree_sitter::Node<'_>,
     ) -> Vec<(PathCondition, Vec<StringPart>)> {
         let entry_scope = self.mark_scope();
-        let entry_locals = self.locals.clone();
-        self.locals.enter_local_scope();
+        let entry_locals = self.state.fork_locals();
+        self.state.enter_local_scope();
         let (own, reachability) = self.activate_with(
             control_header(self.source, action).as_ref(),
             action.start_byte(),
             0,
         );
-        let post_header_locals = self.locals.clone();
+        let post_header_locals = self.state.fork_locals();
         let body_condition = own.clone().unwrap_or(Predicate::True);
         let consequence = children_with_field(action, "consequence");
         let body_arms = if body_condition == Predicate::False {
@@ -207,8 +207,8 @@ impl Interpreter<'_> {
         } else {
             self.inline_body_arms(&consequence)
         };
-        self.locals.exit_local_scope();
-        let consequence_locals = self.locals.clone();
+        self.state.exit_local_scope();
+        let consequence_locals = self.state.fork_locals();
         let mut arms = body_arms
             .into_iter()
             .map(|(condition, parts)| {
@@ -224,7 +224,7 @@ impl Interpreter<'_> {
             .collect::<Vec<_>>();
 
         self.rewind(entry_scope);
-        self.locals = post_header_locals.clone();
+        self.state.restore_locals(post_header_locals.clone());
         let alternative_condition = own.as_ref().map_or(Predicate::True, Predicate::negated);
         if alternative_condition != Predicate::True {
             self.push_predicate(alternative_condition.clone());
@@ -238,8 +238,8 @@ impl Interpreter<'_> {
         } else {
             self.inline_body_arms(&alternative)
         };
-        self.locals.exit_local_scope();
-        let alternative_locals = self.locals.clone();
+        self.state.exit_local_scope();
+        let alternative_locals = self.state.fork_locals();
         for (condition, parts) in alternative_arms {
             arms.push((
                 and_conditions_with_memo(
@@ -253,9 +253,9 @@ impl Interpreter<'_> {
 
         self.rewind(entry_scope);
         let outcomes = [consequence_locals, alternative_locals];
-        self.locals = entry_locals.clone();
-        self.locals.join_branch_outcomes(&entry_locals, &outcomes);
-        self.locals.join_binding_decisions(
+        self.state.restore_locals(entry_locals.fork());
+        self.state.join(&entry_locals, &outcomes);
+        self.state.join_binding_decisions(
             &entry_locals,
             &[
                 Some(BindingDecision::new(
@@ -282,9 +282,9 @@ impl Interpreter<'_> {
             return self.inline_region_taint(Span::new(node.start_byte(), node.end_byte()));
         };
         let entry_scope = self.mark_scope();
-        let entry_locals = self.locals.clone();
+        let entry_locals = self.state.fork_locals();
         if let Some((variable, literals)) = parse_literal_list_range_expr(header.expr()) {
-            self.locals.insert_range_domain(variable, literals);
+            self.state.insert_range_domain(variable, literals);
         }
         let _ = self.absorb_header_execution_effects(header.expr());
         let range_source = match header.expr().deparen() {
@@ -330,7 +330,7 @@ impl Interpreter<'_> {
             helm_schema_ast::range_variable_name_expr(header.expr())
         };
         if let Some((variable, binding)) = value_variable.zip(dot.clone()) {
-            self.locals
+            self.state
                 .slot_mut(&variable)
                 .replace_range_member(Some(binding));
         }
@@ -339,7 +339,7 @@ impl Interpreter<'_> {
                 helm_schema_ast::range_destructured_key_variable(node, self.source)
             && let Some(path) = direct_path
         {
-            self.locals
+            self.state
                 .slot_mut(&variable)
                 .replace_range_member(Some(AbstractValue::RangeKey(path)));
         }
@@ -364,7 +364,7 @@ impl Interpreter<'_> {
             ));
         }
         self.rewind(entry_scope);
-        self.locals = entry_locals;
+        self.state.restore_locals(entry_locals);
         // A `{{ range }}…{{ else }}…{{ end }}` alternative renders when the
         // iterable is empty; like the structural range arms it decodes no
         // negated condition. The carrier records the positive arm, but this
@@ -724,12 +724,12 @@ impl Interpreter<'_> {
                     nil_omitting_paths: &hole.effects.nil_omitting_paths,
                     plain_slot_string_format_paths: &hole.effects.plain_slot_string_format_paths,
                     json_serialized_paths: &hole.effects.json_serialized_paths,
-                    chart_value_defaults: &self.locals.chart_value_defaults,
+                    chart_value_defaults: &self.state.chart_value_defaults,
                     local_source_paths: &hole.effects.local_source_paths,
                     local_output_meta: &hole_meta,
                 };
                 self.scalar_output_projection
-                    .then_some(hole.scalar_dispatch())
+                    .then_some(hole.scalar_transport())
                     .flatten()
                     .and_then(|dispatch| lower_scalar_dispatch_arms(dispatch, kind, &scope))
                     .unwrap_or_else(|| match &hole.value {

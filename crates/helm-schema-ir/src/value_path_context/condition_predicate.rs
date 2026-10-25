@@ -289,7 +289,7 @@ impl ValuePathContext<'_> {
         let paths = self.paths_for_expr(expr);
         let metas = self
             .eval_env
-            .local_slots
+            .state
             .variable_slots(name)
             .into_iter()
             .find_map(|slot| slot.output_meta.as_ref());
@@ -1138,7 +1138,7 @@ impl ValuePathContext<'_> {
 
     fn variable_truthy_reduction(&self, name: &str) -> Option<&Predicate> {
         self.eval_env
-            .local_slots
+            .state
             .variable_slots(name)
             .into_iter()
             .find_map(|slot| slot.truthy_reduction.as_ref())
@@ -1146,12 +1146,12 @@ impl ValuePathContext<'_> {
 
     fn truthiness_abstains(&self, name: &str) -> bool {
         self.template_truthiness_abstentions
-            .get(name)
-            .is_some_and(|slot| slot.binding().truthiness_abstained)
+            .read_local(name)
+            .truthiness_abstained
             || self
                 .template_truthiness_abstentions
-                .get(name.trim_start_matches('$'))
-                .is_some_and(|slot| slot.binding().truthiness_abstained)
+                .read_local(name.trim_start_matches('$'))
+                .truthiness_abstained
     }
 
     pub(crate) fn condition_uses_truthiness_abstention(&self, expr: &TemplateExpr) -> bool {
@@ -1342,8 +1342,8 @@ impl ValuePathContext<'_> {
         };
         let name = name.trim_start_matches('$');
         self.eval_env
-            .local_slots
-            .binding(name)
+            .state
+            .read_local(name)
             .output_meta
             .as_ref()
             .and_then(|by_path| by_path.get(&helm_schema_core::ValuesPath::parse(path)))
@@ -1831,7 +1831,7 @@ impl ValuePathContext<'_> {
         let [field] = field else {
             return None;
         };
-        if let Some(slot) = self.eval_env.root_slots.get(field) {
+        if let Some(slot) = self.eval_env.state.read_root(field) {
             if let Some(predicate) = &slot.binding().truth {
                 return Some(predicate.clone());
             }
@@ -1877,8 +1877,8 @@ impl ValuePathContext<'_> {
         };
         let dispatch = self
             .eval_env
-            .root_slots
-            .get(field)?
+            .state
+            .read_root(field)?
             .binding()
             .dispatch
             .as_ref()?;
@@ -1911,8 +1911,8 @@ impl ValuePathContext<'_> {
         };
         if self
             .eval_env
-            .root_slots
-            .get(field)
+            .state
+            .read_root(field)
             .is_some_and(|slot| slot.binding().value.is_some() || slot.binding().dispatch.is_some())
             || matches!(
                 field,
@@ -1942,20 +1942,20 @@ impl ValuePathContext<'_> {
         }
         let field = single_root_field(expr)?;
         self.eval_env
-            .root_slots
-            .get(field)
+            .state
+            .read_root(field)
             .and_then(|slot| slot.binding().dispatch.as_ref())
             .is_some()
             .then_some(field)
     }
 
     fn get_binding_truthy_predicate(&self, name: &str) -> Option<Predicate> {
-        let slots = &self.eval_env.local_slots;
+        let slots = &self.eval_env.state;
         let binding = slots
-            .binding(name.trim_start_matches('$'))
+            .read_local(name.trim_start_matches('$'))
             .get_binding
             .as_ref()?;
-        let keys = slots.binding(&binding.key_var).range_domain.as_ref()?;
+        let keys = slots.read_local(&binding.key_var).range_domain.as_ref()?;
         let predicates = keys
             .iter()
             .map(|key| {
@@ -2536,12 +2536,14 @@ impl ValuePathContext<'_> {
         if let TemplateExpr::Variable(name) = expr.deparen() {
             return self
                 .int_cast_bindings
-                .get(name)
-                .and_then(|slot| slot.binding().int_cast_source.as_ref())
+                .read_local(name)
+                .int_cast_source
+                .as_ref()
                 .or_else(|| {
                     self.int_cast_bindings
-                        .get(name.trim_start_matches('$'))
-                        .and_then(|slot| slot.binding().int_cast_source.as_ref())
+                        .read_local(name.trim_start_matches('$'))
+                        .int_cast_source
+                        .as_ref()
                 })
                 .cloned();
         }
@@ -2650,8 +2652,9 @@ impl ValuePathContext<'_> {
             TemplateExpr::Field(_) | TemplateExpr::Selector { .. } => true,
             TemplateExpr::Variable(name) => self
                 .typeof_bindings
-                .get(name.trim_start_matches('$'))
-                .and_then(|slot| slot.binding().typeof_source.as_ref())
+                .read_local(name.trim_start_matches('$'))
+                .typeof_source
+                .as_ref()
                 .is_none(),
             TemplateExpr::Call { function, args } if function == "index" => {
                 args.split_first().is_some_and(|(base, keys)| {
@@ -2779,7 +2782,7 @@ impl ValuePathContext<'_> {
                 return None;
             };
             self.eval_env
-                .local_slots
+                .state
                 .variable_slots(name)
                 .into_iter()
                 .find_map(|slot| slot.output_meta.as_ref())
@@ -2846,7 +2849,7 @@ impl ValuePathContext<'_> {
         if let TemplateExpr::Variable(name) = subject.deparen() {
             let meta = self
                 .eval_env
-                .local_slots
+                .state
                 .variable_slots(name)
                 .into_iter()
                 .find_map(|slot| slot.output_meta.as_ref());
@@ -2936,9 +2939,9 @@ impl ValuePathContext<'_> {
             }
             TemplateExpr::Variable(name) => self
                 .typeof_bindings
-                .get(name.trim_start_matches('$'))
-                .and_then(|slot| slot.binding().typeof_source.as_ref())
-                .cloned(),
+                .read_local(name.trim_start_matches('$'))
+                .typeof_source
+                .clone(),
             _ => None,
         }
     }
@@ -2963,8 +2966,8 @@ impl ValuePathContext<'_> {
             let local_meta = match subject {
                 TemplateExpr::Variable(name) => self
                     .eval_env
-                    .local_slots
-                    .binding(name.trim_start_matches('$'))
+                    .state
+                    .read_local(name.trim_start_matches('$'))
                     .output_meta
                     .as_ref(),
                 _ => None,

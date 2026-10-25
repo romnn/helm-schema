@@ -1,17 +1,8 @@
-use std::collections::{BTreeSet, HashMap};
+use std::collections::BTreeSet;
 
 use crate::scalar_value::TruthCondition;
-use crate::value::{LocalSlot, LocalSlots};
+use crate::value::State;
 use helm_schema_core::{Predicate, PredicateMemo};
-
-#[derive(Clone, Debug, Default)]
-pub(crate) struct SymbolicLocalState {
-    pub(crate) slots: LocalSlots,
-    /// Values paths defaulted by structural `set X "K" (X.K | default V)`
-    /// helper mutations that have already run in source order.
-    pub(crate) chart_value_defaults: BTreeSet<helm_schema_core::ValuesPath>,
-    pub(crate) scopes: Vec<HashMap<String, LocalSlot>>,
-}
 
 /// The values path (and optional literal-integer `default` fallback) behind
 /// a local's `int`/`int64` cast binding. The fallback matters for
@@ -28,11 +19,11 @@ pub(crate) struct IntCastSource {
 pub(crate) struct ControlOutcome {
     condition: Predicate,
     pub(crate) truth: Option<TruthCondition>,
-    pub(crate) state: SymbolicLocalState,
+    pub(crate) state: State,
 }
 
 impl ControlOutcome {
-    pub(crate) fn new(truth: TruthCondition, state: SymbolicLocalState) -> Self {
+    pub(crate) fn new(truth: TruthCondition, state: State) -> Self {
         let condition = truth
             .predicate()
             .cloned()
@@ -44,20 +35,18 @@ impl ControlOutcome {
         }
     }
 
-    pub(crate) fn unresolved_from_changed(entry: &SymbolicLocalState, known: &[Self]) -> Self {
+    pub(crate) fn unresolved_from_changed(entry: &State, known: &[Self]) -> Self {
         let variables = known
             .iter()
             .flat_map(|outcome| {
                 outcome
                     .state
-                    .slots
-                    .iter()
+                    .iter_locals()
                     .filter_map(|(name, slot)| slot.binding().binding.is_some().then_some(name))
             })
             .chain(
                 entry
-                    .slots
-                    .iter()
+                    .iter_locals()
                     .filter_map(|(name, slot)| slot.binding().binding.is_some().then_some(name)),
             )
             .cloned()
@@ -65,8 +54,8 @@ impl ControlOutcome {
         let mut state = entry.clone();
         for variable in variables {
             if known.iter().all(|outcome| {
-                outcome.state.binding(&variable).binding.as_ref()
-                    == entry.binding(&variable).binding.as_ref()
+                outcome.state.read_local(&variable).binding.as_ref()
+                    == entry.read_local(&variable).binding.as_ref()
             }) {
                 continue;
             }
@@ -102,7 +91,7 @@ impl ControlOutcome {
         ));
     }
 
-    pub(crate) fn replace_state(&mut self, state: &SymbolicLocalState) {
-        self.state = state.clone();
+    pub(crate) fn replace_state(&mut self, state: &State) {
+        self.state = state.fork_locals();
     }
 }

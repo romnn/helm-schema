@@ -39,3 +39,6 @@ fn assignment_header_results_cross_a_mutation_boundary() -> eyre::Result<()> {
     sim_assert_eq!(have: path(after), want: Some("right".to_string()));
     Ok(())
 }
+
+#[path = "fragment_eval_state.rs"]
+mod state;

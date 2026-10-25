@@ -4,11 +4,11 @@ use std::rc::Rc;
 use helm_schema_ast::TemplateExpr;
 
 use crate::abstract_value::AbstractValue;
-use crate::bound_value_analysis::BoundValueContext;
 use crate::eval_effect::MemberHostConversion;
 use crate::function_semantics::ArgumentEvaluationMode;
 use crate::helper_meta::HelperOutputMeta;
 use crate::scalar_value::{TruthCondition, conjoin_predicates_with_memo};
+use crate::value::State;
 use crate::value::{RootSlot, root_slots};
 use helm_schema_core::{Predicate, PredicateMemo};
 
@@ -416,13 +416,12 @@ impl LocalBinding {
 pub(crate) struct EvalEnv {
     pub(crate) dot: Option<AbstractValue>,
     pub(crate) dot_binding_mode: BindingEvaluationMode,
-    pub(crate) root_slots: HashMap<String, RootSlot>,
     /// The root-field semantic maps describe the current dot rather than
     /// only the global root. Bound helpers set this for their call argument
     /// frame; nested `with`/`range` frames clear it.
     pub(crate) root_field_semantics_on_current_dot: bool,
     pub(crate) locals: HashMap<String, LocalBinding>,
-    pub(crate) local_slots: BoundValueContext,
+    pub(crate) state: State,
     pub(crate) member_host_conversions: BTreeSet<MemberHostConversion>,
     pub(crate) active_predicates: Vec<Predicate>,
     pub(crate) allow_field_root_lookup: bool,
@@ -478,8 +477,8 @@ impl EvalEnv {
             && head != "Values"
         {
             return self
-                .root_slots
-                .get(head)
+                .state
+                .read_root(head)
                 .and_then(|slot| slot.binding().value.as_ref())?
                 .apply_to_path(tail);
         }
@@ -494,7 +493,7 @@ impl EvalEnv {
         Self {
             dot: current_dot.cloned(),
             dot_binding_mode,
-            root_slots: root_slots(bindings.cloned().unwrap_or_default()),
+            state: State::from_roots(root_slots(bindings.cloned().unwrap_or_default())),
             allow_field_root_lookup: true,
             ..Self::default()
         }
@@ -509,14 +508,16 @@ impl EvalEnv {
         Self {
             dot: current_dot.cloned(),
             dot_binding_mode,
-            root_slots: locals
-                .iter()
-                .filter_map(|(name, binding)| {
-                    binding
-                        .value(predicate_memo)
-                        .map(|value| (name.clone(), RootSlot::new(Some(value), None, None)))
-                })
-                .collect(),
+            state: State::from_roots(
+                locals
+                    .iter()
+                    .filter_map(|(name, binding)| {
+                        binding
+                            .value(predicate_memo)
+                            .map(|value| (name.clone(), RootSlot::new(Some(value), None, None)))
+                    })
+                    .collect(),
+            ),
             locals: locals.clone(),
             allow_field_root_lookup: false,
             predicate_memo: Rc::clone(predicate_memo),

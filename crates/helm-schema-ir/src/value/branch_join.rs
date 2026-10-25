@@ -6,15 +6,12 @@ use crate::scalar_value::{
 };
 use helm_schema_core::{Predicate, PredicateMemo};
 
-use crate::symbolic_local_state::SymbolicLocalState;
 use crate::value::LocalSlot;
+use crate::value::State;
 
 const MAX_JOINED_SCALAR_ARMS: usize = 128;
 
-pub(super) fn joined_branch_outcomes(
-    entry: &SymbolicLocalState,
-    outcomes: &[SymbolicLocalState],
-) -> SymbolicLocalState {
+pub(super) fn joined_branch_outcomes(entry: &State, outcomes: &[State]) -> State {
     if outcomes.is_empty() {
         return entry.clone();
     }
@@ -33,21 +30,22 @@ pub(super) fn joined_branch_outcomes(
             (name.clone(), LocalSlot::join(&exits))
         })
         .collect();
-    SymbolicLocalState {
+    State {
         slots,
         chart_value_defaults: intersect_chart_defaults(outcomes),
         scopes: entry.scopes.clone(),
+        ..State::default()
     }
 }
 
-impl SymbolicLocalState {
+impl State {
     /// Rebuild scalar locals from the mutually exclusive arms of one exact
     /// `if` chain. Ordinary local facts join by equality or value choice;
     /// scalar values retain the condition that selected each reassignment.
     pub(crate) fn join_scalar_dispatch_arms(
         &mut self,
-        entry: &SymbolicLocalState,
-        arms: &[(TruthCondition, SymbolicLocalState)],
+        entry: &State,
+        arms: &[(TruthCondition, State)],
         has_unconditional_else: bool,
         memo: &PredicateMemo,
     ) {
@@ -150,9 +148,9 @@ impl SymbolicLocalState {
 
     pub(crate) fn join_binding_decisions(
         &mut self,
-        fallthrough: &SymbolicLocalState,
+        fallthrough: &State,
         decisions: &[Option<std::rc::Rc<BindingDecision>>],
-        outcomes: &[SymbolicLocalState],
+        outcomes: &[State],
     ) {
         let fallthrough = outcomes.get(decisions.len()).unwrap_or(fallthrough);
         let variables: BTreeSet<&String> = outcomes
@@ -202,8 +200,8 @@ impl SymbolicLocalState {
     /// cannot erase a kill-switch reassignment at the union.
     pub(crate) fn join_truthy_reduction_arms(
         &mut self,
-        entry: &SymbolicLocalState,
-        arms: &[(TruthCondition, SymbolicLocalState)],
+        entry: &State,
+        arms: &[(TruthCondition, State)],
         has_unconditional_else: bool,
         memo: &PredicateMemo,
     ) {
@@ -271,9 +269,7 @@ impl SymbolicLocalState {
     }
 }
 
-fn intersect_chart_defaults(
-    outcomes: &[SymbolicLocalState],
-) -> BTreeSet<helm_schema_core::ValuesPath> {
+fn intersect_chart_defaults(outcomes: &[State]) -> BTreeSet<helm_schema_core::ValuesPath> {
     let Some((first, rest)) = outcomes.split_first() else {
         return BTreeSet::new();
     };

@@ -1441,9 +1441,9 @@ fn eval_short_circuit_args(
         if next_condition != Predicate::True {
             execution_predicates.insert(next_condition);
         }
-        constrained_env.local_slots = constrained_env
-            .local_slots
-            .with_predicate_constraints(arg, previous_truthy);
+        constrained_env
+            .state
+            .apply_predicate_constraints(arg, previous_truthy);
     }
     let mut result = EvalResult::with_effects(AbstractValue::choice(values), effects);
     result.proven_operands = Some(proven_operands);

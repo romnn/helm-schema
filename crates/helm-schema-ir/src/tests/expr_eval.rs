@@ -468,10 +468,10 @@ fn pristine_root_values_selector_records_direct_hosts_in_both_binding_modes() {
         BindingEvaluationMode::Evaluated,
     ] {
         let mut env = EvalEnv {
-            root_slots: crate::value::root_slots(HashMap::from([(
+            state: crate::value::State::from_roots(crate::value::root_slots(HashMap::from([(
                 "Values".to_string(),
                 AbstractValue::values_root(),
-            )])),
+            )]))),
             ..EvalEnv::default()
         };
         env.locals.insert(
@@ -533,7 +533,7 @@ fn direct_binding(value: AbstractValue) -> LocalBinding {
 
 fn env_from_root_fields(root_fields: HashMap<String, AbstractValue>) -> EvalEnv {
     EvalEnv {
-        root_slots: crate::value::root_slots(root_fields),
+        state: crate::value::State::from_roots(crate::value::root_slots(root_fields)),
         allow_field_root_lookup: true,
         ..EvalEnv::default()
     }
@@ -733,10 +733,10 @@ fn direct_root_values_path_is_an_expression_eval_projection() {
 #[test]
 fn named_root_alias_projects_values_only_from_its_typed_binding() {
     let mut env = EvalEnv {
-        root_slots: crate::value::root_slots(HashMap::from([(
+        state: crate::value::State::from_roots(crate::value::root_slots(HashMap::from([(
             "Values".to_string(),
             AbstractValue::values_root(),
-        )])),
+        )]))),
         ..EvalEnv::default()
     };
     env.locals.insert(
@@ -1248,7 +1248,7 @@ fn invalid_kind_abstains_for_a_meta_selected_subject_identity() {
 
         ..EvalEnv::default()
     };
-    env.local_slots.set_output_metadata(&HashMap::from([(
+    env.state.set_output_metadata(&HashMap::from([(
         "selected".to_string(),
         BTreeMap::from([(ValuesPath::parse("value"), metadata)]),
     )]));
@@ -1272,10 +1272,7 @@ fn invalid_kind_abstains_for_a_default_selected_subject_identity() {
         "selected".to_string(),
         BTreeSet::from([ValuesPath::parse("value")]),
     )]) {
-        crate::tests::bind_test_defaults(
-            env.local_slots.slots.entry(name.clone()).or_default(),
-            Some(paths),
-        );
+        crate::tests::bind_test_defaults(env.state.slot_mut(&name), Some(paths));
     }
 
     let result = eval_expr(&expr(r#"kindIs "invalid" $selected"#), &env);
@@ -2107,10 +2104,8 @@ fn short_circuit_calls_scope_later_runtime_failures_to_execution() {
 #[test]
 fn truth_only_locals_drive_short_circuit_execution() {
     let mut env = EvalEnv::default();
-    env.local_slots
-        .slots
-        .entry("shouldContinue".to_string())
-        .or_default()
+    env.state
+        .slot_mut(&"shouldContinue".to_string())
         .bind_truth(
             crate::fragment_assignment::AssignmentKind::Declaration,
             Some(Predicate::True),
@@ -2212,15 +2207,11 @@ fn local_selector_truth_comes_from_the_selected_value() {
         "plugin".to_string(),
         direct_binding(values_path!("plugins.*")),
     );
-    env.local_slots
-        .slots
-        .entry("plugin".to_string())
-        .or_default()
-        .bind_truth(
-            crate::fragment_assignment::AssignmentKind::Declaration,
-            Some(Predicate::truthy_path("plugins.*")),
-            false,
-        );
+    env.state.slot_mut(&"plugin".to_string()).bind_truth(
+        crate::fragment_assignment::AssignmentKind::Declaration,
+        Some(Predicate::truthy_path("plugins.*")),
+        false,
+    );
 
     let result = eval_expr(&single_expr("$plugin.hostPath"), &env);
 
@@ -2421,10 +2412,7 @@ fn root_values_replacement_is_exported_and_used_by_later_values_reads() {
     );
     for (name, slot) in result.effects.root_writes {
         if let Some(value) = slot.binding().value.clone() {
-            env.root_slots
-                .entry(name)
-                .or_default()
-                .overwrite(value, None);
+            env.state.write_field(name).overwrite(value, None);
         }
     }
 
@@ -2486,9 +2474,8 @@ fn root_set_truth_predicates_feed_later_root_field_assignments() {
 
     for (name, slot) in server.effects.root_writes {
         if let Some(truth) = slot.binding().truth.clone() {
-            env.root_slots
-                .entry(name)
-                .or_default()
+            env.state
+                .write_field(name)
                 .merge(crate::value::RootSlot::new(None, Some(truth), None));
         }
     }
@@ -2702,7 +2689,7 @@ fn ternary_condition_discards_local_output_metadata_but_keeps_consumption_contra
 
         ..EvalEnv::default()
     };
-    env.local_slots.set_output_metadata(&HashMap::from([(
+    env.state.set_output_metadata(&HashMap::from([(
         "flag".to_string(),
         BTreeMap::from([(ValuesPath::parse("diagnosticMode.enabled"), metadata)]),
     )]));

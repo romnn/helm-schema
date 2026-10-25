@@ -1184,7 +1184,7 @@ fn resolve_bound_helper_call(
             expr,
             Some(&params.eval_env.locals),
             Some(&crate::bound_value_analysis::output_metadata(
-                &params.eval_env.local_slots.slots,
+                &params.eval_env.state,
             )),
             params.outer_bindings,
             params.current_dot,
@@ -1230,7 +1230,7 @@ fn resolve_bound_helper_call(
         for slot in slots.values_mut() {
             slot.clear_facts();
         }
-        for (name, caller) in &params.eval_env.root_slots {
+        for (name, caller) in params.eval_env.state.roots() {
             let truth = caller.binding().truth.as_ref();
             let dispatch = caller.binding().dispatch.as_ref();
             if truth.is_some() || dispatch.is_some() {

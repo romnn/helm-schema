@@ -4,23 +4,24 @@ use helm_schema_core::{Guard, Predicate, PredicateKind, PredicateMemo};
 
 use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::GetBindingPlan;
-use crate::eval_env::{BindingDecision, BindingEvaluationMode, BindingValueMetadata, LocalBinding};
+use crate::eval_env::{BindingDecision, BindingEvaluationMode, LocalBinding};
 use crate::fragment_assignment::AssignmentKind;
 use crate::scalar_value::TruthCondition;
-use crate::symbolic_local_state::{ControlOutcome, SymbolicLocalState};
+use crate::symbolic_local_state::ControlOutcome;
+use crate::value::State;
 
 use super::LocalSlot;
 use super::branch_join::joined_branch_outcomes;
 
-impl SymbolicLocalState {
+impl State {
     pub(crate) fn with_root(value: AbstractValue, mode: BindingEvaluationMode) -> Self {
         let mut state = Self::default();
         state.slot_mut("").binding = Some(LocalBinding::new(value, mode));
         state
     }
 
-    pub(crate) fn join_branch_outcomes(&mut self, entry: &Self, outcomes: &[Self]) {
-        *self = joined_branch_outcomes(entry, outcomes);
+    pub(crate) fn join(&mut self, entry: &Self, outcomes: &[Self]) {
+        self.restore_locals(joined_branch_outcomes(entry, outcomes));
     }
 
     /// Join every semantic local domain from a complete set of control exits.
@@ -31,7 +32,7 @@ impl SymbolicLocalState {
         memo: &PredicateMemo,
     ) {
         if outcomes.is_empty() {
-            *self = entry.clone();
+            self.restore_locals(entry.fork_locals());
             return;
         }
         let states = outcomes
@@ -51,7 +52,7 @@ impl SymbolicLocalState {
                     .map(|truth| (truth, outcome.state.clone()))
             })
             .collect::<Vec<_>>();
-        self.join_branch_outcomes(entry, &states);
+        self.join(entry, &states);
         self.join_binding_decisions(entry, &decisions, &states);
         if scalar_arms.len() == outcomes.len() {
             self.join_scalar_dispatch_arms(entry, &scalar_arms, true, memo);
@@ -196,27 +197,10 @@ impl SymbolicLocalState {
         variable: String,
         binding: Option<AbstractValue>,
     ) {
-        self.bind_fragment_value_with_metadata(
-            kind,
-            variable,
-            binding,
-            BindingValueMetadata::default(),
-        );
-    }
-
-    pub(crate) fn bind_fragment_value_with_metadata(
-        &mut self,
-        kind: AssignmentKind,
-        variable: String,
-        binding: Option<AbstractValue>,
-        metadata: BindingValueMetadata,
-    ) {
         self.bind_local_binding(
             kind,
             variable,
-            binding.map(|value| {
-                LocalBinding::new_with_metadata(value, BindingEvaluationMode::Evaluated, metadata)
-            }),
+            binding.map(|value| LocalBinding::new(value, BindingEvaluationMode::Evaluated)),
         );
     }
 
@@ -319,10 +303,6 @@ impl SymbolicLocalState {
                     .map(|binding| (name.clone(), binding))
             })
             .collect()
-    }
-
-    pub(crate) fn binding(&self, variable: &str) -> super::LocalSlotView<'_> {
-        self.slot(variable).binding()
     }
 
     pub(crate) fn slot(&self, variable: &str) -> &LocalSlot {
@@ -548,8 +528,8 @@ fn path_is_strict_ancestor(
     child.is_descendant_of(parent)
 }
 
-impl SymbolicLocalState {
-    pub(crate) fn bind_assignment(
+impl State {
+    pub(crate) fn bind(
         &mut self,
         kind: AssignmentKind,
         variable: &str,
@@ -645,7 +625,7 @@ impl SymbolicLocalState {
     }
 }
 
-impl crate::bound_value_analysis::BoundValueContext {
+impl crate::value::State {
     pub(crate) fn set_output_metadata(
         &mut self,
         metadata: &HashMap<

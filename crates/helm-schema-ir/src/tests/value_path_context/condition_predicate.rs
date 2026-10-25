@@ -175,23 +175,20 @@ fn condition_context_with_defines(
         .map(|(name, value)| (name, LocalBinding::evaluated(value)))
         .collect();
     for (name, metadata) in template_output_meta {
-        crate::tests::bind_test_output_meta(
-            eval_env.local_slots.slots.entry(name).or_default(),
-            Some(metadata),
-        );
+        crate::tests::bind_test_output_meta(eval_env.state.slot_mut(&name), Some(metadata));
     }
-    let template_truthiness_abstentions = Box::leak(Box::new(crate::value::LocalSlots::default()));
+    let template_truthiness_abstentions = Box::leak(Box::new(crate::value::State::default()));
     let defines = Box::leak(Box::new(defines));
     let analysis_db = Box::leak(Box::new(IrAnalysisDb::new(defines)));
 
-    let typeof_bindings = Box::leak(Box::new(crate::value::LocalSlots::default()));
+    let typeof_bindings = Box::leak(Box::new(crate::value::State::default()));
 
     ValuePathContext {
         helper_dispatch_depth: std::cell::Cell::new(0),
         eval_env,
         template_truthiness_abstentions,
         typeof_bindings,
-        int_cast_bindings: Box::leak(Box::new(crate::value::LocalSlots::default())),
+        int_cast_bindings: Box::leak(Box::new(crate::value::State::default())),
         fragment_context: FragmentEvalContext::new(analysis_db),
         current_dot_fragment: None,
         root_dot_identity: RootDotIdentity::Unresolved,
@@ -890,9 +887,9 @@ fn files_get_printf_condition_decodes_to_finite_name_disjunction() {
     let context = ValuePathContext {
         helper_dispatch_depth: std::cell::Cell::new(0),
         eval_env,
-        template_truthiness_abstentions: Box::leak(Box::new(crate::value::LocalSlots::default())),
-        typeof_bindings: Box::leak(Box::new(crate::value::LocalSlots::default())),
-        int_cast_bindings: Box::leak(Box::new(crate::value::LocalSlots::default())),
+        template_truthiness_abstentions: Box::leak(Box::new(crate::value::State::default())),
+        typeof_bindings: Box::leak(Box::new(crate::value::State::default())),
+        int_cast_bindings: Box::leak(Box::new(crate::value::State::default())),
         fragment_context: FragmentEvalContext::new(analysis_db),
         current_dot_fragment: None,
         root_dot_identity: RootDotIdentity::Unresolved,

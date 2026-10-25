@@ -365,9 +365,8 @@ impl Interpreter<'_> {
         let current_dot = self.current_dot_fragment();
         let mut seen = self.helper_seen.clone();
         let mut bindings = self
-            .locals
-            .slots
-            .iter()
+            .state
+            .iter_locals()
             .filter_map(|(name, slot)| {
                 slot.binding()
                     .binding
@@ -382,20 +381,20 @@ impl Interpreter<'_> {
             FragmentEvalContext::new(self.db),
             &mut seen,
         );
-        self.locals.replace_fragment_bindings(bindings);
+        self.state.replace_fragment_bindings(bindings);
         if !applied {
             return false;
         }
         let effects = crate::expr_eval::eval_helper_exprs_direct_effects(
             exprs,
-            &crate::value::root_values(&self.root_slots),
+            &self.state.root_values(),
             self.current_value_dot().as_ref(),
             self.current_dot_binding_mode(),
         );
         self.chart_defaults_observed
             .extend(effects.chart_default_paths.iter().cloned());
         let mut chart_defaults = effects.chart_default_paths;
-        self.locals.chart_value_defaults.append(&mut chart_defaults);
+        self.state.chart_value_defaults.append(&mut chart_defaults);
         true
     }
 
@@ -406,7 +405,7 @@ impl Interpreter<'_> {
     /// `set $globals.Values "workers" $workers`). Every other document
     /// set call keeps the read-only treatment below.
     fn apply_context_copy_value_mutations(&mut self, exprs: &[TemplateExpr]) {
-        let template_bindings = self.locals.evaluation_bindings();
+        let template_bindings = self.state.evaluation_bindings();
         let current_dot = self.current_dot_fragment();
         let env = crate::eval_env::EvalEnv::from_fragment_context(
             &template_bindings,
@@ -422,7 +421,7 @@ impl Interpreter<'_> {
             };
             let result = crate::expr_eval::eval_expr(mutation_expr, &env);
             for (name, entries) in &result.effects.local_set_mutations {
-                self.locals
+                self.state
                     .overlay_context_values(name, entries, self.db.predicate_memo());
             }
         }
@@ -578,7 +577,7 @@ impl Interpreter<'_> {
             };
             let output_effects = self.value_path_context().expression_output_effects(rhs);
             let hole = self.eval_hole_exprs(rhs);
-            let scalar_dispatch = hole.scalar_dispatch().cloned();
+            let scalar_dispatch = hole.scalar_transport().cloned();
             // The binding is the hole value without widened members (an
             // unknown call result is influence, not a values-backed
             // fragment).
@@ -616,7 +615,7 @@ impl Interpreter<'_> {
                 None
             };
             let rhs_truthy_reduction = result_truth.or(condition_truthy_reduction);
-            let previous = self.locals.binding(&assignment.variable);
+            let previous = self.state.read_local(&assignment.variable);
             let previous_truthy_reduction = previous.truthy_reduction.clone();
             let truthy_reduction = match assignment.kind {
                 crate::fragment_assignment::AssignmentKind::Assignment
@@ -674,7 +673,7 @@ impl Interpreter<'_> {
                             })
                     }),
             };
-            self.locals.bind_assignment(
+            self.state.bind(
                 assignment.kind,
                 &assignment.variable,
                 crate::value::AssignmentBinding {
@@ -695,10 +694,8 @@ impl Interpreter<'_> {
             if let Some(sources) =
                 type_descriptor_sources(&assignment.rhs_expr, self, &hole.effects.local_output_meta)
             {
-                self.locals
-                    .slots
-                    .entry(assignment.variable.clone())
-                    .or_default()
+                self.state
+                    .slot_mut(&assignment.variable.clone())
                     .record_type_source(sources);
             }
             // `$replicas := int (default 1 .Values.x)` binds an INTEGER
@@ -709,7 +706,7 @@ impl Interpreter<'_> {
                 .value_path_context()
                 .int_cast_operand(&assignment.rhs_expr);
             // Empty metadata entries remain present so every-exit joins retain their distinction.
-            self.locals
+            self.state
                 .slot_mut(&assignment.variable)
                 .record_assignment_metadata(cast_source, binding_metadata);
             let demotion = if self.helper_scope {
@@ -731,7 +728,7 @@ impl Interpreter<'_> {
             }
         }
         if let Some(get_binding) = parse_get_binding_from_exprs(exprs) {
-            self.locals.apply_get_binding(get_binding);
+            self.state.apply_get_binding(get_binding);
         }
     }
 }

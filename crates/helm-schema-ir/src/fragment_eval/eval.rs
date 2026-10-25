@@ -22,7 +22,7 @@
 //! - range headers: `range_header_from_source` /
 //!   `range_has_destructured_variable_definition` on the shared Go-template
 //!   parse (body shape comes from the CST),
-//! - local state: [`SymbolicLocalState`] with shared branch-join rules.
+//! - local state: [`State`] with shared branch-join rules.
 //!
 //! The same interpreter evaluates documents and helper bodies; a helper
 //! scope additionally carries the call's root bindings, the resolved dot
@@ -39,7 +39,7 @@
 //! inherits the branch guard.
 
 use std::cmp::Reverse;
-use std::collections::{BTreeMap, BTreeSet, BinaryHeap, HashMap, HashSet};
+use std::collections::{BTreeSet, BinaryHeap, HashMap, HashSet};
 use std::rc::Rc;
 
 use helm_schema_ast::{
@@ -54,7 +54,6 @@ use helm_schema_syntax::{
 
 use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
-use crate::bound_value_analysis::BoundValueContext;
 use crate::eval_effect::{CaptureKind, FailCapture};
 use crate::eval_env::{BindingEvaluationMode, EvalEnv};
 use crate::fragment_expr_eval::FragmentEvalContext;
@@ -62,8 +61,8 @@ use crate::helper_meta::{HelperOutputMeta, merge_provenance_sites};
 use crate::node_eval::{NodeAction, control_headers, node_action};
 use crate::observed_facts::ObservedFacts;
 use crate::scalar_value::TruthCondition;
-use crate::symbolic_local_state::SymbolicLocalState;
-use crate::value::{RootSlot, root_slots};
+use crate::value::State;
+use crate::value::root_slots;
 use crate::value_path_context::{RootDotIdentity, ValuePathContext};
 use crate::{ContractProvenance, Guard, ResourceRef, SourceSpan};
 use helm_schema_core::{GuardDnf, Predicate};
@@ -976,10 +975,7 @@ impl LoopControl {
         self.continues.extend(other.continues);
     }
 
-    pub(super) fn replace_states(
-        &mut self,
-        state: &crate::symbolic_local_state::SymbolicLocalState,
-    ) {
+    pub(super) fn replace_states(&mut self, state: &crate::value::State) {
         for exit in self.breaks.iter_mut().chain(&mut self.continues) {
             exit.replace_state(state);
         }
@@ -1479,16 +1475,12 @@ pub(super) struct Interpreter<'a> {
     pub(super) helper_seen: HashSet<String>,
     /// Typed payload truth observed at whole-hole JSON helper outputs.
     pub(super) json_payload_truth_outputs: Vec<(Predicate, TruthCondition)>,
-    pub(super) locals: SymbolicLocalState,
+    pub(super) state: State,
     pub(super) dot_stack: Vec<DotBinding>,
     /// The value-flavor dot of a helper scope's root frame (the call
     /// boundary resolves both flavors; see [`DotBinding`]).
     /// Document scope has none: its value dot derives from the fragment dot.
     pub(super) root_value_dot: Option<AbstractValue>,
-    /// Live root-context values, truth predicates and per-arm scalar alternatives.
-    pub(super) root_slots: HashMap<String, RootSlot>,
-    /// Root-context replacements observed in source order and exported by helper summaries.
-    pub(super) root_writes: BTreeMap<String, RootSlot>,
     /// Values paths with a strict STRING consumer that executed before the
     /// first values-root program-wrapper rewrite in this source: a wrapper
     /// map at such a path reaches the consumer raw and aborts (nats'
@@ -1623,14 +1615,10 @@ impl<'a> Interpreter<'a> {
             scalar_output_projection: false,
             helper_seen: HashSet::new(),
             json_payload_truth_outputs: Vec::new(),
-            locals: SymbolicLocalState::with_root(
-                AbstractValue::RootContext,
-                BindingEvaluationMode::Direct,
-            ),
+            state: State::with_root(AbstractValue::RootContext, BindingEvaluationMode::Direct)
+                .with_roots(root_slots(db.static_root_fields().clone())),
             dot_stack: Vec::new(),
             root_value_dot: None,
-            root_slots: root_slots(db.static_root_fields().clone()),
-            root_writes: BTreeMap::new(),
             pre_rewrite_strict_paths: BTreeSet::new(),
             active_predicates: Vec::new(),
             loop_depth: 0,
@@ -1868,19 +1856,18 @@ impl<'a> Interpreter<'a> {
         .without_helper_call_args()
         .with_predicate_memo(std::rc::Rc::clone(self.db.predicate_memo()));
         // Locals and root bindings are distinct namespaces (see the hole
-        // evaluator); roots resolve through `root_slots` only.
-        eval_env.locals = self.locals.evaluation_bindings();
-        eval_env.local_slots = BoundValueContext::new(&self.locals.slots);
-        eval_env.root_slots = self.root_slots.clone();
+        // evaluator); roots resolve through the root slots only.
+        eval_env.locals = self.state.evaluation_bindings();
+        eval_env.state = self.state.expression_state();
         eval_env.root_field_semantics_on_current_dot =
             self.root_value_dot.is_some() && self.dot_stack.len() <= 1;
 
         ValuePathContext {
             helper_dispatch_depth: std::cell::Cell::new(0),
             eval_env,
-            template_truthiness_abstentions: &self.locals.slots,
-            typeof_bindings: &self.locals.slots,
-            int_cast_bindings: &self.locals.slots,
+            template_truthiness_abstentions: &self.state,
+            typeof_bindings: &self.state,
+            int_cast_bindings: &self.state,
             fragment_context: FragmentEvalContext::new(self.db),
             current_dot_fragment,
             root_dot_identity,
@@ -2598,10 +2585,10 @@ impl<'a> Interpreter<'a> {
     /// Joins the executed and skipped local states for a node that ran under
     /// a partial `remaining` condition: the node's effect on locals holds
     /// exactly where `remaining` does.
-    fn join_remaining_outcomes(&mut self, local_entry: &SymbolicLocalState, remaining: &Predicate) {
-        let executed = self.locals.clone();
+    fn join_remaining_outcomes(&mut self, local_entry: &State, remaining: &Predicate) {
+        let executed = self.state.fork_locals();
         let skipped = local_entry.clone();
-        self.locals.join_control_outcomes(
+        self.state.join_control_outcomes(
             local_entry,
             &[
                 crate::symbolic_local_state::ControlOutcome::new(
@@ -2664,7 +2651,7 @@ impl<'a> Interpreter<'a> {
             if remaining == Predicate::False {
                 break;
             }
-            let local_entry = self.locals.clone();
+            let local_entry = self.state.fork_locals();
             let entry_scope = self.mark_scope();
             self.push_predicate(remaining.clone());
             let mut next = Contributions::default();
@@ -3184,7 +3171,7 @@ impl<'a> Interpreter<'a> {
                     .breaks
                     .push(crate::symbolic_local_state::ControlOutcome::new(
                         TruthCondition::exact(Predicate::True),
-                        self.locals.clone(),
+                        self.state.fork_locals(),
                     ));
             }
             Node::Opaque(opaque) if opaque.kind == OpaqueKind::Continue => {
@@ -3192,7 +3179,7 @@ impl<'a> Interpreter<'a> {
                     .continues
                     .push(crate::symbolic_local_state::ControlOutcome::new(
                         TruthCondition::exact(Predicate::True),
-                        self.locals.clone(),
+                        self.state.fork_locals(),
                     ));
             }
             Node::Control(_) | Node::Output(_) | Node::Comment(_) | Node::Opaque(_) => {}

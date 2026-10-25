@@ -370,13 +370,13 @@ impl Interpreter<'_> {
             nil_omitting_paths: &hole.effects.nil_omitting_paths,
             plain_slot_string_format_paths: &hole.effects.plain_slot_string_format_paths,
             json_serialized_paths: &hole.effects.json_serialized_paths,
-            chart_value_defaults: &self.locals.chart_value_defaults,
+            chart_value_defaults: &self.state.chart_value_defaults,
             local_source_paths: &hole.effects.local_source_paths,
             local_output_meta: &hole_meta,
         };
         let mut out =
             if kind == ValueKind::Scalar && (self.scalar_output_projection || self.helper_scope) {
-                hole.scalar_dispatch()
+                hole.scalar_transport()
                     .and_then(|dispatch| lower_scalar_dispatch(dispatch, kind, &scope))
             } else {
                 None
@@ -587,7 +587,7 @@ impl Interpreter<'_> {
         let call = self.db.summarize_bound_helper_call(
             &name,
             arg,
-            Some(&crate::value::root_values(&self.root_slots)),
+            Some(&self.state.root_values()),
             current_dot.as_ref(),
             &env,
             FragmentEvalContext::new(self.db),
@@ -638,7 +638,7 @@ impl Interpreter<'_> {
         self.pre_rewrite_strict_paths
             .extend(summary.pre_rewrite_strict_paths.iter().cloned());
         let mut chart_defaults = summary.chart_defaults.clone();
-        self.locals.chart_value_defaults.append(&mut chart_defaults);
+        self.state.chart_value_defaults.append(&mut chart_defaults);
         Some((
             splice_summary(summary, self.current_site.as_ref(), self.in_value_slot),
             summary.root_render_indent,
@@ -710,12 +710,12 @@ impl Interpreter<'_> {
             nil_omitting_paths: &hole.effects.nil_omitting_paths,
             plain_slot_string_format_paths: &hole.effects.plain_slot_string_format_paths,
             json_serialized_paths: &hole.effects.json_serialized_paths,
-            chart_value_defaults: &self.locals.chart_value_defaults,
+            chart_value_defaults: &self.state.chart_value_defaults,
             local_source_paths: &hole.effects.local_source_paths,
             local_output_meta: &hole_meta,
         };
         let mut arms = (self.scalar_output_projection || self.helper_scope)
-            .then_some(hole.scalar_dispatch())
+            .then_some(hole.scalar_transport())
             .flatten()
             .and_then(|dispatch| lower_scalar_dispatch_arms(dispatch, kind, &scope))
             .unwrap_or_else(|| match &value {

@@ -12,11 +12,8 @@ use helm_schema_syntax::{ControlKind, ControlRegion, Node, ScalarPart};
 use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::{literal_dict_range_keys, parse_literal_list_range_expr};
 use crate::eval_effect::{SelectionTruthReachability, SelectionTruthSource};
-use crate::scalar_value::{
-    ScalarContent, ScalarValueDispatch, TruthCondition, any_predicates_with_memo,
-};
-use crate::value::RootSlot;
-use crate::value_path_context::{guard_value_is_truthy, predicate_any};
+use crate::scalar_value::{TruthCondition, any_predicates_with_memo};
+use crate::value_path_context::predicate_any;
 use crate::{Guard, ValueKind};
 use helm_schema_core::{GuardValue, Predicate};
 
@@ -45,8 +42,8 @@ pub(super) struct RangeIterationAlternative {
 
 /// State produced by evaluating a control header before any arm is selected.
 struct ControlHeaderTransition {
-    in_scope: crate::symbolic_local_state::SymbolicLocalState,
-    after_scope: crate::symbolic_local_state::SymbolicLocalState,
+    in_scope: crate::value::State,
+    after_scope: crate::value::State,
 }
 
 #[derive(PartialEq)]
@@ -77,7 +74,7 @@ impl Interpreter<'_> {
         let branch_nodes = branch_node_lists(region, adopted);
         let (mut escaped_per_branch, mut escaped_after) = split_escaped(region, escaped);
 
-        let entry_locals = self.locals.clone();
+        let entry_locals = self.state.fork_locals();
         let entry_scope = self.mark_scope();
         // Root-context `set` state joins across if/else arms like locals:
         // each arm evaluates from the entry state (arms are mutually
@@ -86,12 +83,9 @@ impl Interpreter<'_> {
         // complete literal-assignment chains into an exact value dispatch
         // (vault's five-arm `vault.mode`). Non-If regions keep the
         // sequential accumulation.
-        let entry_root = (region.kind == ControlKind::If).then(|| self.capture_root_set_state());
-        let mut root_arm_states: Vec<(Predicate, bool, RootSetState)> = Vec::new();
-        let mut local_arm_states: Vec<(
-            TruthCondition,
-            crate::symbolic_local_state::SymbolicLocalState,
-        )> = Vec::new();
+        let entry_root = (region.kind == ControlKind::If).then(|| self.state.fork_roots());
+        let mut root_arm_states: Vec<(Predicate, bool, crate::value::RootSnapshot)> = Vec::new();
+        let mut local_arm_states: Vec<(TruthCondition, crate::value::State)> = Vec::new();
         let mut binding_decisions = Vec::new();
 
         let mut out = Contributions::default();
@@ -105,17 +99,17 @@ impl Interpreter<'_> {
         let mut common_header_fallthrough = None;
 
         for (index, _branch) in region.branches.iter().enumerate() {
-            self.locals = if index > 0 {
+            self.state.restore_locals(if index > 0 {
                 header_transition.as_ref().map_or_else(
-                    || entry_locals.clone(),
+                    || entry_locals.fork(),
                     |transition| transition.in_scope.clone(),
                 )
             } else {
-                entry_locals.clone()
-            };
+                entry_locals.fork()
+            });
             self.rewind(entry_scope);
             if let Some(entry_root) = &entry_root {
-                self.restore_root_set_state(entry_root);
+                self.state.restore_roots(entry_root);
             }
 
             let mut arm_condition = Predicate::True;
@@ -145,13 +139,13 @@ impl Interpreter<'_> {
             let region_site = self.region_site(region.span);
             let previous_site = std::mem::replace(&mut self.current_site, region_site);
             if index == 0 {
-                self.locals.enter_local_scope();
+                self.state.enter_local_scope();
             }
             let (own_condition, extra, iterations, own_reachability, post_header_locals) =
                 self.activate_arm(&arm, &nodes, region.span.start, index);
             self.current_site = previous_site;
             if !matches!(arm, ArmSpec::Else) {
-                let in_scope = post_header_locals.unwrap_or_else(|| self.locals.clone());
+                let in_scope = post_header_locals.unwrap_or_else(|| self.state.fork_locals());
                 let mut after_scope = in_scope.clone();
                 after_scope.exit_local_scope();
                 if index == 0 {
@@ -248,7 +242,7 @@ impl Interpreter<'_> {
                         // Items within one alternative run sequentially. Distinct
                         // list alternatives start from the same state so a split
                         // path such as `a.b | c.d` cannot cross-pair its segments.
-                        let alternative_entry = self.locals.clone();
+                        let alternative_entry = self.state.fork_locals();
                         let mut all = Contributions::default();
                         let mut alternative_outcomes = Vec::new();
                         // Items beyond the alternatives' SHARED PREFIX execute
@@ -279,7 +273,7 @@ impl Interpreter<'_> {
                             usize::MAX
                         };
                         for alternative in &plan.alternatives {
-                            self.locals = alternative_entry.clone();
+                            self.state.restore_locals(alternative_entry.clone());
                             let mut remaining = Predicate::True;
                             let mut exit_outcomes = Vec::new();
                             for (item_index, item) in alternative.items.iter().enumerate() {
@@ -287,14 +281,14 @@ impl Interpreter<'_> {
                                     break;
                                 }
                                 if let Some((variable, binding)) = &item.variable {
-                                    self.locals.bind_direct_fragment_value(
+                                    self.state.bind_direct_fragment_value(
                                         arm_binding_kind,
                                         variable.clone(),
                                         binding.clone(),
                                     );
                                 }
                                 if let Some((variable, ordinal)) = &item.key {
-                                    self.locals.bind_direct_fragment_value(
+                                    self.state.bind_direct_fragment_value(
                                         arm_binding_kind,
                                         variable.clone(),
                                         ordinal.clone(),
@@ -345,12 +339,12 @@ impl Interpreter<'_> {
                                             remaining,
                                             self.db.predicate_memo().as_ref(),
                                         ),
-                                        self.locals.clone(),
+                                        self.state.fork_locals(),
                                     ),
                                 );
                             }
                             if !exit_outcomes.is_empty() {
-                                self.locals.join_control_outcomes(
+                                self.state.join_control_outcomes(
                                     &alternative_entry,
                                     &exit_outcomes,
                                     self.db.predicate_memo().as_ref(),
@@ -359,7 +353,7 @@ impl Interpreter<'_> {
                             alternative_outcomes.push(
                                 crate::symbolic_local_state::ControlOutcome::new(
                                     alternative.truth.clone(),
-                                    self.locals.clone(),
+                                    self.state.fork_locals(),
                                 ),
                             );
                         }
@@ -371,7 +365,7 @@ impl Interpreter<'_> {
                                 );
                             alternative_outcomes.push(unresolved);
                         }
-                        self.locals.join_control_outcomes(
+                        self.state.join_control_outcomes(
                             &alternative_entry,
                             &alternative_outcomes,
                             self.db.predicate_memo().as_ref(),
@@ -429,12 +423,12 @@ impl Interpreter<'_> {
                 self.loop_depth -= 1;
                 contributions.take_loop_control();
             }
-            self.locals.exit_local_scope();
+            self.state.exit_local_scope();
             if matches!(arm, ArmSpec::Range { .. })
                 && iterations.is_none()
                 && let Some(transition) = &header_transition
             {
-                self.locals
+                self.state
                     .widen_changed_fragment_bindings(&transition.after_scope);
             }
             // A branch-local reassignment's truthiness holds only where the
@@ -457,20 +451,16 @@ impl Interpreter<'_> {
                 }
             };
             if let Some(semantic_arm_truth) = semantic_arm_truth {
-                local_arm_states.push((semantic_arm_truth, self.locals.clone()));
+                local_arm_states.push((semantic_arm_truth, self.state.fork_locals()));
             }
-            self.locals.conjoin_changed_truthy_reductions(
+            self.state.conjoin_changed_truthy_reductions(
                 &entry_locals,
                 &stamped_condition,
                 self.db.predicate_memo().as_ref(),
             );
-            outcomes.push(self.locals.clone());
+            outcomes.push(self.state.fork_locals());
             if entry_root.is_some() {
-                root_arm_states.push((
-                    arm_condition.clone(),
-                    arm_decoded,
-                    self.capture_root_set_state(),
-                ));
+                root_arm_states.push((arm_condition.clone(), arm_decoded, self.state.fork_roots()));
             }
 
             contributions.extend(extra);
@@ -478,11 +468,12 @@ impl Interpreter<'_> {
             out.extend(contributions);
         }
 
-        self.locals = entry_locals.clone();
+        self.state.restore_locals(entry_locals.fork());
         self.rewind(entry_scope);
         if let Some(entry_root) = &entry_root {
-            self.restore_root_set_state(entry_root);
-            self.join_root_set_arms(entry_root, &root_arm_states, has_unconditional_else);
+            self.state.restore_roots(entry_root);
+            self.state
+                .join_root_set_arms(entry_root, &root_arm_states, has_unconditional_else);
         }
         let binding_fallthrough = header_transition
             .as_ref()
@@ -504,24 +495,24 @@ impl Interpreter<'_> {
             );
             self.apply_omission_exclusions(common_entry, &mut outcomes, &arm_header_exprs);
         }
-        self.locals.join_branch_outcomes(&entry_locals, &outcomes);
-        self.locals
+        self.state.join(&entry_locals, &outcomes);
+        self.state
             .join_binding_decisions(binding_fallthrough, &binding_decisions, &outcomes);
         if region.kind == ControlKind::If {
-            self.locals.join_truthy_reduction_arms(
+            self.state.join_truthy_reduction_arms(
                 binding_fallthrough,
                 &local_arm_states,
                 has_unconditional_else,
                 self.db.predicate_memo().as_ref(),
             );
-            self.locals.join_scalar_dispatch_arms(
+            self.state.join_scalar_dispatch_arms(
                 binding_fallthrough,
                 &local_arm_states,
                 has_unconditional_else,
                 self.db.predicate_memo().as_ref(),
             );
         }
-        out.loop_control.replace_states(&self.locals);
+        out.loop_control.replace_states(&self.state);
 
         // Descendants after the region evaluate outside its branch scope.
         self.add_parent_alternatives(&mut escaped_after);
@@ -719,7 +710,7 @@ impl Interpreter<'_> {
             if remaining == Predicate::False {
                 break;
             }
-            let local_entry = self.locals.clone();
+            let local_entry = self.state.fork_locals();
             let entry_scope = self.mark_scope();
             self.push_predicate(remaining.clone());
             let mut next = match step {
@@ -734,7 +725,7 @@ impl Interpreter<'_> {
             };
             self.rewind(entry_scope);
             if remaining != Predicate::True {
-                self.locals.join_control_outcomes(
+                self.state.join_control_outcomes(
                     &local_entry,
                     &[
                         crate::symbolic_local_state::ControlOutcome::new(
@@ -742,7 +733,7 @@ impl Interpreter<'_> {
                                 remaining.clone(),
                                 self.db.predicate_memo().as_ref(),
                             ),
-                            self.locals.clone(),
+                            self.state.fork_locals(),
                         ),
                         crate::symbolic_local_state::ControlOutcome::new(
                             TruthCondition::exact_with_memo(
@@ -1179,7 +1170,7 @@ impl Interpreter<'_> {
         Contributions,
         Option<RangeIterations>,
         SelectionTruthReachability,
-        Option<crate::symbolic_local_state::SymbolicLocalState>,
+        Option<crate::value::State>,
     ) {
         match arm {
             ArmSpec::Else => (
@@ -1231,9 +1222,8 @@ impl Interpreter<'_> {
             }
         });
         let definite: Vec<(String, AbstractValue)> = self
-            .locals
-            .slots
-            .iter()
+            .state
+            .iter_locals()
             .filter_map(|(name, slot)| {
                 slot.binding()
                     .definite_range_member_value
@@ -1250,10 +1240,8 @@ impl Interpreter<'_> {
         for (variable, value) in definite {
             saved.push((
                 variable.clone(),
-                self.locals
-                    .slots
-                    .entry(variable.clone())
-                    .or_default()
+                self.state
+                    .slot_mut(&variable)
                     .replace_range_member(Some(value)),
             ));
         }
@@ -1267,14 +1255,12 @@ impl Interpreter<'_> {
         for (variable, previous) in saved {
             match previous {
                 Some(previous) => {
-                    self.locals
-                        .slots
-                        .entry(variable.clone())
-                        .or_default()
+                    self.state
+                        .slot_mut(&variable)
                         .replace_range_member(Some(previous));
                 }
                 None => {
-                    self.locals.slot_mut(&variable).replace_range_member(None);
+                    self.state.slot_mut(&variable).replace_range_member(None);
                 }
             }
         }
@@ -1515,8 +1501,8 @@ impl Interpreter<'_> {
             return Vec::new();
         };
         let accumulator_is_empty = self
-            .locals
-            .binding(name.trim_start_matches('$'))
+            .state
+            .read_local(name.trim_start_matches('$'))
             .binding
             .as_ref()
             .and_then(|binding| binding.value(self.db.predicate_memo()))
@@ -1648,14 +1634,14 @@ impl Interpreter<'_> {
         Contributions,
         Option<RangeIterations>,
         SelectionTruthReachability,
-        crate::symbolic_local_state::SymbolicLocalState,
+        crate::value::State,
     ) {
         let destructured = range.destructured;
         let binding_kind = range.binding_kind;
         let value_variable = range.value_variable.as_deref();
         let key_variable = range.key_variable.as_deref();
         let Some(header) = range.header.as_ref() else {
-            let post_header_locals = self.locals.clone();
+            let post_header_locals = self.state.fork_locals();
             self.push_dot(None, crate::eval_env::BindingEvaluationMode::Direct);
             return (
                 None,
@@ -1686,48 +1672,43 @@ impl Interpreter<'_> {
             if let Some(target) = &header_value_variable
                 && target != source
             {
-                self.locals
+                self.state
                     .bind_current_variable_state(binding_kind, source, target);
             }
             if let Some(target) = key_variable
                 && target != source
             {
-                self.locals
+                self.state
                     .bind_current_variable_state(binding_kind, source, target);
             }
         } else {
             let value = iterable_value.clone().unwrap_or(AbstractValue::Unknown);
             if let Some(variable) = &header_value_variable {
-                self.locals.bind_fragment_value(
-                    binding_kind,
-                    variable.clone(),
-                    Some(value.clone()),
-                );
+                self.state
+                    .bind_fragment_value(binding_kind, variable.clone(), Some(value.clone()));
             }
             if let Some(variable) = key_variable {
-                self.locals
+                self.state
                     .bind_fragment_value(binding_kind, variable.to_string(), Some(value));
             }
         }
-        let post_header_locals = self.locals.clone();
+        let post_header_locals = self.state.fork_locals();
         if binding_kind == crate::fragment_assignment::AssignmentKind::Declaration {
             for variable in header_value_variable
                 .as_deref()
                 .into_iter()
                 .chain(key_variable)
             {
-                self.locals.clear_current_binding(variable);
+                self.state.clear_current_binding(variable);
             }
         }
         if let Some((variable, literals)) = parse_literal_list_range_expr(header.expr()) {
             if binding_kind == crate::fragment_assignment::AssignmentKind::Assignment {
-                self.locals
-                    .slots
-                    .entry(variable.clone())
-                    .or_default()
+                self.state
+                    .slot_mut(&variable)
                     .record_iteration_domain(literals);
             } else {
-                self.locals.insert_range_domain(variable, literals);
+                self.state.insert_range_domain(variable, literals);
             }
         } else if let Some(variable) = key_variable
             && let Some(keys) = literal_dict_range_keys(header.expr())
@@ -1736,13 +1717,9 @@ impl Interpreter<'_> {
             // literal keys: `$k`'s domain makes `get map $k` reads decode
             // to the finite member set.
             if binding_kind == crate::fragment_assignment::AssignmentKind::Assignment {
-                self.locals
-                    .slots
-                    .entry(variable.to_string())
-                    .or_default()
-                    .record_iteration_domain(keys);
+                self.state.slot_mut(variable).record_iteration_domain(keys);
             } else {
-                self.locals.insert_range_domain(variable.to_string(), keys);
+                self.state.insert_range_domain(variable.to_string(), keys);
             }
         }
         let range_is_statically_nonempty = iterable_value
@@ -1980,7 +1957,7 @@ impl Interpreter<'_> {
             && let Some((variable, binding)) =
                 helm_schema_ast::range_variable_name_expr(header.expr()).zip(dot.clone())
         {
-            self.locals
+            self.state
                 .bind_direct_fragment_value(binding_kind, variable, binding);
         }
         // The value binding carries the member identity (`x.*`), while the
@@ -1993,10 +1970,8 @@ impl Interpreter<'_> {
             None => None,
         };
         if let Some((variable, binding)) = member_variable.clone().zip(dot.clone()) {
-            self.locals
-                .slots
-                .entry(variable.clone())
-                .or_default()
+            self.state
+                .slot_mut(&variable)
                 .replace_range_member(Some(binding));
         }
         // A local dict assembled by an unconditional `set` over a
@@ -2011,17 +1986,13 @@ impl Interpreter<'_> {
             && let Some(variable) = member_variable
             && let Some(entry) = entries.values().next()
         {
-            self.locals
-                .slots
-                .entry(variable.clone())
-                .or_default()
+            self.state
+                .slot_mut(&variable)
                 .record_definite_member(entry.clone());
         }
         if let Some((variable, path)) = key_variable.zip(range_binding_path) {
-            self.locals
-                .slots
-                .entry(variable.to_string())
-                .or_default()
+            self.state
+                .slot_mut(variable)
                 .replace_range_member(Some(AbstractValue::RangeKey(path)));
         }
         self.push_dot(dot, crate::eval_env::BindingEvaluationMode::Direct);
@@ -2633,14 +2604,13 @@ impl Interpreter<'_> {
     /// those captures abstain.
     fn apply_reassignment_exclusions(
         &self,
-        entry: &crate::symbolic_local_state::SymbolicLocalState,
-        outcomes: &mut [crate::symbolic_local_state::SymbolicLocalState],
+        entry: &crate::value::State,
+        outcomes: &mut [crate::value::State],
         header_exprs: &[Option<TemplateExpr>],
         region_start: usize,
     ) {
         let mut entry_identities: Vec<(&String, BTreeSet<helm_schema_core::ValuesPath>)> = entry
-            .slots
-            .iter()
+            .iter_locals()
             .filter_map(|(name, slot)| slot.binding().binding.as_ref().map(|value| (name, value)))
             .filter_map(|(name, value)| {
                 let paths = value.paths(self.db.predicate_memo());
@@ -2656,7 +2626,7 @@ impl Interpreter<'_> {
             // one unexplained arm drops the record entirely.
             let mut fold_spellings: Option<BTreeSet<GuardValue>> = Some(BTreeSet::new());
             for (index, outcome) in outcomes.iter().enumerate() {
-                let Some(value) = outcome.binding(name).binding.as_ref() else {
+                let Some(value) = outcome.read_local(name).binding.as_ref() else {
                     continue;
                 };
                 // A reassignment severs the identity when the arm's value
@@ -2885,16 +2855,15 @@ impl Interpreter<'_> {
     /// re-add it".
     fn apply_omission_exclusions(
         &self,
-        entry: &crate::symbolic_local_state::SymbolicLocalState,
-        outcomes: &mut [crate::symbolic_local_state::SymbolicLocalState],
+        entry: &crate::value::State,
+        outcomes: &mut [crate::value::State],
         header_exprs: &[Option<TemplateExpr>],
     ) {
         let mut names: Vec<String> = outcomes
             .iter()
             .flat_map(|outcome| {
                 outcome
-                    .slots
-                    .iter()
+                    .iter_locals()
                     .filter_map(|(name, slot)| slot.binding().output_meta.is_some().then_some(name))
                     .cloned()
             })
@@ -2902,11 +2871,11 @@ impl Interpreter<'_> {
         names.sort();
         names.dedup();
         for name in names {
-            let entry_omitted = binding_omitted_keys(entry.binding(&name).output_meta.as_ref());
+            let entry_omitted = binding_omitted_keys(entry.read_local(&name).output_meta.as_ref());
             let mut additions: BTreeMap<String, Vec<Guard>> = BTreeMap::new();
             for (index, outcome) in outcomes.iter().enumerate() {
                 for (key, retain) in
-                    binding_omitted_keys(outcome.binding(&name).output_meta.as_ref())
+                    binding_omitted_keys(outcome.read_local(&name).output_meta.as_ref())
                 {
                     if entry_omitted.contains_key(&key) {
                         continue;
@@ -3035,138 +3004,6 @@ fn attach_reassignment_exclusion(
     }
 }
 
-/// Snapshot of the interpreter's root-context `set` state: live bindings,
-/// truthiness predicates, value dispatches, and the summary-exported
-/// observed maps.
-pub(super) struct RootSetState {
-    root: HashMap<String, RootSlot>,
-    observed: BTreeMap<String, RootSlot>,
-}
-
-impl Interpreter<'_> {
-    pub(super) fn capture_root_set_state(&self) -> RootSetState {
-        RootSetState {
-            root: self.root_slots.clone(),
-            observed: self.root_writes.clone(),
-        }
-    }
-
-    fn restore_root_set_state(&mut self, state: &RootSetState) {
-        self.root_slots = state.root.clone();
-        self.root_writes = state.observed.clone();
-    }
-
-    /// Join per-arm root `set` outcomes after an if/else region.
-    ///
-    /// The replay applies each arm's changed keys in source order, matching
-    /// the last-write-wins accumulation the pipeline had before the per-arm
-    /// entry restore. When the chain is COMPLETE — an unconditional else and
-    /// every arm condition decoded without approximation — and every arm
-    /// leaves a key holding one scalar string literal, the key additionally
-    /// joins into an exact [`ScalarValueDispatch`]: root-field equalities
-    /// decode as the disjunction of the arms assigning the compared literal,
-    /// and the key's truthiness becomes the disjunction of the arms assigning
-    /// a truthy literal.
-    fn join_root_set_arms(
-        &mut self,
-        entry: &RootSetState,
-        arms: &[(Predicate, bool, RootSetState)],
-        has_unconditional_else: bool,
-    ) {
-        let mut keys: BTreeSet<String> = BTreeSet::new();
-        for (_, _, state) in arms {
-            for (key, value) in state
-                .observed
-                .iter()
-                .filter_map(|(name, slot)| slot.binding().value.as_ref().map(|value| (name, value)))
-            {
-                if entry
-                    .observed
-                    .get(key)
-                    .and_then(|slot| slot.binding().value.as_ref())
-                    != Some(value)
-                {
-                    keys.insert(key.clone());
-                }
-            }
-        }
-        if keys.is_empty() {
-            return;
-        }
-        for (_, _, state) in arms {
-            for key in &keys {
-                let Some(value) = state
-                    .observed
-                    .get(key)
-                    .and_then(|slot| slot.binding().value.as_ref())
-                else {
-                    continue;
-                };
-                if entry
-                    .observed
-                    .get(key)
-                    .and_then(|slot| slot.binding().value.as_ref())
-                    == Some(value)
-                {
-                    continue;
-                }
-                if let Some(slot) = state.observed.get(key) {
-                    self.root_slots.insert(key.clone(), slot.clone());
-                    self.root_writes.insert(key.clone(), slot.clone());
-                }
-            }
-        }
-        let complete = has_unconditional_else
-            && arms
-                .iter()
-                .all(|(condition, decoded, _)| *decoded && !condition.contains_approximation());
-        if !complete {
-            return;
-        }
-        'keys: for key in &keys {
-            let mut dispatch_arms = Vec::new();
-            let mut joined_values: BTreeSet<AbstractValue> = BTreeSet::new();
-            let mut truthy_conditions = Vec::new();
-            for (condition, _, state) in arms {
-                let value = state
-                    .observed
-                    .get(key)
-                    .and_then(|slot| slot.binding().value.as_ref())
-                    .or_else(|| {
-                        entry
-                            .observed
-                            .get(key)
-                            .and_then(|slot| slot.binding().value.as_ref())
-                    });
-                let Some(value) = value else {
-                    continue 'keys;
-                };
-                let Some(literal) = root_dispatch_literal(value) else {
-                    continue 'keys;
-                };
-                if guard_value_is_truthy(&literal) {
-                    truthy_conditions.push(condition.clone());
-                }
-                dispatch_arms.push((condition.clone(), ScalarContent::Literal(literal)));
-                joined_values.insert(value.clone());
-            }
-            let truthy = predicate_any(truthy_conditions);
-            let joined_value = if joined_values.len() == 1 {
-                joined_values
-                    .into_iter()
-                    .next()
-                    .unwrap_or(AbstractValue::Unknown)
-            } else {
-                AbstractValue::Choice(joined_values)
-            };
-            let dispatch = ScalarValueDispatch::bind_content(dispatch_arms, true);
-            let slot = RootSlot::new(Some(joined_value), Some(truthy), Some(dispatch));
-            self.root_slots.insert(key.clone(), slot.clone());
-            self.root_writes.insert(key.clone(), slot);
-        }
-    }
-}
-
 pub(super) fn semantic_truth_reachability(
     evaluated_truth: SelectionTruthReachability,
     predicate: &Predicate,
@@ -3195,15 +3032,6 @@ fn abstain_truth(truth: SelectionTruthReachability, abstains: bool) -> Selection
 /// The scalar literal one dispatch arm assigns (`set . "mode" "ha"`); only
 /// singleton string literals qualify — anything else keeps the key on the
 /// replayed last-write state.
-fn root_dispatch_literal(value: &AbstractValue) -> Option<GuardValue> {
-    match value {
-        AbstractValue::StringSet(values) if values.len() == 1 => {
-            values.first().map(GuardValue::string)
-        }
-        _ => None,
-    }
-}
-
 /// Whether a decoded condition reads a WILDCARD member path (`x.*.y`): the
 /// shape a ranged member's own condition takes.
 fn predicate_reads_member_wildcard(predicate: &Predicate) -> bool {

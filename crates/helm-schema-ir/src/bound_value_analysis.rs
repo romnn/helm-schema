@@ -7,7 +7,7 @@ use helm_schema_ast::TemplateExpr;
 
 use crate::expr_eval::direct_values_path;
 use crate::fragment_assignment::AssignmentKind;
-use crate::value::{LocalSlot, LocalSlots};
+use crate::value::State;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct GetBinding {
@@ -22,70 +22,11 @@ pub(crate) struct GetBindingPlan {
     pub(crate) binding: GetBinding,
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub(crate) struct BoundValueContext {
-    pub(crate) slots: LocalSlots,
-    constraints: DomainConstraints,
-}
-
-impl BoundValueContext {
-    pub(crate) fn new(slots: &LocalSlots) -> Self {
-        Self {
-            slots: slots.clone(),
-            constraints: DomainConstraints::default(),
-        }
-    }
-
-    pub(crate) fn binding(&self, name: &str) -> crate::value::LocalSlotView<'_> {
-        self.slots.get(name).unwrap_or(&LocalSlot::EMPTY).binding()
-    }
-
-    pub(crate) fn variable_slots(&self, name: &str) -> [crate::value::LocalSlotView<'_>; 2] {
-        [
-            self.binding(name),
-            self.binding(name.trim_start_matches('$')),
-        ]
-    }
-
-    pub(crate) fn selector_paths(&self, expr: &TemplateExpr) -> BTreeSet<ValuesPath> {
-        let Some((variable, rest)) = bound_selector_read(expr) else {
-            return BTreeSet::new();
-        };
-        let Some(binding) = self.binding(variable).get_binding.as_ref() else {
-            return BTreeSet::new();
-        };
-        let Some(domain) = self.binding(&binding.key_var).range_domain.as_ref() else {
-            return BTreeSet::new();
-        };
-
-        domain
-            .iter()
-            .filter(|value| self.constraints.allows(&binding.key_var, value))
-            .map(|value| {
-                let mut path = binding.base.clone();
-                path.push(value.clone());
-                let rest = ValuesPath::parse(&rest);
-                ValuesPath::from_segments(path.segments().chain(rest.segments()))
-            })
-            .collect()
-    }
-
-    pub(crate) fn with_predicate_constraints(&self, expr: &TemplateExpr, truthy: bool) -> Self {
-        let Some(next_constraints) = predicate_domain_constraints(expr, truthy) else {
-            return self.clone();
-        };
-        Self {
-            slots: self.slots.clone(),
-            constraints: self.constraints.and(&next_constraints),
-        }
-    }
-}
-
 pub(crate) fn output_metadata(
-    slots: &LocalSlots,
+    state: &State,
 ) -> HashMap<String, BTreeMap<ValuesPath, HelperOutputMeta>> {
-    slots
-        .iter()
+    state
+        .iter_locals()
         .filter_map(|(name, slot)| {
             let crate::value::LocalSlotView {
                 range_domain: _,
@@ -227,7 +168,7 @@ fn string_literal_value(expr: &TemplateExpr) -> Option<&str> {
     }
 }
 
-fn bound_selector_read(expr: &TemplateExpr) -> Option<(&str, String)> {
+pub(crate) fn bound_selector_read(expr: &TemplateExpr) -> Option<(&str, String)> {
     let TemplateExpr::Selector { operand, path } = expr else {
         return None;
     };
@@ -241,7 +182,7 @@ fn bound_selector_read(expr: &TemplateExpr) -> Option<(&str, String)> {
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
-struct DomainConstraints {
+pub(crate) struct DomainConstraints {
     by_variable: HashMap<String, ValueDomainConstraint>,
 }
 
@@ -252,7 +193,7 @@ struct ValueDomainConstraint {
 }
 
 impl DomainConstraints {
-    fn and(&self, other: &Self) -> Self {
+    pub(crate) fn and(&self, other: &Self) -> Self {
         let mut combined = self.clone();
         for (variable, constraint) in &other.by_variable {
             combined
@@ -264,7 +205,7 @@ impl DomainConstraints {
         combined
     }
 
-    fn allows(&self, variable: &str, value: &str) -> bool {
+    pub(crate) fn allows(&self, variable: &str, value: &str) -> bool {
         self.by_variable
             .get(variable)
             .is_none_or(|constraint| constraint.allows(value))
@@ -295,7 +236,10 @@ impl ValueDomainConstraint {
     }
 }
 
-fn predicate_domain_constraints(expr: &TemplateExpr, truthy: bool) -> Option<DomainConstraints> {
+pub(crate) fn predicate_domain_constraints(
+    expr: &TemplateExpr,
+    truthy: bool,
+) -> Option<DomainConstraints> {
     match expr.deparen() {
         TemplateExpr::Call { function, args } if function == "not" => match args.as_slice() {
             [arg] => predicate_domain_constraints(arg, !truthy),

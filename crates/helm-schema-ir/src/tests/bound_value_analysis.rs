@@ -2,8 +2,7 @@ use std::collections::HashMap;
 use test_util::prelude::sim_assert_eq;
 
 use super::{
-    BoundValueContext, GetBinding, GetBindingPlan, parse_get_binding_from_exprs,
-    parse_literal_list_range_expr,
+    GetBinding, GetBindingPlan, parse_get_binding_from_exprs, parse_literal_list_range_expr,
 };
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::eval_exprs_effects;
@@ -28,12 +27,10 @@ fn extract_bound_values(
     range_domains: &HashMap<String, Vec<String>>,
     get_bindings: &HashMap<String, GetBinding>,
 ) -> Vec<String> {
-    let mut state = crate::symbolic_local_state::SymbolicLocalState::default();
+    let mut state = crate::value::State::default();
     for (name, domain) in range_domains {
         state
-            .slots
-            .entry(name.clone())
-            .or_default()
+            .slot_mut(&name)
             .record_iteration_domain(domain.clone());
     }
     for (name, binding) in get_bindings {
@@ -44,7 +41,7 @@ fn extract_bound_values(
         });
     }
     let env = EvalEnv {
-        local_slots: BoundValueContext::new(&state.slots),
+        state: state.expression_state(),
         ..EvalEnv::default()
     };
     eval_exprs_effects(&parse_expr_text(text), &env)

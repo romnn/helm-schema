@@ -50,7 +50,7 @@ fn member_host_captures(result: &crate::eval_effect::EvalResult) -> usize {
 /// remainder, whether the read takes the whole binding or one member of it.
 ///
 /// `Select(Unknown, candidate, Unknown)` is exactly what
-/// `SymbolicLocalState::widen_changed_fragment_bindings` builds at a range
+/// `State::widen_changed_fragment_bindings` builds at a range
 /// exit whose iteration count is not exact: the `Unknown` branch stands for
 /// every value the loop did NOT produce, starting with the variable's entry
 /// value. Dropping it from a member read turns "this member is
@@ -236,7 +236,7 @@ fn mixed_selection_proves_only_the_decidable_arm() {
 /// segment.
 ///
 /// Inside a helper, `$` is bound to the helper's argument
-/// (`SymbolicLocalState::with_root`), so `include "h" .Values.sub` makes `$`
+/// (`State::with_root`), so `include "h" .Values.sub` makes `$`
 /// the value at `sub`. `bound_values_member` reports no `Values` member for
 /// a bare values path, which is why the pre-patch code recorded nothing
 /// here.

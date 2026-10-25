@@ -250,8 +250,8 @@ pub(crate) fn eval_expr_with_helper_calls(
                     return None;
                 }
                 let (head, tail) = path.split_first()?;
-                env.root_slots
-                    .get(head)
+                env.state
+                    .read_root(head)
                     .and_then(|slot| slot.binding().value.as_ref())
                     .and_then(|value| value.apply_to_path(tail))
             });
@@ -354,7 +354,7 @@ pub(crate) fn eval_expr_with_helper_calls(
             effects.output_paths.clear();
             effects
                 .bound_output_paths
-                .extend(env.local_slots.selector_paths(expr));
+                .extend(env.state.selector_paths(expr));
             match value {
                 Some(value) => {
                     let mut result =
@@ -417,7 +417,7 @@ fn root_values_selector_result(segments: &[String], env: &EvalEnv) -> EvalResult
 }
 
 fn values_path_value(tail: &[String], env: &EvalEnv) -> AbstractValue {
-    if let Some(slot) = env.root_slots.get("Values")
+    if let Some(slot) = env.state.read_root("Values")
         && let Some(root) = &slot.binding().value
         && let Some(value) = root.apply_to_path(tail)
     {
@@ -633,8 +633,8 @@ fn local_binding_result(var: &str, binding: &LocalBinding, env: &EvalEnv) -> Eva
 fn bound_values_member(value: &AbstractValue, env: &EvalEnv) -> Option<AbstractValue> {
     match value {
         AbstractValue::RootContext => Some(
-            env.root_slots
-                .get("Values")
+            env.state
+                .read_root("Values")
                 .and_then(|slot| slot.binding().value.as_ref())
                 .cloned()
                 .unwrap_or_else(AbstractValue::values_root),
@@ -826,7 +826,7 @@ fn local_value_result(
     result.effects.local_source_paths = source_paths;
     let default_paths = leaf_metadata
         .map(|metadata| &metadata.default_paths)
-        .or_else(|| env.local_slots.binding(var).default_paths.as_ref());
+        .or_else(|| env.state.read_local(var).default_paths.as_ref());
     if let Some(default_paths) = default_paths {
         result
             .effects
@@ -841,7 +841,7 @@ fn local_value_result(
     }
     let output_meta = leaf_metadata
         .map(|metadata| &metadata.output_meta)
-        .or_else(|| env.local_slots.binding(var).output_meta.as_ref());
+        .or_else(|| env.state.read_local(var).output_meta.as_ref());
     if let Some(meta_by_path) = output_meta {
         match selected_paths {
             Some(paths) => result.effects.merge_local_output_meta(
@@ -859,7 +859,7 @@ fn local_value_result(
 }
 
 fn attach_local_scalar_facts(result: &mut EvalResult, var: &str, env: &EvalEnv) {
-    let slots = env.local_slots.variable_slots(var);
+    let slots = env.state.variable_slots(var);
     let dispatch = slots
         .iter()
         .find_map(|slot| {
@@ -945,7 +945,7 @@ fn attach_root_field_semantics(result: &mut EvalResult, path: &[String], env: &E
 }
 
 fn attach_named_root_field_semantics(result: &mut EvalResult, field: &str, env: &EvalEnv) {
-    let Some(slot) = env.root_slots.get(field) else {
+    let Some(slot) = env.state.read_root(field) else {
         return;
     };
     let view = slot.binding();
@@ -974,7 +974,7 @@ fn with_bound_selector_paths(
     result
         .effects
         .bound_output_paths
-        .extend(env.local_slots.selector_paths(expr));
+        .extend(env.state.selector_paths(expr));
     result
 }
 

@@ -6,7 +6,7 @@ use crate::eval_effect::SelectionReachability;
 use crate::eval_env::EvalEnv;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_meta::HelperOutputMeta;
-use crate::value::LocalSlots;
+use crate::value::State;
 use helm_schema_core::{Predicate, ValuesPath};
 
 mod condition_predicate;
@@ -65,9 +65,9 @@ pub(crate) enum RootDotIdentity {
 pub(crate) struct ValuePathContext<'a> {
     pub(crate) helper_dispatch_depth: Cell<u8>,
     pub(crate) eval_env: EvalEnv,
-    pub(crate) template_truthiness_abstentions: &'a LocalSlots,
-    pub(crate) typeof_bindings: &'a LocalSlots,
-    pub(crate) int_cast_bindings: &'a LocalSlots,
+    pub(crate) template_truthiness_abstentions: &'a State,
+    pub(crate) typeof_bindings: &'a State,
+    pub(crate) int_cast_bindings: &'a State,
     pub(crate) fragment_context: FragmentEvalContext<'a>,
     pub(crate) current_dot_fragment: Option<AbstractValue>,
     pub(crate) root_dot_identity: RootDotIdentity,
