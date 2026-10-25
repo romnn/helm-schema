@@ -156,22 +156,35 @@ enum Fixture {
     Unusable(String),
 }
 
-#[test]
-fn fixture_verdicts() -> eyre::Result<()> {
-    helm_schema_test_support::init_perfetto_from_env()?;
-    let layout = Layout::corpus();
-    let run = run_fixture_gate(FAMILY_WITNESSES, &layout)?;
-    assert_gate(&run)
+mod frozen {
+    use color_eyre::eyre;
+
+    use super::{FAMILY_WITNESSES, Layout, assert_gate, run_fixture_gate};
+
+    #[test]
+    fn fixture_verdicts() -> eyre::Result<()> {
+        helm_schema_test_support::init_perfetto_from_env()?;
+        let layout = Layout::corpus();
+        let run = run_fixture_gate(FAMILY_WITNESSES, &layout)?;
+        assert_gate(&run)
+    }
 }
 
-/// Live output generation and the complete family report run in the integration profile.
-#[test]
-fn generated_output_sizes_and_family_report() -> eyre::Result<()> {
-    helm_schema_test_support::init_perfetto_from_env()?;
-    let layout = Layout::corpus();
-    let run = run_gate(FAMILY_WITNESSES, &layout)?;
-    println!("{}", family_report(FAMILY_WITNESSES, &run)?);
-    assert_gate(&run)
+/// Whole-chart generation belongs to the integration profile throughout this module.
+mod live {
+    use color_eyre::eyre;
+
+    use super::{FAMILY_WITNESSES, Layout, assert_gate, family_report, run_gate};
+
+    /// Live output generation and the complete family report run in the integration profile.
+    #[test]
+    fn generated_output_sizes_and_family_report() -> eyre::Result<()> {
+        helm_schema_test_support::init_perfetto_from_env()?;
+        let layout = Layout::corpus();
+        let run = run_gate(FAMILY_WITNESSES, &layout)?;
+        println!("{}", family_report(FAMILY_WITNESSES, &run)?);
+        assert_gate(&run)
+    }
 }
 
 fn assert_gate(run: &GateRun) -> eyre::Result<()> {
