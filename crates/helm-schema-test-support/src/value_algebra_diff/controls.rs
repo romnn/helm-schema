@@ -2008,28 +2008,14 @@ pub fn copy_registry(
     Ok(copy)
 }
 
-/// Copies the blobs `case` needs from `registry` into the new directory
-/// `blob_root`, so a replay sees nothing else.
+/// Copies the input blobs `case` needs from `source` into the new flat
+/// directory `blob_root`, so its runner sees nothing else: never the
+/// grounding or its Helm evidence.
 ///
 /// # Errors
 ///
-/// As [`ControlBlobs::input_closure`]; [`DiffError::Infrastructure`] when
-/// a blob cannot be written.
-pub fn stage_case_blobs(
-    registry: &ControlRegistry,
-    case: &ControlCase,
-    blob_root: &Path,
-) -> Result<(), DiffError> {
-    stage_blobs(&registry.blobs(), case, blob_root)
-}
-
-/// Copies the blobs `case` needs from `source` into the new flat directory
-/// `blob_root`, so a replay sees nothing else.
-///
-/// # Errors
-///
-/// As [`ControlCase::closure`]; [`DiffError::Infrastructure`] when a blob
-/// cannot be written.
+/// As [`ControlBlobs::input_closure`]; [`DiffError::Infrastructure`] when a
+/// blob cannot be written.
 pub fn stage_blobs(
     source: &ControlBlobs,
     case: &ControlCase,
@@ -2037,7 +2023,7 @@ pub fn stage_blobs(
 ) -> Result<(), DiffError> {
     std::fs::create_dir_all(blob_root)
         .map_err(|error| DiffError::Infrastructure(format!("{}: {error}", blob_root.display())))?;
-    for blob in case.closure(source)? {
+    for blob in source.input_closure(&case.input)? {
         write_new(&blob_root.join(&blob), &source.read(&blob)?)?;
     }
     Ok(())

@@ -1527,3 +1527,30 @@ fn abort_selections_round_trip() -> eyre::Result<()> {
     sim_assert_eq!(have: serde_json::from_value::<Observation>(value)?, want: termination);
     Ok(())
 }
+
+/// A runner's blob root holds exactly its case's input closure: never the
+/// grounding evidence, nor Helm's output unless those bytes are an input
+/// themselves (an empty stderr is the empty values file).
+#[test]
+fn runners_never_see_the_grounding() -> eyre::Result<()> {
+    let scratch = ScratchDir::new("vac-stage")?;
+    let root = scratch.path();
+    let helm = fake_helm(&root.join("helm"))?;
+    let registry = base(&root.join("registry"), &helm)?;
+    let blobs = registry.blobs();
+    for case in registry.cases.values() {
+        let staged = root.join("staged").join(&case.id);
+        controls::stage_blobs(&blobs, case, &staged)?;
+        let have = std::fs::read_dir(&staged)?
+            .map(|entry| Ok(entry?.file_name().to_string_lossy().into_owned()))
+            .collect::<eyre::Result<std::collections::BTreeSet<_>>>()?;
+        let inputs = blobs.input_closure(&case.input)?;
+        sim_assert_eq!(have: have.clone(), want: inputs.clone());
+        let evidence = case.check_grounding(&blobs)?;
+        sim_assert_eq!(have: have.contains(&case.grounding.evidence_sha256), want: false);
+        for output in [&evidence.stdout_sha256, &evidence.stderr_sha256] {
+            sim_assert_eq!(have: have.contains(output), want: inputs.contains(output));
+        }
+    }
+    Ok(())
+}

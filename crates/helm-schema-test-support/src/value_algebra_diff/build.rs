@@ -1,6 +1,7 @@
 //! The capture's own build of a revision's binaries, with its receipt.
 //!
-//! A capture never trusts a binary handed to it: it builds the producer, the
+//! A capture never trusts a revision's binary handed to it (the external Helm
+//! and helmsweep are pinned by hash instead): it builds the producer, the
 //! contract exporter, the CLI and the IR control runner from the checkout with
 //! Cargo, keeps Cargo's artifact messages, and binds the full tracked-tree
 //! digest (tests included) before and after the build, the compiler, the build

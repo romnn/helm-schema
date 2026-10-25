@@ -4,7 +4,8 @@
 //!
 //! [`capture`] builds every binary itself ([`super::build`]), so a stale or
 //! foreign binary cannot stand in for the revision. [`open_capture`] rechecks
-//! every file the capture recorded.
+//! every hash the manifest records and every binary the build receipt names;
+//! logs, run directories and scratch are diagnostics and are not bound.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::io::Write as _;
@@ -788,12 +789,10 @@ pub fn record_controls(
         if case.scored_query().is_none() {
             continue;
         }
-        let record = observe_case(
-            &runner,
-            &dir.join("runs").join(&case.id),
-            &dir.join("registry/blobs"),
-            case,
-        )?;
+        let run_dir = dir.join("runs").join(&case.id);
+        let blob_root = dir.join("inputs").join(&case.id);
+        super::controls::stage_blobs(&registry.blobs(), case, &blob_root)?;
+        let record = observe_case(&runner, &run_dir, &blob_root, case)?;
         lines.push(json_line(&record)?);
     }
     Ok(ControlsCapture {

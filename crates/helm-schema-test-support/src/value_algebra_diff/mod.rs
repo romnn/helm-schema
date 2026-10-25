@@ -2,8 +2,9 @@
 //! over a persistent, append-only witness universe under an explicit
 //! construction policy, with hash-chained receipts.
 //!
-//! [`capture`] verifies each revision's producer dump against its own
-//! manifest. The comparison itself is [`crate::acceptance`]'s policy-free
+//! [`revision`] captures a revision and binds everything it measured;
+//! [`capture`] verifies a producer dump against its own manifest. The
+//! comparison itself is [`crate::acceptance`]'s policy-free
 //! core; this module adds witness identity, history and policy.
 
 pub mod admission;
