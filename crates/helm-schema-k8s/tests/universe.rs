@@ -1,9 +1,11 @@
 //! Pruning contract that chart-local CRD extraction stamps onto resource schemas.
 //!
 //! The Kubernetes API server prunes every object field a structural schema does not declare.
-//! `x-kubernetes-preserve-unknown-fields` keeps the unknown fields of its own node and of a preserving array's items.
+//! `x-kubernetes-preserve-unknown-fields` keeps the unknown fields of its own node
+//! and of a preserving array's items.
 //! The declared properties and map values below it are pruned by their own schemas again.
-//! The resource root and `x-kubernetes-embedded-resource` nodes never prune `apiVersion`, `kind`, or `metadata`.
+//! The resource root and `x-kubernetes-embedded-resource` nodes
+//! never prune `apiVersion`, `kind`, or `metadata`.
 
 use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_k8s::resource_schemas_from_crd_document_with_source;
