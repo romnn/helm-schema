@@ -14,13 +14,17 @@ This maintainer-only download may use the network; ordinary gates never provisio
 The build runs offline, disables toolchain downloads and writes the binary and build
 cache under `target/`. `GOMODCACHE` may select a private module cache.
 
-The binary is `target/crdcheck`; `HELM_SCHEMA_CRDCHECK` can select another binary.
+The binary is `target/crdcheck`. Only an explicit maintainer opt-in invokes it:
+set `HELM_SCHEMA_CRDCHECK` to the binary (`target/crdcheck` or another build).
 The Rust caller hashes its bytes into every original-input request identity.
-Only explicit maintainer live adjudication may invoke it; ordinary gates replay
-complete recorded requests/responses and neither build nor require this tool.
-Missing, failed or mismatched tooling is Uncertain.
+That identity binds the render by its root-independent Helm invocation key
+(`content_key`), never by the per-process Helm root, so a receipt replays in
+every process and checkout. Without that variable every caller, including the live Helm battery
+(`ADJUDICATE_WITH_HELM=1`), replays the complete receipts in `testdata/crdcheck`
+and neither builds nor requires this tool, whether or not `target/crdcheck` exists.
+A request without a committed receipt, and missing, failed or mismatched tooling, is Uncertain.
 Live results default to `.cache/crdcheck`; `HELM_SCHEMA_CRDCHECK_RECORDS` selects a
-recording directory. Binary changes recompute under a new complete-input key;
+recording directory (in replay, the receipt directory). Binary changes recompute under a new complete-input key;
 older records remain available without supplying authority to the new binary.
 Copy deliberately reviewed complete receipts to `testdata/crdcheck`
 for ordinary replay; normal live runs never mutate committed replay cases.

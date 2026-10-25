@@ -107,6 +107,42 @@ fn each_identity_field_changes_the_key() -> eyre::Result<()> {
     Ok(())
 }
 
+/// The content key ignores where the runner root lies and nothing else.
+#[test]
+fn content_key_names_equal_content_under_any_root() -> eyre::Result<()> {
+    let base = base_request();
+    let mut moved = base.clone();
+    moved.working_directory = "/scratch/helm-root-7".to_string();
+    for value in moved
+        .arguments
+        .iter_mut()
+        .chain(moved.environment.iter_mut().map(|(_, value)| value))
+        .chain(moved.inputs.iter_mut().map(|(path, _)| path))
+    {
+        if let Some(rest) = value.strip_prefix("/store/") {
+            *value = format!("/scratch/helm-root-7/{rest}");
+        }
+    }
+    sim_assert_eq!(have: moved.content_key()?, want: base.content_key()?);
+    eyre::ensure!(
+        moved.key()? != base.key()?,
+        "store keys still bind the root"
+    );
+    let mut prefix_only = base.clone();
+    prefix_only.inputs[0].0 = "/storefront/trees/chart".to_string();
+    eyre::ensure!(
+        prefix_only.content_key()? != base.content_key()?,
+        "a sibling path is not below the root"
+    );
+    let mut content = base.clone();
+    content.inputs[0].1 = "other chart".to_string();
+    eyre::ensure!(
+        content.content_key()? != base.content_key()?,
+        "content decides the content key"
+    );
+    Ok(())
+}
+
 /// A packaged dependency's bytes are chart content: changing only a nested
 /// archive changes the prepared tree's identity.
 #[test]

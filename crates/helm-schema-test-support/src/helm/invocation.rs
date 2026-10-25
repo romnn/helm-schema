@@ -51,6 +51,9 @@ const INVOCATION_FORMAT: &str = "helm-schema/helm-invocation/v4";
 /// preparation removes, adds or repacks must change this.
 const PREPARATION_POLICY: &str = "helm-schema/prepared-chart/v1";
 
+/// How [`InvocationRequest::content_key`] spells the runner root.
+pub const CONTENT_ROOT: &str = "$HELM_ROOT";
+
 /// The release name every adjudication renders.
 const RELEASE_NAME: &str = "adjudication";
 
@@ -189,6 +192,8 @@ pub struct InvocationRecord {
     pub stage: String,
     /// The invocation key ([`InvocationRequest::key`]).
     pub key: String,
+    /// The root-independent invocation identity ([`InvocationRequest::content_key`]).
+    pub content_key: String,
     /// How the outputs were obtained.
     pub outcome: Outcome,
     /// Helm's exit code.
@@ -277,6 +282,54 @@ impl InvocationRequest {
     /// Returns an error when the request cannot be encoded.
     pub fn key(&self) -> eyre::Result<String> {
         Ok(key_of(&self.encode()?))
+    }
+
+    /// The key of this request with the runner root spelled as [`CONTENT_ROOT`].
+    ///
+    /// Every path a request names lies below the root and is content-addressed there,
+    /// so equal content run by the same program has one identity in every process and
+    /// checkout. Replay stores keep [`Self::key`], which also binds their root.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the request cannot be encoded.
+    pub fn content_key(&self) -> eyre::Result<String> {
+        let Self {
+            format,
+            platform,
+            engine,
+            program_sha256,
+            program_version,
+            working_directory,
+            environment,
+            arguments,
+            inputs,
+            client_only,
+        } = self;
+        let root = Path::new(working_directory);
+        let relative = |value: &String| match Path::new(value).strip_prefix(root) {
+            Ok(rest) => format!("{CONTENT_ROOT}/{}", rest.to_string_lossy()),
+            Err(_) => value.clone(),
+        };
+        Self {
+            format: format.clone(),
+            platform: platform.clone(),
+            engine: engine.clone(),
+            program_sha256: program_sha256.clone(),
+            program_version: program_version.clone(),
+            working_directory: CONTENT_ROOT.to_string(),
+            environment: environment
+                .iter()
+                .map(|(name, value)| (name.clone(), relative(value)))
+                .collect(),
+            arguments: arguments.iter().map(relative).collect(),
+            inputs: inputs
+                .iter()
+                .map(|(path, sha256)| (relative(path), sha256.clone()))
+                .collect(),
+            client_only: *client_only,
+        }
+        .key()
     }
 }
 
@@ -685,6 +738,7 @@ impl HelmRunner {
         self.verify_program()?;
         let request = invocation.encode()?;
         let key = invocation.key()?;
+        let content_key = invocation.content_key()?;
         let entry = self.entry_dir(&key);
         let lookup = Instant::now();
         let lookup_outside =
@@ -740,6 +794,7 @@ impl HelmRunner {
         let record = InvocationRecord {
             stage: stage.to_string(),
             key,
+            content_key,
             outcome,
             exit_code: result.exit_code,
             elapsed_ms: result.elapsed_ms,

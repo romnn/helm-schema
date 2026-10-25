@@ -1547,7 +1547,10 @@ impl OfflineKubernetesValidator {
                             &self.native_crds,
                             resource,
                             self.crds.as_ref().map(|crds| crds.cache_dir.as_path()),
-                            &format!("{}\n{}", self.schema_identity, probe.rendered.record.key),
+                            &format!(
+                                "{}\n{}",
+                                self.schema_identity, probe.rendered.record.content_key
+                            ),
                             &[],
                         )
                     },

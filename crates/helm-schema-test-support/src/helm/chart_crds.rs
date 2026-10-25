@@ -92,35 +92,25 @@ impl Checker {
         }
     }
 
+    /// Replays the committed receipts unless `HELM_SCHEMA_CRDCHECK` names a binary to run live.
+    ///
+    /// Live Helm adjudication alone never selects the binary, so a verdict cannot depend on
+    /// whether a maintainer tool happens to exist in the checkout.
     pub(crate) fn from_environment(root: &Path) -> Self {
-        let binary = std::env::var_os("HELM_SCHEMA_CRDCHECK")
-            .map_or_else(|| root.join("target/crdcheck"), PathBuf::from);
-        let live = std::env::var("ADJUDICATE_WITH_HELM").is_ok_and(|value| value == "1");
-        let records = std::env::var_os("HELM_SCHEMA_CRDCHECK_RECORDS").map_or_else(
-            || {
-                root.join(if live {
-                    ".cache/crdcheck"
-                } else {
-                    "testdata/crdcheck"
-                })
-            },
-            PathBuf::from,
-        );
-        let binary_sha256 = if live {
-            fs::read(&binary)
-                .map(|bytes| digest(&bytes))
-                .unwrap_or_default()
-        } else {
-            fs::read_to_string(records.join("binary.sha256"))
-                .unwrap_or_default()
-                .trim()
-                .to_string()
-        };
-        Self {
-            binary,
-            binary_sha256,
-            records,
-            live,
+        Self::select(
+            root,
+            std::env::var_os("HELM_SCHEMA_CRDCHECK").map(PathBuf::from),
+            std::env::var_os("HELM_SCHEMA_CRDCHECK_RECORDS").map(PathBuf::from),
+        )
+    }
+
+    pub(crate) fn select(root: &Path, binary: Option<PathBuf>, records: Option<PathBuf>) -> Self {
+        match binary {
+            Some(binary) => Self::live(
+                &binary,
+                &records.unwrap_or_else(|| root.join(".cache/crdcheck")),
+            ),
+            None => Self::replay(&records.unwrap_or_else(|| root.join("testdata/crdcheck"))),
         }
     }
 
@@ -227,7 +217,8 @@ impl Installation {
     /// Judges chart-local installation proof, retaining the existing catalog boundary.
     ///
     /// `identity` binds the complete original chart, Helm invocation and schema-bundle policy.
-    /// Callers supply the content-keyed invocation receipt, never only a chart name.
+    /// Callers supply the root-independent invocation key ([`super::invocation::InvocationRecord`]'s
+    /// `content_key`), never only a chart name, so a committed receipt replays in every process.
     #[must_use]
     pub fn decide(
         &self,
