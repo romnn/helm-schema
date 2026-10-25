@@ -37,7 +37,8 @@ Effective defaulted JSON and its digest are response evidence only.
 Native rejection diagnostics are not battery allowance identities; the Rust
 oracle abstains unless it can prove an exact existing assertion correspondence.
 
-The pinned catalog keeps its pre-existing validation behavior (ADR 0101).
+The pinned catalog keeps its pre-existing validation behavior
+([ADR 0053](../../docs/adr/0053-kubernetes-invalidity-needs-a-found-offline-schema.md)).
 Catalog schemas take precedence, including when chart declarations differ;
 missing sidecars, install hooks, rendered CRDs/admission, and native SSA limits
 add no veto to catalog decisions. The catalog path does not prove that chart
