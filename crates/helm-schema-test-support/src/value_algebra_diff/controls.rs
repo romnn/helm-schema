@@ -1842,6 +1842,84 @@ impl RegistryBuilder {
     }
 }
 
+/// One case of a registry specification.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct CaseSpec {
+    /// The case id.
+    pub id: String,
+    /// The chart directory, relative to the specification.
+    pub chart: PathBuf,
+    /// The query.
+    pub query: Query,
+}
+
+/// Builds the new registry `out` from the specification `spec`, a JSON list
+/// of [`CaseSpec`]s: each chart rendered with empty values and grounded by
+/// the pinned Helm `helm`.
+///
+/// # Errors
+///
+/// [`DiffError::Request`] for an unreadable specification or chart, or a
+/// case Helm's outcome does not ground; otherwise as [`RegistryBuilder`].
+pub fn ground_registry(spec: &Path, helm: &Path, out: &Path) -> Result<ControlRegistry, DiffError> {
+    let request =
+        |error: &dyn std::fmt::Display| DiffError::Request(format!("{}: {error}", spec.display()));
+    let specs: Vec<CaseSpec> = std::fs::read(spec)
+        .map_err(|error| request(&error))
+        .and_then(|bytes| serde_json::from_slice(&bytes).map_err(|error| request(&error)))?;
+    let base = spec.parent().unwrap_or_else(|| Path::new("."));
+    let scratch = out.with_extension("ground");
+    let mut builder = RegistryBuilder::new(out)?;
+    for CaseSpec { id, chart, query } in specs {
+        let files = chart_files(&base.join(&chart))?;
+        let files = files
+            .iter()
+            .map(|(name, contents)| (name.as_str(), contents.as_str()))
+            .collect::<Vec<_>>();
+        let input = builder.render_input(&files, "", &json!({}))?;
+        let grounding = builder.ground(helm, &input, &query, &scratch.join(&id))?;
+        builder.case(&ControlCase {
+            format_version: PROTOCOL_VERSION,
+            id,
+            role: Role::Scored,
+            input,
+            query: Some(query),
+            claim: None,
+            grounding,
+        })?;
+    }
+    builder.finish()
+}
+
+/// Every file under `root` by `/`-separated relative name, as UTF-8.
+fn chart_files(root: &Path) -> Result<BTreeMap<String, String>, DiffError> {
+    let mut files = BTreeMap::new();
+    let mut pending = vec![root.to_path_buf()];
+    while let Some(dir) = pending.pop() {
+        let entries = std::fs::read_dir(&dir)
+            .map_err(|error| DiffError::Request(format!("{}: {error}", dir.display())))?;
+        for entry in entries {
+            let path = entry
+                .map_err(|error| DiffError::Request(format!("{}: {error}", dir.display())))?
+                .path();
+            if path.is_dir() {
+                pending.push(path);
+                continue;
+            }
+            let name = path
+                .strip_prefix(root)
+                .map_err(|error| DiffError::Request(error.to_string()))?
+                .to_string_lossy()
+                .replace('\\', "/");
+            let contents = std::fs::read_to_string(&path)
+                .map_err(|error| DiffError::Request(format!("{}: {error}", path.display())))?;
+            files.insert(name, contents);
+        }
+    }
+    Ok(files)
+}
+
 /// One captured observation: a scored case's validated response.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]

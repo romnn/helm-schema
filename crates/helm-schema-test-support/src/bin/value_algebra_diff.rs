@@ -15,7 +15,11 @@
 //! value_algebra_diff amend --history DIR --previous RECEIPT --witness-batch SHA --review FILE
 //!                          --out NEW_DIR --helmsweep PATH [--contexts FILE]
 //! value_algebra_diff verify (--capture DIR | --history DIR --receipt FILE)
+//! value_algebra_diff ground --cases FILE --helm PATH --out NEW_REGISTRY_DIR
 //! ```
+//!
+//! `ground` builds a control registry from a JSON list of
+//! `{"id", "chart", "query"}` cases, each grounded by the pinned Helm.
 //!
 //! Exit codes: 0 complete and policy-satisfied; 1 semantic, unadjudicated
 //! or monotonicity failure; 2 invalid request, identity or chain; 3
@@ -30,10 +34,11 @@ use std::process::ExitCode;
 use helm_schema_test_support::value_algebra_diff::commands::{
     self, CompareRequest, LiveOptions, Verdict,
 };
+use helm_schema_test_support::value_algebra_diff::controls;
 use helm_schema_test_support::value_algebra_diff::revision::{self, CaptureRequest};
 use helm_schema_test_support::value_algebra_diff::{DiffError, EquivalenceCertificate};
 
-const USAGE: &str = "usage: value_algebra_diff (capture|compare|init|amend|verify) [options]; \
+const USAGE: &str = "usage: value_algebra_diff (capture|compare|init|amend|verify|ground) [options]; \
      see the binary's documentation";
 
 fn main() -> ExitCode {
@@ -240,6 +245,15 @@ fn run() -> Result<Verdict, DiffError> {
                 }
                 _ => return Err(DiffError::Request(USAGE.into())),
             }
+        }
+        "ground" => {
+            let (cases, helm, out) = (
+                options.path("--cases")?,
+                options.path("--helm")?,
+                options.path("--out")?,
+            );
+            options.finish()?;
+            controls::ground_registry(&cases, &helm, &out).map(|_| Verdict::Pass)?
         }
         "migrate" => {
             return Err(DiffError::Request(
