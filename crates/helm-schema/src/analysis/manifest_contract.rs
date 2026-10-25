@@ -96,7 +96,7 @@ fn collect_manifest_contract_for_template(
         source,
         path.as_str(),
         contains_template_action(source)?,
-    )?;
+    );
     Ok((contract, local_resource_schemas))
 }
 

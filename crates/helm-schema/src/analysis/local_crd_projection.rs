@@ -1,8 +1,9 @@
 use helm_schema_k8s::{
     LocalResourceSchema, LocalSchemaUniverse, resource_schemas_from_crd_document_with_source,
 };
-use helm_schema_syntax::{MappingEntry, Node, Span, TemplatedDocument};
-use serde::Deserialize;
+use helm_schema_syntax::{
+    HelmYamlDocument, HelmYamlKey, MappingEntry, Node, Span, TemplatedDocument, helm_yaml_documents,
+};
 use serde_json::{Value, json};
 
 use crate::chart::{ChartContext, FileRole, LoadedChartCorpus};
@@ -26,7 +27,7 @@ pub(crate) fn collect_static_crd_universe(
                 file.source()?,
                 STATIC_CRD_SOURCE_ID,
                 file.path.as_str(),
-            )? {
+            ) {
                 universe.insert_resource_schema(resource_schema);
             }
         }
@@ -39,7 +40,7 @@ pub(crate) fn local_resource_schemas_from_template_source(
     source: &str,
     filename: &str,
     contains_template_action: bool,
-) -> EngineResult<Vec<LocalResourceSchema>> {
+) -> Vec<LocalResourceSchema> {
     if !contains_template_action {
         return resource_schemas_from_literal_documents(source, TEMPLATE_CRD_SOURCE_ID, filename);
     }
@@ -56,27 +57,50 @@ pub(crate) fn local_resource_schemas_from_template_source(
             filename.to_string(),
         ));
     }
-    Ok(resource_schemas)
+    resource_schemas
 }
 
+/// The CRDs of a literal source, decoded as Helm decodes them. A document
+/// Helm refuses installs nothing; a version schema holding a value this
+/// reader cannot reproduce is open.
 fn resource_schemas_from_literal_documents(
     source: &str,
     source_id: &str,
     filename: &str,
-) -> EngineResult<Vec<LocalResourceSchema>> {
+) -> Vec<LocalResourceSchema> {
     let mut resource_schemas = Vec::new();
-    for document in serde_yaml::Deserializer::from_str(source) {
-        let document = Value::deserialize(document)?;
-        if document.is_null() {
+    for document in helm_yaml_documents(source) {
+        let HelmYamlDocument::Decoded { mut value, unknown } = document else {
+            continue;
+        };
+        if value.is_null() {
             continue;
         }
+        for pointer in &unknown {
+            if let Some(schema) =
+                enclosing_crd_schema(pointer).and_then(|schema| value.pointer_mut(&schema))
+            {
+                *schema = json!({});
+            }
+        }
         resource_schemas.extend(resource_schemas_from_crd_document_with_source(
-            &document,
+            &value,
             source_id,
             filename.to_string(),
         ));
     }
-    Ok(resource_schemas)
+    resource_schemas
+}
+
+/// The pointer of the CRD version schema enclosing `pointer`, if one does.
+fn enclosing_crd_schema(pointer: &str) -> Option<String> {
+    let segments = pointer.split('/').collect::<Vec<_>>();
+    let length = match segments.as_slice() {
+        ["", "spec", "versions", _, "schema", "openAPIV3Schema", ..] => 6,
+        ["", "spec", "validation", "openAPIV3Schema", ..] => 4,
+        _ => return None,
+    };
+    Some(segments.get(..length)?.join("/"))
 }
 
 fn crd_document_from_nodes(
@@ -184,21 +208,34 @@ fn mapping_child<'nodes>(
     mapping_entry(document, &entry.children, None, key)
 }
 
+/// The entry for `key` among `nodes`. A merge key or a second entry for
+/// `key` decides Helm's value in ways not followed here, so neither yields
+/// an entry.
 fn mapping_entry<'nodes>(
     document: &TemplatedDocument<'_>,
     nodes: &'nodes [Node],
     span: Option<Span>,
     key: &str,
 ) -> Option<&'nodes MappingEntry> {
-    nodes.iter().find_map(|node| {
+    let mut found = None;
+    for node in nodes {
         let Node::Mapping(entry) = node else {
-            return None;
+            continue;
         };
         if span.is_some_and(|span| entry.span.start < span.start || entry.span.start >= span.end) {
-            return None;
+            continue;
         }
-        (document.literal_scalar(&entry.key)?.as_str()? == key).then_some(entry)
-    })
+        match document.literal_key(&entry.key) {
+            Some(HelmYamlKey::Merge) => return None,
+            Some(HelmYamlKey::Key(name)) if name == key => {
+                if found.replace(entry).is_some() {
+                    return None;
+                }
+            }
+            Some(HelmYamlKey::Key(_) | HelmYamlKey::Unknown) | None => {}
+        }
+    }
+    found
 }
 
 fn literal_value_for_child(
