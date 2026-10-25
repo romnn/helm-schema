@@ -20,12 +20,18 @@ Only explicit maintainer live adjudication may invoke it; ordinary gates replay
 complete recorded requests/responses and neither build nor require this tool.
 Missing, failed or mismatched tooling is Uncertain.
 Live results default to `.cache/crdcheck`; `HELM_SCHEMA_CRDCHECK_RECORDS` selects a
-recording directory. Copy deliberately reviewed complete receipts to `testdata/crdcheck`
+recording directory. Binary changes recompute under a new complete-input key;
+older records remain available without supplying authority to the new binary.
+Copy deliberately reviewed complete receipts to `testdata/crdcheck`
 for ordinary replay; normal live runs never mutate committed replay cases.
 
 Inputs are three JSON files: complete v1 CRD, original resource, request context.
-Protocol `helm-schema/crdcheck/v2` requires the shared declaration/instance apply
-boundary; older binaries and receipts abstain in the Rust caller.
+Protocol `helm-schema/crdcheck/v3` requires the shared declaration/instance apply
+boundary and native SSA typed-patch validation of custom resources before
+pruning/defaulting.
+The pinned OpenAPI builder and managed-fields converter supply the same structured
+merge validation Kubernetes applies, including set/map lists and atomic maps.
+Older binaries and receipts abstain in the Rust caller.
 The response echoes the length-framed SHA-256 of those original bytes.
 Effective defaulted JSON and its digest are response evidence only.
 Native rejection diagnostics are not battery allowance identities; the Rust

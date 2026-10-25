@@ -1115,7 +1115,7 @@ pub const KUBERNETES_RELEASE: &str = "v1.29.0-standalone-strict";
 
 /// How resource schemas are compiled and judged. Changing the compilation
 /// options or the identity proof must change this.
-const VALIDATOR_POLICY: &str = "helm-schema/offline-kubernetes-validator/v9";
+const VALIDATOR_POLICY: &str = "helm-schema/offline-kubernetes-validator/v10";
 
 /// Base for anonymous schemas; resource API/kind separately qualify every assertion.
 const ANONYMOUS_SCHEMA_URI: &str = "https://helm-schema.invalid/resource";

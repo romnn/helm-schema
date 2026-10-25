@@ -107,11 +107,18 @@ func TestInstallationVetoesActiveHooksAndWholeMalformedStreams(t *testing.T) {
 	}
 }
 
-func TestCommentOnlyCRDFilesHaveEmptyDocumentsNotNull(t *testing.T) {
-	evidence := &installation{}
-	evidence.collect(&chartv2.Chart{Metadata: &chartv2.Metadata{Name: "root"}, Files: []*common.File{{Name: "crds/empty.yaml", Data: []byte("# only a comment\n---\n")}}}, &releasev1.Release{Name: "adjudication", Namespace: "default"})
-	if len(evidence.Problems) != 0 || len(evidence.CRDs) != 1 || evidence.CRDs[0].Documents == nil || len(evidence.CRDs[0].Documents) != 0 {
-		t.Fatalf("empty stream: %+v", evidence)
+func TestEmptyCRDFilesVetoTheWholeInstallation(t *testing.T) {
+	for _, source := range []string{"", "# only a comment\n---\n", "---\nnull\n---\n"} {
+		evidence := &installation{}
+		// A valid prefix cannot hide a selected file that Helm refuses to install.
+		files := []*common.File{
+			{Name: "crds/valid.yaml", Data: []byte("apiVersion: apiextensions.k8s.io/v1\nkind: CustomResourceDefinition\nmetadata:\n  name: widgets.example.org\n")},
+			{Name: "crds/empty.yaml", Data: []byte(source)},
+		}
+		evidence.collect(&chartv2.Chart{Metadata: &chartv2.Metadata{Name: "root"}, Files: files}, &releasev1.Release{Name: "adjudication", Namespace: "default"})
+		if len(evidence.Problems) == 0 || len(evidence.CRDs) != 2 || evidence.CRDs[1].Documents == nil || len(evidence.CRDs[1].Documents) != 0 {
+			t.Fatalf("empty stream: %+v", evidence)
+		}
 	}
 }
 

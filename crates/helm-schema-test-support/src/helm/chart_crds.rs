@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::Duration;
 
-use color_eyre::eyre::{self, WrapErr as _};
+use color_eyre::eyre::{self, OptionExt as _, WrapErr as _};
 use helm_schema_core::ResourceRef;
 use helm_schema_k8s::crds_catalog::relative_path_for_resource;
 use serde::{Deserialize, Serialize};
@@ -17,8 +17,8 @@ use sha2::{Digest as _, Sha256};
 
 use super::invocation::{hex, output_within};
 
-const PROTOCOL: &str = "helm-schema/crdcheck/v2";
-const POLICY: &str = "helm-schema/chart-crds/v3";
+const PROTOCOL: &str = "helm-schema/crdcheck/v3";
+const POLICY: &str = "helm-schema/chart-crds/v4";
 
 /// Complete evidence emitted by the dependency-processed Helm install action.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -149,20 +149,16 @@ impl Checker {
         if let Ok(raw) = fs::read(&path) {
             let record: Recorded = serde_json::from_slice(&raw)?;
             eyre::ensure!(record.inputs == inputs, "recorded original inputs differ");
-            verify_response(&record.response, &key, context, resource)?;
+            verify_response(&record.response, &key, resource)?;
             return Ok(record.response);
         }
         eyre::ensure!(self.live, "no recorded native result for {key}");
         fs::create_dir_all(&self.records)?;
-        let pin = self.records.join("binary.sha256");
-        if let Ok(existing) = fs::read_to_string(&pin) {
-            eyre::ensure!(
-                existing.trim() == self.binary_sha256,
-                "recording directory belongs to another checker binary"
-            );
-        } else {
-            fs::write(pin, format!("{}\n", self.binary_sha256))?;
-        }
+        // Record keys already bind the binary; this pin only selects offline replay identity.
+        fs::write(
+            self.records.join("binary.sha256"),
+            format!("{}\n", self.binary_sha256),
+        )?;
         let scratch = tempfile::Builder::new()
             .prefix("crdcheck-")
             .tempdir_in(&self.records)?;
@@ -185,7 +181,7 @@ impl Checker {
         );
         let response: Value =
             serde_json::from_slice(&output.stdout).wrap_err("incomplete native response")?;
-        verify_response(&response, &key, context, resource)?;
+        verify_response(&response, &key, resource)?;
         fs::write(
             path,
             serde_json::to_vec_pretty(&Recorded {
@@ -309,7 +305,7 @@ impl Installation {
         };
         let declarations: Vec<_> = declarations.into_values().cloned().collect();
         // Original installation and invocation identities bind all sources, hooks and policy.
-        let context = json!({"mode":"helm-4.2.3-ssa-create-strict","reference_environment":"fresh-kubernetes-1.29.0-no-admission","release_namespace":self.namespace,"created_namespaces":created_namespaces,"declarations":declarations,"declaration_only":false,"identity":format!("{}\n{identity}\n{}",checker.identity(),serde_json::to_string(self)?)});
+        let context = json!({"mode":"helm-4.2.3-ssa-create-strict","reference_environment":"fresh-kubernetes-1.29.0-no-admission","release_namespace":self.namespace,"created_namespaces":created_namespaces,"declarations":declarations,"identity":format!("{}\n{identity}\n{}",checker.identity(),serde_json::to_string(self)?)});
         let response = checker.check(selected, resource, &context)?;
         match response.get("verdict").and_then(Value::as_str) {
             Some("Accepted") => Ok(Decision::Accepted),
@@ -378,6 +374,7 @@ impl Installation {
         let namespace = metadata
             .get("namespace")
             .and_then(Value::as_str)
+            .filter(|namespace| !namespace.is_empty())
             .unwrap_or(&self.namespace);
         let mut count = 0;
         for other in &self.resources {
@@ -392,6 +389,7 @@ impl Installation {
                 && other
                     .pointer("/metadata/namespace")
                     .and_then(Value::as_str)
+                    .filter(|namespace| !namespace.is_empty())
                     .unwrap_or(&self.namespace)
                     == namespace
             {
@@ -409,8 +407,8 @@ impl Installation {
         let mut declarations = BTreeMap::new();
         for file in &self.crds {
             eyre::ensure!(
-                !file.raw.is_empty() && !file.filename.is_empty(),
-                "missing CRD source bytes"
+                !file.raw.is_empty() && !file.filename.is_empty() && !file.documents.is_empty(),
+                "missing CRD source bytes or resources are empty"
             );
             for declaration in &file.documents {
                 eyre::ensure!(
@@ -428,15 +426,56 @@ impl Installation {
                         "conflicting same-name CRD declarations"
                     );
                 }
-                eyre::ensure!(
-                    !declarations.iter().any(|(other_name, other)| {
-                        *other_name != name
-                            && other.pointer("/spec/group") == declaration.pointer("/spec/group")
-                            && other.pointer("/spec/names/kind")
-                                == declaration.pointer("/spec/names/kind")
-                    }),
-                    "cross-name group/kind collision"
-                );
+            }
+        }
+        // Kubernetes reconciles resource aliases and kind aliases in separate per-group domains.
+        let mut resources = BTreeMap::new();
+        let mut kinds = BTreeMap::new();
+        for (owner, declaration) in &declarations {
+            let spec = declaration.get("spec").ok_or_eyre("CRD spec missing")?;
+            let group = string(spec, "group")?;
+            let names = spec.get("names").ok_or_eyre("CRD names missing")?;
+            let kind = string(names, "kind")?;
+            let plural = string(names, "plural")?;
+            let singular = match names.get("singular") {
+                Some(Value::String(value)) if !value.is_empty() => value.clone(),
+                None | Some(Value::String(_)) => {
+                    eyre::ensure!(kind.is_ascii(), "unmodelled non-ASCII CRD singular default");
+                    kind.to_ascii_lowercase()
+                }
+                _ => eyre::bail!("malformed CRD singular"),
+            };
+            let list_kind = match names.get("listKind") {
+                Some(Value::String(value)) if !value.is_empty() => value.clone(),
+                None | Some(Value::String(_)) => format!("{kind}List"),
+                _ => eyre::bail!("malformed CRD listKind"),
+            };
+            let mut aliases = vec![plural.to_string(), singular];
+            if let Some(short_names) = names.get("shortNames") {
+                for alias in short_names
+                    .as_array()
+                    .ok_or_eyre("malformed CRD shortNames")?
+                {
+                    aliases.push(
+                        alias
+                            .as_str()
+                            .ok_or_eyre("malformed CRD shortName")?
+                            .to_string(),
+                    );
+                }
+            }
+            for alias in aliases {
+                if let Some(previous) = resources.insert((group, alias), *owner) {
+                    eyre::ensure!(
+                        previous == *owner,
+                        "cross-name CRD resource naming collision"
+                    );
+                }
+            }
+            for alias in [kind.to_string(), list_kind] {
+                if let Some(previous) = kinds.insert((group, alias), *owner) {
+                    eyre::ensure!(previous == *owner, "cross-name CRD kind naming collision");
+                }
             }
         }
         Ok(declarations)
@@ -463,12 +502,7 @@ fn input_digest(inputs: &[String]) -> String {
     hex(&hash.finalize())
 }
 
-fn verify_response(
-    response: &Value,
-    key: &str,
-    context: &Value,
-    resource: &Value,
-) -> eyre::Result<()> {
+fn verify_response(response: &Value, key: &str, resource: &Value) -> eyre::Result<()> {
     eyre::ensure!(
         response.get("protocol").and_then(Value::as_str) == Some(PROTOCOL)
             && response.get("request_sha256").and_then(Value::as_str) == Some(key),
@@ -481,9 +515,7 @@ fn verify_response(
         ),
         "native response verdict missing"
     );
-    if response.get("verdict").and_then(Value::as_str) == Some("Accepted")
-        && context.get("declaration_only").and_then(Value::as_bool) != Some(true)
-    {
+    if response.get("verdict").and_then(Value::as_str) == Some("Accepted") {
         eyre::ensure!(
             response
                 .get("effective_json")

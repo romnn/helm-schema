@@ -311,3 +311,169 @@ fn catalog_authority_survives_installation_vetoes() -> eyre::Result<()> {
     }
     Ok(())
 }
+
+#[test]
+fn empty_namespace_and_omitted_namespace_are_duplicate_installations() -> eyre::Result<()> {
+    let case = starrocks()?;
+    let checker = Checker::replay(&root().join("testdata/crdcheck"));
+    for namespace in [json!(""), case.source["installation"]["namespace"].clone()] {
+        let mut source = case.source["installation"].clone();
+        let mut omitted = case.resource.clone();
+        omitted["metadata"]
+            .as_object_mut()
+            .ok_or_eyre("metadata missing")?
+            .remove("namespace");
+        let mut explicit = omitted.clone();
+        explicit["metadata"]["namespace"] = namespace;
+        source["resources"] = json!([omitted, explicit]);
+        let installation: Installation = serde_json::from_value(source)?;
+        for resource in installation.resources() {
+            assert!(
+                matches!(installation.decide(&checker, resource, None, &case.identity, &[]), Decision::Uncertain(reason) if reason.contains("duplicate"))
+            );
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn all_selected_crds_share_resource_and_kind_naming_domains() -> eyre::Result<()> {
+    let case = starrocks()?;
+    let checker = Checker::replay(&root().join("testdata/crdcheck"));
+    // Conflicts in unrelated declarations still prevent the chart's API installation.
+    for fields in [
+        &["plural", "singular", "shortNames"][..],
+        &["kind", "listKind"][..],
+    ] {
+        for left in fields {
+            for right in fields {
+                if *left == "plural" && *right == "plural" {
+                    continue;
+                }
+                let mut source = case.source["installation"].clone();
+                let mut first = source["crds"][0]["documents"][0].clone();
+                let mut second = first.clone();
+                first["spec"]["group"] = json!("witness.example");
+                second["spec"]["group"] = json!("witness.example");
+                first["spec"]["names"] = json!({"plural":"widgets","singular":"widget","kind":"Widget","listKind":"WidgetList"});
+                second["spec"]["names"] = json!({"plural":"gadgets","singular":"gadget","kind":"Gadget","listKind":"GadgetList"});
+                let collision = if *left == "plural" {
+                    "widgets"
+                } else if *right == "plural" {
+                    "gadgets"
+                } else if fields[0] == "kind" {
+                    "SharedKind"
+                } else {
+                    "shared"
+                };
+                first["spec"]["names"][left] = if *left == "shortNames" {
+                    json!([collision])
+                } else {
+                    json!(collision)
+                };
+                second["spec"]["names"][right] = if *right == "shortNames" {
+                    json!([collision])
+                } else {
+                    json!(collision)
+                };
+                first["metadata"]["name"] = json!("widgets.witness.example");
+                second["metadata"]["name"] = json!("gadgets.witness.example");
+                source["crds"][0]["documents"]
+                    .as_array_mut()
+                    .ok_or_eyre("documents missing")?
+                    .extend([first, second]);
+                let installation: Installation = serde_json::from_value(source)?;
+                let decision =
+                    installation.decide(&checker, &case.resource, None, &case.identity, &[]);
+                assert!(
+                    matches!(&decision, Decision::Uncertain(reason) if reason.contains("cross-name")),
+                    "{left}/{right}: {decision:?}"
+                );
+            }
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn crd_naming_defaults_conflict_only_within_their_group() -> eyre::Result<()> {
+    let case = starrocks()?;
+    let checker = Checker::replay(&root().join("testdata/crdcheck"));
+    for (field, collision_field, collision) in [
+        ("singular", "shortNames", json!(["starrockscluster"])),
+        ("listKind", "kind", json!("StarRocksClusterList")),
+    ] {
+        for omitted in [true, false] {
+            for same_group in [true, false] {
+                let mut source = case.source["installation"].clone();
+                let first = &mut source["crds"][0]["documents"][0];
+                if omitted {
+                    first["spec"]["names"]
+                        .as_object_mut()
+                        .ok_or_eyre("names missing")?
+                        .remove(field);
+                } else {
+                    first["spec"]["names"][field] = json!("");
+                }
+                let mut second = first.clone();
+                let group = if same_group {
+                    "starrocks.com"
+                } else {
+                    "witness.example"
+                };
+                second["metadata"]["name"] = json!(format!("others.{group}"));
+                second["spec"]["group"] = json!(group);
+                second["spec"]["names"] = json!({"kind":"Other","plural":"others"});
+                second["spec"]["names"][collision_field] = collision.clone();
+                source["crds"][0]["documents"]
+                    .as_array_mut()
+                    .ok_or_eyre("documents missing")?
+                    .push(second);
+                let installation: Installation = serde_json::from_value(source)?;
+                let decision =
+                    installation.decide(&checker, &case.resource, None, &case.identity, &[]);
+                let conflict = matches!(&decision, Decision::Uncertain(reason) if reason.contains("cross-name"));
+                sim_assert_eq!(have:conflict,want:same_group);
+            }
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn an_empty_selected_crd_file_vetoes_other_valid_declarations() -> eyre::Result<()> {
+    let case = starrocks()?;
+    let checker = Checker::replay(&root().join("testdata/crdcheck"));
+    let mut source = case.source["installation"].clone();
+    source["crds"]
+        .as_array_mut()
+        .ok_or_eyre("files missing")?
+        .push(json!({"filename":"root/crds/empty.yaml","raw":"# comment only","documents":[]}));
+    let installation: Installation = serde_json::from_value(source)?;
+    assert!(
+        matches!(installation.decide(&checker,&case.resource,None,&case.identity,&[]),Decision::Uncertain(reason) if reason.contains("resources are empty"))
+    );
+    Ok(())
+}
+
+#[test]
+fn non_ascii_crd_singular_defaults_abstain() -> eyre::Result<()> {
+    let case = starrocks()?;
+    let checker = Checker::replay(&root().join("testdata/crdcheck"));
+    // Go maps Kelvin sign and dotted I to ASCII.
+    // Their naming defaults require Unicode case mapping.
+    for kind in ["\u{212a}", "\u{130}"] {
+        let mut source = case.source["installation"].clone();
+        let names = &mut source["crds"][0]["documents"][0]["spec"]["names"];
+        names["kind"] = json!(kind);
+        names
+            .as_object_mut()
+            .ok_or_eyre("names missing")?
+            .remove("singular");
+        let installation: Installation = serde_json::from_value(source)?;
+        assert!(
+            matches!(installation.decide(&checker,&case.resource,None,&case.identity,&[]),Decision::Uncertain(reason) if reason.contains("non-ASCII"))
+        );
+    }
+    Ok(())
+}

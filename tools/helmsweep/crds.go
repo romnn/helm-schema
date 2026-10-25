@@ -63,6 +63,9 @@ func (e *installation) collect(ch chart.Charter, rel *releasev1.Release) {
 			documents = []json.RawMessage{}
 		}
 		e.CRDs = append(e.CRDs, crdFile{Filename: file.Filename, Raw: string(file.File.Data), Documents: documents})
+		if len(documents) == 0 {
+			e.Problems = append(e.Problems, fmt.Sprintf("CRD %s: resources are empty", file.Filename))
+		}
 		if err != nil {
 			e.Problems = append(e.Problems, fmt.Sprintf("CRD %s: %v", file.Filename, err))
 		}

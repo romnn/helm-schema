@@ -21,12 +21,14 @@ import (
 	"k8s.io/apiextensions-apiserver/pkg/apiserver/schema/objectmeta"
 	"k8s.io/apiextensions-apiserver/pkg/apiserver/schema/pruning"
 	"k8s.io/apiextensions-apiserver/pkg/apiserver/validation"
+	"k8s.io/apiextensions-apiserver/pkg/controller/openapi/builder"
 	"k8s.io/apiextensions-apiserver/pkg/registry/customresource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/util/managedfields"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
-const protocol = "helm-schema/crdcheck/v2"
+const protocol = "helm-schema/crdcheck/v3"
 
 // EffectiveJSON is output evidence, never a cache lookup input.
 type response struct {
@@ -51,7 +53,6 @@ type fieldError struct {
 
 type requestContext struct {
 	Declarations         []json.RawMessage `json:"declarations"`
-	DeclarationOnly      bool              `json:"declaration_only"`
 	Mode                 string            `json:"mode"`
 	ReferenceEnvironment string            `json:"reference_environment"`
 	ReleaseNamespace     string            `json:"release_namespace"`
@@ -110,9 +111,6 @@ func validate(inputs [][]byte) (result, error) {
 		if _, err := validatedDeclaration(raw); err != nil {
 			return result{}, err
 		}
-	}
-	if request.DeclarationOnly {
-		return result{Verdict: "Accepted"}, nil
 	}
 	ctx := context.Background()
 	resource, err := applyObject(inputs[1])
@@ -173,6 +171,23 @@ func validate(inputs [][]byte) (result, error) {
 	}
 	if subresources == nil {
 		subresources = &apiextensions.CustomResourceSubresources{}
+	}
+
+	// SSA validates the original patch before pruning, defaults or the create strategy.
+	var external apiextensionsv1.CustomResourceDefinition
+	if err := apiextensionsv1.Convert_apiextensions_CustomResourceDefinition_To_v1_CustomResourceDefinition(crd, &external, nil); err != nil {
+		return result{}, err
+	}
+	models, err := builder.BuildOpenAPIV3(&external, gvk.Version, builder.Options{})
+	if err != nil {
+		return result{}, err
+	}
+	typeConverter, err := managedfields.NewTypeConverter(models.Components.Schemas, external.Spec.PreserveUnknownFields)
+	if err != nil {
+		return result{}, err
+	}
+	if _, err := typeConverter.ObjectToTyped(resource); err != nil {
+		return result{Verdict: "Rejected", Reason: fmt.Sprintf("Kubernetes SSA typed patch validation: %v", err)}, nil
 	}
 
 	// Track fields before pruning so strict decoding cannot silently discard a rejection.

@@ -102,3 +102,14 @@ func TestDeclarationsUseTheSameApplyBoundary(t *testing.T) {
 		t.Fatalf("declaration status: %v", err)
 	}
 }
+
+func TestSSATypedPatchRejectsObjectSetMembers(t *testing.T) {
+	declaration := []byte(`{"apiVersion":"apiextensions.k8s.io/v1","kind":"CustomResourceDefinition","metadata":{"name":"widgets.witness.example"},"spec":{"group":"witness.example","names":{"kind":"Widget","plural":"widgets"},"scope":"Namespaced","versions":[{"name":"v1","served":true,"storage":true,"schema":{"openAPIV3Schema":{"type":"object","properties":{"spec":{"type":"object","properties":{"entries":{"type":"array","x-kubernetes-list-type":"set","items":{"type":"object","x-kubernetes-map-type":"atomic","properties":{"name":{"type":"string"}}}}}}}}}}]}}`)
+	resource := []byte(`{"apiVersion":"witness.example/v1","kind":"Widget","metadata":{"name":"witness"},"spec":{"entries":[{"name":"one"}]}}`)
+	context := []byte(`{"mode":"helm-4.2.3-ssa-create-strict","reference_environment":"fresh-kubernetes-1.29.0-no-admission","release_namespace":"default"}`)
+	// Create validation accepts this structural schema, but SSA cannot type its object-valued set.
+	out, err := validate([][]byte{declaration, resource, context})
+	if err != nil || out.Verdict != "Rejected" || !strings.Contains(out.Reason, "SSA typed patch") {
+		t.Fatalf("SSA object set: result=%+v err=%v", out, err)
+	}
+}
