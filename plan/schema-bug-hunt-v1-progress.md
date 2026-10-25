@@ -9387,4 +9387,12 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   (Opus, r3b/differential-tool e9f2a2fc; main-vs-main PASS 271,528 identical, main-vs-perturbed FAIL as intended) in sol review
   20261025T030526-1760fdd7. Disk: removed ~165 GiB of idle targets (r1b, w1-opus, lint10c, devbin, guards); killed a session-6
   orphan wait loop (PID 38797). Orchestrator.
-Next: merge landing 14 on chain green; T0 review → land T0 (test infra) and merge it into r3b/construction; R3a rebase fix-ups → merge into r3b/construction; R3b C01/C02 hand-back → review (two sol lenses).
+- 07:3x CET (Oct 25) — **LANDED: landing 14 merged as 3521189d (provider negative-cache refresh fix, chain green run 1).** ee522059
+  (05a16b16 + ee522059): a successful refresh clears both negative stores and supersedes contradicted markers; 0 adopted. Steps:
+  dump 04:04, unit 04:07, lint 04:16, battery 04:19 (63 min), integration 05:22, sweep 05:37 (114 min: builder load ~30, final CLI
+  differential phase long), finalize 07:31, green 07:32 (3.5 h total). Receipt /Volumes/T7/dev/round8-landing14-run1/receipt.json
+  sha256 d3cd7c17…. In flight: R3b construction (astra; C01 committed 1cd00990 — private value runtime, all 1,857 admission cells
+  and 542 files identical), T0 differential tool rework after sol REWORK (13 P1s, Opus), CRD-oracle extraction from Track G (Codex
+  sol 20261025T040919-78091260; triage 20261025T030829-d84b3e5a picked it as the best interpreter-independent track). R3a fix-ups
+  committed (r3a e0ae224c / r3b b64028f0): all gates 0 incl. task lint and lint:fc 54 PASS. Orchestrator.
+Next: T0 rework → re-review → landing 15 (T0 test infra) and merge into r3b/construction; CRD oracle hand-back → review → landing; R3b C02 hand-back → two sol lens reviews.
