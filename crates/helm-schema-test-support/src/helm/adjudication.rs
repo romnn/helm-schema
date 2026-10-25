@@ -1115,7 +1115,7 @@ pub const KUBERNETES_RELEASE: &str = "v1.29.0-standalone-strict";
 
 /// How resource schemas are compiled and judged. Changing the compilation
 /// options or the identity proof must change this.
-const VALIDATOR_POLICY: &str = "helm-schema/offline-kubernetes-validator/v6";
+const VALIDATOR_POLICY: &str = "helm-schema/offline-kubernetes-validator/v10";
 
 /// Base for anonymous schemas; resource API/kind separately qualify every assertion.
 const ANONYMOUS_SCHEMA_URI: &str = "https://helm-schema.invalid/resource";
@@ -1223,6 +1223,7 @@ static COMPILED_SCHEMAS: OnceLock<Mutex<BTreeMap<String, Arc<CompiledSchemas>>>>
 /// Validates rendered resources against pinned, offline Kubernetes (and CRD)
 /// schema bundles.
 pub struct OfflineKubernetesValidator {
+    native_crds: super::chart_crds::Checker,
     provider: KubernetesJsonSchemaProvider,
     /// The pinned CRD catalog that decides non-built-in kinds, if any.
     crds: Option<CrdsCatalogSchemaProvider>,
@@ -1259,7 +1260,13 @@ impl OfflineKubernetesValidator {
         if let Some(crds) = crds {
             bundles.push((crds.to_path_buf(), tree_sha256(crds)?));
         }
-        let mut identity = format!("{VALIDATOR_POLICY}\n{release}\n");
+        let native_crds = super::chart_crds::Checker::from_environment(
+            &PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../.."),
+        );
+        let mut identity = format!(
+            "{VALIDATOR_POLICY}\n{release}\n{}\n",
+            native_crds.identity()
+        );
         for (_, sha256) in &bundles {
             identity.push_str(sha256);
             identity.push('\n');
@@ -1275,6 +1282,7 @@ impl OfflineKubernetesValidator {
             .or_default()
             .clone();
         Ok(Self {
+            native_crds,
             provider: KubernetesJsonSchemaProvider::new(release)
                 .with_cache_dir(cache)
                 .with_allow_download(false),
@@ -1493,7 +1501,64 @@ impl OfflineKubernetesValidator {
         chart: &PinnedHelmChart,
         probe: &HelmProbe,
     ) -> eyre::Result<ResourceEvidence> {
-        self.document_evidence(&Self::decode_probe(chart, probe)?)
+        let sidecar = probe
+            .evidence_dir
+            .join(format!("{}.crds.json", probe.rendered.record.stage));
+        let installation = fs::read(sidecar)
+            .ok()
+            .and_then(|raw| serde_json::from_slice::<super::chart_crds::Installation>(&raw).ok());
+        let documents = Self::decode_probe(chart, probe)?;
+        let mut evidence = ResourceEvidence::default();
+        for (index, document) in documents.iter().enumerate() {
+            if document.is_null() {
+                continue;
+            }
+            let location = format!("document {index}");
+            let previous_uncertain = evidence.uncertain.len();
+            let previous_invalid = evidence.invalid.len();
+            self.validate_document(document, &location, &mut evidence)?;
+            let api = document
+                .get("apiVersion")
+                .and_then(Value::as_str)
+                .unwrap_or_default();
+            let kind = document
+                .get("kind")
+                .and_then(Value::as_str)
+                .unwrap_or_default();
+            let group = api.split_once('/').map_or("", |(group, _)| group);
+            if !is_k8s_builtin_group(group)
+                && evidence.invalid.len() == previous_invalid
+                && evidence.uncertain.len() > previous_uncertain
+                && self.compiled_validator(api, kind).is_err()
+            {
+                let decision = installation.as_ref().map_or_else(
+                    || {
+                        super::chart_crds::Decision::Uncertain(
+                            "missing Helm installation sidecar".to_string(),
+                        )
+                    },
+                    |installed| {
+                        let Some(resource) = installed.resource_for(document) else {
+                            return super::chart_crds::Decision::Uncertain(
+                                "resource lacks unique Helm submission proof".to_string(),
+                            );
+                        };
+                        installed.decide(
+                            &self.native_crds,
+                            resource,
+                            self.crds.as_ref().map(|crds| crds.cache_dir.as_path()),
+                            &format!("{}\n{}", self.schema_identity, probe.rendered.record.key),
+                            &[],
+                        )
+                    },
+                );
+                // Chart proof may resolve uncertainty; abstention preserves the legacy reason.
+                if decision == super::chart_crds::Decision::Accepted {
+                    evidence.uncertain.truncate(previous_uncertain);
+                }
+            }
+        }
+        Ok(evidence)
     }
 
     fn document_evidence(&self, documents: &[Value]) -> eyre::Result<ResourceEvidence> {

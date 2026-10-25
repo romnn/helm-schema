@@ -177,6 +177,112 @@ fn missing_required_members_do_not_exchange_allowances() -> eyre::Result<()> {
 }
 
 #[test]
+fn catalog_list_members_retain_legacy_decisions() -> eyre::Result<()> {
+    let root = ScratchDir::new("contextual-custom-list")?;
+    let cache = ScratchDir::new("contextual-custom-list")?;
+    let catalog = ScratchDir::new("contextual-custom-list")?;
+    let document = json!({
+        "apiVersion": "v1", "kind": "List", "items": [{
+            "apiVersion": "v1", "kind": "List", "items": [{
+                "apiVersion": "example.test/v1", "kind": "Widget",
+                "metadata": {"name": "child"}
+            }]
+        }]
+    });
+    write_chart(root.path(), &json!({}), &serde_json::to_string(&document)?)?;
+    write_cached_schema(
+        cache.path(),
+        "list-v1.json",
+        &json!({
+            "type": "object",
+            "properties": {"apiVersion": {"const": "v1"}, "kind": {"const": "List"}}
+        }),
+    )?;
+    let catalog_path = catalog.path().join("default/example.test/widget_v1.json");
+    fs::create_dir_all(catalog_path.parent().ok_or_eyre("catalog parent missing")?)?;
+    fs::write(catalog_path, br#"{"type":"object"}"#)?;
+    let chart = PinnedHelmChart::prepare(HelmRunner::shared()?, root.path())?;
+    let validator = OfflineKubernetesValidator::with_crd_catalog(
+        cache.path(),
+        catalog.path(),
+        KUBERNETES_RELEASE,
+    )?;
+    sim_assert_eq!(
+        have: validator.validate_documents(&[document]),
+        want: helm_schema_test_support::helm::adjudication::KubernetesVerdict::Valid,
+    );
+    let defaults = chart.adjudicate(&json!({}))?;
+    validator.check_controls(&chart, &defaults, &[&defaults])?;
+    Ok(())
+}
+
+#[test]
+fn catalog_controls_need_no_installation_or_native_apply_proof() -> eyre::Result<()> {
+    let root = ScratchDir::new("catalog-control-ratchet")?;
+    let cache = ScratchDir::new("catalog-control-ratchet")?;
+    let catalog = ScratchDir::new("catalog-control-ratchet")?;
+    write_chart(
+        root.path(),
+        &json!({}),
+        &serde_json::to_string(&json!({
+            "apiVersion": "example.test/v1", "kind": "Widget",
+            "metadata": {"name": "catalog", "uid": "legacy", "annotations": {"helm.sh/hook": "pre-install"}},
+            "status": {"count": "bad"}
+        }))?,
+    )?;
+    let path = catalog.path().join("default/example.test/widget_v1.json");
+    fs::create_dir_all(path.parent().ok_or_eyre("catalog parent missing")?)?;
+    fs::write(path, br#"{"type":"object"}"#)?;
+    let chart = PinnedHelmChart::prepare(HelmRunner::shared()?, root.path())?;
+    let validator = OfflineKubernetesValidator::with_crd_catalog(
+        cache.path(),
+        catalog.path(),
+        KUBERNETES_RELEASE,
+    )?;
+    for missing_sidecar in [false, true] {
+        let defaults = chart.adjudicate(&json!({}))?;
+        if missing_sidecar {
+            fs::remove_file(defaults.evidence_dir.join("render.crds.json"))?;
+        }
+        validator.check_controls(&chart, &defaults, &[&defaults])?;
+    }
+    Ok(())
+}
+
+#[test]
+fn chart_abstention_retains_the_legacy_uncertainty_text() -> eyre::Result<()> {
+    let root = ScratchDir::new("catalog-unknown-ratchet")?;
+    let cache = ScratchDir::new("catalog-unknown-ratchet")?;
+    let catalog = ScratchDir::new("catalog-unknown-ratchet")?;
+    let document = json!({
+        "apiVersion": "example.test/v1", "kind": "Widget",
+        "metadata": {"name": "unknown", "annotations": {"helm.sh/hook": "pre-install"}}
+    });
+    write_chart(root.path(), &json!({}), &serde_json::to_string(&document)?)?;
+    let chart = PinnedHelmChart::prepare(HelmRunner::shared()?, root.path())?;
+    let validator = OfflineKubernetesValidator::with_crd_catalog(
+        cache.path(),
+        catalog.path(),
+        KUBERNETES_RELEASE,
+    )?;
+    let defaults = chart.adjudicate(&json!({}))?;
+    let helm_schema_test_support::helm::adjudication::KubernetesVerdict::Uncertain(reasons) =
+        validator.validate(HelmRunner::shared()?, &defaults.rendered.stdout)?
+    else {
+        eyre::bail!("missing catalog unexpectedly decided the resource");
+    };
+    let err = validator
+        .check_controls(&chart, &defaults, &[&defaults])
+        .err()
+        .ok_or_eyre("unknown resource unexpectedly became decidable")?;
+    sim_assert_eq!(
+        have: err.to_string(),
+        want: format!("unusable defaults Kubernetes control: uncertainty: {}", reasons.join("; ")),
+    );
+    Ok(())
+}
+
+#[test]
 fn unidentified_list_members_retain_each_missing_identity_field() -> eyre::Result<()> {
     let root = ScratchDir::new("contextual-identity")?;
     let cache = ScratchDir::new("contextual-identity")?;

@@ -23,7 +23,7 @@ use helm_schema_test_support::helm::invocation::{
 
 fn base_request() -> InvocationRequest {
     InvocationRequest {
-        format: "helm-schema/helm-invocation/v3".to_string(),
+        format: "helm-schema/helm-invocation/v4".to_string(),
         platform: "macos-aarch64".to_string(),
         engine: "helmsweep".to_string(),
         program_sha256: "helmsweep".to_string(),
@@ -166,6 +166,7 @@ struct Observed {
     stdout: Vec<u8>,
     stderr: Vec<u8>,
     key: String,
+    installation: Option<serde_json::Value>,
 }
 
 fn render(
@@ -187,7 +188,12 @@ fn render(
         stage,
         cacheability,
     )?;
+    let installation = fs::read(case.path().join(format!("{stage}.crds.json")))
+        .ok()
+        .map(|raw| serde_json::from_slice(&raw))
+        .transpose()?;
     Ok(Observed {
+        installation,
         outcome: execution.record.outcome.clone(),
         success: execution.success(),
         stdout: execution.stdout,
@@ -245,6 +251,9 @@ fn identical_invocations_replay_and_changed_inputs_execute() -> eyre::Result<()>
     sim_assert_eq!(have: again.outcome, want: Outcome::Replayed);
     sim_assert_eq!(have: again.stdout, want: first.stdout);
     sim_assert_eq!(have: again.key, want: first.key);
+    // Installation evidence replays with the same complete output receipt.
+    assert!(first.installation.is_some());
+    sim_assert_eq!(have:again.installation,want:first.installation);
 
     let changed_values = render(
         &runner,
