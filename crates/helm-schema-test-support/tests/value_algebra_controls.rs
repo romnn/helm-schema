@@ -1299,6 +1299,13 @@ fn through_c02(root: &Path) -> eyre::Result<Story> {
         reviewer: "reviewer".into(),
         reasoning: "the reviewed seed tightening".into(),
     }];
+    // The seed checkpoint without a seed review is refused before it runs.
+    let (attempt, verdict) = chain.compare("c02-no-seed", &main, &c02, &[], None, &certificates)?;
+    let Err(DiffError::Request(message)) = verdict else {
+        eyre::bail!("a seed checkpoint without --seed-review ran: {verdict:?}");
+    };
+    assert!(message.contains("needs --seed-review"), "{message}");
+    sim_assert_eq!(have: attempt.exists(), want: false);
     let (attempt, verdict) =
         chain.compare("c02-unreviewed", &main, &c02, &[], Some(&[]), &certificates)?;
     let found = problems(verdict)?;

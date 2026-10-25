@@ -1230,6 +1230,17 @@ fn checkpoint(request: &CompareRequest) -> Result<Checkpoint, DiffError> {
         ));
     }
     let ordinal = predecessor.checkpoint_ordinal + 1;
+    // Refused before the comparison runs, not after hours of it.
+    if (ordinal == plan.seed_ordinal) != seed_review.is_some() {
+        return Err(DiffError::Request(if ordinal == plan.seed_ordinal {
+            format!("checkpoint {ordinal} establishes the seed and needs --seed-review")
+        } else {
+            format!(
+                "only checkpoint {} may supply --seed-review",
+                plan.seed_ordinal
+            )
+        }));
+    }
     let semantic = plan.checkpoint(ordinal)?.kind == super::history::CheckpointKind::Semantic;
     let prior = history.prior_sets(&predecessor)?;
     Ok(Checkpoint {
