@@ -201,23 +201,23 @@ enum PruneEntry {
 
 /// Stamps a pruning CRD's structural contract onto its object nodes.
 ///
-/// A pruned resource carries only the fields its schema declares, so an
-/// object that declares `properties` accepts nothing else. The CRDs catalog
-/// bakes that stamp into its documents; without it here, a chart that ships
-/// the very same CRD would hand out an open contract for a resource the
-/// catalog closes, and which provider answered would decide what the values
-/// schema accepts.
+/// A pruned resource carries only the fields its schema declares.
+/// An object that declares `properties` therefore accepts nothing else.
+/// The CRDs catalog bakes that stamp into its documents.
+/// Without it here, a chart that ships the same CRD would get an open contract for a resource the catalog closes.
+/// Which provider answered would then decide what the values schema accepts.
 ///
-/// The walk mirrors the API server's pruning algorithm. A node with
-/// `x-kubernetes-preserve-unknown-fields` keeps its own unknown fields (and
-/// those of its array items), yet its declared properties are pruned by their
-/// own schemas again. An embedded resource, like the resource root, never
-/// prunes `apiVersion`, `kind`, or `metadata`: the API machinery validates
-/// those rather than the structural schema, so those fields are not walked,
-/// and the node keeps its open reading because they reach it whether or not
-/// the CRD spells them. Only the structural keywords are walked: a structural
-/// schema states its structure outside `allOf`/`anyOf`/`oneOf`/`not`, so a
-/// stamp inside a junctor arm would reject documents the sibling arm accepts.
+/// The walk mirrors the API server's pruning algorithm.
+/// A node with `x-kubernetes-preserve-unknown-fields` keeps its own unknown fields and those of its array items.
+/// Its declared properties and map values are pruned by their own schemas again.
+///
+/// An embedded resource, like the resource root, never prunes `apiVersion`, `kind`, or `metadata`.
+/// The API machinery validates those rather than the structural schema, so the walk skips them.
+/// The node itself keeps its open reading, because those fields reach it whether or not the CRD spells them.
+///
+/// Only the structural keywords are walked.
+/// A structural schema states its structure outside `allOf`/`anyOf`/`oneOf`/`not`.
+/// A stamp inside a junctor arm would reject documents the sibling arm accepts.
 fn close_pruned_object_nodes(schema: &mut Value, entry: PruneEntry) {
     let Some(object) = schema.as_object_mut() else {
         return;
