@@ -9414,4 +9414,19 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   r3b/perf-representation). The C08a certified helper memo is brought forward to right after C03: design and eligibility in
   round8-r3b-perf/review/c08a-*, with 97% / 82% / 57% of include sites statically eligible in kube-prometheus-stack / datadog /
   kyverno. agentmux issues #16–#18 filed. Orchestrator.
-Next: starrocks replay fix → assemble landing 15 run2 (crd-oracle + fix + test:all fix) with a fresh E; R3b C03 commit → hand perf commits P4–P8 to the builder, start C08a and C06a slices; Opus profile → re-rank P-list.
+- 21:10 (Oct 25) — **R3b C03 committed (002bd823 on r3b/construction, non-landable checkpoint): the state explosion is gone;
+  kyverno 3.58 CPU-s, kube-prometheus-stack 4.37, datadog 44.32 (main 5.6–8.3 s wall), peak RSS 132–305 MB.** One
+  continuation frontier replaces sibling-only reconvergence (P1), per-file `.Template` identity is shared, and redundant guard
+  terms are removed. W1 admission: 1,857 cells, 176 false acceptances / 0 false rejections versus main (C02: 227/1); all 519
+  control verdicts match. Production −14,190 LOC versus baseline. Orchestrator applied transfer-C03.patch (sha c0c06c2b…) with
+  `git apply --cached`. Builder gates: fmt/check 0; `task lint` 201 (stale inventory references to deleted eval_env.rs);
+  workspace units 1,333 passed / 641 failed / 2 unreported after a watchdog stop, being re-measured by a sol review. Two sol
+  reviews are running: join exactness (20261025T200659-8a1d398f) and test health + datadog sampling (20261025T200706-6c4dcc59).
+  The R3b builder moves to the lint fix, then C04. Perf builder and C08a (Fable) rebase onto 002bd823, re-measure and keep only
+  real wins. Also today: G1 LAND after a comment rewrap by the orchestrator (4750c948). G2 REWORK (13 Go divergences from
+  yaml-rust syntax) → orchestrator decision: libyaml-safer, scanner errors → unsupported (widen); Codex builder
+  20261025T182031-3784523f. F20 REWORK (trim semantics in the layout transparency rule + a cluster-autoscaler selector false
+  rejection); the Opus builder is reworking. T0 rework done (bbf20a0f; 43 GB → ≤ 2.5 GB RSS; real chain init/C01/C02 PASS,
+  perturbed C03 FAIL as intended); sol re-review running. Landing 15 run 2 (oracle + starrocks replay 704cb7d7 + test:all +
+  G1; E=round8-landing15-run2; runner caea639 also unsets HELM_SCHEMA_CRDCHECK*) started 20:39. User: max 6 Claude agents. Orchestrator.
+Next: landing 15 run 2 → merge; C03 reviews → C04 go/fix; T0 re-review → land T0; G2/F20 rework hand-backs → reviews; C06a slice after the C04 seam answer.
