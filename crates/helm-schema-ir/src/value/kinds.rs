@@ -1,9 +1,9 @@
-use helm_schema_core::{Predicate, PredicateMemo};
+use helm_schema_core::Predicate;
 
-use super::scalar_value::{ScalarContent, TruthCondition};
+use super::scalar_value::ScalarContent;
 use super::{ScalarValue, ScalarValueDispatch};
 
-/// Runtime types distinguished by R2 parameter checks; conflicting types widen to unknown.
+/// Runtime types carried by the scalar leaf and function signatures.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum GoType {
     Nil,
@@ -41,33 +41,13 @@ impl ScalarValue {
 }
 
 impl ScalarValueDispatch {
-    /// Refines existing leaves without changing content, truth, selection, effects or content bounds.
+    /// Refines the type on retained leaves without changing content or arm coverage.
     ///
-    /// Unresolved coverage receives disjoint type-only arms with a separate bound.
-    /// A legacy empty projection remains empty rather than acquiring a new fallback meaning.
-    pub(crate) fn refine_type(&mut self, go_type: GoType, memo: &PredicateMemo) {
-        if self.arms.is_empty() {
-            return;
-        }
+    /// Unmodeled branches remain unresolved instead of acquiring a parallel type-only partition.
+    pub(crate) fn refine_type(&mut self, go_type: GoType) {
         for (_, value) in &mut self.arms {
             value.go_type = go_type;
         }
-        if self.complete {
-            return;
-        }
-        let covered = TruthCondition::any_with_memo(
-            self.arms.iter().map(|(condition, _)| {
-                TruthCondition::from_predicate_with_memo(condition.clone(), memo)
-            }),
-            memo,
-        );
-        if let Some(covered) = covered.predicate() {
-            let missing = covered.clone().negated();
-            if missing != Predicate::False {
-                self.arms.push((missing, ScalarValue::type_only(go_type)));
-            }
-        }
-        self.bound_type_arms();
     }
 
     pub(crate) fn typed(go_type: GoType) -> Self {

@@ -2325,10 +2325,7 @@ fn bound_helper_range_break_retains_scalar_candidate_selection() {
         ],
         true,
     );
-    expected.refine_type(
-        crate::value::kinds::GoType::String,
-        &helm_schema_core::PredicateMemo::new(),
-    );
+    expected.refine_type(crate::value::kinds::GoType::String);
     sim_assert_eq!(
         have: result.scalar_transport().cloned(),
         want: Some(expected)

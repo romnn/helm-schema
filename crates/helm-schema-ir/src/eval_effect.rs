@@ -1491,13 +1491,9 @@ impl EvalResult {
         self.scalar_dispatch.as_ref()
     }
 
-    pub(crate) fn refine_go_type(
-        &mut self,
-        go_type: crate::value::kinds::GoType,
-        memo: &helm_schema_core::PredicateMemo,
-    ) {
+    pub(crate) fn refine_go_type(&mut self, go_type: crate::value::kinds::GoType) {
         match &mut self.scalar_dispatch {
-            Some(dispatch) => dispatch.refine_type(go_type, memo),
+            Some(dispatch) => dispatch.refine_type(go_type),
             None => self.scalar_dispatch = Some(ScalarValueDispatch::typed(go_type)),
         }
     }

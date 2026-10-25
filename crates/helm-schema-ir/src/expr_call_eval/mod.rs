@@ -172,7 +172,7 @@ fn eval_invocation(
     let success = function_semantics(invocation.function).success;
     let mut result = eval_invocation_inner(invocation, env, resolver);
     if let crate::function_semantics::SuccessType::Fixed(go_type) = success {
-        result.refine_go_type(go_type, env.predicate_memo.as_ref());
+        result.refine_go_type(go_type);
     }
     result
 }

@@ -39,7 +39,7 @@ fn type_only_projection_is_absent_but_legacy_empty_projection_stays_present() {
     let dispatch = ScalarValueDispatch::typed(GoType::Float64);
     sim_assert_eq!(have: dispatch.content().is_none(), want: true);
     let mut empty = ScalarValueDispatch::bind_content(Vec::new(), false);
-    empty.refine_type(GoType::String, &PredicateMemo::default());
+    empty.refine_type(GoType::String);
     sim_assert_eq!(have: empty.content().map(|content| (content.arms().count(), content.complete)), want: Some((0, false)));
 }
 
@@ -49,7 +49,7 @@ fn type_refinement_preserves_all_non_type_result_facts() {
     let mut result =
         crate::eval_effect::EvalResult::none().with_truth_with_memo(Predicate::True, &memo);
     let before = result.clone();
-    result.refine_go_type(GoType::Float64, &memo);
+    result.refine_go_type(GoType::Float64);
     sim_assert_eq!(have: &result.value, want: &before.value);
     sim_assert_eq!(have: &result.effects, want: &before.effects);
     sim_assert_eq!(have: &result.truth, want: &before.truth);
@@ -63,11 +63,10 @@ fn type_refinement_preserves_all_non_type_result_facts() {
 
 #[test]
 fn conflicting_types_join_without_changing_equal_content() -> eyre::Result<()> {
-    let memo = PredicateMemo::default();
     let mut literal = ScalarValueDispatch::constant(GuardValue::Int(1));
-    literal.refine_type(GoType::Int, &memo);
+    literal.refine_type(GoType::Int);
     let mut component = ScalarValueDispatch::constant(GuardValue::Int(1));
-    component.refine_type(GoType::Uint64, &memo);
+    component.refine_type(GoType::Uint64);
     sim_assert_eq!(have: literal.content_eq(&component), want: true);
     sim_assert_eq!(have: literal == component, want: false);
     let joined = literal
@@ -85,7 +84,7 @@ fn conflicting_types_join_without_changing_equal_content() -> eyre::Result<()> {
 }
 
 #[test]
-fn mixed_projection_keeps_content_and_its_incomplete_coverage() {
+fn type_refinement_keeps_content_and_its_incomplete_coverage() {
     let mut dispatch = ScalarValueDispatch::bind_content(
         vec![(
             Predicate::truthy_path("enabled"),
@@ -93,9 +92,21 @@ fn mixed_projection_keeps_content_and_its_incomplete_coverage() {
         )],
         false,
     );
-    dispatch.refine_type(GoType::Int, &PredicateMemo::default());
+    dispatch.refine_type(GoType::Int);
     sim_assert_eq!(have: dispatch.content().map(|content| (content.arms().count(), content.complete)), want: Some((1, false)));
-    sim_assert_eq!(have: dispatch.arms.len(), want: 2);
+    sim_assert_eq!(
+        have: dispatch,
+        want: ScalarValueDispatch {
+            arms: vec![(
+                Predicate::truthy_path("enabled"),
+                super::ScalarValue {
+                    go_type: GoType::Int,
+                    content: Some(ScalarContent::Literal(GuardValue::Int(1))),
+                },
+            )],
+            complete: false,
+        }
+    );
 }
 
 #[test]
@@ -109,7 +120,7 @@ fn refining_partial_content_does_not_change_an_exhausted_transform_projection() 
         )],
         false,
     );
-    dispatch.refine_type(GoType::Int, &PredicateMemo::default());
+    dispatch.refine_type(GoType::Int);
     sim_assert_eq!(have: dispatch.stringified().content().map(|content| (content.arms().count(), content.complete)), want: Some((0, false)));
     sim_assert_eq!(have: dispatch.printf_string("%s").is_none(), want: true);
 }

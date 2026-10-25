@@ -395,10 +395,7 @@ fn static_semver_numeric_selector(
             ScalarValueDispatch::constant(helm_schema_core::GuardValue::Int(component)),
             env.predicate_memo.as_ref(),
         );
-    result.refine_go_type(
-        crate::value::kinds::GoType::Uint64,
-        env.predicate_memo.as_ref(),
-    );
+    result.refine_go_type(GoType::Uint64);
     Some(result)
 }
 
@@ -931,7 +928,7 @@ fn literal_result(literal: &Literal, env: &EvalEnv) -> EvalResult {
         Literal::Float(_) => GoType::Float64,
         Literal::Nil => GoType::Nil,
     };
-    result.refine_go_type(go_type, env.predicate_memo.as_ref());
+    result.refine_go_type(go_type);
     result
 }
 
