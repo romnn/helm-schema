@@ -45,7 +45,7 @@ const PINNED_HELM_VERSION: &str = "v4.2.3";
 
 /// Domain of invocation keys and the stored entry format. Changing what an
 /// entry holds or how a request is encoded must change this.
-const INVOCATION_FORMAT: &str = "helm-schema/helm-invocation/v3";
+const INVOCATION_FORMAT: &str = "helm-schema/helm-invocation/v4";
 
 /// The preparation policy a prepared tree identity covers. Changing what
 /// preparation removes, adds or repacks must change this.
@@ -227,7 +227,7 @@ impl InvocationRecord {
 /// Everything that identifies one Helm execution.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct InvocationRequest {
-    /// The key and entry format, such as `helm-schema/helm-invocation/v3`.
+    /// The key and entry format, such as `helm-schema/helm-invocation/v4`.
     pub format: String,
     /// `<os>-<arch>`.
     pub platform: String,
@@ -300,6 +300,7 @@ pub struct TemplateRequest<'a> {
 /// The result half of a stored entry.
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 struct StoredResult {
+    installation: Option<serde_json::Value>,
     exit_code: i32,
     stdout_sha256: String,
     stderr_sha256: String,
@@ -726,6 +727,12 @@ impl HelmRunner {
                 };
                 (result, stdout, stderr, outcome, server_max_rss_bytes)
             };
+        let sidecar = case.join(format!("{stage}.crds.json"));
+        if let Some(installation) = &result.installation {
+            fs::write(&sidecar, serde_json::to_vec(installation)?)?;
+        } else if sidecar.exists() {
+            fs::remove_file(&sidecar)?;
+        }
         fs::write(
             case.join(format!("{stage}.status")),
             format!("exit status: {}", result.exit_code),
@@ -821,6 +828,7 @@ impl HelmRunner {
         let stdout = fs::read(&stdout_path)?;
         let stderr = fs::read(&stderr_path)?;
         let result = StoredResult {
+            installation: None,
             exit_code,
             stdout_sha256: hex(&Sha256::digest(&stdout)),
             stderr_sha256: hex(&Sha256::digest(&stderr)),
@@ -1026,6 +1034,9 @@ impl ResidentPool {
         let stdout = fs::read(&stdout_path)?;
         let stderr = fs::read(&stderr_path)?;
         let result = StoredResult {
+            installation: fs::read(case.join(format!("{stage}.crds.json")))
+                .ok()
+                .and_then(|raw| serde_json::from_slice(&raw).ok()),
             exit_code,
             stdout_sha256: hex(&Sha256::digest(&stdout)),
             stderr_sha256: hex(&Sha256::digest(&stderr)),
@@ -1096,6 +1107,7 @@ impl Resident {
             "skip_schema_validation": skip_schema,
             "stdout_path": utf8(stdout)?,
             "stderr_path": utf8(stderr)?,
+            "crds_path": utf8(&stdout.with_extension("crds.json"))?,
         });
         let mut line = serde_json::to_vec(&request)?;
         line.push(b'\n');
@@ -1484,7 +1496,7 @@ fn hash_field(hasher: &mut Sha256, bytes: &[u8]) {
     hasher.update(bytes);
 }
 
-fn hex(bytes: &[u8]) -> String {
+pub(crate) fn hex(bytes: &[u8]) -> String {
     let mut text = String::with_capacity(bytes.len() * 2);
     for byte in bytes {
         let _ = write!(text, "{byte:02x}");
