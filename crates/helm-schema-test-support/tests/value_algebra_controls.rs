@@ -9,7 +9,9 @@
 //! its answers, so two scripts are two versioned runner builds. A fake Helm
 //! script renders each chart's `rendered/` sidecar, so groundings reproduce.
 //! Synthetic runners, fake Helm and hand-written captures are protocol
-//! fixtures, never admissible checkpoint evidence.
+//! fixtures, never admissible checkpoint evidence. The scripts need a Unix
+//! shell, so the binary is Unix-only.
+#![cfg(unix)]
 
 use std::collections::BTreeMap;
 use std::os::unix::fs::PermissionsExt as _;
