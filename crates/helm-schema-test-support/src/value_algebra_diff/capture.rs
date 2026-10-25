@@ -318,7 +318,7 @@ impl DumpPair {
             // Attribution needs each revision's own annotate regeneration,
             // which a dump does not carry; the comparator never regenerates it.
             annotation: None,
-            replay: Vec::new(),
+            replay: crate::acceptance::Replay::default(),
         })
     }
 }

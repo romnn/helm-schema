@@ -150,13 +150,46 @@ fn verdict_answer(verdict: &HelmFlipVerdict) -> (OracleAnswer, Option<bool>) {
     }
 }
 
+/// What classifying a judged witness needs: its verdicts, never its
+/// documents, so a comparison holds one of these per witness.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct JudgedWitness {
+    /// The witness id.
+    pub id: String,
+    /// `chart: name`, the case its adjudication reports.
+    pub case: String,
+    /// Whether the baseline accepts it.
+    pub baseline_accepts: bool,
+    /// Whether the candidate accepts it.
+    pub candidate_accepts: bool,
+    /// Whether the verdicts differ or the candidate rejects for a new reason.
+    pub transition: bool,
+    /// The candidate's violations for a transition it rejects.
+    pub candidate_violations: Vec<String>,
+}
+
+impl JudgedWitness {
+    /// The verdicts of `witness`, identified as `id`.
+    #[must_use]
+    pub fn of(id: String, witness: &ScreenedWitness) -> Self {
+        Self {
+            id,
+            case: witness.case(),
+            baseline_accepts: witness.baseline_accepts,
+            candidate_accepts: witness.candidate_accepts,
+            transition: witness.transition,
+            candidate_violations: witness.candidate_violations.clone(),
+        }
+    }
+}
+
 /// Classifies `witness` given its adjudication, if any.
 #[must_use]
 pub fn classify(
-    witness_id: &str,
-    witness: &ScreenedWitness,
+    witness: &JudgedWitness,
     adjudication: Option<&AdjudicationRecord>,
 ) -> WitnessOutcome {
+    let witness_id = witness.id.as_str();
     let (baseline, candidate) = (witness.baseline_accepts, witness.candidate_accepts);
     let unchanged = baseline == candidate && !witness.transition;
     let (oracle, implied, detail, infrastructure, severity) = match adjudication
@@ -242,7 +275,7 @@ pub fn classify(
     };
     WitnessOutcome {
         witness: witness_id.to_string(),
-        case: witness.case(),
+        case: witness.case.clone(),
         baseline_accepts: baseline,
         candidate_accepts: candidate,
         transition: witness.transition,

@@ -18,7 +18,7 @@ use super::discovery::{
 };
 use super::{
     ChartCost, ChartHelm, ComparedChart, LiveChart, LoadedInputs, ScreenedChart, ScreenedWitness,
-    elapsed_ms,
+    WitnessSink, elapsed_ms,
 };
 
 /// Names the imported context roster file in the ordinary battery.
@@ -537,15 +537,18 @@ pub fn screen(request: &ScreenRequest<'_>) -> eyre::Result<LintScreen> {
     screen_recording(request, None)
 }
 
-/// [`screen`], also recording every composed document as a witness of
-/// `chart` in `witnesses` when given.
+/// Receives each witness a recording screen judges.
+pub type Recorder<'a> = &'a mut dyn FnMut(ScreenedWitness);
+
+/// [`screen`], also handing every composed document as a witness of
+/// `chart` to the recorder when given.
 ///
 /// # Errors
 ///
 /// Returns an error when the chart's inputs cannot be loaded or composed.
 pub fn screen_recording(
     request: &ScreenRequest<'_>,
-    mut witnesses: Option<(&str, &mut Vec<ScreenedWitness>)>,
+    mut witnesses: Option<(&str, Recorder<'_>)>,
 ) -> eyre::Result<LintScreen> {
     let mut coverage = LintCoverage {
         imported_rows: request.imported.len(),
@@ -599,8 +602,8 @@ pub fn screen_recording(
                             .candidate_violations(&values.root, transition)
                     });
                     let probe = document_probe(&row, kind, lint_control, values.root, &defaults)?;
-                    if let Some((chart, witnesses)) = witnesses.as_mut() {
-                        witnesses.push(ScreenedWitness {
+                    if let Some((chart, record)) = witnesses.as_mut() {
+                        record(ScreenedWitness {
                             chart: (*chart).to_string(),
                             instance: None,
                             composed: probe
@@ -800,50 +803,39 @@ pub struct ScreenedProbes {
 }
 
 impl ScreenedProbes {
-    /// Adds the replayed witnesses that screening proposes and discovery did
-    /// not, under `accounting`; replayed documents count toward `coverage`.
-    pub fn append_replay(
+    /// Adds a replayed witness that screening proposes and no case in
+    /// `known` (discovered or already screened) covers, under `accounting`.
+    pub fn append_replayed(
         &mut self,
-        replayed: &[ScreenedWitness],
-        discovered: &[ScreenedWitness],
+        witness: &ScreenedWitness,
+        known: &BTreeSet<String>,
         accounting: LintAccounting,
         coverage: &mut ProbeCoverage,
     ) {
-        let known = discovered
-            .iter()
-            .map(ScreenedWitness::case)
-            .chain(
-                self.screened
-                    .iter()
-                    .map(|probe| format!("{}: {}", coverage.label, probe.name)),
-            )
-            .collect::<BTreeSet<_>>();
-        for witness in replayed {
-            self.probes_checked += 1;
-            if !witness.screened || known.contains(&witness.case()) {
-                continue;
-            }
-            match accounting {
-                LintAccounting::Live => self.screened.push(witness.probe.clone()),
-                LintAccounting::SchemaOnly { identical_schemas } => {
-                    let forced = witness
-                        .probe
-                        .document
-                        .as_ref()
-                        .is_some_and(|document| document.lint_control);
-                    if forced && identical_schemas {
-                        if let Some(lint) = coverage.lint.as_mut() {
-                            lint.deferred_live_audits.push(witness.probe.name.clone());
-                        }
-                        continue;
+        self.probes_checked += 1;
+        if !witness.screened || known.contains(&witness.case()) {
+            return;
+        }
+        match accounting {
+            LintAccounting::Live => self.screened.push(witness.probe.clone()),
+            LintAccounting::SchemaOnly { identical_schemas } => {
+                let forced = witness
+                    .probe
+                    .document
+                    .as_ref()
+                    .is_some_and(|document| document.lint_control);
+                if forced && identical_schemas {
+                    if let Some(lint) = coverage.lint.as_mut() {
+                        lint.deferred_live_audits.push(witness.probe.name.clone());
                     }
-                    self.flips.push(format!(
-                        "{}: before={}, after={}",
-                        witness.case(),
-                        witness.baseline_accepts,
-                        witness.candidate_accepts
-                    ));
+                    return;
                 }
+                self.flips.push(format!(
+                    "{}: before={}, after={}",
+                    witness.case(),
+                    witness.baseline_accepts,
+                    witness.candidate_accepts
+                ));
             }
         }
     }
@@ -910,8 +902,8 @@ pub fn screen_template_probes(
     )
 }
 
-/// [`screen_template_probes`], also recording every reachable probe as a
-/// witness rendered for `kubernetes_version` when `witnesses` is given.
+/// [`screen_template_probes`], also handing every reachable probe as a
+/// witness rendered for `kubernetes_version` to the recorder when given.
 pub fn screen_template_probes_recording(
     chart_dir: &std::path::Path,
     profiles: &ProfileSchemas,
@@ -919,7 +911,7 @@ pub fn screen_template_probes_recording(
     probes: Vec<(String, ProbeInstance)>,
     coverage: &mut ProbeCoverage,
     adjudicate_live: bool,
-    mut witnesses: Option<(&str, &mut Vec<ScreenedWitness>)>,
+    mut witnesses: Option<(&str, Recorder<'_>)>,
 ) -> ScreenedProbes {
     let label = &coverage.label;
     let probes_checked = probes.len();
@@ -948,9 +940,9 @@ pub fn screen_template_probes_recording(
             }
         };
         let flip = profiles.screens_a_flip(&probe);
-        if let Some((kubernetes_version, witnesses)) = witnesses.as_mut() {
+        if let Some((kubernetes_version, record)) = witnesses.as_mut() {
             let (baseline_accepts, candidate_accepts) = profiles.verdicts(&probe);
-            witnesses.push(ScreenedWitness {
+            record(ScreenedWitness {
                 chart: label.clone(),
                 probe: ScreenedProbe {
                     name: probe_name.clone(),
@@ -1004,12 +996,12 @@ pub fn screen_chart(
     adjudicate_live: bool,
     roster: Option<&ImportedRoster>,
 ) -> eyre::Result<(ScreenedChart, Option<LiveChart>)> {
-    screen_chart_recording(chart, adjudicate_live, roster, false, None)
+    screen_chart_recording(chart, adjudicate_live, roster, None, None)
 }
 
 /// [`screen_chart`], also judging the chart's replayed witnesses outside
-/// every discovery cap and, when `record`, reporting every discovered and
-/// replayed witness.
+/// every discovery cap and, when `sink` is given, handing it every
+/// discovered and replayed witness as soon as it is judged.
 ///
 /// # Errors
 ///
@@ -1028,7 +1020,7 @@ pub fn screen_chart_recording(
     chart: ComparedChart,
     adjudicate_live: bool,
     roster: Option<&ImportedRoster>,
-    record: bool,
+    sink: Option<&WitnessSink>,
     runner: Option<&'static crate::helm::invocation::HelmRunner>,
 ) -> eyre::Result<(ScreenedChart, Option<LiveChart>)> {
     let started = std::time::Instant::now();
@@ -1071,7 +1063,17 @@ pub fn screen_chart_recording(
         helm: std::collections::BTreeMap::new(),
     };
     let version = crate::helm::kubernetes_version::chart_kubernetes_version(chart_dir.path())?;
-    let mut witnesses = Vec::new();
+    let mut discovered = BTreeSet::new();
+    let mut sink_error = None;
+    let mut record = |witness: ScreenedWitness| {
+        discovered.insert(witness.case());
+        if let Some(sink) = sink
+            && sink_error.is_none()
+            && let Err(error) = sink(witness)
+        {
+            sink_error = Some(error);
+        }
+    };
     let screening = std::time::Instant::now();
     let mut result = screen_template_probes_recording(
         chart_dir.path(),
@@ -1080,7 +1082,8 @@ pub fn screen_chart_recording(
         probes,
         &mut coverage,
         adjudicate_live,
-        record.then_some((version, &mut witnesses)),
+        sink.is_some()
+            .then_some((version, &mut record as Recorder<'_>)),
     );
     let lint_started = std::time::Instant::now();
     let imported = roster
@@ -1095,23 +1098,40 @@ pub fn screen_chart_recording(
             roster_sha256: roster.map(|roster| roster.sha256.clone()),
             available_probes: MAX_PROBES_PER_CHART.saturating_sub(result.probes_checked),
         },
-        record.then_some((label.as_str(), &mut witnesses)),
+        sink.is_some()
+            .then_some((label.as_str(), &mut record as Recorder<'_>)),
     );
     let accounting = LintAccounting::new(adjudicate_live, baseline_bytes == candidate_bytes);
     result.append_lint(lint, &lint_schemas, &mut coverage, accounting);
     cost.lint_screening_ms = elapsed_ms(lint_started);
-    let replayed = replay_witnesses(chart_dir.path(), &profiles, &lint_schemas, replay)?;
-    result.append_replay(&replayed, &witnesses, accounting, &mut coverage);
-    if record {
-        let discovered = witnesses
-            .iter()
-            .map(ScreenedWitness::case)
-            .collect::<BTreeSet<_>>();
-        witnesses.extend(
-            replayed
-                .into_iter()
-                .filter(|witness| !discovered.contains(&witness.case())),
-        );
+    if let Some(error) = sink_error {
+        return Err(error);
+    }
+    let known = discovered
+        .iter()
+        .cloned()
+        .chain(
+            result
+                .screened
+                .iter()
+                .map(|probe| format!("{}: {}", coverage.label, probe.name)),
+        )
+        .collect::<BTreeSet<_>>();
+    let mut inputs = None;
+    for witness in replay {
+        let witness = rejudge(
+            chart_dir.path(),
+            &profiles,
+            &lint_schemas,
+            &mut inputs,
+            witness?,
+        )?;
+        result.append_replayed(&witness, &known, accounting, &mut coverage);
+        if let Some(sink) = sink
+            && !discovered.contains(&witness.case())
+        {
+            sink(witness)?;
+        }
     }
     cost.screening_ms = elapsed_ms(screening);
     let ScreenedProbes {
@@ -1143,74 +1163,69 @@ pub fn screen_chart_recording(
         screened_flips: live.as_ref().map_or(0, |live| live.flips.len()),
         helm: live.as_ref().map(|live| live.helm.clone()),
         cost,
-        witnesses,
     };
     Ok((screened, live))
 }
 
-/// `replay`'s witnesses judged again by both schemas, each first recomposed
-/// from its overlay and required to reproduce its recorded document.
+/// A replayed witness judged again by both schemas, first recomposed from
+/// its overlay and required to reproduce its recorded document; `inputs`
+/// caches the chart's composition inputs across witnesses.
 ///
 /// # Errors
 ///
-/// Returns an error when a witness no longer composes or composes to
+/// Returns an error when the witness no longer composes or composes to
 /// another document.
-pub fn replay_witnesses(
+pub fn rejudge(
     chart_dir: &Path,
     profiles: &ProfileSchemas,
     lint: &LintSchemas,
-    replay: Vec<ScreenedWitness>,
-) -> eyre::Result<Vec<ScreenedWitness>> {
-    let mut inputs = None;
-    let mut replayed = Vec::with_capacity(replay.len());
-    for mut witness in replay {
-        let case = witness.case();
-        let (verdicts, transition, screened) =
-            match (&witness.instance, &mut witness.probe.document) {
-                (Some(instance), None) => {
-                    eyre::ensure!(
-                        profiles.composed(instance) == witness.composed,
-                        "replayed witness {case} composes to another document"
-                    );
-                    let transition = profiles.screens_a_flip(instance);
-                    witness.candidate_violations =
-                        profiles.candidate_violations(&witness.composed, transition);
-                    (profiles.verdicts(instance), transition, transition)
-                }
-                (None, Some(document)) => {
-                    let inputs = match &mut inputs {
-                        Some(inputs) => inputs,
-                        None => inputs.insert(AcceptanceInputs::load(chart_dir)?),
-                    };
-                    let composed = inputs
-                        .compose(witness.probe.overlay.clone(), document.kind)
-                        .map_err(|error| eyre::eyre!("replayed witness {case}: {error}"))?;
-                    eyre::ensure!(
-                        composed.root == document.values && document.values == witness.composed,
-                        "replayed witness {case} composes to another document"
-                    );
-                    document.defaults = default_documents(inputs)?.remove(&document.kind).flatten();
-                    let verdicts = lint.profiles.document_verdicts(&document.values);
-                    let transition = lint.profiles.screen_document(&document.values);
-                    witness.candidate_violations = lint
-                        .profiles
-                        .candidate_violations(&document.values, transition);
-                    (
-                        verdicts,
-                        transition,
-                        transition || (document.lint_control && !verdicts.1),
-                    )
-                }
-                (Some(_), Some(_)) | (None, None) => {
-                    eyre::bail!("replayed witness {case} names neither or both lanes")
-                }
+    inputs: &mut Option<AcceptanceInputs>,
+    mut witness: ScreenedWitness,
+) -> eyre::Result<ScreenedWitness> {
+    let case = witness.case();
+    let (verdicts, transition, screened) = match (&witness.instance, &mut witness.probe.document) {
+        (Some(instance), None) => {
+            eyre::ensure!(
+                profiles.composed(instance) == witness.composed,
+                "replayed witness {case} composes to another document"
+            );
+            let transition = profiles.screens_a_flip(instance);
+            witness.candidate_violations =
+                profiles.candidate_violations(&witness.composed, transition);
+            (profiles.verdicts(instance), transition, transition)
+        }
+        (None, Some(document)) => {
+            let inputs = match inputs {
+                Some(inputs) => inputs,
+                None => inputs.insert(AcceptanceInputs::load(chart_dir)?),
             };
-        (witness.baseline_accepts, witness.candidate_accepts) = verdicts;
-        witness.screened = screened;
-        witness.transition = transition;
-        replayed.push(witness);
-    }
-    Ok(replayed)
+            let composed = inputs
+                .compose(witness.probe.overlay.clone(), document.kind)
+                .map_err(|error| eyre::eyre!("replayed witness {case}: {error}"))?;
+            eyre::ensure!(
+                composed.root == document.values && document.values == witness.composed,
+                "replayed witness {case} composes to another document"
+            );
+            document.defaults = default_documents(inputs)?.remove(&document.kind).flatten();
+            let verdicts = lint.profiles.document_verdicts(&document.values);
+            let transition = lint.profiles.screen_document(&document.values);
+            witness.candidate_violations = lint
+                .profiles
+                .candidate_violations(&document.values, transition);
+            (
+                verdicts,
+                transition,
+                transition || (document.lint_control && !verdicts.1),
+            )
+        }
+        (Some(_), Some(_)) | (None, None) => {
+            eyre::bail!("replayed witness {case} names neither or both lanes")
+        }
+    };
+    (witness.baseline_accepts, witness.candidate_accepts) = verdicts;
+    witness.screened = screened;
+    witness.transition = transition;
+    Ok(witness)
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord)]

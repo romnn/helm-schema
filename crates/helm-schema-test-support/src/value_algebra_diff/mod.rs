@@ -35,6 +35,7 @@ pub enum DiffError {
 }
 
 use std::collections::{BTreeMap, BTreeSet};
+use std::sync::{Arc, Mutex};
 
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
@@ -42,10 +43,14 @@ use serde_json::{Value, json};
 use crate::acceptance::discovery::{read_coalesced_defaults, validate_probe_coverage};
 use crate::acceptance::pool::PoolLimits;
 use crate::acceptance::screen::ImportedRoster;
-use crate::acceptance::{AcceptanceComparison, ComparisonConfig, compare_charts};
+use crate::acceptance::{
+    AcceptanceComparison, ComparisonConfig, Replay, ScreenedWitness, compare_charts,
+};
 use crate::helm::adjudication::OfflineKubernetesValidator;
 use capture::{ArtifactPair, DumpPair, chart_keys};
-use compare::{ChartIdentity, Class, OutcomeTable, classify, replay_witness, witness_record};
+use compare::{
+    ChartIdentity, Class, JudgedWitness, OutcomeTable, classify, replay_witness, witness_record,
+};
 use history::{BlobStore, UniverseState, WitnessRecord, canonical_json};
 
 /// What one dump-pair comparison needs besides the pair.
@@ -68,8 +73,8 @@ pub struct RunOptions {
 pub struct ComparisonRun {
     /// Every witness's outcome.
     pub table: OutcomeTable,
-    /// Every witness judged, discovered or replayed, by id.
-    pub witnesses: BTreeMap<String, WitnessRecord>,
+    /// How many distinct witnesses were judged, discovered or replayed.
+    pub witness_count: usize,
     /// The witnesses the universe did not hold.
     pub new_witnesses: Vec<WitnessRecord>,
     /// Every artifact's hashes in both dumps.
@@ -111,15 +116,31 @@ pub fn run_comparison(
     let mut charts = pair.compared_charts(selection.as_ref())?;
     let (identities, expected) =
         attach_replay(&chart_keys(&pair.baseline)?, &mut charts, universe, blobs)?;
+    let recorder = Arc::new(Recorder {
+        identities,
+        known: universe.witnesses.keys().cloned().collect(),
+        blobs: blobs.clone(),
+        origin,
+        judged: Mutex::new(Judged::default()),
+    });
+    let sink = recorder.clone();
     let config = ComparisonConfig {
         kubernetes,
         contexts,
         pool,
-        record_witnesses: true,
+        witnesses: Some(Arc::new(move |witness| sink.record(&witness))),
         helm,
     };
     let mut comparison = compare_charts(charts, &config)
         .map_err(|error| DiffError::Infrastructure(format!("compare: {error:#}")))?;
+    drop(config);
+    let Judged {
+        witnesses,
+        new,
+        failures: mut recorded_failures,
+    } = Arc::into_inner(recorder)
+        .and_then(|recorder| recorder.judged.into_inner().ok())
+        .ok_or_else(|| DiffError::Infrastructure("the witness recorder is still shared".into()))?;
     comparison.charts_checked = comparison.coverage.len();
     let mut failures = Vec::new();
     if let Err(error) = AcceptanceComparison::validate_lint_coverages(&comparison.coverage, live) {
@@ -136,29 +157,16 @@ pub fn run_comparison(
             .iter()
             .map(|failure| format!("screening failure: {failure}")),
     );
+    failures.append(&mut recorded_failures);
     let adjudications = comparison
         .adjudications
         .iter()
         .map(|record| (record.case.clone(), record))
         .collect::<BTreeMap<_, _>>();
-    let mut witnesses = BTreeMap::new();
-    let mut outcomes = Vec::new();
-    for witness in &comparison.witnesses {
-        let Some(identity) = identities.get(&witness.chart) else {
-            failures.push(format!("witness of unselected chart {}", witness.chart));
-            continue;
-        };
-        let record = witness_record(witness, identity, blobs, &origin)?;
-        if witnesses.contains_key(&record.id) {
-            continue;
-        }
-        outcomes.push(classify(
-            &record.id,
-            witness,
-            adjudications.get(&witness.case()).copied(),
-        ));
-        witnesses.insert(record.id.clone(), record);
-    }
+    let outcomes = witnesses
+        .values()
+        .map(|witness| classify(witness, adjudications.get(&witness.case).copied()))
+        .collect();
     let missing = expected
         .iter()
         .filter(|id| !witnesses.contains_key(*id))
@@ -166,11 +174,7 @@ pub fn run_comparison(
     if !missing.is_empty() {
         failures.push(format!("universe witnesses were not judged: {missing:?}"));
     }
-    let new_witnesses = witnesses
-        .values()
-        .filter(|record| !universe.witnesses.contains_key(&record.id))
-        .cloned()
-        .collect::<Vec<_>>();
+    let new_witnesses = new.into_values().collect::<Vec<_>>();
     let table = OutcomeTable::new(outcomes);
     let coverage = json!({
         "charts": comparison.charts_checked,
@@ -184,10 +188,9 @@ pub fn run_comparison(
         "adjudication_failures": comparison.helm_adjudication.adjudication_failures.len(),
         "live": live,
     });
-    comparison.witnesses.clear();
     Ok(ComparisonRun {
         table,
-        witnesses,
+        witness_count: witnesses.len(),
         new_witnesses,
         artifacts: pair.artifacts(),
         coverage,
@@ -196,8 +199,63 @@ pub fn run_comparison(
     })
 }
 
-/// Attaches each chart's universe witnesses for replay; returns every
-/// chart's identity and the ids replayed.
+/// What the recorder keeps of every judged witness: its verdicts, and the
+/// record of each witness the universe does not hold.
+#[derive(Default)]
+struct Judged {
+    witnesses: BTreeMap<String, JudgedWitness>,
+    new: BTreeMap<String, WitnessRecord>,
+    failures: Vec<String>,
+}
+
+/// Turns each witness the screening workers judge into its record, storing
+/// its documents as blobs, and keeps only its verdicts.
+struct Recorder {
+    identities: BTreeMap<String, ChartIdentity>,
+    known: BTreeSet<String>,
+    blobs: BlobStore,
+    origin: String,
+    judged: Mutex<Judged>,
+}
+
+impl Recorder {
+    fn record(&self, witness: &ScreenedWitness) -> color_eyre::Result<()> {
+        let record = match self.identities.get(&witness.chart) {
+            Some(identity) => Some(witness_record(
+                witness,
+                identity,
+                &self.blobs,
+                &self.origin,
+            )?),
+            None => None,
+        };
+        let mut judged = self
+            .judged
+            .lock()
+            .map_err(|_| color_eyre::eyre::eyre!("a witness recorder panicked"))?;
+        let Some(record) = record else {
+            judged
+                .failures
+                .push(format!("witness of unselected chart {}", witness.chart));
+            return Ok(());
+        };
+        if judged.witnesses.contains_key(&record.id) {
+            return Ok(());
+        }
+        judged.witnesses.insert(
+            record.id.clone(),
+            JudgedWitness::of(record.id.clone(), witness),
+        );
+        if !self.known.contains(&record.id) {
+            judged.new.insert(record.id.clone(), record);
+        }
+        Ok(())
+    }
+}
+
+/// Attaches each chart's universe witnesses for replay, materialized one
+/// at a time as the chart's worker judges them; returns every chart's
+/// identity and the ids replayed.
 fn attach_replay(
     keys: &BTreeMap<String, capture::ChartKey>,
     charts: &mut [crate::acceptance::ComparedChart],
@@ -217,6 +275,7 @@ fn attach_replay(
                 DiffError::Infrastructure(format!("{}: {error:#}", chart.label))
             })?,
         };
+        let mut records = Vec::new();
         for record in universe.witnesses.values().filter(|record| {
             record.identity.chart == chart.label
                 && record.identity.mode != history::WitnessMode::Observation
@@ -229,9 +288,13 @@ fn attach_replay(
                     record.id, chart.label
                 )));
             }
-            chart.replay.push(replay_witness(record, blobs)?);
             expected.insert(record.id.clone());
+            records.push(record.clone());
         }
+        let blobs = blobs.clone();
+        chart.replay = Replay::new(records.into_iter().map(move |record| {
+            replay_witness(&record, &blobs).map_err(|error| color_eyre::eyre::eyre!("{error}"))
+        }));
         identities.insert(chart.label.clone(), identity);
     }
     Ok((identities, expected))

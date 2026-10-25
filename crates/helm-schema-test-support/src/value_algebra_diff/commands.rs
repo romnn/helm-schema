@@ -609,83 +609,36 @@ fn write_tables(
         hashes.insert(name, write_lines(&out.join(file), &lines)?);
         Ok(())
     };
-    let lines = |values: &[Value]| values.iter().map(json_line).collect::<Result<Vec<_>, _>>();
-    let to_values = |result: Result<Vec<Value>, serde_json::Error>| {
-        result.map_err(|error| DiffError::Infrastructure(format!("serialize: {error}")))
-    };
     table(
         "outcomes",
         "outcomes.jsonl",
-        lines(&to_values(
-            run.table
-                .outcomes
-                .iter()
-                .map(serde_json::to_value)
-                .collect(),
-        )?)?,
+        jsonl(run.table.outcomes.iter())?,
     )?;
     table(
         "observations",
         "observations.jsonl",
-        lines(&to_values(
-            run.table
-                .observations
-                .iter()
-                .map(serde_json::to_value)
-                .collect(),
-        )?)?,
+        jsonl(run.table.observations.iter())?,
     )?;
     table(
         "admissions",
         "admissions.jsonl",
-        lines(&to_values(
-            run.table
-                .admissions
-                .iter()
-                .map(serde_json::to_value)
-                .collect(),
-        )?)?,
+        jsonl(run.table.admissions.iter())?,
     )?;
     table(
         "artifacts",
         "artifacts.jsonl",
-        lines(&to_values(
-            comparison
-                .artifacts
-                .iter()
-                .map(serde_json::to_value)
-                .collect(),
-        )?)?,
+        jsonl(comparison.artifacts.iter())?,
     )?;
-    table(
-        "changes",
-        "changes.jsonl",
-        lines(&to_values(
-            changes.iter().map(serde_json::to_value).collect(),
-        )?)?,
-    )?;
+    table("changes", "changes.jsonl", jsonl(changes.iter())?)?;
     table(
         "regressions",
         "regressions.jsonl",
-        lines(&to_values(
-            run.table
-                .regressions()
-                .iter()
-                .map(serde_json::to_value)
-                .collect(),
-        )?)?,
+        jsonl(run.table.regressions().iter())?,
     )?;
     table(
         "closures",
         "closures.tsv",
         run.table.closures().into_iter().collect(),
-    )?;
-    table(
-        "witnesses",
-        "witnesses.jsonl",
-        lines(&to_values(
-            run.witnesses.values().map(serde_json::to_value).collect(),
-        )?)?,
     )?;
     let mut coverage = run.coverage.clone();
     if let Some(members) = coverage.as_object_mut() {
@@ -722,6 +675,11 @@ fn unadjudicated_changes(changes: &[ArtifactChange]) -> Vec<String> {
             )
         })
         .collect()
+}
+
+/// One canonical JSON line per item, serialized one at a time.
+fn jsonl<T: Serialize>(items: impl IntoIterator<Item = T>) -> Result<Vec<String>, DiffError> {
+    items.into_iter().map(|item| json_line(&item)).collect()
 }
 
 /// Reports infrastructure `problems` (exit code 3) and fails with them.
@@ -778,14 +736,14 @@ pub fn self_test(
     let counts = comparison.run.table.class_counts();
     let mut problems = comparison.run.table.inequalities();
     problems.extend(unadjudicated_changes(&changes));
-    if comparison.run.witnesses.is_empty() || comparison.run.table.observations.is_empty() {
+    if comparison.run.witness_count == 0 || comparison.run.table.observations.is_empty() {
         problems.push("vacuous: no schema witness or observation was judged".to_string());
     }
     problems.extend(comparison.failures.iter().cloned());
     let report = json!({
         "mode": "self-test",
         "main": main.hash, "candidate": candidate.hash,
-        "witnesses": comparison.run.witnesses.len(),
+        "witnesses": comparison.run.witness_count,
         "observations": comparison.run.table.observations.len(),
         "admission_cells": comparison.run.table.admissions.len(),
         "classes": counts.iter().map(|(class, count)| (format!("{class:?}"), count)).collect::<BTreeMap<_, _>>(),
@@ -1121,11 +1079,11 @@ pub fn init(
         return Err(DiffError::Infrastructure(comparison.failures.join("; ")));
     }
     let mut problems = comparison.run.table.inequalities();
-    if !changes.is_empty() || comparison.run.witnesses.is_empty() {
+    if !changes.is_empty() || comparison.run.witness_count == 0 {
         problems.push(format!(
             "main does not compare equally with itself: {} changes, {} witnesses",
             changes.len(),
-            comparison.run.witnesses.len()
+            comparison.run.witness_count
         ));
     }
     if !problems.is_empty() {

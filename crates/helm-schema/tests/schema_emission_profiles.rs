@@ -17,7 +17,7 @@ use helm_schema_test_support::acceptance::{
     AcceptanceComparison, AcceptanceResult, AdjudicatedProbe, AdjudicationFailure, ChartCost,
     ChartInputs, ComparedChart, ComparisonConfig, DeclaredTypesAnnotation, FailureKind,
     HelmAdjudicationCoverage, HelmFlipVerdict, LiveChart, LoadedInputs, ObservedFalseAcceptance,
-    ObservedUndecidedAcceptance, PoolReport, ScreenedChart, compare_charts, fold_results,
+    ObservedUndecidedAcceptance, PoolReport, Replay, ScreenedChart, compare_charts, fold_results,
 };
 use lint_adjudication::{
     adjudicate_flip, adjudicate_lint_flip, adjudicate_probe_group, adjudicate_round74_flip,
@@ -1938,7 +1938,6 @@ fn round73_fixture_flips_are_adjudicated_and_probe_caps_are_disclosed() -> eyre:
         helm_adjudication,
         costs: _,
         pool: _,
-        witnesses: _,
         adjudications: _,
     } = corpus_acceptance_comparison()?;
     let baseline_ref = baseline_ref()?;
@@ -2092,7 +2091,6 @@ fn round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced() -> eyre::
         helm_adjudication,
         costs,
         pool,
-        witnesses: _,
         adjudications: _,
     } = corpus_acceptance_comparison()?;
     write_invocation_report(&costs, pool.as_ref())?;
@@ -2205,7 +2203,7 @@ fn external_schema_pair_flips_are_helm_adjudicated() -> eyre::Result<()> {
             defaults,
         },
         annotation: None,
-        replay: Vec::new(),
+        replay: Replay::default(),
     }];
     let config = battery_config(&charts)?;
     let comparison = compare_charts(charts, &config)?;
@@ -2352,7 +2350,7 @@ fn fixture_chart(
             candidate_path,
         },
         annotation,
-        replay: Vec::new(),
+        replay: Replay::default(),
     }
 }
 
@@ -2382,7 +2380,7 @@ fn battery_config(charts: &[ComparedChart]) -> eyre::Result<ComparisonConfig> {
         kubernetes,
         contexts,
         pool: PoolLimits::from_env()?,
-        record_witnesses: false,
+        witnesses: None,
         helm: None,
     })
 }

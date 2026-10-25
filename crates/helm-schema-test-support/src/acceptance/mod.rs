@@ -41,9 +41,10 @@ pub struct ComparisonConfig {
     pub contexts: Option<ImportedRoster>,
     /// Worker and memory bounds.
     pub pool: PoolLimits,
-    /// Whether every discovered and replayed probe and document is reported
-    /// as a [`ScreenedWitness`], not only the flips.
-    pub record_witnesses: bool,
+    /// Receives every discovered and replayed probe and document as a
+    /// [`ScreenedWitness`] the moment it is judged, not only the flips;
+    /// nothing keeps them, so memory stays bounded by one chart's screening.
+    pub witnesses: Option<std::sync::Arc<WitnessSink>>,
     /// The pinned Helm runner live adjudication uses; `None` uses the
     /// process's shared runner.
     pub helm: Option<&'static crate::helm::invocation::HelmRunner>,
@@ -264,8 +265,6 @@ pub struct AcceptanceComparison {
     pub costs: Vec<ChartCost>,
     /// The pool the comparison ran on.
     pub pool: Option<PoolReport>,
-    /// Every discovered or replayed witness, when recording, in chart order.
-    pub witnesses: Vec<ScreenedWitness>,
     /// Every live adjudication's outcome, in chart and flip order.
     pub adjudications: Vec<AdjudicationRecord>,
 }
@@ -402,7 +401,39 @@ pub struct ComparedChart {
     pub annotation: Option<DeclaredTypesAnnotation>,
     /// Earlier witnesses of this chart to judge again, outside every
     /// discovery cap.
-    pub replay: Vec<ScreenedWitness>,
+    pub replay: Replay,
+}
+
+/// Where a recording comparison hands each judged witness. It is called
+/// from the screening workers, one witness at a time.
+pub type WitnessSink = dyn Fn(ScreenedWitness) -> eyre::Result<()> + Send + Sync;
+
+/// A chart's earlier witnesses, produced one at a time so that no chart's
+/// replayed documents are held together.
+pub struct Replay(Box<dyn Iterator<Item = eyre::Result<ScreenedWitness>> + Send>);
+
+impl Replay {
+    /// Replays the witnesses `witnesses` yields.
+    pub fn new(
+        witnesses: impl Iterator<Item = eyre::Result<ScreenedWitness>> + Send + 'static,
+    ) -> Self {
+        Self(Box::new(witnesses))
+    }
+}
+
+impl Default for Replay {
+    /// Replays nothing.
+    fn default() -> Self {
+        Self::new(std::iter::empty())
+    }
+}
+
+impl Iterator for Replay {
+    type Item = eyre::Result<ScreenedWitness>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next()
+    }
 }
 
 /// Where a compared chart's schemas and defaults come from.
@@ -587,8 +618,6 @@ pub struct ScreenedChart {
     pub helm: Option<std::sync::Arc<ChartHelm>>,
     /// Its cost.
     pub cost: ChartCost,
-    /// Its recorded witnesses.
-    pub witnesses: Vec<ScreenedWitness>,
 }
 
 /// The live adjudication of one screened flip.
@@ -635,7 +664,7 @@ fn compare(
         kubernetes,
         contexts: roster,
         pool: limits,
-        record_witnesses,
+        witnesses,
         helm,
     } = config;
     let limits = *limits;
@@ -659,7 +688,7 @@ fn compare(
                     *chart,
                     adjudicate_live,
                     roster.as_ref(),
-                    *record_witnesses,
+                    witnesses.as_deref(),
                     *helm,
                 ) {
                     Ok(screened) => screened,
@@ -748,7 +777,6 @@ pub fn fold_results(
                 }
                 comparison.coverage.push(screened.coverage);
                 comparison.costs.push(screened.cost);
-                comparison.witnesses.extend(screened.witnesses);
                 helm_charts.push(screened.helm);
             }
             AcceptanceResult::Probe(probe) => {

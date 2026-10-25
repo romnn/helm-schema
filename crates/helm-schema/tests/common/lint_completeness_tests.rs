@@ -41,7 +41,7 @@ fn screen_external(
                 defaults: json!({"enabled":false}),
             },
             annotation: None,
-            replay: Vec::new(),
+            replay: helm_schema_test_support::acceptance::Replay::default(),
         },
         false,
         roster,

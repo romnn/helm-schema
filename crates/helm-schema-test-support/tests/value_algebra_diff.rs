@@ -14,9 +14,9 @@ use helm_schema_test_support::acceptance::{
 use helm_schema_test_support::manifest::{MANIFEST_FILE, Manifest};
 use helm_schema_test_support::value_algebra_diff::capture::{ArtifactPair, DumpPair, VerifiedDump};
 use helm_schema_test_support::value_algebra_diff::compare::{
-    ChartIdentity, Class, ConstructionRequest, LedgerRow, OracleAnswer, OutcomeTable, PriorSets,
-    RegressionKey, SeedReview, WitnessOutcome, classify, construction_policy, replay_witness,
-    witness_record,
+    ChartIdentity, Class, ConstructionRequest, JudgedWitness, LedgerRow, OracleAnswer,
+    OutcomeTable, PriorSets, RegressionKey, SeedReview, WitnessOutcome, classify,
+    construction_policy, replay_witness, witness_record,
 };
 use helm_schema_test_support::value_algebra_diff::controls::{
     ControlResult, EngineMode, ObservationOutcome, Score, UnsupportedReason,
@@ -436,7 +436,7 @@ fn check(cases: Vec<Case>) {
     {
         let witness = verdict_witness(baseline, candidate, transition);
         let record = adjudication.map(adjudicated);
-        let outcome = classify("id", &witness, record.as_ref());
+        let outcome = classify(&JudgedWitness::of("id".into(), &witness), record.as_ref());
         sim_assert_eq!(
             have: (outcome.class, outcome.oracle, outcome.direction.as_deref()),
             want: (class, oracle, direction)
