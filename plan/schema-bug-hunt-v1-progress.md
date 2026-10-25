@@ -9395,4 +9395,23 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   and 542 files identical), T0 differential tool rework after sol REWORK (13 P1s, Opus), CRD-oracle extraction from Track G (Codex
   sol 20261025T040919-78091260; triage 20261025T030829-d84b3e5a picked it as the best interpreter-independent track). R3a fix-ups
   committed (r3a e0ae224c / r3b b64028f0): all gates 0 incl. task lint and lint:fc 54 PASS. Orchestrator.
-Next: T0 rework → re-review → landing 15 (T0 test infra) and merge into r3b/construction; CRD oracle hand-back → review → landing; R3b C02 hand-back → two sol lens reviews.
+- 18:34 (Oct 25) — **Landing 15 (chart-CRD oracle, crd-oracle/extract 79bc569a, merge 9cc6e336) FAILED at battery after
+  1 h 53 min; R3b performance reviews in; R3b is the user's top priority.** Chain run1 (E=/Volumes/T7/dev/round8-landing15-run1):
+  dump/unit/lint OK, battery exit 100 after 6,776 s, slowed by host contention (load up to 59). The cause is
+  known_inherited_failures.rs:410: two kube-starrocks LintRaw rows that 79bc569a re-recorded at 2087e952 with a
+  generator-attribution reason (overlays operator.global.rbac.create=true and starrocks.configMaps=[]) are stale. The chain
+  instead observes "unusable defaults Kubernetes control: uncertainty: StarRocksCluster pinned CRD schema not found".
+  Hypothesis, unverified: the builder observed the rows with a live crdcheck binary, while ordinary gates only replay
+  testdata/crdcheck (3 files). The Opus fixer is on clone round8-l15fix, branch fix/l15-starrocks-replay. A testdata/crdcheck
+  change is a non-test path for the runner, so the rerun needs a fresh dump. The rerun will therefore combine landing 15, the
+  starrocks fix and the test:all fresh-clone fix (b534d184 + 8e731d9a, LAND), which was planned as landing 16, in one chain.
+  User 17:0x: land R3b as soon as possible and keep landing throughput with parallel lanes. R3b performance: four reviews ran
+  on snapshot 5abc47ca (c2d44404 + C03 WIP; clone round8-r3b-perf): astra architecture, sol algorithmic
+  (20261025T162323-90259d41), sol representation (20261025T162327-5a7840d2) and the Opus profile (still running). They are
+  consolidated as P1–P12 in /Volumes/T7/dev/round8/r3b-perf-consolidated.md. Root cause: whole-State forks that fail to
+  reconverge; kube-prometheus-stack dashboard files entered with 18→2,304 states. The R3b astra builder owns P1–P3 and P9.
+  An Opus perf builder owns P4–P8 (byte-identical representation changes; clone round8-r3b-perfbuild, branch
+  r3b/perf-representation). The C08a certified helper memo is brought forward to right after C03: design and eligibility in
+  round8-r3b-perf/review/c08a-*, with 97% / 82% / 57% of include sites statically eligible in kube-prometheus-stack / datadog /
+  kyverno. agentmux issues #16–#18 filed. Orchestrator.
+Next: starrocks replay fix → assemble landing 15 run2 (crd-oracle + fix + test:all fix) with a fresh E; R3b C03 commit → hand perf commits P4–P8 to the builder, start C08a and C06a slices; Opus profile → re-rank P-list.
