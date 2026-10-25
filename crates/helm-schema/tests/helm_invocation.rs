@@ -1242,7 +1242,12 @@ fn resident_protocol_failures_are_harness_failures() -> eyre::Result<()> {
     let programs = ScratchDir::new("helm_invocation")?;
     let answer = |line: &str| format!("while read -r request; do printf '%s\\n' '{line}'; done");
     for (name, body, expected) in [
-        ("exits", "exit 0".to_string(), "without answering"),
+        // Consume the request so the client observes EOF while reading the reply.
+        (
+            "exits",
+            "read -r request; exit 0".to_string(),
+            "without answering",
+        ),
         ("garbage", answer("not json"), "malformed answer"),
         (
             "other-id",
