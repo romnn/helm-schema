@@ -31,6 +31,7 @@ mod selection_reachability;
 mod state;
 mod symbolic_local_state;
 mod url_parse_pattern;
+mod value_runtime;
 
 use crate::{Guard, SymbolicIrContext, ValueKind, YamlPath};
 use color_eyre::eyre;
