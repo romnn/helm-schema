@@ -9364,4 +9364,27 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   byte-identity rule. Provider negative-cache audit (Codex 20261024T165549-6af5151f): all 97 vendored not-found markers are genuine
   upstream 404s; fixed stale negatives surviving an HTTP 200 refresh (05a16b16, +14 LOC, 0 fixtures), in review. Differential tool
   for R3b (Opus, clone round8-difftool) in progress. Orchestrator.
-Next: landing 13 = battery accounting fix + provider negative-cache fix once both reviews say LAND; R2 T/C then family-scope decision (R2-11 closures + certificate report); R3a State facade; difftool T0; then R3b construction on R2+R3a.
+- 03:1x CET (Oct 25) — **LANDED: landing 13 merged as 187cea8f (battery schema-only accounting, chain green); landing 14 running
+  (provider negative-cache fix). SCOPE DECISION: R2 stops at S+T+C; the next interpreter landing is the R3b cut-over; R3b
+  construction started.** Landing 13 = c8554013: schema-only runs defer forced PartialOverride LintRaw audits only when the chart's
+  baseline and candidate schema bytes are identical (sol 20261024T162253-00da4305 REWORK ×3 → LAND; the assertion comparator was
+  replaced by the byte-identity rule, net −273 test lines); 0 adopted; receipt /Volumes/T7/dev/round8-landing13-run1/receipt.json
+  sha256 c9782cf2…; steps dump 01:11 CEST … green 02:23 CET (the clock went back 1 h mid-chain). Landing 14 = ee522059
+  (bundle/not-found-audit): all 97 vendored not-found markers are genuine upstream 404s; an HTTP 200 refresh now clears both negative
+  stores and records a shared supersession so a contradicted marker is never trusted (sol 20261024T193823-54110e5d REWORK → LAND;
+  task test:all 0); chain started 04:04 CET (E=round8-landing14-run1). R2 decision (orchestrator, user delegated scope calls to
+  "more correct and/or simpler"; design-r2.md §8): W's measurement-first report certifies 10/165 corpus charts and 0/44 luup2
+  charts (873/1,382 synthetic admission charts); under R2-11 (new rejections only at unconditional sites, because builder
+  witnesses showed legacy guard errors the certificate cannot exclude — helper shadow snapshots, `fromJson "[]"` folded falsy) the
+  kind families would close synthetic cells only, for ~+1,000 temporary LOC. So W is parked unlanded and the families, F2, D4,
+  nilness and determinism move to R3b. R2 final (r2/kind-leaf 90759086): S seal, T Go-type leaf, C catalog owner + legacy
+  compatibility views, lint fixes, prune (−105), re-tags; every gate 0 incl. task lint and lint:fc 54 PASS; 542 files and 1,418
+  admission hashes identical to main; +545 production LOC. R3a (r3a/single-execution c20172bb, rebased onto R2 final by the
+  orchestrator; 3 test-code compile errors being fixed by its builder): 8 rows retired, 12 deferred to R3b, State facade, −22 LOC,
+  byte-identical. Deviation from D3's L3/L4 sequence: neither R2 (no closures) nor R2+R3a (net +523 LOC, fails clause 2b(iv))
+  can land alone; they are the base of the R3b construction branch. R3b construction: astra builder 20261025T030721-dcd1829e,
+  clone round8-r3b, branch r3b/construction 3a473b9c, brief /Volumes/T7/dev/round8/brief-r3b-construction.md. Differential tool T0
+  (Opus, r3b/differential-tool e9f2a2fc; main-vs-main PASS 271,528 identical, main-vs-perturbed FAIL as intended) in sol review
+  20261025T030526-1760fdd7. Disk: removed ~165 GiB of idle targets (r1b, w1-opus, lint10c, devbin, guards); killed a session-6
+  orphan wait loop (PID 38797). Orchestrator.
+Next: merge landing 14 on chain green; T0 review → land T0 (test infra) and merge it into r3b/construction; R3a rebase fix-ups → merge into r3b/construction; R3b C01/C02 hand-back → review (two sol lenses).
