@@ -970,10 +970,10 @@ fn partial_scalar_keeps_ordered_parts() {
                     when always:
                       scalar [splice prefix partial text{"-"} splice suffix partial]
                   key "host":
-                    when always:
+                    when !(truthy(host)):
                       scalar [text{"localhost"} text{":8080"}]
                     when truthy(host):
-                      scalar [splice host partial defaulted text{":8080"}]
+                      scalar [splice host partial text{":8080"}]
     "#};
     assert_fragment_dump(source, "", expected);
 }

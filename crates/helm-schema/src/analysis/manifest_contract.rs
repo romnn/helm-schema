@@ -1,7 +1,6 @@
 use helm_schema_ast::contains_template_action;
-use helm_schema_ir::{ContractIr, Guard, SymbolicIrContext};
+use helm_schema_ir::{ContractIr, Guard, SymbolicIrContext, SymbolicTemplate};
 use helm_schema_k8s::LocalResourceSchema;
-use vfs::VfsPath;
 
 use super::local_crd_projection::local_resource_schemas_from_template_source;
 use crate::chart;
@@ -19,10 +18,39 @@ pub(crate) fn collect_manifest_contract_for_chart(
     let mut local_resource_schemas = Vec::new();
     let activation_guard_sets = chart_activation_guard_sets(&chart.dependency_activation_chain);
 
-    for file in loaded_chart.files_with_role(chart::FileRole::ManifestTemplate) {
-        let source = file.source()?;
-        let (mut manifest_contract, template_local_resource_schemas) =
-            collect_manifest_contract_for_template(source, &file.path, symbolic_context)?;
+    let files = loaded_chart
+        .files_with_role(chart::FileRole::ManifestTemplate)
+        .chain(loaded_chart.files_with_role(chart::FileRole::NotesTemplate))
+        .map(|file| {
+            Ok(ManifestSource {
+                source: file.source()?,
+                path: file.path.as_str(),
+                name: chart::template_execution_name(chart, &file.path),
+                textual: file.has_role(chart::FileRole::NotesTemplate),
+            })
+        })
+        .collect::<EngineResult<Vec<_>>>()?;
+    let sources: Vec<_> = files
+        .iter()
+        .map(|file| SymbolicTemplate {
+            source: file.source,
+            source_path: &file.name,
+        })
+        .collect();
+    let contracts = symbolic_context.generate_contract_irs_for_sources(&sources);
+    for (file, mut manifest_contract) in files.iter().zip(contracts) {
+        let source = file.source;
+        // NOTES executes in the same schedule, but its prose is not a YAML manifest.
+        let template_local_resource_schemas = if file.textual {
+            manifest_contract.mark_rendered_output_textual();
+            Vec::new()
+        } else {
+            local_resource_schemas_from_template_source(
+                source,
+                file.path,
+                contains_template_action(source)?,
+            )?
+        };
         manifest_contract.map_value_paths(|path| {
             helm_schema_core::ValuesPath::parse(&chart::scope_values_path(
                 &path.encode(),
@@ -50,54 +78,22 @@ pub(crate) fn collect_manifest_contract_for_chart(
         local_resource_schemas.extend(template_local_resource_schemas);
     }
 
-    // Helm executes `templates/NOTES.txt` too: its consumers and terminal
-    // effects (a `tpl` on a values string, a migration `fail`) are schema
-    // evidence like any manifest's. Its prose is NOT a manifest — resource
-    // schema extraction would try to YAML-parse free text (ASCII art,
-    // indented URLs) and fail, so only the contract lane runs here.
-    for file in loaded_chart.files_with_role(chart::FileRole::NotesTemplate) {
-        let source = file.source()?;
-        let mut notes_contract =
-            symbolic_context.generate_contract_ir_for_source(source, file.path.as_str());
-        // NOTES is a Go-template text program, not YAML. Direct holes use
-        // Go's textual formatting and therefore impose no input shape; real
-        // strict calls and terminal effects remain in their own channels.
-        notes_contract.mark_rendered_output_textual();
-        notes_contract.map_value_paths(|path| {
-            helm_schema_core::ValuesPath::parse(&chart::scope_values_path(
-                &path.encode(),
-                &chart.values_prefix,
-            ))
-        });
-        notes_contract.project_dependency_global_contracts(&chart.values_prefix);
-        notes_contract = apply_chart_activation_guard_sets(notes_contract, &activation_guard_sets);
-        contract.append(notes_contract);
-    }
-
     Ok(ManifestContractAnalysis {
         contract,
         local_resource_schemas,
     })
 }
 
+struct ManifestSource<'a> {
+    source: &'a str,
+    path: &'a str,
+    name: String,
+    textual: bool,
+}
+
 pub(crate) struct ManifestContractAnalysis {
     pub(crate) contract: ContractIr,
     pub(crate) local_resource_schemas: Vec<LocalResourceSchema>,
-}
-
-#[tracing::instrument(skip_all)]
-fn collect_manifest_contract_for_template(
-    source: &str,
-    path: &VfsPath,
-    symbolic_context: &SymbolicIrContext,
-) -> EngineResult<(ContractIr, Vec<LocalResourceSchema>)> {
-    let contract = symbolic_context.generate_contract_ir_for_source(source, path.as_str());
-    let local_resource_schemas = local_resource_schemas_from_template_source(
-        source,
-        path.as_str(),
-        contains_template_action(source)?,
-    )?;
-    Ok((contract, local_resource_schemas))
 }
 
 fn apply_chart_activation_guard_sets(

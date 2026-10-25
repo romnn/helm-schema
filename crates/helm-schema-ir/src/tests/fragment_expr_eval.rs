@@ -22,21 +22,70 @@ struct ExecutedObservation {
 }
 
 impl ExecutedObservation {
+    fn subject_sites(&self) -> impl Iterator<Item = &crate::value::ExecutedSite> {
+        self.execution.sites().filter(|site| {
+            site.rendered() && site.source_path().is_none() && site.span() == self.value_span
+        })
+    }
+
     fn value(&self) -> Option<AbstractValue> {
         AbstractValue::merge_all(
-            self.execution
-                .sites()
-                .filter(|site| {
-                    site.rendered()
-                        && site.source_path().is_none()
-                        && site.span() == self.value_span
-                })
+            self.subject_sites()
                 .map(|site| site.projected_value())
                 .collect(),
         )
     }
 
+    fn captured_boolean_truth(&self) -> Option<Predicate> {
+        let mut observed = false;
+        let mut coverage = Vec::new();
+        let mut when_true = Vec::new();
+        for site in self.subject_sites() {
+            observed = true;
+            if !site.coverage_exact() || site.condition().contains_approximation() {
+                return None;
+            }
+            for alternative in site.value().alternatives() {
+                if !alternative.coverage_exact() || alternative.condition().contains_approximation()
+                {
+                    return None;
+                }
+                let Some(GuardValue::Bool(truth)) = alternative.value().literal() else {
+                    return None;
+                };
+                let condition = Predicate::all(vec![
+                    site.condition().clone(),
+                    alternative.condition().clone(),
+                ])
+                .normalize_boolean();
+                coverage.push(condition.clone());
+                if *truth {
+                    when_true.push(condition);
+                }
+            }
+        }
+        let normal_coverage = Predicate::Or(
+            self.execution
+                .text()
+                .map(|(condition, _)| condition)
+                .collect(),
+        )
+        .normalize_boolean();
+        if !observed || Predicate::Or(coverage).normalize_boolean() != normal_coverage {
+            return None;
+        }
+        Some(Predicate::Or(when_true).normalize_boolean())
+    }
+
     fn exact_truth(&self) -> Option<Predicate> {
+        if self.subject_sites().next().is_some()
+            && self
+                .subject_sites()
+                .all(|site| site.value().go_type() == crate::value::kinds::GoType::Bool)
+        {
+            // Guarded Boolean values remain exact when their rendered bytes differ by branch.
+            return self.captured_boolean_truth();
+        }
         (!self
             .execution
             .text_for_span(self.truth_span, None)
@@ -57,11 +106,7 @@ impl ExecutedObservation {
     }
 
     fn output_paths(&self) -> BTreeSet<ValuesPath> {
-        self.execution
-            .sites()
-            .filter(|site| {
-                site.rendered() && site.source_path().is_none() && site.span() == self.value_span
-            })
+        self.subject_sites()
             .flat_map(|site| site.value().inputs())
             .collect()
     }
@@ -129,7 +174,7 @@ fn helper_result_from_expr_with_fragment_locals(
     let start = source.len();
     source.push_str("{{ $__result }}");
     let value_span = helm_schema_syntax::Span::new(start, source.len());
-    source.push_str("\n{{ if $__result }}");
+    source.push_str("\n{{ if $__result }}# ");
     let start = source.len();
     source.push_str("selected");
     let truth_span = helm_schema_syntax::Span::new(start, source.len());
@@ -160,6 +205,7 @@ fn expression_source(expression: &TemplateExpr) -> String {
         TemplateExpr::Literal(Literal::String(text) | Literal::RawString(text)) => {
             format!("{text:?}")
         }
+        TemplateExpr::Literal(Literal::UnresolvedString(source)) => source.clone(),
         TemplateExpr::Literal(Literal::Int(value)) => value.to_string(),
         TemplateExpr::Literal(Literal::Float(value)) => format!("{value:?}"),
         TemplateExpr::Literal(Literal::Bool(value)) => value.to_string(),
@@ -1036,6 +1082,9 @@ fn literal_helper_dispatch_uses_the_values_root_as_its_actual_dot() {
         &mut seen,
     );
 
+    let sites_before = result.execution.all_sites().count();
+    sim_assert_eq!(have: result.captured_boolean_truth(), want: Some(Predicate::truthy_path("useFIPSAgent")));
+    sim_assert_eq!(have: result.execution.all_sites().count(), want: sites_before);
     sim_assert_eq!(
         have: result.exact_truth(),
         want: Some(Predicate::truthy_path("useFIPSAgent")),
@@ -1110,6 +1159,9 @@ fn nested_helper_scalar_output_reuses_the_inner_dispatch() {
         &mut seen,
     );
 
+    let sites_before = result.execution.all_sites().count();
+    sim_assert_eq!(have: result.captured_boolean_truth(), want: Some(Predicate::truthy_path("feature.enabled")));
+    sim_assert_eq!(have: result.execution.all_sites().count(), want: sites_before);
     sim_assert_eq!(
         have: result.exact_truth(),
         want: Some(Predicate::truthy_path("feature.enabled")),
@@ -1269,7 +1321,7 @@ fn exact_helper_arm_survives_an_unmodeled_sibling_branch() {
     let analysis_db = IrAnalysisDb::new(&defines);
     let context = helper_context(&analysis_db);
     let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
-    let expr = single_expr(r#"include "feature.mode" .Values"#);
+    let expr = single_expr(r#"include "feature.mode" ."#);
     let mut seen = HashSet::new();
 
     let result = helper_result_from_expr_with_fragment_locals(
@@ -1282,13 +1334,23 @@ fn exact_helper_arm_survives_an_unmodeled_sibling_branch() {
     );
 
     let exact = result
-        .execution
-        .sites()
-        .filter(|site| site.span() == result.value_span)
-        .filter_map(|site| {
+        .subject_sites()
+        .flat_map(|site| {
             site.value()
-                .exact_text()
-                .map(|text| (site.condition().clone(), text))
+                .alternatives()
+                .into_iter()
+                .filter_map(move |arm| {
+                    if !site.coverage_exact() || !arm.coverage_exact() {
+                        return None;
+                    }
+                    arm.value().exact_text().map(|text| {
+                        (
+                            Predicate::all(vec![site.condition().clone(), arm.condition().clone()])
+                                .normalize_boolean(),
+                            text,
+                        )
+                    })
+                })
         })
         .collect::<BTreeSet<_>>();
     assert!(
@@ -1325,7 +1387,7 @@ fn print_literal_helper_arms_form_an_exact_scalar_dispatch() {
     let analysis_db = IrAnalysisDb::new(&defines);
     let context = helper_context(&analysis_db);
     let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
-    let expr = single_expr(r#"eq (include "feature.mode" .Values) "enabled""#);
+    let expr = single_expr(r#"eq (include "feature.mode" .) "enabled""#);
     let mut seen = HashSet::new();
 
     let result = helper_result_from_expr_with_fragment_locals(
@@ -1337,6 +1399,9 @@ fn print_literal_helper_arms_form_an_exact_scalar_dispatch() {
         &mut seen,
     );
 
+    let sites_before = result.execution.all_sites().count();
+    sim_assert_eq!(have: result.captured_boolean_truth(), want: Some(Predicate::truthy_path("feature.enabled")));
+    sim_assert_eq!(have: result.execution.all_sites().count(), want: sites_before);
     sim_assert_eq!(
         have: result.exact_truth(),
         want: Some(Predicate::truthy_path("feature.enabled")),
@@ -1485,6 +1550,9 @@ fn helper_local_reassignments_join_into_one_scalar_dispatch() {
         &mut seen,
     );
 
+    let sites_before = result.execution.all_sites().count();
+    sim_assert_eq!(have: result.captured_boolean_truth(), want: Some(Predicate::truthy_path("feature.enabled")));
+    sim_assert_eq!(have: result.execution.all_sites().count(), want: sites_before);
     sim_assert_eq!(
         have: result.exact_truth(),
         want: Some(Predicate::truthy_path("feature.enabled")),
@@ -1957,7 +2025,7 @@ fn helper_scalar_output_retains_known_arms_beside_an_unknown_arm() {
             {{- define "feature.partial" -}}
             {{- if .Values.feature.explicit -}}
             true
-            {{- else if mystery .Values.feature.dynamic -}}
+            {{- else if and .Values.feature.dynamic (eq (randAlphaNum 1) "a") -}}
             true
             {{- else -}}
             false
@@ -1999,7 +2067,7 @@ fn helper_scalar_output_combines_structural_and_projected_known_arms() {
             {{- .Values.feature.explicit -}}
             {{- else if .Values.feature.static -}}
             true
-            {{- else if mystery .Values.feature.dynamic -}}
+            {{- else if and .Values.feature.dynamic (eq (randAlphaNum 1) "a") -}}
             true
             {{- else -}}
             false
@@ -2061,7 +2129,7 @@ fn partial_helper_conditions_keep_typed_subsets_in_both_control_lanes() {
             {{- define "feature.partial" -}}
             {{- if .Values.feature.explicit -}}
             true
-            {{- else if mystery .Values.feature.dynamic -}}
+            {{- else if and .Values.feature.dynamic (eq (randAlphaNum 1) "a") -}}
             true
             {{- else -}}
             false
@@ -2171,16 +2239,54 @@ fn outer_expr_fragment_local_selector_uses_shared_expression_eval() {
 }
 
 #[test]
-fn helper_value_fragment_local_selector_uses_shared_expression_eval() {
-    let binding = helper_value_from_fragment_locals(
-        r"$ctx.config.name | toYaml | fromYaml",
-        &context_local(),
-    );
-
-    sim_assert_eq!(
-        have: binding,
-        want: Some(values_path!("serviceAccount.name"))
-    );
+fn helper_value_fragment_local_selector_uses_shared_expression_eval() -> eyre::Result<()> {
+    let source = indoc! {r#"
+        {{- $ctx := dict "config" .Values.serviceAccount -}}
+        {{- $decoded := $ctx.config.name | toYaml | fromYaml -}}
+        data: {{ $decoded | toJson | quote }}
+    "#};
+    let document = helm_schema_syntax::TemplatedDocument::parse(source);
+    let assignment = document
+        .actions()
+        .iter()
+        .find(|action| {
+            source
+                .get(action.span.start..action.span.end)
+                .is_some_and(|text| {
+                    parse_action_expressions(text).iter().any(|expression| {
+                        matches!(expression,
+                TemplateExpr::VariableDefinition { name, value: _ } if name == "$decoded")
+                    })
+                })
+        })
+        .ok_or_eyre("decoded assignment missing")?
+        .span;
+    let db = IrAnalysisDb::new(&DefineIndex::new());
+    let execution = crate::value::execute_document(source, None, &db);
+    let sites = execution
+        .all_sites()
+        .filter(|site| site.span() == assignment)
+        .collect::<Vec<_>>();
+    assert!(!sites.is_empty(), "decoded local value was not observed");
+    for site in sites {
+        sim_assert_eq!(have: site.value().identity(), want: None);
+        sim_assert_eq!(have: site.value().go_type(), want: crate::value::kinds::GoType::Map);
+        sim_assert_eq!(have: site.value().inputs(), want: BTreeSet::from([ValuesPath::parse("serviceAccount.name")]));
+    }
+    for (source, expected) in [
+        (
+            r#"{{ $ctx := dict "config" (dict "name" (dict "key" "old")) }}{{ $decoded := $ctx.config.name | toYaml | fromYaml }}{{ $_ := set $ctx.config.name "key" "new" }}data: {{ get $decoded "key" | quote }}"#,
+            r#"data: "old""#,
+        ),
+        (
+            r#"{{ $ctx := dict "config" (dict "name" "foo") }}{{ $decoded := $ctx.config.name | toYaml | fromYaml }}data: {{ hasKey $decoded "Error" | quote }}"#,
+            r#"data: "true""#,
+        ),
+    ] {
+        let execution = crate::value::execute_document(source, None, &db);
+        sim_assert_eq!(have: execution.text().map(|(_, text)| text.exact_text()).collect::<Vec<_>>(), want: vec![Some(expected.to_owned())]);
+    }
+    Ok(())
 }
 
 #[test]
@@ -2809,4 +2915,49 @@ fn overlapping_unknown_arm_abstains_from_the_helper_dispatch_for_good() -> eyre:
             .any(|branch| branch.contains(&Predicate::truthy_path("namespaceOverride")))
     );
     Ok(())
+}
+
+#[test]
+fn captured_boolean_truth_abstains_on_partial_alternatives() {
+    let db = IrAnalysisDb::new(&DefineIndex::new());
+    let result = helper_result_from_expr_with_fragment_locals(
+        &single_expr(r#"ternary true false (eq (randAlphaNum 1) "x")"#),
+        &HashMap::new(),
+        None,
+        None,
+        &db,
+        &mut HashSet::new(),
+    );
+    sim_assert_eq!(have: result.captured_boolean_truth(), want: None);
+    sim_assert_eq!(have: result.exact_truth(), want: None);
+}
+
+#[test]
+fn captured_boolean_truth_does_not_coerce_incompatible_scalar_arms() {
+    let db = IrAnalysisDb::new(&DefineIndex::new());
+    let result = helper_result_from_expr_with_fragment_locals(
+        &single_expr(r#"ternary true "false" (hasKey .Values "choose")"#),
+        &HashMap::new(),
+        None,
+        None,
+        &db,
+        &mut HashSet::new(),
+    );
+    sim_assert_eq!(have: result.captured_boolean_truth(), want: None);
+    sim_assert_eq!(have: result.exact_truth(), want: Some(Predicate::True));
+}
+
+#[test]
+fn captured_boolean_truth_requires_the_whole_normal_execution_region() {
+    let db = IrAnalysisDb::new(&DefineIndex::new());
+    let result = helper_result_from_expr_with_fragment_locals(
+        &single_expr("true"),
+        &HashMap::new(),
+        None,
+        Some(&values_path!("scope")),
+        &db,
+        &mut HashSet::new(),
+    );
+    sim_assert_eq!(have: result.captured_boolean_truth(), want: None);
+    sim_assert_eq!(have: result.exact_truth(), want: None);
 }

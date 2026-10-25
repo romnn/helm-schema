@@ -2,7 +2,7 @@ use std::cell::OnceCell;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::rc::Rc;
 
-use helm_schema_ast::{DefineIndex, DefineSourceRole, TemplateExpr, parse_go_template};
+use helm_schema_ast::{DefineIndex, DefineSourceRole, ParsedActions, parse_go_template};
 
 use crate::abstract_value::AbstractValue;
 use crate::symbolic::SymbolicPolicy;
@@ -11,14 +11,13 @@ pub(crate) struct ParsedHelperBody<'a> {
     pub(crate) source: &'a str,
     pub(crate) source_path: &'a str,
     pub(crate) body_offset: usize,
-    pub(crate) tree: &'a tree_sitter::Tree,
-    pub(crate) expressions: &'a [TemplateExpr],
+    pub(crate) syntax: &'a ParsedProgramSyntax,
 }
 
 /// Shared parsed helper programs for one immutable define index.
 ///
-/// Define boundaries are discovered once. Each body tree and flattened
-/// expression list remains lazy so unused helpers pay no body-parse cost.
+/// Define boundaries are discovered once.
+/// Each body program remains lazy so unused helpers pay no body-parse cost.
 #[derive(Clone)]
 pub struct ParsedDefines {
     inner: Rc<ParsedDefinesInner>,
@@ -99,8 +98,7 @@ impl ParsedDefines {
             source: body.source.as_str(),
             source_path: body.source_path.as_str(),
             body_offset: body.body_offset,
-            tree: body.tree()?,
-            expressions: body.expressions(),
+            syntax: body.syntax()?,
         })
     }
 }
@@ -276,12 +274,32 @@ impl IrAnalysisDb {
     }
 }
 
+pub(crate) struct ParsedProgramSyntax {
+    pub(crate) tree: tree_sitter::Tree,
+    pub(crate) actions: Vec<helm_schema_syntax::TemplateAction>,
+    pub(crate) expressions: ParsedActions,
+}
+
+impl ParsedProgramSyntax {
+    pub(crate) fn parse(source: &str) -> Option<Self> {
+        let tree = parse_go_template(source)?;
+        let document =
+            helm_schema_syntax::TemplatedDocument::parse_with_root(source, tree.root_node());
+        let actions = document.actions().to_vec();
+        let expressions = ParsedActions::lower(tree.root_node(), source, &actions);
+        Some(Self {
+            tree,
+            actions,
+            expressions,
+        })
+    }
+}
+
 struct CachedDefineBody {
     source: String,
     source_path: String,
     body_offset: usize,
-    tree: OnceCell<Option<tree_sitter::Tree>>,
-    expressions: OnceCell<Vec<TemplateExpr>>,
+    syntax: OnceCell<Option<ParsedProgramSyntax>>,
 }
 
 impl CachedDefineBody {
@@ -290,23 +308,14 @@ impl CachedDefineBody {
             source: source.to_string(),
             source_path: source_path.to_string(),
             body_offset,
-            tree: OnceCell::new(),
-            expressions: OnceCell::new(),
+            syntax: OnceCell::new(),
         }
     }
 
-    fn tree(&self) -> Option<&tree_sitter::Tree> {
-        self.tree
-            .get_or_init(|| parse_go_template(&self.source))
+    fn syntax(&self) -> Option<&ParsedProgramSyntax> {
+        self.syntax
+            .get_or_init(|| ParsedProgramSyntax::parse(&self.source))
             .as_ref()
-    }
-
-    fn expressions(&self) -> &[TemplateExpr] {
-        self.expressions.get_or_init(|| {
-            self.tree()
-                .map(|tree| helm_schema_ast::node_expressions(tree.root_node(), &self.source))
-                .unwrap_or_default()
-        })
     }
 }
 
@@ -323,46 +332,67 @@ fn extract_define_blocks(src: &str) -> Vec<DefineBlock> {
     };
 
     let mut out = Vec::new();
-    collect_define_blocks(tree.root_node(), src, &mut out);
+    let document = helm_schema_syntax::TemplatedDocument::parse_with_root(src, tree.root_node());
+    collect_define_blocks(tree.root_node(), src, document.actions(), &mut out);
     out.sort_by_key(|block| block.body_offset);
     out
 }
 
-fn collect_define_blocks(node: tree_sitter::Node<'_>, src: &str, out: &mut Vec<DefineBlock>) {
-    if node.kind() == "define_action"
-        && let Some(block) = define_block_from_node(node, src)
+fn collect_define_blocks(
+    node: tree_sitter::Node<'_>,
+    src: &str,
+    actions: &[helm_schema_syntax::TemplateAction],
+    out: &mut Vec<DefineBlock>,
+) {
+    if matches!(node.kind(), "define_action" | "block_action")
+        && let Some(block) = define_block_from_node(node, src, actions)
     {
         out.push(block);
     }
 
     let mut cursor = node.walk();
     for child in node.named_children(&mut cursor) {
-        collect_define_blocks(child, src, out);
+        collect_define_blocks(child, src, actions, out);
     }
 }
 
-fn define_block_from_node(node: tree_sitter::Node<'_>, src: &str) -> Option<DefineBlock> {
+fn define_block_from_node(
+    node: tree_sitter::Node<'_>,
+    src: &str,
+    actions: &[helm_schema_syntax::TemplateAction],
+) -> Option<DefineBlock> {
+    use helm_schema_syntax::{ActionKind, ControlKind, Span, TextTrim, trim_text_span};
+
     let name = define_name(node, src)?;
-    let body_children = children_with_field(node, "body");
-    let end_action_start = find_end_action_start(node);
-
-    let body_end = end_action_start.unwrap_or_else(|| {
-        body_children
-            .last()
-            .map(tree_sitter::Node::end_byte)
-            .unwrap_or_else(|| node.end_byte())
-    });
-    let body_start = body_children
-        .first()
-        .map(tree_sitter::Node::start_byte)
-        .unwrap_or(body_end);
-    let body_range = body_start..body_end;
-    let body = src.get(body_range.clone())?.to_string();
-
+    let opener = actions
+        .iter()
+        .find(|action| action.span.start == node.start_byte())?;
+    let ActionKind::RegionOpen {
+        region,
+        kind,
+        region_end: _,
+    } = opener.kind
+    else {
+        return None;
+    };
+    if !matches!(kind, ControlKind::Define | ControlKind::Block) {
+        return None;
+    }
+    let closing = actions.iter().find(
+        |action| matches!(action.kind, ActionKind::RegionEnd { region: owner } if owner == region),
+    )?;
+    let span = trim_text_span(
+        src,
+        Span::new(opener.span.end, closing.span.start),
+        TextTrim {
+            start: opener.trim_right,
+            end: closing.trim_left,
+        },
+    )?;
     Some(DefineBlock {
         name,
-        body,
-        body_offset: body_range.start,
+        body: src.get(span.start..span.end)?.to_owned(),
+        body_offset: span.start,
     })
 }
 
@@ -389,21 +419,6 @@ fn define_name(node: tree_sitter::Node<'_>, src: &str) -> Option<String> {
         return None;
     }
     Some(quoted.to_string())
-}
-
-fn find_end_action_start(node: tree_sitter::Node<'_>) -> Option<usize> {
-    let mut cursor = node.walk();
-    node.named_children(&mut cursor)
-        .find(|child| child.kind() == "end_action")
-        .map(|child| child.start_byte())
-}
-
-fn children_with_field<'node>(
-    node: tree_sitter::Node<'node>,
-    field: &str,
-) -> Vec<tree_sitter::Node<'node>> {
-    let mut cursor = node.walk();
-    node.children_by_field_name(field, &mut cursor).collect()
 }
 
 #[cfg(test)]

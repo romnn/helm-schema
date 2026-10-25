@@ -108,13 +108,21 @@ impl Value {
                     inputs.extend(origin.influences.iter().cloned());
                     inputs.extend(origin.identity.iter().cloned());
                     match datum {
-                        Datum::Sequence(Some(items)) => pending.extend(items.iter()),
+                        Datum::Sequence(super::InterfaceSequence {
+                            storage,
+                            start: _,
+                            length: _,
+                            capacity: _,
+                        }) => {
+                            if let Some(items) = storage {
+                                pending.extend(items.iter());
+                            }
+                        }
                         Datum::Scalar {
                             go_type: _,
                             content: _,
                         }
                         | Datum::Map { view: _, target: _ }
-                        | Datum::Sequence(None)
                         | Datum::Strings(_)
                         | Datum::Slot {
                             backing: _,
@@ -144,56 +152,268 @@ impl Value {
 }
 
 impl State {
+    pub(super) fn record_value_read(&mut self, value: &Value, coverage: super::ReadCoverage) {
+        let condition = self.path_predicate();
+        for path in self.heap.freeze(value).inputs() {
+            self.reads.insert(super::RuntimeRead {
+                path,
+                condition: condition.clone(),
+                coverage,
+            });
+        }
+    }
+
+    pub(super) fn record_field_read(&mut self, value: &Value, key: &str) {
+        if key.is_empty() {
+            self.record_container_read(value);
+            return;
+        }
+        if matches!(
+            self.lookup_field(value, key),
+            Some(Field::Present(_) | Field::Absent)
+        ) {
+            return;
+        }
+        if let Some(path) = self.untouched_map_child_identity(value, key) {
+            self.record_value_read(&Value::input(path), super::ReadCoverage::ExactPath);
+        }
+    }
+
+    pub(super) fn record_container_read(&mut self, value: &Value) {
+        let consumed = self.consumed(value);
+        if matches!(
+            self.heap.freeze(&consumed).go_type(),
+            super::kinds::GoType::Map | super::kinds::GoType::Slice | super::kinds::GoType::Unknown
+        ) {
+            self.record_value_read(&consumed, super::ReadCoverage::UnknownRegion);
+        }
+    }
+
+    pub(super) fn record_invocation_reads(&mut self, invocation: &super::Invocation) {
+        use crate::function_semantics::{InputRead, function_semantics};
+        let super::Callee::Function(function) = &invocation.callee;
+        for operand in &invocation.operands {
+            self.record_value_read(&operand.value, super::ReadCoverage::ExactPath);
+        }
+        match function_semantics(function).input_read {
+            InputRead::Value => {}
+            InputRead::Contents => {
+                for operand in &invocation.operands {
+                    self.record_container_read(&operand.value);
+                }
+            }
+            InputRead::Keyed => {
+                if invocation
+                    .operands
+                    .iter()
+                    .skip(1)
+                    .any(|operand| !matches!(operand.value.constant(), Some(GuardValue::String(key)) if !key.is_empty()))
+                {
+                    if let Some(operand) = invocation.operands.first() {
+                        self.record_value_read(&operand.value, super::ReadCoverage::UnknownRegion);
+                    }
+                }
+            }
+        }
+    }
+
     pub(super) fn path_predicate(&self) -> Predicate {
+        if self.heap.arena.runtime_path(&self.active).is_impossible() {
+            return Predicate::False;
+        }
         Predicate::all(
             self.active
                 .iter()
-                .filter(|edge| edge.test.coverage == Coverage::Exact)
-                .map(|edge| {
-                    if edge.taken {
-                        edge.test.when_true.clone()
-                    } else {
-                        edge.test.when_false.clone()
-                    }
-                })
+                .map(|edge| edge.test.possible_predicate(edge.taken))
                 .collect(),
         )
     }
     pub(super) fn consumed(&self, value: &Value) -> Value {
         let value = self.heap.version.consume(value);
-        let value = if let Some(path) = value.identity() {
-            let id = self.heap.arena.input_objects.borrow().get(path).cloned();
-            if let Some(id) = id.filter(|id| self.heap.version.object(id).is_some()) {
-                Value {
+        let guard = self.heap.arena.runtime_path(&self.active);
+        let value = value.under_runtime(&guard);
+        let value = self.input_backing_view(&value);
+        value.under_runtime(&guard)
+    }
+
+    fn input_backing_view(&self, value: &Value) -> Value {
+        match value.node.as_ref() {
+            ValueNode::Select { decision, yes, no } => Value::select(
+                Rc::clone(decision),
+                self.input_backing_view(yes),
+                self.input_backing_view(no),
+            ),
+            ValueNode::Leaf(Leaf {
+                datum: Datum::Map { view, target },
+                origin:
+                    super::Origin {
+                        identity: Some(_),
+                        influences: _,
+                    },
+            }) => Value {
+                node: Rc::new(ValueNode::Leaf(Leaf {
+                    datum: Datum::Map {
+                        view: *view,
+                        target: target.clone(),
+                    },
+                    origin: super::Origin {
+                        identity: None,
+                        influences: value.inputs(),
+                    },
+                })),
+            },
+            ValueNode::Leaf(Leaf {
+                datum: Datum::Unknown(super::UnknownValue { types, aliases }),
+                origin,
+            }) => {
+                let Some(path) = &origin.identity else {
+                    return value.clone();
+                };
+                let backing = self.heap.arena.input_objects.borrow().get(path).cloned();
+                let Some(backing) =
+                    backing.filter(|backing| self.heap.version.object(&backing.object).is_some())
+                else {
+                    return value.clone();
+                };
+                let map = Value {
                     node: Rc::new(ValueNode::Leaf(Leaf {
                         datum: Datum::Map {
                             view: super::MapType::Interface,
-                            target: Some(id),
+                            target: Some(backing.object),
                         },
                         origin: super::Origin {
                             identity: None,
                             influences: value.inputs(),
                         },
                     })),
+                };
+                match types {
+                    super::TypeCoverage::Map(_) => map,
+                    super::TypeCoverage::Unresolved => {
+                        let nonmap = Value {
+                            node: Rc::new(ValueNode::Leaf(Leaf {
+                                datum: Datum::Unknown(super::UnknownValue {
+                                    types: super::TypeCoverage::InputNonMap,
+                                    aliases: aliases.clone(),
+                                }),
+                                origin: origin.clone(),
+                            })),
+                        };
+                        Value::select(backing.map_type, map, nonmap)
+                    }
+                    super::TypeCoverage::InputNonMap
+                    | super::TypeCoverage::Scalar(_)
+                    | super::TypeCoverage::Sequence => value.clone(),
                 }
-            } else {
-                value
             }
-        } else {
-            value
-        };
-        self.active
-            .iter()
-            .fold(value, |value, edge| value.under(&edge.test, edge.taken))
+            ValueNode::Leaf(Leaf {
+                datum: _,
+                origin: _,
+            }) => value.clone(),
+        }
+    }
+
+    pub(super) fn selector_field(&mut self, value: &Value, key: &str) -> Value {
+        let value = self.consumed(value);
+        if let ValueNode::Select { decision, yes, no } = value.node.as_ref() {
+            return Value::select(
+                Rc::clone(decision),
+                self.selector_field(yes, key),
+                self.selector_field(no, key),
+            );
+        }
+        if let ValueNode::Leaf(Leaf {
+            datum:
+                Datum::Map {
+                    view: super::MapType::Values,
+                    target,
+                },
+            origin: _,
+        }) = value.node.as_ref()
+        {
+            let influences = self.heap.freeze(&value).inputs();
+            let datum = match key {
+                "YAML" => Datum::Scalar {
+                    go_type: ScalarType::String,
+                    content: None,
+                },
+                "AsMap" => match self.truth(&value) {
+                    Some(false) => return self.heap.map(super::Remainder::Closed),
+                    Some(true) => Datum::Map {
+                        view: super::MapType::Interface,
+                        target: target.clone(),
+                    },
+                    None => Datum::Unknown(super::UnknownValue {
+                        types: super::TypeCoverage::Map(super::MapType::Interface),
+                        aliases: super::AliasSet::RenderGraph,
+                    }),
+                },
+                "Table" | "Encode" => return Value::influenced(influences),
+                _ => return self.field(&value, key),
+            };
+            return Value {
+                node: Rc::new(ValueNode::Leaf(Leaf {
+                    datum,
+                    origin: super::Origin {
+                        identity: None,
+                        influences,
+                    },
+                })),
+            };
+        }
+        self.field(&value, key)
     }
     pub(super) fn field(&mut self, value: &Value, key: &str) -> Value {
         let value = self.consumed(value);
-        match value.node.as_ref() {
+        let result = match value.node.as_ref() {
+            ValueNode::Leaf(Leaf {
+                datum:
+                    Datum::Unknown(super::UnknownValue {
+                        types: super::TypeCoverage::InputNonMap,
+                        aliases: _,
+                    })
+                    | Datum::Scalar {
+                        go_type: _,
+                        content: _,
+                    },
+                origin: _,
+            }) => Value::influenced(value.inputs()),
             ValueNode::Select { decision, yes, no } => Value::select(
                 Rc::clone(decision),
                 self.field(yes, key),
                 self.field(no, key),
             ),
+            ValueNode::Leaf(Leaf {
+                datum:
+                    Datum::Map {
+                        view: super::MapType::String,
+                        target,
+                    },
+                origin: _,
+            }) => {
+                let unknown = Value {
+                    node: Rc::new(ValueNode::Leaf(Leaf {
+                        datum: Datum::Scalar {
+                            go_type: ScalarType::String,
+                            content: None,
+                        },
+                        origin: super::Origin {
+                            identity: None,
+                            influences: self.heap.freeze(&value).inputs(),
+                        },
+                    })),
+                };
+                target.as_ref().map_or_else(
+                    || Value::string(""),
+                    |id| {
+                        self.consumed(&field_value(
+                            self.heap.version.field(id, key),
+                            &unknown,
+                            &Value::string(""),
+                        ))
+                    },
+                )
+            }
             ValueNode::Leaf(Leaf {
                 datum: _,
                 origin:
@@ -202,7 +422,13 @@ impl State {
                         influences: _,
                     },
             }) => {
-                let id = self.heap.arena.input_objects.borrow().get(path).cloned();
+                let id = self
+                    .heap
+                    .arena
+                    .input_objects
+                    .borrow()
+                    .get(path)
+                    .map(|backing| backing.object.clone());
                 let unknown = self.unknown_child_value(id.as_ref(), Some(path), key);
                 id.map_or(unknown.clone(), |id| {
                     self.consumed(&field_value(
@@ -232,7 +458,9 @@ impl State {
                 datum: _,
                 origin: _,
             }) => Value::influenced(value.inputs()),
-        }
+        };
+        self.record_value_read(&result, super::ReadCoverage::ExactPath);
+        result
     }
     fn unknown_child_value(
         &self,
@@ -240,9 +468,18 @@ impl State {
         path: Option<&ValuesPath>,
         key: &str,
     ) -> Value {
+        if let Some(ObjectData::Widened { inputs }) = id
+            .and_then(|id| self.heap.version.object(id))
+            .map(|object| &object.data)
+        {
+            return Value::influenced(inputs.as_ref().clone());
+        }
         let Some(mut path) = path.cloned() else {
             return Value::unknown();
         };
+        if key.is_empty() {
+            return Value::influenced(BTreeSet::from([path]));
+        }
         path.push(key);
         let untouched = id
             .and_then(|id| self.heap.version.object(id))
@@ -279,29 +516,29 @@ impl State {
                     Datum::Map {
                         target: None,
                         view: _,
-                    }
-                    | Datum::Sequence(None),
+                    },
                 origin: _,
             }) => Some(false),
             ValueNode::Leaf(Leaf {
-                datum: Datum::Strings(id),
+                datum:
+                    Datum::Strings(super::StringSlice {
+                        backing: _,
+                        start: _,
+                        length,
+                        capacity: _,
+                    }),
                 origin: _,
-            }) => match self.heap.version.object(id).map(|object| &object.data) {
-                Some(ObjectData::Strings(slots)) => Some(!slots.is_empty()),
-                Some(
-                    ObjectData::Map {
-                        fields: _,
-                        remainder: _,
-                    }
-                    | ObjectData::Opaque { reachable: _ }
-                    | ObjectData::Widened { inputs: _ },
-                )
-                | None => None,
-            },
+            }) => Some(*length != 0),
             ValueNode::Leaf(Leaf {
-                datum: Datum::Sequence(Some(items)),
+                datum:
+                    Datum::Sequence(super::InterfaceSequence {
+                        storage: _,
+                        start: _,
+                        length,
+                        capacity: _,
+                    }),
                 origin: _,
-            }) => Some(!items.is_empty()),
+            }) => Some(*length != 0),
             ValueNode::Leaf(Leaf {
                 datum:
                     Datum::Map {
@@ -355,16 +592,11 @@ impl State {
         }
     }
     pub(super) fn test(&self, value: &Value) -> Rc<FrozenTest> {
-        let value = self.consumed(value);
-        if let ValueNode::Select { decision, yes, no } = value.node.as_ref() {
-            if yes.constant() == Some(&GuardValue::Bool(true))
-                && no.constant() == Some(&GuardValue::Bool(false))
-            {
-                return Rc::clone(decision);
-            }
-        }
-        let (when_true, when_false, coverage) = test_predicates(self, &value);
-        self.heap.arena.decision(when_true, when_false, coverage)
+        let mut budget = TruthBudget {
+            visits: 255,
+            leaves: 128,
+        };
+        truth_test(self, value, &mut budget)
     }
     pub(super) fn map_target(&mut self, value: &Value) -> Option<super::ObjectId> {
         let value = self.consumed(value);
@@ -374,14 +606,23 @@ impl State {
                 origin: _,
             }) => target.clone(),
             ValueNode::Leaf(Leaf {
-                datum: _,
+                datum: Datum::Unknown(super::UnknownValue { types, aliases: _ }),
                 origin:
                     super::Origin {
                         identity: Some(path),
                         influences: _,
                     },
-            }) => {
-                let existing = self.heap.arena.input_objects.borrow().get(path).cloned();
+            }) if matches!(types, super::TypeCoverage::Map(_))
+                || matches!(types, super::TypeCoverage::Unresolved)
+                    && path.segments().next().is_none() =>
+            {
+                let existing = self
+                    .heap
+                    .arena
+                    .input_objects
+                    .borrow()
+                    .get(path)
+                    .map(|backing| backing.object.clone());
                 if let Some(id) = existing {
                     if self.heap.version.object(&id).is_none() {
                         self.heap.install(
@@ -405,11 +646,27 @@ impl State {
                     },
                     super::Multiplicity::Singleton,
                 );
-                self.heap
-                    .arena
-                    .input_objects
-                    .borrow_mut()
-                    .insert(path.clone(), id.clone());
+                self.heap.arena.input_objects.borrow_mut().insert(
+                    path.clone(),
+                    super::InputBacking {
+                        object: id.clone(),
+                        map_type: {
+                            let object = if path.segments().next().is_none() {
+                                Predicate::True
+                            } else {
+                                Predicate::from(Guard::TypeIs {
+                                    path: path.clone(),
+                                    schema_type: "object".to_owned(),
+                                })
+                            };
+                            self.heap.arena.decision(
+                                object.clone(),
+                                object.negated(),
+                                Coverage::Exact,
+                            )
+                        },
+                    },
+                );
                 self.heap
                     .arena
                     .input_paths
@@ -440,73 +697,59 @@ impl State {
         }
     }
 }
-/// Reads bounded truth subsets from the canonical decision graph.
-fn test_predicates(state: &State, value: &Value) -> (Predicate, Predicate, Coverage) {
-    const MAX_LEAVES: usize = 128;
-    const MAX_VISITS: usize = MAX_LEAVES * 2 - 1;
-    let mut pending = vec![(value.clone(), Predicate::True)];
-    let mut when_true = Vec::new();
-    let mut when_false = Vec::new();
-    let mut coverage = Coverage::Exact;
-    let mut leaves = 0;
-    let mut visits = 0;
-    while let Some((value, condition)) = pending.pop() {
-        if condition == Predicate::False {
-            continue;
+struct TruthBudget {
+    visits: usize,
+    leaves: usize,
+}
+
+fn truth_test(state: &State, value: &Value, budget: &mut TruthBudget) -> Rc<FrozenTest> {
+    if budget.visits == 0 {
+        return state
+            .heap
+            .arena
+            .decision(Predicate::False, Predicate::False, Coverage::Partial);
+    }
+    budget.visits -= 1;
+    let value = state.consumed(value);
+    match value.node.as_ref() {
+        ValueNode::Select { decision, yes, no } => {
+            let yes = truth_test(state, yes, budget);
+            let no = truth_test(state, no, budget);
+            state.heap.arena.choose_test(Rc::clone(decision), yes, no)
         }
-        if visits == MAX_VISITS {
-            coverage = Coverage::Partial;
-            break;
-        }
-        visits += 1;
-        let value = state.consumed(&value);
-        match value.node.as_ref() {
-            ValueNode::Select { decision, yes, no } => {
-                if decision.coverage == Coverage::Partial
-                    || decision.when_true.contains_approximation()
-                    || decision.when_false.contains_approximation()
-                {
-                    coverage = Coverage::Partial;
-                }
-                for (branch, predicate) in [(no, &decision.when_false), (yes, &decision.when_true)]
-                {
-                    let selected = Predicate::all(vec![condition.clone(), predicate.clone()])
-                        .normalize_boolean();
-                    if selected != Predicate::False {
-                        pending.push((branch.clone(), selected));
-                    }
-                }
+        ValueNode::Leaf(Leaf {
+            datum: _,
+            origin: _,
+        }) => {
+            if budget.leaves == 0 {
+                return state.heap.arena.decision(
+                    Predicate::False,
+                    Predicate::False,
+                    Coverage::Partial,
+                );
             }
-            ValueNode::Leaf(Leaf {
-                datum: _,
-                origin: _,
-            }) => {
-                if leaves == MAX_LEAVES {
-                    coverage = Coverage::Partial;
-                    break;
-                }
-                leaves += 1;
-                if let Some(truth) = state.truth(&value) {
-                    if truth {
-                        when_true.push(condition);
-                    } else {
-                        when_false.push(condition);
-                    }
-                } else if let Some(path) = value.identity() {
-                    let positive = Predicate::from(Guard::Truthy { path: path.clone() });
-                    when_true.push(Predicate::all(vec![condition.clone(), positive.clone()]));
-                    when_false.push(Predicate::all(vec![condition, positive.negated()]));
+            budget.leaves -= 1;
+            let condition = if let Some(truth) = state.truth(&value) {
+                if truth {
+                    Predicate::True
                 } else {
-                    coverage = Coverage::Partial;
+                    Predicate::False
                 }
-            }
+            } else if let Some(path) = value.identity() {
+                Predicate::from(Guard::Truthy { path: path.clone() })
+            } else {
+                return state.heap.arena.decision(
+                    Predicate::False,
+                    Predicate::False,
+                    Coverage::Partial,
+                );
+            };
+            state
+                .heap
+                .arena
+                .decision(condition.clone(), condition.negated(), Coverage::Exact)
         }
     }
-    (
-        Predicate::Or(when_true).normalize_boolean(),
-        Predicate::Or(when_false).normalize_boolean(),
-        coverage,
-    )
 }
 
 fn field_value(field: Field, unknown: &Value, absent: &Value) -> Value {
@@ -529,11 +772,20 @@ impl FrozenValue {
         self.value.identity()
     }
     pub(crate) fn inputs(&self) -> BTreeSet<ValuesPath> {
+        self.collect_inputs(false)
+    }
+
+    pub(super) fn reachable_inputs(&self) -> BTreeSet<ValuesPath> {
+        self.collect_inputs(true)
+    }
+
+    fn collect_inputs(&self, include_unknown_aliases: bool) -> BTreeSet<ValuesPath> {
         let mut inputs = BTreeSet::new();
         let mut values = vec![self.value.clone()];
         let mut objects = Vec::new();
         let mut seen_objects = BTreeSet::new();
         let mut seen_values = BTreeSet::new();
+        let mut seen_input_sets = BTreeSet::new();
         let mut expanded_render_graph = false;
         while !values.is_empty() || !objects.is_empty() {
             while let Some(value) = values.pop() {
@@ -558,19 +810,36 @@ impl FrozenValue {
                             target: Some(id),
                             view: _,
                         }
-                        | Datum::Strings(id)
+                        | Datum::Strings(super::StringSlice {
+                            backing: id,
+                            start: _,
+                            length: _,
+                            capacity: _,
+                        })
                         | Datum::Slot {
                             backing: id,
                             index: _,
                         } => objects.push(id.clone()),
-                        Datum::Sequence(Some(items)) => values.extend(items.iter().cloned()),
+                        Datum::Sequence(super::InterfaceSequence {
+                            storage,
+                            start: _,
+                            length: _,
+                            capacity: _,
+                        }) => {
+                            if let Some(items) = storage {
+                                values.extend(items.iter().cloned());
+                            }
+                        }
                         Datum::Unknown(super::UnknownValue { types: _, aliases }) => {
-                            extend_aliases(
-                                aliases,
-                                &self.heap,
-                                &mut objects,
-                                &mut expanded_render_graph,
-                            )
+                            // Mutation reachability does not describe the value's input provenance.
+                            if include_unknown_aliases {
+                                extend_aliases(
+                                    aliases,
+                                    &self.heap,
+                                    &mut objects,
+                                    &mut expanded_render_graph,
+                                );
+                            }
                         }
                         Datum::Scalar {
                             go_type: _,
@@ -579,8 +848,7 @@ impl FrozenValue {
                         | Datum::Map {
                             target: None,
                             view: _,
-                        }
-                        | Datum::Sequence(None) => {}
+                        } => {}
                     },
                 }
             }
@@ -601,7 +869,11 @@ impl FrozenValue {
                         }
                     }
                     ObjectData::Strings(slots) => values.extend(slots.iter().cloned()),
-                    ObjectData::Widened { inputs: known } => inputs.extend(known.iter().cloned()),
+                    ObjectData::Widened { inputs: known } => {
+                        if seen_input_sets.insert(Rc::as_ptr(known)) {
+                            inputs.extend(known.iter().cloned());
+                        }
+                    }
                     ObjectData::Opaque { reachable } => extend_aliases(
                         reachable,
                         &self.heap,
@@ -622,41 +894,52 @@ impl FrozenValue {
         result
     }
     pub(crate) fn go_type(&self) -> super::kinds::GoType {
-        use super::kinds::GoType;
-        match self.value.node.as_ref() {
-            ValueNode::Select {
-                decision: _,
-                yes: _,
-                no: _,
-            } => GoType::Unknown,
-            ValueNode::Leaf(Leaf { datum, origin: _ }) => match datum {
-                Datum::Scalar {
-                    go_type,
-                    content: _,
-                } => match go_type {
-                    ScalarType::Nil => GoType::Nil,
-                    ScalarType::Bool => GoType::Bool,
-                    ScalarType::String => GoType::String,
-                    ScalarType::Int => GoType::Int,
-                    ScalarType::Int64 => GoType::Int64,
-                    ScalarType::Uint64 => GoType::Uint64,
-                    ScalarType::Float64 => GoType::Float64,
-                    ScalarType::Uint8 | ScalarType::Complex128 => GoType::Unknown,
-                },
-                Datum::Map { view: _, target: _ } => GoType::Map,
-                Datum::Sequence(_) | Datum::Strings(_) => GoType::Slice,
-                Datum::Slot {
-                    backing: _,
-                    index: _,
-                } => GoType::String,
-                Datum::Unknown(super::UnknownValue { types, aliases: _ }) => match types {
-                    super::TypeCoverage::Map(_) => GoType::Map,
-                    super::TypeCoverage::Sequence => GoType::Slice,
-                    super::TypeCoverage::Scalar(kind) => kind.query_type(),
-                    super::TypeCoverage::Unresolved => GoType::Unknown,
-                },
+        let mut remaining = super::MAX_SCALAR_DISPATCH_STATES;
+        runtime_type(&self.value, &mut remaining)
+    }
+}
+
+fn runtime_type(value: &Value, remaining: &mut usize) -> super::kinds::GoType {
+    use super::kinds::GoType;
+    if *remaining == 0 {
+        return GoType::Unknown;
+    }
+    *remaining -= 1;
+    match value.node.as_ref() {
+        ValueNode::Select {
+            decision: _,
+            yes,
+            no,
+        } => runtime_type(yes, remaining).joined(runtime_type(no, remaining)),
+        ValueNode::Leaf(Leaf { datum, origin: _ }) => match datum {
+            Datum::Scalar {
+                go_type,
+                content: _,
+            } => match go_type {
+                ScalarType::Nil => GoType::Nil,
+                ScalarType::Bool => GoType::Bool,
+                ScalarType::String => GoType::String,
+                ScalarType::Int => GoType::Int,
+                ScalarType::Int64 => GoType::Int64,
+                ScalarType::Uint64 => GoType::Uint64,
+                ScalarType::Float64 => GoType::Float64,
+                ScalarType::Uint8 | ScalarType::Complex128 => GoType::Unknown,
             },
-        }
+            Datum::Map { view: _, target: _ } => GoType::Map,
+            Datum::Sequence(_) | Datum::Strings(_) => GoType::Slice,
+            Datum::Slot {
+                backing: _,
+                index: _,
+            } => GoType::String,
+            Datum::Unknown(super::UnknownValue { types, aliases: _ }) => match types {
+                super::TypeCoverage::Map(_) => GoType::Map,
+                super::TypeCoverage::Sequence => GoType::Slice,
+                super::TypeCoverage::Scalar(kind) => kind.query_type(),
+                super::TypeCoverage::Unresolved | super::TypeCoverage::InputNonMap => {
+                    GoType::Unknown
+                }
+            },
+        },
     }
 }
 impl ScalarType {
@@ -732,6 +1015,11 @@ impl State {
     pub(super) fn lookup_field(&self, value: &Value, key: &str) -> Option<Field> {
         let value = self.consumed(value);
         match value.node.as_ref() {
+            ValueNode::Select { decision, yes, no } => Some(Field::select(
+                Rc::clone(decision),
+                self.lookup_field(yes, key).unwrap_or(Field::Unknown),
+                self.lookup_field(no, key).unwrap_or(Field::Unknown),
+            )),
             ValueNode::Leaf(Leaf {
                 datum:
                     Datum::Map {
@@ -762,12 +1050,7 @@ impl State {
                     }
                     | Datum::Unknown(_),
                 origin: _,
-            })
-            | ValueNode::Select {
-                decision: _,
-                yes: _,
-                no: _,
-            } => None,
+            }) => None,
         }
     }
     pub(super) fn get_field(&mut self, value: &Value, key: &str) -> Value {
@@ -780,7 +1063,13 @@ impl State {
             ),
             ValueNode::Leaf(Leaf { datum, origin }) => {
                 let unknown = if let Some(path) = &origin.identity {
-                    let id = self.heap.arena.input_objects.borrow().get(path).cloned();
+                    let id = self
+                        .heap
+                        .arena
+                        .input_objects
+                        .borrow()
+                        .get(path)
+                        .map(|backing| backing.object.clone());
                     let child = self.unknown_child_value(id.as_ref(), Some(path), key);
                     Value::influenced(child.inputs())
                 } else if let Datum::Map {
@@ -800,17 +1089,12 @@ impl State {
                     })
             }
         };
-        for path in self.heap.freeze(&result).inputs() {
-            self.reads.insert(super::RuntimeRead {
-                path,
-                condition: self.path_predicate(),
-                coverage: super::ReadCoverage::ExactPath,
-            });
-        }
+        self.record_value_read(&result, super::ReadCoverage::ExactPath);
         result
     }
 
-    pub(super) fn field_presence(&self, value: &Value, key: &str) -> Value {
+    pub(super) fn field_presence(&mut self, value: &Value, key: &str) -> Value {
+        self.record_field_read(value, key);
         let value = self.consumed(value);
         if let ValueNode::Select { decision, yes, no } = value.node.as_ref() {
             return Value::select(
@@ -826,8 +1110,11 @@ impl State {
             Some(Field::Present(_)) => return Value::literal(GuardValue::Bool(true)),
             Some(Field::Absent) => return Value::literal(GuardValue::Bool(false)),
         };
-        let unknown = if let Some(path) = path {
-            let predicate = Predicate::from(Guard::Absent { path }).negated();
+        let unknown = if let Some(path) = path.and_then(|path| path.parent()) {
+            let predicate = Predicate::from(Guard::HasKey {
+                path,
+                key: key.to_owned(),
+            });
             let decision =
                 self.heap
                     .arena
@@ -856,8 +1143,33 @@ impl State {
     }
 
     fn untouched_map_child_identity(&self, value: &Value, key: &str) -> Option<ValuesPath> {
+        let value = self.consumed(value);
+        if matches!(
+            value.node.as_ref(),
+            ValueNode::Leaf(Leaf {
+                datum: Datum::Unknown(super::UnknownValue {
+                    types: super::TypeCoverage::InputNonMap,
+                    aliases: _,
+                }) | Datum::Scalar {
+                    go_type: _,
+                    content: _
+                },
+                origin: _,
+            })
+        ) {
+            return None;
+        }
+        if key.is_empty() {
+            return None;
+        }
         if let Some(path) = value.identity() {
-            let id = self.heap.arena.input_objects.borrow().get(path).cloned();
+            let id = self
+                .heap
+                .arena
+                .input_objects
+                .borrow()
+                .get(path)
+                .map(|backing| backing.object.clone());
             if let Some(object) = id.as_ref().and_then(|id| self.heap.version.object(id)) {
                 if !matches!(
                     object.data,
@@ -873,7 +1185,6 @@ impl State {
             child.push(key);
             return Some(child);
         }
-        let value = self.consumed(value);
         let ValueNode::Leaf(Leaf {
             datum:
                 Datum::Map {

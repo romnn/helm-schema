@@ -12,9 +12,7 @@ pub(crate) mod summary;
 pub(crate) use domain::{StringPart, TaintPart};
 #[cfg(test)]
 pub(crate) use dump::dump_document;
-#[cfg(test)]
 pub(crate) use eval::EvaluatedDocument;
-#[cfg(test)]
 pub(crate) use eval::project_execution;
 pub(crate) use eval::{ValueRead, eval_document};
 #[cfg(test)]

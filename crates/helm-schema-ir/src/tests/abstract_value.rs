@@ -218,14 +218,35 @@ fn guard_metadata_preserves_raw_identity_through_member_selection() {
     let selected = execution
         .sites()
         .find(|site| site.value().exact_text().as_deref() == Some("selected"));
+    let parent =
+        helm_schema_core::ValuesPath::parse(r"workers.celery.sets.\*.securityContexts.pod");
+    let parent_null = Predicate::from(helm_schema_core::Guard::Eq {
+        path: parent.clone(),
+        value: helm_schema_core::GuardValue::Null,
+    });
+    let parent_absent = Predicate::from(helm_schema_core::Guard::Absent {
+        path: parent.clone(),
+    });
+    let expected = Predicate::all(vec![
+        Predicate::Or(vec![
+            Predicate::from(helm_schema_core::Guard::TypeIs {
+                path: parent.clone(),
+                schema_type: "object".to_owned(),
+            }),
+            parent_null.clone(),
+            parent_absent.clone(),
+        ]),
+        parent_null.negated(),
+        parent_absent.negated(),
+        Predicate::from(helm_schema_core::Guard::HasKey {
+            path: parent,
+            key: "runAsUser".to_owned(),
+        }),
+    ])
+    .normalize_boolean();
     sim_assert_eq!(
-        have: selected.map(|site| site.condition().clone()),
-        want: Some(
-            Predicate::from(helm_schema_core::Guard::Absent {
-                path: helm_schema_core::ValuesPath::parse(r"workers.celery.sets.\*.securityContexts.pod.runAsUser"),
-            })
-            .negated()
-        )
+        have: selected.map(|site| site.condition().clone().normalize_boolean()),
+        want: Some(expected),
     );
 }
 

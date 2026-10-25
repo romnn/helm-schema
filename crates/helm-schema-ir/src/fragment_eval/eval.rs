@@ -342,7 +342,7 @@ impl Projection<'_> {
             .filter(|site| self.matches(site, span))
         {
             let mut fragment = site
-                .projected_scalar()
+                .rendered_scalar()
                 .as_ref()
                 .and_then(|scalar| {
                     self.with_scope(|scope| lower_scalar_dispatch(scalar, kind, scope))
@@ -372,7 +372,7 @@ impl Projection<'_> {
 
     fn site_parts(&self, site: &ExecutedSite) -> Vec<(Predicate, Vec<StringPart>)> {
         let parts = site
-            .projected_scalar()
+            .rendered_scalar()
             .as_ref()
             .and_then(|scalar| {
                 self.with_scope(|scope| {

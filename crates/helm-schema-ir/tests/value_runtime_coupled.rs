@@ -1,9 +1,7 @@
 //! Public contract controls for the coupled value-runtime replacement.
 
 use helm_schema_ast::DefineIndex;
-use helm_schema_core::{
-    ContractSchemaSignals, ContractUse, Predicate, ValueKind, ValuesPath, YamlPath,
-};
+use helm_schema_core::{ContractSchemaSignals, Predicate};
 use helm_schema_ir::{ContractIr, SymbolicIrContext};
 use test_util::prelude::sim_assert_eq;
 
@@ -13,18 +11,6 @@ fn expected_failure(fails: bool) -> ContractSchemaSignals {
         contract.add_terminal_fail_condition(Predicate::True);
     }
     contract.finalize().into_schema_signals()
-}
-
-fn expected_unknown_region() -> ContractSchemaSignals {
-    ContractIr::from_contract_uses(vec![ContractUse::new(
-        ValuesPath::default(),
-        YamlPath(Vec::new()),
-        ValueKind::WidenedRegion,
-        Vec::new(),
-        None,
-    )])
-    .finalize()
-    .into_schema_signals()
 }
 
 fn assert_exact_text(setup: &str, expression: &str, expected: &str, helpers: Option<&str>) {
@@ -131,7 +117,7 @@ fn an_unknown_alternative_cannot_publish_a_universal_abort() {
             r#"{{ if eq (randAlphaNum 1) "a" }}{{ fail "no" }}{{ else }}ok{{ end }}"#,
         )
         .finalize();
-    sim_assert_eq!(have: contract.into_schema_signals(), want: expected_unknown_region());
+    sim_assert_eq!(have: contract.into_schema_signals(), want: expected_failure(false));
 }
 
 #[test]
@@ -157,7 +143,7 @@ fn conservative_transfers_do_not_reject_helm_successes() {
     }
     sim_assert_eq!(
         have: context.generate_contract_ir(r#"{{ $_ := repeat 1.0 "x" }}"#).finalize().into_schema_signals(),
-        want: expected_unknown_region()
+        want: expected_failure(false)
     );
 }
 
@@ -203,6 +189,111 @@ fn output_budget_neighbors_widen_the_whole_result() {
             have: SymbolicIrContext::new(&defines).generate_contract_ir(&source).finalize().into_schema_signals(),
             want: expected_failure(terms <= 128),
             "output terms: {terms}"
+        );
+    }
+}
+
+#[test]
+fn render_file_writes_reach_the_later_public_contract() {
+    use helm_schema_ir::SymbolicTemplate;
+
+    let context = SymbolicIrContext::new(&DefineIndex::new());
+    for (written, fails) in [("false", false), ("true", true)] {
+        let writer = format!("{{{{ $_ := set .Values \"enabled\" {written} }}}}");
+        let mut combined = ContractIr::default();
+        for contract in context.generate_contract_irs_for_sources(&[
+            SymbolicTemplate {
+                source: r#"{{ if .Values.enabled }}{{ $_ := required "bad" }}{{ end }}"#,
+                source_path: "chart/templates/a-check.yaml",
+            },
+            SymbolicTemplate {
+                source: &writer,
+                source_path: "chart/templates/z-write.yaml",
+            },
+        ]) {
+            combined.append(contract);
+        }
+        sim_assert_eq!(
+            have: combined.finalize().into_schema_signals(),
+            want: expected_failure(fails)
+        );
+    }
+}
+
+#[test]
+fn yaml_decoding_resolves_plain_booleans_and_mapping_keys() {
+    assert_exact_text("", r#"get (fromYaml "a: yes") "a""#, "true", None);
+    assert_exact_text("", r#"first (fromYamlArray "- off")"#, "false", None);
+    assert_exact_text("", r#"get (fromYaml "on: x") "true""#, r#""x""#, None);
+    assert_exact_text("", r#"get (fromYaml "1: x") "1""#, r#""x""#, None);
+    assert_exact_text("", r#"get (fromYaml "a: 'yes'") "a""#, r#""yes""#, None);
+}
+
+#[test]
+fn yaml_decoding_expands_merge_keys_before_lookup() {
+    assert_exact_text(
+        r#"{{ $m := fromYaml "base: &base {p: kept}\nchild: {<<: *base, q: extra}" }}"#,
+        "get $m.child \"p\"",
+        r#""kept""#,
+        None,
+    );
+}
+
+#[test]
+fn yaml_empty_and_null_maps_can_be_populated() {
+    for document in ["", "null"] {
+        assert_exact_text(
+            &format!(
+                r#"{{{{ $m := fromYaml {document:?} }}}}{{{{ $_ := set $m "x" "written" }}}}"#
+            ),
+            "get $m \"x\"",
+            r#""written""#,
+            None,
+        );
+    }
+    assert_exact_text("", r#"eq (fromYamlArray "null") nil"#, "false", None);
+}
+
+#[test]
+fn sprig_string_sequences_omit_nil_members() {
+    assert_exact_text("", r#"first (toStrings (list nil "b"))"#, r#""b""#, None);
+    assert_exact_text(
+        "",
+        r#"join "," (sortAlpha (list "b" nil "a"))"#,
+        r#""a,b""#,
+        None,
+    );
+    assert_exact_text(
+        "",
+        r#"join "," (list nil "a" nil "b" nil)"#,
+        r#""a,b""#,
+        None,
+    );
+}
+
+#[test]
+fn default_ignores_later_values_after_their_effects_execute() {
+    assert_exact_text("", r#""c" | default "a" "b""#, r#""b""#, None);
+    assert_exact_text("", r#""c" | default "a" """#, r#""a""#, None);
+    assert_exact_text(
+        r#"{{ $d := dict }}{{ $v := default "fallback" "first" (set $d "x" "written") }}"#,
+        "get $d \"x\"",
+        r#""written""#,
+        None,
+    );
+}
+
+#[test]
+fn unspellable_yaml_cannot_create_an_exact_failure() {
+    for source in [
+        r#"{{ if hasKey (fromYaml "child: {~: x}\nkept: true") "kept" }}{{ fail "YAML error erased" }}{{ end }}"#,
+        r#"{{ if hasKey (fromYaml "a: .inf\nkept: true") "kept" }}{{ fail "JSON conversion error erased" }}{{ end }}"#,
+        r#"{{ if hasKey (fromYaml "'<<': {p: x}") "p" }}{{ fail "quoted key expanded" }}{{ end }}"#,
+    ] {
+        sim_assert_eq!(
+            have: SymbolicIrContext::new(&DefineIndex::new()).generate_contract_ir(source).finalize().into_schema_signals(),
+            want: expected_failure(false),
+            "{source}"
         );
     }
 }

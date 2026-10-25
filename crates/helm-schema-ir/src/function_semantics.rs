@@ -87,8 +87,24 @@ enum CollectionItemSemantics {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum InputRead {
+    Value,
+    Contents,
+    Keyed,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum HeapEffect {
+    ReadOnly,
+    Operands,
+    Unknown,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) struct FunctionSemantics {
     known: bool,
+    pub(crate) input_read: InputRead,
+    pub(crate) heap_effect: HeapEffect,
     pub(crate) success: SuccessType,
     parameters: &'static [GoType],
     variadic: Option<GoType>,
@@ -104,6 +120,8 @@ pub(crate) struct FunctionSemantics {
 
 const UNKNOWN: FunctionSemantics = FunctionSemantics {
     known: false,
+    input_read: InputRead::Value,
+    heap_effect: HeapEffect::Unknown,
     success: SuccessType::Selected,
     parameters: &[],
     variadic: None,
@@ -119,6 +137,7 @@ const UNKNOWN: FunctionSemantics = FunctionSemantics {
 
 const KNOWN: FunctionSemantics = FunctionSemantics {
     known: true,
+    heap_effect: HeapEffect::ReadOnly,
     ..UNKNOWN
 };
 
@@ -214,6 +233,8 @@ const LAST_TRANSFORM: FunctionSemantics = FunctionSemantics {
 };
 
 const MAP_MERGE: FunctionSemantics = FunctionSemantics {
+    input_read: InputRead::Contents,
+    heap_effect: HeapEffect::Operands,
     nil_behavior: DirectAccessAborts,
     collection: Merge,
     ..KNOWN
@@ -227,12 +248,14 @@ const DURATION_PARSER: FunctionSemantics = FunctionSemantics {
 };
 
 const FORMATTER: FunctionSemantics = FunctionSemantics {
+    input_read: InputRead::Contents,
     provenance: Preserve,
     predicate: TypeDescriptor,
     ..KNOWN
 };
 
 const STRINGIFIER: FunctionSemantics = FunctionSemantics {
+    input_read: InputRead::Contents,
     legacy_operands: All,
     behavior: Stringify,
     ..KNOWN
@@ -276,12 +299,33 @@ const NONEMPTY: FunctionSemantics = FunctionSemantics {
 };
 
 impl FunctionSemantics {
+    const fn recognized(self) -> Self {
+        Self {
+            heap_effect: match self.heap_effect {
+                HeapEffect::Unknown => HeapEffect::ReadOnly,
+                HeapEffect::ReadOnly | HeapEffect::Operands => self.heap_effect,
+            },
+            ..self
+        }
+    }
+
+    const fn reading(self, input_read: InputRead) -> Self {
+        Self { input_read, ..self }
+    }
+
+    const fn writing(self, heap_effect: HeapEffect) -> Self {
+        Self {
+            heap_effect,
+            ..self
+        }
+    }
+
     const fn fixed(self, parameters: &'static [GoType], result: GoType) -> Self {
         Self {
             success: SuccessType::Fixed(result),
             parameters,
             variadic: None,
-            ..self
+            ..self.recognized()
         }
     }
 
@@ -290,7 +334,7 @@ impl FunctionSemantics {
             success: SuccessType::Fixed(result),
             parameters,
             variadic: Some(tail),
-            ..self
+            ..self.recognized()
         }
     }
 
@@ -299,7 +343,7 @@ impl FunctionSemantics {
             success: SuccessType::Selected,
             parameters,
             variadic,
-            ..self
+            ..self.recognized()
         }
     }
 
@@ -337,14 +381,21 @@ pub(crate) fn function_semantics(function: &str) -> FunctionSemantics {
         "add1f" | "ceil" | "floor" => ARITHMETIC.fixed(&[Unknown], Float64),
         "addf" => ARITHMETIC.variadic(&[], Unknown, Float64),
         "adler32sum" | "sha1sum" | "sha256sum" | "sha512sum" => CHECKSUM.fixed(&[Text], Text),
-        "and" | "coalesce" | "dig" | "or" => UNKNOWN.selected(&[], Some(Unknown)),
-        "append" | "prepend" | "push" => STRICT.fixed(&[Unknown, Unknown], Slice),
+        "and" | "coalesce" | "or" => UNKNOWN.selected(&[], Some(Unknown)),
+        "dig" => UNKNOWN
+            .selected(&[], Some(Unknown))
+            .reading(InputRead::Contents),
+        "append" | "mustAppend" | "prepend" | "mustPrepend" | "push" => {
+            STRICT.fixed(&[Unknown, Unknown], Slice)
+        }
         "b64dec" | "b64enc" => TRANSFORM.fixed(&[Text], Text),
         "chunk" | "mustChunk" => UNKNOWN.selected(&[Int, Unknown], None),
         "compact" | "initial" | "rest" | "reverse" => STRICT.fixed(&[Unknown], Slice),
         "concat" => STRICT.selected(&[], Some(Unknown)),
         "contains" | "hasPrefix" | "hasSuffix" | "mustRegexMatch" | "regexMatch" => STRING_MATCH,
-        "deepCopy" | "mustDeepCopy" => PRESERVING_STRICT.selected(&[Unknown], None),
+        "deepCopy" | "mustDeepCopy" => PRESERVING_STRICT
+            .selected(&[Unknown], None)
+            .reading(InputRead::Contents),
         "default" => UNKNOWN.selected(&[Unknown], Some(Unknown)),
         "dict" => UNKNOWN.variadic(&[], Unknown, Map),
         "empty" | "not" => UNKNOWN.fixed(&[Unknown], Bool),
@@ -362,19 +413,44 @@ pub(crate) fn function_semantics(function: &str) -> FunctionSemantics {
         "genSelfSignedCertWithKey" => UNKNOWN.selected(&[Text, Slice, Slice, Int, Text], None),
         "genSignedCert" => IP_CERTIFICATE.selected(&[Text, Slice, Slice, Int, Unknown], None),
         "genSignedCertWithKey" => UNKNOWN.selected(&[Text, Slice, Slice, Int, Unknown, Text], None),
-        "get" => MAP_LOOKUP.selected(&[Map, Text], None),
-        "hasKey" => MAP_LOOKUP.fixed(&[Map, Text], Bool),
+        "get" => MAP_LOOKUP
+            .selected(&[Map, Text], None)
+            .reading(InputRead::Keyed),
+        "hasKey" => MAP_LOOKUP
+            .fixed(&[Map, Text], Bool)
+            .reading(InputRead::Keyed),
         "htpasswd" | "trimAll" | "trimPrefix" | "trimSuffix" => {
             TRANSFORM.fixed(&[Text, Text], Text)
         }
-        "include" | "template" => UNKNOWN.fixed(&[Text, Unknown], Text),
+        "include" | "template" => UNKNOWN
+            .fixed(&[Text, Unknown], Text)
+            .writing(HeapEffect::Unknown),
         "indent" | "nindent" => INDENT.fixed(&[Int, Text], Text),
-        "index" | "mustSlice" | "slice" => STRICT.selected(&[Unknown], Some(Unknown)),
+        "index" => STRICT
+            .selected(&[Unknown], Some(Unknown))
+            .reading(InputRead::Keyed),
+        "mustSlice" | "slice" => STRICT.selected(&[Unknown], Some(Unknown)),
         "int" => PRESERVING_CAST.fixed(&[Unknown], Int),
         "int64" => NUMERIC_CAST.fixed(&[Unknown], Int64),
-        "keys" => MAP_LOOKUP.variadic(&[], Map, Slice),
+        "keys" => MAP_LOOKUP
+            .variadic(&[], Map, Slice)
+            .reading(InputRead::Contents),
         "kindOf" | "typeOf" => DESCRIPTOR.fixed(&[Unknown], Text),
-        "len" => STRICT.fixed(&[Unknown], Int),
+        "kindIs" | "typeIs" | "typeIsLike" => DESCRIPTOR.fixed(&[Text, Unknown], Bool),
+        "set" => MAP_LOOKUP
+            .fixed(&[Map, Text, Unknown], Map)
+            .writing(HeapEffect::Operands),
+        "sortAlpha" => UNKNOWN
+            .fixed(&[Unknown], Slice)
+            .reading(InputRead::Contents)
+            .writing(HeapEffect::Operands),
+        "toStrings" => UNKNOWN
+            .fixed(&[Unknown], Slice)
+            .reading(InputRead::Contents),
+        "join" => UNKNOWN
+            .fixed(&[Text, Unknown], Text)
+            .reading(InputRead::Contents),
+        "len" => STRICT.fixed(&[Unknown], Int).reading(InputRead::Contents),
         "list" | "tuple" => UNKNOWN.variadic(&[], Unknown, Slice),
         "lookup" => STRING_LOOKUP.fixed(&[Text, Text, Text, Text], Map),
         "lower" | "trim" | "upper" => LAST_TRANSFORM.fixed(&[Text], Text),
@@ -393,12 +469,18 @@ pub(crate) fn function_semantics(function: &str) -> FunctionSemantics {
         | "regexReplaceAll"
         | "regexReplaceAllLiteral"
         | "replace" => TRANSFORM.fixed(&[Text, Text, Text], Text),
-        "mustToJson" | "mustToRawJson" | "toJson" | "toRawJson" => UNKNOWN.fixed(&[Unknown], Text),
+        "mustToJson" | "mustToRawJson" | "mustToPrettyJson" | "toJson" | "toRawJson"
+        | "toPrettyJson" => UNKNOWN.fixed(&[Unknown], Text).reading(InputRead::Contents),
         "mustUniq" | "uniq" => PRESERVING_STRICT.fixed(&[Unknown], Slice),
-        "omit" | "pick" => MAP_LOOKUP.variadic(&[Map], Text, Map),
+        "omit" | "pick" => MAP_LOOKUP
+            .variadic(&[Map], Text, Map)
+            .reading(InputRead::Contents),
         "pluck" => MAP_LOOKUP.variadic(&[Text], Map, Slice),
+        "now" => UNKNOWN.fixed(&[], Unknown),
         "plural" => UNKNOWN.fixed(&[Text, Text, Int], Text),
-        "print" | "println" => UNKNOWN.variadic(&[], Unknown, Text),
+        "print" | "println" => UNKNOWN
+            .variadic(&[], Unknown, Text)
+            .reading(InputRead::Contents),
         "printf" => FORMATTER.variadic(&[Text], Unknown, Text),
         "quote" | "squote" | "urlquery" => STRINGIFIER.variadic(&[], Unknown, Text),
         "randAlpha" | "randAlphaNum" | "randAscii" | "randBytes" | "randNumeric" => {
@@ -418,14 +500,20 @@ pub(crate) fn function_semantics(function: &str) -> FunctionSemantics {
         "substr" => LAST_TRANSFORM.fixed(&[Int, Int, Text], Text),
         "ternary" => STRICT.selected(&[Unknown, Unknown, Bool], None),
         "toString" => STRINGIFIER.fixed(&[Unknown], Text),
-        "toYaml" => PRESERVING.fixed(&[Unknown], Text),
-        "tpl" => PRESERVING.fixed(&[Text, Unknown], Text),
-        "unset" => MAP_LOOKUP.fixed(&[Map, Text], Map),
+        "toYaml" | "toYamlPretty" => PRESERVING
+            .fixed(&[Unknown], Text)
+            .reading(InputRead::Contents),
+        "tpl" => PRESERVING
+            .fixed(&[Text, Unknown], Text)
+            .writing(HeapEffect::Unknown),
+        "unset" => MAP_LOOKUP
+            .fixed(&[Map, Text], Map)
+            .writing(HeapEffect::Operands),
         "until" => UNKNOWN.selected(&[Int], None),
         "untilStep" => UNKNOWN.selected(&[Int, Int, Int], None),
         "urlParse" => URL_PARSER.fixed(&[Text], Map),
         "uuidv4" => NONEMPTY.fixed(&[], Text),
-        "values" => MAP_LOOKUP.fixed(&[Map], Slice),
+        "values" => MAP_LOOKUP.fixed(&[Map], Slice).reading(InputRead::Contents),
         "wrapWith" => UNKNOWN.fixed(&[Int, Text, Text], Text),
         _ => UNKNOWN,
     }

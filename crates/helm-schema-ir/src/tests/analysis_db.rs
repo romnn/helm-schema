@@ -1,3 +1,4 @@
+use color_eyre::eyre;
 use std::collections::BTreeSet;
 
 use super::{IrAnalysisDb, ParsedDefines, extract_define_blocks};
@@ -114,7 +115,22 @@ fn dynamic_helper_names_preserve_unknown_output() {
         {{- include "dynamic" . -}}
         {{- end -}}
     "#};
-    assert_unknown_helper_output(source, r#"{{ include "dynamic" . }}"#);
+    let db = helper_db(source);
+    let execution = crate::value::execute_document(r#"{{ include "dynamic" . }}"#, None, &db);
+    let string_name = Predicate::from(helm_schema_core::Guard::TypeIs {
+        path: ValuesPath::parse("helper"),
+        schema_type: "string".to_owned(),
+    });
+    sim_assert_eq!(have: execution.abort_predicate(), want: string_name.negated());
+    let outputs = execution.text().collect::<Vec<_>>();
+    assert!(
+        !outputs.is_empty(),
+        "dynamic execution lost its unknown normal alternative"
+    );
+    for (condition, output) in outputs {
+        sim_assert_eq!(have: condition.normalize_boolean(), want: string_name.clone());
+        sim_assert_eq!(have: output.exact_text(), want: None);
+    }
 }
 
 #[test]
@@ -376,4 +392,23 @@ pub(crate) fn widen_large_bound_value_ref(
     );
     widened_paths.extend(binding.paths().iter().map(ValuesPath::encode));
     Some(AbstractValue::Top)
+}
+
+#[test]
+fn repeated_helper_lookups_share_one_parsed_program() -> eyre::Result<()> {
+    use color_eyre::eyre::OptionExt as _;
+    let db = helper_db(r#"{{ define "leaf" }}{{ .Values.x }}{{ end }}"#);
+    let first = db
+        .parsed_helper_body("leaf")
+        .ok_or_eyre("first helper missing")?;
+    let second = db
+        .parsed_helper_body("leaf")
+        .ok_or_eyre("second helper missing")?;
+    assert!(std::ptr::eq(first.syntax, second.syntax));
+    assert!(std::ptr::eq(&first.syntax.tree, &second.syntax.tree));
+    assert!(std::ptr::eq(
+        &first.syntax.expressions,
+        &second.syntax.expressions
+    ));
+    Ok(())
 }

@@ -2,17 +2,15 @@ use super::eval::{Executor, local_name, normal};
 use super::{
     Coverage, Datum, Exit, Flow, Leaf, Normal, ObjectData, Remainder, State, Value, ValueNode,
 };
-use helm_schema_ast::{ParsedActions, TemplateExpr};
+use helm_schema_ast::TemplateExpr;
 use helm_schema_core::{GuardValue, Predicate};
-use helm_schema_syntax::{ActionKind, ControlKind, Span, TemplateAction, TemplatedDocument};
+use helm_schema_syntax::{ActionKind, ControlKind, Span, TemplateAction, TextTrim, trim_text_span};
 use std::rc::Rc;
 
 struct Program<'a> {
     source: &'a str,
     path: Option<&'a str>,
-    actions: Vec<TemplateAction>,
-    expressions: ParsedActions,
-    tree: tree_sitter::Tree,
+    syntax: &'a crate::analysis_db::ParsedProgramSyntax,
 }
 struct Window {
     start: usize,
@@ -23,28 +21,51 @@ struct RangeEntry {
     value: Value,
 }
 impl Executor<'_> {
-    pub(super) fn body(&self, source: &str, path: Option<&str>, mut state: State) -> Vec<Exit> {
-        state.program = state.heap.arena.next_program.get();
-        state.heap.arena.next_program.set(state.program + 1);
-        let Some(tree) = helm_schema_syntax::parse_go_template(source) else {
+    pub(super) fn body(&self, source: &str, path: Option<&str>, state: State) -> Vec<Exit> {
+        let syntax = crate::analysis_db::ParsedProgramSyntax::parse(source);
+        self.parsed_body(source, path, syntax.as_ref(), state)
+    }
+
+    pub(super) fn parsed_body(
+        &self,
+        source: &str,
+        path: Option<&str>,
+        syntax: Option<&crate::analysis_db::ParsedProgramSyntax>,
+        state: State,
+    ) -> Vec<Exit> {
+        let program = state.heap.arena.program();
+        self.execute_parsed_body(source, path, syntax, state, program)
+    }
+
+    pub(super) fn parsed_file_body(
+        &self,
+        source: &str,
+        path: Option<&str>,
+        syntax: Option<&crate::analysis_db::ParsedProgramSyntax>,
+        state: State,
+        occurrence: &super::session::FileOccurrence,
+    ) -> Vec<Exit> {
+        self.execute_parsed_body(source, path, syntax, state, occurrence.program)
+    }
+
+    fn execute_parsed_body(
+        &self,
+        source: &str,
+        path: Option<&str>,
+        syntax: Option<&crate::analysis_db::ParsedProgramSyntax>,
+        mut state: State,
+        program: u64,
+    ) -> Vec<Exit> {
+        state.program = program;
+        let Some(syntax) = syntax.filter(|syntax| !syntax.tree.root_node().has_error()) else {
             super::operations::invalidate(&mut state);
             state.output.emit(state.heap.freeze(&Value::unknown()));
             return normal(state, Value::unknown());
         };
-        if tree.root_node().has_error() {
-            super::operations::invalidate(&mut state);
-            state.output.emit(state.heap.freeze(&Value::unknown()));
-            return normal(state, Value::unknown());
-        }
-        let document = TemplatedDocument::parse_with_root(source, tree.root_node());
-        let actions = document.actions().to_vec();
-        let expressions = ParsedActions::lower(tree.root_node(), source, &actions);
         let program = Program {
             source,
             path,
-            actions,
-            expressions,
-            tree,
+            syntax,
         };
         self.window(
             &program,
@@ -55,41 +76,33 @@ impl Executor<'_> {
             normal(state, Value::nil()),
         )
     }
-    fn window(&self, program: &Program<'_>, window: Window, mut exits: Vec<Exit>) -> Vec<Exit> {
+    fn window(&self, program: &Program<'_>, window: Window, exits: Vec<Exit>) -> Vec<Exit> {
+        let mut exits = super::window_exits::WindowExits::new(exits);
         let mut cursor = window.start;
         let mut index = program
+            .syntax
             .actions
             .partition_point(|action| action.span.start < window.start);
         while let Some(action) = program
+            .syntax
             .actions
             .get(index)
             .copied()
             .filter(|action| action.span.start < window.end)
         {
-            let bytes = program
-                .source
-                .get(cursor..action.span.start)
-                .unwrap_or_default();
-            let bytes = if action.trim_left {
-                bytes.trim_end_matches(char::is_whitespace)
-            } else {
-                bytes
-            };
-            for exit in &mut exits {
-                if matches!(exit.flow, Flow::Normal(_)) {
-                    exit.state.emit_bytes(
-                        Span {
-                            start: cursor,
-                            end: action.span.start,
-                        },
-                        program.path,
-                        bytes,
-                    );
-                }
-            }
+            let span = literal_span(program, index, Span::new(cursor, action.span.start));
+            let bytes = program.source.get(span.start..span.end).unwrap_or_default();
+            exits.emit_bytes(span, program.path, bytes);
             cursor = action.span.end;
-            let mut next = super::ExitBuffer::default();
-            for mut exit in exits {
+            let mut next = exits.next_buffer();
+            for chunk in exits.into_chunks() {
+                let mut exit = match chunk {
+                    super::window_exits::WindowChunk::Single(exit) => exit,
+                    super::window_exits::WindowChunk::Terminal(run) => {
+                        next.forward(run);
+                        continue;
+                    }
+                };
                 if !matches!(exit.flow, Flow::Normal(_)) {
                     next.push(exit);
                     continue;
@@ -102,6 +115,7 @@ impl Executor<'_> {
                     | ActionKind::Assign => {
                         let rendered = matches!(action.kind, ActionKind::Output { .. });
                         let expressions = program
+                            .syntax
                             .expressions
                             .at(action.span)
                             .map(|parsed| parsed.expressions.as_ref())
@@ -166,7 +180,7 @@ impl Executor<'_> {
                     }
                 }
             }
-            exits = reconverge(next.finish());
+            exits = next.finish();
             if let ActionKind::RegionOpen {
                 region_end,
                 region: _,
@@ -175,32 +189,20 @@ impl Executor<'_> {
             {
                 cursor = region_end;
                 index = program
+                    .syntax
                     .actions
                     .partition_point(|action| action.span.start < region_end);
             } else {
                 index += 1;
             }
-            if action.trim_right {
-                let suffix = program.source.get(cursor..window.end).unwrap_or_default();
-                cursor += suffix.len() - suffix.trim_start_matches(char::is_whitespace).len();
-                index = program
-                    .actions
-                    .partition_point(|action| action.span.start < cursor);
-            }
         }
-        for exit in &mut exits {
-            if matches!(exit.flow, Flow::Normal(_)) {
-                exit.state.emit_bytes(
-                    Span {
-                        start: cursor,
-                        end: window.end,
-                    },
-                    program.path,
-                    program.source.get(cursor..window.end).unwrap_or_default(),
-                );
-            }
-        }
-        exits
+        let span = literal_span(program, index, Span::new(cursor, window.end));
+        exits.emit_bytes(
+            span,
+            program.path,
+            program.source.get(span.start..span.end).unwrap_or_default(),
+        );
+        exits.into_exits()
     }
     fn region(
         &self,
@@ -214,7 +216,22 @@ impl Executor<'_> {
         if kind == ControlKind::Define {
             return normal(state, Value::nil());
         }
-        let boundaries: Vec<_> = program.actions.iter().copied().filter(|action| action.span.start > opener.span.start && action.span.start < end && matches!(action.kind, ActionKind::RegionBranch { region: candidate } | ActionKind::RegionEnd { region: candidate } if candidate == region)).collect();
+        if kind == ControlKind::Block {
+            let mut exits = if let Some(call) = block_call(program, opener.span.start) {
+                self.expression(&call, state, opener.span.start)
+            } else {
+                super::operations::invalidate(&mut state);
+                normal(state, Value::unknown())
+            };
+            for exit in &mut exits {
+                if let Flow::Normal(value) = &exit.flow {
+                    exit.state
+                        .observe(opener.span, program.path, &value.value, true);
+                }
+            }
+            return exits;
+        }
+        let boundaries: Vec<_> = program.syntax.actions.iter().copied().filter(|action| action.span.start > opener.span.start && action.span.start < end && matches!(action.kind, ActionKind::RegionBranch { region: candidate } | ActionKind::RegionEnd { region: candidate } if candidate == region)).collect();
         if kind == ControlKind::Range {
             return self.range(program, opener, &boundaries, state);
         }
@@ -226,6 +243,7 @@ impl Executor<'_> {
             let mut next = super::StateBuffer::default();
             for state in pending {
                 let expression = program
+                    .syntax
                     .expressions
                     .at(header.span)
                     .and_then(|parsed| parsed.expressions.first());
@@ -302,7 +320,11 @@ impl Executor<'_> {
         mut state: State,
     ) -> Vec<Exit> {
         state.enter_scope(None);
-        let node = node_at(program.tree.root_node(), opener.span.start, "range_action");
+        let node = node_at(
+            program.syntax.tree.root_node(),
+            opener.span.start,
+            "range_action",
+        );
         let header =
             node.and_then(|node| helm_schema_ast::range_header_from_source(node, program.source));
         let expression = header.as_ref().map(|header| header.expr());
@@ -337,6 +359,7 @@ impl Executor<'_> {
                 results.push(exit);
                 continue;
             };
+            exit.state.record_container_read(&value.value);
             exit.state
                 .observe(opener.span, program.path, &value.value, false);
             for name in [key_name.as_deref(), value_name.as_deref()]
@@ -488,36 +511,64 @@ impl Executor<'_> {
         }
     }
 }
+fn block_call(program: &Program<'_>, start: usize) -> Option<TemplateExpr> {
+    let node = node_at(program.syntax.tree.root_node(), start, "block_action")?;
+    let names =
+        helm_schema_ast::node_expressions(node.child_by_field_name("name")?, program.source);
+    let arguments =
+        helm_schema_ast::node_expressions(node.child_by_field_name("argument")?, program.source);
+    let [name] = names.as_slice() else {
+        return None;
+    };
+    let [argument] = arguments.as_slice() else {
+        return None;
+    };
+    Some(TemplateExpr::Call {
+        function: "template".to_owned(),
+        args: vec![name.clone(), argument.clone()],
+    })
+}
+
+fn literal_span(program: &Program<'_>, next: usize, span: Span) -> Span {
+    let previous = next
+        .checked_sub(1)
+        .and_then(|index| program.syntax.actions.get(index));
+    let following = program.syntax.actions.get(next);
+    trim_text_span(
+        program.source,
+        span,
+        TextTrim {
+            start: previous
+                .is_some_and(|action| action.span.end == span.start && action.trim_right),
+            end: following.is_some_and(|action| action.span.start == span.end && action.trim_left),
+        },
+    )
+    .unwrap_or_else(|| Span::new(span.start, span.start))
+}
+
 fn entries(state: &State, value: &Value) -> Option<Vec<RangeEntry>> {
     let value = state.consumed(value);
     match value.node.as_ref() {
         ValueNode::Leaf(Leaf {
-            datum: Datum::Strings(id),
-            origin: _,
-        }) => {
-            let ObjectData::Strings(slots) = &state.heap.version.object(id)?.data else {
-                return None;
-            };
-            Some(
-                slots
-                    .iter()
-                    .enumerate()
-                    .map(|(index, _)| RangeEntry {
-                        key: Value::literal(GuardValue::Int(index as i64)),
-                        value: Value::leaf(Datum::Slot {
-                            backing: id.clone(),
-                            index,
-                        }),
-                    })
-                    .collect(),
-            )
-        }
-
-        ValueNode::Leaf(Leaf {
-            datum: Datum::Sequence(Some(items)),
+            datum: Datum::Strings(slice),
             origin: _,
         }) => Some(
-            items
+            (0..slice.length)
+                .map(|index| RangeEntry {
+                    key: Value::literal(GuardValue::Int(index as i64)),
+                    value: Value::leaf(Datum::Slot {
+                        backing: slice.backing.clone(),
+                        index: slice.start + index,
+                    }),
+                })
+                .collect(),
+        ),
+        ValueNode::Leaf(Leaf {
+            datum: Datum::Sequence(sequence),
+            origin: _,
+        }) => Some(
+            sequence
+                .items()?
                 .iter()
                 .enumerate()
                 .map(|(index, value)| RangeEntry {
@@ -527,12 +578,10 @@ fn entries(state: &State, value: &Value) -> Option<Vec<RangeEntry>> {
                 .collect(),
         ),
         ValueNode::Leaf(Leaf {
-            datum:
-                Datum::Sequence(None)
-                | Datum::Map {
-                    target: None,
-                    view: _,
-                },
+            datum: Datum::Map {
+                target: None,
+                view: _,
+            },
             origin: _,
         }) => Some(Vec::new()),
         ValueNode::Leaf(Leaf {
@@ -640,7 +689,7 @@ pub(super) fn summarize_exits(exits: Vec<Exit>) -> Vec<Exit> {
         .filter_map(|mut group| {
             let mut inputs = std::collections::BTreeSet::new();
             let mut snapshots = std::collections::BTreeSet::new();
-            let mut reads = std::collections::BTreeSet::new();
+            let mut reads = super::read_set::ReadSet::default();
             for exit in &group {
                 for read in &exit.state.reads {
                     inputs.insert(read.path.clone());
@@ -651,7 +700,7 @@ pub(super) fn summarize_exits(exits: Vec<Exit>) -> Vec<Exit> {
                     });
                 }
                 if snapshots.insert(exit.state.heap.version.id.ordinal) {
-                    inputs.extend(exit.state.heap.freeze(&Value::unknown()).inputs());
+                    inputs.extend(exit.state.heap.freeze(&Value::unknown()).reachable_inputs());
                 }
                 for frame in &exit.state.frames {
                     for value in frame.bindings.values().chain(frame.dot.iter()) {
@@ -672,9 +721,9 @@ pub(super) fn summarize_exits(exits: Vec<Exit>) -> Vec<Exit> {
             representative.state.reads = representative
                 .state
                 .reads
-                .into_iter()
+                .iter()
                 .map(|read| super::RuntimeRead {
-                    path: read.path,
+                    path: read.path.clone(),
                     coverage: read.coverage,
                     condition: Predicate::True,
                 })
@@ -738,7 +787,7 @@ impl super::ExitBuffer {
         }
     }
     pub(super) fn finish(self) -> Vec<Exit> {
-        self.exits
+        reconverge(self.exits)
     }
 }
 impl super::StateBuffer {
@@ -761,13 +810,23 @@ impl super::StateBuffer {
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct FrozenEdgeKey {
+    parent: u64,
     decision: u64,
     taken: bool,
 }
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+struct ContinuationKey {
+    arena: *const super::Arena,
+    context: u64,
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+struct PathKey {
+    continuation: ContinuationKey,
+    prefix: u64,
+    snapshot: u64,
+}
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-struct ReconvergenceKey {
-    decision: u64,
-    prefix: Vec<FrozenEdgeKey>,
+struct ContinuationContext {
     program: u64,
     frames: Vec<FrameShape>,
     calls: Vec<String>,
@@ -784,34 +843,32 @@ struct LoopShape {
     call: u64,
     ordinal: u64,
 }
-struct BranchKey {
-    key: ReconvergenceKey,
-    taken: bool,
-    decision: Rc<super::FrozenTest>,
+#[derive(Debug, Default)]
+pub(super) struct FrontierIndex {
+    prefixes: std::collections::BTreeMap<FrozenEdgeKey, u64>,
+    contexts: std::collections::BTreeMap<ContinuationContext, u64>,
+    declined: std::collections::BTreeSet<DeclinedJoin>,
 }
-#[derive(Default)]
-struct BranchSlots {
-    yes: Vec<usize>,
-    no: Vec<usize>,
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+struct DeclinedJoin {
+    left: PathKey,
+    right: PathKey,
 }
-fn branch_key(exit: &Exit) -> Option<BranchKey> {
-    if !matches!(exit.flow, Flow::Normal(_)) {
-        return None;
+impl FrontierIndex {
+    fn prefix(&mut self, parent: u64, edge: &super::DecisionEdge) -> u64 {
+        let key = FrozenEdgeKey {
+            parent,
+            decision: edge.test.id,
+            taken: edge.taken,
+        };
+        let next = self.prefixes.len() as u64 + 1;
+        *self.prefixes.entry(key).or_insert(next)
     }
-    let (last, prefix) = exit.state.active.split_last()?;
-    Some(BranchKey {
-        key: ReconvergenceKey {
-            decision: last.test.id,
-            prefix: prefix
-                .iter()
-                .map(|edge| FrozenEdgeKey {
-                    decision: edge.test.id,
-                    taken: edge.taken,
-                })
-                .collect(),
-            program: exit.state.program,
-            frames: exit
-                .state
+
+    fn path(&mut self, state: &State, active: &[super::DecisionEdge]) -> PathKey {
+        let shape = ContinuationContext {
+            program: state.program,
+            frames: state
                 .frames
                 .iter()
                 .map(|frame| {
@@ -830,9 +887,8 @@ fn branch_key(exit: &Exit) -> Option<BranchKey> {
                     }
                 })
                 .collect(),
-            calls: exit.state.calls.clone(),
-            loops: exit
-                .state
+            calls: state.calls.clone(),
+            loops: state
                 .loops
                 .iter()
                 .map(|super::LoopId { call, ordinal }| LoopShape {
@@ -840,110 +896,227 @@ fn branch_key(exit: &Exit) -> Option<BranchKey> {
                     ordinal: *ordinal,
                 })
                 .collect(),
-        },
-        taken: last.taken,
-        decision: Rc::clone(&last.test),
-    })
-}
-pub(super) fn reconverge(exits: Vec<Exit>) -> Vec<Exit> {
-    if exits.len() < 2 {
-        return exits;
-    }
-    let mut slots: Vec<Option<Exit>> = Vec::new();
-    let mut pending = std::collections::BTreeMap::<ReconvergenceKey, BranchSlots>::new();
-    for mut exit in exits {
-        loop {
-            let Some(branch) = branch_key(&exit) else {
-                slots.push(Some(exit));
-                break;
-            };
-            let counterpart = pending.get_mut(&branch.key).and_then(|slots| {
-                if branch.taken {
-                    slots.no.pop()
-                } else {
-                    slots.yes.pop()
-                }
-            });
-            let Some(index) = counterpart else {
-                let index = slots.len();
-                slots.push(Some(exit));
-                let entry = pending.entry(branch.key).or_default();
-                if branch.taken {
-                    entry.yes.push(index);
-                } else {
-                    entry.no.push(index);
-                }
-                break;
-            };
-            let Some(other) = slots.get_mut(index).and_then(Option::take) else {
-                continue;
-            };
-            let joined = if branch.taken {
-                State::join_branches(Rc::clone(&branch.decision), &exit.state, &other.state)
-            } else {
-                State::join_branches(Rc::clone(&branch.decision), &other.state, &exit.state)
-            };
-            let Some(mut state) = joined else {
-                if let Some(slot) = slots.get_mut(index) {
-                    *slot = Some(other);
-                }
-                let entry = pending.entry(branch.key.clone()).or_default();
-                if branch.taken {
-                    entry.no.push(index);
-                } else {
-                    entry.yes.push(index);
-                }
-                let index = slots.len();
-                slots.push(Some(exit));
-                let entry = pending.entry(branch.key).or_default();
-                if branch.taken {
-                    entry.yes.push(index);
-                } else {
-                    entry.no.push(index);
-                }
-                break;
-            };
-            let Flow::Normal(value) = &exit.flow else {
-                slots.push(Some(exit));
-                break;
-            };
-            let Flow::Normal(other_value) = &other.flow else {
-                slots.push(Some(exit));
-                slots.push(Some(other));
-                break;
-            };
-            let mut widened = std::collections::BTreeSet::new();
-            let value = if branch.taken {
-                super::state::join_frame_value(
-                    branch.decision,
-                    &value.value,
-                    &other_value.value,
-                    &exit.state.heap,
-                    &other.state.heap,
-                    &mut widened,
-                )
-            } else {
-                super::state::join_frame_value(
-                    branch.decision,
-                    &other_value.value,
-                    &value.value,
-                    &other.state.heap,
-                    &exit.state.heap,
-                    &mut widened,
-                )
-            };
-            for path in widened {
-                state.reads.insert(super::RuntimeRead {
-                    path,
-                    condition: state.path_predicate(),
-                    coverage: super::ReadCoverage::UnknownRegion,
-                });
-            }
-            exit = Exit {
-                state,
-                flow: Flow::Normal(Normal { value }),
-            };
+        };
+        let next = self.contexts.len() as u64;
+        let context = *self.contexts.entry(shape).or_insert(next);
+        let mut prefix = 0;
+        for edge in active {
+            prefix = self.prefix(prefix, edge);
+        }
+        PathKey {
+            continuation: ContinuationKey {
+                arena: Rc::as_ptr(&state.heap.arena),
+                context,
+            },
+            prefix,
+            snapshot: state.heap.version.id.ordinal,
         }
     }
-    slots.into_iter().flatten().collect()
+}
+pub(super) trait Reconvergent: Sized {
+    type Context;
+    type Joined;
+    fn state<'a>(&'a self, context: &'a Self::Context) -> &'a State;
+    fn active<'a>(&'a self, context: &'a Self::Context) -> &'a [super::DecisionEdge] {
+        &self.state(context).active
+    }
+    fn prepare_join(
+        &self,
+        other: &Self,
+        plan: &super::state::ContinuationJoin,
+        context: &Self::Context,
+    ) -> Option<Self::Joined>;
+    fn is_normal(&self) -> bool;
+    fn compatible(&self, other: &Self) -> bool;
+    fn joined(
+        self,
+        other: Self,
+        state: Self::Joined,
+        decision: Rc<super::FrozenTest>,
+        taken: bool,
+        context: &Self::Context,
+    ) -> Self;
+}
+
+pub(super) struct IndexedContinuation<T> {
+    pub(super) index: usize,
+    pub(super) continuation: T,
+}
+
+struct FrontierSlot<T> {
+    continuation: T,
+    path: Option<PathKey>,
+}
+
+struct PreparedContinuation<T> {
+    index: usize,
+    plan: super::state::ContinuationJoin,
+    state: T,
+}
+
+pub(super) fn reconverge(exits: Vec<Exit>) -> Vec<Exit> {
+    reconverge_continuations(exits, &())
+        .into_iter()
+        .map(|entry| entry.continuation)
+        .collect()
+}
+
+#[tracing::instrument(skip_all)]
+pub(super) fn reconverge_continuations<T: Reconvergent>(
+    exits: Vec<T>,
+    context: &T::Context,
+) -> Vec<IndexedContinuation<T>> {
+    if exits.len() < 2 {
+        return exits
+            .into_iter()
+            .enumerate()
+            .map(|(index, continuation)| IndexedContinuation {
+                index,
+                continuation,
+            })
+            .collect();
+    }
+    let mut slots: Vec<Option<FrontierSlot<T>>> = Vec::new();
+    let mut pending = std::collections::BTreeMap::<ContinuationKey, Vec<usize>>::new();
+    for mut exit in exits {
+        loop {
+            let arena = &exit.state(context).heap.arena;
+            let path = exit.is_normal().then(|| {
+                arena
+                    .frontier
+                    .borrow_mut()
+                    .path(exit.state(context), exit.active(context))
+            });
+            let mut counterpart = None;
+            if let Some(path) = path
+                && let Some(candidates) = pending.get_mut(&path.continuation)
+            {
+                candidates.retain(|index| slots.get(*index).is_some_and(Option::is_some));
+                for &index in candidates.iter().rev() {
+                    let Some(FrontierSlot {
+                        continuation: other,
+                        path: Some(other_path),
+                    }) = slots.get(index).and_then(Option::as_ref)
+                    else {
+                        continue;
+                    };
+                    if !exit.compatible(other) {
+                        continue;
+                    }
+                    let declined = DeclinedJoin {
+                        left: path,
+                        right: *other_path,
+                    };
+                    if arena.frontier.borrow().declined.contains(&declined) {
+                        continue;
+                    }
+                    let plan = arena.join_paths(exit.active(context), other.active(context));
+                    if let Some(state) = exit.prepare_join(other, &plan, context) {
+                        counterpart = Some(PreparedContinuation { index, plan, state });
+                        break;
+                    }
+                    arena.frontier.borrow_mut().declined.insert(declined);
+                }
+            }
+            if let Some(PreparedContinuation { index, plan, state }) = counterpart
+                && let Some(FrontierSlot {
+                    continuation: other,
+                    path: _,
+                }) = slots.get_mut(index).and_then(Option::take)
+            {
+                exit = exit.joined(other, state, plan.decision, plan.taken, context);
+            } else {
+                let index = slots.len();
+                if let Some(path) = path {
+                    pending.entry(path.continuation).or_default().push(index);
+                }
+                slots.push(Some(FrontierSlot {
+                    continuation: exit,
+                    path,
+                }));
+                break;
+            }
+        }
+    }
+    slots
+        .into_iter()
+        .enumerate()
+        .filter_map(|(index, slot)| {
+            slot.map(
+                |FrontierSlot {
+                     continuation,
+                     path: _,
+                 }| {
+                    IndexedContinuation {
+                        index,
+                        continuation,
+                    }
+                },
+            )
+        })
+        .collect()
+}
+
+impl Reconvergent for Exit {
+    type Context = ();
+    type Joined = State;
+    fn state<'a>(&'a self, _context: &'a ()) -> &'a State {
+        &self.state
+    }
+    fn prepare_join(
+        &self,
+        other: &Self,
+        plan: &super::state::ContinuationJoin,
+        _context: &(),
+    ) -> Option<State> {
+        State::join_branches(plan, &self.state, &other.state)
+    }
+    fn is_normal(&self) -> bool {
+        matches!(self.flow, Flow::Normal(_))
+    }
+    fn compatible(&self, other: &Self) -> bool {
+        self.is_normal() && other.is_normal()
+    }
+    fn joined(
+        self,
+        other: Self,
+        mut state: State,
+        decision: Rc<super::FrozenTest>,
+        taken: bool,
+        _context: &(),
+    ) -> Self {
+        let (Flow::Normal(value), Flow::Normal(other_value)) = (&self.flow, &other.flow) else {
+            return self;
+        };
+        let mut widened = std::collections::BTreeSet::new();
+        let (yes, no) = if taken {
+            (&self, &other)
+        } else {
+            (&other, &self)
+        };
+        let (yes_value, no_value) = if taken {
+            (&value.value, &other_value.value)
+        } else {
+            (&other_value.value, &value.value)
+        };
+        let value = super::state::join_frame_value(
+            decision,
+            yes_value,
+            no_value,
+            &yes.state.heap,
+            &no.state.heap,
+            &mut widened,
+        );
+        for path in widened {
+            state.reads.insert(super::RuntimeRead {
+                path,
+                condition: state.path_predicate(),
+                coverage: super::ReadCoverage::UnknownRegion,
+            });
+        }
+        Exit {
+            state,
+            flow: Flow::Normal(Normal { value }),
+        }
+    }
 }

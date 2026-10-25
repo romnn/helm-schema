@@ -18,6 +18,7 @@ impl Executor<'_> {
                 state,
                 match literal {
                     Literal::String(text) | Literal::RawString(text) => Value::string(text),
+                    Literal::UnresolvedString(_) => Value::scalar(ScalarType::String, None),
                     Literal::Int(value) => Value::literal(GuardValue::Int(*value)),
                     Literal::Float(value) => Value::scalar(
                         ScalarType::Float64,
@@ -127,15 +128,9 @@ impl Executor<'_> {
     }
     fn selector(&self, mut state: State, mut value: Value, path: &[String]) -> Vec<Exit> {
         for key in path {
-            value = state.field(&value, key);
+            value = state.selector_field(&value, key);
         }
-        for path in value.inputs() {
-            state.reads.insert(super::RuntimeRead {
-                coverage: super::ReadCoverage::ExactPath,
-                path,
-                condition: state.path_predicate(),
-            });
-        }
+        state.record_value_read(&value, super::ReadCoverage::ExactPath);
         normal(state, value)
     }
 }

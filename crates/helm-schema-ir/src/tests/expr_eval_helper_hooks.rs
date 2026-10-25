@@ -18,7 +18,7 @@ fn execute(action: &str) -> crate::value::DocumentExecution {
         {{- define "common.labels" -}}app: {{ .Values.labels.app }}{{- end -}}
         {{- define "partial.feature" -}}
           {{- if .Values.feature.gate -}}true
-          {{- else -}}{{ printf "%q" .Values.feature.output }}{{- end -}}
+          {{- else -}}{{ if eq (randAlphaNum 1) "a" }}{{ .Values.feature.output }}{{ end }}{{- end -}}
         {{- end -}}
     "#},
     );

@@ -16,7 +16,11 @@ use tree_sitter::Node;
 pub enum Literal {
     /// `"..."` — escapes already decoded. e.g. `"a\"b"` → `String("a\"b")`.
     String(String),
-    /// `` `...` `` — backtick raw string, escapes preserved verbatim.
+    /// Interpreted string whose runtime bytes cannot be represented exactly as UTF-8.
+    ///
+    /// The original quoted lexeme is retained for diagnostics, not as runtime content.
+    UnresolvedString(String),
+    /// `` `...` `` — backtick raw string, escapes preserved and source carriage returns discarded.
     RawString(String),
     /// Signed integer literal. Decimal, hex (`0x`), octal (`0o`/`0`),
     /// binary (`0b`) are all decoded; digit underscores `_` are stripped.
@@ -31,12 +35,16 @@ pub enum Literal {
 
 impl Literal {
     /// Returns the literal's decoded string content if it's a string
-    /// (interpreted or raw). For non-string literals returns `None`.
+    /// (interpreted or raw). Unresolved strings and non-string literals return `None`.
     #[must_use]
     pub fn as_string(&self) -> Option<&str> {
         match self {
             Literal::String(s) | Literal::RawString(s) => Some(s),
-            _ => None,
+            Literal::UnresolvedString(_)
+            | Literal::Int(_)
+            | Literal::Float(_)
+            | Literal::Bool(_)
+            | Literal::Nil => None,
         }
     }
 }
@@ -508,14 +516,18 @@ fn convert_pipeline(node: Node<'_>, src: &str) -> TemplateExpr {
             name: field_text(node, "variable", src).to_string(),
             value: Box::new(convert_value_field(node, src)),
         },
-        "interpreted_string_literal" => TemplateExpr::Literal(Literal::String(
-            decode_interpreted_string(node_text(node, src)),
-        )),
+        "interpreted_string_literal" => {
+            let raw = node_text(node, src);
+            TemplateExpr::Literal(decode_interpreted_string(raw).map_or_else(
+                || Literal::UnresolvedString(raw.to_string()),
+                Literal::String,
+            ))
+        }
         "raw_string_literal" => {
             let raw = node_text(node, src);
             let content = raw.strip_prefix('`').unwrap_or(raw);
             let content = content.strip_suffix('`').unwrap_or(content);
-            TemplateExpr::Literal(Literal::RawString(content.to_string()))
+            TemplateExpr::Literal(Literal::RawString(content.replace('\r', "")))
         }
         "int_literal" => {
             let raw = node_text(node, src);
@@ -627,128 +639,57 @@ fn collect_pipeline_stages(node: Node<'_>, src: &str, out: &mut Vec<TemplateExpr
     }
 }
 
-/// Decode a Go `interpreted_string_literal` (text including the
-/// surrounding `"`s) into its runtime string value. Handles the
-/// escape forms tree-sitter-go-template's grammar models:
-///   - single-char: `\n`, `\r`, `\t`, `\\`, `\"`, `\'`, `\a`,
-///     `\b`, `\f`, `\v`
-///   - `\xHH` (exactly two hex digits, an ASCII byte value; like the
-///     octal form, a non-ASCII byte is one fragment of a UTF-8 sequence
-///     Go assembles byte-wise and is preserved verbatim)
-///   - `\NNN` (exactly three octal digits, same ASCII-byte rule)
-///   - `\uHHHH` (exactly four hex digits, BMP code point)
-///   - `\UHHHHHHHH` (exactly eight hex digits, any code point)
+/// Decodes byte escapes before validating the complete runtime string as UTF-8.
 ///
-/// For any malformed escape (wrong digit count, non-hex char, surrogate
-/// code point) the original `\X…` bytes are preserved verbatim — we
-/// never produce silently-wrong output. Octal escapes (`\NNN`, exactly
-/// three octal digits) decode when the byte value is ASCII; a non-ASCII
-/// octal byte is one fragment of a UTF-8 sequence Go assembles at the
-/// byte level, which a `char`-based decoder cannot represent alone, so
-/// it is preserved verbatim (abstain rather than guess). Other unknown
-/// one-char escapes are also preserved as-is.
-fn decode_interpreted_string(raw: &str) -> String {
-    let inner = raw
-        .strip_prefix('"')
-        .and_then(|s| s.strip_suffix('"'))
-        .unwrap_or(raw);
-
-    let mut out = String::with_capacity(inner.len());
+/// Go's octal and hexadecimal byte escapes can jointly encode one Unicode character.
+/// Unicode escapes name scalar values instead. Invalid escapes and valid non-UTF-8
+/// Go strings have no exact string representation in this AST.
+fn decode_interpreted_string(raw: &str) -> Option<String> {
+    let inner = raw.strip_prefix('"')?.strip_suffix('"')?;
+    let mut output = Vec::with_capacity(inner.len());
     let mut chars = inner.chars();
-    while let Some(c) = chars.next() {
-        if c != '\\' {
-            out.push(c);
+    while let Some(character) = chars.next() {
+        if character != '\\' {
+            if matches!(character, '\n' | '"') {
+                return None;
+            }
+            let mut encoded = [0; 4];
+            output.extend_from_slice(character.encode_utf8(&mut encoded).as_bytes());
             continue;
         }
-        let Some(next) = chars.next() else {
-            // Trailing backslash — preserve verbatim.
-            out.push('\\');
-            break;
-        };
-        match next {
-            'n' => out.push('\n'),
-            'r' => out.push('\r'),
-            't' => out.push('\t'),
-            '\\' => out.push('\\'),
-            '"' => out.push('"'),
-            '\'' => out.push('\''),
-            'a' => out.push('\x07'),
-            'b' => out.push('\x08'),
-            'f' => out.push('\x0c'),
-            'v' => out.push('\x0b'),
-            'x' => decode_hex_escape(&mut chars, 2, 'x', &mut out),
-            'u' => decode_hex_escape(&mut chars, 4, 'u', &mut out),
-            'U' => decode_hex_escape(&mut chars, 8, 'U', &mut out),
-            '0'..='7' => decode_octal_escape(&mut chars, next, &mut out),
-            other => {
-                // Unknown escape — preserve the backslash and the char.
-                out.push('\\');
-                out.push(other);
+        match chars.next()? {
+            'n' => output.push(b'\n'),
+            'r' => output.push(b'\r'),
+            't' => output.push(b'\t'),
+            '\\' => output.push(b'\\'),
+            '"' => output.push(b'"'),
+            'a' => output.push(0x07),
+            'b' => output.push(0x08),
+            'f' => output.push(0x0c),
+            'v' => output.push(0x0b),
+            'x' => output.push(u8::try_from(decode_escape_digits(&mut chars, 2, 16)?).ok()?),
+            marker @ ('u' | 'U') => {
+                let width = if marker == 'u' { 4 } else { 8 };
+                let character = char::from_u32(decode_escape_digits(&mut chars, width, 16)?)?;
+                let mut encoded = [0; 4];
+                output.extend_from_slice(character.encode_utf8(&mut encoded).as_bytes());
             }
+            first @ '0'..='7' => {
+                let value = first.to_digit(8)? * 64 + decode_escape_digits(&mut chars, 2, 8)?;
+                output.push(u8::try_from(value).ok()?);
+            }
+            _ => return None,
         }
     }
-    out
+    String::from_utf8(output).ok()
 }
 
-/// Decode a Go octal escape: `first` plus exactly two more octal digits
-/// name a byte value. An ASCII byte decodes directly; a non-ASCII byte
-/// is one fragment of a UTF-8 sequence Go assembles byte-wise, so it is
-/// preserved verbatim, as is any malformed digit run.
-fn decode_octal_escape(chars: &mut std::str::Chars<'_>, first: char, out: &mut String) {
-    let rest = chars.as_str();
-    let mut tail = rest.chars();
-    let (second, third) = (tail.next(), tail.next());
-    if let (Some(second @ '0'..='7'), Some(third @ '0'..='7')) = (second, third) {
-        let value = (first as u32 - '0' as u32) * 64
-            + (second as u32 - '0' as u32) * 8
-            + (third as u32 - '0' as u32);
-        if value < 0x80 {
-            out.push(char::from_u32(value).unwrap_or('\u{fffd}'));
-            chars.next();
-            chars.next();
-            return;
-        }
-    }
-    out.push('\\');
-    out.push(first);
-}
-
-/// Consume exactly `width` hex digits from `chars` and append the
-/// decoded character to `out`. On any failure (fewer chars available,
-/// non-hex digit, code point not representable as a `char`) preserve
-/// the original `\<marker><consumed>` bytes verbatim.
-fn decode_hex_escape(
-    chars: &mut std::str::Chars<'_>,
-    width: usize,
-    marker: char,
-    out: &mut String,
-) {
-    let mut buf = String::with_capacity(width);
+fn decode_escape_digits(chars: &mut std::str::Chars<'_>, width: usize, radix: u32) -> Option<u32> {
+    let mut value = 0;
     for _ in 0..width {
-        if let Some(ch) = chars.next() {
-            buf.push(ch);
-        } else {
-            break;
-        }
+        value = value * radix + chars.next()?.to_digit(radix)?;
     }
-    let valid = buf.len() == width && buf.chars().all(|c| c.is_ascii_hexdigit());
-    if valid
-        && let Ok(code) = u32::from_str_radix(&buf, 16)
-        // `\xHH` names a raw BYTE in Go, not a code point: a non-ASCII
-        // byte is one fragment of a UTF-8 sequence assembled byte-wise
-        // (Go reads `"\xc3\xa9"` as "é"), which a char-based decoder cannot
-        // represent alone — decoding it as U+00HH would fabricate a
-        // different string. Preserve it verbatim like the octal form.
-        // `\u`/`\U` name code points and decode for any value.
-        && (marker != 'x' || code < 0x80)
-        && let Some(ch) = char::from_u32(code)
-    {
-        out.push(ch);
-        return;
-    }
-    out.push('\\');
-    out.push(marker);
-    out.push_str(&buf);
+    Some(value)
 }
 
 /// Parse a Go integer literal, including underscores and base prefixes

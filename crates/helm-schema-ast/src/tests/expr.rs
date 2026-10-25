@@ -578,14 +578,12 @@ fn block_name_is_not_surfaced_but_argument_is() {
 
 #[test]
 fn malformed_unicode_escape_is_preserved_verbatim() {
-    // `\u12` is only two hex digits — Go's grammar requires four.
-    // The decoder must not silently produce a wrong char; the input
-    // bytes are preserved verbatim so callers can detect the issue.
+    // An incomplete escape is retained as a lexeme, never published as runtime string content.
     let exprs = parse_action_expressions(r#"{{ "\u12" }}"#);
-    let TemplateExpr::Literal(Literal::String(s)) = first(&exprs) else {
-        panic!("expected string literal");
-    };
-    sim_assert_eq!(have: s, want: r"\u12", "got {s:?}");
+    sim_assert_eq!(
+        have: exprs.first(),
+        want: Some(&TemplateExpr::Literal(Literal::UnresolvedString(r#""\u12""#.into())))
+    );
 }
 
 #[test]
@@ -600,14 +598,12 @@ fn well_formed_unicode_escapes_decode_correctly() {
 
 #[test]
 fn surrogate_code_point_is_not_silently_decoded() {
-    // `\uD800` is the leading half of a UTF-16 surrogate pair —
-    // not a valid Unicode scalar value. `char::from_u32` returns
-    // None, so the decoder must preserve the raw escape bytes.
+    // A UTF-16 surrogate is not a Go Unicode scalar escape.
     let exprs = parse_action_expressions(r#"{{ "\uD800" }}"#);
-    let TemplateExpr::Literal(Literal::String(s)) = first(&exprs) else {
-        panic!("expected string literal");
-    };
-    sim_assert_eq!(have: s, want: r"\uD800");
+    sim_assert_eq!(
+        have: exprs.first(),
+        want: Some(&TemplateExpr::Literal(Literal::UnresolvedString(r#""\uD800""#.into())))
+    );
 }
 
 #[test]
@@ -981,16 +977,14 @@ fn ascii_octal_escapes_decode_in_interpreted_strings() {
         want: Some(&TemplateExpr::Literal(Literal::String("helper".into())))
     );
 
-    // A non-ASCII octal byte is one fragment of a UTF-8 sequence Go
-    // assembles byte-wise; a char-based decoder must abstain verbatim
-    // rather than fabricate a wrong code point.
+    // Adjacent byte escapes jointly encode the same UTF-8 string as a Unicode literal.
     let exprs = parse_action_expressions(r#"{{ include "\303\251" . }}"#);
     let TemplateExpr::Call { args, .. } = first(&exprs) else {
         panic!("expected Call, got {exprs:?}");
     };
     sim_assert_eq!(
         have: args.first(),
-        want: Some(&TemplateExpr::Literal(Literal::String("\\303\\251".into())))
+        want: Some(&TemplateExpr::Literal(Literal::String("é".into())))
     );
 }
 
@@ -1039,5 +1033,112 @@ fn parenthesized_pipeline_argument_stays_an_argument() {
                     )
         ),
         "parenthesized pipeline argument survives: {exprs:?}"
+    );
+}
+
+#[test]
+fn adjacent_byte_and_unicode_escapes_share_one_utf8_runtime_string() {
+    for literal in [
+        r#""\303\251""#,
+        r#""\xc3\xa9""#,
+        r#""\303\xa9""#,
+        r#""\xc3\251""#,
+        r#""\u00e9""#,
+        r#""\U000000e9""#,
+    ] {
+        let exprs = parse_action_expressions(&format!("{{{{ {literal} }}}}"));
+        sim_assert_eq!(
+            have: exprs.first(),
+            want: Some(&TemplateExpr::Literal(Literal::String("é".into()))),
+            "literal={literal}"
+        );
+    }
+    let exprs = parse_action_expressions(r#"{{ "before\xc3\xa9\u00e9\U0001f600after" }}"#);
+    sim_assert_eq!(
+        have: exprs.first(),
+        want: Some(&TemplateExpr::Literal(Literal::String("beforeéé😀after".into())))
+    );
+}
+
+#[test]
+fn escaped_backslashes_do_not_start_byte_escapes() {
+    let exprs = parse_action_expressions(r#"{{ "\\303\\251" }}"#);
+    sim_assert_eq!(
+        have: exprs.first(),
+        want: Some(&TemplateExpr::Literal(Literal::String(r"\303\251".into())))
+    );
+    let exprs = parse_action_expressions(r#"{{ `\303\251` }}"#);
+    sim_assert_eq!(
+        have: exprs.first(),
+        want: Some(&TemplateExpr::Literal(Literal::RawString(r"\303\251".into())))
+    );
+}
+
+#[test]
+fn non_utf8_and_invalid_escapes_are_typed_unresolved_strings() {
+    for literal in [
+        r#""\xff""#,
+        r#""\377""#,
+        r#""\xc3""#,
+        r#""\xc3é""#,
+        r#""\400""#,
+        r#""\uD800""#,
+        r#""\u12""#,
+        r#""\U00110000""#,
+    ] {
+        let exprs = parse_action_expressions(&format!("{{{{ {literal} }}}}"));
+        sim_assert_eq!(
+            have: exprs.first(),
+            want: Some(&TemplateExpr::Literal(Literal::UnresolvedString(literal.into()))),
+            "literal={literal}"
+        );
+        if let Some(TemplateExpr::Literal(literal)) = exprs.first() {
+            sim_assert_eq!(have: literal.as_string(), want: None);
+        }
+    }
+}
+
+#[test]
+fn malformed_escape_recovery_stays_an_unknown_action() {
+    let source = r#"{{ "\xg0" }}"#;
+    let exprs = parse_action_expressions(source);
+    sim_assert_eq!(
+        have: exprs.first(),
+        want: Some(&TemplateExpr::Unknown(source.into())),
+    );
+}
+
+#[test]
+fn decoded_byte_escape_boundaries_include_nul_and_del() {
+    let exprs = parse_action_expressions(r#"{{ "\000\x7f\177" }}"#);
+    sim_assert_eq!(
+        have: exprs.first(),
+        want: Some(&TemplateExpr::Literal(Literal::String("\0\u{7f}\u{7f}".into())))
+    );
+}
+
+#[test]
+fn raw_strings_discard_source_carriage_returns() {
+    let exprs = parse_action_expressions("{{ `a\rb\r\nc\r` }}");
+    sim_assert_eq!(
+        have: exprs.first(),
+        want: Some(&TemplateExpr::Literal(Literal::RawString("ab\nc".into())))
+    );
+    if let Some(TemplateExpr::Literal(literal)) = exprs.first() {
+        sim_assert_eq!(have: literal.as_string(), want: Some("ab\nc"));
+    }
+}
+
+#[test]
+fn raw_backslash_r_and_interpreted_carriage_returns_remain_runtime_data() {
+    let raw = parse_action_expressions(r"{{ `a\rb` }}");
+    sim_assert_eq!(
+        have: raw.first(),
+        want: Some(&TemplateExpr::Literal(Literal::RawString(r"a\rb".into())))
+    );
+    let interpreted = parse_action_expressions(r#"{{ "\r" }}"#);
+    sim_assert_eq!(
+        have: interpreted.first(),
+        want: Some(&TemplateExpr::Literal(Literal::String("\r".into())))
     );
 }

@@ -30,6 +30,9 @@ mod ip_item_pattern;
 mod observed_facts;
 mod range_modes;
 mod resource_identity;
+mod runtime_heap_transfers;
+mod runtime_invocation;
+mod runtime_template_trim;
 mod scalar_content_view;
 mod scalar_kinds;
 mod selection_reachability;
@@ -39,7 +42,7 @@ mod url_parse_pattern;
 mod value_runtime;
 
 use crate::{Guard, SymbolicIrContext, ValueKind, YamlPath};
-use color_eyre::eyre;
+use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_core::{DYNAMIC_MAPPING_VALUE_SEGMENT, GuardDnf, Predicate};
 use indoc::indoc;
 
@@ -723,13 +726,12 @@ fn helper_type_dispatch_keeps_or_candidate_selection_on_each_row() {
 }
 
 #[test]
-fn opaque_include_guard_abstains_from_provider_schema_evidence() {
-    // The arm uses an unknown function whose output grammar is not modeled,
-    // so the include guard stays undecodable.
+fn opaque_include_guard_abstains_from_provider_schema_evidence() -> eyre::Result<()> {
+    // A stock random branch makes helper output presence undecidable from the values alone.
     let helpers = indoc! {r#"
         {{- define "resource.enabled" -}}
         {{- if .Values.enabled -}}
-        {{ mystery .Values.marker }}
+        {{ if eq (randAlphaNum 1) "a" }}{{ .Values.marker }}{{ end }}
         {{- end -}}
         {{- end -}}
     "#};
@@ -754,7 +756,7 @@ fn opaque_include_guard_abstains_from_provider_schema_evidence() {
             use_.source_expr == conditional_path("payload")
                 && use_.path == YamlPath(vec!["data".to_string(), "value".to_string()])
         })
-        .unwrap_or_else(|| panic!("expected rendered payload use: {finalized:#?}"));
+        .ok_or_eyre("expected rendered payload use")?;
     assert!(
         payload
             .condition
@@ -771,6 +773,7 @@ fn opaque_include_guard_abstains_from_provider_schema_evidence() {
             .is_none_or(|evidence| evidence.provider_schema_uses.is_empty()),
         "an approximate resource guard must not leak provider constraints: {finalized:#?}"
     );
+    Ok(())
 }
 
 #[test]

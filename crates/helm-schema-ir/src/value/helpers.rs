@@ -43,10 +43,15 @@ impl Executor<'_> {
             });
         };
         let argument = arguments.get(1).cloned().unwrap_or_else(Value::nil);
+        let body = if function == "tpl" {
+            None
+        } else {
+            self.db.parsed_helper_body(name)
+        };
         let source = if function == "tpl" {
             Some(name.as_str())
         } else {
-            self.db.parsed_helper_body(name).map(|body| body.source)
+            body.as_ref().map(|body| body.source)
         };
         let Some(source) = source else {
             super::operations::invalidate(&mut state);
@@ -100,14 +105,12 @@ impl Executor<'_> {
         let loops = std::mem::take(&mut state.loops);
         state.enter_call(argument);
         state.calls.push(name.clone());
-        let path = if function == "tpl" {
-            None
-        } else {
-            self.db
-                .parsed_helper_body(name)
-                .map(|body| body.source_path)
+        let exits = match body {
+            Some(body) => {
+                self.parsed_body(source, Some(body.source_path), Some(body.syntax), state)
+            }
+            None => self.body(source, None, state),
         };
-        let exits = self.body(source, path, state);
         let program = exits
             .first()
             .map_or(caller_program, |exit| exit.state.program);

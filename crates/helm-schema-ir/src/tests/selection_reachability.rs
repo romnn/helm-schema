@@ -48,44 +48,50 @@ fn condition_reachability_distinguishes_raw_identities_from_rendered_scalars() {
 }
 
 #[test]
-fn partial_truth_becomes_approximate_without_inverting_its_sound_subset() -> eyre::Result<()> {
-    let execution = execute(r#"{{ or .Values.alpha (printf "%q" .Values.opaque) }}"#);
-    let site = execution
-        .sites()
-        .filter(|site| site.rendered())
-        .last()
-        .ok_or_eyre("missing partial output")?;
-    let alternatives = site.value().alternatives();
-    assert!(
-        alternatives.iter().any(|arm| !arm.coverage_exact()),
-        "unknown formatting became exact"
+fn partial_truth_keeps_its_positive_proof_without_inverting_the_unknown_remainder() {
+    let positive = execute(
+        r#"{{ if or .Values.alpha (eq (randAlphaNum 1) "a") }}{{ fail "selected" }}{{ end }}"#,
     );
-    assert!(
-        alternatives
-            .iter()
-            .filter(|arm| !arm.coverage_exact())
-            .all(|arm| arm.condition() != &Predicate::truthy_path("alpha").negated()),
-        "partial knowledge was inverted into an exact complement"
+    let negative = execute(
+        r#"{{ if not (or .Values.alpha (eq (randAlphaNum 1) "a")) }}{{ fail "selected" }}{{ end }}"#,
     );
-    Ok(())
+    sim_assert_eq!(have: positive.abort_predicate(), want: Predicate::truthy_path("alpha"));
+    sim_assert_eq!(have: negative.abort_predicate(), want: Predicate::False);
 }
 
 #[test]
 fn condition_polarities_preserve_independent_partial_proofs() {
     let positive =
-        execute(r#"{{ if or .Values.enabled (printf "%q" .Values.opaque) }}selected{{ end }}"#);
+        execute(r#"{{ if or .Values.enabled (eq (randAlphaNum 1) "a") }}# selected{{ end }}"#);
     let negative = execute(
-        r#"{{ if not (or .Values.enabled (printf "%q" .Values.opaque)) }}selected{{ end }}"#,
+        r#"{{ if not (or .Values.enabled (eq (randAlphaNum 1) "a")) }}# selected{{ end }}"#,
     );
-    let positive = selected_condition(&positive);
-    let negative = selected_condition(&negative);
+    let positive = positive
+        .text_sites()
+        .filter(|site| site.bytes() == "# selected")
+        .collect::<Vec<_>>();
+    let negative = negative
+        .text_sites()
+        .filter(|site| site.bytes() == "# selected")
+        .collect::<Vec<_>>();
     assert!(
-        positive.contains_approximation() || positive == Predicate::True,
-        "partial positive condition became exact: {positive:?}"
+        positive
+            .iter()
+            .any(|site| site.coverage_exact()
+                && site.condition() == &Predicate::truthy_path("enabled")),
+        "the known positive arm was lost"
     );
     assert!(
-        negative.contains_approximation() || negative == Predicate::True,
-        "partial negative condition became exact: {negative:?}"
+        positive.iter().any(|site| !site.coverage_exact()),
+        "the random remainder became exact"
+    );
+    assert!(
+        !negative.is_empty(),
+        "the possible negative arm was dropped"
+    );
+    assert!(
+        negative.iter().all(|site| !site.coverage_exact()),
+        "the random remainder became an exact complement"
     );
 }
 

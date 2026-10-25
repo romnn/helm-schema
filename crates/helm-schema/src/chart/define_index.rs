@@ -50,7 +50,7 @@ fn chart_relative_path(chart_dir: &VfsPath, path: &VfsPath) -> String {
 /// for the analyzer and for Helm: two charts shipping `templates/x.yaml`
 /// stay two distinct templates, and a computed include resolves to the
 /// executing chart's own file.
-fn template_execution_name(chart: &ChartContext, path: &VfsPath) -> String {
+pub(crate) fn template_execution_name(chart: &ChartContext, path: &VfsPath) -> String {
     format!(
         "{}/{}",
         chart.template_namespace,

@@ -29,7 +29,7 @@ pub use helm_schema_core::{
     ProviderSchemaUse, RangeDomain, ResourceRef, SourceSpan, ValueKind, ValuesDefaultSource,
     YamlPath,
 };
-pub use symbolic::{SymbolicIrContext, SymbolicPolicy};
+pub use symbolic::{SymbolicIrContext, SymbolicPolicy, SymbolicTemplate};
 
 #[cfg(test)]
 #[path = "tests/mod.rs"]

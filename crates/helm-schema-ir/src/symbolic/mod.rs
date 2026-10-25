@@ -6,7 +6,7 @@ use helm_schema_ast::DefineIndex;
 use crate::analysis_db::{IrAnalysisDb, ParsedDefines};
 use crate::contract::ContractIr;
 
-/// Immutable non-values inputs supplied by the Helm render environment.
+/// Initial non-values inputs supplied by the Helm render environment.
 ///
 /// These inputs may decide control flow, but never become `.Values` schema
 /// evidence themselves. Static root strings use path segments rather than a
@@ -17,16 +17,25 @@ pub struct SymbolicPolicy {
     pub chart_default_strings: BTreeMap<String, String>,
     /// Normalized Kubernetes version used by `.Capabilities.KubeVersion`.
     pub kubernetes_version: Option<String>,
-    /// Exact scalar strings beneath immutable roots such as `.Chart`.
+    /// Exact initial scalar strings beneath roots such as `.Chart`.
     pub static_root_strings: BTreeMap<Vec<String>, String>,
+}
+
+/// One executable template in a shared chart render session.
+#[derive(Clone, Copy, Debug)]
+pub struct SymbolicTemplate<'a> {
+    /// Template text whose expressions execute in the shared heap.
+    pub source: &'a str,
+    /// Helm's logical name, including the chart instance and `templates/` path.
+    pub source_path: &'a str,
 }
 
 /// Reusable state for generating symbolic IR across many templates that
 /// share one [`DefineIndex`].
 ///
-/// The context owns exact parse/helper-analysis caches. Reusing it across
-/// templates avoids recomputing helper bodies without changing analysis
-/// semantics; a cache miss and cache hit return the same structural facts.
+/// The context shares parsed helper programs and immutable analysis policy.
+/// A single-source call creates a fresh heap, while a batch call shares one
+/// heap across its templates in Helm execution order.
 #[derive(Clone)]
 pub struct SymbolicIrContext {
     analysis_db: Rc<IrAnalysisDb>,
@@ -58,7 +67,7 @@ impl SymbolicIrContext {
         )
     }
 
-    /// Build a context carrying immutable render-policy inputs.
+    /// Builds a context carrying initial render-policy inputs.
     #[must_use]
     pub fn with_policy(defines: &DefineIndex, policy: SymbolicPolicy) -> Self {
         Self {
@@ -91,8 +100,33 @@ impl SymbolicIrContext {
         self.generate_contract_ir_with_provenance(src, Some(source_path))
     }
 
-    /// Evaluate a template into the abstract fragment domain, reusing this
-    /// context's memoized helper analyses.
+    /// Executes chart templates in Helm order while preserving cross-file mutations.
+    ///
+    /// Results retain the input order.
+    /// Every file gets fresh lexical bindings and a fresh `.Template` object.
+    /// A render abort prevents the affected alternative from reaching later files.
+    #[must_use]
+    #[tracing::instrument(skip_all)]
+    pub fn generate_contract_irs_for_sources(
+        &self,
+        sources: &[SymbolicTemplate<'_>],
+    ) -> Vec<ContractIr> {
+        crate::value::execute_documents(sources, &self.analysis_db)
+            .iter()
+            .zip(sources)
+            .map(|(execution, source)| {
+                let document = crate::fragment_eval::project_execution(
+                    source.source,
+                    Some(source.source_path),
+                    &self.analysis_db,
+                    execution,
+                );
+                self.contract_from_document(&document)
+            })
+            .collect()
+    }
+
+    /// Executes a fresh single-template session and projects its fragment.
     #[must_use]
     #[cfg(test)]
     pub(crate) fn eval_document_fragment(
@@ -108,8 +142,15 @@ impl SymbolicIrContext {
         source_path: Option<&str>,
     ) -> ContractIr {
         let document = crate::fragment_eval::eval_document(src, source_path, &self.analysis_db);
+        self.contract_from_document(&document)
+    }
+
+    fn contract_from_document(
+        &self,
+        document: &crate::fragment_eval::EvaluatedDocument,
+    ) -> ContractIr {
         let mut contract = crate::fragment_eval::contract_ir_from_document(
-            &document,
+            document,
             self.analysis_db.predicate_memo().as_ref(),
         );
         contract.extend_values_program_wrapper_exclusions(

@@ -1,4 +1,6 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
+
+use helm_schema_core::ValuesPath;
 use std::rc::Rc;
 
 use super::{
@@ -9,6 +11,12 @@ use super::{
 const OBJECTS_PER_PAGE: u64 = 64;
 
 impl Arena {
+    pub(super) fn object(&self) -> ObjectId {
+        let ordinal = self.next_object.get();
+        self.next_object.set(ordinal + 1);
+        ObjectId { ordinal }
+    }
+
     pub(super) fn snapshot(&self) -> SnapshotId {
         let ordinal = self.next_snapshot.get();
         self.next_snapshot.set(ordinal + 1);
@@ -38,6 +46,15 @@ impl Heap {
 
     #[tracing::instrument(skip_all)]
     pub(super) fn allocate(&mut self, data: ObjectData, multiplicity: Multiplicity) -> ObjectId {
+        self.allocate_at(None, data, multiplicity)
+    }
+
+    pub(super) fn allocate_at(
+        &mut self,
+        occurrence: Option<&ObjectId>,
+        data: ObjectData,
+        multiplicity: Multiplicity,
+    ) -> ObjectId {
         let reason = match &data {
             ObjectData::Map {
                 fields,
@@ -57,12 +74,18 @@ impl Heap {
         let data = if let Some(reason) = reason {
             tracing::debug!(?reason, "widen object");
             ObjectData::Widened {
-                inputs: self.data_inputs(&data),
+                inputs: Rc::new(self.data_inputs(&data)),
             }
         } else {
             data
         };
-        if self.arena.next_object.get() >= 4096 {
+        let classes = self
+            .version
+            .pages
+            .values()
+            .map(|page| page.len())
+            .sum::<usize>();
+        if classes >= 4096 {
             tracing::debug!(reason = ?super::BoundReason::ObjectClasses, "widen allocation");
             let ordinal = if let Some(ordinal) = self.arena.aggregate_summary.get() {
                 ordinal
@@ -86,14 +109,14 @@ impl Heap {
                 ObjectVersion {
                     revision: self.arena.snapshot(),
                     multiplicity: Multiplicity::Summary,
-                    data: ObjectData::Widened { inputs },
+                    data: ObjectData::Widened {
+                        inputs: Rc::new(inputs),
+                    },
                 },
             );
             return id;
         }
-        let ordinal = self.arena.next_object.get();
-        self.arena.next_object.set(ordinal + 1);
-        let id = ObjectId { ordinal };
+        let id = occurrence.cloned().unwrap_or_else(|| self.arena.object());
         self.install(
             id.clone(),
             ObjectVersion {
@@ -134,9 +157,12 @@ impl Heap {
             return false;
         };
         if let ObjectData::Widened { inputs } = &object.data {
-            let mut inputs = inputs.clone();
+            let mut inputs = Rc::clone(inputs);
             if let Field::Present(value) = &value {
-                inputs.extend(self.freeze(value).inputs());
+                let added = self.freeze(value).inputs();
+                if !added.is_subset(&inputs) {
+                    Rc::make_mut(&mut inputs).extend(added);
+                }
             }
             let multiplicity = object.multiplicity;
             self.install(
@@ -186,7 +212,9 @@ impl Heap {
                 ObjectVersion {
                     revision: self.arena.snapshot(),
                     multiplicity,
-                    data: ObjectData::Widened { inputs },
+                    data: ObjectData::Widened {
+                        inputs: Rc::new(inputs),
+                    },
                 },
             );
             return true;
@@ -244,10 +272,71 @@ impl Heap {
 
     #[tracing::instrument(skip_all)]
     pub(super) fn freeze(&self, value: &Value) -> FrozenValue {
-        FrozenValue {
-            heap: Rc::clone(&self.version),
-            value: self.version.consume(value),
+        let value = self.version.consume(value);
+        let heap = if value.depends_on_heap() {
+            Rc::clone(&self.version)
+        } else {
+            Rc::clone(self.arena.empty_snapshot.get_or_init(|| {
+                Rc::new(HeapVersion {
+                    id: self.arena.snapshot(),
+                    pages: BTreeMap::new(),
+                })
+            }))
+        };
+        FrozenValue { heap, value }
+    }
+}
+
+impl Value {
+    fn depends_on_heap(&self) -> bool {
+        let mut pending = vec![self];
+        let mut seen = BTreeSet::new();
+        while let Some(value) = pending.pop() {
+            if !seen.insert(Rc::as_ptr(&value.node)) {
+                continue;
+            }
+            match value.node.as_ref() {
+                ValueNode::Select {
+                    decision: _,
+                    yes,
+                    no,
+                } => pending.extend([yes, no]),
+                ValueNode::Leaf(Leaf { datum, origin: _ }) => match datum {
+                    Datum::Scalar {
+                        go_type: _,
+                        content: _,
+                    }
+                    | Datum::Map {
+                        view: _,
+                        target: None,
+                    } => {}
+                    Datum::Sequence(super::InterfaceSequence {
+                        storage,
+                        start: _,
+                        length: _,
+                        capacity: _,
+                    }) => {
+                        if let Some(storage) = storage {
+                            pending.extend(storage.iter());
+                        }
+                    }
+                    Datum::Unknown(super::UnknownValue { types: _, aliases }) => match aliases {
+                        super::AliasSet::Known(objects) if objects.is_empty() => {}
+                        super::AliasSet::Known(_) | super::AliasSet::RenderGraph => return true,
+                    },
+                    Datum::Map {
+                        view: _,
+                        target: Some(_),
+                    }
+                    | Datum::Strings(_)
+                    | Datum::Slot {
+                        backing: _,
+                        index: _,
+                    } => return true,
+                },
+            }
         }
+        false
     }
 }
 
@@ -284,7 +373,15 @@ impl HeapVersion {
     pub(super) fn consume(&self, value: &Value) -> Value {
         match value.node.as_ref() {
             ValueNode::Select { decision, yes, no } => {
-                Value::select(Rc::clone(decision), self.consume(yes), self.consume(no))
+                let consumed_yes = self.consume(yes);
+                let consumed_no = self.consume(no);
+                if Rc::ptr_eq(&yes.node, &consumed_yes.node)
+                    && Rc::ptr_eq(&no.node, &consumed_no.node)
+                {
+                    value.clone()
+                } else {
+                    Value::select(Rc::clone(decision), consumed_yes, consumed_no)
+                }
             }
             ValueNode::Leaf(Leaf {
                 datum: Datum::Slot { backing, index },
@@ -298,13 +395,28 @@ impl HeapVersion {
                 Some(ObjectVersion {
                     revision: _,
                     multiplicity: _,
+                    data: ObjectData::Widened { inputs },
+                }) => Value {
+                    node: Rc::new(ValueNode::Leaf(Leaf {
+                        datum: Datum::Scalar {
+                            go_type: super::ScalarType::String,
+                            content: None,
+                        },
+                        origin: super::Origin {
+                            identity: None,
+                            influences: inputs.as_ref().clone(),
+                        },
+                    })),
+                },
+                Some(ObjectVersion {
+                    revision: _,
+                    multiplicity: _,
                     data:
                         ObjectData::Map {
                             fields: _,
                             remainder: _,
                         }
-                        | ObjectData::Opaque { reachable: _ }
-                        | ObjectData::Widened { inputs: _ },
+                        | ObjectData::Opaque { reachable: _ },
                 })
                 | None => Value::unknown(),
             },
@@ -420,6 +532,7 @@ impl Heap {
             .chain(no_pages.keys())
             .copied()
             .collect::<std::collections::BTreeSet<_>>();
+        let mut input_unions = BTreeMap::new();
         for page_id in page_ids {
             if yes_pages
                 .get(&page_id)
@@ -436,13 +549,6 @@ impl Heap {
                 .collect::<std::collections::BTreeSet<_>>();
             for id in ids {
                 let input_path = self.arena.input_paths.borrow().get(&id).cloned();
-                if input_path
-                    .as_ref()
-                    .is_some_and(|path| path.segments().next().is_some())
-                    && yes_version.object(&id).is_some() != no_version.object(&id).is_some()
-                {
-                    return Err(JoinError::ConditionalInputType);
-                }
                 let baseline = ObjectVersion {
                     revision: self.arena.snapshot(),
                     multiplicity: Multiplicity::Singleton,
@@ -470,18 +576,38 @@ impl Heap {
                             multiplicity: no_multiplicity,
                             data: no_data,
                         } = no_object;
-                        let mut data = join_data(Rc::clone(&decision), yes_data, no_data)?;
+                        let mut data =
+                            join_data(Rc::clone(&decision), yes_data, no_data, &mut input_unions)?;
                         if let ObjectData::Widened { inputs } = &mut data {
-                            inputs.extend(yes.object_inputs(&id));
-                            inputs.extend(no.object_inputs(&id));
-                            inputs.extend(input_path.iter().cloned());
+                            let mut added = BTreeSet::new();
+                            for branch in [yes, no] {
+                                match branch.version.object(&id).map(|object| &object.data) {
+                                    Some(ObjectData::Widened { inputs: _ }) | None => {}
+                                    Some(
+                                        ObjectData::Map {
+                                            fields: _,
+                                            remainder: _,
+                                        }
+                                        | ObjectData::Strings(_)
+                                        | ObjectData::Opaque { reachable: _ },
+                                    ) => {
+                                        added.extend(branch.object_inputs(&id));
+                                    }
+                                }
+                            }
+                            added.extend(input_path.iter().cloned());
+                            if !added.is_subset(inputs) {
+                                Rc::make_mut(inputs).extend(added);
+                            }
                         }
                         if matches!(&data, ObjectData::Map { fields, remainder: _ } if fields.len() > 128)
                         {
                             let mut inputs = yes.object_inputs(&id);
                             inputs.extend(no.object_inputs(&id));
                             inputs.extend(input_path.iter().cloned());
-                            data = ObjectData::Widened { inputs };
+                            data = ObjectData::Widened {
+                                inputs: Rc::new(inputs),
+                            };
                             tracing::debug!(reason = ?super::BoundReason::ObjectFields, "widen joined map");
                         }
                         ObjectVersion {
@@ -519,14 +645,19 @@ pub(super) enum JoinError {
     DifferentSessions,
     #[error("object storage changed across a fork")]
     StorageChanged,
-    #[error("input container materialization does not cover both branches")]
-    ConditionalInputType,
+}
+
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+struct InputPair {
+    yes: *const BTreeSet<ValuesPath>,
+    no: *const BTreeSet<ValuesPath>,
 }
 
 fn join_data(
     decision: Rc<FrozenTest>,
     yes: &ObjectData,
     no: &ObjectData,
+    input_unions: &mut BTreeMap<InputPair, Rc<BTreeSet<ValuesPath>>>,
 ) -> Result<ObjectData, JoinError> {
     match (yes, no) {
         (
@@ -597,7 +728,21 @@ fn join_data(
         }
         (ObjectData::Widened { inputs: yes }, ObjectData::Widened { inputs: no }) => {
             Ok(ObjectData::Widened {
-                inputs: yes.union(no).cloned().collect(),
+                inputs: if Rc::ptr_eq(yes, no) || no.is_subset(yes) {
+                    Rc::clone(yes)
+                } else if yes.is_subset(no) {
+                    Rc::clone(no)
+                } else {
+                    let key = InputPair {
+                        yes: Rc::as_ptr(yes),
+                        no: Rc::as_ptr(no),
+                    };
+                    Rc::clone(
+                        input_unions
+                            .entry(key)
+                            .or_insert_with(|| Rc::new(yes.union(no).cloned().collect())),
+                    )
+                },
             })
         }
         (
@@ -618,7 +763,7 @@ fn join_data(
             | ObjectData::Opaque { reachable: _ },
             ObjectData::Widened { inputs },
         ) => Ok(ObjectData::Widened {
-            inputs: inputs.clone(),
+            inputs: Rc::clone(inputs),
         }),
         (ObjectData::Opaque { reachable: yes }, ObjectData::Opaque { reachable: no }) => {
             Ok(ObjectData::Opaque {
@@ -722,7 +867,7 @@ impl Heap {
                     types: super::TypeCoverage::Unresolved,
                     aliases: reachable.clone(),
                 }));
-                inputs.extend(self.freeze(&reference).inputs());
+                inputs.extend(self.freeze(&reference).reachable_inputs());
             }
             ObjectData::Widened { inputs: known } => inputs.extend(known.iter().cloned()),
         }
@@ -757,7 +902,7 @@ impl Heap {
             types: super::TypeCoverage::Unresolved,
             aliases: super::AliasSet::Known(std::collections::BTreeSet::from([id.clone()])),
         }));
-        self.freeze(&reference).inputs()
+        self.freeze(&reference).reachable_inputs()
     }
 }
 

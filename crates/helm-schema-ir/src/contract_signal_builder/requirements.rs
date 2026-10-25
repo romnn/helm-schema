@@ -7,11 +7,11 @@ use super::{
     remove_redundant_approximate_conditions, terminal_clause_guard,
 };
 
-/// Lower one `fail` conjunction into a path requirement: rendering aborts
-/// whenever the conjunction holds, so valid inputs must falsify the failing
-/// TEST wherever the OUTER guards hold. Conjunctions whose test cannot be
-/// negated structurally are skipped (truthy-fallback predicates approximate
-/// undecodable conditions and must never be negated).
+/// Projects a failing execution condition without discarding any Boolean dimension.
+///
+/// Exactly representable document conditions become terminal clauses.
+/// Member-scoped conditions retain their range quantifiers and scoped requirements.
+/// Approximate conditions may only contribute their existing sound positive subsets.
 #[expect(
     clippy::too_many_lines,
     reason = "keeping this semantic operation together makes its state transitions easier to audit"
@@ -457,6 +457,20 @@ pub(super) fn record_fail_conjunction(
         .cloned()
         .collect();
     let conjunction = &conjunction;
+    // A document failure is already a complete positive formula; keep every conjunct intact.
+    if capture.ranged.iter().next().is_none()
+        && conjunction.iter().all(is_document_terminal_predicate)
+        && let Some(mut clause) = conjunction
+            .iter()
+            .map(terminal_clause_guard)
+            .collect::<Option<Vec<_>>>()
+    {
+        ConditionalGuard::canonicalize_conjunction(&mut clause);
+        if !terminal_clauses.contains(&clause) {
+            terminal_clauses.push(clause);
+        }
+        return;
+    }
     let execution_range_paths = conjunction
         .iter()
         .filter_map(|predicate| match predicate.kind() {
@@ -716,6 +730,35 @@ pub(super) fn record_fail_conjunction(
     acc.referenced = true;
     if !acc.requirement_implications.contains(&implication) {
         acc.requirement_implications.push(implication);
+    }
+}
+
+fn is_document_terminal_predicate(predicate: &Predicate) -> bool {
+    match predicate.kind() {
+        helm_schema_core::PredicateKind::True | helm_schema_core::PredicateKind::False => true,
+        helm_schema_core::PredicateKind::Approximate {
+            marker: _,
+            paths: _,
+            role: _,
+            sound_subset: _,
+        } => false,
+        helm_schema_core::PredicateKind::Guard(guard) => {
+            !matches!(
+                guard,
+                Guard::Range { path: _ }
+                    | Guard::RangeKeyPrefix { path: _, prefix: _ }
+                    | Guard::RangeKeyEquals { path: _, key: _ }
+                    | Guard::RangeKeyMatches {
+                        path: _,
+                        pattern: _
+                    }
+            ) && !predicate.value_paths().iter().any(values_path_has_wildcard)
+        }
+        helm_schema_core::PredicateKind::Not(inner) => is_document_terminal_predicate(inner),
+        helm_schema_core::PredicateKind::And(items)
+        | helm_schema_core::PredicateKind::Or(items) => {
+            items.iter().all(is_document_terminal_predicate)
+        }
     }
 }
 

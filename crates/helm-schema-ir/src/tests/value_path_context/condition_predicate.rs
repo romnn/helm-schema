@@ -68,30 +68,30 @@ fn invalid_kind_is_absence_or_null_instead_of_truthiness() {
 }
 
 #[test]
-fn invalid_kind_guard_abstains_for_a_meta_selected_subject() {
-    let template_bindings = HashMap::from([("selected".to_string(), values_path!("value"))]);
-    let mut metadata = HelperOutputMeta {
-        input_identity: true,
-        ..HelperOutputMeta::default()
-    };
-    metadata.conjoin_branches(&std::collections::BTreeSet::from([Predicate::truthy_path(
-        "enabled",
-    )]));
-    let template_output_meta = HashMap::from([(
-        "selected".to_string(),
-        BTreeMap::from([(helm_schema_core::ValuesPath::parse("value"), metadata)]),
-    )]);
-
-    sim_assert_eq!(
-        have: parse_condition_with_template_facts(
-            r#"kindIs "invalid" $selected"#,
-            template_bindings,
-            template_output_meta,
-        ),
-        want: vec![Guard::Truthy {
-            path: helm_schema_core::ValuesPath::parse("value"),
-        }],
+fn invalid_kind_guard_tracks_nil_and_selected_input_arms() -> eyre::Result<()> {
+    let mut context = condition_context(HashMap::new());
+    context.source.push_str(
+        r#"{{ $selected := index (dict) "missing" }}{{ if .Values.enabled }}{{ $selected = .Values.value }}{{ end }}"#,
     );
+    let expression = parse_action_expressions(r#"{{ kindIs "invalid" $selected }}"#)
+        .into_iter()
+        .next()
+        .ok_or_eyre("condition expression missing")?;
+    let enabled = Predicate::truthy_path("enabled");
+    let nil = Predicate::Or(vec![
+        Predicate::from(Guard::Eq {
+            path: helm_schema_core::ValuesPath::parse("value"),
+            value: GuardValue::Null,
+        }),
+        Predicate::from(Guard::Absent {
+            path: helm_schema_core::ValuesPath::parse("value"),
+        }),
+    ]);
+    sim_assert_eq!(
+        have: context.condition_predicate_expr(&expression),
+        want: Predicate::Or(vec![enabled.negated(), Predicate::all(vec![enabled, nil])]).normalize_boolean()
+    );
+    Ok(())
 }
 
 #[test]
@@ -152,11 +152,11 @@ impl ConditionContext {
         let mut source = self.source.clone();
         source.push_str(&format!("{{{{ if {} }}}}", expression_source(expression)));
         let start = source.len();
-        source.push_str("selected{{ end }}");
+        source.push_str("# selected{{ end }}");
         let db = IrAnalysisDb::new(&self.defines);
         (
             crate::value::execute_document(&source, None, &db),
-            helm_schema_syntax::Span::new(start, start + "selected".len()),
+            helm_schema_syntax::Span::new(start + 2, start + 2 + "selected".len()),
         )
     }
 
@@ -186,6 +186,7 @@ fn expression_source(expression: &TemplateExpr) -> String {
         TemplateExpr::Literal(Literal::String(text) | Literal::RawString(text)) => {
             format!("{text:?}")
         }
+        TemplateExpr::Literal(Literal::UnresolvedString(source)) => source.clone(),
         TemplateExpr::Literal(Literal::Int(value)) => value.to_string(),
         TemplateExpr::Literal(Literal::Float(value)) => format!("{value:?}"),
         TemplateExpr::Literal(Literal::Bool(value)) => value.to_string(),
@@ -550,16 +551,16 @@ fn or_paths_are_sorted() {
 }
 
 #[test]
-fn or_with_nested_helper_calls() {
-    sim_assert_eq!(
-        have: parse_condition("or (has .Values.A 1) (has .Values.B 2)"),
-        want: vec![Guard::Or {
-            paths: vec![
-                helm_schema_core::ValuesPath::parse("A"),
-                helm_schema_core::ValuesPath::parse("B"),
-            ],
-        }],
-    );
+fn has_with_a_scalar_haystack_aborts_before_or_can_continue() -> eyre::Result<()> {
+    let expression = parse_action_expressions("{{ or (has .Values.A 1) (has .Values.B 2) }}")
+        .into_iter()
+        .next()
+        .ok_or_eyre("condition expression missing")?;
+    let context = condition_context(HashMap::new());
+    let (execution, span) = context.execution(&expression);
+    sim_assert_eq!(have: execution.abort_predicate(), want: Predicate::True);
+    sim_assert_eq!(have: execution.condition_for_span(span, None), want: Predicate::False);
+    Ok(())
 }
 
 #[test]
@@ -576,7 +577,7 @@ fn or_with_equality_preserves_typed_alternative() {
                     value: GuardValue::string("prod"),
                 }],
             ],
-        }],
+        }, comparison_normality("mode", "string")],
     );
 }
 
@@ -606,7 +607,7 @@ fn eq_with_string_literal() {
         want: vec![Guard::Eq {
             path: helm_schema_core::ValuesPath::parse("X"),
             value: GuardValue::string("value"),
-        }],
+        }, comparison_normality("X", "string")],
     );
 }
 
@@ -617,7 +618,7 @@ fn eq_with_string_literal_containing_phantom_path() {
         want: vec![Guard::Eq {
             path: helm_schema_core::ValuesPath::parse("X"),
             value: GuardValue::string(".Values.fake"),
-        }],
+        }, comparison_normality("X", "string")],
     );
 }
 
@@ -628,7 +629,7 @@ fn eq_with_bool_literal_preserves_exact_comparison() {
         want: vec![Guard::Eq {
             path: helm_schema_core::ValuesPath::parse("enabled"),
             value: GuardValue::Bool(false),
-        }],
+        }, comparison_normality("enabled", "boolean")],
     );
 }
 
@@ -639,30 +640,33 @@ fn eq_with_int_literal_preserves_exact_comparison() {
         want: vec![Guard::Eq {
             path: helm_schema_core::ValuesPath::parse("replicas"),
             value: GuardValue::Int(3),
-        }],
+        }, comparison_normality("replicas", "integer")],
     );
 }
 
 #[test]
 fn eq_with_nil_literal_preserves_exact_comparison() {
+    let expressions = parse_action_expressions("{{ eq .Values.image.tag nil }}");
+    let predicate = expressions
+        .first()
+        .map(|expression| condition_context(HashMap::new()).condition_predicate_expr(expression));
     sim_assert_eq!(
-        have: parse_condition("eq .Values.image.tag nil"),
-        want: vec![Guard::Eq {
-            path: helm_schema_core::ValuesPath::parse("image.tag"),
-            value: GuardValue::Null,
-        }],
+        have: predicate,
+        want: Some(Predicate::Or(vec![
+            Predicate::from(Guard::Eq {
+                path: helm_schema_core::ValuesPath::parse("image.tag"),
+                value: GuardValue::Null,
+            }),
+            Predicate::from(Guard::Absent {
+                path: helm_schema_core::ValuesPath::parse("image.tag"),
+            }),
+        ])),
     );
 }
 
 #[test]
-fn eq_compare_two_values_falls_through_to_truthy() {
-    sim_assert_eq!(
-        have: parse_condition("eq .Values.X .Values.Y"),
-        want: vec![
-            Guard::Truthy { path: helm_schema_core::ValuesPath::parse("X") },
-            Guard::Truthy { path: helm_schema_core::ValuesPath::parse("Y") },
-        ],
-    );
+fn eq_two_inputs_does_not_imply_that_either_input_is_truthy() {
+    sim_assert_eq!(have: parse_condition("eq .Values.X .Values.Y"), want: Vec::<Guard>::new());
 }
 
 #[test]
@@ -672,7 +676,7 @@ fn ne_with_string_literal_emits_not_eq() {
         want: vec![Guard::NotEq {
             path: helm_schema_core::ValuesPath::parse("X"),
             value: GuardValue::string("value"),
-        }],
+        }, comparison_normality("X", "string")],
     );
 }
 
@@ -683,7 +687,7 @@ fn not_eq_literal_projects_to_not_eq() {
         want: vec![Guard::NotEq {
             path: helm_schema_core::ValuesPath::parse("mode"),
             value: GuardValue::string("disabled"),
-        }],
+        }, comparison_normality("mode", "string")],
     );
 }
 
@@ -694,7 +698,7 @@ fn not_ne_literal_projects_to_eq() {
         want: vec![Guard::Eq {
             path: helm_schema_core::ValuesPath::parse("mode"),
             value: GuardValue::string("disabled"),
-        }],
+        }, comparison_normality("mode", "string")],
     );
 }
 
@@ -830,7 +834,7 @@ fn eq_value_preserves_literal_dot_star_substring() {
         want: vec![Guard::Eq {
             path: helm_schema_core::ValuesPath::parse("X"),
             value: GuardValue::string("match.*foo"),
-        }],
+        }, comparison_normality("X", "string")],
     );
 }
 
@@ -841,7 +845,7 @@ fn eq_value_preserves_dot_values_substring_inside_string() {
         want: vec![Guard::Eq {
             path: helm_schema_core::ValuesPath::parse("X"),
             value: GuardValue::string(".Values.fake"),
-        }],
+        }, comparison_normality("X", "string")],
     );
 }
 
@@ -854,7 +858,7 @@ fn alias_comparison_preserves_typed_predicates() {
         want: vec![Guard::Eq {
             path: helm_schema_core::ValuesPath::parse("service.type"),
             value: GuardValue::string("ClusterIP"),
-        }],
+        }, comparison_normality("service.type", "string")],
     );
 }
 
@@ -1117,4 +1121,22 @@ fn type_descriptor_over_a_truncated_selection_chain_abstains() -> eyre::Result<(
         );
     }
     Ok(())
+}
+
+fn comparison_normality(path: &str, schema_type: &str) -> Guard {
+    Guard::AnyOf {
+        alternatives: vec![
+            vec![Guard::Eq {
+                path: helm_schema_core::ValuesPath::parse(path),
+                value: GuardValue::Null,
+            }],
+            vec![Guard::Absent {
+                path: helm_schema_core::ValuesPath::parse(path),
+            }],
+            vec![Guard::TypeIs {
+                path: helm_schema_core::ValuesPath::parse(path),
+                schema_type: schema_type.to_owned(),
+            }],
+        ],
+    }
 }

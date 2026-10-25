@@ -119,6 +119,30 @@ impl Observation {
             .collect()
     }
 
+    fn captured_boolean_subset(&self, truth: bool) -> Predicate {
+        let mut conditions = Vec::new();
+        for site in self
+            .execution
+            .sites()
+            .filter(|site| site.rendered() && site.span() == self.value_span)
+        {
+            if !site.coverage_exact() {
+                continue;
+            }
+            for alternative in site.value().alternatives() {
+                if alternative.coverage_exact()
+                    && alternative.value().literal() == Some(&GuardValue::Bool(truth))
+                {
+                    conditions.push(Predicate::all(vec![
+                        site.condition().clone(),
+                        alternative.condition().clone(),
+                    ]));
+                }
+            }
+        }
+        Predicate::Or(conditions).normalize_boolean()
+    }
+
     fn requirements(&self) -> BTreeSet<(CaptureKind, BTreeSet<Predicate>)> {
         self.captures()
             .into_iter()
@@ -208,11 +232,11 @@ fn observe_with_db(prefix: &str, expression: &str, db: &IrAnalysisDb) -> Observa
     let start = source.len();
     source.push_str("{{ $__observed }}");
     let value_span = Span::new(start, source.len());
-    source.push_str("\n{{ if $__observed }}");
+    source.push_str("\n{{ if $__observed }}# ");
     let start = source.len();
     source.push_str("selected");
     let true_span = Span::new(start, source.len());
-    source.push_str("{{ else }}");
+    source.push_str("{{ else }}# ");
     let start = source.len();
     source.push_str("other");
     let false_span = Span::new(start, source.len());
@@ -742,11 +766,11 @@ fn values_numeric_type_spellings_remain_provenance_dependent() {
     let int64 = observe("", r#"typeIs "int64" .Values.value"#);
     let float64 = observe("", r#"kindIs "float64" .Values.value"#);
     sim_assert_eq!(have: int64.truth(), want: None);
-    sim_assert_eq!(have: int64.when_true(), want: Predicate::False);
-    sim_assert_eq!(have: int64.when_false(), want: typed("value", "integer").negated());
+    sim_assert_eq!(have: int64.captured_boolean_subset(true), want: Predicate::False);
+    sim_assert_eq!(have: int64.captured_boolean_subset(false), want: typed("value", "integer").negated());
     sim_assert_eq!(have: float64.truth(), want: None);
-    sim_assert_eq!(have: float64.when_true(), want: Predicate::all(vec![typed("value", "number"), typed("value", "integer").negated()]).normalize_boolean());
-    sim_assert_eq!(have: float64.when_false(), want: typed("value", "number").negated());
+    sim_assert_eq!(have: float64.captured_boolean_subset(true), want: Predicate::all(vec![typed("value", "number"), typed("value", "integer").negated()]).normalize_boolean());
+    sim_assert_eq!(have: float64.captured_boolean_subset(false), want: typed("value", "number").negated());
 }
 
 #[test]
@@ -885,13 +909,25 @@ fn migrated_invocation_families_match_between_call_and_pipeline_syntax() {
 
 #[test]
 fn integer_and_float_comparisons_keep_distinct_runtime_kinds() {
-    for (expression, schema_type) in [
-        ("eq .Values.input 1", "integer"),
-        ("eq .Values.input 1.5", "number"),
+    let nil = Predicate::invalid_kind_path("input").normalize_boolean();
+    let number = Predicate::from(Guard::TypeIs {
+        path: ValuesPath::parse("input"),
+        schema_type: "number".to_owned(),
+    });
+    // Integer input may be Int64 from --set or Float64 from a file; either valid loader survives.
+    for (expression, accepted) in [
+        (
+            "eq .Values.input 1",
+            Predicate::Or(vec![nil.clone(), typed("input", "integer")]).normalize_boolean(),
+        ),
+        (
+            "eq .Values.input 1.5",
+            Predicate::Or(vec![nil, number]).normalize_boolean(),
+        ),
     ] {
-        sim_assert_eq!(have: observe("", expression).requirements(), want: BTreeSet::from([(
-            CaptureKind::ComparableKind { path: ValuesPath::parse("input"), schema_type: schema_type.to_owned() }, BTreeSet::new()
-        )]));
+        let result = observe("", expression);
+        sim_assert_eq!(have: result.execution.abort_predicate(), want: accepted.negated().normalize_boolean());
+        sim_assert_eq!(have: result.kinds(), want: BTreeSet::from([CaptureKind::Fail]));
     }
 }
 
@@ -938,10 +974,10 @@ fn chained_default_records_the_composed_primary_selection_on_the_final_fallback(
 }
 
 #[test]
-fn opaque_default_primary_records_an_unlowerable_fallback_selection() {
+fn quoted_default_primary_never_selects_its_fallback() {
     let result = observe("", r#"printf "%q" .Values.alpha | default .Values.omega"#);
-    sim_assert_eq!(have: result.raw_conditions("omega"), want: None);
-    sim_assert_eq!(have: result.paths(), want: paths(&["alpha", "omega"]));
+    sim_assert_eq!(have: result.raw_conditions("omega"), want: Some(Predicate::False));
+    sim_assert_eq!(have: result.paths(), want: paths(&["alpha"]));
 }
 
 #[test]
@@ -964,9 +1000,13 @@ fn formatter_default_chain_uses_rendered_truthiness_for_the_final_fallback() {
 
 #[test]
 fn generated_default_chain_keeps_truthy_primary_string_consumption() {
-    let result = observe(
+    let mut defines = DefineIndex::new();
+    defines.add_file_source("helpers.tpl", r#"{{ define "existing" }}{{ end }}"#);
+    let db = IrAnalysisDb::new(&defines);
+    let result = observe_with_db(
         "",
         r#".Values.secret | default (include "existing" .) | default (randAlphaNum 16) | b64enc"#,
+        &db,
     );
     assert!(result.string_routes().contains(&(
         ValuesPath::parse("secret"),
@@ -998,27 +1038,22 @@ fn serializer_output_does_not_retype_raw_input() {
 
 #[test]
 fn literal_and_string_set_default_primaries_record_exact_fallback_reachability() {
-    for (expression, reachable) in [
-        (r#""" | default .Values.omega"#, true),
-        (r#""x" | default .Values.omega"#, false),
+    for (expression, selected) in [
+        (r#""" | default .Values.omega"#, Predicate::True),
+        (r#""x" | default .Values.omega"#, Predicate::False),
         (
             r#"ternary "" "" .Values.choose | default .Values.omega"#,
-            true,
+            Predicate::from(Guard::TypeIs {
+                path: ValuesPath::parse("choose"),
+                schema_type: "boolean".to_owned(),
+            }),
         ),
         (
             r#"ternary "x" "y" .Values.choose | default .Values.omega"#,
-            false,
+            Predicate::False,
         ),
     ] {
-        assert_selected(
-            &observe("", expression),
-            "omega",
-            if reachable {
-                Predicate::True
-            } else {
-                Predicate::False
-            },
-        );
+        assert_selected(&observe("", expression), "omega", selected);
     }
 }
 
@@ -1141,14 +1176,52 @@ fn helper_argument_dict_projects_string_and_raw_string_keys() {
 
 #[test]
 fn helper_argument_merge_preserves_ordered_overwrite_and_root_context_expansion() {
-    let prefix = r#"{{ $root := dict "root" .Values.root.value }}{{ $fallback := dict "fallback" .Values.fallback.value }}{{ $overrideMap := dict "fallback" .Values.override }}{{ $arg := merge $fallback $root $overrideMap }}"#;
-    // Destination-first merge preserves the original fallback over the later conflicting source.
+    let selectors_succeed = Predicate::all(vec![
+        Predicate::from(Guard::TypeIs {
+            path: ValuesPath::parse("root"),
+            schema_type: "object".to_owned(),
+        }),
+        Predicate::from(Guard::TypeIs {
+            path: ValuesPath::parse("fallback"),
+            schema_type: "object".to_owned(),
+        }),
+    ]);
+    let non_nil = |path| {
+        Predicate::Or(vec![
+            Predicate::from(Guard::Eq {
+                path: ValuesPath::parse(path),
+                value: GuardValue::Null,
+            }),
+            Predicate::from(Guard::Absent {
+                path: ValuesPath::parse(path),
+            }),
+        ])
+        .negated()
+    };
+    let prefix = r#"{{ $root := dict "root" .Values.root.value }}{{ $fallback := dict "fallback" .Values.fallback.value }}{{ $overrideMap := dict "fallback" "override" }}{{ $arg := merge $fallback $root $overrideMap }}"#;
+    // A later nonempty source replaces an empty destination; nonempty destination values win.
     assert_selected(
         &observe(prefix, "$arg.fallback"),
         "fallback.value",
-        Predicate::True,
+        Predicate::all(vec![selectors_succeed.clone(), truthy("fallback.value")]),
     );
-    assert_selected(&observe(prefix, "$arg.root"), "root.value", Predicate::True);
+    assert_selected(
+        &observe(prefix, "$arg.root"),
+        "root.value",
+        Predicate::all(vec![selectors_succeed, non_nil("root.value")]),
+    );
+    let prefix = r#"{{ $root := dict "root" .Values.root.value }}{{ $fallback := dict "fallback" "" }}{{ $overrideMap := dict "fallback" .Values.override }}{{ $arg := merge $fallback $root $overrideMap }}"#;
+    assert_selected(
+        &observe(prefix, "$arg.fallback"),
+        "override",
+        Predicate::all(vec![
+            Predicate::from(Guard::TypeIs {
+                path: ValuesPath::parse("root"),
+                schema_type: "object".to_owned(),
+            }),
+            non_nil("override"),
+        ]),
+    );
 }
 
 #[test]

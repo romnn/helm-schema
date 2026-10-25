@@ -57,7 +57,8 @@ pub use cst::{
 };
 pub use rendered::{
     BodyLayout, BranchChoice, HoleShape, HoleShapes, LayoutUncertainty, MAX_LAYOUT_STATES,
-    Occurrence, PieceId, RenderedArm, RenderedBody, RenderedPiece, UnknownShapes, render_body,
+    Occurrence, PieceId, RenderedArm, RenderedBody, RenderedPiece, TextTrim, UnknownShapes,
+    render_body, trim_text_span,
 };
 pub use yaml::{
     ArmLayout, BlockHeader, BlockScalarOwnership, Chomping, MAX_SKELETON_BYTES, ScalarStyle,

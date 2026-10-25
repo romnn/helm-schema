@@ -3,6 +3,12 @@ use std::rc::Rc;
 
 use super::{DecisionEdge, Frame, FrameBoundary, FrozenTest, Heap, LoopId, State, Value};
 
+pub(super) struct ContinuationJoin {
+    pub(super) decision: Rc<FrozenTest>,
+    pub(super) active: Vec<DecisionEdge>,
+    pub(super) taken: bool,
+}
+
 impl State {
     pub(super) fn new(argument: Value) -> Self {
         let heap = Heap::new();
@@ -13,16 +19,34 @@ impl State {
             active: Vec::new(),
             output: super::TextBuffer::default(),
             output_widened: false,
-            sites: Vec::new(),
-            text_sites: Vec::new(),
+            sites: Default::default(),
+            text_sites: Default::default(),
             reads: Default::default(),
             calls: Vec::new(),
             program: 0,
             namespace_unknown: false,
-            invocations: Vec::new(),
+            invocations: Default::default(),
             invocation_records_complete: true,
             loops: Vec::new(),
         }
+    }
+
+    pub(super) fn join_local_values(
+        &mut self,
+        decision: Rc<FrozenTest>,
+        yes: &Value,
+        no: &Value,
+    ) -> Value {
+        let mut widened = std::collections::BTreeSet::new();
+        let value = join_frame_value(decision, yes, no, &self.heap, &self.heap, &mut widened);
+        for path in widened {
+            self.reads.insert(super::RuntimeRead {
+                path,
+                condition: self.path_predicate(),
+                coverage: super::ReadCoverage::UnknownRegion,
+            });
+        }
+        value
     }
 
     pub(super) fn bind(&mut self, name: String, value: Value) {
@@ -98,6 +122,14 @@ impl State {
             .push(Frame::call(argument, self.heap.arena.call()));
     }
 
+    pub(super) fn enter_file_call(
+        &mut self,
+        argument: Value,
+        occurrence: &super::session::FileOccurrence,
+    ) {
+        self.frames.push(Frame::call(argument, occurrence.call));
+    }
+
     pub(super) fn leave_call(&mut self) -> bool {
         let Some(boundary) = self
             .frames
@@ -126,14 +158,7 @@ impl State {
     #[tracing::instrument(skip_all)]
     pub(super) fn fork(&self, test: Rc<FrozenTest>, taken: bool) -> Self {
         let mut active = self.active.clone();
-        let forced = test.coverage == super::Coverage::Exact
-            && if taken {
-                test.when_true == helm_schema_core::Predicate::True
-                    && test.when_false == helm_schema_core::Predicate::False
-            } else {
-                test.when_false == helm_schema_core::Predicate::True
-                    && test.when_true == helm_schema_core::Predicate::False
-            };
+        let forced = test.constant_outcome() == Some(taken);
         if !forced {
             active.push(DecisionEdge { test, taken });
         }
@@ -167,7 +192,13 @@ impl Frame {
 }
 
 impl super::Arena {
-    fn call(&self) -> u64 {
+    pub(super) fn program(&self) -> u64 {
+        let program = self.next_program.get();
+        self.next_program.set(program + 1);
+        program
+    }
+
+    pub(super) fn call(&self) -> u64 {
         let call = self.next_call.get();
         self.next_call.set(call + 1);
         call
@@ -176,11 +207,29 @@ impl super::Arena {
 
 impl State {
     #[tracing::instrument(skip_all)]
-    pub(super) fn join_branches(decision: Rc<FrozenTest>, yes: &Self, no: &Self) -> Option<Self> {
+    pub(super) fn join_branches(
+        plan: &ContinuationJoin,
+        left: &Self,
+        right: &Self,
+    ) -> Option<Self> {
+        let (yes, no) = if plan.taken {
+            (left, right)
+        } else {
+            (right, left)
+        };
+        Self::join_guarded(Rc::clone(&plan.decision), plan.active.clone(), yes, no)
+    }
+
+    fn join_guarded(
+        decision: Rc<FrozenTest>,
+        active: Vec<DecisionEdge>,
+        yes: &Self,
+        no: &Self,
+    ) -> Option<Self> {
         let State {
             heap: yes_heap,
             frames: yes_frames,
-            active: yes_active,
+            active: _,
             reads: yes_reads,
             calls: yes_calls,
             program: yes_program,
@@ -196,7 +245,7 @@ impl State {
         let State {
             heap: no_heap,
             frames: no_frames,
-            active: no_active,
+            active: _,
             reads: no_reads,
             calls: no_calls,
             program: no_program,
@@ -214,23 +263,10 @@ impl State {
             || yes_calls != no_calls
             || yes_loops != no_loops
             || yes_frames.len() != no_frames.len()
-            || yes_active.len() != no_active.len()
         {
             return None;
         }
-        let (yes_edge, yes_prefix) = yes_active.split_last()?;
-        let (no_edge, no_prefix) = no_active.split_last()?;
-        if yes_edge.test != decision
-            || no_edge.test != decision
-            || !yes_edge.taken
-            || no_edge.taken
-            || !yes_prefix
-                .iter()
-                .zip(no_prefix)
-                .all(|(yes, no)| yes.test == no.test && yes.taken == no.taken)
-        {
-            return None;
-        }
+
         for (yes, no) in yes_frames.iter().zip(no_frames) {
             let Frame {
                 bindings: yes_bindings,
@@ -309,16 +345,16 @@ impl State {
         let mut joined = State {
             heap,
             frames,
-            active: yes_prefix.to_vec(),
+            active,
             output: Default::default(),
             output_widened: false,
-            sites: Vec::new(),
-            text_sites: Vec::new(),
-            reads: yes_reads.union(no_reads).cloned().collect(),
+            sites: Default::default(),
+            text_sites: Default::default(),
+            reads: yes_reads.union(no_reads),
             calls: yes_calls.clone(),
             program: *yes_program,
             namespace_unknown: *yes_namespace || *no_namespace,
-            invocations: Vec::new(),
+            invocations: Default::default(),
             invocation_records_complete: true,
             loops: yes_loops.clone(),
         };
@@ -330,6 +366,7 @@ impl State {
                 coverage: super::ReadCoverage::UnknownRegion,
             });
         }
+        let mut seen_input_sets = std::collections::BTreeSet::new();
         for object in joined
             .heap
             .version
@@ -337,8 +374,10 @@ impl State {
             .values()
             .flat_map(|page| page.values())
         {
-            if let super::ObjectData::Widened { inputs } = &object.data {
-                for path in inputs {
+            if let super::ObjectData::Widened { inputs } = &object.data
+                && seen_input_sets.insert(Rc::as_ptr(inputs))
+            {
+                for path in inputs.iter() {
                     joined.reads.insert(super::RuntimeRead {
                         path: path.clone(),
                         condition: condition.clone(),

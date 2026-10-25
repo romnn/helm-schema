@@ -896,3 +896,59 @@ fn dynamic_competing_kind_arm_voids_the_nested_selector() {
         "the DaemonSet Helm renders accepts its maxSurge: instance={instance}; schema={schema}"
     );
 }
+// Diagnostic unit-test draft for tests/kind_partition_matrix.rs, reusing its existing helpers.
+// This records complete schemas for review and checks their JSON domains; it adopts no fixtures.
+#[test]
+fn conditional_input_reconvergence_schema_domain_diagnostic() {
+    let cases = [
+        (
+            "scalar-after-optional-set",
+            r#"{{ if .Values.flag }}{{ $_ := set .Values.obj "unused" "written" }}{{ end }}{{ $_ := trim .Values.obj }}"#,
+        ),
+        (
+            "map-after-optional-set",
+            r#"{{ if .Values.flag }}{{ $_ := set .Values.obj "unused" "written" }}{{ end }}{{ $_ := set .Values.obj "unused" "written" }}"#,
+        ),
+    ];
+    for (name, actions) in cases {
+        let source = formatdoc! {r"
+            {actions}
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: test
+            data:
+              fixed: okay
+        "};
+        let schema = strict_schema(&source, "", "{}\n");
+        eprintln!("CONDITIONAL_INPUT_SCHEMA {name} {schema}");
+        for flag in [false, true] {
+            for obj in [
+                None,
+                Some(serde_json::json!(null)),
+                Some(serde_json::json!("")),
+                Some(serde_json::json!("scalar")),
+                Some(serde_json::json!(0)),
+                Some(serde_json::json!(true)),
+                Some(serde_json::json!([])),
+                Some(serde_json::json!({})),
+                Some(serde_json::json!({"x":"old"})),
+            ] {
+                let mut instance = serde_json::json!({"flag":flag});
+                if let Some(obj) = &obj {
+                    instance["obj"] = obj.clone();
+                }
+                let expected = if name == "scalar-after-optional-set" {
+                    !flag && obj.as_ref().is_some_and(Value::is_string)
+                } else {
+                    obj.as_ref().is_some_and(Value::is_object)
+                };
+                let actual = schema_accepts_instance(&schema, &instance);
+                eprintln!(
+                    "CONDITIONAL_INPUT_CELL {name} {instance} accepted={actual} expected={expected}"
+                );
+                sim_assert_eq!(have: actual, want: expected);
+            }
+        }
+    }
+}

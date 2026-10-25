@@ -173,7 +173,7 @@ fn incomplete_inline_kind_chains_record_no_branch_sources() {
 }
 
 #[test]
-fn recovers_values_selected_kind_candidates_from_body_partitions() {
+fn body_comparisons_do_not_restrict_an_unresolved_emitted_kind() {
     let resource = detect(
         indoc! {r#"
             apiVersion: apps/v1
@@ -192,14 +192,9 @@ fn recovers_values_selected_kind_candidates_from_body_partitions() {
               {{- end }}
         "#},
         &DefineIndex::new(),
-    )
-    .expect("resource");
-
-    sim_assert_eq!(have: resource.kind, want: "DaemonSet");
-    sim_assert_eq!(
-        have: resource.kind_candidates,
-        want: vec!["StatefulSet", "Deployment"]
     );
+
+    sim_assert_eq!(have: resource, want: None);
 }
 
 #[test]

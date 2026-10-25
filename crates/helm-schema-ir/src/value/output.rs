@@ -96,6 +96,10 @@ impl TextBuffer {
         Some(output)
     }
 
+    pub(super) fn stripped_value(&self) -> Value {
+        strip_no_value(&self.as_value(), &mut 128).unwrap_or_else(|| unknown_text(self.inputs()))
+    }
+
     pub(super) fn as_value(&self) -> Value {
         if let Some(text) = self.exact_text() {
             return Value::string(&text);
@@ -122,6 +126,30 @@ impl TextBuffer {
             result = joined;
         }
         result
+    }
+}
+
+fn strip_no_value(value: &Value, remaining: &mut usize) -> Option<Value> {
+    if *remaining == 0 {
+        return None;
+    }
+    *remaining -= 1;
+    match value.node.as_ref() {
+        ValueNode::Select { decision, yes, no } => Some(Value::select(
+            std::rc::Rc::clone(decision),
+            strip_no_value(yes, remaining)?,
+            strip_no_value(no, remaining)?,
+        )),
+        ValueNode::Leaf(Leaf {
+            datum: _,
+            origin: _,
+        }) => Some(match value.constant() {
+            Some(GuardValue::String(text)) => Value::string(&text.replace("<no value>", "")),
+            Some(
+                GuardValue::Null | GuardValue::Bool(_) | GuardValue::Int(_) | GuardValue::Float(_),
+            )
+            | None => unknown_text(value.inputs()),
+        }),
     }
 }
 
@@ -282,6 +310,7 @@ impl ExecutedSite {
         let Self {
             program,
             coverage_exact,
+            rendered_unchanged,
             ordinal,
             span,
             source_path,
@@ -292,6 +321,7 @@ impl ExecutedSite {
         let Self {
             program: other_program,
             coverage_exact: other_coverage,
+            rendered_unchanged: other_unchanged,
             ordinal: other_ordinal,
             span: other_span,
             source_path: other_source,
@@ -301,6 +331,7 @@ impl ExecutedSite {
         } = other;
         program == other_program
             && coverage_exact == other_coverage
+            && rendered_unchanged == other_unchanged
             && ordinal == other_ordinal
             && span == other_span
             && source_path == other_source
@@ -345,6 +376,14 @@ impl ExecutedSite {
         self.value
             .identity()
             .map(|path| super::ScalarValueDispatch::identity(path.clone()))
+    }
+
+    pub(crate) fn rendered_scalar(&self) -> Option<super::ScalarValueDispatch> {
+        if self.rendered && self.rendered_unchanged {
+            self.projected_scalar()
+        } else {
+            None
+        }
     }
 }
 impl super::State {
@@ -406,6 +445,7 @@ impl super::State {
         if !bytes.is_empty() && self.text_sites.len() + self.sites.len() < 128 {
             self.text_sites.push(ExecutedText {
                 program: self.program,
+                rendered_unchanged: true,
                 coverage_exact: self
                     .active
                     .iter()
@@ -425,6 +465,9 @@ impl super::State {
         value: &Value,
         rendered: bool,
     ) {
+        if rendered {
+            self.record_container_read(value);
+        }
         let value = self.heap.freeze(&self.consumed(value));
         if rendered {
             self.output.emit(value.clone());
@@ -438,6 +481,7 @@ impl super::State {
         }
         self.sites.push(ExecutedSite {
             program: self.program,
+            rendered_unchanged: true,
             coverage_exact: self
                 .active
                 .iter()
@@ -453,26 +497,12 @@ impl super::State {
 }
 impl DocumentExecution {
     pub(super) fn new(exits: Vec<Exit>) -> Self {
+        let root_programs = exits.iter().map(|exit| exit.state.program).collect();
         let mut execution = Self {
             exits,
+            root_programs,
             observed_facts: crate::observed_facts::ObservedFacts::default(),
         };
-        for exit in &mut execution.exits {
-            if exit.state.output_widened
-                || exit
-                    .state
-                    .active
-                    .iter()
-                    .any(|edge| edge.test.coverage == super::Coverage::Partial)
-            {
-                for site in &mut exit.state.sites {
-                    site.coverage_exact = false;
-                }
-                for site in &mut exit.state.text_sites {
-                    site.coverage_exact = false;
-                }
-            }
-        }
         let aborted = execution.abort_predicate();
         if aborted != Predicate::False {
             execution
@@ -537,14 +567,14 @@ impl DocumentExecution {
                 let mut conditions = BTreeSet::new();
                 let mut coverage_exact = true;
                 for site in &exit.state.text_sites {
-                    if site.program != 0
+                    if !self.root_programs.contains(&site.program)
                         || site.source_path.as_deref() != source_path
                         || site.span.start >= span.end
                         || span.start >= site.span.end
                     {
                         continue;
                     }
-                    coverage_exact &= site.coverage_exact;
+                    coverage_exact &= site.coverage_exact && site.rendered_unchanged;
                     conditions.insert(site.condition.clone());
                     let start = span
                         .start
@@ -557,7 +587,7 @@ impl DocumentExecution {
                     pieces.push((site.ordinal, site.bytes.get(start..end).map(str::to_owned)));
                 }
                 for site in &exit.state.sites {
-                    if site.program != 0
+                    if !self.root_programs.contains(&site.program)
                         || !site.rendered
                         || site.source_path.as_deref() != source_path
                         || site.span.start >= span.end
@@ -565,7 +595,7 @@ impl DocumentExecution {
                     {
                         continue;
                     }
-                    coverage_exact &= site.coverage_exact;
+                    coverage_exact &= site.coverage_exact && site.rendered_unchanged;
                     conditions.insert(site.condition.clone());
                     pieces.push((site.ordinal, site.value.exact_text()));
                 }
@@ -589,7 +619,7 @@ impl DocumentExecution {
             .iter()
             .filter(|exit| matches!(exit.flow, Flow::Normal(_)))
             .flat_map(|exit| exit.state.text_sites.iter())
-            .filter(|site| site.program == 0)
+            .filter(|site| self.root_programs.contains(&site.program))
     }
     #[cfg(test)]
     pub(crate) fn all_sites(&self) -> impl Iterator<Item = &ExecutedSite> {
@@ -600,7 +630,7 @@ impl DocumentExecution {
             .iter()
             .filter(|exit| matches!(exit.flow, Flow::Normal(_)))
             .flat_map(|exit| exit.state.sites.iter())
-            .filter(|site| site.program == 0)
+            .filter(|site| self.root_programs.contains(&site.program))
     }
     pub(crate) fn text(&self) -> impl Iterator<Item = (Predicate, &TextBuffer)> {
         self.exits.iter().filter_map(|exit| match &exit.flow {
@@ -619,7 +649,7 @@ impl DocumentExecution {
             .filter(|exit| matches!(exit.flow, Flow::Normal(_)))
             .flat_map(|exit| &exit.state.text_sites)
             .filter(|site| {
-                site.program == 0
+                self.root_programs.contains(&site.program)
                     && site.source_path.as_deref() == source_path
                     && site.span.start < span.end
                     && span.start < site.span.end
@@ -628,7 +658,7 @@ impl DocumentExecution {
         let actions = self
             .sites()
             .filter(|site| {
-                site.program == 0
+                self.root_programs.contains(&site.program)
                     && site.source_path() == source_path
                     && site.span.start < span.end
                     && span.start < site.span.end
@@ -640,42 +670,38 @@ impl DocumentExecution {
         let aborted = Predicate::Or(
             self.exits
                 .iter()
-                .filter_map(|exit| {
-                    if matches!(exit.flow, Flow::Abort(_))
-                        && exit
-                            .state
-                            .active
-                            .iter()
-                            .all(|edge| edge.test.coverage == super::Coverage::Exact)
-                    {
-                        Some(exit.state.path_predicate())
-                    } else {
-                        None
-                    }
-                })
+                .filter(|exit| !exit_may_continue(exit))
+                .map(|exit| exit.state.path_predicate())
                 .collect(),
         );
-        let possible_success = Predicate::Or(
-            self.exits
-                .iter()
-                .filter_map(|exit| {
-                    if matches!(exit.flow, Flow::Abort(_))
-                        && exit
-                            .state
-                            .active
-                            .iter()
-                            .all(|edge| edge.test.coverage == super::Coverage::Exact)
-                    {
-                        None
-                    } else {
-                        Some(exit.state.path_predicate())
-                    }
-                })
-                .collect(),
-        );
-        Predicate::all(vec![aborted, possible_success.negated()]).normalize_boolean()
+        Predicate::all(vec![
+            aborted,
+            possible_success_predicate(&self.exits).negated(),
+        ])
+        .normalize_boolean()
     }
 }
+pub(super) fn exit_may_continue(exit: &Exit) -> bool {
+    flow_may_continue(&exit.flow, &exit.state.active)
+}
+
+pub(super) fn flow_may_continue(flow: &Flow, active: &[super::DecisionEdge]) -> bool {
+    !matches!(flow, Flow::Abort(_))
+        || active
+            .iter()
+            .any(|edge| edge.test.coverage == super::Coverage::Partial)
+}
+
+pub(super) fn possible_success_predicate(exits: &[Exit]) -> Predicate {
+    Predicate::Or(
+        exits
+            .iter()
+            .filter(|exit| exit_may_continue(exit))
+            .map(|exit| exit.state.path_predicate())
+            .collect(),
+    )
+}
+
 impl FrozenValue {
     pub(crate) fn exact_text(&self) -> Option<String> {
         match self.literal()? {
@@ -706,16 +732,20 @@ fn project(
     }
     match value.node.as_ref() {
         ValueNode::Leaf(Leaf {
-            datum: Datum::Strings(id),
+            datum: Datum::Strings(slice),
             origin: _,
         }) => {
             let Some(super::ObjectVersion {
                 data: ObjectData::Strings(slots),
                 revision: _,
                 multiplicity: _,
-            }) = heap.object(id)
+            }) = heap.object(&slice.backing)
             else {
                 return AbstractValue::Unknown;
+            };
+            let Some(slots) = slots.get(slice.start..slice.start.saturating_add(slice.length))
+            else {
+                return AbstractValue::Widened(value.inputs());
             };
             AbstractValue::List(
                 slots
@@ -774,14 +804,22 @@ fn project(
             }
         }
         ValueNode::Leaf(Leaf {
-            datum: Datum::Sequence(Some(items)),
+            datum: Datum::Sequence(sequence),
             origin: _,
-        }) => AbstractValue::List(
-            items
-                .iter()
-                .map(|value| project(value, heap, &mut seen.clone(), depth + 1))
-                .collect(),
-        ),
+        }) => {
+            if sequence.storage.is_none() {
+                return AbstractValue::Widened(value.inputs());
+            }
+            let Some(items) = sequence.items() else {
+                return AbstractValue::Widened(value.inputs());
+            };
+            AbstractValue::List(
+                items
+                    .iter()
+                    .map(|value| project(value, heap, &mut seen.clone(), depth + 1))
+                    .collect(),
+            )
+        }
         ValueNode::Leaf(Leaf {
             datum:
                 Datum::Scalar {
@@ -797,7 +835,6 @@ fn project(
                     content: _,
                 }
                 | Datum::Map { view: _, target: _ }
-                | Datum::Sequence(None)
                 | Datum::Slot {
                     backing: _,
                     index: _,
@@ -824,17 +861,18 @@ fn json(
     }
     match value.node.as_ref() {
         ValueNode::Leaf(Leaf {
-            datum: Datum::Strings(id),
+            datum: Datum::Strings(slice),
             origin: _,
         }) => {
             let super::ObjectVersion {
                 data: ObjectData::Strings(slots),
                 revision: _,
                 multiplicity: _,
-            } = heap.object(id)?
+            } = heap.object(&slice.backing)?
             else {
                 return None;
             };
+            let slots = slots.get(slice.start..slice.start.checked_add(slice.length)?)?;
             Some(serde_json::Value::Array(
                 slots
                     .iter()
@@ -884,21 +922,25 @@ fn json(
             Some(serde_json::Value::Object(result))
         }
         ValueNode::Leaf(Leaf {
-            datum: Datum::Sequence(Some(items)),
+            datum: Datum::Sequence(sequence),
             origin: _,
-        }) => Some(serde_json::Value::Array(
-            items
-                .iter()
-                .map(|value| json(value, heap, &mut seen.clone(), depth + 1))
-                .collect::<Option<Vec<_>>>()?,
-        )),
+        }) => {
+            if sequence.storage.is_none() {
+                return Some(serde_json::Value::Null);
+            }
+            Some(serde_json::Value::Array(
+                sequence
+                    .items()?
+                    .iter()
+                    .map(|value| json(value, heap, &mut seen.clone(), depth + 1))
+                    .collect::<Option<Vec<_>>>()?,
+            ))
+        }
         ValueNode::Leaf(Leaf {
-            datum:
-                Datum::Map {
-                    target: None,
-                    view: _,
-                }
-                | Datum::Sequence(None),
+            datum: Datum::Map {
+                target: None,
+                view: _,
+            },
             origin: _,
         }) => Some(serde_json::Value::Null),
         ValueNode::Leaf(Leaf {
@@ -927,6 +969,10 @@ fn json(
 }
 
 impl super::ExecutedText {
+    pub(crate) fn coverage_exact(&self) -> bool {
+        self.coverage_exact
+    }
+
     pub(crate) fn span(&self) -> helm_schema_syntax::Span {
         self.span
     }

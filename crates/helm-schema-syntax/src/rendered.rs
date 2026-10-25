@@ -404,6 +404,36 @@ fn enclosing_control(mut node: tree_sitter::Node<'_>, span: Span) -> Option<tree
     }
 }
 
+/// Go-template trim markers affecting one adjacent literal text span.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct TextTrim {
+    /// The previous action trims whitespace at the text's start.
+    pub start: bool,
+    /// The following action trims whitespace at the text's end.
+    pub end: bool,
+}
+
+/// Applies Go's ASCII whitespace trims while retaining original source offsets.
+///
+/// Returns `None` when the source span is invalid.
+/// A completely trimmed span remains an empty span at its adjusted start.
+#[must_use]
+pub fn trim_text_span(source: &str, span: Span, trim: TextTrim) -> Option<Span> {
+    let text = source.get(span.start..span.end)?;
+    let is_space = |character| matches!(character, ' ' | '\t' | '\r' | '\n');
+    let start = if trim.start {
+        span.end - text.trim_start_matches(is_space).len()
+    } else {
+        span.start
+    };
+    let end = if trim.end {
+        span.start + text.trim_end_matches(is_space).len()
+    } else {
+        span.end
+    };
+    Some(Span::new(start, end.max(start)))
+}
+
 /// The trimmed literal of `span` as a piece, or `None` when it is empty.
 /// `{{-` trims the whitespace before the action and `-}}` the whitespace
 /// after it, including line breaks, as the Go lexer does.
@@ -414,23 +444,19 @@ fn literal_piece(
     trim_end: bool,
     pieces: &mut Vec<RenderedPiece>,
 ) -> Option<PieceId> {
-    let text = source.get(span.start..span.end)?;
-    let is_space = |c: char| matches!(c, ' ' | '\t' | '\r' | '\n');
-    let start = if trim_start {
-        span.end - text.trim_start_matches(is_space).len()
-    } else {
-        span.start
-    };
-    let end = if trim_end {
-        span.start + text.trim_end_matches(is_space).len()
-    } else {
-        span.end
-    };
-    if start >= end {
+    let span = trim_text_span(
+        source,
+        span,
+        TextTrim {
+            start: trim_start,
+            end: trim_end,
+        },
+    )?;
+    if span.start == span.end {
         return None;
     }
     pieces.push(RenderedPiece::Text {
-        span: Span::new(start, end),
+        span,
         occurrence: Occurrence::default(),
     });
     Some(PieceId(pieces.len() - 1))

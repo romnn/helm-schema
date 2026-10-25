@@ -1,18 +1,22 @@
 mod algebra;
 mod control;
 mod eval;
+mod guard;
 mod heap;
 mod helpers;
+mod history;
 mod invoke;
 pub(crate) mod kinds;
 mod operations;
 mod output;
 mod query;
+mod read_set;
 pub(crate) mod scalar_value;
 mod session;
 mod shape_summary;
 mod state;
-pub(crate) use session::execute_document;
+mod window_exits;
+pub(crate) use session::{execute_document, execute_documents};
 
 use std::cell::{Cell, RefCell};
 use std::collections::{BTreeMap, BTreeSet};
@@ -53,13 +57,68 @@ enum Datum {
         view: MapType,
         target: Option<ObjectId>,
     },
-    Sequence(Option<Rc<Vec<Value>>>),
-    Strings(ObjectId),
+    Sequence(InterfaceSequence),
+    Strings(StringSlice),
     Slot {
         backing: ObjectId,
         index: usize,
     },
     Unknown(UnknownValue),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct InterfaceSequence {
+    storage: Option<Rc<Vec<Value>>>,
+    start: usize,
+    length: usize,
+    capacity: Option<usize>,
+}
+
+impl InterfaceSequence {
+    fn items(&self) -> Option<&[Value]> {
+        let Some(storage) = &self.storage else {
+            return Some(&[]);
+        };
+        storage.get(self.start..self.start.checked_add(self.length)?)
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct StringSlice {
+    backing: ObjectId,
+    start: usize,
+    length: usize,
+    capacity: Option<usize>,
+}
+
+impl Value {
+    fn sequence(items: Vec<Value>) -> Self {
+        let length = items.len();
+        Self::leaf(Datum::Sequence(InterfaceSequence {
+            storage: Some(Rc::new(items)),
+            start: 0,
+            length,
+            capacity: Some(length),
+        }))
+    }
+
+    fn nil_sequence() -> Self {
+        Self::leaf(Datum::Sequence(InterfaceSequence {
+            storage: None,
+            start: 0,
+            length: 0,
+            capacity: Some(0),
+        }))
+    }
+
+    fn strings(backing: ObjectId, length: usize) -> Self {
+        Self::leaf(Datum::Strings(StringSlice {
+            backing,
+            start: 0,
+            length,
+            capacity: Some(length),
+        }))
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -94,6 +153,7 @@ struct FrozenTest {
     when_true: Predicate,
     when_false: Predicate,
     coverage: Coverage,
+    runtime: Option<guard::RuntimeGuard>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -118,9 +178,19 @@ struct SnapshotId {
     ordinal: u64,
 }
 
+#[derive(Clone, Debug)]
+struct InputBacking {
+    object: ObjectId,
+    map_type: Rc<FrozenTest>,
+}
+
 /// Forks share only the allocator; immutable versions own every semantic fact.
 #[derive(Debug, Default)]
 struct Arena {
+    guards: RefCell<guard::DecisionStore>,
+    frontier: RefCell<control::FrontierIndex>,
+    exact_decisions: RefCell<BTreeMap<guard::ExactDecisionKey, std::rc::Weak<FrozenTest>>>,
+    empty_snapshot: std::cell::OnceCell<Rc<HeapVersion>>,
     next_object: Cell<u64>,
     next_snapshot: Cell<u64>,
     next_decision: Cell<u64>,
@@ -128,7 +198,7 @@ struct Arena {
     next_program: Cell<u64>,
     next_invocation: Cell<u64>,
     aggregate_summary: Cell<Option<u64>>,
-    input_objects: RefCell<BTreeMap<ValuesPath, ObjectId>>,
+    input_objects: RefCell<BTreeMap<ValuesPath, InputBacking>>,
     input_paths: RefCell<BTreeMap<ObjectId, ValuesPath>>,
 }
 
@@ -170,7 +240,7 @@ enum ObjectData {
         reachable: AliasSet,
     },
     Widened {
-        inputs: BTreeSet<ValuesPath>,
+        inputs: Rc<BTreeSet<ValuesPath>>,
     },
 }
 
@@ -212,13 +282,13 @@ pub(crate) struct State {
     active: Vec<DecisionEdge>,
     output: TextBuffer,
     output_widened: bool,
-    sites: Vec<ExecutedSite>,
-    text_sites: Vec<ExecutedText>,
-    reads: BTreeSet<RuntimeRead>,
+    sites: history::History<ExecutedSite>,
+    text_sites: history::History<ExecutedText>,
+    reads: read_set::ReadSet,
     calls: Vec<String>,
     program: u64,
     namespace_unknown: bool,
-    invocations: Vec<ExecutedInvocationRecord>,
+    invocations: history::History<ExecutedInvocationRecord>,
     invocation_records_complete: bool,
     loops: Vec<LoopId>,
 }
@@ -261,7 +331,7 @@ struct Normal {
     value: Value,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 enum AbortReason {
     Arity,
     Type,
@@ -269,14 +339,14 @@ enum AbortReason {
     Fail,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct Invocation {
     callee: Callee,
     operands: Vec<Operand>,
     site: u64,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 enum Callee {
     Function(String),
 }
@@ -291,6 +361,7 @@ struct Operand {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum ArgumentForm {
     DirectLiteral,
+    DirectLookup,
     Evaluated,
 }
 
@@ -312,7 +383,10 @@ enum TextPart {
 #[derive(Clone, Debug)]
 pub(crate) struct ExecutedSite {
     program: u64,
+    /// Certainty at evaluation, unaffected by later output or control flow.
     coverage_exact: bool,
+    /// Whether final file text still preserves this emission's original bytes.
+    rendered_unchanged: bool,
     ordinal: usize,
     span: helm_schema_syntax::Span,
     source_path: Option<String>,
@@ -324,6 +398,7 @@ pub(crate) struct ExecutedSite {
 pub(crate) struct ExecutedText {
     program: u64,
     coverage_exact: bool,
+    rendered_unchanged: bool,
     ordinal: usize,
     bytes: String,
     span: helm_schema_syntax::Span,
@@ -333,6 +408,7 @@ pub(crate) struct ExecutedText {
 #[derive(Debug)]
 pub(crate) struct DocumentExecution {
     exits: Vec<Exit>,
+    root_programs: BTreeSet<u64>,
     observed_facts: crate::observed_facts::ObservedFacts,
 }
 
@@ -356,6 +432,7 @@ struct UnknownValue {
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum TypeCoverage {
     Unresolved,
+    InputNonMap,
     Scalar(ScalarType),
     Map(MapType),
     Sequence,

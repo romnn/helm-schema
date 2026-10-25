@@ -7,6 +7,7 @@ mod values;
 mod yaml_boolean_keys;
 
 pub use define_index::build_define_index;
+pub(crate) use define_index::template_execution_name;
 pub use discovery::discover_chart_contexts;
 pub(crate) use file_roles::{FileRole, LoadedChart, LoadedChartCorpus};
 pub(crate) use paths::scope_values_path;
