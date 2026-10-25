@@ -351,7 +351,7 @@ fn contract_artifacts(main: &Capture, candidate: &Capture) -> Result<Vec<Artifac
 fn compare_captures(
     main: &Capture,
     candidate: &Capture,
-    universe: &UniverseState,
+    universe: UniverseState,
     blobs: &BlobStore,
     options: &LiveOptions,
     origin: &str,
@@ -398,7 +398,7 @@ fn compare_captures(
         cases,
         new: observed_new,
         grounding_only,
-    } = observation_cases(main, candidate, universe, blobs, origin)?;
+    } = observation_cases(main, candidate, &universe, blobs, origin)?;
     let mut run = run_comparison(
         &pair,
         universe,
@@ -726,7 +726,7 @@ pub fn self_test(
     let mut comparison = compare_captures(
         &main,
         &candidate,
-        &UniverseState::default(),
+        UniverseState::default(),
         &blobs,
         options,
         "attempt:self-test",
@@ -1060,7 +1060,7 @@ pub fn init(
     let mut comparison = compare_captures(
         &main,
         &main,
-        &universe,
+        universe,
         history.universe.blobs(),
         options,
         "attempt:genesis",
@@ -1282,7 +1282,7 @@ pub fn compare(request: &CompareRequest) -> Result<Verdict, DiffError> {
     let mut comparison = compare_captures(
         &main,
         &candidate,
-        &universe,
+        universe,
         history.universe.blobs(),
         &request.live,
         &format!("attempt:checkpoint-{ordinal}"),
@@ -1403,7 +1403,7 @@ pub fn amend(
         plan_sha256,
         predecessor,
         review,
-        universe,
+        universe_head,
         batch,
         captures,
         main,
@@ -1421,7 +1421,15 @@ pub fn amend(
             .iter()
             .find(|entry| entry.ordinal == ordinal)
             .ok_or_else(|| DiffError::Identity(format!("checkpoint {ordinal} is not retained")))?;
-        let table = backfill_run(&history, &main, entry, &universe, live, out, &mut problems)?;
+        let table = backfill_run(
+            &history,
+            &main,
+            entry,
+            universe_head.as_deref(),
+            live,
+            out,
+            &mut problems,
+        )?;
         problems.extend(backfill_problems(&Backfill {
             ordinal,
             seed_ordinal: plan.seed_ordinal,
@@ -1458,6 +1466,12 @@ pub fn amend(
         ordinal: predecessor.checkpoint_ordinal,
         ..prior
     };
+    let universe = history.universe.load()?;
+    if universe.head != universe_head {
+        return Err(DiffError::Identity(
+            "the universe moved during the amendment".into(),
+        ));
+    }
     let sealed = receipt(
         &ReceiptInputs {
             plan: &plan,
@@ -1486,7 +1500,7 @@ struct Amendment {
     plan_sha256: String,
     predecessor: Receipt,
     review: AmendmentReview,
-    universe: UniverseState,
+    universe_head: Option<String>,
     batch: BTreeSet<String>,
     captures: Vec<RetainedCapture>,
     main: Capture,
@@ -1532,7 +1546,7 @@ fn amendment(history_dir: &Path, previous: &Path, review: &Path) -> Result<Amend
         plan_sha256,
         predecessor,
         review,
-        universe,
+        universe_head: universe.head,
         batch,
         captures,
         main,
@@ -1546,11 +1560,18 @@ fn backfill_run(
     history: &History,
     main: &Capture,
     entry: &RetainedCapture,
-    universe: &UniverseState,
+    universe_head: Option<&str>,
     live: &LiveOptions,
     out: &Path,
     problems: &mut Vec<String>,
 ) -> Result<OutcomeTable, DiffError> {
+    // Each backfill consumes a fresh load, so no two universes are held.
+    let universe = history.universe.load()?;
+    if universe.head.as_deref() != universe_head {
+        return Err(DiffError::Identity(
+            "the universe moved during the amendment".into(),
+        ));
+    }
     let ordinal = entry.ordinal;
     let candidate = open_capture(&entry.path)?;
     if candidate.hash != entry.capture_hash {

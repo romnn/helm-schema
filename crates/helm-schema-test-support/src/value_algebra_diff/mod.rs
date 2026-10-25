@@ -100,7 +100,7 @@ pub struct ComparisonRun {
 /// comparison cannot run at all.
 pub fn run_comparison(
     pair: &DumpPair,
-    universe: &UniverseState,
+    universe: UniverseState,
     blobs: &BlobStore,
     options: RunOptions,
 ) -> Result<ComparisonRun, DiffError> {
@@ -114,11 +114,12 @@ pub fn run_comparison(
     } = options;
     let live = kubernetes.is_some();
     let mut charts = pair.compared_charts(selection.as_ref())?;
+    let known = universe.witnesses.keys().cloned().collect();
     let (identities, expected) =
         attach_replay(&chart_keys(&pair.baseline)?, &mut charts, universe, blobs)?;
     let recorder = Arc::new(Recorder {
         identities,
-        known: universe.witnesses.keys().cloned().collect(),
+        known,
         blobs: blobs.clone(),
         origin,
         judged: Mutex::new(Judged::default()),
@@ -253,15 +254,25 @@ impl Recorder {
     }
 }
 
-/// Attaches each chart's universe witnesses for replay, materialized one
-/// at a time as the chart's worker judges them; returns every chart's
-/// identity and the ids replayed.
+/// Moves each chart's universe witnesses into its lazy replay, each
+/// materialized only when the chart's worker judges it; returns every
+/// chart's identity and the ids replayed. Witnesses of unselected charts
+/// are dropped with the universe.
 fn attach_replay(
     keys: &BTreeMap<String, capture::ChartKey>,
     charts: &mut [crate::acceptance::ComparedChart],
-    universe: &UniverseState,
+    universe: UniverseState,
     blobs: &BlobStore,
 ) -> Result<(BTreeMap<String, ChartIdentity>, BTreeSet<String>), DiffError> {
+    let mut by_chart: BTreeMap<String, Vec<WitnessRecord>> = BTreeMap::new();
+    for record in universe.witnesses.into_values() {
+        if record.identity.mode != history::WitnessMode::Observation {
+            by_chart
+                .entry(record.identity.chart.clone())
+                .or_default()
+                .push(record);
+        }
+    }
     let mut identities = BTreeMap::new();
     let mut expected = BTreeSet::new();
     for chart in charts {
@@ -275,11 +286,8 @@ fn attach_replay(
                 DiffError::Infrastructure(format!("{}: {error:#}", chart.label))
             })?,
         };
-        let mut records = Vec::new();
-        for record in universe.witnesses.values().filter(|record| {
-            record.identity.chart == chart.label
-                && record.identity.mode != history::WitnessMode::Observation
-        }) {
+        let records = by_chart.remove(&chart.label).unwrap_or_default();
+        for record in &records {
             if record.identity.chart_input_sha256 != identity.chart_input_sha256
                 || record.identity.recipe_sha256 != identity.recipe_sha256
             {
@@ -289,7 +297,6 @@ fn attach_replay(
                 )));
             }
             expected.insert(record.id.clone());
-            records.push(record.clone());
         }
         let blobs = blobs.clone();
         chart.replay = Replay::new(records.into_iter().map(move |record| {

@@ -1016,7 +1016,7 @@ fn displaced_universe_witnesses_still_replay_and_flip() -> eyre::Result<()> {
     }
     let run = run_comparison(
         &pair,
-        &universe,
+        universe,
         &blobs,
         RunOptions {
             kubernetes: None,
