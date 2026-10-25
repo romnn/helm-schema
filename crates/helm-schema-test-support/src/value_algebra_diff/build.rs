@@ -110,9 +110,14 @@ pub fn tree_sha256(checkout: &Path) -> Result<String, DiffError> {
     let mut index = Vec::new();
     for name in names {
         let path = checkout.join(&name);
-        // A tracked file deleted in the work tree is part of the state too.
-        let digest = match std::fs::read(&path) {
-            Ok(bytes) => sha256_hex(&bytes),
+        // A tracked file deleted in the work tree is part of the state too;
+        // a symbolic link is its target, as Git stores it.
+        let digest = match std::fs::symlink_metadata(&path) {
+            Ok(metadata) if metadata.file_type().is_symlink() => {
+                let target = std::fs::read_link(&path).map_err(|error| io(&path, &error))?;
+                sha256_hex(["link:", &target.to_string_lossy()].concat().as_bytes())
+            }
+            Ok(_) => sha256_hex(&std::fs::read(&path).map_err(|error| io(&path, &error))?),
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => "deleted".to_string(),
             Err(error) => return Err(io(&path, &error)),
         };

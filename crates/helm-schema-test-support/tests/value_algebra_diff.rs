@@ -1043,3 +1043,39 @@ fn displaced_universe_witnesses_still_replay_and_flip() -> eyre::Result<()> {
     sim_assert_eq!(have: run.coverage["replayed"].clone(), want: json!(2));
     Ok(())
 }
+
+/// The capture's tree digest covers a tracked symbolic link by its target
+/// and sees a changed target, an edited file and an untracked file.
+#[cfg(unix)]
+#[test]
+fn the_tree_digest_covers_links_edits_and_untracked_files() -> eyre::Result<()> {
+    use helm_schema_test_support::value_algebra_diff::build::tree_sha256;
+
+    let scratch = ScratchDir::new("vad-tree")?;
+    let root = scratch.path();
+    let git = |args: &[&str]| -> eyre::Result<()> {
+        let status = std::process::Command::new("git")
+            .args(args)
+            .current_dir(root)
+            .status()?;
+        eyre::ensure!(status.success(), "git {args:?}");
+        Ok(())
+    };
+    git(&["init", "-q"])?;
+    std::fs::create_dir_all(root.join("skills"))?;
+    std::fs::write(root.join("skills/a.md"), "a")?;
+    std::os::unix::fs::symlink("skills", root.join("linked"))?;
+    git(&["add", "skills/a.md", "linked"])?;
+    let original = tree_sha256(root)?;
+    sim_assert_eq!(have: tree_sha256(root)?, want: original.clone());
+    std::fs::remove_file(root.join("linked"))?;
+    std::os::unix::fs::symlink("elsewhere", root.join("linked"))?;
+    let relinked = tree_sha256(root)?;
+    sim_assert_eq!(have: relinked == original, want: false);
+    std::fs::write(root.join("skills/a.md"), "b")?;
+    let edited = tree_sha256(root)?;
+    sim_assert_eq!(have: edited == relinked, want: false);
+    std::fs::write(root.join("new.txt"), "c")?;
+    sim_assert_eq!(have: tree_sha256(root)? == edited, want: false);
+    Ok(())
+}
