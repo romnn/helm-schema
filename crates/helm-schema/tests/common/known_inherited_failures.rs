@@ -1165,7 +1165,7 @@ pub(crate) const KNOWN_INHERITED_FAILURES: &[KnownInheritedFailure] = &[
             kubernetes_version: "1.29.0",
         }),
         failure: FailureClass::Adjudication {
-            reason: "unusable defaults Kubernetes control: uncertainty: document 9: starrocks.com/v1/StarRocksCluster kube-starrocks: pinned CRD schema not found",
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
         },
         input: FailureInput {
             values_file_sha256: Cow::Borrowed(
@@ -1178,8 +1178,8 @@ pub(crate) const KNOWN_INHERITED_FAILURES: &[KnownInheritedFailure] = &[
         lint_diagnostics_sha256: Some(Cow::Borrowed(
             "a446858176b0aba5cb869f7296c7915b2a7f043674ca784361b44adacdf31f8a",
         )),
-        owner: "oracle: chart CRDs / crdcheck (C/D)",
-        observed_on: "lint10c/d3cf7a2f",
+        owner: "generator: inherited lint rejection without Kubernetes attribution",
+        observed_on: "crd-oracle/extract/2087e952",
     },
     KnownInheritedFailure {
         chart: "kube-starrocks",
@@ -1190,7 +1190,7 @@ pub(crate) const KNOWN_INHERITED_FAILURES: &[KnownInheritedFailure] = &[
             kubernetes_version: "1.29.0",
         }),
         failure: FailureClass::Adjudication {
-            reason: "unusable defaults Kubernetes control: uncertainty: document 9: starrocks.com/v1/StarRocksCluster kube-starrocks: pinned CRD schema not found",
+            reason: "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution",
         },
         input: FailureInput {
             values_file_sha256: Cow::Borrowed(
@@ -1203,8 +1203,8 @@ pub(crate) const KNOWN_INHERITED_FAILURES: &[KnownInheritedFailure] = &[
         lint_diagnostics_sha256: Some(Cow::Borrowed(
             "a446858176b0aba5cb869f7296c7915b2a7f043674ca784361b44adacdf31f8a",
         )),
-        owner: "oracle: chart CRDs / crdcheck (C/D)",
-        observed_on: "lint10c/d3cf7a2f",
+        owner: "generator: inherited lint rejection without Kubernetes attribution",
+        observed_on: "crd-oracle/extract/2087e952",
     },
     KnownInheritedFailure {
         chart: "kyverno",

@@ -15,8 +15,8 @@
 //! under an otherwise identical key.
 //!
 //! A completed execution is stored under its key as one directory published
-//! by an atomic rename of a synced staging directory. Readers verify the
-//! request and output hashes; an incomplete or corrupt entry is a miss.
+//! by an atomic rename after syncing every file and, on Unix, directory metadata.
+//! Readers verify the request and output hashes; an incomplete or corrupt entry is a miss.
 
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
@@ -45,11 +45,14 @@ const PINNED_HELM_VERSION: &str = "v4.2.3";
 
 /// Domain of invocation keys and the stored entry format. Changing what an
 /// entry holds or how a request is encoded must change this.
-const INVOCATION_FORMAT: &str = "helm-schema/helm-invocation/v3";
+const INVOCATION_FORMAT: &str = "helm-schema/helm-invocation/v4";
 
 /// The preparation policy a prepared tree identity covers. Changing what
 /// preparation removes, adds or repacks must change this.
 const PREPARATION_POLICY: &str = "helm-schema/prepared-chart/v1";
+
+/// How [`InvocationRequest::content_key`] spells the runner root.
+pub const CONTENT_ROOT: &str = "$HELM_ROOT";
 
 /// The release name every adjudication renders.
 const RELEASE_NAME: &str = "adjudication";
@@ -189,6 +192,8 @@ pub struct InvocationRecord {
     pub stage: String,
     /// The invocation key ([`InvocationRequest::key`]).
     pub key: String,
+    /// The root-independent invocation identity ([`InvocationRequest::content_key`]).
+    pub content_key: String,
     /// How the outputs were obtained.
     pub outcome: Outcome,
     /// Helm's exit code.
@@ -227,7 +232,7 @@ impl InvocationRecord {
 /// Everything that identifies one Helm execution.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct InvocationRequest {
-    /// The key and entry format, such as `helm-schema/helm-invocation/v3`.
+    /// The key and entry format, such as `helm-schema/helm-invocation/v4`.
     pub format: String,
     /// `<os>-<arch>`.
     pub platform: String,
@@ -278,6 +283,62 @@ impl InvocationRequest {
     pub fn key(&self) -> eyre::Result<String> {
         Ok(key_of(&self.encode()?))
     }
+
+    /// The key of this request with the runner root spelled as [`CONTENT_ROOT`].
+    ///
+    /// Paths below the runner root are content-addressed and use slash-separated
+    /// relative components, so equal content run by the same program has one identity
+    /// in every process and checkout.
+    /// Replay stores keep [`Self::key`], which also binds their root.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the request cannot be encoded.
+    pub fn content_key(&self) -> eyre::Result<String> {
+        let Self {
+            format,
+            platform,
+            engine,
+            program_sha256,
+            program_version,
+            working_directory,
+            environment,
+            arguments,
+            inputs,
+            client_only,
+        } = self;
+        let root = Path::new(working_directory);
+        let relative = |value: &String| match Path::new(value).strip_prefix(root) {
+            Ok(rest) => {
+                let relative = rest
+                    .iter()
+                    .map(|component| component.to_string_lossy())
+                    .collect::<Vec<_>>()
+                    .join("/");
+                format!("{CONTENT_ROOT}/{relative}")
+            }
+            Err(_) => value.clone(),
+        };
+        Self {
+            format: format.clone(),
+            platform: platform.clone(),
+            engine: engine.clone(),
+            program_sha256: program_sha256.clone(),
+            program_version: program_version.clone(),
+            working_directory: CONTENT_ROOT.to_string(),
+            environment: environment
+                .iter()
+                .map(|(name, value)| (name.clone(), relative(value)))
+                .collect(),
+            arguments: arguments.iter().map(relative).collect(),
+            inputs: inputs
+                .iter()
+                .map(|(path, sha256)| (relative(path), sha256.clone()))
+                .collect(),
+            client_only: *client_only,
+        }
+        .key()
+    }
 }
 
 fn key_of(request: &[u8]) -> String {
@@ -300,6 +361,7 @@ pub struct TemplateRequest<'a> {
 /// The result half of a stored entry.
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 struct StoredResult {
+    installation: Option<serde_json::Value>,
     exit_code: i32,
     stdout_sha256: String,
     stderr_sha256: String,
@@ -684,6 +746,7 @@ impl HelmRunner {
         self.verify_program()?;
         let request = invocation.encode()?;
         let key = invocation.key()?;
+        let content_key = invocation.content_key()?;
         let entry = self.entry_dir(&key);
         let lookup = Instant::now();
         let lookup_outside =
@@ -726,6 +789,12 @@ impl HelmRunner {
                 };
                 (result, stdout, stderr, outcome, server_max_rss_bytes)
             };
+        let sidecar = case.join(format!("{stage}.crds.json"));
+        if let Some(installation) = &result.installation {
+            fs::write(&sidecar, serde_json::to_vec(installation)?)?;
+        } else if sidecar.exists() {
+            fs::remove_file(&sidecar)?;
+        }
         fs::write(
             case.join(format!("{stage}.status")),
             format!("exit status: {}", result.exit_code),
@@ -733,6 +802,7 @@ impl HelmRunner {
         let record = InvocationRecord {
             stage: stage.to_string(),
             key,
+            content_key,
             outcome,
             exit_code: result.exit_code,
             elapsed_ms: result.elapsed_ms,
@@ -821,6 +891,7 @@ impl HelmRunner {
         let stdout = fs::read(&stdout_path)?;
         let stderr = fs::read(&stderr_path)?;
         let result = StoredResult {
+            installation: None,
             exit_code,
             stdout_sha256: hex(&Sha256::digest(&stdout)),
             stderr_sha256: hex(&Sha256::digest(&stderr)),
@@ -1026,6 +1097,9 @@ impl ResidentPool {
         let stdout = fs::read(&stdout_path)?;
         let stderr = fs::read(&stderr_path)?;
         let result = StoredResult {
+            installation: fs::read(case.join(format!("{stage}.crds.json")))
+                .ok()
+                .and_then(|raw| serde_json::from_slice(&raw).ok()),
             exit_code,
             stdout_sha256: hex(&Sha256::digest(&stdout)),
             stderr_sha256: hex(&Sha256::digest(&stderr)),
@@ -1096,6 +1170,7 @@ impl Resident {
             "skip_schema_validation": skip_schema,
             "stdout_path": utf8(stdout)?,
             "stderr_path": utf8(stderr)?,
+            "crds_path": utf8(&stdout.with_extension("crds.json"))?,
         });
         let mut line = serde_json::to_vec(&request)?;
         line.push(b'\n');
@@ -1230,9 +1305,13 @@ fn publish_entry(
         file.write_all(bytes)?;
         file.sync_all()?;
     }
-    fs::File::open(staged.path())?.sync_all()?;
+    // Portable File::open cannot open Windows directories for syncing.
+    // Files are synced on every host, and readers reject incomplete entries after a crash.
+    if cfg!(unix) {
+        fs::File::open(staged.path())?.sync_all()?;
+    }
     // A rename never replaces a complete entry: the target is a non-empty directory.
-    if fs::rename(staged.path(), entry).is_ok() {
+    if fs::rename(staged.path(), entry).is_ok() && cfg!(unix) {
         fs::File::open(parent)?.sync_all()?;
     }
     Ok(())
@@ -1484,7 +1563,7 @@ fn hash_field(hasher: &mut Sha256, bytes: &[u8]) {
     hasher.update(bytes);
 }
 
-fn hex(bytes: &[u8]) -> String {
+pub(crate) fn hex(bytes: &[u8]) -> String {
     let mut text = String::with_capacity(bytes.len() * 2);
     for byte in bytes {
         let _ = write!(text, "{byte:02x}");

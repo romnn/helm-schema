@@ -50,10 +50,11 @@ jobs:
       # `mise exec` selects it). The compiler is recorded with every value as its environment.
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with:
+          version: 2026.10.19
           install: false
           cache: true
           env: false
-      - run: mise install rust python
+      - run: mise install --locked rust python
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           cache-on-failure: true
@@ -80,6 +81,9 @@ jobs:
           --json target/bench/history.json
           --valgrind valgrind
           --summary "$GITHUB_STEP_SUMMARY"
+      # Recording history switches branches, so tool installation must preserve both lockfiles.
+      - name: Check toolchain lockfiles
+        run: git diff --exit-code -- mise.lock mise.bench.lock
       # No threshold alert is evaluated: github-action-benchmark only checks its alert threshold
       # to post a commit comment or fail the job, and runner hardware and the millisecond phases of
       # the small charts are too noisy for either. The job summary lists every value against the

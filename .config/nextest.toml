@@ -31,16 +31,18 @@
 
 [profile.default]
 # The frozen-witness gate (`tests/family_witnesses.rs`) is the one `tests/`
-# binary in the default profile: it reads adopted fixtures and runs no Helm,
-# so it is as cheap and hermetic as a unit test. Any live Helm variant of it
-# belongs in a binary of its own and stays integration-only.
-default-filter = "not kind(test) or binary_id(=helm-schema::family_witnesses)"
+# binary in the default profile: its `frozen` module reads adopted fixtures.
+# The `live` module regenerates whole charts and prints the complete family
+# report, so it runs only in integration alongside the corpus producer.
+# Any live Helm variant belongs in its own integration-only binary.
+default-filter = "not kind(test) or (binary_id(=helm-schema::family_witnesses) and not test(/^live::/))"
 fail-fast = { max-fail = "all" }
 retries = 0
 slow-timeout = { period = "120s", terminate-after = 15, grace-period = "10s" }
 
 [profile.integration]
-default-filter = "kind(test) and not binary(/^network_/)"
+# The `live` module includes frozen verdicts in the complete family report.
+default-filter = "kind(test) and not binary(/^network_/) and not (binary_id(=helm-schema::family_witnesses) and test(/^frozen::/))"
 fail-fast = { max-fail = "all" }
 retries = 0
 # Whole-chart analyses are CPU-heavy and single-threaded. Leaving three cores

@@ -18,11 +18,14 @@ copy under the target directory, never the source tree:
 5. appends `replace helm.sh/helm/v4 => ./third_party/helm-v4.2.3` to the build
    copy's `go.mod`, where `go build -trimpath -buildvcs=false` and the tests run.
 
-The patch changes only `pkg/chart/common/util/jsonschema.go` (upstream sha256
-`7dabf3ef…6bdce6`, patched `80104edd…32cb9f07`); the patch itself has sha256
-`1f6767be…43bae4`, which `helmsweep version` prints and the build checks.
-`TestVendoredHelmIsUpstreamPlusOnePatch` pins the staged tree: the 1,983
-unpatched files and the patched file.
+The patch changes `pkg/chart/common/util/jsonschema.go` (patched SHA-256
+`80104edd35b11dbf0b04d5f45aac50450f71f6fd5902d1256ed0c42632cb9f07`)
+and exposes the existing private install metadata visitor from
+`pkg/action/validate.go` for sidecar evidence.
+The bridge delegates directly and changes no install behavior.
+Patch SHA-256: `5749c37a135125fa9c057f56168d4712647d7b4a08df1981deaa4be1222e6d77`.
+`TestVendoredHelmIsUpstreamPlusOnePatch` pins both changed files and all 1,982
+unchanged files; `helmsweep version` prints the patch identity.
 
 ## The change
 

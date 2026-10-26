@@ -215,6 +215,10 @@ func templateCell(chartPath, kubeVersion, valuesFile string) (int, []byte) {
 // flags at their defaults (pkg/cmd/install.go addInstallFlags), then
 // runInstall. It returns the CLI's exit code, stdout and stderr.
 func templateRun(release, chartPath, kubeVersion string, valuesFiles []string, skipSchema bool) (int, []byte, []byte) {
+	return templateWithEvidence(release, chartPath, kubeVersion, valuesFiles, skipSchema, nil)
+}
+
+func templateWithEvidence(release, chartPath, kubeVersion string, valuesFiles []string, skipSchema bool, evidence *installation) (int, []byte, []byte) {
 	var stderr bytes.Buffer
 	settings := cli.New()
 	cfg, ok := initRootConfig(settings)
@@ -237,8 +241,11 @@ func templateRun(release, chartPath, kubeVersion string, valuesFiles []string, s
 	client.Replace = true
 	client.APIVersions = common.VersionSet([]string{})
 	client.IncludeCRDs = false
+	if evidence != nil {
+		evidence.KubernetesVersion = parsed.Version
+	}
 
-	rel, err := runInstall([]string{release, chartPath}, client, &values.Options{ValueFiles: valuesFiles}, settings)
+	rel, err := runInstall([]string{release, chartPath}, client, &values.Options{ValueFiles: valuesFiles}, settings, evidence)
 	if err != nil {
 		if rel != nil {
 			err = fmt.Errorf("%w\n\nUse --debug flag to render out invalid YAML", err)
@@ -272,7 +279,7 @@ func initRootConfig(settings *cli.EnvSettings) (*action.Configuration, bool) {
 
 // runInstall is pkg/cmd/install.go runInstall for a local chart directory,
 // without its signal handler.
-func runInstall(args []string, client *action.Install, valueOpts *values.Options, settings *cli.EnvSettings) (*releasev1.Release, error) {
+func runInstall(args []string, client *action.Install, valueOpts *values.Options, settings *cli.EnvSettings, evidence *installation) (*releasev1.Release, error) {
 	name, chartRef, err := client.NameAndChart(args)
 	if err != nil {
 		return nil, err
@@ -315,8 +322,10 @@ func runInstall(args []string, client *action.Install, valueOpts *values.Options
 	// pkg/cmd/root.go releaserToV1Release
 	switch rel := ri.(type) {
 	case releasev1.Release:
+		evidence.collect(chartRequested, &rel)
 		return &rel, err
 	case *releasev1.Release:
+		evidence.collect(chartRequested, rel)
 		return rel, err
 	case nil:
 		return nil, err

@@ -23,7 +23,7 @@ use helm_schema_test_support::helm::invocation::{
 
 fn base_request() -> InvocationRequest {
     InvocationRequest {
-        format: "helm-schema/helm-invocation/v3".to_string(),
+        format: "helm-schema/helm-invocation/v4".to_string(),
         platform: "macos-aarch64".to_string(),
         engine: "helmsweep".to_string(),
         program_sha256: "helmsweep".to_string(),
@@ -107,6 +107,78 @@ fn each_identity_field_changes_the_key() -> eyre::Result<()> {
     Ok(())
 }
 
+/// The content key ignores where the runner root lies and nothing else.
+#[test]
+fn content_key_names_equal_content_under_any_root() -> eyre::Result<()> {
+    let base = base_request();
+    let mut moved = base.clone();
+    moved.working_directory = "/scratch/helm-root-7".to_string();
+    for value in moved
+        .arguments
+        .iter_mut()
+        .chain(moved.environment.iter_mut().map(|(_, value)| value))
+        .chain(moved.inputs.iter_mut().map(|(path, _)| path))
+    {
+        if let Some(rest) = value.strip_prefix("/store/") {
+            *value = format!("/scratch/helm-root-7/{rest}");
+        }
+    }
+    sim_assert_eq!(have: moved.content_key()?, want: base.content_key()?);
+    eyre::ensure!(
+        moved.key()? != base.key()?,
+        "store keys still bind the root"
+    );
+    let mut prefix_only = base.clone();
+    prefix_only.inputs[0].0 = "/storefront/trees/chart".to_string();
+    eyre::ensure!(
+        prefix_only.content_key()? != base.content_key()?,
+        "a sibling path is not below the root"
+    );
+    let mut content = base.clone();
+    content.inputs[0].1 = "other chart".to_string();
+    eyre::ensure!(
+        content.content_key()? != base.content_key()?,
+        "content decides the content key"
+    );
+    Ok(())
+}
+
+#[test]
+fn content_key_uses_portable_paths_below_a_native_root() -> eyre::Result<()> {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("content-key-root");
+    let chart = root
+        .join("trees")
+        .join("chart")
+        .to_string_lossy()
+        .into_owned();
+    let values = root
+        .join("inputs")
+        .join("values.json")
+        .to_string_lossy()
+        .into_owned();
+    let home = root.join("home").to_string_lossy().into_owned();
+    let base = base_request();
+    let mut native = base.clone();
+    native.working_directory = root.to_string_lossy().into_owned();
+    native.environment = vec![("HOME".to_string(), home.clone())];
+    native.arguments[2] = chart.clone();
+    native.arguments[7] = values.clone();
+    native.inputs = vec![
+        (chart, "chart".to_string()),
+        (values, "values".to_string()),
+        (home, "home".to_string()),
+    ];
+
+    // On Windows these paths include a drive and native backslashes.
+    // Their content identity matches the portable request while the store key binds the root.
+    sim_assert_eq!(have: native.content_key()?, want: base.content_key()?);
+    eyre::ensure!(
+        native.key()? != base.key()?,
+        "store keys still bind the native root"
+    );
+    Ok(())
+}
+
 /// A packaged dependency's bytes are chart content: changing only a nested
 /// archive changes the prepared tree's identity.
 #[test]
@@ -166,6 +238,7 @@ struct Observed {
     stdout: Vec<u8>,
     stderr: Vec<u8>,
     key: String,
+    installation: Option<serde_json::Value>,
 }
 
 fn render(
@@ -187,7 +260,12 @@ fn render(
         stage,
         cacheability,
     )?;
+    let installation = fs::read(case.path().join(format!("{stage}.crds.json")))
+        .ok()
+        .map(|raw| serde_json::from_slice(&raw))
+        .transpose()?;
     Ok(Observed {
+        installation,
         outcome: execution.record.outcome.clone(),
         success: execution.success(),
         stdout: execution.stdout,
@@ -245,6 +323,9 @@ fn identical_invocations_replay_and_changed_inputs_execute() -> eyre::Result<()>
     sim_assert_eq!(have: again.outcome, want: Outcome::Replayed);
     sim_assert_eq!(have: again.stdout, want: first.stdout);
     sim_assert_eq!(have: again.key, want: first.key);
+    // Installation evidence replays with the same complete output receipt.
+    assert!(first.installation.is_some());
+    sim_assert_eq!(have:again.installation,want:first.installation);
 
     let changed_values = render(
         &runner,
@@ -1197,7 +1278,12 @@ fn resident_protocol_failures_are_harness_failures() -> eyre::Result<()> {
     let programs = ScratchDir::new("helm_invocation")?;
     let answer = |line: &str| format!("while read -r request; do printf '%s\\n' '{line}'; done");
     for (name, body, expected) in [
-        ("exits", "exit 0".to_string(), "without answering"),
+        // Consume the request so the client observes EOF while reading the reply.
+        (
+            "exits",
+            "read -r request; exit 0".to_string(),
+            "without answering",
+        ),
         ("garbage", answer("not json"), "malformed answer"),
         (
             "other-id",
