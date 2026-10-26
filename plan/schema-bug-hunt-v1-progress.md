@@ -9449,4 +9449,18 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - User: switch most work to Codex (Claude quota); CI green before R3b lands. Codex sandboxes can no longer write .git, so
     the orchestrator commits transfer patches. agentmux issues #22 (labels) and #23 (continue in a fresh session) filed.
   - Disk: ~120 GB of idle targets removed; landing TARGET evidence grew to 150 GB (queued process fix). Orchestrator.
-Next: watch main CI (bench + Windows) after the user pushes; landing 16 = F20 (after its P1 rework) + G2 (after rework, battery with the oracle) + T0 (after re-review); R3b kube-prometheus-stack regression → P7 → lint → C04.
+- 16:20 (Oct 26) — **Landing 16 merged (c7cb0843): T0 value-algebra differential gate; receipt round8-landing16-run1
+  sha256 aea1e040…; 0 fixtures adopted. Landing 17 (CRD G2) started. R3b C04 put on SIMPLIFY after the user challenged its
+  size.** T0: rework 2 (single-writer atomic history, stable witness identities, required roster, grounded controls) and
+  ba627bef (Normal guards against case-folded headers and non-finite numbers); sol review LAND after two reworks. R3b:
+  three C03 transfers committed 0c4f66a8 (budget-guard reuse: kube-prometheus-stack 20.1 → 8.8, kyverno 4.8 → 3.7,
+  datadog 22.6 → 21.1 debug CPU-s, byte-identical), 655e21b8 (P7) and 87e66562 (inventory; task lint green); production
+  66,424 LOC (−11,152 vs pre-cutover). C04 WIP: +4,622 production LOC; false acceptances 175 → 173; 5 new Helm-matched
+  closures; 0 new false rejections; kyverno stopped at 100 CPU-s. User: "is C04 worth +4,400 lines?" → sol simplicity
+  review 20261026T145551-9c15e236 SIMPLIFY (duplicate runner, repeated traversal, superseded projection/repair APIs kept,
+  extra host precision; a gain-focused C04 of about +1.0–1.4k is plausible). Orchestrator decision: delete superseded models
+  now, one runner, consolidate traversal, seal directly, keep host features only where a measured closure or control needs
+  them. Target ≤ +3,000 vs 87e66562; kyverno at C03 speed; 5 closures kept; 0 new FR. G2: Opus rework (libyaml-safer,
+  apimachinery framing, three libyaml-safer panics avoided without catch_unwind, linear comma-tag check), both reviews LAND
+  at 64782416. Orchestrator.
+Next: landing 17 (G2) → merge; F20 rework → re-review → landing 18; R3b C04 simplification → size ledger + admission + timings → commit or rescope; queued process fixes in round8/process-queue.md.
