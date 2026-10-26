@@ -24,7 +24,7 @@ use helm_schema_test_support::value_algebra_diff::controls::{
     ProjectionStatus, Query, Selection, Termination, UnknownReason,
 };
 use helm_schema_test_support::value_algebra_diff::history::canonical_json;
-use indoc::indoc;
+use indoc::{formatdoc, indoc};
 use serde::Deserialize as _;
 use serde_json::{Value, json};
 use test_util::prelude::sim_assert_eq;
@@ -333,9 +333,10 @@ fn termination(execution: &Execution) -> Result<Termination, String> {
 /// proven to succeed: `apiVersion` and `kind` must be unambiguous strings,
 /// `metadata` a mapping whose `name` is a string and whose `annotations`
 /// map strings to strings, and no hook annotation may steer the render.
+/// Case-folded field aliases and non-finite numbers remain unverified.
 /// An empty document is skipped by Helm. `None` when it provably decodes.
 fn helm_header_problem(document: &serde_yaml::Value) -> Option<String> {
-    if serde_json::to_value(document).is_err() {
+    if !yaml_numbers_finite(document) || serde_json::to_value(document).is_err() {
         return Some("the rendered document is outside Helm's JSON loader domain".into());
     }
     let text = |value: Option<&serde_yaml::Value>, optional: bool| match value {
@@ -348,6 +349,9 @@ fn helm_header_problem(document: &serde_yaml::Value) -> Option<String> {
         serde_yaml::Value::Mapping(header) => header,
         _ => return Some("a document Helm's manifest head cannot decode".into()),
     };
+    if !header_keys_supported(header, &["apiVersion", "kind", "metadata"]) {
+        return Some("manifest header field aliases are unverified".into());
+    }
     if !text(header.get("apiVersion"), false) || !text(header.get("kind"), false) {
         return Some("apiVersion and kind are not proven strings".into());
     }
@@ -356,6 +360,9 @@ fn helm_header_problem(document: &serde_yaml::Value) -> Option<String> {
         Some(serde_yaml::Value::Mapping(metadata)) => metadata,
         Some(_) => return Some("metadata is not a mapping".into()),
     };
+    if !header_keys_supported(metadata, &["name", "annotations"]) {
+        return Some("metadata field aliases are unverified".into());
+    }
     if !text(metadata.get("name"), true) {
         return Some("metadata.name is not a proven string".into());
     }
@@ -369,6 +376,33 @@ fn helm_header_problem(document: &serde_yaml::Value) -> Option<String> {
             (!proven).then(|| "metadata.annotations are not proven string pairs".into())
         }
         Some(_) => Some("metadata.annotations is not a mapping".into()),
+    }
+}
+
+/// Go folds struct field names, including Unicode aliases of ASCII letters.
+/// Only ASCII string keys without aliases of the supported fields are proven.
+fn header_keys_supported(mapping: &serde_yaml::Mapping, fields: &[&str]) -> bool {
+    mapping.keys().all(|key| {
+        let serde_yaml::Value::String(key) = key else {
+            return false;
+        };
+        key.is_ascii()
+            && !fields
+                .iter()
+                .any(|field| key != field && key.eq_ignore_ascii_case(field))
+    })
+}
+
+/// Rejects non-finite numbers before JSON serialization can replace them with null.
+fn yaml_numbers_finite(value: &serde_yaml::Value) -> bool {
+    match value {
+        serde_yaml::Value::Null | serde_yaml::Value::Bool(_) | serde_yaml::Value::String(_) => true,
+        serde_yaml::Value::Number(number) => number.as_f64().is_some_and(f64::is_finite),
+        serde_yaml::Value::Sequence(values) => values.iter().all(yaml_numbers_finite),
+        serde_yaml::Value::Mapping(values) => values
+            .iter()
+            .all(|(key, value)| yaml_numbers_finite(key) && yaml_numbers_finite(value)),
+        serde_yaml::Value::Tagged(tagged) => yaml_numbers_finite(&tagged.value),
     }
 }
 
@@ -876,5 +910,110 @@ fn normal_needs_whole_chart_proof() -> eyre::Result<()> {
         };
         sim_assert_eq!(have: reason, want: UnknownReason::RepresentationGap);
     }
+    Ok(())
+}
+
+/// Renders with the exact Helm release whose loader the adapter models.
+fn render_with_pinned_helm(template: &str) -> eyre::Result<std::process::Output> {
+    let helm = || {
+        let mut command = std::process::Command::new("mise");
+        command.args(["exec", "helm@4.2.3", "--", "helm"]);
+        command
+    };
+    let version = helm()
+        .args(["version", "--template", "{{.Version}}"])
+        .output()?;
+    assert!(version.status.success(), "{version:?}");
+    sim_assert_eq!(have: String::from_utf8(version.stdout)?.trim(), want: "v4.2.3");
+    let chart = test_util::scratch::ScratchDir::new("ir-controls-helm-parity")?;
+    std::fs::create_dir_all(chart.path().join("templates"))?;
+    let (name, contents) = CHART;
+    std::fs::write(chart.path().join(name), contents)?;
+    std::fs::write(chart.path().join("templates/cm.yaml"), template)?;
+    Ok(helm()
+        .args(["template", "p"])
+        .arg(chart.path())
+        .args(["--kube-version", "1.29.0"])
+        .output()?)
+}
+
+/// The adapter must leave Helm's render-YAML failures unknown rather than claim Normal.
+fn assert_helm_yaml_gap(template: &str) -> eyre::Result<()> {
+    let have = run(
+        &[CHART, ("templates/cm.yaml", template)],
+        &json!({"kind": "termination_v1", "scope": "render"}),
+    )?;
+    let ControlResult::AbstractUnknown { reason, .. } = have else {
+        eyre::bail!("expected an unknown render exit for {template:?}, have {have:?}");
+    };
+    sim_assert_eq!(have: reason, want: UnknownReason::RepresentationGap);
+    let rendered = render_with_pinned_helm(template)?;
+    let stderr = String::from_utf8(rendered.stderr)?;
+    sim_assert_eq!(have: rendered.status.code(), want: Some(1), "{template}: {stderr}");
+    assert!(stderr.contains("YAML parse error"), "{template}: {stderr}");
+    Ok(())
+}
+
+/// Go's folded struct lookup can reach typed fields through aliases Rust does not look up.
+#[test]
+fn case_folded_headers_do_not_prove_normal() -> eyre::Result<()> {
+    for alias in [
+        "Metadata: []",
+        "APIVERSION: []",
+        "KIND: []",
+        "\u{212a}ind: []",
+        indoc! {"
+            metadata:
+              Name: []
+        "},
+        indoc! {"
+            metadata:
+              Annotations: []
+        "},
+        indoc! {"
+            metadata:
+              annotationſ: []
+        "},
+    ] {
+        assert_helm_yaml_gap(&formatdoc! {"
+            apiVersion: v1
+            kind: ConfigMap
+            {alias}
+        "})?;
+    }
+    Ok(())
+}
+
+/// Non-finite values are outside Helm's JSON domain, including nested mappings and sequences.
+#[test]
+fn non_finite_yaml_does_not_prove_normal() -> eyre::Result<()> {
+    for scalar in [".nan", ".inf", "-.inf"] {
+        for body in [
+            format!("data: {scalar}\n"),
+            formatdoc! {"
+                data:
+                  nested:
+                    - values: [{scalar}]
+            "},
+        ] {
+            assert_helm_yaml_gap(&formatdoc! {"
+                apiVersion: v1
+                kind: ConfigMap
+                {body}
+            "})?;
+        }
+    }
+    // Finite numbers and quoted spellings remain valid loader inputs.
+    let finite = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        data:
+          nested: [1.5, 0, -1, ".nan", ".inf"]
+    "#};
+    sim_assert_eq!(have: run(&[CHART, ("templates/cm.yaml", finite)],
+        &json!({"kind": "termination_v1", "scope": "render"}))?,
+        want: exact(Observation::Termination { outcome: Termination::Normal }));
+    let rendered = render_with_pinned_helm(finite)?;
+    assert!(rendered.status.success(), "{rendered:?}");
     Ok(())
 }
