@@ -1,7 +1,14 @@
 use serde::ser::SerializeStruct as _;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-use crate::{ContractProvenance, Guard, GuardDnf, ResourceRef, ValueKind, ValuesPath, YamlPath};
+use crate::{
+    ContractProvenance, Guard, GuardDnf, PlainScalarPlacement, ResourceRef, ValueKind, ValuesPath,
+    YamlPath,
+};
+
+fn is_default<T: Default + PartialEq>(value: &T) -> bool {
+    value == &T::default()
+}
 
 /// The rendered text is ONE SEGMENT of the source string split by a literal
 /// separator (`regexSplit ":" . -1 | last` extracting a port suffix): the
@@ -197,6 +204,9 @@ pub struct ContractUse {
     /// so a provider slot observes text rather than the raw input shape.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub stringified: bool,
+    /// Positive plain-block placement proof for this particular rendered use.
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub plain_scalar_placement: PlainScalarPlacement,
     /// Literal member keys the TEMPLATE writes beside this fragment splice
     /// in the same mapping (`- name: tmp` next to `toYaml .Values.tmpVolume`):
     /// the rendered object already has them, so a provider slot's object
@@ -292,6 +302,7 @@ impl ContractUse {
             resource,
             provenance: provenance.into_iter().collect(),
             stringified: false,
+            plain_scalar_placement: PlainScalarPlacement::Unknown,
             template_supplied_member_keys: std::collections::BTreeSet::new(),
             split_segment: None,
             merge_layers: None,
@@ -330,6 +341,7 @@ impl ContractUse {
             resource: _,
             provenance: _,
             stringified: _,
+            plain_scalar_placement: _,
             template_supplied_member_keys: _,
             split_segment: _,
             merge_layers,

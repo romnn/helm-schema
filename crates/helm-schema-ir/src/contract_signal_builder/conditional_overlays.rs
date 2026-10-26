@@ -283,6 +283,7 @@ pub(super) fn provider_schema_use(
         path: contract_use.path.clone(),
         kind: contract_use.kind,
         stringified: contract_use.stringified,
+        plain_scalar_placement: contract_use.plain_scalar_placement,
         resource,
         template_supplied_member_keys: contract_use.template_supplied_member_keys.clone(),
         split_segment: contract_use.split_segment.clone(),

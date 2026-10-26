@@ -1,3 +1,4 @@
+use std::fmt::Write as _;
 use std::rc::Rc;
 
 use color_eyre::eyre::{self, OptionExt as _};
@@ -53,9 +54,10 @@ fn growing_branch_chains_keep_one_normal_continuation() -> eyre::Result<()> {
         let mut source = String::from("{{ $value := float64 .Values.input }}");
         for index in 0..count {
             let keyword = if index == 0 { "if" } else { "else if" };
-            source.push_str(&format!(
+            write!(
+                source,
                 "{{{{ {keyword} eq .Values.branch {index} }}}}{{{{ $value = float64 .Values.input }}}}"
-            ));
+            )?;
         }
         source.push_str("{{ end }}{{ $value }}");
         let execution = crate::value::execute_document(&source, None, &db);

@@ -31,7 +31,7 @@ impl ExecutedObservation {
     fn value(&self) -> Option<AbstractValue> {
         AbstractValue::merge_all(
             self.subject_sites()
-                .map(|site| site.projected_value())
+                .map(super::super::value::ExecutedSite::projected_value)
                 .collect(),
         )
     }
@@ -161,20 +161,26 @@ fn helper_result_from_expr_with_fragment_locals(
 ) -> ExecutedObservation {
     let mut source = String::new();
     for (name, value) in fragment_locals {
-        source.push_str(&format!("{{{{ ${name} := {} }}}}", fixture_source(value)));
+        source.push_str("{{ $");
+        source.push_str(name);
+        source.push_str(" := ");
+        source.push_str(&fixture_source(value));
+        source.push_str(" }}");
     }
     let rebound = current_dot.is_some_and(|value| !matches!(value, AbstractValue::RootContext));
     if let Some(value) = current_dot.filter(|_| rebound) {
-        source.push_str(&format!("{{{{ with {} }}}}", fixture_source(value)));
+        source.push_str("{{ with ");
+        source.push_str(&fixture_source(value));
+        source.push_str(" }}");
     }
-    source.push_str(&format!(
-        "{{{{ $__result := {} }}}}value: ",
-        expression_source(expr)
-    ));
+    source.push_str("{{ $__result := ");
+    source.push_str(&expression_source(expr));
+    source.push_str(" }}value: ");
     let start = source.len();
     source.push_str("{{ $__result }}");
     let value_span = helm_schema_syntax::Span::new(start, source.len());
-    source.push_str("\n{{ if $__result }}# ");
+    source.push('\n');
+    source.push_str("{{ if $__result }}# ");
     let start = source.len();
     source.push_str("selected");
     let truth_span = helm_schema_syntax::Span::new(start, source.len());
@@ -205,7 +211,8 @@ fn expression_source(expression: &TemplateExpr) -> String {
         TemplateExpr::Literal(Literal::String(text) | Literal::RawString(text)) => {
             format!("{text:?}")
         }
-        TemplateExpr::Literal(Literal::UnresolvedString(source)) => source.clone(),
+        TemplateExpr::Literal(Literal::UnresolvedString(source))
+        | TemplateExpr::Unknown(source) => source.clone(),
         TemplateExpr::Literal(Literal::Int(value)) => value.to_string(),
         TemplateExpr::Literal(Literal::Float(value)) => format!("{value:?}"),
         TemplateExpr::Literal(Literal::Bool(value)) => value.to_string(),
@@ -240,7 +247,6 @@ fn expression_source(expression: &TemplateExpr) -> String {
         TemplateExpr::Assignment { name, value } => {
             format!("{name} = {}", expression_source(value))
         }
-        TemplateExpr::Unknown(source) => source.clone(),
     }
 }
 
@@ -580,6 +586,7 @@ fn direct_provider_scalar_keeps_positive_subset_of_int_cast_guard() {
             ]),
             kind: crate::ValueKind::Scalar,
             stringified: false,
+            plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
             resource: crate::ResourceRef::concrete("v1".to_string(), "Service".to_string()),
             is_self_range_collection: false,
             source_null_tolerant: false,

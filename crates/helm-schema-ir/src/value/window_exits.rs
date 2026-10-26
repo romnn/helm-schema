@@ -7,7 +7,7 @@ pub(super) enum WindowExits {
 }
 
 pub(super) enum WindowChunk {
-    Single(Exit),
+    Single(Box<Exit>),
     Terminal(TerminalRun),
 }
 
@@ -17,7 +17,7 @@ pub(super) struct TerminalRun {
 }
 
 enum TerminalTree {
-    Leaf(Exit),
+    Leaf(Box<Exit>),
     Concat {
         left: TerminalRun,
         right: TerminalRun,
@@ -36,7 +36,7 @@ impl TerminalRun {
     fn one(exit: Exit) -> Self {
         Self {
             length: 1,
-            tree: Box::new(TerminalTree::Leaf(exit)),
+            tree: Box::new(TerminalTree::Leaf(Box::new(exit))),
         }
     }
 
@@ -52,7 +52,7 @@ impl TerminalRun {
         let mut pending = vec![self];
         while let Some(Self { length: _, tree }) = pending.pop() {
             match *tree {
-                TerminalTree::Leaf(exit) => exits.push(exit),
+                TerminalTree::Leaf(exit) => exits.push(*exit),
                 TerminalTree::Concat { left, right } => pending.extend([right, left]),
             }
         }
@@ -77,7 +77,7 @@ impl WindowExits {
         let mut chunks = Vec::new();
         for exit in exits {
             let chunk = if matches!(exit.flow, Flow::Normal(_)) {
-                WindowChunk::Single(exit)
+                WindowChunk::Single(Box::new(exit))
             } else {
                 WindowChunk::Terminal(TerminalRun::one(exit))
             };
@@ -123,7 +123,10 @@ impl WindowExits {
     pub(super) fn into_chunks(self) -> Vec<WindowChunk> {
         match self {
             Self::Compact(chunks) => chunks,
-            Self::Expanded(exits) => exits.into_iter().map(WindowChunk::Single).collect(),
+            Self::Expanded(exits) => exits
+                .into_iter()
+                .map(|exit| WindowChunk::Single(Box::new(exit)))
+                .collect(),
         }
     }
 
@@ -131,7 +134,7 @@ impl WindowExits {
         self.into_chunks()
             .into_iter()
             .flat_map(|chunk| match chunk {
-                WindowChunk::Single(exit) => vec![exit],
+                WindowChunk::Single(exit) => vec![*exit],
                 WindowChunk::Terminal(run) => run.into_exits(),
             })
             .collect()
@@ -175,7 +178,7 @@ impl WindowBuffer {
             append(
                 chunks,
                 if matches!(exit.flow, Flow::Normal(_)) {
-                    WindowChunk::Single(exit)
+                    WindowChunk::Single(Box::new(exit))
                 } else {
                     WindowChunk::Terminal(TerminalRun::one(exit))
                 },
@@ -204,7 +207,7 @@ impl WindowBuffer {
                     match chunk {
                         WindowChunk::Single(exit) => {
                             slots.push(WindowSlot::Normal(normals.len()));
-                            normals.push(exit);
+                            normals.push(*exit);
                         }
                         WindowChunk::Terminal(run) => slots.push(WindowSlot::Terminal(run)),
                     }
@@ -216,13 +219,16 @@ impl WindowBuffer {
                 for slot in slots {
                     match slot {
                         WindowSlot::Terminal(run) => {
-                            append(&mut chunks, WindowChunk::Terminal(run))
+                            append(&mut chunks, WindowChunk::Terminal(run));
                         }
                         WindowSlot::Normal(index) => {
                             if joined.peek().is_some_and(|entry| entry.index == index)
                                 && let Some(entry) = joined.next()
                             {
-                                append(&mut chunks, WindowChunk::Single(entry.continuation));
+                                append(
+                                    &mut chunks,
+                                    WindowChunk::Single(Box::new(entry.continuation)),
+                                );
                             }
                         }
                     }

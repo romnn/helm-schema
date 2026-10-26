@@ -732,7 +732,7 @@ fn bitnami_standard_labels_merge_keeps_name_override_scalar() {
 }
 
 #[test]
-fn scalar_slot_rendered_array_keeps_provider_item_schema() {
+fn scalar_slot_rendered_array_preserves_formatted_item_preimage() {
     let src = indoc! {r"
         apiVersion: v1
         kind: Service
@@ -747,20 +747,17 @@ fn scalar_slot_rendered_array_keeps_provider_item_schema() {
     "};
 
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
-    let source_ranges = schema
-        .pointer("/properties/service/properties/loadBalancerSourceRanges")
-        .expect("service.loadBalancerSourceRanges present");
 
-    sim_assert_eq!(
-        have: source_ranges.pointer("/anyOf/0/type").and_then(Value::as_str),
-        want: Some("array"),
-        "loadBalancerSourceRanges should remain array-valued, got {source_ranges}"
-    );
-    sim_assert_eq!(
-        have: source_ranges.pointer("/anyOf/0/items/type").and_then(Value::as_str),
-        want: Some("string"),
-        "loadBalancerSourceRanges items should keep the Kubernetes string schema, got {source_ranges}"
-    );
+    // Go formats [42, 43] as [42 43], which YAML parses as one string item.
+    // The provider's item type therefore cannot constrain each raw input item.
+    for (ranges, accepted) in [
+        (serde_json::json!([42, 43]), true),
+        (serde_json::json!([]), true),
+        (serde_json::json!({ "safe": "value" }), false),
+    ] {
+        let instance = serde_json::json!({ "service": { "loadBalancerSourceRanges": ranges } });
+        sim_assert_eq!(have: schema_accepts_instance(&schema, &instance), want: accepted, "instance={instance}; schema={schema}");
+    }
 }
 
 #[test]
@@ -1163,6 +1160,7 @@ fn provider_schema_for_container_resources_path_keeps_open_quantity_maps() {
         ]),
         kind: helm_schema_ir::ValueKind::Fragment,
         stringified: false,
+        plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
         resource: ResourceRef::concrete("apps/v1".to_string(), "Deployment".to_string()),
         is_self_range_collection: false,
         source_null_tolerant: false,

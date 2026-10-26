@@ -46,12 +46,12 @@ fn keyed_reads_preserve_the_child_without_opening_the_root() {
 #[test]
 fn whole_and_dynamic_consumers_open_only_the_consumed_region() {
     for source in [
-        r#"{{ toYaml .Values }}"#,
-        r#"{{ toJson .Values }}"#,
-        r#"{{ .Values }}"#,
-        r#"{{ $key := .Values.key }}{{ index .Values $key }}"#,
-        r#"{{ $key := .Values.key }}{{ hasKey .Values $key }}"#,
-        r#"{{ range .Values }}{{ . }}{{ end }}"#,
+        r"{{ toYaml .Values }}",
+        r"{{ toJson .Values }}",
+        r"{{ .Values }}",
+        r"{{ $key := .Values.key }}{{ index .Values $key }}",
+        r"{{ $key := .Values.key }}{{ hasKey .Values $key }}",
+        r"{{ range .Values }}{{ . }}{{ end }}",
     ] {
         let execution = execution(source);
         assert!(
@@ -59,7 +59,7 @@ fn whole_and_dynamic_consumers_open_only_the_consumed_region() {
             "{source}"
         );
     }
-    let nested = execution(r#"{{ toYaml .Values.config }}"#);
+    let nested = execution(r"{{ toYaml .Values.config }}");
     sim_assert_eq!(have: unknown_regions(&nested), want: BTreeSet::from([ValuesPath::parse("config")]));
 }
 

@@ -237,7 +237,7 @@ fn serialized_empty_map_union_keeps_open_arm_for_members() {
           name: repro
         data:
           config.yaml: |
-        {{ toYaml .Values.config | indent 4 }}
+        {{ toYaml . | indent 4 }}
         {{- end }}
     "};
     let values_yaml = indoc! {"

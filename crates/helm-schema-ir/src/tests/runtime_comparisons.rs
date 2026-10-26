@@ -1,4 +1,5 @@
 use std::collections::BTreeSet;
+use std::fmt::Write as _;
 
 use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_ast::DefineIndex;
@@ -27,9 +28,9 @@ fn kind(path: &str, schema_type: &str) -> Predicate {
     })
 }
 
-fn equivalent(have: Predicate, want: Predicate) {
+fn equivalent(have: &Predicate, want: &Predicate) {
     sim_assert_eq!(
-        have: (have.exactly_implies(&want), want.exactly_implies(&have)),
+        have: (have.exactly_implies(want), want.exactly_implies(have)),
         want: (true, true),
         "have: {have:?}; want: {want:?}"
     );
@@ -91,13 +92,13 @@ fn integer_comparison_keeps_equal_and_unequal_normal_loader_results() {
         value: GuardValue::Int(1),
     });
     equivalent(
-        execution(r#"{{ if eq .Values.input 1 }}{{ fail "equal" }}{{ end }}ok"#).abort_predicate(),
-        Predicate::Or(vec![accepted.negated(), equal.clone()]).normalize_boolean(),
+        &execution(r#"{{ if eq .Values.input 1 }}{{ fail "equal" }}{{ end }}ok"#).abort_predicate(),
+        &Predicate::Or(vec![accepted.negated(), equal.clone()]).normalize_boolean(),
     );
     equivalent(
-        execution(r#"{{ if ne .Values.input 1 }}{{ fail "unequal" }}{{ end }}ok"#)
+        &execution(r#"{{ if ne .Values.input 1 }}{{ fail "unequal" }}{{ end }}ok"#)
             .abort_predicate(),
-        Predicate::all(vec![accepted, equal])
+        &Predicate::all(vec![accepted, equal])
             .negated()
             .normalize_boolean(),
     );
@@ -156,8 +157,8 @@ fn raw_pair_keeps_the_precise_both_nil_equality_arm() {
         }
     }
     equivalent(
-        Predicate::Or(true_arms).normalize_boolean(),
-        Predicate::all(vec![nil("left"), nil("right")]).normalize_boolean(),
+        &Predicate::Or(true_arms).normalize_boolean(),
+        &Predicate::all(vec![nil("left"), nil("right")]).normalize_boolean(),
     );
 }
 
@@ -168,7 +169,7 @@ fn typed_nil_and_nonnil_containers_follow_go_comparability() {
         (r#"{{ ne nil (fromJsonArray "null") }}"#, "false"),
         (r#"{{ eq (fromJson "null") (dict) }}"#, "false"),
         (r#"{{ eq (fromJsonArray "null") (list) }}"#, "false"),
-        (r#"{{ eq (int 1) (int64 1) }}"#, "true"),
+        (r"{{ eq (int 1) (int64 1) }}", "true"),
     ] {
         let execution = execution(source);
         sim_assert_eq!(have: execution.abort_predicate(), want: Predicate::False);
@@ -225,8 +226,8 @@ fn equality_preserves_selected_nil_container_alternatives() {
     ])
     .normalize_boolean();
     equivalent(
-        execution(source).abort_predicate(),
-        accepted.negated().normalize_boolean(),
+        &execution(source).abort_predicate(),
+        &accepted.negated().normalize_boolean(),
     );
 }
 
@@ -281,7 +282,7 @@ fn independent_numeric_comparisons_keep_one_normal_continuation() -> eyre::Resul
     for count in [1, 2, 4, 8, 16] {
         let mut source = "before".to_owned();
         for ordinal in 0..count {
-            source.push_str(&format!("{{{{ $_ := eq .Values.x{ordinal} 1 }}}}"));
+            write!(source, "{{{{ $_ := eq .Values.x{ordinal} 1 }}}}")?;
         }
         let result = execution(&source);
         sim_assert_eq!(have: result.exits.iter().filter(|exit| matches!(exit.flow, Flow::Normal(_))).count(), want: 1, "{count}");

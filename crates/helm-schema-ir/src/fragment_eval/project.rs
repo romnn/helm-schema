@@ -486,6 +486,7 @@ fn splice_row(
         &splice.meta.provenance,
     );
     row.stringified = splice.meta.stringified;
+    row.plain_scalar_placement = splice.meta.plain_scalar_placement;
     row.template_supplied_member_keys = member_sibling_keys.clone();
     row.split_segment = splice.meta.split_segment.clone();
     row.range_key = splice.meta.range_key;

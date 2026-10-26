@@ -203,13 +203,16 @@ impl ContractIr {
     /// unchanged.
     pub fn mark_rendered_output_textual(&mut self) {
         for contract_use in self.uses.iter_mut().chain(&mut self.dependency_uses) {
+            contract_use.plain_scalar_placement = helm_schema_core::PlainScalarPlacement::Unknown;
             contract_use.kind = match contract_use.kind {
                 ValueKind::Scalar
                 | ValueKind::PartialScalar
                 | ValueKind::Fragment
                 | ValueKind::Serialized
                 | ValueKind::YamlSerialized
-                | ValueKind::TemplatedYamlSerialized => ValueKind::Serialized,
+                | ValueKind::TemplatedYamlSerialized
+                | ValueKind::GoFormattedMap
+                | ValueKind::GoFormattedSequence => ValueKind::Serialized,
                 ValueKind::WidenedDependency => ValueKind::WidenedDependency,
                 ValueKind::WidenedRegion => ValueKind::WidenedRegion,
             };

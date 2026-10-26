@@ -19,13 +19,15 @@ impl State {
             active: Vec::new(),
             output: super::TextBuffer::default(),
             output_widened: false,
-            sites: Default::default(),
-            text_sites: Default::default(),
-            reads: Default::default(),
+            observation_count: super::output::BranchCounts::default(),
+            invocation_count: super::output::BranchCounts::default(),
+            sites: super::history::History::default(),
+            text_sites: super::history::History::default(),
+            reads: super::read_set::ReadSet::default(),
             calls: Vec::new(),
             program: 0,
             namespace_unknown: false,
-            invocations: Default::default(),
+            invocations: super::history::History::default(),
             invocation_records_complete: true,
             loops: Vec::new(),
         }
@@ -162,12 +164,22 @@ impl State {
         if !forced {
             active.push(DecisionEdge { test, taken });
         }
+        let mut output = self.output.clone();
+        output.restrict_budget(&self.heap.arena.runtime_path(&active), &self.heap.arena);
+        let runtime = self.heap.arena.runtime_path(&active);
+        let output_widened = self.output_widened
+            && (output.is_widened_under(&runtime, &self.heap.arena)
+                || self
+                    .observation_count
+                    .overflow_under(&runtime, &self.heap.arena));
         Self {
             heap: self.heap.fork(),
             frames: self.frames.clone(),
             active,
-            output: self.output.clone(),
-            output_widened: self.output_widened,
+            output,
+            output_widened,
+            observation_count: self.observation_count.clone(),
+            invocation_count: self.invocation_count.clone(),
             sites: self.sites.clone(),
             text_sites: self.text_sites.clone(),
             reads: self.reads.clone(),
@@ -217,11 +229,11 @@ impl State {
         } else {
             (right, left)
         };
-        Self::join_guarded(Rc::clone(&plan.decision), plan.active.clone(), yes, no)
+        Self::join_guarded(&plan.decision, plan.active.clone(), yes, no)
     }
 
     fn join_guarded(
-        decision: Rc<FrozenTest>,
+        decision: &Rc<FrozenTest>,
         active: Vec<DecisionEdge>,
         yes: &Self,
         no: &Self,
@@ -237,6 +249,8 @@ impl State {
             loops: yes_loops,
             output: _,
             output_widened: _,
+            observation_count: _,
+            invocation_count: _,
             sites: _,
             text_sites: _,
             invocations: _,
@@ -253,6 +267,8 @@ impl State {
             loops: no_loops,
             output: _,
             output_widened: _,
+            observation_count: _,
+            invocation_count: _,
             sites: _,
             text_sites: _,
             invocations: _,
@@ -267,107 +283,59 @@ impl State {
             return None;
         }
 
-        for (yes, no) in yes_frames.iter().zip(no_frames) {
-            let Frame {
-                bindings: yes_bindings,
-                dot: yes_dot,
-                boundary: yes_boundary,
-            } = yes;
-            let Frame {
-                bindings: no_bindings,
-                dot: no_dot,
-                boundary: no_boundary,
-            } = no;
-            if yes_boundary != no_boundary
-                || !yes_bindings.keys().eq(no_bindings.keys())
-                || yes_dot.is_some() != no_dot.is_some()
-            {
-                return None;
-            }
+        if !compatible_frames(yes_frames, no_frames) {
+            return None;
         }
         let mut heap = yes_heap.clone();
-        if let Err(err) = heap.join(Rc::clone(&decision), yes_heap, no_heap) {
+        if let Err(err) = heap.join(decision, yes_heap, no_heap) {
             tracing::trace!(?err, "decline incompatible branch heap join");
             return None;
         }
         let mut widened_inputs = std::collections::BTreeSet::new();
-        let frames = yes_frames
-            .iter()
-            .zip(no_frames)
-            .map(|(yes, no)| {
-                let Frame {
-                    bindings: yes_bindings,
-                    dot: yes_dot,
-                    boundary,
-                } = yes;
-                let Frame {
-                    bindings: no_bindings,
-                    dot: no_dot,
-                    boundary: _,
-                } = no;
-                let bindings = yes_bindings
-                    .iter()
-                    .filter_map(|(name, yes)| {
-                        no_bindings.get(name).map(|no| {
-                            (
-                                name.clone(),
-                                join_frame_value(
-                                    Rc::clone(&decision),
-                                    yes,
-                                    no,
-                                    yes_heap,
-                                    no_heap,
-                                    &mut widened_inputs,
-                                ),
-                            )
-                        })
-                    })
-                    .collect();
-                let dot = match (yes_dot, no_dot) {
-                    (Some(yes), Some(no)) => Some(join_frame_value(
-                        Rc::clone(&decision),
-                        yes,
-                        no,
-                        yes_heap,
-                        no_heap,
-                        &mut widened_inputs,
-                    )),
-                    (None, None) => None,
-                    (Some(_), None) | (None, Some(_)) => return None,
-                };
-                Some(Frame {
-                    bindings,
-                    dot,
-                    boundary: *boundary,
-                })
-            })
-            .collect::<Option<Vec<_>>>()?;
+        let frames = join_frames(
+            decision,
+            yes_frames,
+            no_frames,
+            yes_heap,
+            no_heap,
+            &mut widened_inputs,
+        )?;
         let mut joined = State {
             heap,
             frames,
             active,
-            output: Default::default(),
+            output: super::TextBuffer::default(),
             output_widened: false,
-            sites: Default::default(),
-            text_sites: Default::default(),
+            observation_count: super::output::BranchCounts::default(),
+            invocation_count: super::output::BranchCounts::default(),
+            sites: super::history::History::default(),
+            text_sites: super::history::History::default(),
             reads: yes_reads.union(no_reads),
             calls: yes_calls.clone(),
             program: *yes_program,
             namespace_unknown: *yes_namespace || *no_namespace,
-            invocations: Default::default(),
+            invocations: super::history::History::default(),
             invocation_records_complete: true,
             loops: yes_loops.clone(),
         };
-        let condition = joined.path_predicate();
+        joined.record_join_widening(widened_inputs);
+        joined.merge_observations(decision, yes, no);
+        Some(joined)
+    }
+    fn record_join_widening(
+        &mut self,
+        widened_inputs: std::collections::BTreeSet<helm_schema_core::ValuesPath>,
+    ) {
+        let condition = self.path_predicate();
         for path in widened_inputs {
-            joined.reads.insert(super::RuntimeRead {
+            self.reads.insert(super::RuntimeRead {
                 path,
                 condition: condition.clone(),
                 coverage: super::ReadCoverage::UnknownRegion,
             });
         }
         let mut seen_input_sets = std::collections::BTreeSet::new();
-        for object in joined
+        for object in self
             .heap
             .version
             .pages
@@ -378,7 +346,7 @@ impl State {
                 && seen_input_sets.insert(Rc::as_ptr(inputs))
             {
                 for path in inputs.iter() {
-                    joined.reads.insert(super::RuntimeRead {
+                    self.reads.insert(super::RuntimeRead {
                         path: path.clone(),
                         condition: condition.clone(),
                         coverage: super::ReadCoverage::UnknownRegion,
@@ -386,9 +354,9 @@ impl State {
                 }
             }
         }
-        for (id, path) in joined.heap.arena.input_paths.borrow().iter() {
+        for (id, path) in self.heap.arena.input_paths.borrow().iter() {
             if matches!(
-                joined.heap.version.object(id).map(|object| &object.data),
+                self.heap.version.object(id).map(|object| &object.data),
                 Some(
                     super::ObjectData::Widened { inputs: _ }
                         | super::ObjectData::Map {
@@ -397,15 +365,13 @@ impl State {
                         }
                 )
             ) {
-                joined.reads.insert(super::RuntimeRead {
+                self.reads.insert(super::RuntimeRead {
                     path: path.clone(),
                     condition: condition.clone(),
                     coverage: super::ReadCoverage::UnknownRegion,
                 });
             }
         }
-        joined.merge_observations(decision, yes, no);
-        Some(joined)
     }
 }
 
@@ -457,4 +423,87 @@ pub(super) fn join_frame_value(
     widened.extend(inputs.iter().cloned());
     tracing::debug!(reason = "value_fanout", "widen joined binding");
     Value::influenced(inputs)
+}
+
+fn join_frames(
+    decision: &Rc<FrozenTest>,
+    yes_frames: &[Frame],
+    no_frames: &[Frame],
+    yes_heap: &super::Heap,
+    no_heap: &super::Heap,
+    widened_inputs: &mut std::collections::BTreeSet<helm_schema_core::ValuesPath>,
+) -> Option<Vec<Frame>> {
+    yes_frames
+        .iter()
+        .zip(no_frames)
+        .map(|(yes, no)| {
+            let Frame {
+                bindings: yes_bindings,
+                dot: yes_dot,
+                boundary,
+            } = yes;
+            let Frame {
+                bindings: no_bindings,
+                dot: no_dot,
+                boundary: _,
+            } = no;
+            let bindings = yes_bindings
+                .iter()
+                .filter_map(|(name, yes)| {
+                    no_bindings.get(name).map(|no| {
+                        (
+                            name.clone(),
+                            join_frame_value(
+                                Rc::clone(decision),
+                                yes,
+                                no,
+                                yes_heap,
+                                no_heap,
+                                widened_inputs,
+                            ),
+                        )
+                    })
+                })
+                .collect();
+            let dot = match (yes_dot, no_dot) {
+                (Some(yes), Some(no)) => Some(join_frame_value(
+                    Rc::clone(decision),
+                    yes,
+                    no,
+                    yes_heap,
+                    no_heap,
+                    widened_inputs,
+                )),
+                (None, None) => None,
+                (Some(_), None) | (None, Some(_)) => return None,
+            };
+            Some(Frame {
+                bindings,
+                dot,
+                boundary: *boundary,
+            })
+        })
+        .collect::<Option<Vec<_>>>()
+}
+
+fn compatible_frames(yes_frames: &[Frame], no_frames: &[Frame]) -> bool {
+    for (yes, no) in yes_frames.iter().zip(no_frames) {
+        let Frame {
+            bindings: yes_bindings,
+            dot: yes_dot,
+            boundary: yes_boundary,
+        } = yes;
+        let Frame {
+            bindings: no_bindings,
+            dot: no_dot,
+            boundary: no_boundary,
+        } = no;
+        if yes_boundary != no_boundary
+            || !yes_bindings.keys().eq(no_bindings.keys())
+            || yes_dot.is_some() != no_dot.is_some()
+        {
+            return false;
+        }
+    }
+    true
 }

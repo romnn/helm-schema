@@ -1,3 +1,4 @@
+use color_eyre::eyre::{self, OptionExt as _};
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
@@ -1439,15 +1440,25 @@ fn helper_short_circuit_else_keeps_its_strict_nil_boundary() {
         metadata:
           name: test
         data:
-          result: '{{- if and .Values.subject (not (empty .Values.other)) -}}
-                     {{ (default false .Values.demo) | ternary true ((and .Values.authEnabled (or (eq .Values.authType "oidc") (eq .Values.authType "dex"))) | ternary true false) }}
-                   {{- else -}}
-                     {{ .Values.subject | ternary "true" ((default false .Values.demo) | ternary "true" .Values.authEnabled) }}
-                   {{- end }}'
+          result: {{ if and .Values.subject (not (empty .Values.other)) -}}
+                    {{ (default false .Values.demo) | ternary true ((and .Values.authEnabled (or (eq .Values.authType "oidc") (eq .Values.authType "dex"))) | ternary true false) | list | join "" | quote }}
+                  {{- else -}}
+                    {{ .Values.subject | ternary "true" ((default false .Values.demo) | ternary "true" .Values.authEnabled) | list | join "" | quote }}
+                  {{- end }}
     "#};
     let schema = schema_for(parse_ir_with_helpers(src, helpers));
     let expected = schema_for(parse_ir(inline));
 
+    let first_arm = serde_json::json!({
+        "subject": "truthy", "other": true, "demo": true,
+        "authEnabled": true, "authType": "oidc",
+    });
+    for candidate in [&schema, &expected] {
+        assert!(
+            schema_accepts_instance(candidate, &first_arm),
+            "the selected first arm does not consume subject as a boolean: {candidate}"
+        );
+    }
     sim_assert_eq!(have: &schema, want: &expected);
     for (instance, want) in [
         (serde_json::json!({}), false),
@@ -1792,7 +1803,7 @@ fn empty_control_inside_mapping_keeps_required_in_its_true_arm() {
 
 /// Specialized string consumers preserve the selected local leaf.
 #[test]
-fn conditional_local_specialized_string_consumers_use_proven_leaves() {
+fn conditional_local_specialized_string_consumers_use_proven_leaves() -> eyre::Result<()> {
     for expression in [
         "$value | sha256sum",
         "splitList \",\" $value | first",
@@ -1836,12 +1847,94 @@ fn conditional_local_specialized_string_consumers_use_proven_leaves() {
             &expression.replace("$value", ".Values.a"),
         );
 
-        sim_assert_eq!(
-            have: schema_for(parse_ir(&src)),
-            want: schema_for(parse_ir(&reference)),
-            "expression={expression}",
-        );
+        let mut have = schema_for(parse_ir(&src));
+        let mut want = schema_for(parse_ir(&reference));
+        normalize_selected_string_rejection(&mut have)?;
+        normalize_selected_string_rejection(&mut want)?;
+        sim_assert_eq!(have: have, want: want, "expression={expression}");
     }
+    Ok(())
+}
+
+fn normalize_selected_string_rejection(schema: &mut Value) -> eyre::Result<()> {
+    let atoms = [
+        helm_truthy_guard("useB"),
+        serde_json::json!({
+            "properties": { "a": { "type": "string" } },
+            "required": ["a"], "type": "object",
+        }),
+        serde_json::json!({
+            "properties": { "b": { "type": "string" } },
+            "required": ["b"], "type": "object",
+        }),
+    ];
+    let Some(clauses) = schema.get_mut("allOf").and_then(Value::as_array_mut) else {
+        return Ok(());
+    };
+    for clause in clauses {
+        if clause.get("then") != Some(&Value::Bool(false)) {
+            continue;
+        }
+        let condition = clause
+            .get_mut("if")
+            .ok_or_eyre("rejection clause has no condition")?;
+        // Exhaust all valuations of these three exact atoms; other schema content stays intact.
+        let mut alternatives = Vec::new();
+        for assignment in 0_u8..8 {
+            if selected_string_rejection_truth(condition, &atoms, assignment)? {
+                let terms: Vec<_> = atoms
+                    .iter()
+                    .enumerate()
+                    .map(|(index, atom)| {
+                        if assignment & (1 << index) != 0 {
+                            atom.clone()
+                        } else {
+                            serde_json::json!({ "not": atom })
+                        }
+                    })
+                    .collect();
+                alternatives.push(serde_json::json!({ "allOf": terms }));
+            }
+        }
+        *condition = serde_json::json!({ "anyOf": alternatives });
+    }
+    Ok(())
+}
+
+fn selected_string_rejection_truth(
+    formula: &Value,
+    atoms: &[Value; 3],
+    assignment: u8,
+) -> eyre::Result<bool> {
+    if let Some(index) = atoms.iter().position(|atom| atom == formula) {
+        return Ok(assignment & (1 << index) != 0);
+    }
+    let object = formula
+        .as_object()
+        .ok_or_eyre("non-object rejection formula")?;
+    if object.len() != 1 {
+        eyre::bail!("unrecognized selected-string rejection atom: {formula}");
+    }
+    if let Some(negated) = object.get("not") {
+        return Ok(!selected_string_rejection_truth(
+            negated, atoms, assignment,
+        )?);
+    }
+    for (operator, conjunction) in [("allOf", true), ("anyOf", false)] {
+        if let Some(terms) = object.get(operator).and_then(Value::as_array) {
+            let mut result = conjunction;
+            for term in terms {
+                let value = selected_string_rejection_truth(term, atoms, assignment)?;
+                result = if conjunction {
+                    result && value
+                } else {
+                    result || value
+                };
+            }
+            return Ok(result);
+        }
+    }
+    eyre::bail!("unrecognized selected-string rejection atom: {formula}")
 }
 
 /// A selected trim affix preserves the chosen local leaf's string contract.

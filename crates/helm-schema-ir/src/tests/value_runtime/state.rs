@@ -171,8 +171,8 @@ impl CallOutcome {
 
 impl super::Arena {
     fn call(&self) -> u64 {
-        let call = self.next_call.get();
-        self.next_call.set(call + 1);
+        let call = self.call.get();
+        self.call.set(call + 1);
         call
     }
 }

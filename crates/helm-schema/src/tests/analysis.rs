@@ -1224,7 +1224,7 @@ fn dependency_activation_guards_subchart_contract_uses() -> eyre::Result<()> {
               - name: child
                 alias: kid
                 version: 0.1.0
-                condition: kid.enabled, global.kidEnabled
+                condition: kid.enabled,global.kidEnabled
                 tags:
                   - observability
         "},
@@ -1270,11 +1270,17 @@ fn dependency_activation_guards_subchart_contract_uses() -> eyre::Result<()> {
         .iter()
         .filter(|use_| {
             use_.source_expr == helm_schema_core::ValuesPath::parse("kid.enabled")
-                && use_.path.0 == ["data".to_string(), "enabled".to_string()]
+                && (use_.path.0 == ["data".to_string(), "enabled".to_string()]
+                    || use_.kind == ValueKind::WidenedDependency && use_.path.0.is_empty())
         })
         .cloned()
         .collect::<Vec<_>>();
 
+    assert!(
+        uses.iter()
+            .any(|use_| use_.path.0 == ["data".to_string(), "enabled".to_string()]),
+        "expected the enabled value to retain its placed output use, got {uses:#?}"
+    );
     assert!(
         uses.iter().any(|use_| {
             use_.condition.guard_conjunctions().iter().any(|guards| {

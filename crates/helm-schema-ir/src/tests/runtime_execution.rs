@@ -1,3 +1,6 @@
+use std::collections::BTreeSet;
+use std::fmt::Write as _;
+
 use crate::analysis_db::IrAnalysisDb;
 use crate::value::execute_document;
 use color_eyre::eyre::{self, OptionExt as _};
@@ -376,7 +379,7 @@ fn joining_widened_objects_shares_the_union_of_branch_inputs() -> eyre::Result<(
         .map(|_| {
             heap.allocate(
                 ObjectData::Map {
-                    fields: Default::default(),
+                    fields: std::collections::BTreeMap::default(),
                     remainder: Remainder::Closed,
                 },
                 Multiplicity::Singleton,
@@ -413,7 +416,7 @@ fn joining_widened_objects_shares_the_union_of_branch_inputs() -> eyre::Result<(
     let decision = heap
         .arena
         .decision(predicate.clone(), predicate.negated(), Coverage::Exact);
-    heap.join(decision, &yes, &no)?;
+    heap.join(&decision, &yes, &no)?;
     let mut shared = None;
     for id in ids {
         let object = heap
@@ -632,10 +635,15 @@ fn reconverged_span_does_not_drop_the_missing_conditional_suffix() {
     let span = helm_schema_syntax::Span::new(0, source.len());
     let outcomes = execution.text_for_span(span, None).collect::<Vec<_>>();
 
-    // The false arm renders "prefix" and the true arm renders "prefixsuffix".
-    // A consumer that discards guards must abstain rather than report only the longer string.
-    assert!(!outcomes.is_empty());
-    assert!(outcomes.iter().all(|(_, text)| text.is_none()));
+    // Both complete strings retain their executed guard; no unconditional concatenation is valid.
+    let flag = Predicate::truthy_path("flag");
+    sim_assert_eq!(
+        have: outcomes.into_iter().collect::<BTreeSet<_>>(),
+        want: BTreeSet::from([
+            (flag.clone(), Some("prefixsuffix".to_owned())),
+            (flag.negated().normalize_boolean(), Some("prefix".to_owned())),
+        ])
+    );
 }
 
 #[test]
@@ -653,10 +661,17 @@ fn reconverged_api_version_suffix_never_becomes_the_only_literal() -> eyre::Resu
         .ok_or_eyre("api version line is missing")?;
     let span = helm_schema_syntax::Span::new("apiVersion: ".len(), end);
 
-    // Both apps/v1 and apps/v1beta1 are feasible scalar outputs.
-    // The current literal-only resource consumer cannot discard the empty-suffix alternative.
+    // Each API version is complete and belongs only to its executed control arm.
+    let legacy = Predicate::truthy_path("legacy");
+    sim_assert_eq!(
+        have: execution.text_for_span(span, None).collect::<BTreeSet<_>>(),
+        want: BTreeSet::from([
+            (legacy.clone(), Some("apps/v1beta1".to_owned())),
+            (legacy.negated().normalize_boolean(), Some("apps/v1".to_owned())),
+        ])
+    );
     let body = crate::resource_identity::executed_scalar_body(&execution, span, None);
-    sim_assert_eq!(have: body.all_literals(), want: Vec::<String>::new());
+    sim_assert_eq!(have: body.all_literals(), want: vec!["apps/v1beta1".to_owned(), "apps/v1".to_owned()]);
     Ok(())
 }
 
@@ -816,25 +831,32 @@ mod joined_query_cases {
 }
 
 #[test]
-fn sixty_four_independent_controls_reconverge_to_one_normal_state() {
-    let source = (0..64)
-        .map(|index| format!("{{{{ if .Values.g{index} }}}}item{index}: fixed\n{{{{ end }}}}\n"))
-        .collect::<String>();
+fn sixty_four_independent_controls_reconverge_to_one_normal_state() -> eyre::Result<()> {
+    let mut source = String::new();
+    for index in 0..64 {
+        write!(
+            source,
+            "{{{{ if .Values.g{index} }}}}item{index}: fixed\n{{{{ end }}}}\n"
+        )?;
+    }
     let db = IrAnalysisDb::new(&DefineIndex::new());
     let execution = execute_document(&source, None, &db);
     sim_assert_eq!(have: execution.exits.len(), want: 1);
     assert!(execution.exits.iter().all(|exit| matches!(exit.flow, super::Flow::Normal(_)) && exit.state.active.is_empty()));
     sim_assert_eq!(have: execution.abort_predicate(), want: Predicate::False);
+    Ok(())
 }
 
 #[test]
-fn conditional_parameter_failures_reconverge_surviving_states() {
+fn conditional_parameter_failures_reconverge_surviving_states() -> eyre::Result<()> {
     for count in [1, 2, 8, 32] {
-        let source = (0..count)
-            .map(|index| {
-                format!("{{{{ if .Values.g{index} }}}}{{{{ $_ := lower .Values.s{index} }}}}{{{{ end }}}}")
-            })
-            .collect::<String>();
+        let mut source = String::new();
+        for index in 0..count {
+            write!(
+                source,
+                "{{{{ if .Values.g{index} }}}}{{{{ $_ := lower .Values.s{index} }}}}{{{{ end }}}}"
+            )?;
+        }
         let db = IrAnalysisDb::new(&DefineIndex::new());
         let execution = execute_document(&source, None, &db);
         let normal = execution
@@ -847,7 +869,7 @@ fn conditional_parameter_failures_reconverge_surviving_states() {
         let failed: Vec<_> = (0..count)
             .map(|index| {
                 Predicate::all(vec![
-                    Predicate::truthy_path(&format!("g{index}")),
+                    Predicate::truthy_path(format!("g{index}")),
                     Predicate::from(helm_schema_core::Guard::TypeIs {
                         path: helm_schema_core::ValuesPath::parse(&format!("s{index}")),
                         schema_type: "string".to_owned(),
@@ -874,11 +896,12 @@ fn conditional_parameter_failures_reconverge_surviving_states() {
             assert!(expected.exactly_implies(&observed));
         }
     }
+    Ok(())
 }
 
 #[test]
 fn repeated_conditional_consumption_reuses_the_surviving_condition() {
-    let source = r#"{{ if .Values.enabled }}{{ $_ := lower .Values.input }}{{ end }}"#.repeat(32);
+    let source = r"{{ if .Values.enabled }}{{ $_ := lower .Values.input }}{{ end }}".repeat(32);
     let db = IrAnalysisDb::new(&DefineIndex::new());
     let execution = execute_document(&source, None, &db);
     let normal = execution
@@ -1326,7 +1349,7 @@ mod header_reconvergence_laws {
             let body_invocations = execution
                 .invocations()
                 .filter(|invocation| invocation.function() == "include")
-                .map(|invocation| invocation.invocation())
+                .map(super::super::ExecutedInvocationRecord::invocation)
                 .collect::<BTreeSet<_>>();
             sim_assert_eq!(have: body_invocations.len(), want: 1);
             assert!(execution.invocation_records_complete());
@@ -1444,7 +1467,7 @@ mod render_session {
         ];
         let execution = execute_documents(&sources, &db);
         sim_assert_eq!(
-            have: execution.iter().map(|document| document.abort_predicate()).collect::<Vec<_>>(),
+            have: execution.iter().map(super::super::DocumentExecution::abort_predicate).collect::<Vec<_>>(),
             want: vec![Predicate::False, Predicate::False]
         );
         sim_assert_eq!(
@@ -1474,7 +1497,7 @@ mod render_session {
         let execution = execute_documents(&sources, &db);
         let later: Vec<_> = execution
             .iter()
-            .flat_map(|document| document.text_sites())
+            .flat_map(super::super::DocumentExecution::text_sites)
             .filter(|site| site.bytes == "later")
             .collect();
         sim_assert_eq!(have: later.len(), want: 1);
@@ -1483,7 +1506,7 @@ mod render_session {
         let completed = Predicate::Or(
             execution
                 .iter()
-                .flat_map(|document| document.text())
+                .flat_map(super::super::DocumentExecution::text)
                 .filter(|(_, text)| text.exact_text().as_deref() == Some("later"))
                 .map(|(condition, _)| condition)
                 .collect(),
@@ -1498,7 +1521,7 @@ mod render_session {
         let db = IrAnalysisDb::new(&DefineIndex::new());
         let sources = [
             SymbolicTemplate {
-                source: r#"{{ .Values.message }}"#,
+                source: r"{{ .Values.message }}",
                 source_path: "chart/templates/z-read.yaml",
             },
             SymbolicTemplate {
@@ -1518,7 +1541,7 @@ mod render_session {
         let db = IrAnalysisDb::new(&DefineIndex::new());
         let sources = [
             SymbolicTemplate {
-                source: r#"{{ .Values.unreachable }}"#,
+                source: r"{{ .Values.unreachable }}",
                 source_path: "chart/templates/a-later.yaml",
             },
             SymbolicTemplate {
@@ -1527,7 +1550,7 @@ mod render_session {
             },
         ];
         let execution = execute_documents(&sources, &db);
-        sim_assert_eq!(have: execution.iter().map(|document| document.abort_predicate()).collect::<Vec<_>>(), want: vec![Predicate::False, Predicate::True]);
+        sim_assert_eq!(have: execution.iter().map(super::super::DocumentExecution::abort_predicate).collect::<Vec<_>>(), want: vec![Predicate::False, Predicate::True]);
         sim_assert_eq!(have: execution.iter().map(|document| document.reads().len()).collect::<Vec<_>>(), want: vec![0, 0]);
         let fresh = execute_documents(&sources[..1], &db);
         sim_assert_eq!(have: fresh.iter().flat_map(|document| document.text().map(|(_, text)| text.exact_text())).collect::<Vec<_>>(), want: vec![None]);
@@ -1538,7 +1561,7 @@ mod render_session {
         let db = IrAnalysisDb::new(&DefineIndex::new());
         let sources = [
             SymbolicTemplate {
-                source: r#"{{ .Values.saved.Name }}|{{ .Template.Name }}|{{ .Template.BasePath }}"#,
+                source: r"{{ .Values.saved.Name }}|{{ .Template.Name }}|{{ .Template.BasePath }}",
                 source_path: "chart/templates/a-read.yaml",
             },
             SymbolicTemplate {
@@ -1609,7 +1632,7 @@ mod render_stripping {
             &db,
         );
         sim_assert_eq!(have: execution.text().map(|(_, text)| text.exact_text()).collect::<Vec<_>>(), want: vec![Some("ABuntouched".to_owned())]);
-        sim_assert_eq!(have: execution.sites().map(|site| site.coverage_exact()).collect::<Vec<_>>(), want: vec![true, true]);
+        sim_assert_eq!(have: execution.sites().map(super::super::ExecutedSite::coverage_exact).collect::<Vec<_>>(), want: vec![true, true]);
         sim_assert_eq!(have: execution.sites().map(|site| site.rendered_unchanged).collect::<Vec<_>>(), want: vec![false, true]);
         sim_assert_eq!(have: execution.text_sites().map(|site| site.coverage_exact).collect::<Vec<_>>(), want: vec![true, true]);
         sim_assert_eq!(have: execution.text_sites().map(|site| site.rendered_unchanged).collect::<Vec<_>>(), want: vec![false, false]);
@@ -1619,12 +1642,12 @@ mod render_stripping {
     fn unknown_output_does_not_demote_unaffected_earlier_text_or_guards() {
         let db = IrAnalysisDb::new(&DefineIndex::new());
         let execution = execute_document(
-            r#"{{ if true }}earlier{{ end }}{{ .Values.unknown }}later"#,
+            r"{{ if true }}earlier{{ end }}{{ .Values.unknown }}later",
             Some("chart/templates/test.yaml"),
             &db,
         );
         sim_assert_eq!(have: execution.text().map(|(_, text)| text.exact_text()).collect::<Vec<_>>(), want: vec![None]);
-        sim_assert_eq!(have: execution.sites().map(|site| site.coverage_exact()).collect::<Vec<_>>(), want: vec![true, true]);
+        sim_assert_eq!(have: execution.sites().map(super::super::ExecutedSite::coverage_exact).collect::<Vec<_>>(), want: vec![true, true]);
         sim_assert_eq!(have: execution.sites().map(|site| site.rendered_unchanged).collect::<Vec<_>>(), want: vec![true, false]);
         sim_assert_eq!(have: execution.text_sites().map(|site| site.coverage_exact).collect::<Vec<_>>(), want: vec![true, true]);
     }
@@ -1676,8 +1699,7 @@ mod observation_certainty {
     }
 
     #[test]
-    fn raw_expression_identity_survives_possible_stripping_but_placement_abstains()
-    -> eyre::Result<()> {
+    fn raw_expression_identity_survives_with_only_marker_safe_placement() -> eyre::Result<()> {
         let db = IrAnalysisDb::new(&DefineIndex::new());
         let execution = execute_document("number: {{ .Values.number }}", None, &db);
         let output = execution
@@ -1690,8 +1712,19 @@ mod observation_certainty {
             have: output.projected_scalar(),
             want: Some(ScalarValueDispatch::identity(ValuesPath::parse("number")))
         );
-        // A raw string such as "1<no value>" can become numeric YAML after file stripping.
-        sim_assert_eq!(have: output.rendered_scalar(), want: None);
+        // Marker-bearing strings retain no placement claim, while safe scalar inputs do.
+        let rendered = output
+            .rendered_scalar()
+            .ok_or_eyre("missing safe scalar projection")?;
+        let content = rendered
+            .content()
+            .ok_or_eyre("missing safe scalar content")?;
+        assert!(!content.complete);
+        assert!(
+            content
+                .arms()
+                .all(|(condition, _)| condition != &helm_schema_core::Predicate::True)
+        );
         Ok(())
     }
 
@@ -2006,7 +2039,7 @@ mod scheduled_file_occurrence_laws {
         let observed = Predicate::Or(
             documents
                 .iter()
-                .map(|document| document.abort_predicate())
+                .map(super::super::DocumentExecution::abort_predicate)
                 .collect(),
         )
         .normalize_boolean();
@@ -2072,7 +2105,7 @@ mod scheduled_file_occurrence_laws {
         let observed = Predicate::Or(
             documents
                 .iter()
-                .map(|document| document.abort_predicate())
+                .map(super::super::DocumentExecution::abort_predicate)
                 .collect(),
         )
         .normalize_boolean();
@@ -2130,10 +2163,11 @@ mod partial_survivor_review_laws {
     use crate::value::{Coverage, Field, Flow, Remainder, State, Value};
 
     fn exact(state: &State, predicate: Predicate) -> Rc<crate::value::FrozenTest> {
+        let rejected = predicate.negated();
         state
             .heap
             .arena
-            .decision(predicate.clone(), predicate.negated(), Coverage::Exact)
+            .decision(predicate, rejected, Coverage::Exact)
     }
 
     #[test]
@@ -2490,7 +2524,7 @@ mod conditional_input_backing_laws {
                 },
                 origin: crate::value::Origin {
                     identity: Some(ValuesPath::parse("obj")),
-                    influences: Default::default(),
+                    influences: std::collections::BTreeSet::default(),
                 },
             })),
         };
@@ -2500,8 +2534,7 @@ mod conditional_input_backing_laws {
     }
 
     #[test]
-    fn independent_optional_map_writers_across_files_have_one_normal_continuation()
-    -> eyre::Result<()> {
+    fn independent_optional_map_writers_across_files_have_one_normal_continuation() {
         for count in [1, 2, 4, 8] {
             let owned: Vec<_> = (0..count).map(|index| (
                 format!("{{{{ if .Values.g{index} }}}}{{{{ $_ := set .Values.m{index} \"unused\" \"written\" }}}}{{{{ end }}}}"),
@@ -2522,7 +2555,7 @@ mod conditional_input_backing_laws {
             let observed = Predicate::Or(
                 documents
                     .iter()
-                    .map(|document| document.abort_predicate())
+                    .map(super::super::DocumentExecution::abort_predicate)
                     .collect(),
             )
             .normalize_boolean();
@@ -2530,7 +2563,7 @@ mod conditional_input_backing_laws {
                 (0..count)
                     .map(|index| {
                         Predicate::all(vec![
-                            Predicate::truthy_path(&format!("g{index}")),
+                            Predicate::truthy_path(format!("g{index}")),
                             invalid_set_input(&format!("m{index}")),
                         ])
                     })
@@ -2543,7 +2576,6 @@ mod conditional_input_backing_laws {
                 &crate::value::tests::runtime_guard_json_domain::independent_input_models(count),
             );
         }
-        Ok(())
     }
 
     #[test]
@@ -2900,7 +2932,7 @@ mod window_buffer_review_laws {
         for chunk in WindowExits::new(exits).into_chunks() {
             match chunk {
                 WindowChunk::Terminal(run) => buffer.forward(run),
-                WindowChunk::Single(exit) => buffer.push(exit),
+                WindowChunk::Single(exit) => buffer.push(*exit),
             }
         }
     }
@@ -3231,7 +3263,7 @@ mod value_transfer_laws {
             .iter()
             .filter_map(|read| match read.coverage {
                 ReadCoverage::UnknownRegion => Some(read.path.clone()),
-                ReadCoverage::ExactPath => None,
+                ReadCoverage::ExactPath | ReadCoverage::MemberHost => None,
             })
             .collect();
         sim_assert_eq!(have: covered, want: paths);
@@ -3241,3 +3273,6 @@ mod value_transfer_laws {
 
 #[path = "runtime_comparisons.rs"]
 mod comparisons;
+
+#[path = "runtime_join_maps.rs"]
+mod join_map_laws;

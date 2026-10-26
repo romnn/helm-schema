@@ -33,7 +33,7 @@ fn parse_condition_with_template_bindings(
     text: &str,
     template_bindings: HashMap<String, AbstractValue>,
 ) -> Vec<Guard> {
-    parse_condition_with_template_facts(text, template_bindings, HashMap::new())
+    parse_condition_with_template_facts(text, template_bindings, &HashMap::new())
 }
 
 #[test]
@@ -127,7 +127,10 @@ fn selected_binding_type_test_keeps_its_decision_condition() {
 fn parse_condition_with_template_facts(
     text: &str,
     template_bindings: HashMap<String, AbstractValue>,
-    template_output_meta: HashMap<String, BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>,
+    template_output_meta: &HashMap<
+        String,
+        BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>,
+    >,
 ) -> Vec<Guard> {
     let wrapped = format!("{{{{ {text} }}}}");
     let Some(top) = parse_action_expressions(&wrapped).into_iter().next() else {
@@ -150,7 +153,9 @@ impl ConditionContext {
         expression: &TemplateExpr,
     ) -> (crate::value::DocumentExecution, helm_schema_syntax::Span) {
         let mut source = self.source.clone();
-        source.push_str(&format!("{{{{ if {} }}}}", expression_source(expression)));
+        source.push_str("{{ if ");
+        source.push_str(&expression_source(expression));
+        source.push_str(" }}");
         let start = source.len();
         source.push_str("# selected{{ end }}");
         let db = IrAnalysisDb::new(&self.defines);
@@ -186,7 +191,8 @@ fn expression_source(expression: &TemplateExpr) -> String {
         TemplateExpr::Literal(Literal::String(text) | Literal::RawString(text)) => {
             format!("{text:?}")
         }
-        TemplateExpr::Literal(Literal::UnresolvedString(source)) => source.clone(),
+        TemplateExpr::Literal(Literal::UnresolvedString(source))
+        | TemplateExpr::Unknown(source) => source.clone(),
         TemplateExpr::Literal(Literal::Int(value)) => value.to_string(),
         TemplateExpr::Literal(Literal::Float(value)) => format!("{value:?}"),
         TemplateExpr::Literal(Literal::Bool(value)) => value.to_string(),
@@ -221,7 +227,6 @@ fn expression_source(expression: &TemplateExpr) -> String {
         TemplateExpr::Assignment { name, value } => {
             format!("{name} = {}", expression_source(value))
         }
-        TemplateExpr::Unknown(source) => source.clone(),
     }
 }
 
@@ -322,19 +327,25 @@ fn fixture_condition(predicate: &Predicate) -> Option<String> {
 }
 
 fn condition_context(template_bindings: HashMap<String, AbstractValue>) -> ConditionContext {
-    condition_context_with_output_meta(template_bindings, HashMap::new())
+    condition_context_with_output_meta(template_bindings, &HashMap::new())
 }
 
 fn condition_context_with_output_meta(
     template_bindings: HashMap<String, AbstractValue>,
-    template_output_meta: HashMap<String, BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>,
+    template_output_meta: &HashMap<
+        String,
+        BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>,
+    >,
 ) -> ConditionContext {
     condition_context_with_defines(template_bindings, template_output_meta, DefineIndex::new())
 }
 
 fn condition_context_with_defines(
     template_bindings: HashMap<String, AbstractValue>,
-    template_output_meta: HashMap<String, BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>,
+    template_output_meta: &HashMap<
+        String,
+        BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>,
+    >,
     defines: DefineIndex,
 ) -> ConditionContext {
     let mut source = String::new();
@@ -375,12 +386,24 @@ fn condition_context_with_defines(
                     })
                     .collect::<Option<Vec<_>>>();
                 if let Some(branches) = branches.filter(|branches| !branches.is_empty()) {
-                    source.push_str(&format!("{{{{ ${name} := .Values.__unknown_fixture }}}}{{{{ if or {} }}}}{{{{ ${name} = {value} }}}}{{{{ end }}}}", branches.join(" ")));
+                    source.push_str("{{ $");
+                    source.push_str(&name);
+                    source.push_str(" := .Values.__unknown_fixture }}{{ if or ");
+                    source.push_str(&branches.join(" "));
+                    source.push_str(" }}{{ $");
+                    source.push_str(&name);
+                    source.push_str(" = ");
+                    source.push_str(&value);
+                    source.push_str(" }}{{ end }}");
                     continue;
                 }
             }
         }
-        source.push_str(&format!("{{{{ ${name} := {value} }}}}"));
+        source.push_str("{{ $");
+        source.push_str(&name);
+        source.push_str(" := ");
+        source.push_str(&value);
+        source.push_str(" }}");
     }
     ConditionContext { source, defines }
 }
@@ -406,7 +429,7 @@ fn negated_include_uses_rendered_text_truthiness() {
         .expect("condition expression");
 
     sim_assert_eq!(
-        have: condition_context_with_defines(HashMap::new(), HashMap::new(), defines)
+        have: condition_context_with_defines(HashMap::new(), &HashMap::new(), defines)
             .condition_predicate_expr(&expr),
         want: Predicate::False,
     );
@@ -883,7 +906,7 @@ fn output_meta_comparison_preserves_typed_predicates() {
         have: parse_condition_with_template_facts(
             r#"ne $customUser "postgres""#,
             template_bindings,
-            template_output_meta,
+            &template_output_meta,
         ),
         want: vec![
             Guard::NotEq {
@@ -916,7 +939,7 @@ fn defaulted_binding_comparison_carries_the_fallback_arm() {
         meta.default_fallback = Some(GuardValue::string("skipIfMissing"));
         condition_context_with_output_meta(
             HashMap::from([("mode".to_string(), values_path!(path))]),
-            HashMap::from([(
+            &HashMap::from([(
                 "mode".to_string(),
                 BTreeMap::from([(helm_schema_core::ValuesPath::parse(path), meta)]),
             )]),
@@ -1070,7 +1093,7 @@ fn files_get_printf_condition_decodes_to_finite_name_disjunction() {
     defines.add_file_source("files/profile-demo.yaml", "a: 1\n");
     defines.add_file_source("files/profile-ambient.yaml", "b: 2\n");
     defines.add_file_source("templates/other.yaml", "kind: ConfigMap\n");
-    let context = condition_context_with_defines(HashMap::new(), HashMap::new(), defines);
+    let context = condition_context_with_defines(HashMap::new(), &HashMap::new(), defines);
 
     let wrapped = r#"{{ .Files.Get (printf "files/profile-%s.yaml" .Values.profile) }}"#;
     let top = parse_action_expressions(wrapped)

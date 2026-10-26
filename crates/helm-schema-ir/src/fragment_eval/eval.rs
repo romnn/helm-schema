@@ -9,12 +9,12 @@ use helm_schema_syntax::{Node, ScalarPart, ScalarParts, Span, TemplatedDocument}
 
 use crate::analysis_db::IrAnalysisDb;
 use crate::observed_facts::ObservedFacts;
-use crate::value::{DocumentExecution, ExecutedSite};
+use crate::value::{DocumentExecution, ExecutedSite, RenderedContainerUse};
 use crate::{ContractProvenance, ResourceRef, SourceSpan, ValueKind};
 
 use super::domain::{
     AbstractFragment, AbstractString, EntryKey, Guarded, Mapping, MappingEntry, Sequence,
-    SiteFacts, StringPart, TaintPart, stamp_fragment_sites,
+    SiteFacts, Splice, SpliceMeta, StringPart, TaintPart, stamp_fragment_sites,
 };
 use super::lower::{LowerScope, lower_scalar_dispatch, lower_scalar_dispatch_arms};
 /// The result of evaluating one template source: the abstract rendered
@@ -74,7 +74,7 @@ pub(crate) fn project_execution(
 ) -> EvaluatedDocument {
     let Some(tree) = helm_schema_syntax::parse_go_template(source) else {
         return EvaluatedDocument {
-            reads: execution.reads(),
+            reads: execution.projection_reads(),
             observed_facts: execution.observed_facts().clone(),
             ..EvaluatedDocument::default()
         };
@@ -95,7 +95,7 @@ pub(crate) fn project_execution(
     };
     EvaluatedDocument {
         root: projection.nodes(document.roots()),
-        reads: execution.reads(),
+        reads: execution.projection_reads(),
         observed_facts: execution.observed_facts().clone(),
         pre_rewrite_strict_paths: BTreeSet::new(),
     }
@@ -117,38 +117,7 @@ impl Projection<'_> {
         for node in nodes {
             match node {
                 Node::Mapping(entry) => {
-                    let key = if entry
-                        .key
-                        .parts
-                        .iter()
-                        .all(|part| matches!(part, ScalarPart::Text(_)))
-                    {
-                        EntryKey::Literal(
-                            helm_schema_syntax::parse_yaml_key(self.slice(entry.key.span))
-                                .unwrap_or_else(|| self.slice(entry.key.span).to_owned()),
-                        )
-                    } else {
-                        let parts =
-                            self.scalar(&entry.key, false)
-                                .arms
-                                .into_iter()
-                                .flat_map(|(_, node)| match node {
-                                    AbstractFragment::Scalar(scalar) => scalar.parts,
-                                    AbstractFragment::Splice(splice) => {
-                                        vec![StringPart::Splice(splice)]
-                                    }
-                                    AbstractFragment::Opaque(opaque) => {
-                                        vec![StringPart::Taint(TaintPart::abstaining(opaque.taint))]
-                                    }
-                                    AbstractFragment::Mapping(_)
-                                    | AbstractFragment::Sequence(_) => Vec::new(),
-                                })
-                                .collect();
-                        EntryKey::Dynamic(AbstractString {
-                            parts,
-                            suppressed: false,
-                        })
-                    };
+                    let key = self.entry_key(&entry.key);
                     let mut value = if let Some(block) = &entry.block {
                         self.span_scalar(block.body, true)
                     } else if let Some(scalar) = &entry.value {
@@ -215,7 +184,7 @@ impl Projection<'_> {
                     helm_schema_syntax::OpaqueKind::InlineRegion
                     | helm_schema_syntax::OpaqueKind::ActionLineText
                     | helm_schema_syntax::OpaqueKind::ParseError => {
-                        result.extend(self.span_scalar(opaque.span, true))
+                        result.extend(self.span_scalar(opaque.span, true));
                     }
                     helm_schema_syntax::OpaqueKind::Assignment
                     | helm_schema_syntax::OpaqueKind::Break
@@ -237,6 +206,39 @@ impl Projection<'_> {
         result
     }
 
+    fn entry_key(&self, key: &ScalarParts) -> EntryKey {
+        if key
+            .parts
+            .iter()
+            .all(|part| matches!(part, ScalarPart::Text(_)))
+        {
+            EntryKey::Literal(
+                helm_schema_syntax::parse_yaml_key(self.slice(key.span))
+                    .unwrap_or_else(|| self.slice(key.span).to_owned()),
+            )
+        } else {
+            let parts = self
+                .scalar(key, false)
+                .arms
+                .into_iter()
+                .flat_map(|(_, node)| match node {
+                    AbstractFragment::Scalar(scalar) => scalar.parts,
+                    AbstractFragment::Splice(splice) => {
+                        vec![StringPart::Splice(splice)]
+                    }
+                    AbstractFragment::Opaque(opaque) => {
+                        vec![StringPart::Taint(TaintPart::abstaining(opaque.taint))]
+                    }
+                    AbstractFragment::Mapping(_) | AbstractFragment::Sequence(_) => Vec::new(),
+                })
+                .collect();
+            EntryKey::Dynamic(AbstractString {
+                parts,
+                suppressed: false,
+            })
+        }
+    }
+
     fn scalar(&self, scalar: &ScalarParts, suppressed: bool) -> Guarded<AbstractFragment> {
         let holes = scalar
             .parts
@@ -246,14 +248,14 @@ impl Projection<'_> {
                 ScalarPart::Text(_) => None,
             })
             .collect::<Vec<_>>();
-        if holes.len() == 1
+        if let [hole] = holes.as_slice()
             && scalar.parts.iter().all(|part| match part {
                 ScalarPart::Text(span) => self.slice(*span).trim().is_empty(),
                 ScalarPart::Hole(_) => true,
             })
             && !suppressed
         {
-            return self.hole(holes[0], ValueKind::Scalar);
+            return self.hole(*hole, ValueKind::Scalar);
         }
         let mut arms = vec![(Predicate::True, Vec::new())];
         for part in &scalar.parts {
@@ -345,7 +347,7 @@ impl Projection<'_> {
                 .rendered_scalar()
                 .as_ref()
                 .and_then(|scalar| {
-                    self.with_scope(|scope| lower_scalar_dispatch(scalar, kind, scope))
+                    Self::with_scope(|scope| lower_scalar_dispatch(scalar, kind, scope))
                 })
                 .unwrap_or_else(|| {
                     Guarded::unconditional(AbstractFragment::Scalar(AbstractString {
@@ -355,6 +357,29 @@ impl Projection<'_> {
                         suppressed: false,
                     }))
                 });
+            if kind == ValueKind::Scalar {
+                for RenderedContainerUse {
+                    condition,
+                    path,
+                    kind,
+                } in site.formatted_containers()
+                {
+                    fragment.arms.push((
+                        condition,
+                        AbstractFragment::Splice(Splice {
+                            values_path: path,
+                            kind,
+                            meta: SpliceMeta::default(),
+                        }),
+                    ));
+                }
+            }
+            if kind == ValueKind::Scalar {
+                super::domain::stamp_plain_scalar_placement(
+                    &mut fragment,
+                    site.plain_scalar_placement(),
+                );
+            }
             fragment.guard_all(site.condition(), self.db.predicate_memo());
             stamp_fragment_sites(&mut fragment, self.site(span).as_ref());
             result.extend(fragment);
@@ -375,7 +400,7 @@ impl Projection<'_> {
             .rendered_scalar()
             .as_ref()
             .and_then(|scalar| {
-                self.with_scope(|scope| {
+                Self::with_scope(|scope| {
                     lower_scalar_dispatch_arms(scalar, ValueKind::PartialScalar, scope)
                 })
             })
@@ -430,7 +455,7 @@ impl Projection<'_> {
         }))
     }
 
-    fn with_scope<T>(&self, project: impl FnOnce(&LowerScope<'_>) -> T) -> T {
+    fn with_scope<T>(project: impl FnOnce(&LowerScope<'_>) -> T) -> T {
         let paths = BTreeSet::new();
         let metadata = BTreeMap::new();
         project(&LowerScope {

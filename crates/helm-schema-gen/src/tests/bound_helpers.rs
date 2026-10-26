@@ -357,20 +357,19 @@ fn image_pull_secret_fragment_helper_does_not_project_image_root_as_pod_spec() {
             "{pointer} should not inherit PodSpec.required from imagePullSecrets, got {image}"
         );
     }
-    // image.registry renders only through printf, which formats any
-    // argument, so its slot stays untyped; clientImage.registry never
-    // reaches printf, so its declared string typing stands.
-    sim_assert_eq!(
-        have: schema.pointer("/properties/image/properties/registry"),
-        want: Some(&serde_json::json!({})),
-        "image.registry renders through printf and stays untyped, got {schema}"
+    let instance = |client_registry| {
+        serde_json::json!({
+            "image": { "registry": "docker.io", "repository": "example/app", "tag": "stable" },
+            "clientImage": { "registry": client_registry, "repository": "example/client", "tag": "stable" },
+        })
+    };
+    assert!(
+        schema_accepts_instance(&schema, &instance(serde_json::json!("docker.io"))),
+        "the safe baseline renders its image and should remain valid, got {schema}"
     );
-    sim_assert_eq!(
-        have: schema
-            .pointer("/properties/clientImage/properties/registry/type")
-            .and_then(Value::as_str),
-        want: Some("string"),
-        "clientImage.registry keeps its declared string typing, got {schema}"
+    assert!(
+        schema_accepts_instance(&schema, &instance(serde_json::json!(42))),
+        "the unused client registry has no executed string consumer, got {schema}"
     );
 }
 

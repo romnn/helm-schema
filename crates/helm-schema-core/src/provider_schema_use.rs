@@ -1,4 +1,7 @@
-use crate::{MergeLayersUse, ResourceRef, SplitSegmentUse, ValueKind, ValuesPath, YamlPath};
+use crate::{
+    MergeLayersUse, PlainScalarPlacement, ResourceRef, SplitSegmentUse, ValueKind, ValuesPath,
+    YamlPath,
+};
 
 /// Contract fact that needs a Kubernetes resource schema lookup.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -12,6 +15,8 @@ pub struct ProviderSchemaUse {
     /// Whether Go template rendering stringifies the source before the
     /// completed YAML document reparses it.
     pub stringified: bool,
+    /// Positive placement certificate scoped to this provider occurrence.
+    pub plain_scalar_placement: PlainScalarPlacement,
     /// Resource whose schema owns the slot.
     pub resource: ResourceRef,
     /// Whether the value is the collection directly ranged by the template.

@@ -97,7 +97,7 @@ fn expected_schema(case: &Case) -> Value {
         BooleanDomain::True => {
             failing.push(ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
                 path,
-            })))
+            })));
         }
         BooleanDomain::False => failing.push(ConditionalGuard::Truthy { path }),
         BooleanDomain::Either => {}

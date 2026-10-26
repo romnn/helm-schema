@@ -2234,3 +2234,96 @@ fn range_over_member_of_dict_packed_argument_keeps_iterable_domain() -> eyre::Re
     );
     Ok(())
 }
+
+#[test]
+fn executed_dependency_read_retains_scoped_self_type_permission_without_consumer_facts()
+-> eyre::Result<()> {
+    let mut guards = vec![
+        ConditionalGuard::Truthy {
+            path: conditional_path("enabled"),
+        },
+        ConditionalGuard::TypeIs {
+            path: conditional_path("autoscaling"),
+            schema_type: "string".to_string(),
+        },
+    ];
+    ConditionalGuard::canonicalize_conjunction(&mut guards);
+    let row = ContractUse::with_condition_and_provenances(
+        conditional_path("autoscaling"),
+        YamlPath(Vec::new()),
+        ValueKind::WidenedDependency,
+        helm_schema_core::GuardDnf::from_conjunction(
+            guards.iter().map(ConditionalGuard::predicate),
+        ),
+        None,
+        Vec::new(),
+    );
+    // The kindIs operand is read before dispatch, then read again inside the selected arm.
+    let unconditional = ContractUse::new(
+        conditional_path("autoscaling"),
+        YamlPath(Vec::new()),
+        ValueKind::WidenedDependency,
+        Vec::new(),
+        None,
+    );
+    let signals = signals_for(vec![unconditional, row]);
+    let evidence = signals
+        .evidence_for(&conditional_path("autoscaling"))
+        .ok_or_eyre("missing read evidence")?;
+    sim_assert_eq!(have: evidence.conditional_overlays.len(), want: 1);
+    let overlay = evidence
+        .conditional_overlays
+        .first()
+        .ok_or_eyre("missing scoped dispatch permission")?;
+    sim_assert_eq!(have: &overlay.guards, want: &guards);
+    sim_assert_eq!(have: evidence.guard_predicates.as_slice(), want: &[] as &[ConditionalGuard]);
+    sim_assert_eq!(have: evidence.facts.has_render_use, want: false);
+    sim_assert_eq!(have: overlay.evidence.facts.has_render_use, want: false);
+    sim_assert_eq!(have: overlay.evidence.provider_schema_uses.len(), want: 0);
+    sim_assert_eq!(have: evidence.requirement_implications.len(), want: 0);
+    Ok(())
+}
+
+#[test]
+fn dependency_read_dispatch_permission_needs_positive_exact_self_type() {
+    let positive = helm_schema_core::Predicate::from(Guard::TypeIs {
+        path: conditional_path("tested"),
+        schema_type: "string".to_string(),
+    });
+    for (source, kind, condition) in [
+        (
+            "tested",
+            ValueKind::WidenedDependency,
+            positive.clone().negated(),
+        ),
+        ("other", ValueKind::WidenedDependency, positive.clone()),
+        ("", ValueKind::WidenedDependency, positive.clone()),
+        ("tested", ValueKind::WidenedRegion, positive.clone()),
+        (
+            "tested",
+            ValueKind::WidenedDependency,
+            helm_schema_core::Predicate::all(vec![
+                positive,
+                helm_schema_core::Predicate::approximate(
+                    "partial review branch",
+                    std::collections::BTreeSet::new(),
+                ),
+            ]),
+        ),
+    ] {
+        let row = ContractUse::with_condition_and_provenances(
+            conditional_path(source),
+            YamlPath(Vec::new()),
+            kind,
+            helm_schema_core::GuardDnf::from_conjunction([condition]),
+            None,
+            Vec::new(),
+        );
+        let signals = signals_for(vec![row]);
+        let overlays = signals
+            .evidence_for(&conditional_path(source))
+            .map(|evidence| evidence.conditional_overlays.as_slice())
+            .unwrap_or_default();
+        sim_assert_eq!(have: overlays.len(), want: 0);
+    }
+}

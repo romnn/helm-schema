@@ -115,6 +115,7 @@ impl LowerScope<'_> {
             values_path: path.clone(),
             kind,
             meta: SpliceMeta {
+                plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
                 input_identity: helper_meta.is_some_and(HelperOutputMeta::is_input_identity),
                 defaulted,
                 encoded: values_path_is_encoded(path, self.encoded_paths),

@@ -502,8 +502,15 @@ fn bounded_numeric_preimage_inherits_only_proven_numeric_parent_type() -> eyre::
     ]});
     let actual_string = ResolvePolicy::provider_schema_for_value_use(&string_parent, &policy)
         .ok_or_eyre("string parent preimage")?;
-    sim_assert_eq!(have: actual_string, want: string_parent);
+    sim_assert_eq!(have: actual_string, want: serde_json::json!({
+        "anyOf": [string_parent, {"type": "string", "pattern": "[\\r\\n]"}]
+    }));
     assert!(!jsonschema::validator_for(&actual_string)?.is_valid(&serde_json::json!("4")));
+    // A newline may replace the parent mapping and omit this optional, impossible string leaf.
+    assert!(
+        jsonschema::validator_for(&actual_string)?
+            .is_valid(&serde_json::json!("ignored\ndata:\n  safe: \"ok\""))
+    );
     Ok(())
 }
 
@@ -924,6 +931,7 @@ fn pathless_conditional_target_does_not_own_descendant_defaults() {
         )),
         provenance: Vec::new(),
         stringified: false,
+        plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
         template_supplied_member_keys: BTreeSet::new(),
         split_segment: None,
         merge_layers: None,
@@ -1101,4 +1109,223 @@ fn declared_default_does_not_weaken_terminal_false_branch() {
         !schema_accepts_instance(&schema, &declared),
         "a terminal validator must not be bypassed by default preservation: {schema}"
     );
+}
+
+#[test]
+fn go_formatted_container_preimages_retain_only_proven_top_type_incompatibility() -> eyre::Result<()>
+{
+    for (schema, map_possible, sequence_possible) in [
+        (serde_json::json!({ "type": "string" }), true, false),
+        (serde_json::json!({ "type": "integer" }), false, false),
+        (
+            serde_json::json!({ "type": "array", "items": { "type": "integer" }, "minItems": 2 }),
+            false,
+            true,
+        ),
+        (
+            serde_json::json!({ "type": "object", "properties": { "x": { "type": "string" } } }),
+            false,
+            false,
+        ),
+        (serde_json::json!({}), true, true),
+        (serde_json::json!({ "$ref": "#/unknown" }), true, true),
+        (
+            serde_json::json!({ "properties": { "x": { "type": "integer" } } }),
+            true,
+            true,
+        ),
+        (
+            serde_json::json!({ "not": { "type": "array" } }),
+            true,
+            false,
+        ),
+        (
+            serde_json::json!({ "not": { "type": "array", "minItems": 1 } }),
+            true,
+            true,
+        ),
+        (
+            serde_json::json!({ "not": { "anyOf": [{ "type": "array" }, { "type": "object" }] } }),
+            true,
+            false,
+        ),
+        (
+            serde_json::json!({ "allOf": [{ "not": { "type": "array" } }, { "$ref": "#/unknown" }] }),
+            true,
+            false,
+        ),
+        (
+            serde_json::json!({ "anyOf": [{ "type": "integer" }, { "$ref": "#/unknown" }] }),
+            true,
+            true,
+        ),
+        (
+            serde_json::json!({ "oneOf": [{ "type": "string" }, { "type": "array" }] }),
+            true,
+            true,
+        ),
+        (
+            serde_json::json!({ "type": ["integer", "string"] }),
+            true,
+            false,
+        ),
+        (serde_json::json!({ "const": 1 }), false, false),
+        (serde_json::json!({ "enum": ["x", []] }), true, true),
+        (serde_json::json!(false), false, false),
+        (serde_json::json!(true), true, true),
+    ] {
+        for (kind, possible) in [
+            (ValueKind::GoFormattedMap, map_possible),
+            (ValueKind::GoFormattedSequence, sequence_possible),
+        ] {
+            let policy = ProviderValueUsePolicy::new(
+                kind,
+                false,
+                false,
+                BTreeSet::new(),
+                None,
+                BTreeMap::new(),
+            );
+            let have = ResolvePolicy::provider_schema_for_value_use(&schema, &policy)
+                .ok_or_eyre("missing formatted-class preimage")?;
+            if possible {
+                sim_assert_eq!(have: have, want: serde_json::json!({}), "kind={kind:?}; provider={schema}");
+            } else {
+                let validator = jsonschema::validator_for(&have)?;
+                let (safe, unsafe_text, over_depth) = match kind {
+                    ValueKind::GoFormattedMap => (
+                        serde_json::json!({ "a": "b" }),
+                        serde_json::json!({ "a": "line\nbreak" }),
+                        serde_json::json!({ "a": { "b": { "c": { "d": 1 } } } }),
+                    ),
+                    ValueKind::GoFormattedSequence => (
+                        serde_json::json!(["/var/data"]),
+                        serde_json::json!(["]\nfield: 1 #"]),
+                        serde_json::json!([[[[1]]]]),
+                    ),
+                    _ => eyre::bail!("unexpected formatting class"),
+                };
+                sim_assert_eq!(have: validator.is_valid(&safe), want: false, "provider={schema}; preimage={have}");
+                sim_assert_eq!(have: validator.is_valid(&unsafe_text), want: true, "provider={schema}; preimage={have}");
+                sim_assert_eq!(have: validator.is_valid(&over_depth), want: true, "provider={schema}; preimage={have}");
+            }
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn raw_stringified_structured_provider_preimages_abstain_from_source_shape() -> eyre::Result<()> {
+    for schema in [
+        serde_json::json!({ "type": "array", "items": { "type": "integer" } }),
+        serde_json::json!({ "type": "object", "required": ["x"], "properties": { "x": { "type": "integer" } } }),
+        serde_json::json!({ "oneOf": [{ "type": "string" }, { "type": "array", "minItems": 2 }] }),
+        serde_json::json!({ "$ref": "#/unknown" }),
+    ] {
+        let policy = ProviderValueUsePolicy::new(
+            ValueKind::Scalar,
+            true,
+            false,
+            BTreeSet::new(),
+            None,
+            BTreeMap::new(),
+        );
+        let have = ResolvePolicy::provider_schema_for_value_use(&schema, &policy)
+            .ok_or_eyre("missing structured-string preimage")?;
+        sim_assert_eq!(have: have, want: serde_json::json!({}), "provider={schema}");
+    }
+    Ok(())
+}
+
+#[test]
+fn whole_block_scalar_provider_keeps_newline_override_escape() {
+    let source = indoc! {r"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: newline
+        data:
+          value: {{ .Values.value }}
+    "};
+    let schema = schema_for_values_yaml(parse_ir(source), Some("value: safe\n"));
+    let mut carriage_return_override = String::from("line\r");
+    carriage_return_override.push('\n');
+    carriage_return_override.push_str("  value: last");
+    for (value, accepted) in [
+        (
+            indoc::indoc! {r"
+            first
+              value: last"},
+            true,
+        ),
+        (
+            indoc::indoc! {r"
+            line
+            break"},
+            false,
+        ),
+        (carriage_return_override.as_str(), true),
+    ] {
+        let instance = serde_json::json!({ "value": value });
+        sim_assert_eq!(have: schema_accepts_instance(&schema, &instance), want: accepted, "instance={instance}; schema={schema}");
+    }
+}
+
+#[test]
+fn flow_scalar_newlines_do_not_gain_block_only_provider_rejection() {
+    for placement in [
+        "data: { value: {{ .Values.value }} }",
+        indoc::indoc! {r"
+            data:
+              values: [{{ .Values.value }}]"},
+    ] {
+        let source =
+            format!("apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: newline\n{placement}\n");
+        let ir = parse_ir(&source).finalize();
+        sim_assert_eq!(have: ir.uses().iter().any(|row| row.source_expr == helm_schema_core::ValuesPath::parse("value") && row.kind == ValueKind::Scalar), want: false, "flow placement={placement}; ir={ir:?}");
+        let schema = schema_for_values_yaml(parse_ir(&source), Some("value: safe\n"));
+        sim_assert_eq!(have: schema_accepts_instance(&schema, &serde_json::json!({ "value": "line\nbreak" })), want: true, "flow placement={placement}; schema={schema}");
+    }
+    let multiline = indoc! {r"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: newline
+        data: {
+          value: {{ .Values.value }}
+        }
+    "};
+    let schema = schema_for_values_yaml(parse_ir(multiline), Some("value: safe\n"));
+    sim_assert_eq!(have: schema_accepts_instance(&schema, &serde_json::json!({ "value": "line\nbreak" })), want: true, "multiline flow schema={schema}");
+}
+
+#[test]
+fn block_placement_is_part_of_the_provider_policy_cache_key_and_preimage() -> eyre::Result<()> {
+    let unknown = ProviderValueUsePolicy::new(
+        ValueKind::Scalar,
+        true,
+        false,
+        BTreeSet::new(),
+        None,
+        BTreeMap::new(),
+    );
+    let block = unknown
+        .clone()
+        .with_plain_scalar_placement(helm_schema_core::PlainScalarPlacement::BlockValue);
+    let mut policies = std::collections::HashSet::new();
+    policies.insert(unknown.clone());
+    policies.insert(block.clone());
+    sim_assert_eq!(have: policies.len(), want: 2);
+    for (policy, line_break) in [(unknown, true), (block, false)] {
+        let schema = ResolvePolicy::provider_schema_for_value_use(
+            &serde_json::json!({ "type": "string" }),
+            &policy,
+        )
+        .ok_or_eyre("missing scalar provider preimage")?;
+        let validator = jsonschema::validator_for(&schema)?;
+        sim_assert_eq!(have: validator.is_valid(&serde_json::json!("line\nbreak")), want: line_break);
+        sim_assert_eq!(have: validator.is_valid(&serde_json::json!("first\n  value: last")), want: true);
+        sim_assert_eq!(have: validator.is_valid(&serde_json::json!("line\r\nbreak")), want: true);
+    }
+    Ok(())
 }

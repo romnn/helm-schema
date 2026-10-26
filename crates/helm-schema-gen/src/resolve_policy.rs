@@ -192,6 +192,7 @@ pub(crate) enum ValuePathSchemaInputs {
 pub(crate) struct ProviderValueUsePolicy {
     kind: ValueKind,
     stringified: bool,
+    plain_scalar_placement: helm_schema_core::PlainScalarPlacement,
     is_self_range_collection: bool,
     template_supplied_member_keys: std::collections::BTreeSet<String>,
     split_segment: Option<helm_schema_core::SplitSegmentUse>,
@@ -210,11 +211,20 @@ impl ProviderValueUsePolicy {
         Self {
             kind,
             stringified,
+            plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
             is_self_range_collection,
             template_supplied_member_keys,
             split_segment,
             omitted_members,
         }
+    }
+
+    pub(crate) fn with_plain_scalar_placement(
+        mut self,
+        placement: helm_schema_core::PlainScalarPlacement,
+    ) -> Self {
+        self.plain_scalar_placement = placement;
+        self
     }
 }
 
@@ -224,6 +234,9 @@ impl ResolvePolicy {
         policy: &ProviderValueUsePolicy,
     ) -> Option<Value> {
         match policy.kind {
+            ValueKind::GoFormattedMap | ValueKind::GoFormattedSequence => Some(
+                go_format::top_type_preimage(schema, policy.kind, policy.plain_scalar_placement),
+            ),
             ValueKind::TemplatedYamlSerialized => {
                 Some(templated_yaml_provider_preimage(subtract_omitted_members(
                     relax_template_supplied_required(
@@ -271,11 +284,18 @@ impl ResolvePolicy {
                 .as_ref()
                 .and_then(|segment| split_segment_provider_preimage(schema, segment)),
             ValueKind::Scalar if policy.stringified => {
-                Some(stringified_plain_scalar_provider_preimage(schema.clone()))
+                Some(stringified_plain_scalar_provider_preimage(
+                    schema.clone(),
+                    policy.plain_scalar_placement,
+                ))
             }
-            ValueKind::Scalar => ForeignSchemaRestriction::Scalar
-                .apply(schema.clone())
-                .map(plain_scalar_provider_preimage),
+            ValueKind::Scalar => {
+                ForeignSchemaRestriction::Scalar
+                    .apply(schema.clone())
+                    .map(|schema| {
+                        plain_scalar_provider_preimage(schema, policy.plain_scalar_placement)
+                    })
+            }
         }
     }
 
@@ -930,6 +950,7 @@ fn subtract_omitted_members(
     schema
 }
 
+mod go_format;
 mod scalar_preimage;
 
 #[cfg(test)]
@@ -949,6 +970,7 @@ pub(crate) struct ConditionalTargetContext<'a> {
     pub(crate) values_yaml_doc: &'a YamlValue,
     pub(crate) acceptance_memo: &'a mut ConditionalSchemaAcceptanceMemo,
     pub(crate) declared_types: crate::DeclaredTypes,
+    pub(crate) provider_resolutions: &'a crate::provider_resolution::ProviderSchemaResolutions,
 }
 
 pub(crate) fn conditional_target_schema(
@@ -989,6 +1011,24 @@ pub(crate) fn conditional_target_schema(
     schema
 }
 
+fn has_formatted_provider_restriction(
+    overlay: &ConditionalPathOverlay,
+    provider_resolutions: &crate::provider_resolution::ProviderSchemaResolutions,
+) -> bool {
+    overlay.evidence.provider_schema_uses.iter().any(|use_| {
+        let formatted = matches!(
+            use_.kind,
+            ValueKind::GoFormattedMap | ValueKind::GoFormattedSequence
+        ) || use_.kind == ValueKind::Scalar && use_.stringified;
+        formatted
+            && provider_resolutions
+                .candidate_for_use(use_)
+                .is_some_and(|candidate| {
+                    !is_empty_schema(candidate.schema()) && candidate.schema() != &Value::Bool(true)
+                })
+    })
+}
+
 fn conditional_target_schema_inner(
     target_value_path: &ValuesPath,
     overlay: &ConditionalPathOverlay,
@@ -998,6 +1038,10 @@ fn conditional_target_schema_inner(
     resolved_fallback: Value,
     active_by_defaults: Option<bool>,
 ) -> Value {
+    // Only a resolved provider restriction can override the intent/default rescue.
+    if has_formatted_provider_restriction(overlay, context.provider_resolutions) {
+        return branch_schema;
+    }
     let declared_default = yaml_value_at_values_path(context.values_yaml_doc, target_value_path)
         .and_then(|value| serde_json::to_value(value).ok());
     let self_guard_excludes_declared_default =
@@ -1050,45 +1094,22 @@ fn conditional_target_schema_inner(
     } else {
         branch_schema
     };
-    let branch_schema = if !self_guard_excludes_declared_default
-        && rejects_declared_default(&branch_schema)
-    {
-        declared_default.as_ref().map_or_else(
-            || branch_schema.clone(),
-            |default_value| {
-                // An explicitly DECLARED null default must stay accepted
-                // when every use in the branch tolerates null (self-guarded
-                // rows: a null is falsy, or deleted by helm, so it never
-                // reaches the consumer). A branch that places the raw value
-                // keeps its strict typing.
-                if default_value.is_null() && overlay.evidence.facts.is_nullable {
-                    return union_schema_list(vec![branch_schema.clone(), type_schema("null")]);
-                }
-                let declared_type = if default_value.is_object() {
-                    Some("object")
-                } else if default_value.is_array() {
-                    Some("array")
-                } else {
-                    None
-                };
-                if declared_type
-                    .is_some_and(|schema_type| !schema_allows_type(&branch_schema, schema_type))
-                {
-                    union_schema_list(vec![
-                        branch_schema.clone(),
-                        open_objects_rejecting_declared_members(
-                            values_yaml_schema.clone(),
-                            default_value,
-                        ),
-                    ])
-                } else {
-                    open_objects_rejecting_declared_members(branch_schema.clone(), default_value)
-                }
-            },
-        )
-    } else {
-        branch_schema
-    };
+    let branch_schema =
+        if !self_guard_excludes_declared_default && rejects_declared_default(&branch_schema) {
+            declared_default.as_ref().map_or_else(
+                || branch_schema.clone(),
+                |default_value| {
+                    default_compatible_branch_schema(
+                        &branch_schema,
+                        values_yaml_schema,
+                        default_value,
+                        overlay.evidence.facts.is_nullable,
+                    )
+                },
+            )
+        } else {
+            branch_schema
+        };
     // Guards inactive by defaults or undecidable on the values doc can still
     // be activated by a user who keeps the chart's other defaults.
     if active_by_defaults != Some(true) {
@@ -1123,6 +1144,34 @@ fn conditional_target_schema_inner(
             })
     } else {
         branch_schema
+    }
+}
+
+fn default_compatible_branch_schema(
+    branch_schema: &Value,
+    values_yaml_schema: &Value,
+    default_value: &Value,
+    nullable: bool,
+) -> Value {
+    // An explicitly DECLARED null default must stay accepted when every branch use tolerates null.
+    // A branch that places the raw value keeps its strict typing.
+    if default_value.is_null() && nullable {
+        return union_schema_list(vec![branch_schema.clone(), type_schema("null")]);
+    }
+    let declared_type = if default_value.is_object() {
+        Some("object")
+    } else if default_value.is_array() {
+        Some("array")
+    } else {
+        None
+    };
+    if declared_type.is_some_and(|schema_type| !schema_allows_type(branch_schema, schema_type)) {
+        union_schema_list(vec![
+            branch_schema.clone(),
+            open_objects_rejecting_declared_members(values_yaml_schema.clone(), default_value),
+        ])
+    } else {
+        open_objects_rejecting_declared_members(branch_schema.clone(), default_value)
     }
 }
 

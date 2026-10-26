@@ -276,11 +276,11 @@ pub(super) fn validate_type_predicate(
     value: super::Value,
     accepted: Predicate,
 ) -> Vec<super::Exit> {
-    let success =
-        state
-            .heap
-            .arena
-            .decision(accepted.clone(), accepted.negated(), super::Coverage::Exact);
+    let rejected = accepted.negated();
+    let success = state
+        .heap
+        .arena
+        .decision(accepted, rejected, super::Coverage::Exact);
     finish_parameter_plan(state, ParameterPlan { value, success })
 }
 
@@ -327,7 +327,6 @@ fn validate_parameter_inner(
     remaining: &mut usize,
 ) -> ParameterPlan {
     use super::{Coverage, ValueNode};
-    use std::rc::Rc;
 
     let Some(expected) = expected.filter(|kind| *kind != GoType::Unknown) else {
         return ParameterPlan::accepted(state, value);
@@ -338,40 +337,7 @@ fn validate_parameter_inner(
     }
     *remaining -= 1;
     let consumed = state.consumed(&value);
-    let incompatible_view = match consumed.node.as_ref() {
-        ValueNode::Leaf(
-            super::Leaf {
-                datum:
-                    super::Datum::Map {
-                        view: super::MapType::String,
-                        target: _,
-                    },
-                origin: _,
-            }
-            | super::Leaf {
-                datum:
-                    super::Datum::Unknown(super::UnknownValue {
-                        types: super::TypeCoverage::Map(super::MapType::String),
-                        aliases: _,
-                    }),
-                origin: _,
-            },
-        ) => expected == GoType::Map,
-        ValueNode::Leaf(super::Leaf {
-            datum: super::Datum::Strings(_),
-            origin: _,
-        }) => expected == GoType::Slice,
-        ValueNode::Leaf(super::Leaf {
-            datum: _,
-            origin: _,
-        })
-        | ValueNode::Select {
-            decision: _,
-            yes: _,
-            no: _,
-        } => false,
-    };
-    if incompatible_view {
+    if incompatible_parameter_view(&consumed, expected) {
         return ParameterPlan::rejected(state, value);
     }
     let actual = if matches!(expected, GoType::Map | GoType::Slice)
@@ -409,40 +375,7 @@ fn validate_parameter_inner(
         no: _,
     } = consumed.node.as_ref()
     {
-        let depth = state.active.len();
-        let mut plans = Vec::new();
-        for taken in [true, false] {
-            state.active.push(super::DecisionEdge {
-                test: Rc::clone(decision),
-                taken,
-            });
-            let plan = if state.path_predicate().normalize_boolean() == Predicate::False {
-                ParameterPlan::rejected(state, super::Value::unknown())
-            } else {
-                validate_parameter_inner(
-                    state,
-                    value.under(decision, taken),
-                    Some(expected),
-                    form,
-                    remaining,
-                )
-            };
-            state.active.truncate(depth);
-            plans.push(plan);
-        }
-        let mut plans = plans.into_iter();
-        let Some(yes) = plans.next() else {
-            return ParameterPlan::accepted(state, value);
-        };
-        let Some(no) = plans.next() else {
-            return yes;
-        };
-        let success = state
-            .heap
-            .arena
-            .choose_test(Rc::clone(decision), yes.success, no.success);
-        let value = state.join_local_values(Rc::clone(decision), &yes.value, &no.value);
-        return ParameterPlan { value, success };
+        return validate_selected_parameter(state, value, decision, expected, form, remaining);
     }
     let accepted = if let Some(path) = consumed.identity() {
         let predicate =
@@ -483,6 +416,82 @@ fn validate_parameter_inner(
             .arena
             .decision(accepted, rejected, Coverage::Exact),
     }
+}
+
+fn incompatible_parameter_view(value: &super::Value, expected: GoType) -> bool {
+    use super::ValueNode;
+    match value.node.as_ref() {
+        ValueNode::Leaf(super::Leaf {
+            datum:
+                super::Datum::Map {
+                    view: super::MapType::String,
+                    target: _,
+                }
+                | super::Datum::Unknown(super::UnknownValue {
+                    types: super::TypeCoverage::Map(super::MapType::String),
+                    aliases: _,
+                }),
+            origin: _,
+        }) => expected == GoType::Map,
+        ValueNode::Leaf(super::Leaf {
+            datum: super::Datum::Strings(_),
+            origin: _,
+        }) => expected == GoType::Slice,
+        ValueNode::Leaf(super::Leaf {
+            datum: _,
+            origin: _,
+        })
+        | ValueNode::Select {
+            decision: _,
+            yes: _,
+            no: _,
+        } => false,
+    }
+}
+
+fn validate_selected_parameter(
+    state: &mut super::State,
+    value: super::Value,
+    decision: &std::rc::Rc<super::FrozenTest>,
+    expected: GoType,
+    form: super::ArgumentForm,
+    remaining: &mut usize,
+) -> ParameterPlan {
+    use std::rc::Rc;
+    let depth = state.active.len();
+    let mut plans = Vec::new();
+    for taken in [true, false] {
+        state.active.push(super::DecisionEdge {
+            test: Rc::clone(decision),
+            taken,
+        });
+        let plan = if state.path_predicate().normalize_boolean() == Predicate::False {
+            ParameterPlan::rejected(state, super::Value::unknown())
+        } else {
+            validate_parameter_inner(
+                state,
+                value.under(decision, taken),
+                Some(expected),
+                form,
+                remaining,
+            )
+        };
+        state.active.truncate(depth);
+        plans.push(plan);
+    }
+    let mut plans = plans.into_iter();
+    let Some(yes) = plans.next() else {
+        return ParameterPlan::accepted(state, value);
+    };
+    let Some(no) = plans.next() else {
+        return yes;
+    };
+    let success = state
+        .heap
+        .arena
+        .choose_test(Rc::clone(decision), yes.success, no.success);
+    let value = state.join_local_values(Rc::clone(decision), &yes.value, &no.value);
+    ParameterPlan { value, success }
 }
 
 fn parameter_nil(expected: GoType) -> Option<super::Value> {
@@ -619,57 +628,13 @@ pub(super) fn descriptor(
     function: &str,
     arguments: &[super::Value],
 ) -> super::Value {
-    use super::{Coverage, Datum, Leaf, MapType, ScalarType, Value, ValueNode};
+    use super::{Coverage, Value};
     use helm_schema_core::{Guard, GuardValue};
     let Some(value) = arguments.last() else {
         return Value::unknown();
     };
     let kind_only = matches!(function, "kindOf" | "kindIs");
-    let name = match value.node.as_ref() {
-        ValueNode::Leaf(Leaf { datum, origin: _ }) => match datum {
-            Datum::Scalar {
-                go_type,
-                content: _,
-            } => Some(match go_type {
-                ScalarType::Nil => {
-                    if kind_only {
-                        "invalid"
-                    } else {
-                        "<nil>"
-                    }
-                }
-                ScalarType::Bool => "bool",
-                ScalarType::String => "string",
-                ScalarType::Int => "int",
-                ScalarType::Int64 => "int64",
-                ScalarType::Uint8 => "uint8",
-                ScalarType::Uint64 => "uint64",
-                ScalarType::Float64 => "float64",
-                ScalarType::Complex128 => "complex128",
-            }),
-            Datum::Map { view, target: _ } => Some(if kind_only {
-                "map"
-            } else {
-                match view {
-                    MapType::Interface => "map[string]interface {}",
-                    MapType::String => "map[string]string",
-                    MapType::Values => "common.Values",
-                }
-            }),
-            Datum::Sequence(_) => Some(if kind_only { "slice" } else { "[]interface {}" }),
-            Datum::Strings(_) => Some(if kind_only { "slice" } else { "[]string" }),
-            Datum::Slot {
-                backing: _,
-                index: _,
-            } => Some("string"),
-            Datum::Unknown(_) => None,
-        },
-        ValueNode::Select {
-            decision: _,
-            yes: _,
-            no: _,
-        } => None,
-    };
+    let name = descriptor_name(value, kind_only);
     if matches!(function, "kindOf" | "typeOf") {
         return name.map_or_else(
             || refined_parameter(&Value::influenced(value.inputs()), GoType::String),
@@ -751,6 +716,55 @@ pub(super) fn descriptor(
         }
     }
     Value::influenced(value.inputs())
+}
+
+fn descriptor_name(value: &super::Value, kind_only: bool) -> Option<&'static str> {
+    use super::{Datum, Leaf, MapType, ScalarType, ValueNode};
+    match value.node.as_ref() {
+        ValueNode::Leaf(Leaf { datum, origin: _ }) => match datum {
+            Datum::Scalar {
+                go_type,
+                content: _,
+            } => Some(match go_type {
+                ScalarType::Nil => {
+                    if kind_only {
+                        "invalid"
+                    } else {
+                        "<nil>"
+                    }
+                }
+                ScalarType::Bool => "bool",
+                ScalarType::String => "string",
+                ScalarType::Int => "int",
+                ScalarType::Int64 => "int64",
+                ScalarType::Uint8 => "uint8",
+                ScalarType::Uint64 => "uint64",
+                ScalarType::Float64 => "float64",
+                ScalarType::Complex128 => "complex128",
+            }),
+            Datum::Map { view, target: _ } => Some(if kind_only {
+                "map"
+            } else {
+                match view {
+                    MapType::Interface => "map[string]interface {}",
+                    MapType::String => "map[string]string",
+                    MapType::Values => "common.Values",
+                }
+            }),
+            Datum::Sequence(_) => Some(if kind_only { "slice" } else { "[]interface {}" }),
+            Datum::Strings(_) => Some(if kind_only { "slice" } else { "[]string" }),
+            Datum::Slot {
+                backing: _,
+                index: _,
+            } => Some("string"),
+            Datum::Unknown(_) => None,
+        },
+        ValueNode::Select {
+            decision: _,
+            yes: _,
+            no: _,
+        } => None,
+    }
 }
 
 pub(super) fn nilness(value: &super::Value) -> Option<bool> {

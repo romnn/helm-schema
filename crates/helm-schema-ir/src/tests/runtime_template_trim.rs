@@ -82,16 +82,20 @@ fn region_suffix_uses_end_markers_instead_of_opener_markers() {
 
 #[test]
 fn trim_preserves_unicode_whitespace_and_adjusts_source_spans() {
-    let source = "A\u{a0} \t{{- if true -}} \t\u{a0}B\u{2028} \r\n{{- end -}} \t\u{85}C";
-    sim_assert_eq!(have: exact_text("", source), want: vec![Some("A\u{a0}\u{a0}B\u{2028}\u{85}C".to_owned())]);
+    let mut source = String::from("A\u{a0} \t{{- if true -}} \t\u{a0}B\u{2028} \r");
+    source.push('\n');
+    source.push_str("{{- end -}} \t\u{85}C");
+    sim_assert_eq!(have: exact_text("", &source), want: vec![Some("A\u{a0}\u{a0}B\u{2028}\u{85}C".to_owned())]);
 }
 
 #[test]
 fn absent_trim_markers_keep_helper_whitespace_and_empty_definitions() {
     let plain = indoc! {"{{ define \"probe\" }}\n hello \n{{ end }}\n"};
     sim_assert_eq!(have: exact_text(plain, r#"{{ include "probe" . }}"#), want: vec![Some("\n hello \n".to_owned())]);
-    let empty = "{{- define \"probe\" -}} \t\r\n{{- end -}}";
-    sim_assert_eq!(have: exact_text(empty, r#"{{ include "probe" . }}"#), want: vec![Some(String::new())]);
+    let mut empty = String::from("{{- define \"probe\" -}} \t\r");
+    empty.push('\n');
+    empty.push_str("{{- end -}}");
+    sim_assert_eq!(have: exact_text(&empty, r#"{{ include "probe" . }}"#), want: vec![Some(String::new())]);
 }
 
 #[test]

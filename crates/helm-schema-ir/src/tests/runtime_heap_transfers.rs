@@ -1,3 +1,5 @@
+use std::fmt::Write as _;
+
 use crate::analysis_db::IrAnalysisDb;
 use crate::value::execute_document;
 use color_eyre::eyre::{self, OptionExt as _};
@@ -92,7 +94,7 @@ fn pure_calls_preserve_absent_present_and_conditional_membership() -> eyre::Resu
     use std::collections::BTreeSet;
 
     for call in [
-        r#"randAlphaNum 1"#,
+        r"randAlphaNum 1",
         r#"printf "%d" .Values.number"#,
         "now",
         "uuidv4",
@@ -165,8 +167,8 @@ fn writer_defines() -> DefineIndex {
 fn unresolved_writers_do_not_manufacture_map_membership() -> eyre::Result<()> {
     let db = IrAnalysisDb::new(&writer_defines());
     for writer in [
-        r#"{{ $_ := include (toString .Values.helper) $d }}"#,
-        r#"{{ $_ := tpl (toString .Values.program) $d }}"#,
+        r"{{ $_ := include (toString .Values.helper) $d }}",
+        r"{{ $_ := tpl (toString .Values.program) $d }}",
     ] {
         for source in [
             format!(
@@ -206,8 +208,8 @@ fn pure_call_cannot_prove_the_original_ghost_key_abort() {
 fn unresolved_writer_preserves_transitive_input_influences() -> eyre::Result<()> {
     let db = IrAnalysisDb::new(&writer_defines());
     for writer in [
-        r#"{{ $_ := include (toString .Values.helper) $outer }}"#,
-        r#"{{ $_ := tpl (toString .Values.program) $outer }}"#,
+        r"{{ $_ := include (toString .Values.helper) $outer }}",
+        r"{{ $_ := tpl (toString .Values.program) $outer }}",
     ] {
         let source = format!(
             r#"{{{{ $inner := dict "x" .Values.seed }}}}{{{{ $outer := dict "inner" $inner "replacement" .Values.replacement }}}}{writer}{{{{ $outer.inner.x }}}}"#
@@ -279,13 +281,13 @@ fn unproved_capacity_never_manufactures_a_bounds_rejection() {
     let db = IrAnalysisDb::new(&DefineIndex::new());
     for source in [
         r#"{{ $s := mustFromJson "[1,2,3]" }}{{ $_ := slice $s 0 4 }}ok"#,
-        r#"{{ $s := append (list 1 2 3) 4 }}{{ $_ := slice $s 0 6 }}ok"#,
+        r"{{ $s := append (list 1 2 3) 4 }}{{ $_ := slice $s 0 6 }}ok",
     ] {
         let execution = execute_document(source, Some("templates/test.yaml"), &db);
         sim_assert_eq!(have: execution.abort_predicate(), want: helm_schema_core::Predicate::False);
     }
     let execution = execute_document(
-        r#"{{ $_ := slice (list 1 2 3) 0 4 }}"#,
+        r"{{ $_ := slice (list 1 2 3) 0 4 }}",
         Some("templates/test.yaml"),
         &db,
     );
@@ -296,17 +298,17 @@ fn unproved_capacity_never_manufactures_a_bounds_rejection() {
 fn concrete_non_sequence_intrinsics_abort_but_empty_concat_is_typed_nil() {
     let db = IrAnalysisDb::new(&DefineIndex::new());
     for source in [
-        r#"{{ first (dict) }}"#,
+        r"{{ first (dict) }}",
         r#"{{ last "text" }}"#,
-        r#"{{ slice 1 0 }}"#,
+        r"{{ slice 1 0 }}",
         r#"{{ append (dict) "x" }}"#,
-        r#"{{ concat (list) (dict) }}"#,
+        r"{{ concat (list) (dict) }}",
     ] {
         let execution = execute_document(source, Some("templates/test.yaml"), &db);
         sim_assert_eq!(have: execution.abort_predicate(), want: helm_schema_core::Predicate::True);
     }
     sim_assert_eq!(
-        have: texts(r#"{{ eq (concat) nil }}"#),
+        have: texts(r"{{ eq (concat) nil }}"),
         want: vec![Some("true".to_owned())]
     );
 }
@@ -376,7 +378,7 @@ fn returned_map_views_preserve_implicit_input_tail_influences() -> eyre::Result<
         r#"{{ $r := set .Values "x" "new" }}{{ $r }}"#,
         r#"{{ $r := unset .Values "x" }}{{ $r }}"#,
         r#"{{ $r := mergeOverwrite .Values (dict "x" "new") }}{{ $r }}"#,
-        r#"{{ $r := merge .Values }}{{ $r }}"#,
+        r"{{ $r := merge .Values }}{{ $r }}",
     ] {
         let execution = execute_document(source, Some("templates/test.yaml"), &db);
         let site = execution
@@ -394,7 +396,7 @@ fn returned_map_views_preserve_implicit_input_tail_influences() -> eyre::Result<
 #[test]
 fn merge_without_sources_returns_an_unnamed_map_view() {
     sim_assert_eq!(
-        have: texts(r#"{{ typeOf (merge .Template) }}"#),
+        have: texts(r"{{ typeOf (merge .Template) }}"),
         want: vec![Some("map[string]interface {}".to_owned())]
     );
 }
@@ -440,7 +442,7 @@ fn string_map_signature_mismatch_is_distinct_from_values_and_unnamed_maps() {
             want: helm_schema_core::Predicate::True
         );
         for map in [".Values", r#"dict "_0" "a" "_1" "b""#] {
-            let source = format!(r#"{{{{ $m := {map} }}}}{{{{ $_ := {operation} }}}}"#);
+            let source = format!(r"{{{{ $m := {map} }}}}{{{{ $_ := {operation} }}}}");
             sim_assert_eq!(
                 have: execute_document(&source, Some("templates/test.yaml"), &db).abort_predicate(),
                 want: helm_schema_core::Predicate::False
@@ -482,7 +484,7 @@ fn unknown_split_contents_keep_string_members_without_invalidating_old_objects()
         want: vec![Some("kept|map[string]string|string|false".to_owned())]
     );
     sim_assert_eq!(
-        have: texts(r#"{{ toJson (splitn (toString .Values.separator) 0 (toString .Values.text)) }}"#),
+        have: texts(r"{{ toJson (splitn (toString .Values.separator) 0 (toString .Values.text)) }}"),
         want: vec![Some("{}".to_owned())]
     );
     sim_assert_eq!(
@@ -569,14 +571,16 @@ fn default_selects_the_first_given_value_after_eager_operand_evaluation() {
 }
 
 #[test]
-fn widened_destination_cannot_hide_a_mutated_nested_alias() {
+fn widened_destination_cannot_hide_a_mutated_nested_alias() -> eyre::Result<()> {
     let db = IrAnalysisDb::new(&DefineIndex::new());
-    let extra_keys = (0..128)
-        .map(|index| format!(r#" "k{index}" 0"#))
-        .collect::<String>();
+    let mut extra_keys = String::new();
+    for index in 0..128 {
+        write!(extra_keys, r#" "k{index}" 0"#)?;
+    }
     let source = format!(
         r#"{{{{ $shared := dict "x" "old" }}}}{{{{ $dst := dict "shared" $shared{extra_keys} }}}}{{{{ $_ := mergeOverwrite $dst (dict "shared" (dict "x" "new")) }}}}{{{{ if eq $shared.x "old" }}}}{{{{ fail "stale hidden alias" }}}}{{{{ end }}}}ok"#
     );
     let execution = execute_document(&source, Some("templates/test.yaml"), &db);
     sim_assert_eq!(have: execution.abort_predicate(), want: helm_schema_core::Predicate::False);
+    Ok(())
 }

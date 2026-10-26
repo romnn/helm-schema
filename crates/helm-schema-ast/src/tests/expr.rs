@@ -1067,7 +1067,7 @@ fn escaped_backslashes_do_not_start_byte_escapes() {
         have: exprs.first(),
         want: Some(&TemplateExpr::Literal(Literal::String(r"\303\251".into())))
     );
-    let exprs = parse_action_expressions(r#"{{ `\303\251` }}"#);
+    let exprs = parse_action_expressions(r"{{ `\303\251` }}");
     sim_assert_eq!(
         have: exprs.first(),
         want: Some(&TemplateExpr::Literal(Literal::RawString(r"\303\251".into())))
@@ -1119,7 +1119,10 @@ fn decoded_byte_escape_boundaries_include_nul_and_del() {
 
 #[test]
 fn raw_strings_discard_source_carriage_returns() {
-    let exprs = parse_action_expressions("{{ `a\rb\r\nc\r` }}");
+    let mut source = String::from("{{ `a\rb\r");
+    source.push('\n');
+    source.push_str("c\r` }}");
+    let exprs = parse_action_expressions(&source);
     sim_assert_eq!(
         have: exprs.first(),
         want: Some(&TemplateExpr::Literal(Literal::RawString("ab\nc".into())))

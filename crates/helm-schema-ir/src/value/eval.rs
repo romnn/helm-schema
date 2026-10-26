@@ -30,14 +30,14 @@ impl Executor<'_> {
             ),
             TemplateExpr::Field(path) => {
                 let value = state.dot().cloned().unwrap_or_else(Value::unknown);
-                self.selector(state, value, path)
+                Self::selector(state, value, path)
             }
             TemplateExpr::Selector { operand, path } => {
                 let mut result = super::ExitBuffer::default();
                 for exit in self.expression(operand, state, site) {
                     match exit.flow {
                         Flow::Normal(normal) => {
-                            result.extend(self.selector(exit.state, normal.value, path))
+                            result.extend(Self::selector(exit.state, normal.value, path));
                         }
                         flow => result.push(Exit {
                             state: exit.state,
@@ -74,50 +74,7 @@ impl Executor<'_> {
                 })
                 .collect(),
             TemplateExpr::Call { function, args } => self.invoke(function, args, None, state, site),
-            TemplateExpr::Pipeline(stages) => {
-                let Some((first, stages)) = stages.split_first() else {
-                    return normal(state, Value::unknown());
-                };
-                let mut exits = self.expression(first, state, site);
-                for stage in stages {
-                    let mut next = super::ExitBuffer::default();
-                    for exit in exits {
-                        match exit.flow {
-                            Flow::Normal(normal) => match stage {
-                                TemplateExpr::Call { function, args } => next.extend(self.invoke(
-                                    function,
-                                    args,
-                                    Some(normal.value),
-                                    exit.state,
-                                    site,
-                                )),
-                                TemplateExpr::Literal(_)
-                                | TemplateExpr::Field(_)
-                                | TemplateExpr::Selector {
-                                    operand: _,
-                                    path: _,
-                                }
-                                | TemplateExpr::Variable(_)
-                                | TemplateExpr::Pipeline(_)
-                                | TemplateExpr::Parenthesized(_)
-                                | TemplateExpr::VariableDefinition { name: _, value: _ }
-                                | TemplateExpr::Assignment { name: _, value: _ }
-                                | TemplateExpr::Unknown(_) => {
-                                    let mut state = exit.state;
-                                    super::operations::invalidate(&mut state);
-                                    next.extend(normal_exit(state, Value::unknown()));
-                                }
-                            },
-                            flow => next.push(Exit {
-                                state: exit.state,
-                                flow,
-                            }),
-                        }
-                    }
-                    exits = next.finish();
-                }
-                exits
-            }
+            TemplateExpr::Pipeline(stages) => self.pipeline(stages, state, site),
             TemplateExpr::Unknown(_) => {
                 let mut state = state;
                 super::operations::invalidate(&mut state);
@@ -126,8 +83,54 @@ impl Executor<'_> {
         };
         super::control::bound_exits(exits)
     }
-    fn selector(&self, mut state: State, mut value: Value, path: &[String]) -> Vec<Exit> {
+    fn pipeline(&self, stages: &[TemplateExpr], state: State, site: usize) -> Vec<Exit> {
+        let Some((first, stages)) = stages.split_first() else {
+            return normal(state, Value::unknown());
+        };
+        let mut exits = self.expression(first, state, site);
+        for stage in stages {
+            let mut next = super::ExitBuffer::default();
+            for exit in exits {
+                match exit.flow {
+                    Flow::Normal(normal) => match stage {
+                        TemplateExpr::Call { function, args } => next.extend(self.invoke(
+                            function,
+                            args,
+                            Some(normal.value),
+                            exit.state,
+                            site,
+                        )),
+                        TemplateExpr::Literal(_)
+                        | TemplateExpr::Field(_)
+                        | TemplateExpr::Selector {
+                            operand: _,
+                            path: _,
+                        }
+                        | TemplateExpr::Variable(_)
+                        | TemplateExpr::Pipeline(_)
+                        | TemplateExpr::Parenthesized(_)
+                        | TemplateExpr::VariableDefinition { name: _, value: _ }
+                        | TemplateExpr::Assignment { name: _, value: _ }
+                        | TemplateExpr::Unknown(_) => {
+                            let mut state = exit.state;
+                            super::operations::invalidate(&mut state);
+                            next.extend(normal_exit(state, Value::unknown()));
+                        }
+                    },
+                    flow => next.push(Exit {
+                        state: exit.state,
+                        flow,
+                    }),
+                }
+            }
+            exits = next.finish();
+        }
+        exits
+    }
+    fn selector(mut state: State, mut value: Value, path: &[String]) -> Vec<Exit> {
+        let live = state.selector_live_domain(&value);
         for key in path {
+            state.record_selector_host(&value, &live);
             value = state.selector_field(&value, key);
         }
         state.record_value_read(&value, super::ReadCoverage::ExactPath);

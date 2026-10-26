@@ -112,6 +112,7 @@ fn independent_string_contract_intersects_boolean_provider_preimage() -> eyre::R
             path: YamlPath(vec!["spec".to_string(), "enabled".to_string()]),
             kind: ValueKind::Scalar,
             stringified: false,
+            plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
             resource: ResourceRef::concrete("example.io/v1".to_string(), "Example".to_string()),
             is_self_range_collection: false,
             source_null_tolerant: false,
@@ -133,6 +134,7 @@ fn independent_string_contract_intersects_boolean_provider_preimage() -> eyre::R
             "additionalProperties": {},
             "properties": {"repository": {"allOf": [
                 {"anyOf": [
+                    {"type": "string", "pattern": "[\\r\\n]"},
                     {"type": "string", "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"},
                     {"type": "boolean"}
                 ]},
@@ -144,6 +146,10 @@ fn independent_string_contract_intersects_boolean_provider_preimage() -> eyre::R
     assert!(!validator.is_valid(&serde_json::json!({"image": {"repository": true}})));
     assert!(!validator.is_valid(&serde_json::json!({"image": {"repository": "arbitrary"}})));
     assert!(validator.is_valid(&serde_json::json!({"image": {"repository": "true"}})));
+    // A later injected key can replace the plain scalar while the source remains a string.
+    assert!(validator.is_valid(&serde_json::json!({
+        "image": {"repository": "false\n  enabled: true"}
+    })));
     Ok(())
 }
 
@@ -207,6 +213,7 @@ fn bounded_numeric_preimage_keeps_unknown_strings_beneath_serialized_parent() ->
             path: YamlPath(vec!["spec".to_string(), "count".to_string()]),
             kind: ValueKind::Scalar,
             stringified: false,
+            plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
             resource: ResourceRef::concrete(
                 "example.io/v1".to_string(),
                 "NumericWorkload".to_string(),

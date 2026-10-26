@@ -33,13 +33,10 @@ pub(crate) fn execute_document(
     let root = state.read_root().cloned().unwrap_or_else(Value::unknown);
     begin_file(&mut state, &root, source_path, &occurrence);
     let syntax = crate::analysis_db::ParsedProgramSyntax::parse(source);
-    DocumentExecution::new(finish_file(Executor { db }.parsed_file_body(
-        source,
-        source_path,
-        syntax.as_ref(),
-        state,
-        &occurrence,
-    )))
+    DocumentExecution::new(finish_file(
+        Executor { db }.parsed_file_body(source, source_path, syntax.as_ref(), state, &occurrence),
+        db.predicate_memo(),
+    ))
 }
 
 #[tracing::instrument(skip_all)]
@@ -113,7 +110,10 @@ pub(crate) fn execute_documents(
                 &occurrence,
             ));
         }
-        let exits = finish_file(super::control::reconverge(exits.finish()));
+        let exits = finish_file(
+            super::control::reconverge(exits.finish()),
+            db.predicate_memo(),
+        );
         if let Some(document) = documents.get_mut(index) {
             *document = DocumentExecution::new(exits.clone());
         }
@@ -128,12 +128,16 @@ pub(crate) fn execute_documents(
     documents
 }
 
-fn finish_file(mut exits: Vec<super::Exit>) -> Vec<super::Exit> {
+fn finish_file(
+    mut exits: Vec<super::Exit>,
+    memo: &helm_schema_core::PredicateMemo,
+) -> Vec<super::Exit> {
     for exit in &mut exits {
         if !matches!(exit.flow, Flow::Normal(_)) {
             continue;
         }
         let state = &mut exit.state;
+        super::output_layout::certify_plain_scalar_placements(state, memo);
         let original = state.output.exact_text();
         let stripped = state.output.stripped_value();
         // Helm removes the marker after concatenation, including across emission boundaries.
@@ -150,25 +154,33 @@ fn finish_file(mut exits: Vec<super::Exit>) -> Vec<super::Exit> {
 }
 
 fn demote_stripped_sites(state: &mut State, original: Option<&str>) {
+    #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+    enum Site {
+        Text(usize),
+        Value(usize),
+    }
     struct Piece {
         ordinal: usize,
+        site: Site,
         text: String,
     }
     let mut pieces = Vec::new();
-    for site in &state.text_sites {
+    for (index, site) in state.text_sites.iter().enumerate() {
         if site.program == state.program {
             pieces.push(Piece {
                 ordinal: site.ordinal,
+                site: Site::Text(index),
                 text: site.bytes.clone(),
             });
         }
     }
     let mut complete = true;
-    for site in &state.sites {
+    for (index, site) in state.sites.iter().enumerate() {
         if site.program == state.program && site.rendered {
             if let Some(text) = site.value.exact_text() {
                 pieces.push(Piece {
                     ordinal: site.ordinal,
+                    site: Site::Value(index),
                     text,
                 });
             } else {
@@ -191,7 +203,7 @@ fn demote_stripped_sites(state: &mut State, original: Option<&str>) {
                 .iter()
                 .any(|removed| offset < removed.end && removed.start < end)
             {
-                affected.insert(piece.ordinal);
+                affected.insert(piece.site);
             }
             offset = end;
         }
@@ -199,22 +211,23 @@ fn demote_stripped_sites(state: &mut State, original: Option<&str>) {
         // Unknown neighbors can complete only a marker prefix or suffix of a known piece.
         for piece in &pieces {
             if may_be_stripped(&piece.text) {
-                affected.insert(piece.ordinal);
+                affected.insert(piece.site);
             }
         }
-        for site in &state.sites {
+        for (index, site) in state.sites.iter().enumerate() {
             if site.program == state.program && site.rendered && site.value.exact_text().is_none() {
-                affected.insert(site.ordinal);
+                affected.insert(Site::Value(index));
             }
         }
     }
-    for site in &mut state.text_sites {
-        if site.program == state.program && affected.contains(&site.ordinal) {
+    for (index, site) in state.text_sites.iter_mut().enumerate() {
+        if site.program == state.program && affected.contains(&Site::Text(index)) {
             site.rendered_unchanged = false;
         }
     }
-    for site in &mut state.sites {
-        if site.program == state.program && site.rendered && affected.contains(&site.ordinal) {
+    for (index, site) in state.sites.iter_mut().enumerate() {
+        if site.program == state.program && site.rendered && affected.contains(&Site::Value(index))
+        {
             site.rendered_unchanged = false;
         }
     }
@@ -240,6 +253,8 @@ pub(super) fn begin_file(
     state.enter_file_call(root.clone(), occurrence);
     state.output = TextBuffer::default();
     state.output_widened = false;
+    state.observation_count = super::output::BranchCounts::default();
+    state.invocation_count = super::output::BranchCounts::default();
     state.sites.clear();
     state.text_sites.clear();
     state.reads.clear();
@@ -296,7 +311,7 @@ fn initial_state(db: &crate::analysis_db::IrAnalysisDb) -> State {
                     },
                     origin: Origin {
                         identity: Some(path),
-                        influences: Default::default(),
+                        influences: std::collections::BTreeSet::default(),
                     },
                 })),
             };

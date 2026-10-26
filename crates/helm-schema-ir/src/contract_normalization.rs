@@ -134,20 +134,25 @@ fn canonicalize_contract_use_inputs(uses: &mut [ContractUse]) {
 #[tracing::instrument(skip_all)]
 fn merge_pathless_resource_variants(uses: &mut Vec<ContractUse>) {
     let mut merged: Vec<ContractUse> = Vec::with_capacity(uses.len());
-    let mut pathless_index_by_identity: BTreeMap<
-        (helm_schema_core::ValuesPath, ValueKind, BTreeSet<Predicate>),
-        usize,
-    > = BTreeMap::new();
+    #[derive(PartialEq, Eq, PartialOrd, Ord)]
+    struct PathlessIdentity {
+        source_expr: helm_schema_core::ValuesPath,
+        kind: ValueKind,
+        predicates: BTreeSet<Predicate>,
+        placement: helm_schema_core::PlainScalarPlacement,
+    }
+    let mut pathless_index_by_identity: BTreeMap<PathlessIdentity, usize> = BTreeMap::new();
 
     for mut contract_use in std::mem::take(uses) {
         if contract_use.path.0.is_empty() {
-            let key = (
-                contract_use.source_expr.clone(),
-                contract_use.kind,
-                contract_predicates(&contract_use)
+            let key = PathlessIdentity {
+                source_expr: contract_use.source_expr.clone(),
+                kind: contract_use.kind,
+                predicates: contract_predicates(&contract_use)
                     .cloned()
                     .unwrap_or_default(),
-            );
+                placement: contract_use.plain_scalar_placement,
+            };
             if let Some(existing) = pathless_index_by_identity
                 .get(&key)
                 .and_then(|index| merged.get_mut(*index))
@@ -289,23 +294,10 @@ fn mark_bucket_subsumed_rows(
 #[tracing::instrument(skip_all)]
 pub(crate) fn drop_self_truthy_subsumed_duplicates(uses: &mut Vec<ContractUse>) {
     // Subsumption only compares rows sharing one render site.
-    let mut buckets: BTreeMap<
-        (
-            &helm_schema_core::ValuesPath,
-            &YamlPath,
-            ValueKind,
-            Option<&ResourceRef>,
-        ),
-        Vec<usize>,
-    > = BTreeMap::new();
+    let mut buckets: BTreeMap<RenderSite<'_>, Vec<usize>> = BTreeMap::new();
     for (index, contract_use) in uses.iter().enumerate() {
         buckets
-            .entry((
-                &contract_use.source_expr,
-                &contract_use.path,
-                contract_use.kind,
-                contract_use.resource.as_ref(),
-            ))
+            .entry(render_site(contract_use))
             .or_default()
             .push(index);
     }
@@ -539,20 +531,26 @@ fn merge_suffix_string_requirements(
     (paths.len() >= 2).then_some(conjunctions)
 }
 
-type RenderSite<'a> = (
-    &'a helm_schema_core::ValuesPath,
-    &'a YamlPath,
-    ValueKind,
-    Option<&'a ResourceRef>,
-);
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+struct RenderSite<'a> {
+    source_expr: &'a helm_schema_core::ValuesPath,
+    path: &'a YamlPath,
+    kind: ValueKind,
+    resource: Option<&'a ResourceRef>,
+    placement: helm_schema_core::PlainScalarPlacement,
+    read_condition: Option<&'a helm_schema_core::GuardDnf>,
+}
 
 fn render_site(contract_use: &ContractUse) -> RenderSite<'_> {
-    (
-        &contract_use.source_expr,
-        &contract_use.path,
-        contract_use.kind,
-        contract_use.resource.as_ref(),
-    )
+    RenderSite {
+        source_expr: &contract_use.source_expr,
+        path: &contract_use.path,
+        kind: contract_use.kind,
+        resource: contract_use.resource.as_ref(),
+        placement: contract_use.plain_scalar_placement,
+        read_condition: (contract_use.kind == ValueKind::WidenedDependency)
+            .then_some(&contract_use.condition),
+    }
 }
 
 fn has_self_default_guard(contract_use: &ContractUse) -> bool {
@@ -590,6 +588,17 @@ fn contract_use_base_cmp(left: &ContractUse, right: &ContractUse) -> std::cmp::O
         .then_with(|| left.path.0.cmp(&right.path.0))
         .then_with(|| (left.kind as u8).cmp(&(right.kind as u8)))
         .then_with(|| left.resource.cmp(&right.resource))
+        .then_with(|| {
+            left.plain_scalar_placement
+                .cmp(&right.plain_scalar_placement)
+        })
+        .then_with(|| {
+            if left.kind == crate::ValueKind::WidenedDependency {
+                left.condition.cmp(&right.condition)
+            } else {
+                std::cmp::Ordering::Equal
+            }
+        })
         // These row-scoped semantics must not fold into a plain row at the
         // same site: the fold keeps one row's marker for ALL unioned
         // disjuncts and incorrectly attributes the other's semantics.

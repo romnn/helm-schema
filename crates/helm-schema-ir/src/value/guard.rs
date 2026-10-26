@@ -1,5 +1,5 @@
-use std::collections::BTreeMap;
-use std::rc::Rc;
+use std::collections::{BTreeMap, BTreeSet};
+use std::rc::{Rc, Weak};
 
 use helm_schema_core::{Predicate, PredicateKind};
 
@@ -25,6 +25,7 @@ pub(super) struct DecisionNode {
     test: Rc<FrozenTest>,
     yes: RuntimeGuard,
     no: RuntimeGuard,
+    input_exact: bool,
 }
 
 impl PartialEq for DecisionNode {
@@ -60,22 +61,107 @@ struct Projection {
     sufficient: Predicate,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+enum ProjectionPurpose {
+    Control,
+    Budget,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+struct ProjectionKey {
+    guard: u64,
+    purpose: ProjectionPurpose,
+}
+
 struct GuardedUnion {
     decision: Rc<FrozenTest>,
     taken: bool,
     survival: RuntimeGuard,
 }
 
+#[derive(Debug)]
+pub(super) enum CachedGuard {
+    False,
+    True,
+    Branch(Weak<DecisionNode>),
+}
+
+impl CachedGuard {
+    pub(super) fn new(guard: &RuntimeGuard) -> Self {
+        match guard {
+            RuntimeGuard::False => Self::False,
+            RuntimeGuard::True => Self::True,
+            RuntimeGuard::Branch(node) => Self::Branch(Rc::downgrade(node)),
+        }
+    }
+
+    pub(super) fn upgrade(&self) -> Option<RuntimeGuard> {
+        match self {
+            Self::False => Some(RuntimeGuard::False),
+            Self::True => Some(RuntimeGuard::True),
+            Self::Branch(node) => node.upgrade().map(RuntimeGuard::Branch),
+        }
+    }
+}
+
+trait GuardWork {
+    type Error;
+
+    fn charge(&mut self) -> Result<(), Self::Error>;
+}
+
+struct ExactGuardWork;
+
+impl GuardWork for ExactGuardWork {
+    type Error = std::convert::Infallible;
+
+    fn charge(&mut self) -> Result<(), Self::Error> {
+        Ok(())
+    }
+}
+
+pub(super) struct GuardWorkBudget {
+    remaining: usize,
+}
+
+impl GuardWorkBudget {
+    pub(super) fn new(limit: usize) -> Self {
+        Self { remaining: limit }
+    }
+}
+
+impl GuardWork for GuardWorkBudget {
+    type Error = super::BoundReason;
+
+    fn charge(&mut self) -> Result<(), Self::Error> {
+        self.remaining = self
+            .remaining
+            .checked_sub(1)
+            .ok_or(super::BoundReason::BudgetNodes)?;
+        Ok(())
+    }
+}
+
 #[derive(Debug, Default)]
 pub(super) struct DecisionStore {
-    nodes: BTreeMap<NodeKey, RuntimeGuard>,
-    applications: BTreeMap<ApplyKey, RuntimeGuard>,
-    negations: BTreeMap<u64, RuntimeGuard>,
-    projections: BTreeMap<u64, Projection>,
-    tests: BTreeMap<u64, Rc<FrozenTest>>,
+    next_node: u64,
+    collection_limit: usize,
+    working: Vec<Rc<DecisionNode>>,
+    nodes: BTreeMap<NodeKey, Weak<DecisionNode>>,
+    applications: BTreeMap<ApplyKey, CachedGuard>,
+    negations: BTreeMap<u64, CachedGuard>,
+    projections: BTreeMap<ProjectionKey, Projection>,
+    tests: BTreeMap<ProjectionKey, Weak<FrozenTest>>,
 }
 
 impl RuntimeGuard {
+    pub(super) fn is_input_exact(&self) -> bool {
+        match self {
+            Self::False | Self::True => true,
+            Self::Branch(node) => node.input_exact,
+        }
+    }
+
     pub(super) fn is_impossible(&self) -> bool {
         matches!(self, Self::False)
     }
@@ -94,7 +180,7 @@ impl RuntimeGuard {
         }
     }
 
-    fn id(&self) -> u64 {
+    pub(super) fn id(&self) -> u64 {
         match self {
             Self::False => 0,
             Self::True => 1,
@@ -224,43 +310,113 @@ impl FrozenTest {
 }
 
 impl DecisionStore {
+    fn collect_unused(&mut self) {
+        if self.nodes.len() < self.collection_limit.max(4096) {
+            return;
+        }
+        // Only execution handles keep guards alive across collection.
+        self.working.clear();
+        self.nodes.retain(|_, node| node.strong_count() != 0);
+        let live: BTreeSet<_> = [0, 1]
+            .into_iter()
+            .chain(
+                self.nodes
+                    .values()
+                    .filter_map(Weak::upgrade)
+                    .map(|node| node.id),
+            )
+            .collect();
+        self.applications.retain(|key, result| {
+            live.contains(&key.left) && live.contains(&key.right) && result.upgrade().is_some()
+        });
+        self.negations
+            .retain(|guard, result| live.contains(guard) && result.upgrade().is_some());
+        self.projections.retain(|key, _| live.contains(&key.guard));
+        self.tests
+            .retain(|key, test| live.contains(&key.guard) && test.strong_count() != 0);
+        self.collection_limit = self.nodes.len().saturating_mul(2).max(4096);
+    }
+
     fn select(
         &mut self,
         test: Rc<FrozenTest>,
         yes: RuntimeGuard,
         no: RuntimeGuard,
     ) -> RuntimeGuard {
+        match self.select_with_work(test, yes, no, &mut ExactGuardWork) {
+            Ok(guard) => guard,
+            Err(never) => match never {},
+        }
+    }
+
+    fn select_with_work<W: GuardWork>(
+        &mut self,
+        test: Rc<FrozenTest>,
+        yes: RuntimeGuard,
+        no: RuntimeGuard,
+        work: &mut W,
+    ) -> Result<RuntimeGuard, W::Error> {
         if yes == no {
-            return yes;
+            return Ok(yes);
         }
         let key = NodeKey {
             decision: test.id,
             yes: yes.id(),
             no: no.id(),
         };
-        let id = self.nodes.len() as u64 + 2;
-        self.nodes
-            .entry(key)
-            .or_insert_with(|| RuntimeGuard::Branch(Rc::new(DecisionNode { id, test, yes, no })))
-            .clone()
+        if let Some(node) = self.nodes.get(&key).and_then(Weak::upgrade) {
+            return Ok(RuntimeGuard::Branch(node));
+        }
+        work.charge()?;
+        let id = self.next_node + 2;
+        self.next_node += 1;
+        let input_exact =
+            test.coverage == Coverage::Exact && yes.is_input_exact() && no.is_input_exact();
+        let node = Rc::new(DecisionNode {
+            id,
+            test,
+            yes,
+            no,
+            input_exact,
+        });
+        // Keep intermediate results reusable until collection, including throughout recursive apply.
+        self.working.push(Rc::clone(&node));
+        self.nodes.insert(key, Rc::downgrade(&node));
+        Ok(RuntimeGuard::Branch(node))
     }
 
     fn negate(&mut self, guard: &RuntimeGuard) -> RuntimeGuard {
-        if let Some(negated) = self.negations.get(&guard.id()) {
-            return negated.clone();
+        match self.negate_with_work(guard, &mut ExactGuardWork) {
+            Ok(guard) => guard,
+            Err(never) => match never {},
         }
+    }
+
+    fn negate_with_work<W: GuardWork>(
+        &mut self,
+        guard: &RuntimeGuard,
+        work: &mut W,
+    ) -> Result<RuntimeGuard, W::Error> {
+        if let Some(negated) = self
+            .negations
+            .get(&guard.id())
+            .and_then(CachedGuard::upgrade)
+        {
+            return Ok(negated);
+        }
+        work.charge()?;
         let result = match guard {
             RuntimeGuard::False => RuntimeGuard::True,
             RuntimeGuard::True => RuntimeGuard::False,
             RuntimeGuard::Branch(node) => {
-                let yes = self.negate(&node.yes);
-                let no = self.negate(&node.no);
-                self.select(Rc::clone(&node.test), yes, no)
+                let yes = self.negate_with_work(&node.yes, work)?;
+                let no = self.negate_with_work(&node.no, work)?;
+                self.select_with_work(Rc::clone(&node.test), yes, no, work)?
             }
         };
-        self.negations.insert(guard.id(), result.clone());
-        self.negations.insert(result.id(), guard.clone());
-        result
+        self.negations.insert(guard.id(), CachedGuard::new(&result));
+        self.negations.insert(result.id(), CachedGuard::new(guard));
+        Ok(result)
     }
 
     fn apply(
@@ -269,30 +425,43 @@ impl DecisionStore {
         left: &RuntimeGuard,
         right: &RuntimeGuard,
     ) -> RuntimeGuard {
+        match self.apply_with_work(operation, left, right, &mut ExactGuardWork) {
+            Ok(guard) => guard,
+            Err(never) => match never {},
+        }
+    }
+
+    fn apply_with_work<W: GuardWork>(
+        &mut self,
+        operation: Operation,
+        left: &RuntimeGuard,
+        right: &RuntimeGuard,
+        work: &mut W,
+    ) -> Result<RuntimeGuard, W::Error> {
         if left == right {
-            return left.clone();
+            return Ok(left.clone());
         }
         match operation {
             Operation::And => {
                 if matches!(left, RuntimeGuard::False) || matches!(right, RuntimeGuard::False) {
-                    return RuntimeGuard::False;
+                    return Ok(RuntimeGuard::False);
                 }
                 if matches!(left, RuntimeGuard::True) {
-                    return right.clone();
+                    return Ok(right.clone());
                 }
                 if matches!(right, RuntimeGuard::True) {
-                    return left.clone();
+                    return Ok(left.clone());
                 }
             }
             Operation::Or => {
                 if matches!(left, RuntimeGuard::True) || matches!(right, RuntimeGuard::True) {
-                    return RuntimeGuard::True;
+                    return Ok(RuntimeGuard::True);
                 }
                 if matches!(left, RuntimeGuard::False) {
-                    return right.clone();
+                    return Ok(right.clone());
                 }
                 if matches!(right, RuntimeGuard::False) {
-                    return left.clone();
+                    return Ok(left.clone());
                 }
             }
         }
@@ -301,9 +470,10 @@ impl DecisionStore {
             left: left.id().min(right.id()),
             right: left.id().max(right.id()),
         };
-        if let Some(result) = self.applications.get(&key) {
-            return result.clone();
+        if let Some(result) = self.applications.get(&key).and_then(CachedGuard::upgrade) {
+            return Ok(result);
         }
+        work.charge()?;
         // New decisions sort first, keeping independent appended conditions shallow to update.
         let Some(test) = left
             .decision()
@@ -311,21 +481,54 @@ impl DecisionStore {
             .chain(right.decision())
             .max_by_key(|test| test.id)
         else {
-            return RuntimeGuard::False;
+            return Ok(RuntimeGuard::False);
         };
-        let yes = self.apply(
+        let yes = self.apply_with_work(
             operation,
             &left.arm(test.id, true),
             &right.arm(test.id, true),
-        );
-        let no = self.apply(
+            work,
+        )?;
+        let no = self.apply_with_work(
             operation,
             &left.arm(test.id, false),
             &right.arm(test.id, false),
-        );
-        let result = self.select(Rc::clone(test), yes, no);
-        self.applications.insert(key, result.clone());
-        result
+            work,
+        )?;
+        let result = self.select_with_work(Rc::clone(test), yes, no, work)?;
+        self.applications.insert(key, CachedGuard::new(&result));
+        Ok(result)
+    }
+
+    fn choice_with_work<W: GuardWork>(
+        &mut self,
+        condition: &RuntimeGuard,
+        yes: &RuntimeGuard,
+        no: &RuntimeGuard,
+        work: &mut W,
+    ) -> Result<RuntimeGuard, W::Error> {
+        if condition.is_impossible() {
+            return Ok(no.clone());
+        }
+        if condition == &RuntimeGuard::True || yes == no {
+            return Ok(yes.clone());
+        }
+        if no.is_impossible() {
+            return self.apply_with_work(Operation::And, condition, yes, work);
+        }
+        if yes == &RuntimeGuard::True {
+            return self.apply_with_work(Operation::Or, condition, no, work);
+        }
+        let opposite = self.negate_with_work(condition, work)?;
+        if yes.is_impossible() {
+            return self.apply_with_work(Operation::And, &opposite, no, work);
+        }
+        if no == &RuntimeGuard::True {
+            return self.apply_with_work(Operation::Or, &opposite, yes, work);
+        }
+        let selected_yes = self.apply_with_work(Operation::And, condition, yes, work)?;
+        let selected_no = self.apply_with_work(Operation::And, &opposite, no, work)?;
+        self.apply_with_work(Operation::Or, &selected_yes, &selected_no, work)
     }
 
     fn edge(&mut self, edge: &DecisionEdge) -> RuntimeGuard {
@@ -361,8 +564,12 @@ impl DecisionStore {
     }
 
     #[tracing::instrument(skip_all)]
-    fn project(&mut self, guard: &RuntimeGuard) -> Projection {
-        if let Some(projection) = self.projections.get(&guard.id()) {
+    fn project(&mut self, guard: &RuntimeGuard, purpose: ProjectionPurpose) -> Projection {
+        let key = ProjectionKey {
+            guard: guard.id(),
+            purpose,
+        };
+        if let Some(projection) = self.projections.get(&key) {
             return projection.clone();
         }
         let result = match guard {
@@ -375,44 +582,93 @@ impl DecisionStore {
                 sufficient: Predicate::True,
             },
             RuntimeGuard::Branch(node) => {
-                let yes = self.project(&node.yes);
-                let no = self.project(&node.no);
+                let yes = self.project(&node.yes, purpose);
+                let no = self.project(&node.no, purpose);
                 match node.test.coverage {
                     Coverage::Exact => {
                         let exact =
                             yes.necessary == yes.sufficient && no.necessary == no.sufficient;
-                        let necessary = project_union(vec![
-                            Predicate::all(vec![node.test.when_true.clone(), yes.necessary]),
-                            Predicate::all(vec![node.test.when_false.clone(), no.necessary]),
-                        ]);
+                        let necessary = project_union(
+                            vec![
+                                Predicate::all(vec![node.test.when_true.clone(), yes.necessary]),
+                                Predicate::all(vec![node.test.when_false.clone(), no.necessary]),
+                            ],
+                            purpose,
+                        );
                         // An exact decision partitions its domain. Adding both child proofs
                         // again is redundant and doubles expressions after normalization caps.
                         let sufficient = if exact {
-                            necessary.clone()
+                            necessary.clone().unwrap_or(Predicate::False)
                         } else {
-                            project_union(vec![
-                                Predicate::all(vec![node.test.when_true.clone(), yes.sufficient]),
-                                Predicate::all(vec![node.test.when_false.clone(), no.sufficient]),
-                            ])
+                            project_union(
+                                vec![
+                                    Predicate::all(vec![
+                                        node.test.when_true.clone(),
+                                        yes.sufficient,
+                                    ]),
+                                    Predicate::all(vec![
+                                        node.test.when_false.clone(),
+                                        no.sufficient,
+                                    ]),
+                                ],
+                                purpose,
+                            )
+                            .unwrap_or(Predicate::False)
                         };
                         Projection {
-                            necessary,
+                            necessary: necessary.unwrap_or(Predicate::True),
                             sufficient,
                         }
                     }
                     Coverage::Partial => Projection {
-                        necessary: project_union(vec![yes.necessary, no.necessary]),
-                        sufficient: Predicate::all(vec![yes.sufficient, no.sufficient]),
+                        necessary: project_union(vec![yes.necessary, no.necessary], purpose)
+                            .unwrap_or(Predicate::True),
+                        sufficient: bounded_projection(
+                            Predicate::all(vec![yes.sufficient, no.sufficient]),
+                            purpose,
+                        )
+                        .unwrap_or(Predicate::False),
                     },
                 }
             }
         };
-        self.projections.insert(guard.id(), result.clone());
+        self.projections.insert(key, result.clone());
         result
     }
 }
 
-fn project_union(mut parts: Vec<Predicate>) -> Predicate {
+fn bounded_projection(predicate: Predicate, purpose: ProjectionPurpose) -> Option<Predicate> {
+    if purpose == ProjectionPurpose::Control {
+        return Some(predicate);
+    }
+    // Budget counters can encode exponential cardinality formulas after otherwise ordinary joins.
+    // Bound only their exported syntax; runtime guards and semantic control proofs stay exact.
+    let mut pending = vec![&predicate];
+    let mut terms = 0;
+    while let Some(predicate) = pending.pop() {
+        terms += 1;
+        if terms > 256 {
+            tracing::debug!(reason = ?super::BoundReason::BudgetPredicate, "widen budget guard projection");
+            return None;
+        }
+        match predicate.kind() {
+            PredicateKind::And(parts) | PredicateKind::Or(parts) => pending.extend(parts),
+            PredicateKind::Not(inner) => pending.push(inner),
+            PredicateKind::Approximate {
+                marker: _,
+                paths: _,
+                role: _,
+                sound_subset,
+            } => {
+                pending.extend(sound_subset);
+            }
+            PredicateKind::True | PredicateKind::False | PredicateKind::Guard(_) => {}
+        }
+    }
+    Some(predicate)
+}
+
+fn project_union(mut parts: Vec<Predicate>, purpose: ProjectionPurpose) -> Option<Predicate> {
     parts.retain(|part| part != &Predicate::False);
     let terms: Vec<std::collections::BTreeSet<_>> = parts
         .iter()
@@ -427,23 +683,30 @@ fn project_union(mut parts: Vec<Predicate>) -> Predicate {
         })
         .collect();
     let Some(first) = terms.first() else {
-        return Predicate::False;
+        return Some(Predicate::False);
     };
     let common = terms.iter().skip(1).fold(first.clone(), |common, term| {
         common.intersection(term).cloned().collect()
     });
     if common.is_empty() {
-        return Predicate::Or(parts).normalize_boolean();
+        return bounded_projection(Predicate::Or(parts), purpose)
+            .and_then(|value| bounded_projection(value.normalize_boolean(), purpose));
     }
     // Retain a shared sequential prefix instead of distributing it over both decision arms.
-    let suffix = Predicate::Or(
-        terms
-            .iter()
-            .map(|term| Predicate::all(term.difference(&common).cloned().collect()))
-            .collect(),
-    )
+    let suffix = bounded_projection(
+        Predicate::Or(
+            terms
+                .iter()
+                .map(|term| Predicate::all(term.difference(&common).cloned().collect()))
+                .collect(),
+        ),
+        purpose,
+    )?
     .normalize_boolean();
-    Predicate::all(common.into_iter().chain([suffix]).collect())
+    bounded_projection(
+        Predicate::all(common.into_iter().chain([suffix]).collect()),
+        purpose,
+    )
 }
 
 impl Arena {
@@ -458,9 +721,9 @@ impl Arena {
             .zip(right)
             .take_while(|(left, right)| left.test == right.test && left.taken == right.taken)
             .count();
-        let mut active = left[..common].to_vec();
-        let left_tail = &left[common..];
-        let right_tail = &right[common..];
+        let mut active = left.iter().take(common).cloned().collect::<Vec<_>>();
+        let left_tail = left.get(common..).unwrap_or_default();
+        let right_tail = right.get(common..).unwrap_or_default();
         let mut store = self.guards.borrow_mut();
         let left_guard = store.conjunction(left_tail);
         let right_guard = store.conjunction(right_tail);
@@ -479,7 +742,8 @@ impl Arena {
             .apply(Operation::And, &left_guard, &right_guard)
             .is_impossible()
         {
-            let decision = self.guard_test(&mut store, left_guard.clone());
+            let decision =
+                self.guard_test(&mut store, left_guard.clone(), ProjectionPurpose::Control);
             let survival = store.apply(Operation::Or, &left_guard, &right_guard);
             GuardedUnion {
                 decision,
@@ -510,7 +774,7 @@ impl Arena {
             survival,
         } = union;
         let known = store.conjunction(&active);
-        let success = self.guard_test(&mut store, survival);
+        let success = self.guard_test(&mut store, survival, ProjectionPurpose::Control);
         if success.constant_outcome() != Some(true) && known.implies_test(&success) != Some(true) {
             active.push(DecisionEdge {
                 test: success,
@@ -563,21 +827,37 @@ impl Arena {
         let yes = store.conjunction(yes);
         let no = store.conjunction(no);
         let runtime = store.apply(Operation::Or, &yes, &no);
-        self.guard_test(&mut store, runtime)
+        self.guard_test(&mut store, runtime, ProjectionPurpose::Control)
     }
 
     pub(super) fn runtime_path(&self, edges: &[DecisionEdge]) -> RuntimeGuard {
         self.guards.borrow_mut().conjunction(edges)
     }
 
-    fn guard_test(&self, store: &mut DecisionStore, runtime: RuntimeGuard) -> Rc<FrozenTest> {
-        if let Some(test) = store.tests.get(&runtime.id()) {
-            return Rc::clone(test);
+    #[tracing::instrument(
+        skip_all,
+        level = "debug",
+        target = "helm_schema_ir::value::guard_storage",
+        fields(nodes = store.nodes.len(), applications = store.applications.len(), projections = store.projections.len(), tests = store.tests.len())
+    )]
+    fn guard_test(
+        &self,
+        store: &mut DecisionStore,
+        runtime: RuntimeGuard,
+        purpose: ProjectionPurpose,
+    ) -> Rc<FrozenTest> {
+        store.collect_unused();
+        let key = ProjectionKey {
+            guard: runtime.id(),
+            purpose,
+        };
+        if let Some(test) = store.tests.get(&key).and_then(Weak::upgrade) {
+            return test;
         }
         let Projection {
             necessary,
             sufficient,
-        } = store.project(&runtime);
+        } = store.project(&runtime, purpose);
         let coverage = if necessary == sufficient {
             Coverage::Exact
         } else {
@@ -585,7 +865,6 @@ impl Arena {
         };
         let id = self.next_decision.get();
         self.next_decision.set(id + 1);
-        let guard_id = runtime.id();
         let test = Rc::new(FrozenTest {
             id,
             when_true: sufficient,
@@ -593,7 +872,49 @@ impl Arena {
             coverage,
             runtime: Some(runtime),
         });
-        store.tests.insert(guard_id, Rc::clone(&test));
+        store.tests.insert(key, Rc::downgrade(&test));
         test
     }
 }
+
+impl Arena {
+    pub(super) fn select_runtime_guard_bounded(
+        &self,
+        condition: &RuntimeGuard,
+        yes: &RuntimeGuard,
+        no: &RuntimeGuard,
+        work: &mut GuardWorkBudget,
+    ) -> Result<RuntimeGuard, super::BoundReason> {
+        self.guards
+            .borrow_mut()
+            .choice_with_work(condition, yes, no, work)
+    }
+
+    pub(super) fn union_runtime_guards(
+        &self,
+        left: &RuntimeGuard,
+        right: &RuntimeGuard,
+    ) -> RuntimeGuard {
+        self.guards.borrow_mut().apply(Operation::Or, left, right)
+    }
+
+    pub(super) fn intersect_runtime_guards(
+        &self,
+        left: &RuntimeGuard,
+        right: &RuntimeGuard,
+    ) -> RuntimeGuard {
+        self.guards.borrow_mut().apply(Operation::And, left, right)
+    }
+
+    pub(super) fn budget_test(&self, guard: RuntimeGuard) -> Rc<FrozenTest> {
+        self.guard_test(
+            &mut self.guards.borrow_mut(),
+            guard,
+            ProjectionPurpose::Budget,
+        )
+    }
+}
+
+#[cfg(test)]
+#[path = "../tests/runtime_budget_work.rs"]
+mod tests;

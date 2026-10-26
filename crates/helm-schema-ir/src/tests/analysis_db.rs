@@ -405,10 +405,13 @@ fn repeated_helper_lookups_share_one_parsed_program() -> eyre::Result<()> {
         .parsed_helper_body("leaf")
         .ok_or_eyre("second helper missing")?;
     assert!(std::ptr::eq(first.syntax, second.syntax));
-    assert!(std::ptr::eq(&first.syntax.tree, &second.syntax.tree));
     assert!(std::ptr::eq(
-        &first.syntax.expressions,
-        &second.syntax.expressions
+        &raw const first.syntax.tree,
+        &raw const second.syntax.tree
+    ));
+    assert!(std::ptr::eq(
+        &raw const first.syntax.expressions,
+        &raw const second.syntax.expressions
     ));
     Ok(())
 }

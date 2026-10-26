@@ -44,22 +44,46 @@ struct ScalarPreimage {
     numeric_string_unknown: bool,
 }
 
-pub(super) fn plain_scalar_provider_preimage(schema: Value) -> Value {
+pub(super) fn plain_scalar_provider_preimage(
+    schema: Value,
+    placement: helm_schema_core::PlainScalarPlacement,
+) -> Value {
     let preimage = plain_scalar_provider_preimage_with(schema, None);
     if preimage.numeric_string_unknown {
-        // Draft 7 numeric keywords cannot constrain a parsed string's value.
-        // Preserve the full projection of non-string inputs and abstain on
-        // strings only at the boundary, keeping oneOf cardinality intact.
+        // Draft 7 cannot constrain a parsed string's numeric value without losing valid spellings.
+        // The outer union preserves non-string projections and oneOf cardinality.
         tracing::debug!("Bounded numeric provider preimage retains an unknown string domain");
-        serde_json::json!({"anyOf": [preimage.projected, {"type": "string"}]})
-    } else {
-        preimage.projected
+        return serde_json::json!({"anyOf": [preimage.projected, {"type": "string"}]});
     }
+    // A newline can rewrite later keys or fold inside a flow scalar; source text is not the final value.
+    let newline_escape = match placement {
+        helm_schema_core::PlainScalarPlacement::Unknown => {
+            serde_json::json!({ "type": "string", "pattern": "[\\r\\n]" })
+        }
+        helm_schema_core::PlainScalarPlacement::BlockValue => {
+            // At a proved block value, the unindented second word cannot continue the first line.
+            serde_json::json!({
+                "type": "string",
+                "pattern": "[\\r\\n]",
+                "not": { "pattern": "^[A-Za-z]+\\n[A-Za-z]+$" },
+            })
+        }
+    };
+    union_schema_list(vec![preimage.projected, newline_escape])
 }
 
-pub(super) fn stringified_plain_scalar_provider_preimage(schema: Value) -> Value {
+pub(super) fn stringified_plain_scalar_provider_preimage(
+    schema: Value,
+    placement: helm_schema_core::PlainScalarPlacement,
+) -> Value {
+    // Raw strings may reparse as structured YAML; its members cannot type the source string.
+    if super::go_format::may_allow_type(&schema, "array")
+        || super::go_format::may_allow_type(&schema, "object")
+    {
+        return super::empty_schema();
+    }
     let preserves_plain_string = schema_covers_strict_plain_scalar_string(&schema);
-    let scalar_preimage = plain_scalar_provider_preimage(schema);
+    let scalar_preimage = plain_scalar_provider_preimage(schema, placement);
     if preserves_plain_string {
         union_schema_list(vec![
             scalar_preimage,

@@ -165,10 +165,18 @@ fn nullable_scalar_preserved_for_with_guarded_render_use() {
         .pointer("/properties/priorityClassName")
         .expect("priorityClassName present");
     assert!(permits_null(priority));
-    assert!(
-        permits_type(priority, "string"),
-        "priorityClassName should also accept the provider string type, got {priority}"
-    );
+    for value in [serde_json::Value::Null, serde_json::json!("priority")] {
+        assert!(
+            schema_accepts_instance(&schema, &serde_json::json!({ "priorityClassName": value })),
+            "the complete schema should accept the rendered nullable/string input {value}, got {schema}"
+        );
+    }
+    for value in [serde_json::json!(true), serde_json::json!(1)] {
+        assert!(
+            !schema_accepts_instance(&schema, &serde_json::json!({ "priorityClassName": value })),
+            "a truthy non-string renders an invalid provider field for {value}, got {schema}"
+        );
+    }
 }
 
 /// A scalar rendered only from a truthy self-guard inside a larger condition

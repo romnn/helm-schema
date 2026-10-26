@@ -113,7 +113,11 @@ fn branch_program(count: usize, literal_first: bool) -> String {
     let mut source = String::from("{{- $value := float64 .Values.input -}}");
     for index in 0..count {
         let keyword = if index == 0 { "if" } else { "else if" };
-        source.push_str(&format!("{{{{- {keyword} eq .Values.branch {index} -}}}}"));
+        source.push_str("{{- ");
+        source.push_str(keyword);
+        source.push_str(" eq .Values.branch ");
+        source.push_str(&index.to_string());
+        source.push_str(" -}}");
         if index == 0 && literal_first {
             source.push_str("{{- $value = 1 -}}");
         } else {
@@ -178,7 +182,7 @@ fn a_type_only_helper_shadow_preserves_legacy_binding_and_scope_updates() {
             .sites()
             .filter(|site| site.rendered())
             .last()
-            .map(|site| site.projected_value())
+            .map(super::super::value::ExecutedSite::projected_value)
     };
     sim_assert_eq!(have: output(&actual), want: output(&baseline));
     assert!(output(&actual).is_some());

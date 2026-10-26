@@ -9,13 +9,13 @@ use crate::value::{ReadCoverage, RuntimeRead};
 
 fn read(index: usize) -> RuntimeRead {
     RuntimeRead {
-        coverage: if index % 2 == 0 {
+        coverage: if index.is_multiple_of(2) {
             ReadCoverage::ExactPath
         } else {
             ReadCoverage::UnknownRegion
         },
         path: ValuesPath::parse(&format!("key{index:04}")),
-        condition: Predicate::truthy_path(&format!("flag{}", index % 3)),
+        condition: Predicate::truthy_path(format!("flag{}", index % 3)),
     }
 }
 

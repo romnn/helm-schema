@@ -3,7 +3,7 @@
 use std::collections::BTreeSet;
 
 use helm_schema_ast::DefineIndex;
-use helm_schema_core::{Predicate, ValuesPath};
+use helm_schema_core::{Conjunction, Guard, GuardValue, Predicate, ValuesPath};
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
@@ -33,11 +33,11 @@ fn records_unresolved_width(value: &crate::value::FrozenValue) -> bool {
 /// A loop's unknown remainder must survive both whole-binding and member reads.
 #[test]
 fn selector_read_of_an_unresolved_binding_keeps_the_unknown_remainder() {
-    let source = indoc! {r#"
+    let source = indoc! {r"
         {{- $cfg := fromYaml .Values.unknown -}}
         {{- range .Values.entries -}}{{- $cfg = $.Values.first -}}{{- end -}}
         {{- $cfg -}}{{- $cfg.child -}}
-    "#};
+    "};
     let execution = execute(source);
     let sites = execution
         .sites()
@@ -68,7 +68,7 @@ fn mixed_selection_read_reports_the_proven_arm_and_the_unresolved_remainder() {
     let proven = sites
         .iter()
         .flat_map(|site| site.value().alternatives())
-        .filter(|arm| arm.coverage_exact())
+        .filter(super::super::value::ValueAlternative::coverage_exact)
         .filter_map(|arm| arm.value().identity().cloned())
         .collect::<BTreeSet<_>>();
     sim_assert_eq!(have: proven, want: BTreeSet::from([ValuesPath::parse("proven")]));
@@ -128,13 +128,49 @@ fn mixed_selection_proves_only_the_decidable_arm() {
 }
 
 #[test]
-fn values_rooted_selector_on_a_values_path_root_records_no_member_obligation() {
+fn values_rooted_selector_on_a_values_path_root_records_strict_member_hosts() {
     let execution = execute(r#"{{ include "rooted" .Values.sub }}"#);
-    sim_assert_eq!(have: execution.observed_facts().captures.iter().filter(|capture| matches!(capture.kind, CaptureKind::MemberAccess { .. })).count(), want: 0);
+    assert_values_rooted_hosts(&execution);
 }
 
 #[test]
-fn values_rooted_direct_selector_on_a_values_path_root_records_no_member_obligation() {
+fn values_rooted_direct_selector_on_a_values_path_root_records_strict_member_hosts() {
     let execution = execute("{{ $ctx := .Values.sub }}{{ $ctx.Values.child }}");
-    sim_assert_eq!(have: execution.observed_facts().captures.iter().filter(|capture| matches!(capture.kind, CaptureKind::MemberAccess { .. })).count(), want: 0);
+    assert_values_rooted_hosts(&execution);
+}
+
+fn assert_values_rooted_hosts(execution: &crate::value::DocumentExecution) {
+    // Below the supplied argument, Values is an ordinary member. An invalid entry stays nil-safe.
+    let live = Predicate::Or(vec![
+        Predicate::from(Guard::Absent {
+            path: ValuesPath::parse("sub"),
+        }),
+        Predicate::from(Guard::Eq {
+            path: ValuesPath::parse("sub"),
+            value: GuardValue::Null,
+        }),
+    ])
+    .negated()
+    .normalize_boolean();
+    let expected = ["sub", "sub.Values"]
+        .map(|path| {
+            Conjunction::new([
+                live.clone(),
+                Predicate::from(Guard::TypeIs {
+                    path: ValuesPath::parse(path),
+                    schema_type: "object".to_owned(),
+                })
+                .negated(),
+            ])
+        })
+        .into_iter()
+        .collect::<BTreeSet<_>>();
+    let actual = execution
+        .observed_facts()
+        .captures
+        .iter()
+        .filter(|capture| matches!(capture.kind, CaptureKind::MemberAccess { .. }))
+        .map(|capture| capture.conjunction.clone())
+        .collect::<BTreeSet<_>>();
+    sim_assert_eq!(have: actual, want: expected);
 }

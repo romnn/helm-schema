@@ -1399,6 +1399,6 @@ fn textual_notes_projection_preserves_read_coverage_without_render_facts() -> ey
     assert!(!evidence.facts.has_non_control_use);
     assert!(!evidence.facts.used_as_fragment);
     assert!(!evidence.facts.used_as_serialized);
-    assert!(evidence.provider_schema_uses.is_empty());
+    sim_assert_eq!(have: evidence.provider_schema_uses, want: Vec::<helm_schema_core::ProviderSchemaUse>::new());
     Ok(())
 }

@@ -1,4 +1,5 @@
 use super::*;
+use color_eyre::eyre::{self, OptionExt as _};
 
 /// an `else` arm that EXECUTES a member access closes the unmatched
 /// scalar domain — `typeIs "string"` dispatch with a structural complement
@@ -202,7 +203,7 @@ fn guard_read_beside_serialized_render_keeps_mapping_open() {
           name: test
         data:
           {{- if .Values.config.server }}
-          port: {{ .Values.config.server.port }}
+          port: {{ .Values.config.server.port | quote }}
           {{- end }}
           config.yaml: |
             {{- toYaml .Values.config | nindent 4 }}
@@ -641,4 +642,66 @@ fn helper_sequence_continuation_requires_its_serialized_source() {
             "helper serialization scope ({label}): instance={instance}; want={want}; schema={schema}"
         );
     }
+}
+
+#[test]
+fn helper_type_permission_keeps_the_full_ambient_dispatch_guard() -> eyre::Result<()> {
+    let helper_src = indoc! {r#"
+        {{- define "test.enabled" -}}
+        {{- if .Values.dispatch -}}
+        {{- if kindIs "map" .Values.autoscaling -}}
+        {{- if .Values.autoscaling.enabled -}}true{{- end -}}
+        {{- else if kindIs "string" .Values.autoscaling -}}
+        {{- .Values.autoscaling -}}
+        {{- end -}}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- if (include "test.enabled" .) }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        dispatch: false
+        autoscaling:
+          enabled: false
+    "};
+    let signals = schema_signals_for(parse_ir_with_helpers(src, helper_src));
+    let evidence = signals
+        .evidence_for(&helm_schema_core::ValuesPath::parse("autoscaling"))
+        .ok_or_eyre("the helper reads autoscaling")?;
+    // The initial kindIs read must not absorb the later scoped type permission.
+    assert!(
+        evidence.conditional_overlays.iter().any(|overlay| {
+            let string_permission = overlay.guards.iter().any(|guard| {
+                matches!(guard, helm_schema_core::ConditionalGuard::TypeIs { path, schema_type }
+                    if path.encode() == "autoscaling" && schema_type == "string")
+            });
+            let ambient_guard = overlay.guards.iter().any(|guard| {
+                matches!(guard, helm_schema_core::ConditionalGuard::Truthy { path }
+                    if path.encode() == "dispatch")
+            });
+            string_permission && ambient_guard
+        }),
+        "the full executed type permission must survive normalization: {evidence:?}"
+    );
+    let schema = schema_for_values_yaml(signals, Some(values_yaml));
+
+    // Executed type arms and dormant inputs all render successfully in Helm.
+    for instance in [
+        serde_json::json!({ "dispatch": true, "autoscaling": "on" }),
+        serde_json::json!({ "dispatch": true, "autoscaling": { "enabled": true } }),
+        serde_json::json!({ "dispatch": false, "autoscaling": { "enabled": false } }),
+        serde_json::json!({ "dispatch": false, "autoscaling": "on" }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "instance={instance}; schema={schema}"
+        );
+    }
+    Ok(())
 }

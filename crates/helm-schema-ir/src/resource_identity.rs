@@ -50,7 +50,7 @@ pub(crate) fn collect_resource_spans(
     let roots = sorted_nodes(document.roots());
     let mut spans = Vec::new();
     for window in document.document_spans() {
-        collect_window_spans(&roots, *window, source, Vec::new(), &mut spans);
+        collect_window_spans(&roots, *window, &source, Vec::new(), &mut spans);
     }
     spans.sort_by(|left, right| {
         left.start
@@ -80,7 +80,7 @@ fn starts_in(byte: usize, window: Span) -> bool {
 fn collect_window_spans(
     nodes: &[&CstNode],
     window: Span,
-    source: IdentitySource<'_>,
+    source: &IdentitySource<'_>,
     path_prefix: Vec<String>,
     out: &mut Vec<ResourceSpan>,
 ) {
@@ -224,7 +224,7 @@ fn collect_header_parts(
     nodes: &[&CstNode],
     window: Span,
     top_indent: usize,
-    source: IdentitySource<'_>,
+    source: &IdentitySource<'_>,
     parts: &mut HeaderParts,
 ) {
     for node in nodes {
@@ -274,7 +274,7 @@ fn collect_if_region(
     region: &ControlRegion,
     window: Span,
     top_indent: usize,
-    source: IdentitySource<'_>,
+    source: &IdentitySource<'_>,
     parts: &mut HeaderParts,
 ) {
     let kind_before = parts.kind.is_some() || !parts.kind_candidates.is_empty();
@@ -354,7 +354,7 @@ fn collect_if_region(
 /// scope of the rows the kind types, not the header's, so a kind written
 /// under a rebound dot proves neither. Read from the Go-template tree: the
 /// YAML layout can let a header entry escape an ill-nested region.
-fn in_rebinding_action(source: IdentitySource<'_>, byte: usize) -> bool {
+fn in_rebinding_action(source: &IdentitySource<'_>, byte: usize) -> bool {
     let mut node = source.root.descendant_for_byte_range(byte, byte);
     while let Some(current) = node {
         if matches!(current.kind(), "with_action" | "range_action") {
@@ -393,7 +393,11 @@ fn values_path_literal_comparison(args: &[TemplateExpr]) -> Option<(String, &Str
     }
 }
 
-fn capture_header_entry(entry: &MappingEntry, source: IdentitySource<'_>, parts: &mut HeaderParts) {
+fn capture_header_entry(
+    entry: &MappingEntry,
+    source: &IdentitySource<'_>,
+    parts: &mut HeaderParts,
+) {
     let Some(key) = source.text.get(entry.key.span.start..entry.key.span.end) else {
         return;
     };
@@ -442,7 +446,7 @@ fn capture_header_entry(entry: &MappingEntry, source: IdentitySource<'_>, parts:
 fn collect_kind_partition_literals(
     nodes: &[&CstNode],
     window: Span,
-    source: IdentitySource<'_>,
+    source: &IdentitySource<'_>,
     selector: &str,
     out: &mut Vec<String>,
 ) {
@@ -490,7 +494,7 @@ fn collect_kind_partition_literals(
 /// Projects a header scalar from the successful execution's frozen text alternatives.
 fn scalar_value_body(
     value: &ScalarParts,
-    source: IdentitySource<'_>,
+    source: &IdentitySource<'_>,
 ) -> (HelperBranchBody, Vec<KindBranchSource>) {
     let span = quoted_scalar_content(value.span, source.text);
     if source
@@ -510,7 +514,7 @@ fn scalar_value_body(
 
 /// Keeps structural inline guards beside the corresponding executed scalar output.
 fn inline_scalar_body(
-    source: IdentitySource<'_>,
+    source: &IdentitySource<'_>,
     span: Span,
 ) -> Option<(HelperBranchBody, Vec<KindBranchSource>)> {
     let mut pending = vec![source.root];
@@ -644,7 +648,7 @@ fn quoted_scalar_content(span: Span, text: &str) -> Span {
 
 /// The parsed condition of an `{{ if … }}` / `{{ else if … }}` branch
 /// header; `None` for a bare `{{ else }}` and for other control headers.
-fn branch_condition_header(source: IdentitySource<'_>, header: Span) -> Option<TemplateHeader> {
+fn branch_condition_header(source: &IdentitySource<'_>, header: Span) -> Option<TemplateHeader> {
     let node = source
         .root
         .descendant_for_byte_range(header.start, header.end)

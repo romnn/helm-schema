@@ -51,16 +51,18 @@ impl Value {
     }
 
     /// A repeated decision selects its matching arm, retaining correlation without a product.
-    pub(super) fn select(decision: Rc<FrozenTest>, yes: Self, no: Self) -> Self {
+    pub(super) fn select(decision: Rc<FrozenTest>, mut yes: Self, mut no: Self) -> Self {
         if let Some(taken) = decision.constant_outcome() {
             return if taken {
-                yes.under(&decision, true)
+                yes = yes.under(&decision, true);
+                yes
             } else {
-                no.under(&decision, false)
+                no = no.under(&decision, false);
+                no
             };
         }
-        let yes = yes.under(&decision, true);
-        let no = no.under(&decision, false);
+        yes = yes.under(&decision, true);
+        no = no.under(&decision, false);
         if yes == no {
             return yes;
         }

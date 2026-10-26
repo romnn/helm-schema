@@ -157,7 +157,8 @@ fn insert_candidate(
         use_.template_supplied_member_keys.clone(),
         use_.split_segment.clone(),
         use_.omitted_members.clone(),
-    );
+    )
+    .with_plain_scalar_placement(use_.plain_scalar_placement);
     let key = CandidateKey {
         resource: use_.resource.clone(),
         path: use_.path.clone(),

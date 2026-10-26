@@ -12,6 +12,7 @@ struct Program<'a> {
     path: Option<&'a str>,
     syntax: &'a crate::analysis_db::ParsedProgramSyntax,
 }
+#[derive(Clone, Copy)]
 struct Window {
     start: usize,
     end: usize,
@@ -97,7 +98,7 @@ impl Executor<'_> {
             let mut next = exits.next_buffer();
             for chunk in exits.into_chunks() {
                 let mut exit = match chunk {
-                    super::window_exits::WindowChunk::Single(exit) => exit,
+                    super::window_exits::WindowChunk::Single(exit) => *exit,
                     super::window_exits::WindowChunk::Terminal(run) => {
                         next.forward(run);
                         continue;
@@ -113,42 +114,7 @@ impl Executor<'_> {
                         render_indent: _,
                     }
                     | ActionKind::Assign => {
-                        let rendered = matches!(action.kind, ActionKind::Output { .. });
-                        let expressions = program
-                            .syntax
-                            .expressions
-                            .at(action.span)
-                            .map(|parsed| parsed.expressions.as_ref())
-                            .unwrap_or_default();
-                        let mut action_exits = normal(exit.state, Value::nil());
-                        for expression in expressions {
-                            let mut evaluated = super::ExitBuffer::default();
-                            for exit in action_exits {
-                                match exit.flow {
-                                    Flow::Normal(_) => evaluated.extend(self.expression(
-                                        expression,
-                                        exit.state,
-                                        action.span.start,
-                                    )),
-                                    flow => evaluated.push(Exit {
-                                        state: exit.state,
-                                        flow,
-                                    }),
-                                }
-                            }
-                            action_exits = evaluated.finish();
-                        }
-                        for mut exit in action_exits {
-                            if let Flow::Normal(value) = &exit.flow {
-                                exit.state.observe(
-                                    action.span,
-                                    program.path,
-                                    &value.value,
-                                    rendered,
-                                );
-                            }
-                            next.push(exit);
-                        }
+                        next.extend(self.output_action(program, action, exit.state));
                     }
                     ActionKind::RegionOpen {
                         region,
@@ -203,6 +169,47 @@ impl Executor<'_> {
             program.source.get(span.start..span.end).unwrap_or_default(),
         );
         exits.into_exits()
+    }
+    fn output_action(
+        &self,
+        program: &Program<'_>,
+        action: TemplateAction,
+        state: State,
+    ) -> Vec<Exit> {
+        let rendered = matches!(action.kind, ActionKind::Output { .. });
+        let expressions = program
+            .syntax
+            .expressions
+            .at(action.span)
+            .map(|parsed| parsed.expressions.as_ref())
+            .unwrap_or_default();
+        let mut action_exits = normal(state, Value::nil());
+        for expression in expressions {
+            let mut evaluated = super::ExitBuffer::default();
+            for exit in action_exits {
+                match exit.flow {
+                    Flow::Normal(_) => {
+                        evaluated.extend(self.expression(
+                            expression,
+                            exit.state,
+                            action.span.start,
+                        ));
+                    }
+                    flow => evaluated.push(Exit {
+                        state: exit.state,
+                        flow,
+                    }),
+                }
+            }
+            action_exits = evaluated.finish();
+        }
+        for exit in &mut action_exits {
+            if let Flow::Normal(value) = &exit.flow {
+                exit.state
+                    .observe(action.span, program.path, &value.value, rendered);
+            }
+        }
+        action_exits
     }
     fn region(
         &self,
@@ -327,16 +334,7 @@ impl Executor<'_> {
         );
         let header =
             node.and_then(|node| helm_schema_ast::range_header_from_source(node, program.source));
-        let expression = header.as_ref().map(|header| header.expr());
-        let key_name = node.and_then(|node| {
-            helm_schema_ast::range_destructured_key_variable(node, program.source)
-        });
-        let value_name = node
-            .and_then(|node| {
-                helm_schema_ast::range_destructured_value_variable(node, program.source)
-            })
-            .or_else(|| expression.and_then(helm_schema_ast::range_variable_name_expr));
-        let assignment = node.is_some_and(helm_schema_ast::range_uses_assignment);
+        let expression = header.as_ref().map(helm_schema_ast::TemplateHeader::expr);
         let source = expression.map(|expression| match expression {
             TemplateExpr::VariableDefinition { value, .. }
             | TemplateExpr::Assignment { value, .. } => value.as_ref(),
@@ -353,6 +351,7 @@ impl Executor<'_> {
             start: opener.span.end,
             end: first_boundary.span.start,
         };
+        let bindings = range_bindings(node, expression, program.source, body);
         let mut results = super::ExitBuffer::default();
         for mut exit in evaluated {
             let Flow::Normal(value) = exit.flow else {
@@ -362,63 +361,30 @@ impl Executor<'_> {
             exit.state.record_container_read(&value.value);
             exit.state
                 .observe(opener.span, program.path, &value.value, false);
-            for name in [key_name.as_deref(), value_name.as_deref()]
+            for name in [bindings.key.as_deref(), bindings.value.as_deref()]
                 .into_iter()
                 .flatten()
             {
-                bind_range(&mut exit.state, name, value.value.clone(), assignment);
+                bind_range(
+                    &mut exit.state,
+                    name,
+                    value.value.clone(),
+                    bindings.assignment,
+                );
             }
             let entries = entries(&exit.state, &value.value);
             if entries.as_ref().is_some_and(|entries| entries.len() > 32) {
                 tracing::debug!(reason = ?super::BoundReason::LoopMembers, "widen range");
             }
             let Some(entries) = entries.filter(|entries| entries.len() <= 32) else {
-                let test = exit.state.heap.arena.decision(
-                    Predicate::False,
-                    Predicate::False,
-                    Coverage::Partial,
-                );
-                let zero = exit.state.fork(Rc::clone(&test), false);
-                results.extend(self.range_else(program, boundaries, zero));
-                let mut state = exit.state.fork(test, true);
-                super::operations::invalidate(&mut state);
-                state.enter_scope(Some(Value::influenced(value.value.inputs())));
-                for name in [key_name.as_deref(), value_name.as_deref()]
-                    .into_iter()
-                    .flatten()
-                {
-                    bind_range(
-                        &mut state,
-                        name,
-                        Value::influenced(value.value.inputs()),
-                        assignment,
-                    );
-                }
-                if let Some(id) = state.loop_id(opener.span.start as u64) {
-                    state.loops.push(id);
-                }
-                let mut body_exits = self.window(
+                results.extend(self.unknown_range(
                     program,
-                    Window {
-                        start: body.start,
-                        end: body.end,
-                    },
-                    normal(state, Value::nil()),
-                );
-                for exit in &mut body_exits {
-                    exit.state.loops.pop();
-                    exit.state.leave_scope();
-                    super::operations::invalidate(&mut exit.state);
-                    exit.flow = Flow::Normal(Normal {
-                        value: Value::unknown(),
-                    });
-                    exit.state.output.emit(
-                        exit.state
-                            .heap
-                            .freeze(&Value::influenced(value.value.inputs())),
-                    );
-                }
-                results.extend(body_exits);
+                    boundaries,
+                    opener,
+                    &exit.state,
+                    &value.value,
+                    &bindings,
+                ));
                 continue;
             };
             if entries.is_empty() {
@@ -429,64 +395,137 @@ impl Executor<'_> {
                 results.extend(normal(exit.state, Value::unknown()));
                 continue;
             };
-            let mut pending = normal(exit.state, Value::nil());
-            let mut breaks = super::ExitBuffer::default();
-            for entry in entries {
-                let mut next = super::ExitBuffer::default();
-                for mut exit in pending {
-                    if !matches!(exit.flow, Flow::Normal(_)) {
-                        next.push(exit);
-                        continue;
-                    }
-                    if let Some(name) = &key_name {
-                        bind_range(&mut exit.state, name, entry.key.clone(), assignment);
-                    }
-                    if let Some(name) = &value_name {
-                        bind_range(&mut exit.state, name, entry.value.clone(), assignment);
-                    }
-                    exit.state.enter_scope(Some(entry.value.clone()));
-                    exit.state.loops.push(id);
-                    let body_exits = self.window(
-                        program,
-                        Window {
-                            start: body.start,
-                            end: body.end,
-                        },
-                        normal(exit.state, Value::nil()),
-                    );
-                    for mut exit in body_exits {
-                        exit.state.loops.pop();
-                        exit.state.leave_scope();
-                        match exit.flow {
-                            Flow::Break(target) if target == id => {
-                                exit.flow = Flow::Normal(Normal {
-                                    value: Value::nil(),
-                                });
-                                breaks.push(exit);
-                            }
-                            Flow::Continue(target) if target == id => {
-                                exit.flow = Flow::Normal(Normal {
-                                    value: Value::nil(),
-                                });
-                                next.push(exit);
-                            }
-                            Flow::Normal(_)
-                            | Flow::Abort(_)
-                            | Flow::Break(_)
-                            | Flow::Continue(_) => next.push(exit),
-                        }
-                    }
-                }
-                pending = next.finish();
-            }
-            results.extend(pending);
-            results.extend(breaks.finish());
+            results.extend(self.range_entries(program, &bindings, entries, id, exit.state));
         }
         let mut results = results.finish();
         for exit in &mut results {
             exit.state.leave_scope();
         }
         results
+    }
+    fn range_entries(
+        &self,
+        program: &Program<'_>,
+        bindings: &RangeBindings,
+        entries: Vec<RangeEntry>,
+        id: super::LoopId,
+        state: State,
+    ) -> Vec<Exit> {
+        let mut pending = normal(state, Value::nil());
+        let mut breaks = super::ExitBuffer::default();
+        for entry in entries {
+            let mut next = super::ExitBuffer::default();
+            for mut exit in pending {
+                if !matches!(exit.flow, Flow::Normal(_)) {
+                    next.push(exit);
+                    continue;
+                }
+                if let Some(name) = &bindings.key {
+                    bind_range(
+                        &mut exit.state,
+                        name,
+                        entry.key.clone(),
+                        bindings.assignment,
+                    );
+                }
+                if let Some(name) = &bindings.value {
+                    bind_range(
+                        &mut exit.state,
+                        name,
+                        entry.value.clone(),
+                        bindings.assignment,
+                    );
+                }
+                exit.state.enter_scope(Some(entry.value.clone()));
+                exit.state.loops.push(id);
+                let body_exits = self.window(
+                    program,
+                    Window {
+                        start: bindings.body.start,
+                        end: bindings.body.end,
+                    },
+                    normal(exit.state, Value::nil()),
+                );
+                for mut exit in body_exits {
+                    exit.state.loops.pop();
+                    exit.state.leave_scope();
+                    match exit.flow {
+                        Flow::Break(target) if target == id => {
+                            exit.flow = Flow::Normal(Normal {
+                                value: Value::nil(),
+                            });
+                            breaks.push(exit);
+                        }
+                        Flow::Continue(target) if target == id => {
+                            exit.flow = Flow::Normal(Normal {
+                                value: Value::nil(),
+                            });
+                            next.push(exit);
+                        }
+                        Flow::Normal(_) | Flow::Abort(_) | Flow::Break(_) | Flow::Continue(_) => {
+                            next.push(exit);
+                        }
+                    }
+                }
+            }
+            pending = next.finish();
+        }
+        pending.extend(breaks.finish());
+        pending
+    }
+    fn unknown_range(
+        &self,
+        program: &Program<'_>,
+        boundaries: &[TemplateAction],
+        opener: TemplateAction,
+        state: &State,
+        value: &Value,
+        bindings: &RangeBindings,
+    ) -> Vec<Exit> {
+        let test = state
+            .heap
+            .arena
+            .decision(Predicate::False, Predicate::False, Coverage::Partial);
+        let zero = state.fork(Rc::clone(&test), false);
+        let mut exits = self.range_else(program, boundaries, zero);
+        let mut state = state.fork(test, true);
+        super::operations::invalidate(&mut state);
+        state.enter_scope(Some(Value::influenced(value.inputs())));
+        for name in [bindings.key.as_deref(), bindings.value.as_deref()]
+            .into_iter()
+            .flatten()
+        {
+            bind_range(
+                &mut state,
+                name,
+                Value::influenced(value.inputs()),
+                bindings.assignment,
+            );
+        }
+        if let Some(id) = state.loop_id(opener.span.start as u64) {
+            state.loops.push(id);
+        }
+        let mut body_exits = self.window(
+            program,
+            Window {
+                start: bindings.body.start,
+                end: bindings.body.end,
+            },
+            normal(state, Value::nil()),
+        );
+        for exit in &mut body_exits {
+            exit.state.loops.pop();
+            exit.state.leave_scope();
+            super::operations::invalidate(&mut exit.state);
+            exit.flow = Flow::Normal(Normal {
+                value: Value::unknown(),
+            });
+            exit.state
+                .output
+                .emit(exit.state.heap.freeze(&Value::influenced(value.inputs())));
+        }
+        exits.extend(body_exits);
+        exits
     }
     fn range_else(
         &self,
@@ -555,7 +594,7 @@ fn entries(state: &State, value: &Value) -> Option<Vec<RangeEntry>> {
         }) => Some(
             (0..slice.length)
                 .map(|index| RangeEntry {
-                    key: Value::literal(GuardValue::Int(index as i64)),
+                    key: range_index(index),
                     value: Value::leaf(Datum::Slot {
                         backing: slice.backing.clone(),
                         index: slice.start + index,
@@ -572,7 +611,7 @@ fn entries(state: &State, value: &Value) -> Option<Vec<RangeEntry>> {
                 .iter()
                 .enumerate()
                 .map(|(index, value)| RangeEntry {
-                    key: Value::literal(GuardValue::Int(index as i64)),
+                    key: range_index(index),
                     value: value.clone(),
                 })
                 .collect(),
@@ -601,11 +640,11 @@ fn entries(state: &State, value: &Value) -> Option<Vec<RangeEntry>> {
             };
             fields
                 .iter()
-                .filter_map(|(key, field)| match field {
+                .filter_map(|(key, field)| match state.consumed_field(field) {
                     super::Field::Absent => None,
                     super::Field::Present(value) => Some(Some(RangeEntry {
                         key: Value::string(key),
-                        value: state.consumed(value),
+                        value: state.consumed(&value),
                     })),
                     super::Field::Unknown
                     | super::Field::Select {
@@ -692,6 +731,9 @@ pub(super) fn summarize_exits(exits: Vec<Exit>) -> Vec<Exit> {
             let mut reads = super::read_set::ReadSet::default();
             for exit in &group {
                 for read in &exit.state.reads {
+                    if read.coverage == super::ReadCoverage::MemberHost {
+                        continue;
+                    }
                     inputs.insert(read.path.clone());
                     reads.insert(super::RuntimeRead {
                         path: read.path.clone(),
@@ -722,6 +764,7 @@ pub(super) fn summarize_exits(exits: Vec<Exit>) -> Vec<Exit> {
                 .state
                 .reads
                 .iter()
+                .filter(|read| read.coverage != super::ReadCoverage::MemberHost)
                 .map(|read| super::RuntimeRead {
                     path: read.path.clone(),
                     coverage: read.coverage,
@@ -744,6 +787,7 @@ pub(super) fn summarize_exits(exits: Vec<Exit>) -> Vec<Exit> {
             representative.state.active = vec![super::DecisionEdge { test, taken: true }];
             representative.state.sites.clear();
             representative.state.text_sites.clear();
+            representative.state.observation_count = super::output::BranchCounts::default();
             representative.state.output = super::TextBuffer::default();
             representative.state.output.emit(
                 representative
@@ -1118,5 +1162,39 @@ impl Reconvergent for Exit {
             state,
             flow: Flow::Normal(Normal { value }),
         }
+    }
+}
+
+fn range_index(index: usize) -> Value {
+    i64::try_from(index).map_or_else(
+        |_| Value::unknown(),
+        |index| Value::literal(GuardValue::Int(index)),
+    )
+}
+
+struct RangeBindings {
+    key: Option<String>,
+    value: Option<String>,
+    assignment: bool,
+    body: Window,
+}
+
+fn range_bindings(
+    node: Option<tree_sitter::Node<'_>>,
+    expression: Option<&TemplateExpr>,
+    source: &str,
+    body: Window,
+) -> RangeBindings {
+    let key_name =
+        node.and_then(|node| helm_schema_ast::range_destructured_key_variable(node, source));
+    let value_name = node
+        .and_then(|node| helm_schema_ast::range_destructured_value_variable(node, source))
+        .or_else(|| expression.and_then(helm_schema_ast::range_variable_name_expr));
+    let assignment = node.is_some_and(helm_schema_ast::range_uses_assignment);
+    RangeBindings {
+        key: key_name,
+        value: value_name,
+        assignment,
+        body,
     }
 }

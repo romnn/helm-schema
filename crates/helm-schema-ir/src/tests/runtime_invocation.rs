@@ -172,10 +172,10 @@ fn comparisons_preserve_typed_nil_and_stop_after_a_match() {
     );
     sim_assert_eq!(have: execution.text().map(|(_, text)| text.exact_text()).collect::<Vec<_>>(), want: vec![Some("true/true/false/true/true".to_owned())]);
     for source in [
-        r#"{{ eq (float64 1) 1 }}"#,
-        r#"{{ eq (dict) (dict) }}"#,
-        r#"{{ eq 1 2 (dict) }}"#,
-        r#"{{ eq 1 }}"#,
+        r"{{ eq (float64 1) 1 }}",
+        r"{{ eq (dict) (dict) }}",
+        r"{{ eq 1 2 (dict) }}",
+        r"{{ eq 1 }}",
     ] {
         sim_assert_eq!(have: execute(source).abort_predicate(), want: Predicate::True);
     }
@@ -183,15 +183,15 @@ fn comparisons_preserve_typed_nil_and_stop_after_a_match() {
 
 #[test]
 fn all_map_alternatives_fail_a_string_parameter_even_with_unknown_nilness() {
-    sim_assert_eq!(have: execute(r#"{{ upper (fromJson .Values.document) }}"#).abort_predicate(), want: Predicate::True);
+    sim_assert_eq!(have: execute(r"{{ upper (fromJson .Values.document) }}").abort_predicate(), want: Predicate::True);
 }
 
 #[test]
 fn direct_map_lookup_nil_fails_before_parameter_conversion() {
     for source in [
-        r#"{{ $d := dict }}{{ keys $d.m }}"#,
+        r"{{ $d := dict }}{{ keys $d.m }}",
         r#"{{ $d := dict "m" nil }}{{ keys $d.m }}"#,
-        r#"{{ keys .Values.m }}"#,
+        r"{{ keys .Values.m }}",
     ] {
         let expected = if source.contains(".Values") {
             Predicate::from(Guard::TypeIs {
@@ -205,9 +205,9 @@ fn direct_map_lookup_nil_fails_before_parameter_conversion() {
         sim_assert_eq!(have: execute(source).abort_predicate(), want: expected);
     }
     for source in [
-        r#"{{ $d := dict }}{{ keys ($d.m) }}"#,
-        r#"{{ $d := dict }}{{ $m := $d.m }}{{ keys $m }}"#,
-        r#"{{ $d := dict }}{{ $d.m | keys }}"#,
+        r"{{ $d := dict }}{{ keys ($d.m) }}",
+        r"{{ $d := dict }}{{ $m := $d.m }}{{ keys $m }}",
+        r"{{ $d := dict }}{{ $d.m | keys }}",
         r#"{{ $d := dict "m" (fromJson "null") }}{{ keys $d.m }}"#,
     ] {
         sim_assert_eq!(have: execute(source).abort_predicate(), want: Predicate::False);
@@ -228,7 +228,7 @@ fn float_zero_equality_uses_numeric_value() {
 
 #[test]
 fn values_yaml_method_is_not_an_input_key() {
-    let execution = execute(r#"{{ upper .Values.YAML }}"#);
+    let execution = execute(r"{{ upper .Values.YAML }}");
     sim_assert_eq!(have: execution.abort_predicate(), want: Predicate::False);
 }
 

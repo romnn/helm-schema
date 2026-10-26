@@ -9,6 +9,7 @@ mod invoke;
 pub(crate) mod kinds;
 mod operations;
 mod output;
+mod output_layout;
 mod query;
 mod read_set;
 pub(crate) mod scalar_value;
@@ -269,11 +270,9 @@ pub(crate) struct FrozenValue {
     value: Value,
 }
 
-#[derive(Clone, Debug)]
-struct FrozenField {
-    heap: Rc<HeapVersion>,
-    field: Field,
-}
+#[cfg(test)]
+#[path = "../tests/runtime_frozen_helpers.rs"]
+mod frozen_test_helpers;
 
 #[derive(Clone, Debug)]
 pub(crate) struct State {
@@ -282,6 +281,8 @@ pub(crate) struct State {
     active: Vec<DecisionEdge>,
     output: TextBuffer,
     output_widened: bool,
+    observation_count: output::BranchCounts,
+    invocation_count: output::BranchCounts,
     sites: history::History<ExecutedSite>,
     text_sites: history::History<ExecutedText>,
     reads: read_set::ReadSet,
@@ -368,6 +369,8 @@ enum ArgumentForm {
 #[derive(Clone, Debug, Default)]
 pub(crate) struct TextBuffer {
     parts: Vec<TextPart>,
+    counts: output::BranchCounts,
+    arena: Option<Rc<Arena>>,
 }
 #[derive(Clone, Debug)]
 enum TextPart {
@@ -380,6 +383,12 @@ enum TextPart {
         no: Rc<TextBuffer>,
     },
 }
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct RawFormatInput {
+    condition: Predicate,
+    path: ValuesPath,
+}
+
 #[derive(Clone, Debug)]
 pub(crate) struct ExecutedSite {
     program: u64,
@@ -392,6 +401,8 @@ pub(crate) struct ExecutedSite {
     source_path: Option<String>,
     condition: Predicate,
     value: FrozenValue,
+    raw_format_inputs: Vec<RawFormatInput>,
+    plain_scalar_placement: helm_schema_core::PlainScalarPlacement,
     rendered: bool,
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -404,6 +415,12 @@ pub(crate) struct ExecutedText {
     span: helm_schema_syntax::Span,
     source_path: Option<String>,
     condition: Predicate,
+}
+
+pub(crate) struct RenderedContainerUse {
+    pub(crate) condition: Predicate,
+    pub(crate) path: ValuesPath,
+    pub(crate) kind: crate::ValueKind,
 }
 #[derive(Debug)]
 pub(crate) struct DocumentExecution {
@@ -550,6 +567,8 @@ enum BoundReason {
     ObjectFields,
     StringSlots,
     OutputTerms,
+    BudgetPredicate,
+    BudgetNodes,
     ExecutionAlternatives,
     LoopMembers,
 }
@@ -558,6 +577,8 @@ enum BoundReason {
 enum ReadCoverage {
     ExactPath,
     UnknownRegion,
+    /// A pristine input is the receiver of an executed member selector.
+    MemberHost,
 }
 
 #[derive(Default)]
@@ -601,6 +622,8 @@ struct CompletedExecution {
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct ExecutedInvocationRecord {
+    condition: Predicate,
+    ordinal: usize,
     invocation: u64,
     program: u64,
     site: u64,
@@ -624,3 +647,15 @@ struct WrapperSentinelSite {
 struct StateBuffer {
     exits: ExitBuffer,
 }
+
+#[cfg(test)]
+#[path = "../tests/runtime_join_output.rs"]
+mod join_output_tests;
+
+#[cfg(test)]
+#[path = "../tests/runtime_member_hosts.rs"]
+mod member_host_tests;
+
+#[cfg(test)]
+#[path = "../tests/runtime_span_text.rs"]
+mod span_text_tests;

@@ -75,30 +75,14 @@ impl Executor<'_> {
                 helper_return: None,
             });
         }
-        if allow_summary {
-            if let Some(plan) = super::shape_summary::certified_plan(source) {
-                return self.complete(CompletionInput::Summarized {
-                    plan,
-                    invocation,
-                    state,
-                });
-            }
+        if allow_summary && let Some(plan) = super::shape_summary::certified_plan(source) {
+            return self.complete(CompletionInput::Summarized {
+                plan,
+                invocation,
+                state,
+            });
         }
-        if function == "tpl"
-            && helm_schema_syntax::TemplatedDocument::parse(source)
-                .actions()
-                .iter()
-                .any(|action| {
-                    matches!(
-                        action.kind,
-                        helm_schema_syntax::ActionKind::RegionOpen {
-                            kind: helm_schema_syntax::ControlKind::Define,
-                            region: _,
-                            region_end: _
-                        }
-                    )
-                })
-        {
+        if function == "tpl" && defines_template(source) {
             state.namespace_unknown = true;
         }
         let output = std::mem::take(&mut state.output);
@@ -126,4 +110,20 @@ impl Executor<'_> {
             }),
         })
     }
+}
+
+fn defines_template(source: &str) -> bool {
+    helm_schema_syntax::TemplatedDocument::parse(source)
+        .actions()
+        .iter()
+        .any(|action| {
+            matches!(
+                action.kind,
+                helm_schema_syntax::ActionKind::RegionOpen {
+                    kind: helm_schema_syntax::ControlKind::Define,
+                    region: _,
+                    region_end: _
+                }
+            )
+        })
 }

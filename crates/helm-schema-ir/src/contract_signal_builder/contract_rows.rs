@@ -503,6 +503,25 @@ pub(super) fn record_contract_use_conjunction(
             acc.referenced = true;
             acc.facts.facts.has_unknown_read_region |=
                 contract_use.kind == ValueKind::WidenedRegion;
+            // A read inside a proven self-type arm retains that dispatch permission,
+            // without inventing a rendered consumer or a path-wide type requirement.
+            if contract_use.kind == ValueKind::WidenedDependency
+                && !predicates.iter().any(Predicate::contains_approximation)
+                && predicates
+                    .iter()
+                    .flat_map(flattened_conjuncts)
+                    .any(|predicate| {
+                        matches!(
+                            predicate.kind(),
+                            helm_schema_core::PredicateKind::Guard(Guard::TypeIs { path, .. })
+                                if path == &source_path
+                        )
+                    })
+                && let Some(guards) = lowerable_conditional_guard_set(contract_use, predicates)
+                && !guards.is_empty()
+            {
+                acc.conditional_overlay_branches.entry(guards).or_default();
+            }
         }
         return;
     }
@@ -862,7 +881,14 @@ pub(super) fn record_contract_use_conjunction(
             provider_route_consumes_raw_string && has_yaml_serialized_use;
         let scoped_consumer_owns_raw_domain =
             matching_string_routes.contains(&crate::observed_facts::StringRequirementRoute::Scoped);
-        let provider_use = (!type_dispatched || complement_dispatched || structural_dispatch_arm)
+        let formatted_projection = matches!(
+            contract_use.kind,
+            ValueKind::GoFormattedMap | ValueKind::GoFormattedSequence
+        ) || contract_use.kind == ValueKind::Scalar && total_stringified;
+        let provider_use = (!type_dispatched
+            || complement_dispatched
+            || structural_dispatch_arm
+            || formatted_projection)
             .then(|| provider_schema_use(contract_use, self_range_guarded, source_null_tolerant))
             .flatten()
             .filter(|provider_use| {

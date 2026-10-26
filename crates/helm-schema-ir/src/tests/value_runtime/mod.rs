@@ -111,10 +111,10 @@ struct SnapshotId {
 /// Forks share only the allocator; immutable versions own every semantic fact.
 #[derive(Debug, Default)]
 struct Arena {
-    next_object: Cell<u64>,
-    next_snapshot: Cell<u64>,
-    next_decision: Cell<u64>,
-    next_call: Cell<u64>,
+    object: Cell<u64>,
+    snapshot: Cell<u64>,
+    decision: Cell<u64>,
+    call: Cell<u64>,
 }
 
 #[derive(Clone, Debug)]

@@ -41,6 +41,7 @@ fn canonicalization_merges_provenance_for_semantically_identical_uses() {
                 Vec::new(),
             )],
             stringified: false,
+            plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
             template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
             merge_layers: None,
@@ -62,6 +63,7 @@ fn canonicalization_merges_provenance_for_semantically_identical_uses() {
                 vec!["helper.render".to_string()],
             )],
             stringified: false,
+            plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
             template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
             merge_layers: None,
@@ -465,4 +467,22 @@ fn reference_drop_self_truthy_subsumed_duplicates(uses: &mut Vec<ContractUse>) {
         .collect::<Vec<_>>();
     let mut keep = keep.into_iter();
     uses.retain(|_| keep.next().unwrap_or(true));
+}
+
+#[test]
+fn normalization_never_lends_a_block_placement_proof_to_an_unknown_context() {
+    let unknown = ContractUse::new(
+        helm_schema_core::ValuesPath::parse("value"),
+        YamlPath(vec!["data".to_string(), "value".to_string()]),
+        ValueKind::Scalar,
+        Vec::new(),
+        None,
+    );
+    let mut block = unknown.clone();
+    block.plain_scalar_placement = helm_schema_core::PlainScalarPlacement::BlockValue;
+    block.condition = helm_schema_core::GuardDnf::from_guards(vec![Guard::Truthy {
+        path: helm_schema_core::ValuesPath::parse("enabled"),
+    }]);
+    let rows = normalize_contract_uses(vec![block.clone(), unknown.clone()], Vec::new(), &[]);
+    sim_assert_eq!(have: rows, want: vec![unknown, block]);
 }

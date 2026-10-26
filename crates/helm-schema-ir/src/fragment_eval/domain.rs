@@ -323,6 +323,8 @@ pub(crate) struct SpliceMeta {
     /// so scalar equality and pattern tests can project through its exact
     /// stringification preimage.
     pub stringified: bool,
+    /// Executed-output layout certificate for this whole scalar occurrence.
+    pub plain_scalar_placement: helm_schema_core::PlainScalarPlacement,
     /// The stringification is Sprig `quote`/`squote`, which SKIP nil
     /// operands: a missing or null source renders an explicit YAML null
     /// into the sink, so provider-required slots still reject absence.
@@ -384,6 +386,7 @@ impl SpliceMeta {
             encoded,
             shape_erased,
             stringified,
+            plain_scalar_placement: _,
             nil_omitted,
             yaml_serialized,
             templated_yaml,
@@ -504,6 +507,46 @@ pub(crate) fn stamp_part_sites(parts: &mut [StringPart], site: Option<&Rc<SiteFa
                     taint.site = site.cloned();
                 }
             }
+        }
+    }
+}
+
+/// Copies a certificate only to whole scalar splices of the same executed occurrence.
+pub(crate) fn stamp_plain_scalar_placement(
+    guarded: &mut Guarded<AbstractFragment>,
+    placement: helm_schema_core::PlainScalarPlacement,
+) {
+    for (_, node) in &mut guarded.arms {
+        match node {
+            AbstractFragment::Scalar(scalar) => {
+                for part in &mut scalar.parts {
+                    match part {
+                        StringPart::Splice(splice)
+                            if matches!(
+                                splice.kind,
+                                ValueKind::Scalar
+                                    | ValueKind::GoFormattedMap
+                                    | ValueKind::GoFormattedSequence
+                            ) =>
+                        {
+                            splice.meta.plain_scalar_placement = placement;
+                        }
+                        StringPart::Text(_) | StringPart::Splice(_) | StringPart::Taint(_) => {}
+                    }
+                }
+            }
+            AbstractFragment::Splice(splice)
+                if matches!(
+                    splice.kind,
+                    ValueKind::Scalar | ValueKind::GoFormattedMap | ValueKind::GoFormattedSequence
+                ) =>
+            {
+                splice.meta.plain_scalar_placement = placement;
+            }
+            AbstractFragment::Mapping(_)
+            | AbstractFragment::Sequence(_)
+            | AbstractFragment::Splice(_)
+            | AbstractFragment::Opaque(_) => {}
         }
     }
 }

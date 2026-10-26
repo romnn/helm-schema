@@ -121,7 +121,11 @@ def read_tsv(name):
 
 def needle_count(key):
     _, path, needle = key.split(":", 2)
-    return (ROOT / SRC / path).read_text().count(needle)
+    try:
+        source = (ROOT / SRC / path).read_text()
+    except FileNotFoundError:
+        return 0
+    return source.count(needle)
 
 
 def relocate(found, rows, relocations):
@@ -213,6 +217,17 @@ def check(found, rows, baseline, landed, producers, relocations=()):
 
 
 def self_test(found, rows, baseline):
+    missing = dict.fromkeys(COLUMNS, "") | {
+        "key": "needle:__inventory_missing_source__.rs:missing producer",
+        "class": "D",
+        "delete": "R3b",
+    }
+    assert needle_count(missing["key"]) == 0, "missing source has a producer"
+    assert any("stale row" in error for error in check({}, [missing], [missing], set(), [])), "missing live needle passed"
+    assert not check({}, [missing], [missing], {"R3b"}, []), "deleted needle requires its old source file"
+    producer = dict(missing, **{"class": "E"})
+    assert any("no producers.tsv mapping" in error for error in check({}, [producer], [producer], {"R3b"}, [])), "deleted source bypassed producer mapping"
+    print("self-test: missing source remains subject to stage and producer checks", file=sys.stderr)
     fake = dict(found)
     fake["field:eval_effect.rs:Effects.parallel_truths"] = "pub(crate) parallel_truths: BTreeMap<String, Predicate>"
     assert any("unclassified" in e for e in check(fake, rows, baseline, set(), [])), "new field passed"

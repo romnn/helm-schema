@@ -30,6 +30,7 @@ fn hpa_merge_layer_use(
         path: YamlPath(vec!["spec".to_string(), "maxReplicas".to_string()]),
         kind: ValueKind::Scalar,
         stringified: false,
+        plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
         resource: ResourceRef::concrete(
             "autoscaling/v2".to_string(),
             "HorizontalPodAutoscaler".to_string(),

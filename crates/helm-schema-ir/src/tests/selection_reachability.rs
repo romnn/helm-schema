@@ -130,7 +130,10 @@ fn exactness_demotes_approximation_and_canonicalizes_true_subsets() {
     assert!(exact.reads().is_empty(), "dead operand was evaluated");
     let partial =
         execute(r#"{{ if or .Values.alpha (printf "%q" .Values.beta) }}selected{{ end }}"#);
-    assert!(selected_condition(&partial) != Predicate::truthy_path("alpha"));
+    assert_ne!(
+        selected_condition(&partial),
+        Predicate::truthy_path("alpha")
+    );
 }
 
 #[test]
@@ -146,7 +149,10 @@ fn complement_preserves_only_invertible_selection_knowledge() {
         sim_assert_eq!(have: selected_condition(&execute(source)), want: expected);
     }
     let partial = execute(r#"{{ if not (printf "%q" .Values.primary) }}selected{{ end }}"#);
-    assert!(selected_condition(&partial) != Predicate::truthy_path("primary").negated());
+    assert_ne!(
+        selected_condition(&partial),
+        Predicate::truthy_path("primary").negated()
+    );
 }
 
 #[test]

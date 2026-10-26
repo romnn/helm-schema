@@ -48,7 +48,7 @@ fn default_type_truth_handles_null_and_truthy_nonstring_primaries() -> eyre::Res
 
 /// Type tests follow the runtime arm selected by an ordered `default` value.
 #[test]
-fn default_type_truth_tracks_the_selected_dynamic_value() -> eyre::Result<()> {
+fn default_type_truth_tracks_the_selected_dynamic_value() {
     let source =
         r#"{{ if typeIs "string" (default "fallback" .Values.primary) }}selected{{ end }}"#;
     let defines = DefineIndex::new();
@@ -68,5 +68,4 @@ fn default_type_truth_tracks_the_selected_dynamic_value() -> eyre::Result<()> {
         })
         .collect::<Vec<_>>();
     sim_assert_eq!(have: Predicate::Or(selected).normalize_boolean(), want: predicate);
-    Ok(())
 }

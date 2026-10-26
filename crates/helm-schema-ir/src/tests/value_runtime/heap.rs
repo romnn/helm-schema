@@ -10,8 +10,8 @@ const OBJECTS_PER_PAGE: u64 = 64;
 
 impl Arena {
     pub(super) fn snapshot(&self) -> SnapshotId {
-        let ordinal = self.next_snapshot.get();
-        self.next_snapshot.set(ordinal + 1);
+        let ordinal = self.snapshot.get();
+        self.snapshot.set(ordinal + 1);
         SnapshotId { ordinal }
     }
 }
@@ -36,8 +36,8 @@ impl Heap {
     }
 
     pub(super) fn allocate(&mut self, data: ObjectData, multiplicity: Multiplicity) -> ObjectId {
-        let ordinal = self.arena.next_object.get();
-        self.arena.next_object.set(ordinal + 1);
+        let ordinal = self.arena.object.get();
+        self.arena.object.set(ordinal + 1);
         let id = ObjectId { ordinal };
         self.install(
             id.clone(),
@@ -287,7 +287,7 @@ impl FrozenValue {
 impl Heap {
     pub(super) fn join(
         &mut self,
-        decision: Rc<FrozenTest>,
+        decision: &Rc<FrozenTest>,
         yes: &Self,
         no: &Self,
     ) -> Result<(), JoinError> {
@@ -316,7 +316,7 @@ impl Heap {
                         )
                         | (Multiplicity::Singleton, Multiplicity::Summary) => Multiplicity::Summary,
                     },
-                    data: join_data(Rc::clone(&decision), &yes.data, &no.data)?,
+                    data: join_data(decision, &yes.data, &no.data)?,
                 },
                 (Some(object), None) | (None, Some(object)) => object.clone(),
                 (None, None) => continue,
@@ -336,7 +336,7 @@ pub(super) enum JoinError {
 }
 
 fn join_data(
-    decision: Rc<FrozenTest>,
+    decision: &Rc<FrozenTest>,
     yes: &ObjectData,
     no: &ObjectData,
 ) -> Result<ObjectData, JoinError> {
@@ -360,7 +360,7 @@ fn join_data(
                 fields.insert(
                     key.clone(),
                     Field::select(
-                        Rc::clone(&decision),
+                        Rc::clone(decision),
                         yes.get(key)
                             .cloned()
                             .unwrap_or_else(|| yes_remainder.missing()),
@@ -381,13 +381,13 @@ fn join_data(
             Ok(ObjectData::Strings(
                 yes.iter()
                     .zip(no)
-                    .map(|(yes, no)| Value::select(Rc::clone(&decision), yes.clone(), no.clone()))
+                    .map(|(yes, no)| Value::select(Rc::clone(decision), yes.clone(), no.clone()))
                     .collect(),
             ))
         }
-        (ObjectData::Strings(_), ObjectData::Strings(_))
-        | (
-            ObjectData::Map {
+        (
+            ObjectData::Strings(_)
+            | ObjectData::Map {
                 fields: _,
                 remainder: _,
             },

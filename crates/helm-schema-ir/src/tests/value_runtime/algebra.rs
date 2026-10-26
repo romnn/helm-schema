@@ -34,9 +34,9 @@ impl Value {
     }
 
     /// A repeated decision selects its matching arm, retaining correlation without a product.
-    pub(super) fn select(decision: Rc<FrozenTest>, yes: Self, no: Self) -> Self {
-        let yes = yes.under(&decision, true);
-        let no = no.under(&decision, false);
+    pub(super) fn select(decision: Rc<FrozenTest>, mut yes: Self, mut no: Self) -> Self {
+        yes = yes.under(&decision, true);
+        no = no.under(&decision, false);
         if yes == no {
             return yes;
         }
@@ -74,8 +74,8 @@ impl Arena {
         when_false: Predicate,
         coverage: Coverage,
     ) -> Rc<FrozenTest> {
-        let id = self.next_decision.get();
-        self.next_decision.set(id + 1);
+        let id = self.decision.get();
+        self.decision.set(id + 1);
         Rc::new(FrozenTest {
             id,
             when_true,

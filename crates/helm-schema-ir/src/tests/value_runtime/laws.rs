@@ -376,7 +376,7 @@ fn heap_join_uses_one_frozen_decision_for_aliases_slots_and_absence() -> eyre::R
     assert!(no.write_slot(&strings, 0, Value::string("no")));
     let child = yes.map(Remainder::Closed);
     assert!(yes.write(&id, "child", Field::Present(child.clone())));
-    heap.join(Rc::clone(&decision), &yes, &no)?;
+    heap.join(&decision, &yes, &no)?;
     sim_assert_eq!(have: heap.version.field(&id, "x"), want: Field::select(Rc::clone(&decision), Field::Present(Value::string("yes")), Field::Absent));
     sim_assert_eq!(have: frozen.read_field("x").field, want: Field::Absent);
     let slot = Value::leaf(Datum::Slot {
@@ -387,7 +387,7 @@ fn heap_join_uses_one_frozen_decision_for_aliases_slots_and_absence() -> eyre::R
     sim_assert_eq!(have: joined.under(&decision, true), want: Value::string("yes"));
     sim_assert_eq!(have: joined.under(&decision, false), want: Value::string("no"));
     assert!(heap.version.object(&target(&child)?).is_some());
-    assert!(heap.join(decision, &yes, &Heap::new()).is_err());
+    assert!(heap.join(&decision, &yes, &Heap::new()).is_err());
     Ok(())
 }
 

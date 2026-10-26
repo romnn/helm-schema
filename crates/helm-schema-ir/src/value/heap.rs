@@ -445,58 +445,11 @@ impl Remainder {
     }
 }
 
-impl FrozenValue {
-    fn field(&self, key: &str) -> Field {
-        match self.value.node.as_ref() {
-            ValueNode::Leaf(Leaf {
-                datum:
-                    Datum::Map {
-                        view: _,
-                        target: Some(id),
-                    },
-                origin: _,
-            }) => self.heap.field(id, key),
-            ValueNode::Leaf(Leaf {
-                datum:
-                    Datum::Scalar {
-                        go_type: _,
-                        content: _,
-                    }
-                    | Datum::Map {
-                        view: _,
-                        target: None,
-                    }
-                    | Datum::Sequence(_)
-                    | Datum::Strings(_)
-                    | Datum::Slot {
-                        backing: _,
-                        index: _,
-                    }
-                    | Datum::Unknown(_),
-                origin: _,
-            }) => Field::Unknown,
-            ValueNode::Select { decision, yes, no } => Field::select(
-                Rc::clone(decision),
-                Self {
-                    heap: Rc::clone(&self.heap),
-                    value: yes.clone(),
-                }
-                .field(key),
-                Self {
-                    heap: Rc::clone(&self.heap),
-                    value: no.clone(),
-                }
-                .field(key),
-            ),
-        }
-    }
-}
-
 impl Heap {
     #[tracing::instrument(skip_all)]
     pub(super) fn join(
         &mut self,
-        decision: Rc<FrozenTest>,
+        decision: &Rc<FrozenTest>,
         yes: &Self,
         no: &Self,
     ) -> Result<(), JoinError> {
@@ -548,87 +501,9 @@ impl Heap {
                 .flat_map(|page| page.keys().cloned())
                 .collect::<std::collections::BTreeSet<_>>();
             for id in ids {
-                let input_path = self.arena.input_paths.borrow().get(&id).cloned();
-                let baseline = ObjectVersion {
-                    revision: self.arena.snapshot(),
-                    multiplicity: Multiplicity::Singleton,
-                    data: ObjectData::Map {
-                        fields: BTreeMap::new(),
-                        remainder: Remainder::Input,
-                    },
-                };
-                let yes_object = yes_version
-                    .object(&id)
-                    .or_else(|| input_path.as_ref().map(|_| &baseline));
-                let no_object = no_version
-                    .object(&id)
-                    .or_else(|| input_path.as_ref().map(|_| &baseline));
-                let object = match (yes_object, no_object) {
-                    (Some(yes), Some(no)) if std::ptr::eq(yes, no) || yes == no => yes.clone(),
-                    (Some(yes_object), Some(no_object)) => {
-                        let ObjectVersion {
-                            revision: _,
-                            multiplicity: yes_multiplicity,
-                            data: yes_data,
-                        } = yes_object;
-                        let ObjectVersion {
-                            revision: _,
-                            multiplicity: no_multiplicity,
-                            data: no_data,
-                        } = no_object;
-                        let mut data =
-                            join_data(Rc::clone(&decision), yes_data, no_data, &mut input_unions)?;
-                        if let ObjectData::Widened { inputs } = &mut data {
-                            let mut added = BTreeSet::new();
-                            for branch in [yes, no] {
-                                match branch.version.object(&id).map(|object| &object.data) {
-                                    Some(ObjectData::Widened { inputs: _ }) | None => {}
-                                    Some(
-                                        ObjectData::Map {
-                                            fields: _,
-                                            remainder: _,
-                                        }
-                                        | ObjectData::Strings(_)
-                                        | ObjectData::Opaque { reachable: _ },
-                                    ) => {
-                                        added.extend(branch.object_inputs(&id));
-                                    }
-                                }
-                            }
-                            added.extend(input_path.iter().cloned());
-                            if !added.is_subset(inputs) {
-                                Rc::make_mut(inputs).extend(added);
-                            }
-                        }
-                        if matches!(&data, ObjectData::Map { fields, remainder: _ } if fields.len() > 128)
-                        {
-                            let mut inputs = yes.object_inputs(&id);
-                            inputs.extend(no.object_inputs(&id));
-                            inputs.extend(input_path.iter().cloned());
-                            data = ObjectData::Widened {
-                                inputs: Rc::new(inputs),
-                            };
-                            tracing::debug!(reason = ?super::BoundReason::ObjectFields, "widen joined map");
-                        }
-                        ObjectVersion {
-                            revision: self.arena.snapshot(),
-                            multiplicity: match (*yes_multiplicity, *no_multiplicity) {
-                                (Multiplicity::Singleton, Multiplicity::Singleton) => {
-                                    Multiplicity::Singleton
-                                }
-                                (
-                                    Multiplicity::Summary,
-                                    Multiplicity::Singleton | Multiplicity::Summary,
-                                )
-                                | (Multiplicity::Singleton, Multiplicity::Summary) => {
-                                    Multiplicity::Summary
-                                }
-                            },
-                            data,
-                        }
-                    }
-                    (Some(object), None) | (None, Some(object)) => object.clone(),
-                    (None, None) => continue,
+                let Some(object) = self.join_object(decision, &id, yes, no, &mut input_unions)?
+                else {
+                    continue;
                 };
                 if self.version.object(&id) != Some(&object) {
                     self.install(id, object);
@@ -636,6 +511,96 @@ impl Heap {
             }
         }
         Ok(())
+    }
+    fn join_object(
+        &self,
+        decision: &Rc<FrozenTest>,
+        id: &ObjectId,
+        yes: &Self,
+        no: &Self,
+        input_unions: &mut BTreeMap<InputPair, Rc<BTreeSet<ValuesPath>>>,
+    ) -> Result<Option<ObjectVersion>, JoinError> {
+        let input_path = self.arena.input_paths.borrow().get(id).cloned();
+        let baseline = ObjectVersion {
+            revision: self.arena.snapshot(),
+            multiplicity: Multiplicity::Singleton,
+            data: ObjectData::Map {
+                fields: BTreeMap::new(),
+                remainder: Remainder::Input,
+            },
+        };
+        let yes_object = yes
+            .version
+            .object(id)
+            .or_else(|| input_path.as_ref().map(|_| &baseline));
+        let no_object = no
+            .version
+            .object(id)
+            .or_else(|| input_path.as_ref().map(|_| &baseline));
+        let object = match (yes_object, no_object) {
+            (Some(yes), Some(no)) if std::ptr::eq(yes, no) || yes == no => yes.clone(),
+            (Some(yes_object), Some(no_object)) => {
+                let ObjectVersion {
+                    revision: _,
+                    multiplicity: yes_multiplicity,
+                    data: yes_data,
+                } = yes_object;
+                let ObjectVersion {
+                    revision: _,
+                    multiplicity: no_multiplicity,
+                    data: no_data,
+                } = no_object;
+                let mut data = join_data(decision, yes_data, no_data, input_unions)?;
+                if let ObjectData::Widened { inputs } = &mut data {
+                    let mut added = BTreeSet::new();
+                    for branch in [yes, no] {
+                        match branch.version.object(id).map(|object| &object.data) {
+                            Some(ObjectData::Widened { inputs: _ }) | None => {}
+                            Some(
+                                ObjectData::Map {
+                                    fields: _,
+                                    remainder: _,
+                                }
+                                | ObjectData::Strings(_)
+                                | ObjectData::Opaque { reachable: _ },
+                            ) => {
+                                added.extend(branch.object_inputs(id));
+                            }
+                        }
+                    }
+                    added.extend(input_path.iter().cloned());
+                    if !added.is_subset(inputs) {
+                        Rc::make_mut(inputs).extend(added);
+                    }
+                }
+                if matches!(&data, ObjectData::Map { fields, remainder: _ } if fields.len() > 128) {
+                    let mut inputs = yes.object_inputs(id);
+                    inputs.extend(no.object_inputs(id));
+                    inputs.extend(input_path.iter().cloned());
+                    data = ObjectData::Widened {
+                        inputs: Rc::new(inputs),
+                    };
+                    tracing::debug!(reason = ?super::BoundReason::ObjectFields, "widen joined map");
+                }
+                ObjectVersion {
+                    revision: self.arena.snapshot(),
+                    multiplicity: match (*yes_multiplicity, *no_multiplicity) {
+                        (Multiplicity::Singleton, Multiplicity::Singleton) => {
+                            Multiplicity::Singleton
+                        }
+                        (
+                            Multiplicity::Summary,
+                            Multiplicity::Singleton | Multiplicity::Summary,
+                        )
+                        | (Multiplicity::Singleton, Multiplicity::Summary) => Multiplicity::Summary,
+                    },
+                    data,
+                }
+            }
+            (Some(object), None) | (None, Some(object)) => object.clone(),
+            (None, None) => return Ok(None),
+        };
+        Ok(Some(object))
     }
 }
 
@@ -654,7 +619,7 @@ struct InputPair {
 }
 
 fn join_data(
-    decision: Rc<FrozenTest>,
+    decision: &Rc<FrozenTest>,
     yes: &ObjectData,
     no: &ObjectData,
     input_unions: &mut BTreeMap<InputPair, Rc<BTreeSet<ValuesPath>>>,
@@ -669,46 +634,13 @@ fn join_data(
                 fields: no,
                 remainder: no_remainder,
             },
-        ) => {
-            let keys = yes
-                .keys()
-                .chain(no.keys())
-                .collect::<std::collections::BTreeSet<_>>();
-            if keys.len() > 128 {
-                return Ok(ObjectData::Widened {
-                    inputs: Default::default(),
-                });
-            }
-            let mut fields = BTreeMap::new();
-            for key in keys {
-                let yes_field = yes
-                    .get(key)
-                    .cloned()
-                    .unwrap_or_else(|| yes_remainder.missing());
-                let no_field = no
-                    .get(key)
-                    .cloned()
-                    .unwrap_or_else(|| no_remainder.missing());
-                if !field_join_fits(&yes_field, &no_field) {
-                    return Ok(ObjectData::Widened {
-                        inputs: Default::default(),
-                    });
-                }
-                fields.insert(
-                    key.clone(),
-                    Field::select(Rc::clone(&decision), yes_field, no_field),
-                );
-            }
-            let remainder = match (yes_remainder, no_remainder) {
-                (Remainder::Closed, Remainder::Closed) => Remainder::Closed,
-                (Remainder::Input, Remainder::Input) => Remainder::Input,
-                (Remainder::Open, Remainder::Open | Remainder::Closed | Remainder::Input)
-                | (Remainder::Closed | Remainder::Input, Remainder::Open)
-                | (Remainder::Input, Remainder::Closed)
-                | (Remainder::Closed, Remainder::Input) => Remainder::Open,
-            };
-            Ok(ObjectData::Map { fields, remainder })
-        }
+        ) => Ok(join_map_data(
+            decision,
+            yes,
+            *yes_remainder,
+            no,
+            *no_remainder,
+        )),
         (ObjectData::Strings(yes), ObjectData::Strings(no)) if yes.len() == no.len() => {
             if yes
                 .iter()
@@ -716,33 +648,19 @@ fn join_data(
                 .any(|(yes, no)| !super::state::value_join_fits(yes, no))
             {
                 return Ok(ObjectData::Widened {
-                    inputs: Default::default(),
+                    inputs: Rc::default(),
                 });
             }
             Ok(ObjectData::Strings(
                 yes.iter()
                     .zip(no)
-                    .map(|(yes, no)| Value::select(Rc::clone(&decision), yes.clone(), no.clone()))
+                    .map(|(yes, no)| Value::select(Rc::clone(decision), yes.clone(), no.clone()))
                     .collect(),
             ))
         }
         (ObjectData::Widened { inputs: yes }, ObjectData::Widened { inputs: no }) => {
             Ok(ObjectData::Widened {
-                inputs: if Rc::ptr_eq(yes, no) || no.is_subset(yes) {
-                    Rc::clone(yes)
-                } else if yes.is_subset(no) {
-                    Rc::clone(no)
-                } else {
-                    let key = InputPair {
-                        yes: Rc::as_ptr(yes),
-                        no: Rc::as_ptr(no),
-                    };
-                    Rc::clone(
-                        input_unions
-                            .entry(key)
-                            .or_insert_with(|| Rc::new(yes.union(no).cloned().collect())),
-                    )
-                },
+                inputs: join_input_sets(yes, no, input_unions),
             })
         }
         (
@@ -782,7 +700,7 @@ fn join_data(
             })
         }
         (
-            ObjectData::Opaque { reachable: _ },
+            ObjectData::Opaque { reachable: _ } | ObjectData::Strings(_),
             ObjectData::Map {
                 fields: _,
                 remainder: _,
@@ -796,50 +714,84 @@ fn join_data(
             }
             | ObjectData::Strings(_),
             ObjectData::Opaque { reachable: _ },
-        ) => Err(JoinError::StorageChanged),
-        (ObjectData::Strings(_), ObjectData::Strings(_))
-        | (
-            ObjectData::Map {
-                fields: _,
-                remainder: _,
-            },
-            ObjectData::Strings(_),
         )
         | (
-            ObjectData::Strings(_),
             ObjectData::Map {
                 fields: _,
                 remainder: _,
             },
+            ObjectData::Strings(_),
         ) => Err(JoinError::StorageChanged),
     }
 }
 
-impl FrozenValue {
-    pub(super) fn read_field(&self, key: &str) -> super::FrozenField {
-        super::FrozenField {
-            heap: Rc::clone(&self.heap),
-            field: self.field(key),
-        }
+fn join_input_sets(
+    yes: &Rc<BTreeSet<ValuesPath>>,
+    no: &Rc<BTreeSet<ValuesPath>>,
+    input_unions: &mut BTreeMap<InputPair, Rc<BTreeSet<ValuesPath>>>,
+) -> Rc<BTreeSet<ValuesPath>> {
+    if Rc::ptr_eq(yes, no) || no.is_subset(yes) {
+        Rc::clone(yes)
+    } else if yes.is_subset(no) {
+        Rc::clone(no)
+    } else {
+        let key = InputPair {
+            yes: Rc::as_ptr(yes),
+            no: Rc::as_ptr(no),
+        };
+        Rc::clone(
+            input_unions
+                .entry(key)
+                .or_insert_with(|| Rc::new(yes.union(no).cloned().collect())),
+        )
     }
 }
 
-impl super::FrozenField {
-    pub(super) fn present(&self) -> Option<FrozenValue> {
-        match &self.field {
-            Field::Present(value) => Some(FrozenValue {
-                heap: Rc::clone(&self.heap),
-                value: self.heap.consume(value),
-            }),
-            Field::Absent
-            | Field::Unknown
-            | Field::Select {
-                decision: _,
-                yes: _,
-                no: _,
-            } => None,
-        }
+fn join_map_data(
+    decision: &Rc<FrozenTest>,
+    yes: &BTreeMap<String, Field>,
+    yes_remainder: Remainder,
+    no: &BTreeMap<String, Field>,
+    no_remainder: Remainder,
+) -> ObjectData {
+    let keys = yes
+        .keys()
+        .chain(no.keys())
+        .collect::<std::collections::BTreeSet<_>>();
+    if keys.len() > 128 {
+        return ObjectData::Widened {
+            inputs: Rc::default(),
+        };
     }
+    let mut fields = BTreeMap::new();
+    for key in keys {
+        let yes_field = yes
+            .get(key)
+            .cloned()
+            .unwrap_or_else(|| yes_remainder.missing());
+        let no_field = no
+            .get(key)
+            .cloned()
+            .unwrap_or_else(|| no_remainder.missing());
+        if !field_join_fits(&yes_field, &no_field) {
+            return ObjectData::Widened {
+                inputs: Rc::default(),
+            };
+        }
+        fields.insert(
+            key.clone(),
+            Field::select(Rc::clone(decision), yes_field, no_field),
+        );
+    }
+    let remainder = match (yes_remainder, no_remainder) {
+        (Remainder::Closed, Remainder::Closed) => Remainder::Closed,
+        (Remainder::Input, Remainder::Input) => Remainder::Input,
+        (Remainder::Open, Remainder::Open | Remainder::Closed | Remainder::Input)
+        | (Remainder::Closed | Remainder::Input, Remainder::Open)
+        | (Remainder::Input, Remainder::Closed)
+        | (Remainder::Closed, Remainder::Input) => Remainder::Open,
+    };
+    ObjectData::Map { fields, remainder }
 }
 
 impl Heap {
@@ -907,10 +859,10 @@ impl Heap {
 }
 
 fn field_join_fits(yes: &Field, no: &Field) -> bool {
-    if let (Field::Present(yes), Field::Present(no)) = (yes, no) {
-        if Rc::ptr_eq(&yes.node, &no.node) {
-            return true;
-        }
+    if let (Field::Present(yes), Field::Present(no)) = (yes, no)
+        && Rc::ptr_eq(&yes.node, &no.node)
+    {
+        return true;
     }
     let mut pending = vec![yes, no];
     let mut leaves = 0;

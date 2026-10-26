@@ -475,6 +475,7 @@ fn wildcard_source_path_types_both_collection_lanes_without_empty_variant() {
         resource: Some(ResourceRef::concrete("v1".to_string(), "Pod".to_string())),
         provenance: Vec::new(),
         stringified: false,
+        plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
         template_supplied_member_keys: std::collections::BTreeSet::default(),
         split_segment: None,
         merge_layers: None,

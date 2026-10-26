@@ -6,6 +6,23 @@ use crate::{HelperBranch, Predicate, ValuesPath};
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct YamlPath(pub Vec<String>);
 
+/// Positive placement knowledge from a parsed executed-output scaffold.
+///
+/// This certifies context for bounded preimages, not the input's value or rendered bytes.
+#[derive(
+    Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize,
+)]
+pub enum PlainScalarPlacement {
+    /// The output context has no positive block-value proof.
+    #[default]
+    Unknown,
+    /// One unknown emission fills a plain block-map or block-sequence value without flow ancestors.
+    ///
+    /// Arbitrary inputs may still change the document. This permits only explicitly justified
+    /// context-sensitive preimages, rather than a general claim that layout survives substitution.
+    BlockValue,
+}
+
 /// How a value contributes to rendered YAML.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum ValueKind {
@@ -35,6 +52,12 @@ pub enum ValueKind {
     ///
     /// This withdraws inferred member closure without claiming a container kind.
     WidenedRegion = 7,
+    /// A raw map contributes Go-formatted text in a complete YAML scalar slot.
+    /// Only bounded safe-content subsets can prove its resulting YAML type.
+    GoFormattedMap = 8,
+    /// A raw sequence contributes Go-formatted text in a complete YAML scalar slot.
+    /// Its source items never identify the reparsed YAML items.
+    GoFormattedSequence = 9,
 }
 
 /// One arm of a values-predicate-selected `kind:` chain

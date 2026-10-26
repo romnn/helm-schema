@@ -506,6 +506,7 @@ pub(crate) fn collect_conditional_schemas(
             ));
         }
 
+        let mut type_permissions = Vec::new();
         for (overlay_index, overlay) in evidence.conditional_overlays.iter().enumerate() {
             let flavor = match overlay.flavor {
                 helm_schema_core::ConditionalOverlayFlavor::Ordinary => ConditionalFlavor::Ordinary,
@@ -533,6 +534,10 @@ pub(crate) fn collect_conditional_schemas(
             else {
                 continue;
             };
+            if is_read_type_permission(target_value_path, overlay) {
+                type_permissions.push(overlay.guards.clone());
+                continue;
+            }
             let ancestor_segments = nested_guard_scopes
                 .first()
                 .filter(|_| outer_guards.is_empty())
@@ -644,6 +649,7 @@ pub(crate) fn collect_conditional_schemas(
                 values_yaml_doc,
                 acceptance_memo: &mut acceptance_memo,
                 declared_types,
+                provider_resolutions,
             };
             let target_schema = conditional_target_schema(
                 target_value_path,
@@ -654,15 +660,21 @@ pub(crate) fn collect_conditional_schemas(
                 resolved_target.schema.clone(),
                 active_by_defaults,
             );
+            let implied_by_guard = overlay
+                .guards
+                .iter()
+                .any(|guard| type_guard_implies_schema(guard, target_value_path, &target_schema));
+            let target_schema = if implied_by_guard {
+                crate::schema_model::empty_schema()
+            } else {
+                target_schema
+            };
             if crate::schema_model::is_empty_schema(&target_schema) {
-                // A branch whose renders are all serialized proves the wider
-                // contract inside that branch, so it carries no schema; it
-                // stays a conditional TARGET so base classification still
-                // uncloses/opens the base the way the guarded renders
-                // demand. Mixed branches resolve their own evidence above,
-                // so a stringified occurrence never erases an independent
-                // stricter sibling.
-                if overlay.evidence.facts.used_as_serialized
+                // A vacuous assertion still owns its branch's base policy. Serialized arms
+                // retain the same empty marker; independently resolved siblings keep their
+                // stricter contracts.
+                if implied_by_guard
+                    || overlay.evidence.facts.used_as_serialized
                     || overlay.evidence.facts.used_as_yaml_serialized
                 {
                     conditionals.push(LoweredConjunct::schema(
@@ -715,6 +727,13 @@ pub(crate) fn collect_conditional_schemas(
                 .overlays
                 .push(overlay_decision);
         }
+        append_type_permission_fallback(
+            &mut conditionals,
+            target_value_path,
+            resolved_target,
+            type_permissions,
+            declared_types,
+        );
     }
 
     append_merge_shadow_arms(
@@ -730,8 +749,213 @@ pub(crate) fn collect_conditional_schemas(
     (conditionals, insertion_abstentions)
 }
 
+fn is_read_type_permission(target: &ValuesPath, overlay: &ConditionalPathOverlay) -> bool {
+    let evidence = &overlay.evidence;
+    !evidence.facts.has_render_use
+        && !evidence.facts.has_string_contract
+        && !evidence.facts.is_ranged_source
+        && !evidence.facts.used_as_serialized
+        && !evidence.facts.used_as_yaml_serialized
+        && evidence.range_domain.is_none()
+        && evidence.provider_schema_uses.is_empty()
+        && evidence.type_hints.is_empty()
+        && evidence.metadata_field_kinds.is_empty()
+        && overlay
+            .guards
+            .iter()
+            .any(|guard| positive_self_type(guard, target))
+}
+
+fn positive_self_type(guard: &ConditionalGuard, target: &ValuesPath) -> bool {
+    match guard {
+        ConditionalGuard::TypeIs {
+            path,
+            schema_type: _,
+        } => path == target,
+        ConditionalGuard::AllOf(guards) => {
+            guards.iter().any(|guard| positive_self_type(guard, target))
+        }
+        ConditionalGuard::Truthy { path: _ }
+        | ConditionalGuard::With { path: _ }
+        | ConditionalGuard::Eq { path: _, value: _ }
+        | ConditionalGuard::NotEq { path: _, value: _ }
+        | ConditionalGuard::Absent { path: _ }
+        | ConditionalGuard::MatchesPattern {
+            path: _,
+            pattern: _,
+        }
+        | ConditionalGuard::IntGt { path: _, bound: _ }
+        | ConditionalGuard::IntLt { path: _, bound: _ }
+        | ConditionalGuard::HasKey { path: _, key: _ }
+        | ConditionalGuard::ContainsMemberEquals {
+            path: _,
+            member: _,
+            value: _,
+        }
+        | ConditionalGuard::ContainsTruthyMember { path: _, member: _ }
+        | ConditionalGuard::ContainsEquals { path: _, value: _ }
+        | ConditionalGuard::AtMostOneMember { path: _ }
+        | ConditionalGuard::MinMembers { path: _, bound: _ }
+        | ConditionalGuard::Not(_)
+        | ConditionalGuard::AnyOf(_) => false,
+    }
+}
+
+fn type_guard_implies_schema(
+    guard: &ConditionalGuard,
+    target: &ValuesPath,
+    schema: &Value,
+) -> bool {
+    match guard {
+        ConditionalGuard::TypeIs { path, schema_type } => {
+            path == target && schema_contains_type(schema, schema_type)
+        }
+        ConditionalGuard::AllOf(guards) => guards
+            .iter()
+            .any(|guard| type_guard_implies_schema(guard, target, schema)),
+        ConditionalGuard::AnyOf(guards) => guards
+            .iter()
+            .all(|guard| type_guard_implies_schema(guard, target, schema)),
+        ConditionalGuard::Truthy { path: _ }
+        | ConditionalGuard::With { path: _ }
+        | ConditionalGuard::Eq { path: _, value: _ }
+        | ConditionalGuard::NotEq { path: _, value: _ }
+        | ConditionalGuard::Absent { path: _ }
+        | ConditionalGuard::MatchesPattern {
+            path: _,
+            pattern: _,
+        }
+        | ConditionalGuard::IntGt { path: _, bound: _ }
+        | ConditionalGuard::IntLt { path: _, bound: _ }
+        | ConditionalGuard::HasKey { path: _, key: _ }
+        | ConditionalGuard::ContainsMemberEquals {
+            path: _,
+            member: _,
+            value: _,
+        }
+        | ConditionalGuard::ContainsTruthyMember { path: _, member: _ }
+        | ConditionalGuard::ContainsEquals { path: _, value: _ }
+        | ConditionalGuard::AtMostOneMember { path: _ }
+        | ConditionalGuard::MinMembers { path: _, bound: _ }
+        | ConditionalGuard::Not(_) => false,
+    }
+}
+
+fn schema_contains_type(schema: &Value, schema_type: &str) -> bool {
+    if schema == &Value::Bool(true) || crate::schema_model::is_empty_schema(schema) {
+        return true;
+    }
+    let Some(object) = schema.as_object().filter(|object| object.len() == 1) else {
+        return false;
+    };
+    // Only complete type arms discharge an assertion; constrained or exclusive arms cannot.
+    if let Some(value) = object.get("type") {
+        let covers = |value: &Value| {
+            value.as_str().is_some_and(|name| {
+                name == schema_type || name == "number" && schema_type == "integer"
+            })
+        };
+        return value
+            .as_array()
+            .map_or_else(|| covers(value), |types| types.iter().any(covers));
+    }
+    if let Some(arms) = object.get("anyOf").and_then(Value::as_array) {
+        return arms
+            .iter()
+            .any(|arm| schema_contains_type(arm, schema_type));
+    }
+    object
+        .get("allOf")
+        .and_then(Value::as_array)
+        .is_some_and(|arms| {
+            arms.iter()
+                .all(|arm| schema_contains_type(arm, schema_type))
+        })
+}
+
+fn append_type_permission_fallback(
+    conditionals: &mut Vec<LoweredConjunct>,
+    target: &ValuesPath,
+    resolved: &ResolvedPathSchema,
+    permissions: Vec<Vec<ConditionalGuard>>,
+    declared_types: crate::DeclaredTypes,
+) {
+    if permissions.is_empty()
+        || (crate::schema_model::is_empty_schema(&resolved.schema)
+            && resolved.independent_base_contract.is_none())
+        || conditionals.iter().any(|conditional| {
+            conditional.carrier.target_value_path == *target
+                && matches!(
+                    conditional.carrier.base_effect,
+                    ConditionalBaseEffect::Own | ConditionalBaseEffect::Preserve
+                )
+        })
+    {
+        return;
+    }
+    // Only declaration supplies the fallback; guarded runtime hints are not unconditional contracts.
+    // An empty fallback still owns the base, while independent consumers remain below.
+    // Serialization already discarded the declaration's type; the fallback cannot restore it.
+    let declaration = if resolved.used_as_serialized {
+        crate::schema_model::empty_schema()
+    } else {
+        crate::values_yaml::declared_shape_alone(
+            declared_types,
+            resolved.values_yaml_schema.clone(),
+        )
+    };
+    let guards = vec![ConditionalGuard::Not(Box::new(ConditionalGuard::AnyOf(
+        permissions
+            .into_iter()
+            .map(ConditionalGuard::AllOf)
+            .collect(),
+    )))];
+    let target_segments = &resolved.path_segments;
+    let Some((outer_guards, nested_guard_scopes)) =
+        partition_guard_scopes(target_segments, &guards)
+    else {
+        return;
+    };
+    let ancestor_segments = conditional_ancestor_segments(target_segments, &outer_guards);
+    conditionals.push(LoweredConjunct::schema(
+        EmissionOrigin::Overlay,
+        ConditionalFlavor::Ordinary,
+        target.clone(),
+        ancestor_segments.clone(),
+        target_segments
+            .get(ancestor_segments.len()..)
+            .unwrap_or_default()
+            .to_vec(),
+        outer_guards,
+        nested_guard_scopes,
+        SchemaNode::from_value(declaration),
+        None,
+        ConditionalBaseEffect::Own,
+        false,
+    ));
+    if let Some(independent) = &resolved.independent_base_contract {
+        conditionals.push(LoweredConjunct::schema(
+            EmissionOrigin::Overlay,
+            ConditionalFlavor::Ordinary,
+            target.clone(),
+            Vec::new(),
+            target_segments.clone(),
+            Vec::new(),
+            Vec::new(),
+            independent.schema(),
+            None,
+            ConditionalBaseEffect::None,
+            false,
+        ));
+    }
+}
+
 mod conditional_constraints;
 mod member_projection;
+
+#[cfg(test)]
+#[path = "tests/overlay_type_implication.rs"]
+mod tests;
 
 pub(crate) use conditional_constraints::{
     ConditionalHostPreparation, append_selected_constraints, append_terminal_clauses,

@@ -52,7 +52,7 @@ fn selected_condition(source: &str) -> Predicate {
 
 #[test]
 fn unconditioned_binding_join_keeps_values_but_proves_no_mixed_mode_arm() {
-    let source = r#"{{ $value := ternary .Values.direct .Values.evaluated (regexMatch .Values.pattern .Values.unknown) }}{{ $value }}"#;
+    let source = r"{{ $value := ternary .Values.direct .Values.evaluated (regexMatch .Values.pattern .Values.unknown) }}{{ $value }}";
     let execution = execute(source);
     let sites = execution
         .sites()
@@ -73,7 +73,7 @@ fn unconditioned_binding_join_keeps_values_but_proves_no_mixed_mode_arm() {
 
 #[test]
 fn partial_binding_decision_keeps_proven_subsets_and_unresolved_remainder() {
-    let source = r#"{{ $value := ternary .Values.direct .Values.evaluated (or .Values.select_true (regexMatch .Values.pattern .Values.unknown)) }}{{ $value }}"#;
+    let source = r"{{ $value := ternary .Values.direct .Values.evaluated (or .Values.select_true (regexMatch .Values.pattern .Values.unknown)) }}{{ $value }}";
     let execution = execute(source);
     let sites = execution
         .sites()
@@ -107,12 +107,12 @@ fn unrelated_unknown_binding_decisions_do_not_compare_as_the_same_execution() {
 
 #[test]
 fn two_independent_unknown_decisions_expose_both_leaves_with_unresolved_remainder() {
-    let source = indoc! {r#"
+    let source = indoc! {r"
         {{- $value := .Values.third -}}
         {{- if regexMatch .Values.pattern .Values.unknown1 -}}{{- $value = .Values.first -}}
         {{- else if regexMatch .Values.pattern .Values.unknown2 -}}{{- $value = .Values.second -}}{{- end -}}
         {{- $value -}}
-    "#};
+    "};
     let paths = inputs(source);
     for path in ["first", "second", "third"] {
         assert!(
@@ -153,9 +153,14 @@ fn branch_program(count: usize) -> String {
     let mut source = String::from("{{- $value := \"0\" -}}");
     for index in 1..count {
         let keyword = if index == 1 { "if" } else { "else if" };
-        source.push_str(&format!(
-            "{{{{- {keyword} eq .Values.branch {index} -}}}}{{{{- $value = \"{index}\" -}}}}"
-        ));
+        source.push_str("{{- ");
+        source.push_str(keyword);
+        source.push_str(" eq .Values.branch ");
+        let index_text = index.to_string();
+        source.push_str(&index_text);
+        source.push_str(" -}}{{- $value = \"");
+        source.push_str(&index_text);
+        source.push_str("\" -}}");
     }
     source.push_str("{{- end -}}{{- $value -}}");
     source
@@ -217,12 +222,12 @@ fn snapshot_restore_replaces_all_local_state_maps() {
 
 #[test]
 fn local_scope_restores_shadowed_fragment_value() {
-    sim_assert_eq!(have: identities(r#"{{ $name := .Values.outer }}{{ if true }}{{ $name := .Values.inner }}{{ end }}{{ $name }}"#), want: BTreeSet::from([ValuesPath::parse("outer")]));
+    sim_assert_eq!(have: identities(r"{{ $name := .Values.outer }}{{ if true }}{{ $name := .Values.inner }}{{ end }}{{ $name }}"), want: BTreeSet::from([ValuesPath::parse("outer")]));
 }
 
 #[test]
 fn local_scope_keeps_assignment_to_outer_fragment_value() {
-    sim_assert_eq!(have: identities(r#"{{ $name := .Values.outer }}{{ if true }}{{ $name = .Values.assigned }}{{ end }}{{ $name }}"#), want: BTreeSet::from([ValuesPath::parse("assigned")]));
+    sim_assert_eq!(have: identities(r"{{ $name := .Values.outer }}{{ if true }}{{ $name = .Values.assigned }}{{ end }}{{ $name }}"), want: BTreeSet::from([ValuesPath::parse("assigned")]));
 }
 
 #[test]
@@ -247,12 +252,12 @@ fn local_scope_restores_range_domain_shadowing_outer_binding() {
 
 #[test]
 fn local_scope_restores_default_paths_for_shadowed_declaration() {
-    sim_assert_eq!(have: inputs(r#"{{ $name := default .Values.outer.default .Values.outer }}{{ if true }}{{ $name := default .Values.inner.default .Values.inner }}{{ end }}{{ $name }}"#), want: BTreeSet::from([ValuesPath::parse("outer.default"), ValuesPath::parse("outer")]));
+    sim_assert_eq!(have: inputs(r"{{ $name := default .Values.outer.default .Values.outer }}{{ if true }}{{ $name := default .Values.inner.default .Values.inner }}{{ end }}{{ $name }}"), want: BTreeSet::from([ValuesPath::parse("outer.default"), ValuesPath::parse("outer")]));
 }
 
 #[test]
 fn local_scope_keeps_default_paths_for_outer_assignment() {
-    sim_assert_eq!(have: inputs(r#"{{ $name := default .Values.outer.default .Values.outer }}{{ if true }}{{ $name = default .Values.assigned.default .Values.assigned }}{{ end }}{{ $name }}"#), want: BTreeSet::from([ValuesPath::parse("assigned.default"), ValuesPath::parse("assigned")]));
+    sim_assert_eq!(have: inputs(r"{{ $name := default .Values.outer.default .Values.outer }}{{ if true }}{{ $name = default .Values.assigned.default .Values.assigned }}{{ end }}{{ $name }}"), want: BTreeSet::from([ValuesPath::parse("assigned.default"), ValuesPath::parse("assigned")]));
 }
 
 #[test]

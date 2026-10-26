@@ -40,6 +40,7 @@ fn provider_use(resource: ResourceRef) -> ProviderSchemaUse {
         path: YamlPath(vec!["spec".to_string()]),
         kind: ValueKind::Scalar,
         stringified: false,
+        plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
         resource,
         is_self_range_collection: false,
         template_supplied_member_keys: std::collections::BTreeSet::default(),

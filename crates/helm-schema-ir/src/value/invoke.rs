@@ -15,6 +15,10 @@ struct Assembled {
     values: Vec<Operand>,
     pipe: Option<Value>,
 }
+struct ArgumentAssembly<'a> {
+    next: &'a mut AssembledBuffer,
+    exits: &'a mut super::ExitBuffer,
+}
 struct ValuePlan {
     value: Value,
     normal: Rc<super::FrozenTest>,
@@ -69,7 +73,7 @@ impl Executor<'_> {
             }];
         }
         if matches!(function, "and" | "or") {
-            let exits = self.short_circuit(function, arguments, pipe, state, site);
+            let exits = self.short_circuit(function, arguments, pipe.as_ref(), state, site);
             return self
                 .complete(CompletionInput::Executed {
                     invocation: Invocation {
@@ -91,62 +95,16 @@ impl Executor<'_> {
         for (index, expression) in arguments.iter().enumerate() {
             let mut next = AssembledBuffer::default();
             for assembled in pending {
-                for exit in self.expression(expression, assembled.state, site) {
-                    match exit.flow {
-                        Flow::Normal(normal) => {
-                            let value =
-                                match contextual_literal(expression, semantics.parameter(index)) {
-                                    Ok(Some(value)) => value,
-                                    Ok(None) => normal.value,
-                                    Err(reason) => {
-                                        exits.push(Exit {
-                                            state: exit.state,
-                                            flow: Flow::Abort(reason),
-                                        });
-                                        continue;
-                                    }
-                                };
-                            for validated in super::kinds::validate_parameter(
-                                exit.state,
-                                value,
-                                semantics.parameter(index),
-                                argument_form(expression),
-                            ) {
-                                match validated.flow {
-                                    Flow::Normal(normal) => {
-                                        let mut values = assembled.values.clone();
-                                        values.push(Operand {
-                                            value: normal.value,
-                                            site: site as u64,
-                                            form: argument_form(expression),
-                                        });
-                                        next.push(Assembled {
-                                            state: validated.state,
-                                            values,
-                                            pipe: assembled.pipe.clone(),
-                                        });
-                                    }
-                                    Flow::Abort(reason) => exits.push(Exit {
-                                        state: validated.state,
-                                        flow: Flow::Abort(reason),
-                                    }),
-                                    Flow::Break(loop_id) => exits.push(Exit {
-                                        state: validated.state,
-                                        flow: Flow::Break(loop_id),
-                                    }),
-                                    Flow::Continue(loop_id) => exits.push(Exit {
-                                        state: validated.state,
-                                        flow: Flow::Continue(loop_id),
-                                    }),
-                                }
-                            }
-                        }
-                        flow => exits.push(Exit {
-                            state: exit.state,
-                            flow,
-                        }),
-                    }
-                }
+                self.assemble_argument(
+                    expression,
+                    assembled,
+                    semantics.parameter(index),
+                    site,
+                    &mut ArgumentAssembly {
+                        next: &mut next,
+                        exits: &mut exits,
+                    },
+                );
             }
             pending = next.finish();
         }
@@ -196,11 +154,76 @@ impl Executor<'_> {
         }
         super::control::reconverge(exits.finish())
     }
+    fn assemble_argument(
+        &self,
+        expression: &TemplateExpr,
+        assembled: Assembled,
+        expected: Option<GoType>,
+        site: usize,
+        buffers: &mut ArgumentAssembly<'_>,
+    ) {
+        for exit in self.expression(expression, assembled.state, site) {
+            match exit.flow {
+                Flow::Normal(normal) => {
+                    let value = match contextual_literal(expression, expected) {
+                        Ok(Some(value)) => value,
+                        Ok(None) => normal.value,
+                        Err(reason) => {
+                            buffers.exits.push(Exit {
+                                state: exit.state,
+                                flow: Flow::Abort(reason),
+                            });
+                            continue;
+                        }
+                    };
+                    for validated in super::kinds::validate_parameter(
+                        exit.state,
+                        value,
+                        expected,
+                        argument_form(expression),
+                    ) {
+                        match validated.flow {
+                            Flow::Normal(normal) => {
+                                let mut values = assembled.values.clone();
+                                values.push(Operand {
+                                    value: normal.value,
+                                    site: site as u64,
+                                    form: argument_form(expression),
+                                });
+                                buffers.next.push(Assembled {
+                                    state: validated.state,
+                                    values,
+                                    pipe: assembled.pipe.clone(),
+                                });
+                            }
+                            Flow::Abort(reason) => buffers.exits.push(Exit {
+                                state: validated.state,
+                                flow: Flow::Abort(reason),
+                            }),
+                            Flow::Break(loop_id) => buffers.exits.push(Exit {
+                                state: validated.state,
+                                flow: Flow::Break(loop_id),
+                            }),
+                            Flow::Continue(loop_id) => buffers.exits.push(Exit {
+                                state: validated.state,
+                                flow: Flow::Continue(loop_id),
+                            }),
+                        }
+                    }
+                }
+                flow => buffers.exits.push(Exit {
+                    state: exit.state,
+                    flow,
+                }),
+            }
+        }
+    }
+
     fn short_circuit(
         &self,
         function: &str,
         arguments: &[TemplateExpr],
-        pipe: Option<Value>,
+        pipe: Option<&Value>,
         state: State,
         site: usize,
     ) -> Vec<Exit> {
@@ -245,7 +268,7 @@ impl Executor<'_> {
             pending = next.finish();
         }
         for state in pending {
-            result.extend(normal(state, pipe.clone().unwrap_or_else(Value::nil)));
+            result.extend(normal(state, pipe.cloned().unwrap_or_else(Value::nil)));
         }
         result.finish()
     }
@@ -263,9 +286,9 @@ impl Executor<'_> {
                     let plan = transfer_values(&invocation, &mut state, &mut remaining);
                     finish_value_plan(plan, state)
                 } else if matches!(function.as_str(), "eq" | "ne") {
-                    self.transfer_invocation(&invocation, state)
+                    Self::transfer_invocation(&invocation, state)
                 } else {
-                    self.transfer_alternatives(&invocation, state, &mut remaining)
+                    Self::transfer_alternatives(&invocation, state, &mut remaining)
                 };
                 CompletedExecution {
                     invocation,
@@ -321,18 +344,18 @@ impl Executor<'_> {
                 }
                 wrapper = helper.wrapper.clone();
             }
-            if exit.state.invocations.len() < 128 {
+            for slot in exit.state.reserve_invocation() {
                 exit.state
                     .invocations
                     .push(super::ExecutedInvocationRecord {
+                        condition: slot.condition,
+                        ordinal: slot.ordinal,
                         invocation,
                         program: exit.state.program,
                         site: completed.invocation.site,
                         function: function.clone(),
-                        wrapper,
+                        wrapper: wrapper.clone(),
                     });
-            } else {
-                exit.state.invocation_records_complete = false;
             }
         }
         CallOutcome {
@@ -340,7 +363,6 @@ impl Executor<'_> {
         }
     }
     fn transfer_alternatives(
-        &self,
         invocation: &Invocation,
         state: State,
         remaining: &mut usize,
@@ -375,16 +397,16 @@ impl Executor<'_> {
                         for operand in &mut selected.operands {
                             operand.value = branch.consumed(&operand.value);
                         }
-                        result.extend(self.transfer_alternatives(&selected, branch, remaining));
+                        result.extend(Self::transfer_alternatives(&selected, branch, remaining));
                     }
                 }
                 return result.finish();
             }
         }
-        self.transfer_invocation(invocation, state)
+        Self::transfer_invocation(invocation, state)
     }
     #[tracing::instrument(skip_all)]
-    fn transfer_invocation(&self, invocation: &Invocation, mut state: State) -> Vec<Exit> {
+    fn transfer_invocation(invocation: &Invocation, mut state: State) -> Vec<Exit> {
         state.record_invocation_reads(invocation);
         let Callee::Function(function) = &invocation.callee;
         let function = function.as_str();
@@ -471,22 +493,23 @@ fn value_leaf(invocation: &Invocation, state: &mut State) -> Result<Value, Abort
     })
 }
 
+fn constant_value_test(state: &State, value: bool) -> Rc<super::FrozenTest> {
+    state.heap.arena.decision(
+        if value {
+            Predicate::True
+        } else {
+            Predicate::False
+        },
+        if value {
+            Predicate::False
+        } else {
+            Predicate::True
+        },
+        Coverage::Exact,
+    )
+}
+
 fn transfer_values(invocation: &Invocation, state: &mut State, remaining: &mut usize) -> ValuePlan {
-    let constant = |state: &State, value| {
-        state.heap.arena.decision(
-            if value {
-                Predicate::True
-            } else {
-                Predicate::False
-            },
-            if value {
-                Predicate::False
-            } else {
-                Predicate::True
-            },
-            Coverage::Exact,
-        )
-    };
     if *remaining == 0 {
         state.record_invocation_reads(invocation);
         let values: Vec<_> = invocation
@@ -496,8 +519,8 @@ fn transfer_values(invocation: &Invocation, state: &mut State, remaining: &mut u
             .collect();
         return ValuePlan {
             value: Value::influenced(super::operations::inputs(&values, state)),
-            normal: constant(state, true),
-            failures: Default::default(),
+            normal: constant_value_test(state, true),
+            failures: std::collections::BTreeMap::default(),
         };
     }
     *remaining -= 1;
@@ -518,8 +541,8 @@ fn transfer_values(invocation: &Invocation, state: &mut State, remaining: &mut u
                 let plan = if state.path_predicate().normalize_boolean() == Predicate::False {
                     ValuePlan {
                         value: Value::unknown(),
-                        normal: constant(state, false),
-                        failures: Default::default(),
+                        normal: constant_value_test(state, false),
+                        failures: std::collections::BTreeMap::default(),
                     }
                 } else {
                     let mut invocation = invocation.clone();
@@ -548,12 +571,12 @@ fn transfer_values(invocation: &Invocation, state: &mut State, remaining: &mut u
                         .failures
                         .get(&reason)
                         .cloned()
-                        .unwrap_or_else(|| constant(state, false));
+                        .unwrap_or_else(|| constant_value_test(state, false));
                     let no = no
                         .failures
                         .get(&reason)
                         .cloned()
-                        .unwrap_or_else(|| constant(state, false));
+                        .unwrap_or_else(|| constant_value_test(state, false));
                     (
                         reason,
                         state.heap.arena.choose_test(Rc::clone(decision), yes, no),
@@ -571,13 +594,16 @@ fn transfer_values(invocation: &Invocation, state: &mut State, remaining: &mut u
     match value_leaf(invocation, state) {
         Ok(value) => ValuePlan {
             value,
-            normal: constant(state, true),
-            failures: Default::default(),
+            normal: constant_value_test(state, true),
+            failures: std::collections::BTreeMap::default(),
         },
         Err(reason) => ValuePlan {
             value: Value::unknown(),
-            normal: constant(state, false),
-            failures: std::collections::BTreeMap::from([(reason, constant(state, true))]),
+            normal: constant_value_test(state, false),
+            failures: std::collections::BTreeMap::from([(
+                reason,
+                constant_value_test(state, true),
+            )]),
         },
     }
 }
@@ -663,7 +689,7 @@ fn comparison_invocation(mut state: State, arguments: &[Value], negated: bool) -
     };
     // Keep hypothetical loader paths local; the caller's original decisions survive every return.
     let caller_active = std::mem::take(&mut state.active);
-    let accepted = comparison_success(&mut state, first, &arguments, negated, &mut budget);
+    let accepted = comparison_success(&mut state, &first, &arguments, negated, &mut budget);
     state.active = caller_active;
     let Some(accepted) = accepted else {
         tracing::debug!(reason = ?super::BoundReason::ExecutionAlternatives, "widen comparison dispatch");
@@ -680,7 +706,62 @@ fn comparison_invocation(mut state: State, arguments: &[Value], negated: bool) -
 #[tracing::instrument(skip_all)]
 fn comparison_success(
     state: &mut State,
-    first: Value,
+    first: &Value,
+    arguments: &[Value],
+    negated: bool,
+    budget: &mut ComparisonBudget,
+) -> Option<Predicate> {
+    if let Some(accepted) = binary_comparison_acceptance(state, first, arguments) {
+        return Some(accepted);
+    }
+    comparison_success_explored(state, first, arguments, negated, budget)
+}
+
+fn binary_comparison_acceptance(
+    state: &State,
+    first: &Value,
+    arguments: &[Value],
+) -> Option<Predicate> {
+    let [_, right] = arguments else {
+        return None;
+    };
+    let left_type = state.heap.freeze(first).go_type();
+    let right_type = state.heap.freeze(right).go_type();
+    if left_type == GoType::Unknown && right_type == GoType::Unknown {
+        return None;
+    }
+    if matches!(
+        first.node.as_ref(),
+        ValueNode::Leaf(Leaf {
+            datum: _,
+            origin: _
+        })
+    ) && matches!(
+        right.node.as_ref(),
+        ValueNode::Leaf(Leaf {
+            datum: _,
+            origin: _
+        })
+    ) {
+        // A typed counterpart fixes the raw input's compatible loader domain.
+        return Some(comparison_acceptance(state, first, right).unwrap_or(Predicate::True));
+    }
+    if left_type == GoType::Nil || right_type == GoType::Nil {
+        return Some(Predicate::True);
+    }
+    // Uniform scalar alternatives cannot fail comparison; container nilness still needs dispatch.
+    if !matches!(left_type, GoType::Map | GoType::Slice | GoType::Unknown)
+        && !matches!(right_type, GoType::Map | GoType::Slice | GoType::Unknown)
+        && (left_type == right_type || integer_type(left_type) && integer_type(right_type))
+    {
+        return Some(Predicate::True);
+    }
+    None
+}
+
+fn comparison_success_explored(
+    state: &mut State,
+    first: &Value,
     arguments: &[Value],
     negated: bool,
     budget: &mut ComparisonBudget,
@@ -708,7 +789,7 @@ fn comparison_success(
 
 fn first_comparison_cases(
     state: &mut State,
-    first: Value,
+    first: &Value,
     budget: &mut ComparisonBudget,
 ) -> Vec<ComparisonCase> {
     if budget.remaining == 0 {
@@ -716,7 +797,7 @@ fn first_comparison_cases(
         return Vec::new();
     }
     budget.remaining -= 1;
-    let first = state.consumed(&first);
+    let first = state.consumed(first);
     if let ValueNode::Select {
         decision,
         yes: _,
@@ -730,7 +811,7 @@ fn first_comparison_cases(
             if state.path_predicate().normalize_boolean() != Predicate::False {
                 cases.extend(first_comparison_cases(
                     state,
-                    first.under(decision, taken),
+                    &first.under(decision, taken),
                     budget,
                 ));
             }
@@ -989,45 +1070,7 @@ fn compare_pair_inner(
         return vec![comparison_normal(state, value)];
     }
     budget.remaining -= 1;
-    let selected = match (left.node.as_ref(), right.node.as_ref()) {
-        (
-            ValueNode::Select {
-                decision,
-                yes: _,
-                no: _,
-            },
-            ValueNode::Leaf(Leaf {
-                datum: _,
-                origin: _,
-            })
-            | ValueNode::Select {
-                decision: _,
-                yes: _,
-                no: _,
-            },
-        )
-        | (
-            ValueNode::Leaf(Leaf {
-                datum: _,
-                origin: _,
-            }),
-            ValueNode::Select {
-                decision,
-                yes: _,
-                no: _,
-            },
-        ) => Some(Rc::clone(decision)),
-        (
-            ValueNode::Leaf(Leaf {
-                datum: _,
-                origin: _,
-            }),
-            ValueNode::Leaf(Leaf {
-                datum: _,
-                origin: _,
-            }),
-        ) => None,
-    };
+    let selected = comparison_selector(&left, &right);
     if let Some(decision) = selected {
         let mut exits = Vec::new();
         let depth = state.active.len();
@@ -1089,6 +1132,48 @@ fn compare_pair_inner(
     exits
 }
 
+fn comparison_selector(left: &Value, right: &Value) -> Option<Rc<super::FrozenTest>> {
+    match (left.node.as_ref(), right.node.as_ref()) {
+        (
+            ValueNode::Select {
+                decision,
+                yes: _,
+                no: _,
+            },
+            ValueNode::Leaf(Leaf {
+                datum: _,
+                origin: _,
+            })
+            | ValueNode::Select {
+                decision: _,
+                yes: _,
+                no: _,
+            },
+        )
+        | (
+            ValueNode::Leaf(Leaf {
+                datum: _,
+                origin: _,
+            }),
+            ValueNode::Select {
+                decision,
+                yes: _,
+                no: _,
+            },
+        ) => Some(Rc::clone(decision)),
+        (
+            ValueNode::Leaf(Leaf {
+                datum: _,
+                origin: _,
+            }),
+            ValueNode::Leaf(Leaf {
+                datum: _,
+                origin: _,
+            }),
+        ) => None,
+    }
+}
+
 fn comparison_acceptance(state: &State, left: &Value, right: &Value) -> Option<Predicate> {
     let left_type = state.heap.freeze(left).go_type();
     let right_type = state.heap.freeze(right).go_type();
@@ -1118,20 +1203,21 @@ fn comparison_acceptance(state: &State, left: &Value, right: &Value) -> Option<P
             },
         );
     }
-    if let (Some(left_path), Some(right_path)) = (left.identity(), right.identity()) {
-        if left_type == GoType::Unknown && right_type == GoType::Unknown {
-            let mut accepted = vec![
-                super::kinds::input_nil_predicate(left_path),
-                super::kinds::input_nil_predicate(right_path),
-            ];
-            for kind in [GoType::Bool, GoType::String, GoType::Float64] {
-                accepted.push(Predicate::all(vec![
-                    compatible_input_predicate(left_path, kind)?,
-                    compatible_input_predicate(right_path, kind)?,
-                ]));
-            }
-            return Some(Predicate::Or(accepted).normalize_boolean());
+    if let (Some(left_path), Some(right_path)) = (left.identity(), right.identity())
+        && left_type == GoType::Unknown
+        && right_type == GoType::Unknown
+    {
+        let mut accepted = vec![
+            super::kinds::input_nil_predicate(left_path),
+            super::kinds::input_nil_predicate(right_path),
+        ];
+        for kind in [GoType::Bool, GoType::String, GoType::Float64] {
+            accepted.push(Predicate::all(vec![
+                compatible_input_predicate(left_path, kind)?,
+                compatible_input_predicate(right_path, kind)?,
+            ]));
         }
+        return Some(Predicate::Or(accepted).normalize_boolean());
     }
     let (path, other, other_type) = if left_type == GoType::Unknown {
         (left.identity()?, right, right_type)
@@ -1173,7 +1259,7 @@ fn comparison_value(state: &State, left: &Value, right: &Value, negated: bool) -
         match (left_nil, right_nil) {
             (Some(left), Some(right)) => Some(left == right),
             (Some(false), None) | (None, Some(false)) => Some(false),
-            (Some(true), None) | (None, Some(true)) | (None, None) => None,
+            (Some(true) | None, None) | (None, Some(true)) => None,
         }
     } else {
         None
@@ -1185,29 +1271,30 @@ fn comparison_value(state: &State, left: &Value, right: &Value, negated: bool) -
         return Value::literal(GuardValue::Bool(!negated));
     }
     for (value, other_nil) in [(left, right_nil), (right, left_nil)] {
-        if other_nil == Some(true) {
-            if let Some(path) = value.identity() {
-                return equality_predicate(state, super::kinds::input_nil_predicate(path), negated);
-            }
+        if other_nil == Some(true)
+            && let Some(path) = value.identity()
+        {
+            return equality_predicate(state, super::kinds::input_nil_predicate(path), negated);
         }
     }
-    if left_type == GoType::Unknown && right_type == GoType::Unknown {
-        if let (Some(left_path), Some(right_path)) = (left.identity(), right.identity()) {
-            let nil_right = super::kinds::input_nil_predicate(right_path);
-            let left_nil_value = equality_predicate(state, nil_right.clone(), negated);
-            let right_nil_value = select_predicate(
-                state,
-                nil_right,
-                Value::literal(GuardValue::Bool(negated)),
-                unknown_comparison(state, left, right),
-            );
-            return select_predicate(
-                state,
-                super::kinds::input_nil_predicate(left_path),
-                left_nil_value,
-                right_nil_value,
-            );
-        }
+    if left_type == GoType::Unknown
+        && right_type == GoType::Unknown
+        && let (Some(left_path), Some(right_path)) = (left.identity(), right.identity())
+    {
+        let nil_right = super::kinds::input_nil_predicate(right_path);
+        let left_nil_value = equality_predicate(state, nil_right.clone(), negated);
+        let right_nil_value = select_predicate(
+            state,
+            &nil_right,
+            Value::literal(GuardValue::Bool(negated)),
+            unknown_comparison(state, left, right),
+        );
+        return select_predicate(
+            state,
+            &super::kinds::input_nil_predicate(left_path),
+            left_nil_value,
+            right_nil_value,
+        );
     }
     scalar_equality(state, left, right, negated)
 }
@@ -1230,13 +1317,13 @@ fn equality_predicate(state: &State, predicate: Predicate, negated: bool) -> Val
     };
     select_predicate(
         state,
-        predicate,
+        &predicate,
         Value::literal(GuardValue::Bool(true)),
         Value::literal(GuardValue::Bool(false)),
     )
 }
 
-fn select_predicate(state: &State, predicate: Predicate, yes: Value, no: Value) -> Value {
+fn select_predicate(state: &State, predicate: &Predicate, yes: Value, no: Value) -> Value {
     let decision =
         state
             .heap
@@ -1267,7 +1354,9 @@ fn scalar_equality(state: &State, left: &Value, right: &Value, negated: bool) ->
             (left_literal, right_literal)
         {
             match (left_number.parse::<f64>(), right_number.parse::<f64>()) {
-                (Ok(left), Ok(right)) => left == right,
+                (Ok(left), Ok(right)) => {
+                    left.partial_cmp(&right) == Some(std::cmp::Ordering::Equal)
+                }
                 (Err(_), Ok(_) | Err(_)) | (Ok(_), Err(_)) => {
                     return unknown_comparison(state, left, right);
                 }
@@ -1349,7 +1438,13 @@ fn contextual_literal(
                 return Err(AbortReason::Type);
             }
             if kind == ScalarType::Float64 {
-                return Ok(GuardValue::float(*integer as f64).map(|value| {
+                return Ok(GuardValue::float(
+                    integer
+                        .to_string()
+                        .parse::<f64>()
+                        .map_err(|_| AbortReason::Type)?,
+                )
+                .map(|value| {
                     Value::scalar(
                         kind,
                         Some(super::scalar_value::ScalarContent::Literal(value)),
@@ -1368,7 +1463,11 @@ fn contextual_literal(
             if number.abs() > 9_007_199_254_740_991.0 {
                 return Ok(Some(Value::unknown()));
             }
-            GuardValue::Int(*number as i64)
+            GuardValue::Int(
+                format!("{number:.0}")
+                    .parse::<i64>()
+                    .map_err(|_| AbortReason::Type)?,
+            )
         }
         _ => return Ok(None),
     };
@@ -1502,7 +1601,7 @@ impl super::DocumentExecution {
     pub(crate) fn invocation_records_complete(&self) -> bool {
         self.exits
             .iter()
-            .all(|exit| exit.state.invocation_records_complete)
+            .all(|exit| exit.state.invocations_complete())
     }
 }
 impl super::ExecutedInvocationRecord {
@@ -1629,3 +1728,7 @@ impl super::control::Reconvergent for Assembled {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "../tests/runtime_comparison_work.rs"]
+mod comparison_work_tests;

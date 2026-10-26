@@ -1,6 +1,7 @@
 use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_ast::{DefineIndex, TemplateExpr, parse_action_expressions};
 use std::collections::{BTreeSet, HashMap};
+use std::fmt::Write as _;
 use test_util::prelude::sim_assert_eq;
 
 use crate::analysis_db::IrAnalysisDb;
@@ -20,38 +21,39 @@ fn extract_bound_values(
     text: &str,
     range_domains: &HashMap<String, Vec<String>>,
     get_bindings: &HashMap<String, GetBinding>,
-) -> Vec<String> {
+) -> eyre::Result<Vec<String>> {
     let mut source = String::new();
     for (name, domain) in range_domains {
-        source.push_str(&format!("{{{{- range ${name} := list"));
+        write!(source, "{{{{- range ${name} := list")?;
         for member in domain {
-            source.push_str(&format!(" {member:?}"));
+            write!(source, " {member:?}")?;
         }
         source.push_str(" -}}");
     }
     for (name, binding) in get_bindings {
-        source.push_str(&format!(
+        write!(
+            source,
             "{{{{- ${name} := get .Values.{} ${} -}}}}",
             binding.base.encode(),
             binding.key_var
-        ));
+        )?;
     }
     if text.trim_start().starts_with("{{") {
         source.push_str(text);
     } else {
-        source.push_str(&format!("{{{{ {text} }}}}"));
+        write!(source, "{{{{ {text} }}}}")?;
     }
     for _ in range_domains {
         source.push_str("{{- end -}}");
     }
-    execute(&source)
+    Ok(execute(&source)
         .sites()
         .filter(|site| site.rendered())
         .flat_map(|site| site.value().inputs())
         .map(|path| path.encode())
         .collect::<BTreeSet<_>>()
         .into_iter()
-        .collect()
+        .collect())
 }
 
 #[test]
@@ -64,7 +66,7 @@ fn parse_get_binding_detects_declaration_from_ast() -> eyre::Result<()> {
         .filter(|site| site.rendered())
         .last()
         .ok_or_eyre("missing bound output")?;
-    sim_assert_eq!(have: site.value().identity().map(|path| path.encode()), want: Some("config.frontend".to_string()));
+    sim_assert_eq!(have: site.value().identity().map(helm_schema_core::ValuesPath::encode), want: Some("config.frontend".to_string()));
     Ok(())
 }
 
@@ -78,7 +80,7 @@ fn parse_get_binding_detects_assignment_from_ast() -> eyre::Result<()> {
         .filter(|site| site.rendered())
         .last()
         .ok_or_eyre("missing assigned output")?;
-    sim_assert_eq!(have: site.value().identity().map(|path| path.encode()), want: Some("config.frontend".to_string()));
+    sim_assert_eq!(have: site.value().identity().map(helm_schema_core::ValuesPath::encode), want: Some("config.frontend".to_string()));
     Ok(())
 }
 
@@ -100,7 +102,7 @@ fn parse_literal_list_range_detects_variable_definition_from_ast() {
 }
 
 #[test]
-fn extract_bound_values_resolves_selector_reads_from_ast() {
+fn extract_bound_values_resolves_selector_reads_from_ast() -> eyre::Result<()> {
     let mut range_domains = HashMap::new();
     range_domains.insert(
         "scope".to_string(),
@@ -120,16 +122,17 @@ fn extract_bound_values_resolves_selector_reads_from_ast() {
             r#"{{- printf "%s" $config.port -}}"#,
             &range_domains,
             &get_bindings
-        ),
+        )?,
         want: vec![
             "config.backend.port".to_string(),
             "config.frontend.port".to_string()
         ]
     );
+    Ok(())
 }
 
 #[test]
-fn extract_bound_values_respects_or_short_circuit_eq_predicate() {
+fn extract_bound_values_respects_or_short_circuit_eq_predicate() -> eyre::Result<()> {
     let mut range_domains = HashMap::new();
     range_domains.insert(
         "protocol".to_string(),
@@ -149,13 +152,14 @@ fn extract_bound_values_respects_or_short_circuit_eq_predicate() {
             r#"or (eq $protocol "nats") $config.enabled"#,
             &range_domains,
             &get_bindings
-        ),
+        )?,
         want: vec!["config.websocket.enabled".to_string()]
     );
+    Ok(())
 }
 
 #[test]
-fn extract_bound_values_respects_and_short_circuit_eq_predicate() {
+fn extract_bound_values_respects_and_short_circuit_eq_predicate() -> eyre::Result<()> {
     let mut range_domains = HashMap::new();
     range_domains.insert(
         "protocol".to_string(),
@@ -175,7 +179,8 @@ fn extract_bound_values_respects_and_short_circuit_eq_predicate() {
             r#"and (eq $protocol "nats") $config.enabled"#,
             &range_domains,
             &get_bindings
-        ),
+        )?,
         want: vec!["config.nats.enabled".to_string()]
     );
+    Ok(())
 }

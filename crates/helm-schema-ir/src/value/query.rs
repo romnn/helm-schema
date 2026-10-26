@@ -4,7 +4,7 @@ use super::{
     ValueNode,
 };
 use helm_schema_core::{Guard, GuardValue, Predicate, ValuesPath};
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::rc::Rc;
 
 impl Value {
@@ -208,10 +208,9 @@ impl State {
                     .iter()
                     .skip(1)
                     .any(|operand| !matches!(operand.value.constant(), Some(GuardValue::String(key)) if !key.is_empty()))
+                    && let Some(operand) = invocation.operands.first()
                 {
-                    if let Some(operand) = invocation.operands.first() {
-                        self.record_value_read(&operand.value, super::ReadCoverage::UnknownRegion);
-                    }
+                    self.record_value_read(&operand.value, super::ReadCoverage::UnknownRegion);
                 }
             }
         }
@@ -313,6 +312,60 @@ impl State {
         }
     }
 
+    pub(super) fn selector_live_domain(&self, value: &Value) -> Predicate {
+        let value = self.consumed(value);
+        let mut remaining = super::MAX_SCALAR_DISPATCH_STATES;
+        selector_entry_domain(&value, &mut remaining)
+    }
+
+    pub(super) fn record_selector_host(&mut self, value: &Value, live: &Predicate) {
+        if let ValueNode::Select { decision, yes, no } = value.node.as_ref() {
+            let depth = self.active.len();
+            for (taken, arm) in [(true, yes), (false, no)] {
+                self.active.push(super::DecisionEdge {
+                    test: Rc::clone(decision),
+                    taken,
+                });
+                self.record_selector_host(arm, live);
+                self.active.truncate(depth);
+            }
+            return;
+        }
+        let Some(path) = value.identity() else {
+            return;
+        };
+        if path.segments().next().is_none()
+            || path.segments().any(|segment| segment.literal().is_none())
+            || self
+                .active
+                .iter()
+                .any(|edge| edge.test.coverage != Coverage::Exact)
+        {
+            return;
+        }
+        // Materialized inputs may already have template writes; derived hosts have no raw identity.
+        if self
+            .heap
+            .arena
+            .input_objects
+            .borrow()
+            .get(path)
+            .is_some_and(|backing| self.heap.version.object(&backing.object).is_some())
+        {
+            return;
+        }
+        let condition =
+            Predicate::all(vec![self.path_predicate(), live.clone()]).normalize_boolean();
+        if condition == Predicate::False || condition.contains_approximation() {
+            return;
+        }
+        self.reads.insert(super::RuntimeRead {
+            coverage: super::ReadCoverage::MemberHost,
+            path: path.clone(),
+            condition,
+        });
+    }
+
     pub(super) fn selector_field(&mut self, value: &Value, key: &str) -> Value {
         let value = self.consumed(value);
         if let ValueNode::Select { decision, yes, no } = value.node.as_ref() {
@@ -365,7 +418,7 @@ impl State {
     }
     pub(super) fn field(&mut self, value: &Value, key: &str) -> Value {
         let value = self.consumed(value);
-        let result = match value.node.as_ref() {
+        match value.node.as_ref() {
             ValueNode::Leaf(Leaf {
                 datum:
                     Datum::Unknown(super::UnknownValue {
@@ -458,9 +511,7 @@ impl State {
                 datum: _,
                 origin: _,
             }) => Value::influenced(value.inputs()),
-        };
-        self.record_value_read(&result, super::ReadCoverage::ExactPath);
-        result
+        }
     }
     fn unknown_child_value(
         &self,
@@ -526,12 +577,8 @@ impl State {
                         start: _,
                         length,
                         capacity: _,
-                    }),
-                origin: _,
-            }) => Some(*length != 0),
-            ValueNode::Leaf(Leaf {
-                datum:
-                    Datum::Sequence(super::InterfaceSequence {
+                    })
+                    | Datum::Sequence(super::InterfaceSequence {
                         storage: _,
                         start: _,
                         length,
@@ -542,35 +589,16 @@ impl State {
             ValueNode::Leaf(Leaf {
                 datum:
                     Datum::Map {
-                        target: Some(id),
+                        target: Some(_),
                         view: _,
                     },
                 origin: _,
-            }) => match self.heap.version.object(id).map(|object| &object.data) {
-                Some(ObjectData::Map {
-                    fields,
-                    remainder: super::Remainder::Closed,
-                }) if fields
-                    .values()
-                    .all(|field| matches!(field, Field::Present(_) | Field::Absent)) =>
-                {
-                    Some(
-                        fields
-                            .values()
-                            .any(|field| matches!(field, Field::Present(_))),
-                    )
-                }
-                Some(
-                    ObjectData::Map {
-                        fields: _,
-                        remainder: _,
-                    }
-                    | ObjectData::Strings(_)
-                    | ObjectData::Opaque { reachable: _ }
-                    | ObjectData::Widened { inputs: _ },
-                )
-                | None => None,
-            },
+            }) => self
+                .map_length(&value)
+                .and_then(|length| match length.constant() {
+                    Some(GuardValue::Int(length)) => Some(*length != 0),
+                    _ => None,
+                }),
             ValueNode::Leaf(Leaf {
                 datum:
                     Datum::Scalar {
@@ -631,7 +659,7 @@ impl State {
                                 revision: self.heap.arena.snapshot(),
                                 multiplicity: super::Multiplicity::Singleton,
                                 data: ObjectData::Map {
-                                    fields: Default::default(),
+                                    fields: BTreeMap::default(),
                                     remainder: super::Remainder::Input,
                                 },
                             },
@@ -641,7 +669,7 @@ impl State {
                 }
                 let id = self.heap.allocate(
                     ObjectData::Map {
-                        fields: Default::default(),
+                        fields: BTreeMap::default(),
                         remainder: super::Remainder::Input,
                     },
                     super::Multiplicity::Singleton,
@@ -711,6 +739,9 @@ fn truth_test(state: &State, value: &Value, budget: &mut TruthBudget) -> Rc<Froz
     }
     budget.visits -= 1;
     let value = state.consumed(value);
+    if let Some(length) = state.map_length(&value) {
+        return truth_test(state, &length, budget);
+    }
     match value.node.as_ref() {
         ValueNode::Select { decision, yes, no } => {
             let yes = truth_test(state, yes, budget);
@@ -796,61 +827,14 @@ impl FrozenValue {
                     inputs.extend(origin.influences.iter().cloned());
                     inputs.extend(origin.identity.iter().cloned());
                 }
-                match value.node.as_ref() {
-                    ValueNode::Select {
-                        decision: _,
-                        yes,
-                        no,
-                    } => {
-                        values.push(yes.clone());
-                        values.push(no.clone());
-                    }
-                    ValueNode::Leaf(Leaf { datum, origin: _ }) => match datum {
-                        Datum::Map {
-                            target: Some(id),
-                            view: _,
-                        }
-                        | Datum::Strings(super::StringSlice {
-                            backing: id,
-                            start: _,
-                            length: _,
-                            capacity: _,
-                        })
-                        | Datum::Slot {
-                            backing: id,
-                            index: _,
-                        } => objects.push(id.clone()),
-                        Datum::Sequence(super::InterfaceSequence {
-                            storage,
-                            start: _,
-                            length: _,
-                            capacity: _,
-                        }) => {
-                            if let Some(items) = storage {
-                                values.extend(items.iter().cloned());
-                            }
-                        }
-                        Datum::Unknown(super::UnknownValue { types: _, aliases }) => {
-                            // Mutation reachability does not describe the value's input provenance.
-                            if include_unknown_aliases {
-                                extend_aliases(
-                                    aliases,
-                                    &self.heap,
-                                    &mut objects,
-                                    &mut expanded_render_graph,
-                                );
-                            }
-                        }
-                        Datum::Scalar {
-                            go_type: _,
-                            content: _,
-                        }
-                        | Datum::Map {
-                            target: None,
-                            view: _,
-                        } => {}
-                    },
-                }
+                collect_value_children(
+                    &value,
+                    &self.heap,
+                    include_unknown_aliases,
+                    &mut values,
+                    &mut objects,
+                    &mut expanded_render_graph,
+                );
             }
             while let Some(id) = objects.pop() {
                 if !seen_objects.insert(id.clone()) {
@@ -1027,7 +1011,7 @@ impl State {
                         view: _,
                     },
                 origin: _,
-            }) => Some(self.heap.version.field(id, key)),
+            }) => Some(self.consumed_field(&self.heap.version.field(id, key))),
             ValueNode::Leaf(Leaf {
                 datum:
                     Datum::Map {
@@ -1170,16 +1154,16 @@ impl State {
                 .borrow()
                 .get(path)
                 .map(|backing| backing.object.clone());
-            if let Some(object) = id.as_ref().and_then(|id| self.heap.version.object(id)) {
-                if !matches!(
+            if let Some(object) = id.as_ref().and_then(|id| self.heap.version.object(id))
+                && !matches!(
                     object.data,
                     ObjectData::Map {
+                        fields: _,
                         remainder: super::Remainder::Input,
-                        ..
                     }
-                ) {
-                    return None;
-                }
+                )
+            {
+                return None;
             }
             let mut child = path.clone();
             child.push(key);
@@ -1252,5 +1236,227 @@ fn field_inputs(field: &Field, values: &mut Vec<Value>) {
             field_inputs(no, values);
         }
         Field::Absent | Field::Unknown => {}
+    }
+}
+
+impl State {
+    pub(super) fn consumed_field(&self, field: &Field) -> Field {
+        specialize_field(field, &self.heap.arena.runtime_path(&self.active))
+    }
+
+    pub(super) fn map_length(&self, value: &Value) -> Option<Value> {
+        let value = self.consumed(value);
+        match value.node.as_ref() {
+            ValueNode::Select { decision, yes, no } => Some(Value::select(
+                Rc::clone(decision),
+                self.map_length(yes)?,
+                self.map_length(no)?,
+            )),
+            ValueNode::Leaf(Leaf {
+                datum:
+                    Datum::Map {
+                        target: None,
+                        view: _,
+                    },
+                origin: _,
+            }) => Some(Value::literal(GuardValue::Int(0))),
+            ValueNode::Leaf(Leaf {
+                datum:
+                    Datum::Map {
+                        target: Some(id),
+                        view: _,
+                    },
+                origin: _,
+            }) => {
+                let ObjectData::Map {
+                    fields,
+                    remainder: super::Remainder::Closed,
+                } = &self.heap.version.object(id)?.data
+                else {
+                    return None;
+                };
+                let mut length = Value::literal(GuardValue::Int(0));
+                for field in fields.values() {
+                    let presence = field_length(&self.consumed_field(field));
+                    length = add_lengths(&length, &presence, &mut 255);
+                }
+                Some(length)
+            }
+            ValueNode::Leaf(Leaf {
+                datum: _,
+                origin: _,
+            }) => None,
+        }
+    }
+}
+
+fn specialize_field(field: &Field, guard: &super::guard::RuntimeGuard) -> Field {
+    match field {
+        Field::Absent => Field::Absent,
+        Field::Unknown => Field::Unknown,
+        Field::Present(value) => Field::Present(value.clone()),
+        Field::Select { decision, yes, no } => match guard.implies_test(decision) {
+            Some(true) => specialize_field(yes, guard),
+            Some(false) => specialize_field(no, guard),
+            None => Field::select(
+                Rc::clone(decision),
+                specialize_field(yes, guard),
+                specialize_field(no, guard),
+            ),
+        },
+    }
+}
+
+fn field_length(field: &Field) -> Value {
+    match field {
+        Field::Absent => Value::literal(GuardValue::Int(0)),
+        Field::Present(_) => Value::literal(GuardValue::Int(1)),
+        Field::Unknown => Value::unknown(),
+        Field::Select { decision, yes, no } => {
+            Value::select(Rc::clone(decision), field_length(yes), field_length(no))
+        }
+    }
+}
+
+pub(super) fn add_lengths(left: &Value, right: &Value, remaining: &mut usize) -> Value {
+    if *remaining == 0 {
+        return Value::unknown();
+    }
+    *remaining -= 1;
+    match (left.node.as_ref(), right.node.as_ref()) {
+        (ValueNode::Select { decision, yes, no }, _) => Value::select(
+            Rc::clone(decision),
+            add_lengths(yes, &right.under(decision, true), remaining),
+            add_lengths(no, &right.under(decision, false), remaining),
+        ),
+        (_, ValueNode::Select { decision, yes, no }) => Value::select(
+            Rc::clone(decision),
+            add_lengths(left, yes, remaining),
+            add_lengths(left, no, remaining),
+        ),
+        (ValueNode::Leaf(_), ValueNode::Leaf(_)) => match (left.constant(), right.constant()) {
+            (Some(GuardValue::Int(left)), Some(GuardValue::Int(right))) => left
+                .checked_add(*right)
+                .map_or_else(Value::unknown, |length| {
+                    Value::literal(GuardValue::Int(length))
+                }),
+            _ => Value::unknown(),
+        },
+    }
+}
+
+fn collect_value_children(
+    value: &Value,
+    heap: &super::HeapVersion,
+    include_unknown_aliases: bool,
+    values: &mut Vec<Value>,
+    objects: &mut Vec<super::ObjectId>,
+    expanded_render_graph: &mut bool,
+) {
+    match value.node.as_ref() {
+        ValueNode::Select {
+            decision: _,
+            yes,
+            no,
+        } => {
+            values.push(yes.clone());
+            values.push(no.clone());
+        }
+        ValueNode::Leaf(Leaf { datum, origin: _ }) => match datum {
+            Datum::Map {
+                target: Some(id),
+                view: _,
+            }
+            | Datum::Strings(super::StringSlice {
+                backing: id,
+                start: _,
+                length: _,
+                capacity: _,
+            })
+            | Datum::Slot {
+                backing: id,
+                index: _,
+            } => objects.push(id.clone()),
+            Datum::Sequence(super::InterfaceSequence {
+                storage,
+                start: _,
+                length: _,
+                capacity: _,
+            }) => {
+                if let Some(items) = storage {
+                    values.extend(items.iter().cloned());
+                }
+            }
+            Datum::Unknown(super::UnknownValue { types: _, aliases }) => {
+                // Mutation reachability does not describe the value's input provenance.
+                if include_unknown_aliases {
+                    extend_aliases(aliases, heap, objects, expanded_render_graph);
+                }
+            }
+            Datum::Scalar {
+                go_type: _,
+                content: _,
+            }
+            | Datum::Map {
+                target: None,
+                view: _,
+            } => {}
+        },
+    }
+}
+
+fn selector_entry_domain(value: &Value, remaining: &mut usize) -> Predicate {
+    if *remaining == 0 {
+        return Predicate::False;
+    }
+    *remaining -= 1;
+    match value.node.as_ref() {
+        ValueNode::Select { decision, yes, no } => {
+            if decision.coverage != Coverage::Exact
+                || decision.when_true.contains_approximation()
+                || decision.when_false.contains_approximation()
+            {
+                return Predicate::False;
+            }
+            Predicate::Or(vec![
+                Predicate::all(vec![
+                    decision.when_true.clone(),
+                    selector_entry_domain(yes, remaining),
+                ]),
+                Predicate::all(vec![
+                    decision.when_false.clone(),
+                    selector_entry_domain(no, remaining),
+                ]),
+            ])
+            .normalize_boolean()
+        }
+        ValueNode::Leaf(Leaf { datum, origin }) => {
+            if let Some(path) = &origin.identity {
+                if path.segments().next().is_none() {
+                    return Predicate::True;
+                }
+                if path.segments().any(|segment| segment.literal().is_none()) {
+                    return Predicate::False;
+                }
+                return super::kinds::input_nil_predicate(path)
+                    .negated()
+                    .normalize_boolean();
+            }
+            // Typed nil maps still perform map lookup; only an invalid entry skips the chain.
+            if matches!(
+                datum,
+                Datum::Map { view: _, target: _ }
+                    | Datum::Unknown(super::UnknownValue {
+                        types: super::TypeCoverage::Map(_),
+                        aliases: _
+                    })
+            ) {
+                return Predicate::True;
+            }
+            match super::kinds::nilness(value) {
+                Some(false) => Predicate::True,
+                Some(true) | None => Predicate::False,
+            }
+        }
     }
 }

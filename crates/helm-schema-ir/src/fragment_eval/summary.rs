@@ -36,7 +36,9 @@ fn mark_root_scalar_output_stringified(node: &mut AbstractFragment) {
     match node {
         AbstractFragment::Scalar(scalar) => {
             for part in &mut scalar.parts {
-                if let StringPart::Splice(splice) = part {
+                if let StringPart::Splice(splice) = part
+                    && matches!(splice.kind, ValueKind::Scalar | ValueKind::PartialScalar)
+                {
                     splice.meta.stringified = true;
                 }
             }
@@ -134,6 +136,10 @@ fn condition_branch(conditions: &[PathCondition]) -> BTreeSet<Predicate> {
 }
 
 fn splice_row_meta(splice: &Splice, conditions: &[PathCondition]) -> HelperOutputMeta {
+    let format_only = matches!(
+        splice.kind,
+        ValueKind::GoFormattedMap | ValueKind::GoFormattedSequence
+    );
     let mut provenance: Vec<ContractProvenance> = splice
         .meta
         .site
@@ -143,14 +149,16 @@ fn splice_row_meta(splice: &Splice, conditions: &[PathCondition]) -> HelperOutpu
         .collect();
     merge_provenance_sites(&mut provenance, &splice.meta.provenance);
     let mut meta = HelperOutputMeta {
-        input_identity: splice.meta.input_identity,
+        input_identity: splice.meta.input_identity && !format_only,
         defaulted: splice.meta.defaulted,
-        shape_erased: splice.meta.shape_erased,
+        shape_erased: splice.meta.shape_erased || format_only,
+        derived_text: format_only,
         // A helper returns rendered text even when its body selected a raw
         // values path. Explicit metadata still carries conversions that
         // happened before the helper boundary.
-        stringified: splice.meta.stringified
-            || matches!(splice.kind, ValueKind::Scalar | ValueKind::PartialScalar),
+        stringified: !format_only
+            && (splice.meta.stringified
+                || matches!(splice.kind, ValueKind::Scalar | ValueKind::PartialScalar)),
         nil_omitted: splice.meta.nil_omitted,
         templated_yaml: splice.meta.templated_yaml,
         plain_slot_string_format: splice.meta.plain_slot_string_format,
@@ -532,6 +540,14 @@ fn push_rendered_row(
     encoded: bool,
     meta: HelperOutputMeta,
 ) {
+    let kind = if matches!(
+        kind,
+        ValueKind::GoFormattedMap | ValueKind::GoFormattedSequence
+    ) {
+        ValueKind::Serialized
+    } else {
+        kind
+    };
     let path = helm_schema_core::ValuesPath::parse(path);
     if path.segments().next().is_none() {
         return;

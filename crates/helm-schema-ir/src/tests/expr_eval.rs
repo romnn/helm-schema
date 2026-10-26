@@ -232,7 +232,8 @@ fn observe_with_db(prefix: &str, expression: &str, db: &IrAnalysisDb) -> Observa
     let start = source.len();
     source.push_str("{{ $__observed }}");
     let value_span = Span::new(start, source.len());
-    source.push_str("\n{{ if $__observed }}# ");
+    source.push('\n');
+    source.push_str("{{ if $__observed }}# ");
     let start = source.len();
     source.push_str("selected");
     let true_span = Span::new(start, source.len());
@@ -726,14 +727,45 @@ fn invalid_kind_requires_one_exact_subject_identity() {
 }
 
 #[test]
-fn invalid_kind_abstains_for_a_meta_selected_subject_identity() {
+fn invalid_kind_retains_a_meta_selected_subject_guard() {
     let prefix = r#"{{ $selected := "fallback" }}{{ if .Values.enabled }}{{ $selected = .Values.value }}{{ end }}"#;
-    sim_assert_eq!(have: observe(prefix, r#"kindIs "invalid" $selected"#).truth(), want: None);
+    let result = observe(prefix, r#"kindIs "invalid" $selected"#);
+    let expected = Predicate::all(vec![
+        truthy("enabled"),
+        Predicate::Or(vec![
+            Predicate::from(Guard::Eq {
+                path: ValuesPath::parse("value"),
+                value: GuardValue::Null,
+            }),
+            Predicate::from(Guard::Absent {
+                path: ValuesPath::parse("value"),
+            }),
+        ]),
+    ])
+    .normalize_boolean();
+    sim_assert_eq!(have: result.truth(), want: Some(expected.clone()));
+    sim_assert_eq!(have: result.when_false(), want: expected.negated().normalize_boolean());
 }
 
 #[test]
-fn invalid_kind_abstains_for_a_default_selected_subject_identity() {
-    sim_assert_eq!(have: observe("{{ $selected := default nil .Values.value }}", r#"kindIs "invalid" $selected"#).truth(), want: None);
+fn invalid_kind_retains_a_default_selected_subject_guard() {
+    let result = observe(
+        "{{ $selected := default nil .Values.value }}",
+        r#"kindIs "invalid" $selected"#,
+    );
+    let expected = Predicate::Or(vec![
+        Predicate::from(Guard::Eq {
+            path: ValuesPath::parse("value"),
+            value: GuardValue::Null,
+        }),
+        Predicate::from(Guard::Absent {
+            path: ValuesPath::parse("value"),
+        }),
+        truthy("value").negated(),
+    ])
+    .normalize_boolean();
+    sim_assert_eq!(have: result.truth(), want: Some(expected.clone()));
+    sim_assert_eq!(have: result.when_false(), want: expected.negated().normalize_boolean());
 }
 
 #[test]
