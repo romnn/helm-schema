@@ -9429,4 +9429,24 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   rejection); the Opus builder is reworking. T0 rework done (bbf20a0f; 43 GB → ≤ 2.5 GB RSS; real chain init/C01/C02 PASS,
   perturbed C03 FAIL as intended); sol re-review running. Landing 15 run 2 (oracle + starrocks replay 704cb7d7 + test:all +
   G1; E=round8-landing15-run2; runner caea639 also unsets HELM_SCHEMA_CRDCHECK*) started 20:39. User: max 6 Claude agents. Orchestrator.
-Next: landing 15 run 2 → merge; C03 reviews → C04 go/fix; T0 re-review → land T0; G2/F20 rework hand-backs → reviews; C06a slice after the C04 seam answer.
+- 11:58 (Oct 26) — **Landing 15 merged (f31688c2): chart-CRD oracle + starrocks replay + test:all fix + CRD G1 + CI green +
+  cell_matrix timeout isolation; receipt round8-landing15-run3/receipt.json sha256 28cdf4d8…; 0 fixtures adopted.** Three runs:
+  run1 battery FAILED (starrocks rows recorded with a live crdcheck; the fix makes replay the default and the identity
+  root-independent). Run2 was interrupted mid-battery by a host reboot at ~00:40; the stale heavy lock was removed by the user;
+  the resume was refused because python3 resolved to mise 3.14.6 instead of the recorded 3.14.7 (cwd-dependent; queued as a
+  runner fix in round8/process-queue.md). Run3 (fresh E): dump/unit/lint/battery OK; integration FAILED on the inherited flaky
+  cell_matrix timeout test (real `helmsweep version` > 5 s under load) → 8e30543f replays non-target calls (20/20 under load) →
+  unit/lint/battery/integration/sweep/finalize green (battery 77 min vs landing 11's 68). Also since 21:10 yesterday:
+  - R3b C03 follow-up committed 4f4de0a1 (map-truthiness P1 and output-budget P2 fixed; 17 C02-pass→C03-fail tests
+    recovered, 0 prior-pass regressions; admission 175 FA / 0 FR; −11,295 LOC vs pre-cutover). It regressed kube-prometheus-stack
+    4.4 → 18.6 CPU-s; the builder is investigating (Perfetto: repeated runtime-guard projection).
+  - Perf lane on C03: only P7 kept (5a428513, PredicateMemo routing: datadog 30.5 → 17.1 s; byte-identical; +13 LOC); the rest
+    dropped as noise. C08a helper memo: 11 hits / 656 misses on kube-prometheus-stack, +1,824 LOC, no CPU change →
+    orchestrator decision: shelved unlanded (branch r3b/c08a-helper-memo, evidence round8-c08a-evidence).
+  - F20 rework c819cc64: full battery PASS; structure re-review LAND; probes re-review found 2 new P1s (block-scalar ownership,
+    loop control across newlines) → rework running.
+  - T0 rework 2 done (b1d3bce7, 72237089; all 11 findings; real capture→init→C01→verify 0); re-review running.
+  - User: switch most work to Codex (Claude quota); CI green before R3b lands. Codex sandboxes can no longer write .git, so
+    the orchestrator commits transfer patches. agentmux issues #22 (labels) and #23 (continue in a fresh session) filed.
+  - Disk: ~120 GB of idle targets removed; landing TARGET evidence grew to 150 GB (queued process fix). Orchestrator.
+Next: watch main CI (bench + Windows) after the user pushes; landing 16 = F20 (after its P1 rework) + G2 (after rework, battery with the oracle) + T0 (after re-review); R3b kube-prometheus-stack regression → P7 → lint → C04.
