@@ -9463,4 +9463,13 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   them. Target ≤ +3,000 vs 87e66562; kyverno at C03 speed; 5 closures kept; 0 new FR. G2: Opus rework (libyaml-safer,
   apimachinery framing, three libyaml-safer panics avoided without catch_unwind, linear comma-tag check), both reviews LAND
   at 64782416. Orchestrator.
-Next: landing 17 (G2) → merge; F20 rework → re-review → landing 18; R3b C04 simplification → size ledger + admission + timings → commit or rescope; queued process fixes in round8/process-queue.md.
+- 18:40 (Oct 26) — **Landing 17 merged (be2b7d20): CRD G2; receipt round8-landing17-run2 sha256 18689b3b…; signoz-signoz
+  fixture moved, as committed on the branch.** Run 1 aborted at dump ("clone changed during the dump"): the git auto-merge of
+  Cargo.lock left two base64 versions unreconciled; fixed by 76e7b2c9; process fix queued. R3b C04: the ordered
+  simplification removed 830 lines but stalled at +3,792 (ceiling +3,000). kyverno still did not finish (stopped at 20.9
+  CPU-s) and 15 prior-pass tests failed; the 5 closures held with 0 new FR. Orchestrator decision: split C04 into C04a now
+  (single-chart root init, method dispatch, namespace association/empty definitions, tpl overlay, plus the independent
+  deletions; ≤ +1,500; C03 speed; 0 prior-pass regressions) and C04b later (whole-tree initializer and scheduling,
+  design-first with a cost model and reuse of main's chart preparation). The blocked snapshot stays as a reference
+  (transfer-C04-blocked.patch, sha 130b02ff…). Orchestrator.
+Next: F20 rework → re-review → landing 18; R3b C04a hand-back → review → commit; C04b design inputs → design review.
