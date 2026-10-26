@@ -9,17 +9,21 @@ use test_util::scratch::ScratchDir;
 
 mod acceptance_intake;
 
-#[path = "common/emission_profile_harness.rs"]
-mod harness;
-
-#[path = "common/lint_probes.rs"]
-mod lint_probes;
-
-use lint_probes::{LintSchemas, ScreenedProbe};
-
-#[path = "common/lint_adjudication.rs"]
-mod lint_adjudication;
-use lint_adjudication::adjudicate_lint_flip;
+use helm_schema_test_support::acceptance::adjudicate as lint_adjudication;
+use helm_schema_test_support::acceptance::discovery as harness;
+use helm_schema_test_support::acceptance::pool as helm_pool;
+use helm_schema_test_support::acceptance::screen as lint_probes;
+use helm_schema_test_support::acceptance::{
+    AcceptanceComparison, AcceptanceResult, AdjudicatedProbe, AdjudicationFailure, ChartCost,
+    ChartInputs, ComparedChart, ComparisonConfig, DeclaredTypesAnnotation, FailureKind,
+    HelmAdjudicationCoverage, HelmFlipVerdict, LiveChart, LoadedInputs, ObservedFalseAcceptance,
+    ObservedUndecidedAcceptance, PoolReport, Replay, ScreenedChart, compare_charts, fold_results,
+};
+use lint_adjudication::{
+    adjudicate_flip, adjudicate_lint_flip, adjudicate_probe_group, adjudicate_round74_flip,
+    attribute_to_declared_types, chart_recipe, conjoin, declared_types_attribution,
+};
+use lint_probes::{LintSchemas, ScreenedProbe, probe_groups, screen_chart};
 
 #[path = "common/lint_lane_tests.rs"]
 mod lint_lane_tests;
@@ -37,9 +41,6 @@ use helm_schema_test_support::helm::adjudication as helm_adjudication;
 use helm_schema_test_support::helm::invocation as helm_invocation;
 use helm_schema_test_support::{generate, registry};
 
-#[path = "common/helm_pool.rs"]
-mod helm_pool;
-
 #[path = "common/known_false_acceptances.rs"]
 mod known_false_acceptances;
 
@@ -53,25 +54,23 @@ mod known_inherited_failures;
 mod known_undecided_acceptances;
 
 use helm_adjudication::{KubernetesVerdict, OfflineKubernetesValidator, PinnedHelmChart};
-use helm_pool::{PoolLimits, PoolPeaks, run_ordered};
+use helm_pool::PoolLimits;
 use known_false_acceptances::{
     Baseline, ContextFalseAcceptance, Family, KNOWN_CONTEXT_FALSE_ACCEPTANCES,
     KNOWN_FALSE_ACCEPTANCES, KnownFalseAcceptances, Probe, ROSTER_BASELINE, Rejection,
 };
-use known_inherited_failures::{
-    KNOWN_INHERITED_FAILURES, ObservedFailure, validate_inherited_failures,
-};
+use known_inherited_failures::{KNOWN_INHERITED_FAILURES, validate_inherited_failures};
 use known_undecided_acceptances::{
     ContextUndecidedAcceptance, KNOWN_CONTEXT_UNDECIDED_ACCEPTANCES, KNOWN_UNDECIDED_ACCEPTANCES,
     KnownUndecidedAcceptances,
 };
 
 use harness::{
-    ContractVerdict, ControlCategory, GuardSamplingStrategy, HelmChartDir, ProbeCoverage,
-    ProbeInstance, ProbeValuesFile, ProfileSchemas, SemanticControl, Transport, UnreachableProbe,
-    generate_profile_outputs, generate_profile_schemas, read_chart_schema_fixture,
-    read_coalesced_defaults, rejects_for_a_new_reason, round_robin_base_probes, sparse_override,
-    sparse_override_for_composed, structural_probe_battery, structural_probe_battery_with_coverage,
+    ContractVerdict, ControlCategory, HelmChartDir, ProbeCoverage, ProbeInstance, ProbeValuesFile,
+    ProfileSchemas, SemanticControl, Transport, UnreachableProbe, generate_profile_outputs,
+    generate_profile_schemas, read_chart_schema_fixture, read_coalesced_defaults,
+    round_robin_base_probes, sparse_override, sparse_override_for_composed,
+    structural_probe_battery, structural_probe_battery_with_coverage, validate_probe_coverage,
 };
 
 // The roster's case matcher is this battery's own naming rule: the witness
@@ -203,157 +202,6 @@ fn coverage_report_path() -> eyre::Result<std::path::PathBuf> {
     std::env::var_os(COVERAGE_REPORT_VAR)
         .map(std::path::PathBuf::from)
         .ok_or_else(|| eyre::eyre!("{COVERAGE_REPORT_VAR} must name the report file"))
-}
-
-#[derive(Debug, Default, Serialize)]
-struct HelmAdjudicationCoverage {
-    enabled: bool,
-    adjudication_failures: Vec<ObservedFailure>,
-    /// Rust screening can miss flips that exact Helm coalescence would expose.
-    screening_is_exact: bool,
-    screened_flips: usize,
-    screened_flips_collapsed: usize,
-    flips_adjudicated: usize,
-    tightenings_matched_helm_abort: usize,
-    tightenings_matched_lint_rejection: usize,
-    loosenings_matched_lint_validation: usize,
-    tightenings_matched_kubernetes_rejection: usize,
-    loosenings_matched_kubernetes_validation: usize,
-    loosenings_matched_defaults_violations: usize,
-    /// `chart: probe` of every rejected cell Helm renders whose rejection is
-    /// exactly a declared default's type assertion on a path no template
-    /// reads, which the `annotate` authoring policy accepts.
-    tightenings_attributed_to_declared_types: Vec<String>,
-    /// Accepted cells Helm renders whose changed resources Kubernetes cannot
-    /// decide.
-    loosenings_with_uncertain_kubernetes: Vec<ObservedUndecidedAcceptance>,
-    /// Exact contextual identities actually examined by live adjudication.
-    #[serde(skip)]
-    examined_contexts: std::collections::BTreeSet<String>,
-    /// Labels of the charts whose flips were adjudicated live.
-    charts_adjudicated: std::collections::BTreeSet<String>,
-    /// Accepted cells Helm or Kubernetes reject.
-    false_acceptances: Vec<ObservedFalseAcceptance>,
-    /// `chart: probe` of every composed probe no values file reaches. A
-    /// roster row naming one cannot be observed and is kept, not "fixed".
-    unreachable_cases: Vec<String>,
-    /// The evidence directory of every adjudicated flip, preserved when a
-    /// final gate fails.
-    #[serde(skip)]
-    flip_evidence: Vec<PathBuf>,
-}
-
-/// A false acceptance the battery observed, to be matched by the roster.
-#[derive(Debug, Serialize)]
-struct ObservedFalseAcceptance {
-    case: String,
-    rejection: Rejection,
-    baseline: Baseline,
-    #[serde(skip)]
-    evidence: Option<PathBuf>,
-}
-
-/// An accepted cell Kubernetes cannot decide, to be matched by the roster.
-#[derive(Debug, Serialize)]
-struct ObservedUndecidedAcceptance {
-    case: String,
-    uncertain: Vec<String>,
-    #[serde(skip)]
-    evidence: Option<PathBuf>,
-}
-
-impl HelmAdjudicationCoverage {
-    /// Counts `verdict` for `case`, keeping the flip's evidence directory
-    /// (`None` for a verdict without one) for the final gates.
-    fn record_verdict(
-        &mut self,
-        verdict: HelmFlipVerdict,
-        case: String,
-        evidence: Option<PathBuf>,
-    ) -> Option<bool> {
-        let candidate_accepts = match verdict {
-            HelmFlipVerdict::Collapsed => {
-                self.screened_flips_collapsed += 1;
-                return None;
-            }
-            HelmFlipVerdict::TighteningMatchedLintRejection => {
-                self.tightenings_matched_lint_rejection += 1;
-                false
-            }
-            HelmFlipVerdict::LooseningMatchedLintValidation => {
-                self.loosenings_matched_lint_validation += 1;
-                true
-            }
-            HelmFlipVerdict::CandidateAcceptsLintRejects => {
-                self.false_acceptances.push(ObservedFalseAcceptance {
-                    case,
-                    rejection: Rejection::LintRejects,
-                    baseline: Baseline::RejectsUnlikeItsDefaults,
-                    evidence: evidence.clone(),
-                });
-                true
-            }
-            HelmFlipVerdict::TighteningMatchedHelmAbort => {
-                self.tightenings_matched_helm_abort += 1;
-                false
-            }
-            HelmFlipVerdict::TighteningMatchedKubernetesRejection => {
-                self.tightenings_matched_kubernetes_rejection += 1;
-                false
-            }
-            HelmFlipVerdict::TighteningMatchedDeclaredTypesPolicy => {
-                self.tightenings_attributed_to_declared_types.push(case);
-                false
-            }
-            HelmFlipVerdict::LooseningMatchedKubernetesValidation => {
-                self.loosenings_matched_kubernetes_validation += 1;
-                true
-            }
-            HelmFlipVerdict::LooseningMatchedDefaultsViolations => {
-                self.loosenings_matched_defaults_violations += 1;
-                true
-            }
-            HelmFlipVerdict::LooseningWithUncertainKubernetes(uncertain) => {
-                self.loosenings_with_uncertain_kubernetes
-                    .push(ObservedUndecidedAcceptance {
-                        case,
-                        uncertain,
-                        evidence: evidence.clone(),
-                    });
-                true
-            }
-            HelmFlipVerdict::CandidateAcceptsHelmAborts => {
-                self.false_acceptances.push(ObservedFalseAcceptance {
-                    case,
-                    rejection: Rejection::HelmAborts,
-                    baseline: Baseline::RejectsUnlikeItsDefaults,
-                    evidence: evidence.clone(),
-                });
-                true
-            }
-            HelmFlipVerdict::CandidateAcceptsKubernetesRejects => {
-                self.false_acceptances.push(ObservedFalseAcceptance {
-                    case,
-                    rejection: Rejection::KubernetesRejects,
-                    baseline: Baseline::RejectsUnlikeItsDefaults,
-                    evidence: evidence.clone(),
-                });
-                true
-            }
-            HelmFlipVerdict::UninformativeBaselineFalseAcceptance(rejection) => {
-                self.false_acceptances.push(ObservedFalseAcceptance {
-                    case,
-                    rejection,
-                    baseline: Baseline::RejectsItsDefaults,
-                    evidence: evidence.clone(),
-                });
-                true
-            }
-        };
-        self.flips_adjudicated += 1;
-        self.flip_evidence.extend(evidence);
-        Some(candidate_accepts)
-    }
 }
 
 /// The rows of `roster` on an adjudicated chart that this run did not
@@ -688,62 +536,6 @@ fn known_undecided_acceptances_are_matched_exactly() -> eyre::Result<()> {
         probes: PROBES,
     }];
     assert!(validate_helm_adjudication_coverage(&coverage, &false_acceptances, &[]).is_err());
-    Ok(())
-}
-
-fn validate_probe_coverage(chart: &ProbeCoverage) -> eyre::Result<()> {
-    eyre::ensure!(
-        chart.base_emitted > 0,
-        "targeted probes consumed the base-probe budget: {chart:?}"
-    );
-    eyre::ensure!(
-        chart.base_dropped == 0,
-        "base probes were truncated: {chart:?}"
-    );
-    eyre::ensure!(
-        chart.third_level_dropped == 0,
-        "depth-three probes were truncated: {chart:?}"
-    );
-    eyre::ensure!(
-        chart.base_candidates == chart.base_emitted,
-        "base probe accounting mismatch: {chart:?}"
-    );
-    eyre::ensure!(
-        chart.third_level_candidates == chart.third_level_emitted,
-        "depth-three probe accounting mismatch: {chart:?}"
-    );
-    eyre::ensure!(
-        chart.guards_discovered == chart.guards_attempted + chart.guards_skipped_by_cap,
-        "guard accounting mismatch: {chart:?}"
-    );
-    eyre::ensure!(
-        chart.guards_attempted == chart.guard_pairs_emitted + chart.guards_without_witness_pair,
-        "guard witness accounting mismatch: {chart:?}"
-    );
-    eyre::ensure!(
-        chart.composite_targets
-            == chart.composite_pairs_emitted
-                + chart.composite_targets_without_payload
-                + chart.composite_pairs_dropped_by_cap,
-        "composite probe accounting mismatch: {chart:?}"
-    );
-    eyre::ensure!(
-        chart.guard_sampling_strategy == GuardSamplingStrategy::SchemaOrderPrefix,
-        "undisclosed guard sampling strategy: {chart:?}"
-    );
-    eyre::ensure!(chart.total_emitted > 0, "empty probe battery: {chart:?}");
-    // Reachable coverage floor: at least half of a chart's composed probes
-    // (rounded down) must be documents Helm composes. The known
-    // unreachable case is the single "all declared keys deleted" probe of a
-    // chart whose parent `global` reaches its dependencies.
-    let reachable = chart
-        .composed_probes
-        .saturating_sub(chart.unreachable_probes.len());
-    eyre::ensure!(
-        chart.unreachable_probes.len() <= chart.composed_probes
-            && reachable >= chart.composed_probes / 2,
-        "too few composed probes are reachable through a values file: {chart:?}"
-    );
     Ok(())
 }
 
@@ -1170,57 +962,6 @@ fn a_composed_probe_reaches_helm_with_the_null_defaults_it_keeps() -> eyre::Resu
         want: ProbeValuesFile::ReachableAs { values, document }
     );
     Ok(())
-}
-
-#[derive(Default)]
-struct AcceptanceComparison {
-    charts_checked: usize,
-    probes_checked: usize,
-    flips: Vec<String>,
-    coverage: Vec<ProbeCoverage>,
-    screening_failures: Vec<String>,
-    helm_adjudication: HelmAdjudicationCoverage,
-    costs: Vec<ChartCost>,
-    pool: Option<PoolReport>,
-}
-
-impl AcceptanceComparison {
-    fn validate_lint_completeness(&self, live: bool) -> eyre::Result<()> {
-        Self::validate_lint_coverages(&self.coverage, live)
-    }
-
-    fn validate_lint_coverages(charts: &[ProbeCoverage], live: bool) -> eyre::Result<()> {
-        eyre::ensure!(
-            !charts.is_empty(),
-            "no charts checked for lint completeness"
-        );
-        for chart in charts {
-            let lint = chart.lint.as_ref().ok_or_eyre("lint lane was not run")?;
-            if live {
-                lint.validate_live()?;
-            } else {
-                lint.validate()?;
-            }
-        }
-        Ok(())
-    }
-}
-
-/// What one chart's comparison cost, for the Helm invocation report.
-#[derive(Debug, Serialize)]
-struct ChartCost {
-    label: String,
-    /// Reading both schemas, compiling them and generating the probe battery.
-    context_ms: u64,
-    screening_ms: u64,
-    lint_screening_ms: u64,
-    lint_compilation_ms: u64,
-    preparation_ms: u64,
-    /// Helm executions and Kubernetes judgement of every screened flip.
-    adjudication_ms: u64,
-    /// Content identities of the prepared render and coalescence copies.
-    prepared_trees: Option<(String, String)>,
-    helm: std::collections::BTreeMap<String, helm_invocation::StageTotals>,
 }
 
 /// Writes the per-chart cost report `SCHEMA_HELM_INVOCATION_REPORT` names, if any.
@@ -2185,6 +1926,7 @@ fn round73_fixture_flips_are_adjudicated_and_probe_caps_are_disclosed() -> eyre:
         helm_adjudication,
         costs: _,
         pool: _,
+        adjudications: _,
     } = corpus_acceptance_comparison()?;
     let baseline_ref = baseline_ref()?;
     let report = ProbeCoverageReport {
@@ -2337,6 +2079,7 @@ fn round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced() -> eyre::
         helm_adjudication,
         costs,
         pool,
+        adjudications: _,
     } = corpus_acceptance_comparison()?;
     write_invocation_report(&costs, pool.as_ref())?;
     let baseline_ref = baseline_ref()?;
@@ -2437,7 +2180,7 @@ fn external_schema_pair_flips_are_helm_adjudicated() -> eyre::Result<()> {
     let chart = chart
         .to_str()
         .ok_or_eyre("external chart path must be UTF-8")?;
-    let comparison = compare_charts(vec![ComparedChart {
+    let charts = vec![ComparedChart {
         label: "external".to_string(),
         chart_relative_path: chart.to_string(),
         inputs: ChartInputs::Given {
@@ -2447,7 +2190,11 @@ fn external_schema_pair_flips_are_helm_adjudicated() -> eyre::Result<()> {
             candidate_bytes,
             defaults,
         },
-    }])?;
+        annotation: None,
+        replay: Replay::default(),
+    }];
+    let config = battery_config(&charts)?;
+    let comparison = compare_charts(charts, &config)?;
     validate_external_comparison(&comparison)?;
     eprintln!(
         "probes_checked={} flips={}",
@@ -2519,37 +2266,111 @@ fn corpus_acceptance_comparison() -> eyre::Result<AcceptanceComparison> {
         {
             continue;
         }
-        charts.push(ComparedChart {
-            label: chart.to_string(),
-            chart_relative_path: chart.to_string(),
-            inputs: ChartInputs::Fixture {
-                baseline_ref: baseline_ref.clone(),
-                relative_path: format!("testdata/chart-corpus-schemas/{filename}"),
-                candidate_path: candidate_dump
-                    .join(format!("helm-schema.cli.chart-corpus.{chart}.schema.json")),
-            },
-        });
+        charts.push(fixture_chart(
+            chart.to_string(),
+            chart,
+            &baseline_ref,
+            format!("testdata/chart-corpus-schemas/{filename}"),
+            candidate_dump.join(format!("helm-schema.cli.chart-corpus.{chart}.schema.json")),
+        ));
     }
     for chart in LEAN_FIXTURE_CHARTS {
         if chart_filter.is_some() {
             continue;
         }
         let filename = format!("{chart}.schema.json");
-        charts.push(ComparedChart {
-            label: format!("lean/{chart}"),
-            chart_relative_path: (*chart).to_string(),
-            inputs: ChartInputs::Fixture {
-                baseline_ref: baseline_ref.clone(),
-                relative_path: format!("testdata/emission-profile-schemas/lean/{filename}"),
-                candidate_path: candidate_dump.join(format!(
-                    "helm-schema.emission-profile.lean.{chart}.schema.json"
-                )),
-            },
-        });
+        charts.push(fixture_chart(
+            format!("lean/{chart}"),
+            chart,
+            &baseline_ref,
+            format!("testdata/emission-profile-schemas/lean/{filename}"),
+            candidate_dump.join(format!(
+                "helm-schema.emission-profile.lean.{chart}.schema.json"
+            )),
+        ));
     }
-    let mut comparison = compare_charts(charts)?;
+    let config = battery_config(&charts)?;
+    let mut comparison = compare_charts(charts, &config)?;
     comparison.charts_checked = comparison.coverage.len();
     Ok(comparison)
+}
+
+/// The ordinary battery's chart: the committed fixture at `baseline_ref`
+/// against the candidate dump's artifact, attributed to the declared-types
+/// policy by the candidate's registry recipe, which this build generates.
+fn fixture_chart(
+    label: String,
+    chart: &str,
+    baseline_ref: &str,
+    relative_path: String,
+    candidate_path: PathBuf,
+) -> ComparedChart {
+    let annotation = candidate_path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .and_then(chart_recipe)
+        .map(|recipe| DeclaredTypesAnnotation::new(generate::chart_dir(recipe.chart), recipe));
+    let (baseline_ref, chart_name, candidate) = (
+        baseline_ref.to_string(),
+        chart.to_string(),
+        candidate_path.clone(),
+    );
+    ComparedChart {
+        label,
+        chart_relative_path: chart.to_string(),
+        inputs: ChartInputs::Artifact {
+            load: Box::new(move || {
+                let baseline_bytes = read_schema_bytes_at_ref(&baseline_ref, &relative_path)?;
+                let mut baseline = serde_json::from_slice(&baseline_bytes)?;
+                helm_schema_core::normalize_schema_pattern_dialects(&mut baseline);
+                let candidate_bytes = std::fs::read(&candidate)
+                    .wrap_err_with(|| format!("read {}", candidate.display()))?;
+                let candidate_schema = serde_json::from_slice(&candidate_bytes)
+                    .wrap_err_with(|| format!("parse {}", candidate.display()))?;
+                Ok(LoadedInputs {
+                    baseline,
+                    baseline_bytes,
+                    candidate: candidate_schema,
+                    candidate_bytes,
+                    defaults: read_coalesced_defaults(&chart_name)?,
+                })
+            }),
+            candidate_path,
+        },
+        annotation,
+        replay: Replay::default(),
+    }
+}
+
+/// The battery's comparison configuration from its environment: live
+/// adjudication against the pinned bundle under `ADJUDICATE_WITH_HELM`, the
+/// context roster for exactly `charts`, and the host-sized pool.
+fn battery_config(charts: &[ComparedChart]) -> eyre::Result<ComparisonConfig> {
+    let selected = charts.iter().map(|chart| chart.label.clone()).collect();
+    let contexts = std::env::var_os(lint_probes::CONTEXT_ROSTER_VAR)
+        .map(|path| lint_probes::ImportedRoster::read(std::path::Path::new(&path), &selected))
+        .transpose()?;
+    // Custom resources are judged by the CRD schemas pinned beside the bundle.
+    let kubernetes = if adjudicates_live() {
+        let cache = std::env::var_os(K8S_CACHE_VAR).map_or_else(
+            || test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache"),
+            PathBuf::from,
+        );
+        Some(OfflineKubernetesValidator::with_crd_catalog(
+            &cache,
+            &test_util::workspace_testdata().join("provider-bundle/crds-catalog-cache"),
+            helm_adjudication::KUBERNETES_RELEASE,
+        )?)
+    } else {
+        None
+    };
+    Ok(ComparisonConfig {
+        kubernetes,
+        contexts,
+        pool: PoolLimits::from_env()?,
+        witnesses: None,
+        helm: None,
+    })
 }
 
 /// Reads a schema fixture as an earlier commit recorded it.
@@ -2586,1204 +2407,6 @@ fn candidate_dump_dir(value: Option<std::ffi::OsString>) -> eyre::Result<PathBuf
 fn preservation_battery_requires_candidate_dump() {
     assert!(candidate_dump_dir(None).is_err());
     assert!(candidate_dump_dir(Some("/dump".into())).is_ok());
-}
-
-/// One chart whose baseline and candidate schemas are compared.
-struct ComparedChart {
-    label: String,
-    /// The chart directory, relative to the corpus charts or absolute.
-    chart_relative_path: String,
-    inputs: ChartInputs,
-}
-
-/// Where a compared chart's schemas and defaults come from.
-enum ChartInputs {
-    Fixture {
-        baseline_ref: String,
-        relative_path: String,
-        candidate_path: PathBuf,
-    },
-    Given {
-        baseline: serde_json::Value,
-        baseline_bytes: Vec<u8>,
-        candidate: serde_json::Value,
-        candidate_bytes: Vec<u8>,
-        defaults: serde_json::Value,
-    },
-}
-
-struct LoadedInputs {
-    baseline: serde_json::Value,
-    baseline_bytes: Vec<u8>,
-    candidate: serde_json::Value,
-    /// The candidate artifact's exact bytes, not a Helm-ready spelling.
-    candidate_bytes: Vec<u8>,
-    defaults: serde_json::Value,
-}
-
-/// The whole-chart recipe the registry generates `dump_name` from.
-fn chart_recipe(dump_name: &str) -> Option<registry::ChartRecipe> {
-    registry::registry()
-        .into_iter()
-        .find_map(|spec| match spec.recipe {
-            registry::GenerationRecipe::Chart(recipe) if spec.dump_name == dump_name => {
-                Some(recipe)
-            }
-            _ => None,
-        })
-}
-
-impl ChartInputs {
-    /// The candidate's registry recipe under `--declared-types=annotate`;
-    /// `None` for a schema pair no recipe generates.
-    fn declared_types_annotation(&self) -> Option<DeclaredTypesAnnotation> {
-        let Self::Fixture { candidate_path, .. } = self else {
-            return None;
-        };
-        let recipe = chart_recipe(candidate_path.file_name()?.to_str()?)?;
-        Some(DeclaredTypesAnnotation::new(
-            generate::chart_dir(recipe.chart),
-            recipe,
-        ))
-    }
-
-    /// The baseline schema, the candidate schema and the chart's defaults.
-    fn load(self, chart: &str) -> eyre::Result<LoadedInputs> {
-        match self {
-            Self::Fixture {
-                baseline_ref,
-                relative_path,
-                candidate_path,
-            } => {
-                let baseline_bytes = read_schema_bytes_at_ref(&baseline_ref, &relative_path)?;
-                let mut baseline = serde_json::from_slice(&baseline_bytes)?;
-                helm_schema_core::normalize_schema_pattern_dialects(&mut baseline);
-                let candidate_bytes = std::fs::read(&candidate_path)
-                    .wrap_err_with(|| format!("read {}", candidate_path.display()))?;
-                let candidate = serde_json::from_slice(&candidate_bytes)
-                    .wrap_err_with(|| format!("parse {}", candidate_path.display()))?;
-                let defaults = read_coalesced_defaults(chart)?;
-                Ok(LoadedInputs {
-                    baseline,
-                    baseline_bytes,
-                    candidate,
-                    candidate_bytes,
-                    defaults,
-                })
-            }
-            Self::Given {
-                baseline,
-                baseline_bytes,
-                candidate,
-                candidate_bytes,
-                defaults,
-            } => Ok(LoadedInputs {
-                baseline,
-                baseline_bytes,
-                candidate,
-                candidate_bytes,
-                defaults,
-            }),
-        }
-    }
-}
-
-/// A chart whose screened flips Helm adjudicates, shared by its probe jobs
-/// and dropped with the last of them.
-struct LiveChart {
-    label: String,
-    path: std::path::PathBuf,
-    profiles: ProfileSchemas,
-    /// Each screened probe's name and Helm values file, in probe order.
-    flips: Vec<ScreenedProbe>,
-    lint_schemas: LintSchemas,
-    helm: std::sync::Arc<ChartHelm>,
-    /// The chart under `--declared-types=annotate`, when a registry recipe
-    /// generates the candidate.
-    annotation: Option<DeclaredTypesAnnotation>,
-}
-
-/// A chart's pinned Helm copies, prepared by the first probe job that needs
-/// them, inline.
-#[derive(Default)]
-struct ChartHelm {
-    chart: std::sync::OnceLock<Result<PinnedHelmChart, String>>,
-    preparation_ms: std::sync::atomic::AtomicU64,
-    controls: lint_adjudication::ControlObservations,
-}
-
-impl ChartHelm {
-    fn chart(&self, path: &std::path::Path) -> Result<&PinnedHelmChart, &str> {
-        self.chart
-            .get_or_init(|| {
-                let started = std::time::Instant::now();
-                let chart = helm_invocation::HelmRunner::shared()
-                    .and_then(|runner| PinnedHelmChart::prepare(runner, path))
-                    .map_err(|error| error.to_string());
-                self.preparation_ms
-                    .store(elapsed_ms(started), std::sync::atomic::Ordering::Relaxed);
-                chart
-            })
-            .as_ref()
-            .map_err(String::as_str)
-    }
-
-    /// Memory a probe job of this chart reserves: 1.3 times the largest
-    /// Helm child measured for it, or all of `budget` until one was, so that
-    /// a chart's first probe runs alone.
-    fn reservation(&self, budget: u64) -> u64 {
-        match self.chart.get() {
-            Some(Ok(chart)) if chart.peak_child_rss() > 0 => {
-                (chart.peak_child_rss().saturating_mul(13) / 10).min(budget)
-            }
-            _ => budget,
-        }
-    }
-}
-
-enum AcceptanceJob {
-    Chart(Box<ComparedChart>),
-    Probe(std::sync::Arc<LiveChart>, Vec<usize>),
-}
-
-enum AcceptanceResult {
-    Chart(eyre::Result<Box<ScreenedChart>>),
-    Probe(Box<AdjudicatedProbe>),
-}
-
-/// A chart's probe battery and its screening.
-struct ScreenedChart {
-    label: String,
-    coverage: ProbeCoverage,
-    probes_checked: usize,
-    /// Flips judged by the schemas alone, when Helm does not adjudicate.
-    flips: Vec<String>,
-    /// Probes whose values file the chart could not compose at all.
-    failures: Vec<String>,
-    /// Flips handed to Helm.
-    screened_flips: usize,
-    helm: Option<std::sync::Arc<ChartHelm>>,
-    cost: ChartCost,
-}
-
-struct AdjudicatedProbe {
-    flip: usize,
-    case: String,
-    document_kind: Option<test_util::helm_values::AcceptanceDocument>,
-    kubernetes_version: String,
-    input: Option<known_inherited_failures::FailureInput>,
-    outcome: Result<(HelmFlipVerdict, std::path::PathBuf), String>,
-    adjudication_ms: u64,
-}
-
-/// Screens every chart and adjudicates every screened flip on the pool,
-/// then folds the outcomes in chart and probe order.
-#[tracing::instrument(target = "helm_schema::acceptance", skip_all, fields(charts = charts.len()))]
-fn compare_charts(charts: Vec<ComparedChart>) -> eyre::Result<AcceptanceComparison> {
-    eyre::ensure!(
-        !charts.is_empty(),
-        "no charts selected for acceptance screening"
-    );
-    let selected = charts.iter().map(|chart| chart.label.clone()).collect();
-    let roster = std::env::var_os(lint_probes::CONTEXT_ROSTER_VAR)
-        .map(|path| lint_probes::ImportedRoster::read(std::path::Path::new(&path), &selected))
-        .transpose()?;
-    let adjudicate_live = adjudicates_live();
-    let limits = PoolLimits::from_env()?;
-    // Custom resources are judged by the CRD schemas pinned beside the bundle.
-    let kubernetes = if adjudicate_live {
-        let cache = std::env::var_os(K8S_CACHE_VAR).map_or_else(
-            || test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache"),
-            std::path::PathBuf::from,
-        );
-        Some(OfflineKubernetesValidator::with_crd_catalog(
-            &cache,
-            &test_util::workspace_testdata().join("provider-bundle/crds-catalog-cache"),
-            helm_adjudication::KUBERNETES_RELEASE,
-        )?)
-    } else {
-        None
-    };
-    let started = std::time::Instant::now();
-    let jobs = charts
-        .into_iter()
-        .enumerate()
-        .map(|(index, chart)| ((index, 0), AcceptanceJob::Chart(Box::new(chart))))
-        .collect();
-    let (results, peaks) = run_ordered(
-        limits,
-        jobs,
-        |job| match job {
-            AcceptanceJob::Chart(_) => 0,
-            AcceptanceJob::Probe(live, _) => live.helm.reservation(limits.memory_bytes),
-        },
-        |(chart_index, _), job, submitter| match job {
-            AcceptanceJob::Chart(chart) => {
-                let (screened, live) = match screen_chart(*chart, adjudicate_live, roster.as_ref())
-                {
-                    Ok(screened) => screened,
-                    Err(error) => {
-                        return vec![((chart_index, 0), AcceptanceResult::Chart(Err(error)))];
-                    }
-                };
-                if let Some(live) = live {
-                    let live = std::sync::Arc::new(live);
-                    for flips in probe_groups(&live) {
-                        let Some(first) = flips.first() else { continue };
-                        submitter.submit(
-                            (chart_index, first + 1),
-                            AcceptanceJob::Probe(live.clone(), flips),
-                        );
-                    }
-                }
-                vec![(
-                    (chart_index, 0),
-                    AcceptanceResult::Chart(Ok(Box::new(screened))),
-                )]
-            }
-            AcceptanceJob::Probe(live, flips) => {
-                adjudicate_probe_group(&live, &flips, kubernetes.as_ref())
-                    .into_iter()
-                    .map(|probe| {
-                        (
-                            (chart_index, probe.flip + 1),
-                            AcceptanceResult::Probe(Box::new(probe)),
-                        )
-                    })
-                    .collect()
-            }
-        },
-    );
-    let results = results
-        .into_iter()
-        .flat_map(|(_, results)| results)
-        .collect();
-    let mut comparison = fold_results(results, adjudicate_live)?;
-    if let Some(kubernetes) = &kubernetes {
-        kubernetes.verify_bundles_unchanged()?;
-    }
-    comparison.pool = Some(PoolReport {
-        workers: limits.workers,
-        memory_bytes: limits.memory_bytes,
-        peaks,
-        wall_ms: elapsed_ms(started),
-    });
-    Ok(comparison)
-}
-
-/// Folds chart and probe results at their original ordinals into one comparison.
-fn fold_results(
-    mut results: Vec<(helm_pool::Ordinal, AcceptanceResult)>,
-    adjudicate_live: bool,
-) -> eyre::Result<AcceptanceComparison> {
-    // One input group can contain nonadjacent documents; execution grouping never reorders coverage.
-    results.sort_by_key(|(ordinal, _)| *ordinal);
-    let mut comparison = AcceptanceComparison::default();
-    comparison.helm_adjudication.enabled = adjudicate_live;
-    let mut helm_charts = Vec::new();
-    for (_, result) in results {
-        match result {
-            AcceptanceResult::Chart(screened) => {
-                let screened = screened?;
-                if adjudicate_live {
-                    comparison
-                        .helm_adjudication
-                        .charts_adjudicated
-                        .insert(screened.label.clone());
-                }
-                comparison.probes_checked += screened.probes_checked;
-                comparison.flips.extend(screened.flips);
-                comparison.screening_failures.extend(screened.failures);
-                comparison.helm_adjudication.screened_flips += screened.screened_flips;
-                for unreachable in &screened.coverage.unreachable_probes {
-                    comparison
-                        .helm_adjudication
-                        .unreachable_cases
-                        .push(format!("{}: {}", screened.label, unreachable.probe));
-                }
-                comparison.coverage.push(screened.coverage);
-                comparison.costs.push(screened.cost);
-                helm_charts.push(screened.helm);
-            }
-            AcceptanceResult::Probe(probe) => {
-                if probe.document_kind.is_some() {
-                    comparison
-                        .helm_adjudication
-                        .examined_contexts
-                        .insert(probe.case.clone());
-                }
-                if let Some(kind) = probe.document_kind
-                    && let Some(lint) = comparison
-                        .coverage
-                        .last_mut()
-                        .and_then(|chart| chart.lint.as_mut())
-                    && let Some(counts) = lint.documents.get_mut(&format!("{kind:?}"))
-                {
-                    if probe.outcome.is_ok() {
-                        counts.adjudicated += 1;
-                    } else {
-                        counts.adjudication_failures += 1;
-                    }
-                }
-                if let Some(cost) = comparison.costs.last_mut() {
-                    cost.adjudication_ms += probe.adjudication_ms;
-                }
-                match probe.outcome {
-                    Err(failure) => comparison.helm_adjudication.adjudication_failures.push(
-                        ObservedFailure::from_adjudication(
-                            probe.case,
-                            probe.kubernetes_version,
-                            &failure,
-                            probe.input,
-                        ),
-                    ),
-                    Ok((verdict, evidence)) => {
-                        eprintln!("HELM_FLIP {verdict:?}: evidence={}", evidence.display());
-                        if let Some(candidate_accepts) = comparison
-                            .helm_adjudication
-                            .record_verdict(verdict, probe.case.clone(), Some(evidence))
-                        {
-                            comparison.flips.push(format!(
-                                "{}: candidate accepts={candidate_accepts}",
-                                probe.case
-                            ));
-                        }
-                    }
-                }
-            }
-        }
-    }
-    record_helm_costs(&helm_charts, &mut comparison.costs);
-    Ok(comparison)
-}
-
-/// Records each chart's prepared copies and Helm costs in its cost entry.
-fn record_helm_costs(helm_charts: &[Option<std::sync::Arc<ChartHelm>>], costs: &mut [ChartCost]) {
-    for (helm, cost) in helm_charts.iter().zip(costs) {
-        let Some(helm) = helm else { continue };
-        cost.preparation_ms = helm
-            .preparation_ms
-            .load(std::sync::atomic::Ordering::Relaxed);
-        if let Some(Ok(chart)) = helm.chart.get() {
-            cost.helm = helm_invocation::stage_totals(&chart.invocations());
-            cost.prepared_trees = Some((
-                chart.render_tree().sha256().to_string(),
-                chart.coalesce_tree().sha256().to_string(),
-            ));
-        }
-    }
-}
-
-/// The pool a comparison ran on and the most it ran at once.
-#[derive(Debug, Serialize)]
-struct PoolReport {
-    workers: usize,
-    memory_bytes: u64,
-    peaks: PoolPeaks,
-    wall_ms: u64,
-}
-
-/// How a chart's screened lint documents are accounted.
-#[derive(Clone, Copy)]
-enum LintAccounting {
-    /// Helm adjudicates every screened document, forced audits included.
-    Live,
-    /// The schemas alone judge; `identical_schemas` says whether the baseline
-    /// and candidate artifacts are byte-identical.
-    SchemaOnly { identical_schemas: bool },
-}
-
-impl LintAccounting {
-    fn new(adjudicate_live: bool, identical_schemas: bool) -> Self {
-        if adjudicate_live {
-            Self::Live
-        } else {
-            Self::SchemaOnly { identical_schemas }
-        }
-    }
-}
-
-struct ScreenedProbes {
-    probes_checked: usize,
-    flips: Vec<String>,
-    failures: Vec<String>,
-    screened: Vec<ScreenedProbe>,
-}
-
-impl ScreenedProbes {
-    fn append_lint(
-        &mut self,
-        lint: eyre::Result<lint_probes::LintScreen>,
-        schemas: &LintSchemas,
-        coverage: &mut ProbeCoverage,
-        mode: LintAccounting,
-    ) {
-        let mut lint = match lint {
-            Ok(lint) => lint,
-            Err(err) => {
-                coverage.lint = Some(lint_probes::LintCoverage {
-                    failures: vec![err.to_string()],
-                    ..Default::default()
-                });
-                return;
-            }
-        };
-        self.probes_checked += lint.coverage.probes();
-        for probe in lint.flips {
-            let LintAccounting::SchemaOnly { identical_schemas } = mode else {
-                self.screened.push(probe);
-                continue;
-            };
-            if let Some(document) = probe.document {
-                // Byte-identical schemas give every document identical verdicts, so a forced
-                // audit is no transition; only live mode can run it.
-                if document.lint_control && identical_schemas {
-                    lint.coverage.deferred_live_audits.push(probe.name);
-                    continue;
-                }
-                let (before, after) = schemas.profiles.document_verdicts(&document.values);
-                self.flips.push(format!(
-                    "{}: {}: before={before}, after={after}",
-                    coverage.label, probe.name
-                ));
-            }
-        }
-        coverage.lint = Some(lint.coverage);
-    }
-}
-
-fn screen_template_probes(
-    chart_dir: &std::path::Path,
-    profiles: &ProfileSchemas,
-    defaults: &serde_json::Value,
-    probes: Vec<(String, ProbeInstance)>,
-    coverage: &mut ProbeCoverage,
-    adjudicate_live: bool,
-) -> ScreenedProbes {
-    let label = &coverage.label;
-    let probes_checked = probes.len();
-    let mut flips = Vec::new();
-    let mut failures = Vec::new();
-    let mut screened = Vec::new();
-    for (probe_name, probe) in probes {
-        if matches!(probe, ProbeInstance::Coalesced(_)) {
-            coverage.composed_probes += 1;
-        }
-        let (overlay, probe) = match probe.helm_values_file(chart_dir, defaults) {
-            Ok(ProbeValuesFile::Reachable(overlay)) => (overlay, probe),
-            Ok(ProbeValuesFile::ReachableAs { values, document }) => {
-                (values, ProbeInstance::Coalesced(document))
-            }
-            Ok(ProbeValuesFile::Unreachable(reason)) => {
-                coverage.unreachable_probes.push(UnreachableProbe {
-                    probe: probe_name,
-                    reason,
-                });
-                continue;
-            }
-            Err(error) => {
-                failures.push(format!("{label}: {probe_name}: {error}"));
-                continue;
-            }
-        };
-        if !profiles.screens_a_flip(&probe) {
-            continue;
-        }
-        if adjudicate_live {
-            // Screening proposes an overlay; only Helm can establish its coalesced document.
-            screened.push(ScreenedProbe {
-                name: probe_name,
-                overlay,
-                document: None,
-            });
-        } else {
-            let (before, after) = profiles.verdicts(&probe);
-            flips.push(format!(
-                "{label}: {probe_name}: before={before}, after={after}"
-            ));
-        }
-    }
-    ScreenedProbes {
-        probes_checked,
-        flips,
-        failures,
-        screened,
-    }
-}
-
-/// Compiles both profiles, generates the chart's probe battery and screens
-/// it, returning the screened flips for Helm when `adjudicate_live`.
-#[tracing::instrument(
-    target = "helm_schema::acceptance",
-    skip_all,
-    fields(chart = %chart.label, lane = "screen", adjudicate_live)
-)]
-fn screen_chart(
-    chart: ComparedChart,
-    adjudicate_live: bool,
-    roster: Option<&lint_probes::ImportedRoster>,
-) -> eyre::Result<(ScreenedChart, Option<LiveChart>)> {
-    let started = std::time::Instant::now();
-    let ComparedChart {
-        label,
-        chart_relative_path,
-        inputs,
-    } = chart;
-    let annotation = inputs.declared_types_annotation();
-    let candidate_path = match &inputs {
-        ChartInputs::Fixture { candidate_path, .. } => Some(candidate_path.clone()),
-        ChartInputs::Given { .. } => None,
-    };
-    let LoadedInputs {
-        baseline,
-        baseline_bytes,
-        candidate: current,
-        candidate_bytes,
-        defaults,
-    } = inputs.load(&chart_relative_path)?;
-    let profiles = ProfileSchemas::compile(&baseline, &current, defaults.clone())?;
-    let lint_compilation = std::time::Instant::now();
-    let lint_schemas =
-        LintSchemas::compile_bytes(&baseline_bytes, &current, candidate_path.as_deref())?;
-    let lint_compilation_ms = elapsed_ms(lint_compilation);
-    let (probes, mut coverage) = structural_probe_battery_with_coverage(
-        &chart_relative_path,
-        &defaults,
-        &[&baseline, &current],
-    )?;
-    coverage.label = label.clone();
-    let chart_dir = HelmChartDir::stage(&chart_relative_path)?;
-    let mut cost = ChartCost {
-        label: label.clone(),
-        context_ms: elapsed_ms(started),
-        screening_ms: 0,
-        lint_screening_ms: 0,
-        lint_compilation_ms,
-        preparation_ms: 0,
-        adjudication_ms: 0,
-        prepared_trees: None,
-        helm: std::collections::BTreeMap::new(),
-    };
-    let screening = std::time::Instant::now();
-    let mut result = screen_template_probes(
-        chart_dir.path(),
-        &profiles,
-        &defaults,
-        probes,
-        &mut coverage,
-        adjudicate_live,
-    );
-    let lint_started = std::time::Instant::now();
-    let version = helm_schema_test_support::helm::kubernetes_version::chart_kubernetes_version(
-        chart_dir.path(),
-    )?;
-    let imported = roster
-        .and_then(|roster| roster.rows.get(&label))
-        .map_or(&[][..], Vec::as_slice);
-    let lint = lint_probes::screen(&lint_probes::ScreenRequest {
-        chart: chart_dir.path(),
-        schemas: &lint_schemas,
-        kubernetes_version: version,
-        imported,
-        roster_sha256: roster.map(|roster| roster.sha256.clone()),
-        available_probes: harness::MAX_PROBES_PER_CHART.saturating_sub(result.probes_checked),
-    });
-    let accounting = LintAccounting::new(adjudicate_live, baseline_bytes == candidate_bytes);
-    result.append_lint(lint, &lint_schemas, &mut coverage, accounting);
-    cost.lint_screening_ms = elapsed_ms(lint_started);
-    cost.screening_ms = elapsed_ms(screening);
-    let ScreenedProbes {
-        probes_checked,
-        flips,
-        failures,
-        screened,
-    } = result;
-    let live = (!screened.is_empty()).then(|| LiveChart {
-        label: label.clone(),
-        path: test_util::workspace_testdata()
-            .join("charts")
-            .join(&chart_relative_path),
-        profiles,
-        flips: screened,
-        lint_schemas,
-        helm: std::sync::Arc::default(),
-        annotation,
-    });
-    let screened = ScreenedChart {
-        label,
-        coverage,
-        probes_checked,
-        flips,
-        failures,
-        screened_flips: live.as_ref().map_or(0, |live| live.flips.len()),
-        helm: live.as_ref().map(|live| live.helm.clone()),
-        cost,
-    };
-    Ok((screened, live))
-}
-
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
-struct DocumentInput<'a> {
-    values: &'a [u8],
-    kubernetes_version: &'a str,
-}
-
-/// One lint invocation observes both lint documents, even when templates are nondeterministic.
-/// Chart and schema bytes are fixed by the owning `LiveChart`; imported values retain exact bytes.
-fn probe_groups(live: &LiveChart) -> Vec<Vec<usize>> {
-    let mut documents = std::collections::BTreeMap::<DocumentInput<'_>, Vec<usize>>::new();
-    let mut groups = Vec::new();
-    for (flip, probe) in live.flips.iter().enumerate() {
-        if let Some(document) = &probe.document {
-            documents
-                .entry(DocumentInput {
-                    values: &document.values_file,
-                    kubernetes_version: &document.kubernetes_version,
-                })
-                .or_default()
-                .push(flip);
-        } else {
-            groups.push(vec![flip]);
-        }
-    }
-    groups.extend(documents.into_values());
-    groups.sort_by_key(|group| group.first().copied());
-    groups
-}
-
-type LintObservation<'a> = Result<lint_adjudication::GroupObservations<'a>, String>;
-
-#[tracing::instrument(
-    target = "helm_schema::acceptance",
-    skip_all,
-    fields(
-        chart = %live.label,
-        probes = flips.len(),
-        document_group = flips.first().and_then(|flip| live.flips.get(*flip)).is_some_and(|probe| probe.document.is_some())
-    )
-)]
-fn adjudicate_probe_group(
-    live: &LiveChart,
-    flips: &[usize],
-    kubernetes: Option<&OfflineKubernetesValidator>,
-) -> Vec<AdjudicatedProbe> {
-    let started = std::time::Instant::now();
-    let document = flips
-        .first()
-        .and_then(|flip| live.flips.get(*flip))
-        .and_then(|probe| probe.document.as_ref());
-    // This observation belongs only to this experiment; another group invokes Helm afresh.
-    let mut observations = document.filter(|_| kubernetes.is_some()).map(|document| {
-        let chart = live.helm.chart(&live.path).map_err(str::to_string)?;
-        let lint = chart
-            .adjudicate_lint(&helm_adjudication::LintProbeRequest {
-                values: &document.values_file,
-                kubernetes_version: &document.kubernetes_version,
-                baseline_schema: &live.lint_schemas.baseline,
-                candidate_schema: &live.lint_schemas.candidate,
-            })
-            .map_err(|err| err.to_string())?;
-        Ok(lint_adjudication::GroupObservations::new(
-            chart,
-            document,
-            lint,
-            &live.helm.controls,
-        ))
-    });
-    let observation_ms = elapsed_ms(started);
-    let mut results: Vec<_> = flips
-        .iter()
-        .map(|flip| adjudicate_probe(live, *flip, kubernetes, &mut observations))
-        .collect();
-    // Shared execution time is charged once while every document retains its own outcome.
-    if let Some(first) = results.first_mut() {
-        first.adjudication_ms += observation_ms;
-    }
-    results
-}
-
-/// Adjudicates one screened flip using its group's observations when applicable.
-#[tracing::instrument(
-    target = "helm_schema::acceptance",
-    skip_all,
-    fields(chart = %live.label, lane = "adjudicate", row = flip)
-)]
-fn adjudicate_probe(
-    live: &LiveChart,
-    flip: usize,
-    kubernetes: Option<&OfflineKubernetesValidator>,
-    observations: &mut Option<LintObservation<'_>>,
-) -> AdjudicatedProbe {
-    let started = std::time::Instant::now();
-    let Some(probe) = live.flips.get(flip) else {
-        return AdjudicatedProbe {
-            flip,
-            case: format!("{}: flip {flip}", live.label),
-            document_kind: None,
-            kubernetes_version: String::new(),
-            input: None,
-            outcome: Err(format!("{}: no screened flip {flip}", live.label)),
-            adjudication_ms: 0,
-        };
-    };
-    let case = format!("{}: {}", live.label, probe.name);
-    let input = known_inherited_failures::FailureInput::for_probe(probe);
-    let kubernetes_version = probe.document.as_ref().map_or_else(
-        || {
-            live.helm
-                .chart(&live.path)
-                .ok()
-                .and_then(PinnedHelmChart::kubernetes_version)
-                .unwrap_or_default()
-                .to_string()
-        },
-        |document| document.kubernetes_version.clone(),
-    );
-    let outcome = match (&input, live.helm.chart(&live.path), kubernetes) {
-        (Err(error), _, _) => Err(format!("{case}: cannot identify input: {error}")),
-        (_, Err(error), _) => Err(format!("{case}: {error}")),
-        (_, Ok(_), None) => Err(format!("{case}: no Kubernetes validator")),
-        (_, Ok(chart), Some(kubernetes)) => {
-            let outcome = match &probe.document {
-                Some(document) => match observations {
-                    Some(Ok(observations)) => lint_adjudication::adjudicate_lint_observation(
-                        probe,
-                        document,
-                        &live.lint_schemas,
-                        kubernetes,
-                        observations,
-                    ),
-                    Some(Err(err)) => Err(eyre::eyre!("{err}")),
-                    None => Err(eyre::eyre!("missing lint observation for document group")),
-                },
-                None => adjudicate_flip(
-                    chart,
-                    &probe.overlay,
-                    &live.profiles,
-                    kubernetes,
-                    live.annotation.as_ref(),
-                ),
-            };
-            outcome.map_err(|error| format!("{case}: {error}"))
-        }
-    };
-    AdjudicatedProbe {
-        flip,
-        case,
-        document_kind: probe.document.as_ref().map(|document| document.kind),
-        kubernetes_version,
-        input: input.ok(),
-        outcome,
-        adjudication_ms: elapsed_ms(started),
-    }
-}
-
-fn elapsed_ms(started: std::time::Instant) -> u64 {
-    u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX)
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-enum HelmFlipVerdict {
-    Collapsed,
-    TighteningMatchedLintRejection,
-    LooseningMatchedLintValidation,
-    CandidateAcceptsLintRejects,
-    TighteningMatchedHelmAbort,
-    TighteningMatchedKubernetesRejection,
-    /// Helm renders and Kubernetes proves no new violation, but the
-    /// rejection is exactly a declared default's type assertion on a path no
-    /// template reads, and the schema generated under
-    /// `--declared-types=annotate` accepts the document: the rejection is the
-    /// `assert` authoring policy, not a recovered constraint.
-    TighteningMatchedDeclaredTypesPolicy,
-    LooseningMatchedKubernetesValidation,
-    /// Helm renders, and every Kubernetes violation is one the defaults render already carries.
-    LooseningMatchedDefaultsViolations,
-    /// Helm renders, but a new or changed resource has no decidable schema,
-    /// for the reasons listed.
-    LooseningWithUncertainKubernetes(Vec<String>),
-    CandidateAcceptsHelmAborts,
-    CandidateAcceptsKubernetesRejects,
-    /// The candidate accepts a cell Helm or Kubernetes rejects, and the
-    /// baseline rejected it exactly as it rejects the chart's own defaults:
-    /// a false acceptance judged on the candidate alone.
-    UninformativeBaselineFalseAcceptance(Rejection),
-}
-
-/// Recorded, not yet decisive: how each profile judges every document
-/// Helm's schema checks validate for `overlay`, lint's two included, or why
-/// the port composed none.
-fn acceptance_document_verdicts(
-    chart: &PinnedHelmChart,
-    overlay: &serde_json::Value,
-    profiles: &ProfileSchemas,
-) -> serde_json::Value {
-    let mut documents = serde_json::Map::new();
-    for (kind, document) in chart.acceptance_documents(overlay) {
-        let judged = match document {
-            Ok(document) => {
-                let (baseline, candidate) = profiles.verdicts(&ProbeInstance::Coalesced(document));
-                json!({"baseline_accepts": baseline, "candidate_accepts": candidate})
-            }
-            Err(error) => json!(error.to_string()),
-        };
-        documents.insert(format!("{kind:?}"), judged);
-    }
-    serde_json::Value::Object(documents)
-}
-
-fn adjudicate_round74_flip(
-    chart: &PinnedHelmChart,
-    overlay: &serde_json::Value,
-    profiles: &ProfileSchemas,
-    kubernetes: &OfflineKubernetesValidator,
-) -> eyre::Result<HelmFlipVerdict> {
-    Ok(adjudicate_flip(chart, overlay, profiles, kubernetes, None)?.0)
-}
-
-/// A chart regenerated by its candidate's recipe under both declared-types
-/// policies, prepared by the first flip that needs it. The two generations
-/// differ only in whether declared defaults assert their types.
-struct DeclaredTypesAnnotation {
-    chart_dir: PathBuf,
-    recipe: registry::ChartRecipe,
-    /// A schema conjoined to both regenerations: a control's stand-in for a
-    /// constraint the chart's own generation carries under either policy.
-    /// The battery passes none.
-    constraint: Option<serde_json::Value>,
-    prepared: std::sync::OnceLock<Result<RegeneratedChart, String>>,
-}
-
-/// The chart's schemas under both policies, and the annotate session that
-/// explains its paths.
-struct RegeneratedChart {
-    asserted: PolicySchema,
-    annotated: jsonschema::Validator,
-    session: helm_schema::AnalysisSession,
-}
-
-/// One policy's generated schema and its compiled validator.
-struct PolicySchema {
-    schema: serde_json::Value,
-    validator: jsonschema::Validator,
-}
-
-impl PolicySchema {
-    fn generate(
-        session: &helm_schema::AnalysisSession,
-        recipe: &registry::ChartRecipe,
-        constraint: Option<&serde_json::Value>,
-    ) -> Result<Self, String> {
-        let policy = recipe.authoring.declared_types;
-        let mut schema = generate::session_schema(session, recipe)
-            .map_err(|error| format!("generate the {policy:?} schema: {error:#}"))?;
-        if let Some(constraint) = constraint {
-            schema = conjoin(schema, constraint);
-        }
-        let validator = jsonschema::validator_for(&schema)
-            .map_err(|error| format!("compile the {policy:?} schema: {error}"))?;
-        Ok(Self { schema, validator })
-    }
-}
-
-/// `schema` and `constraint` as one schema: both under `allOf`, their
-/// definitions merged at the root so every `#/$defs/...` still resolves,
-/// under the constraint's dialect when it names one.
-fn conjoin(mut schema: serde_json::Value, constraint: &serde_json::Value) -> serde_json::Value {
-    let mut constraint = constraint.clone();
-    let mut root = serde_json::Map::new();
-    let mut definitions = serde_json::Map::new();
-    for part in [&mut schema, &mut constraint] {
-        let Some(members) = part.as_object_mut() else {
-            continue;
-        };
-        if let Some(dialect) = members.remove("$schema") {
-            root.insert("$schema".to_string(), dialect);
-        }
-        if let Some(serde_json::Value::Object(defined)) = members.remove("$defs") {
-            definitions.extend(defined);
-        }
-    }
-    root.insert("$defs".to_string(), serde_json::Value::Object(definitions));
-    root.insert("allOf".to_string(), json!([schema, constraint]));
-    serde_json::Value::Object(root)
-}
-
-impl DeclaredTypesAnnotation {
-    /// The chart at `chart_dir`, generated by `recipe` under each
-    /// declared-types policy.
-    fn new(chart_dir: PathBuf, recipe: registry::ChartRecipe) -> Self {
-        Self {
-            chart_dir,
-            recipe,
-            constraint: None,
-            prepared: std::sync::OnceLock::new(),
-        }
-    }
-
-    fn prepared(&self) -> Result<&RegeneratedChart, String> {
-        self.prepared
-            .get_or_init(|| {
-                let mut asserting = self.recipe;
-                asserting.authoring.declared_types = helm_schema::generation::DeclaredTypes::Assert;
-                let mut annotating = self.recipe;
-                annotating.authoring.declared_types =
-                    helm_schema::generation::DeclaredTypes::Annotate;
-                let session = |recipe: &registry::ChartRecipe| {
-                    helm_schema::AnalysisSession::new(generate::generate_options_at(
-                        &self.chart_dir,
-                        recipe,
-                    ))
-                };
-                let constraint = self.constraint.as_ref();
-                let asserted =
-                    PolicySchema::generate(&session(&asserting), &asserting, constraint)?;
-                let annotate_session = session(&annotating);
-                let annotated = PolicySchema::generate(&annotate_session, &annotating, constraint)?;
-                Ok(RegeneratedChart {
-                    asserted,
-                    annotated: annotated.validator,
-                    session: annotate_session,
-                })
-            })
-            .as_ref()
-            .map_err(Clone::clone)
-    }
-}
-
-/// [`declared_types_attribution`] of a Helm-rendered rejection, when the
-/// chart has an annotate regeneration and Helm coalesced the document.
-fn attribute_to_declared_types(
-    annotation: Option<&DeclaredTypesAnnotation>,
-    values: Option<&helm_adjudication::CoalescedValues>,
-    profiles: &ProfileSchemas,
-) -> Result<(), String> {
-    match (annotation, values) {
-        (None, _) => Err("the chart has no registry recipe to regenerate".to_string()),
-        (Some(_), None) => Err("Helm produced no coalesced document".to_string()),
-        (Some(annotation), Some(values)) => {
-            declared_types_attribution(annotation, profiles, values.as_json())
-        }
-    }
-}
-
-/// Whether the candidate's rejection of the Helm-coalesced `document` is the
-/// `assert` authoring policy's alone. It is when the candidate, which rejects
-/// it, is the chart's assert regeneration, the annotate regeneration accepts
-/// the document outright, and every value the assert regeneration rejects is
-/// an object member explain C1 reports unread (no use of it, its descendants
-/// or an ancestor besides the seeded top-level and dependency-root claims,
-/// and no generation decision). The two regenerations differ only in the
-/// declared-types policy, so when the annotate one accepts, every reason the
-/// candidate rejects for is the policy's, whatever the baseline rejects; no
-/// failure is compared with another. The error names the first condition
-/// that fails.
-fn declared_types_attribution(
-    annotation: &DeclaredTypesAnnotation,
-    profiles: &ProfileSchemas,
-    document: &serde_json::Value,
-) -> Result<(), String> {
-    let (_, candidate_accepts) = profiles.document_verdicts(document);
-    if candidate_accepts {
-        return Err("the candidate accepts it".to_string());
-    }
-    let regenerated = annotation.prepared()?;
-    if profiles.candidate_schema() != &regenerated.asserted.schema {
-        return Err("the candidate is not the assert regeneration".to_string());
-    }
-    if !regenerated.annotated.is_valid(document) {
-        return Err("the annotate regeneration rejects it".to_string());
-    }
-    for error in regenerated.asserted.validator.iter_errors(document) {
-        let path = error.instance_path().as_str().to_string();
-        // Whether a JSON-pointer token names an object member or an array
-        // element is the document's to say: `Location::segments` reads every
-        // numeric token as an index, even an object key such as `"1"`.
-        let mut keys = Vec::new();
-        let mut instance = document;
-        for token in path.split('/').skip(1) {
-            let key = token.replace("~1", "/").replace("~0", "~");
-            instance = match instance {
-                serde_json::Value::Object(members) => match members.get(&key) {
-                    Some(member) => member,
-                    None => return Err(format!("{path}: `{key}` is not in the document")),
-                },
-                serde_json::Value::Array(_) => {
-                    return Err(format!("{path}: steps into an array"));
-                }
-                _ => return Err(format!("{path}: steps into a scalar")),
-            };
-            keys.push(key);
-        }
-        let mut reached = helm_schema_core::ValuesPath::parse("");
-        let mut ancestry = vec![reached.clone()];
-        for key in &keys {
-            reached.push(key.clone());
-            ancestry.push(reached.clone());
-        }
-        for (depth, values_path) in ancestry.iter().enumerate() {
-            let values_path = values_path.encode();
-            let explanation = regenerated
-                .session
-                .explain(&values_path)
-                .map_err(|error| format!("explain `{values_path}`: {error}"))?;
-            // Two claims are no template read: values seeding's claim on
-            // every declared top-level key (a pathless scalar) and the
-            // dependency-root claim `ContractIr::finalize` adds for every
-            // dependency values root (a pathless fragment). Neither has a
-            // YAML path or template provenance.
-            let dependency_root = explanation
-                .value_path_facts
-                .as_ref()
-                .is_some_and(|facts| facts.accepted_dependency_values_root_fragment);
-            let template_reads = explanation.exact_uses.iter().any(|use_| {
-                let claim = use_.path.0.is_empty()
-                    && use_.provenance.is_empty()
-                    && (use_.kind == helm_schema_core::ValueKind::Scalar
-                        || (dependency_root && use_.kind == helm_schema_core::ValueKind::Fragment));
-                !claim
-            });
-            if template_reads {
-                return Err(format!("{path}: a template reads `{values_path}`"));
-            }
-            if depth < keys.len() {
-                continue;
-            }
-            if !explanation.descendant_uses.is_empty() {
-                return Err(format!("{path}: a template reads beneath `{values_path}`"));
-            }
-            if explanation.generation.is_some() {
-                return Err(format!("{path}: generation decided `{values_path}`"));
-            }
-        }
-    }
-    Ok(())
-}
-
-/// Adjudicates `overlay` with Helm and Kubernetes, returning the verdict and
-/// the probe's evidence directory.
-#[expect(
-    clippy::too_many_lines,
-    reason = "the verdict chain reads as one decision over Helm, Kubernetes and the authoring policy"
-)]
-fn adjudicate_flip(
-    chart: &PinnedHelmChart,
-    overlay: &serde_json::Value,
-    profiles: &ProfileSchemas,
-    kubernetes: &OfflineKubernetesValidator,
-    annotation: Option<&DeclaredTypesAnnotation>,
-) -> eyre::Result<(HelmFlipVerdict, std::path::PathBuf)> {
-    let probe = chart.adjudicate(overlay)?;
-    // Without a Helm-coalesced document, the screened composition is the judged instance.
-    let (baseline_errors, candidate_errors) = match &probe.values {
-        Some(values) => profiles.coalesced_errors(values),
-        None => profiles.override_errors(overlay),
-    };
-    let before = baseline_errors.is_empty();
-    let after = candidate_errors.is_empty();
-    // A candidate rejecting for an assertion the baseline does not violate
-    // is judged as a tightening even when the baseline rejects too.
-    let new_rejection = !after && rejects_for_a_new_reason(&baseline_errors, &candidate_errors);
-    // A baseline rejecting the probe only as it rejects the chart's own
-    // defaults constrains nothing the probe changed.
-    let uninformative =
-        !before && profiles.baseline_rejects_it_as_its_defaults(probe.values.as_ref(), overlay);
-    let baseline_errors: Vec<String> = baseline_errors.iter().map(ToString::to_string).collect();
-    let candidate_errors: Vec<String> = candidate_errors.iter().map(ToString::to_string).collect();
-    let mut evidence = json!({
-        "baseline_rejects_it_as_its_defaults": uninformative,
-        "baseline_accepts": before,
-        "candidate_accepts": after,
-        "candidate_rejects_for_a_new_reason": new_rejection,
-        "baseline_errors": baseline_errors,
-        "candidate_errors": candidate_errors,
-        "helm_coalesced": probe.values.is_some(),
-        "helm_exit": probe.rendered.exit_code,
-        "acceptance_documents": acceptance_document_verdicts(chart, overlay, profiles),
-    });
-    let verdict = if before == after && !new_rejection {
-        Ok(HelmFlipVerdict::Collapsed)
-    } else if !probe.rendered.success() {
-        if after && uninformative {
-            Ok(HelmFlipVerdict::UninformativeBaselineFalseAcceptance(
-                Rejection::HelmAborts,
-            ))
-        } else if after {
-            Ok(HelmFlipVerdict::CandidateAcceptsHelmAborts)
-        } else {
-            Ok(HelmFlipVerdict::TighteningMatchedHelmAbort)
-        }
-    } else {
-        let comparison = kubernetes.compare_with_defaults(chart, &probe)?;
-        let object = evidence
-            .as_object_mut()
-            .ok_or_eyre("schema evidence is not an object")?;
-        let new_errors: Vec<String> = comparison
-            .new_violations
-            .iter()
-            .map(ToString::to_string)
-            .collect();
-        let inherited_errors: Vec<String> = comparison
-            .inherited_violations
-            .iter()
-            .map(ToString::to_string)
-            .collect();
-        object.insert("new_kubernetes_errors".to_string(), json!(new_errors));
-        object.insert(
-            "inherited_kubernetes_errors".to_string(),
-            json!(inherited_errors),
-        );
-        object.insert(
-            "kubernetes_uncertainty".to_string(),
-            json!(comparison.uncertain),
-        );
-        // A new violation is decisive; otherwise every resource must be decided.
-        if !comparison.new_violations.is_empty() {
-            if after && uninformative {
-                Ok(HelmFlipVerdict::UninformativeBaselineFalseAcceptance(
-                    Rejection::KubernetesRejects,
-                ))
-            } else if after {
-                Ok(HelmFlipVerdict::CandidateAcceptsKubernetesRejects)
-            } else {
-                Ok(HelmFlipVerdict::TighteningMatchedKubernetesRejection)
-            }
-        } else if !after {
-            let attribution =
-                attribute_to_declared_types(annotation, probe.values.as_ref(), profiles);
-            object.insert(
-                "declared_types_attribution".to_string(),
-                json!(attribution.as_ref().err()),
-            );
-            match (attribution, comparison.uncertain.is_empty()) {
-                (Ok(()), _) => Ok(HelmFlipVerdict::TighteningMatchedDeclaredTypesPolicy),
-                (Err(_), true) => Err(
-                    "tightening rejects a document whose render adds no Kubernetes violation to the defaults render",
-                ),
-                (Err(_), false) => Err(
-                    "tightening rejects a document Helm renders without a proved Kubernetes violation",
-                ),
-            }
-        } else if !comparison.uncertain.is_empty() {
-            Ok(HelmFlipVerdict::LooseningWithUncertainKubernetes(
-                comparison.uncertain.clone(),
-            ))
-        } else if comparison.inherited_violations.is_empty() {
-            Ok(HelmFlipVerdict::LooseningMatchedKubernetesValidation)
-        } else {
-            Ok(HelmFlipVerdict::LooseningMatchedDefaultsViolations)
-        }
-    };
-    std::fs::write(
-        probe.evidence_dir.join("schema-verdicts.json"),
-        serde_json::to_vec_pretty(&evidence)?,
-    )
-    .wrap_err("write exact schema verdict evidence")?;
-    let verdict = verdict.map_err(|reason| {
-        let evidence = helm_invocation::preserve_failure(&probe.evidence_dir);
-        eyre::eyre!("{reason}; evidence={}", evidence.display())
-    })?;
-    Ok((verdict, probe.evidence_dir))
 }
 
 /// A loosening is matched only when every new or changed resource is decided

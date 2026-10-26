@@ -5,7 +5,6 @@ use std::borrow::Cow;
 use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_test_support::helm::lint::{LintClassification, LintErrorKind, classify_lint};
 use helm_schema_test_support::source_digest::sha256_hex;
-use serde::{Deserialize, Serialize};
 
 use super::HelmAdjudicationCoverage;
 use super::known_false_acceptances::{
@@ -49,32 +48,7 @@ pub(crate) enum FailureClass {
     },
 }
 
-/// Exact input bytes and the ordered applicable controls, including the defaults control.
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq, PartialOrd, Ord, Serialize)]
-pub(crate) struct FailureInput {
-    pub(crate) values_file_sha256: Cow<'static, str>,
-    pub(crate) controls_sha256: Cow<'static, str>,
-}
-
-impl FailureInput {
-    pub(crate) fn new(values: &[u8], controls: &[serde_json::Value]) -> eyre::Result<Self> {
-        let controls = serde_json::json!({"defaults": {}, "applicable": controls});
-        Ok(Self {
-            values_file_sha256: sha256_hex(values).into(),
-            controls_sha256: sha256_hex(&serde_json::to_vec(&controls)?).into(),
-        })
-    }
-
-    pub(crate) fn for_probe(probe: &super::lint_probes::ScreenedProbe) -> eyre::Result<Self> {
-        match &probe.document {
-            Some(document) => Self::new(&document.values_file, &document.control_overlays),
-            None => Self::new(
-                &serde_json::to_vec_pretty(&probe.overlay)?,
-                &[serde_json::json!({})],
-            ),
-        }
-    }
-}
+pub(crate) use helm_schema_test_support::acceptance::{FailureInput, ObservedFailure};
 
 pub(crate) struct KnownInheritedFailure {
     pub(crate) chart: &'static str,
@@ -84,44 +58,6 @@ pub(crate) struct KnownInheritedFailure {
     pub(crate) lint_diagnostics_sha256: Option<Cow<'static, str>>,
     pub(crate) owner: &'static str,
     pub(crate) observed_on: &'static str,
-}
-
-#[derive(Debug, Serialize)]
-pub(crate) struct ObservedFailure {
-    pub(crate) case: String,
-    pub(crate) kubernetes_version: String,
-    pub(crate) reason: String,
-    pub(crate) input: Option<FailureInput>,
-    pub(crate) evidence: Option<std::path::PathBuf>,
-}
-
-impl ObservedFailure {
-    pub(crate) fn from_adjudication(
-        case: String,
-        kubernetes_version: String,
-        message: &str,
-        input: Option<FailureInput>,
-    ) -> Self {
-        let reason = message
-            .strip_prefix(&format!("{case}: "))
-            .unwrap_or(message);
-        let (reason, evidence) = match reason.rsplit_once("; evidence=") {
-            Some((reason, path)) => (reason, Some(std::path::PathBuf::from(path))),
-            None => (reason, None),
-        };
-        let reason = case.split_once(": ").map_or(reason, |(_, probe)| {
-            reason
-                .strip_suffix(&format!("; case={probe}"))
-                .unwrap_or(reason)
-        });
-        Self {
-            case,
-            kubernetes_version,
-            reason: reason.to_string(),
-            input,
-            evidence,
-        }
-    }
 }
 
 impl KnownInheritedFailure {

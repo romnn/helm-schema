@@ -17,27 +17,8 @@
 use std::str::FromStr;
 
 use color_eyre::eyre;
-use serde::Serialize;
 
-/// How the render of an accepted document fails.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
-pub(crate) enum Rejection {
-    /// Schema-free `helm lint` rejects the input semantically.
-    LintRejects,
-    /// `helm template` aborts.
-    HelmAborts,
-    /// Helm renders, and the pinned Kubernetes bundle rejects the render.
-    KubernetesRejects,
-}
-
-/// How the baseline schema rejected a false acceptance's cell.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
-pub(crate) enum Baseline {
-    /// With exactly the violations of the chart's own defaults.
-    RejectsItsDefaults,
-    /// With violations that differ from those of the chart's own defaults.
-    RejectsUnlikeItsDefaults,
-}
+pub(crate) use helm_schema_test_support::acceptance::{Baseline, Rejection};
 
 /// A defect family of the schema-bug-hunt-v1 campaign, as numbered in
 /// `plan/schema-bug-hunt-v1.md`.
