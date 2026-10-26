@@ -143,6 +143,42 @@ fn content_key_names_equal_content_under_any_root() -> eyre::Result<()> {
     Ok(())
 }
 
+#[test]
+fn content_key_uses_portable_paths_below_a_native_root() -> eyre::Result<()> {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("content-key-root");
+    let chart = root
+        .join("trees")
+        .join("chart")
+        .to_string_lossy()
+        .into_owned();
+    let values = root
+        .join("inputs")
+        .join("values.json")
+        .to_string_lossy()
+        .into_owned();
+    let home = root.join("home").to_string_lossy().into_owned();
+    let base = base_request();
+    let mut native = base.clone();
+    native.working_directory = root.to_string_lossy().into_owned();
+    native.environment = vec![("HOME".to_string(), home.clone())];
+    native.arguments[2] = chart.clone();
+    native.arguments[7] = values.clone();
+    native.inputs = vec![
+        (chart, "chart".to_string()),
+        (values, "values".to_string()),
+        (home, "home".to_string()),
+    ];
+
+    // On Windows these paths include a drive and native backslashes.
+    // Their content identity matches the portable request while the store key binds the root.
+    sim_assert_eq!(have: native.content_key()?, want: base.content_key()?);
+    eyre::ensure!(
+        native.key()? != base.key()?,
+        "store keys still bind the native root"
+    );
+    Ok(())
+}
+
 /// A packaged dependency's bytes are chart content: changing only a nested
 /// archive changes the prepared tree's identity.
 #[test]

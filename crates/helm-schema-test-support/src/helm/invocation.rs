@@ -286,9 +286,10 @@ impl InvocationRequest {
 
     /// The key of this request with the runner root spelled as [`CONTENT_ROOT`].
     ///
-    /// Every path a request names lies below the root and is content-addressed there,
-    /// so equal content run by the same program has one identity in every process and
-    /// checkout. Replay stores keep [`Self::key`], which also binds their root.
+    /// Paths below the runner root are content-addressed and use slash-separated
+    /// relative components, so equal content run by the same program has one identity
+    /// in every process and checkout.
+    /// Replay stores keep [`Self::key`], which also binds their root.
     ///
     /// # Errors
     ///
@@ -308,7 +309,14 @@ impl InvocationRequest {
         } = self;
         let root = Path::new(working_directory);
         let relative = |value: &String| match Path::new(value).strip_prefix(root) {
-            Ok(rest) => format!("{CONTENT_ROOT}/{}", rest.to_string_lossy()),
+            Ok(rest) => {
+                let relative = rest
+                    .iter()
+                    .map(|component| component.to_string_lossy())
+                    .collect::<Vec<_>>()
+                    .join("/");
+                format!("{CONTENT_ROOT}/{relative}")
+            }
             Err(_) => value.clone(),
         };
         Self {
