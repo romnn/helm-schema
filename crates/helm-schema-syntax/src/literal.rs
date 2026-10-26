@@ -97,8 +97,12 @@ impl TemplatedDocument<'_> {
         }
     }
 
+    /// Read alone, a block scalar loses its trailing blank lines and its
+    /// parent's indentation, so keep chomping and an explicit indentation
+    /// indicator stay unknown.
     fn literal_block(&self, block: &BlockScalar) -> Option<Value> {
-        if !block.holes.is_empty() {
+        let header = self.source.get(block.header.start..block.header.end)?;
+        if !block.holes.is_empty() || header.contains(|c: char| c == '+' || c.is_ascii_digit()) {
             return None;
         }
         self.literal_source(block.header.start, block.body.end.max(block.header.end))

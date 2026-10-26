@@ -422,7 +422,11 @@ fn constructs_helm_reads_unreproducibly_widen() {
     sim_assert_eq!(
         have: projected(source, false),
         want: vec![
-            ("example.com/v1".to_string(), "Widget".to_string(), json!({})),
+            (
+                "example.com/v1".to_string(),
+                "Widget".to_string(),
+                json!({"type": "object", "properties": {"size": {"type": "integer", "maximum": 3}}}),
+            ),
             ("example.com/v2".to_string(), "Widget".to_string(), json!({})),
             (
                 "example.com/v1".to_string(),
