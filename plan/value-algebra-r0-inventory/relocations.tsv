@@ -1,15 +1,45 @@
 old	new	reviewer
-field:scalar_value.rs:ScalarValueDispatch.arms	field:value/mod.rs:ScalarValueDispatch.arms	R2 reviewed design, seal
-variant:scalar_value.rs:ScalarRenderPart::Identity	variant:value/scalar_value.rs:ScalarRenderPart::Identity	R2 reviewed design, seal
-variant:scalar_value.rs:ScalarValue::Identity	variant:value/scalar_value.rs:ScalarContent::Identity	R2 reviewed design, seal
-variant:scalar_value.rs:ScalarValue::Length	variant:value/scalar_value.rs:ScalarContent::Length	R2 reviewed design, seal
-variant:scalar_value.rs:ScalarValue::Literal	variant:value/scalar_value.rs:ScalarContent::Literal	R2 reviewed design, seal
-variant:scalar_value.rs:ScalarValue::PrintfStringIdentity	variant:value/scalar_value.rs:ScalarContent::PrintfStringIdentity	R2 reviewed design, seal
-variant:scalar_value.rs:ScalarValue::Rendered	variant:value/scalar_value.rs:ScalarContent::Rendered	R2 reviewed design, seal
-variant:scalar_value.rs:ScalarValue::SplitLength	variant:value/scalar_value.rs:ScalarContent::SplitLength	R2 reviewed design, seal
-variant:scalar_value.rs:TruthCondition::Exact	variant:value/scalar_value.rs:TruthCondition::Exact	R2 reviewed design, seal
-variant:scalar_value.rs:TruthCondition::Partial	variant:value/scalar_value.rs:TruthCondition::Partial	R2 reviewed design, seal
-field:value/mod.rs:ContentView.arms	field:value/mod.rs:ContentView.dispatch	R2 reviewed design, canonical typed leaf projection
-field:function_semantics.rs:FunctionSemantics.output	field:function_semantics.rs:FunctionSemantics.behavior	R2-C behavior facet rename; fixed returns owned separately
-field:fragment_eval/eval.rs:Interpreter.locals	field:fragment_eval/eval.rs:Interpreter.state	R3a facade relocation; complete byte-identity validation
-field:symbolic_local_state/mod.rs:SymbolicLocalState.chart_value_defaults	field:value/state.rs:State.chart_value_defaults	R3a facade relocation; complete byte-identity validation
+alias:observed_facts.rs:TypeHints	alias:observed_facts/mod.rs:TypeHints	R3b construction root audit, 2026-10-26
+field:eval_effect.rs:FailCapture.kind	field:observed_facts/captures.rs:FailCapture.kind	R3b construction root audit, 2026-10-26
+field:eval_effect.rs:FailCapture.ranged	field:observed_facts/captures.rs:FailCapture.ranged	R3b construction root audit, 2026-10-26
+field:function_semantics.rs:FunctionSemantics.output	field:function_semantics.rs:FunctionSemantics.behavior	R3b construction root audit, 2026-10-26
+field:observed_facts.rs:ActivatedValuesRootOverlay.source_path	field:observed_facts/mod.rs:ActivatedValuesRootOverlay.source_path	R3b construction root audit, 2026-10-26
+field:observed_facts.rs:ActivatedValuesRootOverlay.target_path	field:observed_facts/mod.rs:ActivatedValuesRootOverlay.target_path	R3b construction root audit, 2026-10-26
+field:observed_facts.rs:HintGrade.scope	field:observed_facts/mod.rs:HintGrade.scope	R3b construction root audit, 2026-10-26
+field:observed_facts.rs:ObservedFacts.activated_values_root_overlays	field:observed_facts/mod.rs:ObservedFacts.activated_values_root_overlays	R3b construction root audit, 2026-10-26
+field:observed_facts.rs:ObservedFacts.captures	field:observed_facts/mod.rs:ObservedFacts.captures	R3b construction root audit, 2026-10-26
+field:observed_facts.rs:ObservedFacts.range_modes	field:observed_facts/mod.rs:ObservedFacts.range_modes	R3b construction root audit, 2026-10-26
+field:observed_facts.rs:ObservedFacts.shape_erased_paths	field:observed_facts/mod.rs:ObservedFacts.shape_erased_paths	R3b construction root audit, 2026-10-26
+field:observed_facts.rs:ObservedFacts.type_hints	field:observed_facts/mod.rs:ObservedFacts.type_hints	R3b construction root audit, 2026-10-26
+field:observed_facts.rs:ObservedFacts.values_root_helper_includes	field:observed_facts/mod.rs:ObservedFacts.values_root_helper_includes	R3b construction root audit, 2026-10-26
+field:observed_facts.rs:ObservedFacts.values_root_overlays	field:observed_facts/mod.rs:ObservedFacts.values_root_overlays	R3b construction root audit, 2026-10-26
+field:observed_facts.rs:ValuesRootOverlay.source_path	field:observed_facts/mod.rs:ValuesRootOverlay.source_path	R3b construction root audit, 2026-10-26
+field:observed_facts.rs:ValuesRootOverlay.target_path	field:observed_facts/mod.rs:ValuesRootOverlay.target_path	R3b construction root audit, 2026-10-26
+field:scalar_value.rs:ScalarValueDispatch.arms	field:value/mod.rs:ScalarValueDispatch.arms	R3b construction root audit, 2026-10-26
+field:value/mod.rs:ContentView.arms	field:value/mod.rs:ContentView.dispatch	R3b construction root audit, 2026-10-26
+variant:eval_effect.rs:CaptureKind::AbsenceAborts	variant:observed_facts/captures.rs:CaptureKind::AbsenceAborts	R3b construction root audit, 2026-10-26
+variant:eval_effect.rs:CaptureKind::CollectionItems	variant:observed_facts/captures.rs:CaptureKind::CollectionItems	R3b construction root audit, 2026-10-26
+variant:eval_effect.rs:CaptureKind::ComparableKind	variant:observed_facts/captures.rs:CaptureKind::ComparableKind	R3b construction root audit, 2026-10-26
+variant:eval_effect.rs:CaptureKind::DigSubject	variant:observed_facts/captures.rs:CaptureKind::DigSubject	R3b construction root audit, 2026-10-26
+variant:eval_effect.rs:CaptureKind::IndexAccess	variant:observed_facts/captures.rs:CaptureKind::IndexAccess	R3b construction root audit, 2026-10-26
+variant:eval_effect.rs:CaptureKind::PlainSlotText	variant:observed_facts/captures.rs:CaptureKind::PlainSlotText	R3b construction root audit, 2026-10-26
+variant:eval_effect.rs:CaptureKind::PrintfStringOperand	variant:observed_facts/captures.rs:CaptureKind::PrintfStringOperand	R3b construction root audit, 2026-10-26
+variant:eval_effect.rs:CaptureKind::QuotedSerialization	variant:observed_facts/captures.rs:CaptureKind::QuotedSerialization	R3b construction root audit, 2026-10-26
+variant:eval_effect.rs:CaptureKind::RangeInput	variant:observed_facts/captures.rs:CaptureKind::RangeInput	R3b construction root audit, 2026-10-26
+variant:eval_effect.rs:CaptureKind::RangeKeyPlainSlot	variant:observed_facts/captures.rs:CaptureKind::RangeKeyPlainSlot	R3b construction root audit, 2026-10-26
+variant:eval_effect.rs:CaptureKind::RangeKeyStrings	variant:observed_facts/captures.rs:CaptureKind::RangeKeyStrings	R3b construction root audit, 2026-10-26
+variant:eval_effect.rs:CaptureKind::RangeSelection	variant:observed_facts/captures.rs:CaptureKind::RangeSelection	R3b construction root audit, 2026-10-26
+variant:eval_effect.rs:CaptureKind::RequiredPresence	variant:observed_facts/captures.rs:CaptureKind::RequiredPresence	R3b construction root audit, 2026-10-26
+variant:eval_effect.rs:CaptureKind::SplitIndexAccess	variant:observed_facts/captures.rs:CaptureKind::SplitIndexAccess	R3b construction root audit, 2026-10-26
+variant:eval_effect.rs:CaptureKind::StringRequirement	variant:observed_facts/captures.rs:CaptureKind::StringRequirement	R3b construction root audit, 2026-10-26
+variant:eval_effect.rs:CaptureKind::ValuePattern	variant:observed_facts/captures.rs:CaptureKind::ValuePattern	R3b construction root audit, 2026-10-26
+variant:eval_effect.rs:CaptureKind::ValueType	variant:observed_facts/captures.rs:CaptureKind::ValueType	R3b construction root audit, 2026-10-26
+variant:scalar_value.rs:ScalarRenderPart::Identity	variant:value/scalar_value.rs:ScalarRenderPart::Identity	R3b construction root audit, 2026-10-26
+variant:scalar_value.rs:ScalarValue::Identity	variant:value/scalar_value.rs:ScalarContent::Identity	R3b construction root audit, 2026-10-26
+variant:scalar_value.rs:ScalarValue::Length	variant:value/scalar_value.rs:ScalarContent::Length	R3b construction root audit, 2026-10-26
+variant:scalar_value.rs:ScalarValue::Literal	variant:value/scalar_value.rs:ScalarContent::Literal	R3b construction root audit, 2026-10-26
+variant:scalar_value.rs:ScalarValue::PrintfStringIdentity	variant:value/scalar_value.rs:ScalarContent::PrintfStringIdentity	R3b construction root audit, 2026-10-26
+variant:scalar_value.rs:ScalarValue::Rendered	variant:value/scalar_value.rs:ScalarContent::Rendered	R3b construction root audit, 2026-10-26
+variant:scalar_value.rs:ScalarValue::SplitLength	variant:value/scalar_value.rs:ScalarContent::SplitLength	R3b construction root audit, 2026-10-26
+variant:scalar_value.rs:TruthCondition::Exact	variant:value/scalar_value.rs:TruthCondition::Exact	R3b construction root audit, 2026-10-26
+variant:scalar_value.rs:TruthCondition::Partial	variant:value/scalar_value.rs:TruthCondition::Partial	R3b construction root audit, 2026-10-26

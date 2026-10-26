@@ -18,19 +18,20 @@ Inputs (plan/value-algebra-r0-inventory):
   landed.txt           stages that have landed (one per line, `#` comments), e.g. R1a.
   producers.tsv        reviewed old->new producer mapping for every deleted baseline F/S/E row.
   relocations.tsv      reviewed one-to-one declaration moves; logical keys retain their class and stages.
+  retirements.tsv      reviewed checkpoint declaration retirements; baseline stages remain unchanged.
 
 Checks (exit 1 on any failure):
   1. every candidate has a classification row (no defaults);
-  2. every row is consumed: present unless its delete stage has landed, then absent;
+  2. every row is consumed: present unless its delete stage landed or a reviewed receipt retires it;
   3. a row whose seal stage has landed is no longer `pub`;
   4. the baseline is frozen: every baseline key stays in classification.tsv with its class (rows are never
-     removed; a declaration disappears only through a landed delete stage, see check 2);
-  5. a row not in the baseline with class F, S or E names in `replaces` baseline rows deleted by a landed stage;
+     removed; declaration retirement follows check 2);
+  5. a row not in the baseline with class F, S or E names in `replaces` baseline rows retired under check 2;
   6. every deleted baseline F/S/E row has a producers.tsv mapping to a surviving producer: a key that is
-     present in the scanned candidates (or a present needle) and whose delete stage has not landed.
+     present in the scanned candidates (or a present needle) and not retired under check 2.
   7. every relocation names one present final declaration and one retained classification row.
 
-Usage: python3 -I plan/value-algebra-r0-inventory/inventory.py [--self-test]
+Usage: python3 -I tools/value-algebra-inventory/inventory.py [--self-test]
 """
 import collections, csv, json, pathlib, re, subprocess, sys
 
@@ -149,7 +150,7 @@ def relocate(found, rows, relocations):
     return relocated, errors
 
 
-def check(found, rows, baseline, landed, producers, relocations=()):
+def check(found, rows, baseline, landed, producers, relocations=(), retirements=()):
     found, errors = relocate(found, rows, relocations)
     by_key = {}
     for row in rows:
@@ -158,11 +159,40 @@ def check(found, rows, baseline, landed, producers, relocations=()):
         if row["class"] not in CLASSES:
             errors.append(f"bad class {row['class']} for {row['key']}")
         by_key[row["key"]] = row
+    receipt_keys = {receipt["key"] for receipt in retirements}
+    retired = set()
+    seen_receipts = set()
+    for receipt in retirements:
+        key, replacement = receipt["key"], receipt["replacement"]
+        problems = []
+        if key in seen_receipts:
+            problems.append("duplicate key")
+        seen_receipts.add(key)
+        if key not in by_key:
+            problems.append("unknown declaration")
+        if receipt["checkpoint"] not in {"C02", "C03"}:
+            problems.append("invalid checkpoint")
+        if not receipt.get("reviewer", "").strip():
+            problems.append("missing reviewer")
+        if not receipt.get("reason", "").strip():
+            problems.append("missing reason")
+        if (needle_count(key) != 0 if key.startswith("needle:") else key in found):
+            problems.append("declaration remains present")
+        target = by_key.get(replacement)
+        target_present = (needle_count(replacement) == 1 if replacement.startswith("needle:")
+                          else replacement in found)
+        if (target is None or not target_present or target["delete"] in landed
+                or replacement in receipt_keys):
+            problems.append("replacement is not a surviving producer")
+        if problems:
+            errors.append(f"invalid retirement {key}: {', '.join(problems)}")
+        else:
+            retired.add(key)
     for key in sorted(found):
         if key not in by_key:
             errors.append(f"unclassified candidate {key}: {' '.join(found[key].split())[:100]}")
     for key, row in by_key.items():
-        deleted = row["delete"] in landed
+        deleted = row["delete"] in landed or key in retired
         present = needle_count(key) == 1 if key.startswith("needle:") else key in found
         if deleted and present:
             errors.append(f"{key} should be deleted by landed stage {row['delete']}")
@@ -186,12 +216,12 @@ def check(found, rows, baseline, landed, producers, relocations=()):
                     errors.append(f"{column} stage moved earlier for {key}: {previous} -> {current}")
         if key not in base and row["class"] in "FSE":
             replaced = [k for k in row["replaces"].split(",") if k]
-            if not replaced or any(k not in base or k not in by_key or by_key[k]["delete"] not in landed
+            if not replaced or any(k not in base or k not in by_key or (by_key[k]["delete"] not in landed and k not in retired)
                                    for k in replaced):
-                errors.append(f"new {row['class']} row {key} must replace baseline rows deleted by a landed stage")
+                errors.append(f"new {row['class']} row {key} must replace baseline rows retired by a landed stage or checkpoint receipt")
     def surviving(key):
         row = by_key.get(key)
-        if row is None or row["delete"] in landed:
+        if row is None or row["delete"] in landed or key in retired:
             return False
         return needle_count(key) == 1 if key.startswith("needle:") else key in found
 
@@ -201,10 +231,12 @@ def check(found, rows, baseline, landed, producers, relocations=()):
     if any(not p.get("reviewer", "").strip() for p in producers):
         errors.append("producer mapping has no reviewer")
     for key, row in by_key.items():
-        if key in base and row["class"] in "FSE" and row["delete"] in landed:
+        if key in base and row["class"] in "FSE" and (row["delete"] in landed or key in retired):
             new = mapped.get(key)
             if new is None:
                 errors.append(f"deleted baseline row {key} has no producers.tsv mapping")
+            elif key in retired and new != next(r["replacement"] for r in retirements if r["key"] == key):
+                errors.append(f"retirement producer mismatch for {key}: {new}")
             elif not surviving(new):
                 errors.append(f"producers.tsv maps {key} to {new}, which is not a surviving producer")
     for stage in landed - SEMANTIC_STAGES:
@@ -276,6 +308,37 @@ def self_test(found, rows, baseline):
     assert any("not a surviving producer" in e for e in check(live, semantic, semantic, {"R3b"}, [dict(mapping, new="absent")]))
     print("self-test: relocations and semantic deletion mappings passed", file=sys.stderr)
 
+    retired_row = dict.fromkeys(COLUMNS, "") | {"key": old, "class": "F", "delete": "keep"}
+    survivor = dict.fromkeys(COLUMNS, "") | {"key": target["key"], "class": "V"}
+    receipt_rows = [retired_row, survivor]
+    receipt = {"key": old, "checkpoint": "C02", "replacement": target["key"],
+               "reason": "Canonical owner replaces the retired declaration.", "reviewer": "fixture"}
+    def receipt_check(receipts, declarations=live, classified=receipt_rows, mappings=(mapping,)):
+        return check(declarations, classified, receipt_rows, set(), mappings,
+                     retirements=receipts)
+    assert not receipt_check([receipt]), "reviewed retirement failed"
+    assert retired_row["delete"] == "keep", "receipt rewrote baseline stage"
+    for changed in (dict(receipt, key="unknown"), dict(receipt, checkpoint="R3b"),
+                    dict(receipt, replacement="absent"), dict(receipt, replacement=old),
+                    dict(receipt, reviewer=""), dict(receipt, reason="")):
+        assert any("invalid retirement" in e for e in receipt_check([changed])), changed
+    other = dict(survivor, key="field:other.rs:Owner.arm")
+    divergent = dict(mapping, new=other["key"])
+    assert any("retirement producer mismatch" in e for e in check(
+        live | {other["key"]: "arm: Predicate"}, receipt_rows + [other], receipt_rows,
+        set(), [divergent], retirements=[receipt]))
+    assert any("duplicate key" in e for e in receipt_check([receipt, receipt]))
+    assert any("remains present" in e for e in receipt_check([receipt], live | {old: "value: Predicate"}))
+    assert any("no producers.tsv mapping" in e for e in receipt_check([receipt], mappings=()))
+    assert any("unclassified candidate" in e for e in receipt_check([receipt], live | {"fresh": "Predicate"}))
+    assert any("baseline row removed" in e for e in receipt_check([receipt], classified=[survivor]))
+    sealed = dict(survivor, seal="R2")
+    assert any("should be sealed" in e for e in check(
+        {target["key"]: "pub value: Predicate"}, [retired_row, sealed], receipt_rows,
+        {"R2"}, [mapping], retirements=[receipt]))
+    print("self-test: checkpoint receipts preserve fail-closed ownership checks", file=sys.stderr)
+
+
 
 def main():
     found = candidates()
@@ -283,7 +346,8 @@ def main():
     landed = {l.strip() for l in (HERE / "landed.txt").read_text().splitlines() if l.strip() and not l.startswith("#")}
     if "--self-test" in sys.argv:
         self_test(found, rows, baseline)
-    errors = check(found, rows, baseline, landed, read_tsv("producers.tsv"), read_tsv("relocations.tsv"))
+    errors = check(found, rows, baseline, landed, read_tsv("producers.tsv"), read_tsv("relocations.tsv"),
+                   read_tsv("retirements.tsv"))
     for e in errors:
         print(e, file=sys.stderr)
     counts = collections.Counter(r["class"] for r in rows)

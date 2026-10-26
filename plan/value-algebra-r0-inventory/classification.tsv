@@ -4,7 +4,14 @@ alias:fragment_eval/control.rs:IterationAlternatives	R	range iteration alternati
 alias:fragment_eval/control.rs:IterationEntries	F	range iteration entries	guarded alternatives	R3b		rework3	
 alias:fragment_eval/domain.rs:PathCondition	G	output condition	frozen guard	keep		rework3	
 alias:observed_facts.rs:TypeHints	X	contract hints	-	keep		rework3	
+alias:value/control.rs:Joined	R	representation of Joined	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+alias:value/invoke.rs:Context	R	representation of Context	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+alias:value/invoke.rs:Joined	R	representation of Joined	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
 alias:value/mod.rs:LocalSlots	R	name for the slot-map type; owns no instance	plain slot map; privacy deferred to R2	R3b		R1a rework: removed LocalSlots.entries owner; existing slots fields retain ownership	
+alias:value/mod.rs:ObjectPage	R	representation of ObjectPage	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+alias:value/read_set.rs:IntoIter	R	representation of IntoIter	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+alias:value/read_set.rs:Item	R	representation of Item	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+alias:value/read_set.rs:Link	R	representation of Link	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
 field:analysis_db.rs:BoundHelperCallCacheKey.bindings	K	helper summary key	key by slot map, then snapshot id + seen	R1a		rework2	
 field:analysis_db.rs:BoundHelperCallCacheKey.dot	K	helper summary key	key by slot map, then snapshot id + seen	R3b		R1a residual: dot/whole argument is a distinct fact	
 field:analysis_db.rs:BoundHelperCallCacheKey.root_slots	K	transposed BoundHelperCallCacheKey.root_slots	slot owner	R3b		R1a builder	field:analysis_db.rs:BoundHelperCallCacheKey.bindings,field:analysis_db.rs:BoundHelperCallCacheKey.root_truthy_predicates,field:analysis_db.rs:BoundHelperCallCacheKey.root_value_dispatches
@@ -49,6 +56,9 @@ field:contract/graph.rs:ContractIr.dependency_values_roots	X	phase artifact	-	ke
 field:contract/graph.rs:ContractIr.observed_facts	X	phase artifact	-	keep		rework3	
 field:contract/graph.rs:ContractIr.values_program_wrapper_exclusions	X	contract	-	keep		rework2	
 field:contract/graph.rs:DependencyValuesRoot.path	X	contract	-	keep		rework2	
+field:contract_normalization.rs:PathlessIdentity.predicates	D	borrowed phase projection PathlessIdentity.predicates	pure projection of DocumentExecution	keep		R3b construction root audit, 2026-10-26	
+field:contract_normalization.rs:PathlessIdentity.source_expr	D	borrowed phase projection PathlessIdentity.source_expr	pure projection of DocumentExecution	keep		R3b construction root audit, 2026-10-26	
+field:contract_normalization.rs:RenderSite.source_expr	D	borrowed phase projection RenderSite.source_expr	pure projection of DocumentExecution	keep		R3b construction root audit, 2026-10-26	
 field:contract_signal_builder/contract_rows.rs:ContractPathAccumulator.fallback_type_hints	X	contract builder	-	keep		rework2	
 field:contract_signal_builder/contract_rows.rs:ContractPathAccumulator.guarded_fallback_type_hints	X	contract builder	-	keep		rework2	
 field:contract_signal_builder/contract_rows.rs:ContractPathAccumulator.guarded_type_hints	X	contract builder	-	keep		rework2	
@@ -125,6 +135,7 @@ field:eval_env.rs:EvalEnv.member_host_conversions	F	object conversions	H write	R
 field:eval_env.rs:EvalEnv.root_fields	F	root: value	RootSlot map, then H	R1a		rework2	
 field:eval_env.rs:EvalEnv.root_truthy_predicates	F	root: truth	RootSlot field, then Q	R1a		rework2	
 field:eval_env.rs:EvalEnv.root_value_dispatches	F	root: dispatch	RootSlot field, then V	R1a		rework2	
+field:eval_env.rs:EvalEnv.state	F	State facade: transposed EvalEnv.local_slots	slot owner	R3b		R3a: replaces nonbaseline slot plumbing; locals and roots retain their distinct snapshot boundaries	field:eval_env.rs:EvalEnv.bound_values,field:eval_env.rs:EvalEnv.local_default_paths,field:eval_env.rs:EvalEnv.local_output_meta,field:eval_env.rs:EvalEnv.local_scalar_dispatches,field:eval_env.rs:EvalEnv.local_truthy_reductions,field:eval_env.rs:EvalEnv.root_fields,field:eval_env.rs:EvalEnv.root_truthy_predicates,field:eval_env.rs:EvalEnv.root_value_dispatches
 field:expr_call_eval/mod.rs:CallInvocation.piped	V	owned piped operand	Operand	keep		rework3	
 field:expr_call_eval/mod.rs:PipedOperand.result	V	owned operand	Operand	keep		rework2	
 field:expr_call_eval/strict_operands.rs:StrictLayerWalk.paths	D	walk scratch	-	keep		rework2	
@@ -207,6 +218,8 @@ field:fragment_eval/eval.rs:LoopControl.breaks	S	break states	Flow	R3b		rework3
 field:fragment_eval/eval.rs:LoopControl.continues	S	continue states	Flow	R3b		rework3	
 field:fragment_eval/eval.rs:ParentShellArm.condition	O	output structure	O buffer	keep		rework3	
 field:fragment_eval/eval.rs:ParentShellArm.shell	O	output structure	O buffer	keep		rework3	
+field:fragment_eval/eval.rs:Projection.db	D	borrowed phase projection Projection.db	pure projection of DocumentExecution	keep		R3b construction root audit, 2026-10-26	
+field:fragment_eval/eval.rs:Projection.execution	D	borrowed phase projection Projection.execution	pure projection of DocumentExecution	keep		R3b construction root audit, 2026-10-26	
 field:fragment_eval/eval.rs:ValueRead.values_path	O	read observation	ObservedFacts	keep		rework2	
 field:fragment_eval/files.rs:ResolvedTemplateProgram.selection_predicate	G	program selection predicate	frozen guard	keep		rework2	
 field:fragment_eval/holes.rs:ArmClaims.double_quoted	O	quote-context claims	ObservedFacts	keep		rework2	
@@ -267,7 +280,11 @@ field:fragment_expr_eval/bound_helper_resolver.rs:BoundHelperValueResolverParams
 field:fragment_expr_eval/bound_helper_resolver.rs:BoundHelperValueResolverParams.outer	D	borrowed params	-	keep		rework2	
 field:fragment_expr_eval/bound_helper_resolver.rs:BoundHelperValueResolverParams.seen	D	borrowed params	-	keep		rework2	
 field:fragment_expr_eval/context.rs:FragmentEvalContext.analysis_db	X	db handle	-	keep		rework3	
+field:function_semantics.rs:FunctionSemantics.input_read	R	static function catalog FunctionSemantics.input_read	typed function catalog	keep		R3b construction root audit, 2026-10-26	
 field:function_semantics.rs:FunctionSemantics.output	R	catalog output facet	catalog facets	keep		rework3	
+field:function_semantics.rs:FunctionSemantics.parameters	R	actual positional parameter types	catalog signature owner	keep		R2-C	
+field:function_semantics.rs:FunctionSemantics.success	R	normal-return type	catalog return owner	keep		R2-C	
+field:function_semantics.rs:FunctionSemantics.variadic	R	actual variadic parameter type	catalog signature owner	keep		R2-C	
 field:helper_meta.rs:HelperOutputMeta.capture_exclusions	V	transform program (provenance)	V provenance	keep		rework2	
 field:helper_meta.rs:HelperOutputMeta.omitted_keys	V	transform program (provenance)	V provenance	keep		rework2	
 field:helper_meta.rs:HelperOutputMeta.predicates	V	transform program (provenance)	V provenance	keep		rework2	
@@ -289,6 +306,8 @@ field:observed_facts.rs:ValuesRootOverlay.target_path	X	phase artifact	-	keep		r
 field:range_modes.rs:RangeModes.modes	G	range modes	frozen guard context	keep		rework2	
 field:resource_identity.rs:HelperOutputEvaluator.seen	E	apiVersion helper-output evaluator	consume evaluator output	R3b		rework2	
 field:resource_identity.rs:IdentitySource.db	X	db handle	-	keep		rework3	
+field:resource_identity.rs:IdentitySource.execution	D	borrowed phase projection IdentitySource.execution	pure projection of DocumentExecution	keep		R3b construction root audit, 2026-10-26	
+field:resource_identity.rs:IdentitySource.root	D	borrowed phase projection IdentitySource.root	pure projection of DocumentExecution	keep		R3b construction root audit, 2026-10-26	
 field:scalar_value.rs:ScalarValueDispatch.arms	R	dispatch arms	sealed view (R2), query (R3b)	R3b	R2	rework2	
 field:static_file_template.rs:StaticTemplateProgram.dot	D	template request	-	keep		rework2	
 field:symbolic/mod.rs:SymbolicIrContext.analysis_db	X	db handle	-	keep		rework3	
@@ -323,6 +342,95 @@ field:symbolic_local_state/mod.rs:VariableLocalState.range_member_value	S	scope-
 field:symbolic_local_state/mod.rs:VariableLocalState.scalar_dispatch	S	scope-undo copy of one local's 13 facts	becomes LocalSlot	R1a		rework2	
 field:symbolic_local_state/mod.rs:VariableLocalState.truthy_reduction	S	scope-undo copy of one local's 13 facts	becomes LocalSlot	R1a		rework2	
 field:symbolic_local_state/mod.rs:VariableLocalState.typeof_source	S	scope-undo copy of one local's 13 facts	becomes LocalSlot	R1a		rework2	
+field:value/control.rs:ContinuationKey.arena	K	runtime identity/interner/reconvergence key or cache ContinuationKey.arena	arena-scoped canonical identity/cache, no independent semantic evaluation	keep		R3b construction root audit, 2026-10-26	
+field:value/control.rs:DeclinedJoin.left	K	runtime identity/interner/reconvergence key or cache DeclinedJoin.left	arena-scoped canonical identity/cache, no independent semantic evaluation	keep		R3b construction root audit, 2026-10-26	
+field:value/control.rs:DeclinedJoin.right	K	runtime identity/interner/reconvergence key or cache DeclinedJoin.right	arena-scoped canonical identity/cache, no independent semantic evaluation	keep		R3b construction root audit, 2026-10-26	
+field:value/control.rs:FrontierIndex.declined	K	runtime identity/interner/reconvergence key or cache FrontierIndex.declined	arena-scoped canonical identity/cache, no independent semantic evaluation	keep		R3b construction root audit, 2026-10-26	
+field:value/control.rs:FrontierSlot.path	K	runtime identity/interner/reconvergence key or cache FrontierSlot.path	arena-scoped canonical identity/cache, no independent semantic evaluation	keep		R3b construction root audit, 2026-10-26	
+field:value/control.rs:PathKey.continuation	K	runtime identity/interner/reconvergence key or cache PathKey.continuation	arena-scoped canonical identity/cache, no independent semantic evaluation	keep		R3b construction root audit, 2026-10-26	
+field:value/control.rs:PreparedContinuation.plan	D	derived runtime query/transfer/join plan PreparedContinuation.plan	per-call plan derived from canonical values and guards	keep		R3b construction root audit, 2026-10-26	
+field:value/control.rs:RangeEntry.key	V	canonical runtime value/control owner RangeEntry.key	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/control.rs:RangeEntry.value	V	canonical runtime value/control owner RangeEntry.value	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/eval.rs:Executor.db	D	derived runtime query/transfer/join plan Executor.db	per-call plan derived from canonical values and guards	keep		R3b construction root audit, 2026-10-26	
+field:value/guard.rs:DecisionNode.no	V	canonical runtime value/control owner DecisionNode.no	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/guard.rs:DecisionNode.test	V	canonical runtime value/control owner DecisionNode.test	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/guard.rs:DecisionNode.yes	V	canonical runtime value/control owner DecisionNode.yes	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/guard.rs:DecisionStore.applications	K	runtime identity/interner/reconvergence key or cache DecisionStore.applications	arena-scoped canonical identity/cache, no independent semantic evaluation	keep		R3b construction root audit, 2026-10-26	
+field:value/guard.rs:DecisionStore.choices	K	runtime identity/interner/reconvergence key or cache DecisionStore.choices	arena-scoped canonical identity/cache, no independent semantic evaluation	keep		R3b construction root audit, 2026-10-26	
+field:value/guard.rs:DecisionStore.negations	K	runtime identity/interner/reconvergence key or cache DecisionStore.negations	arena-scoped canonical identity/cache, no independent semantic evaluation	keep		R3b construction root audit, 2026-10-26	
+field:value/guard.rs:DecisionStore.nodes	K	runtime identity/interner/reconvergence key or cache DecisionStore.nodes	arena-scoped canonical identity/cache, no independent semantic evaluation	keep		R3b construction root audit, 2026-10-26	
+field:value/guard.rs:DecisionStore.projections	K	runtime identity/interner/reconvergence key or cache DecisionStore.projections	arena-scoped canonical identity/cache, no independent semantic evaluation	keep		R3b construction root audit, 2026-10-26	
+field:value/guard.rs:DecisionStore.tests	K	runtime identity/interner/reconvergence key or cache DecisionStore.tests	arena-scoped canonical identity/cache, no independent semantic evaluation	keep		R3b construction root audit, 2026-10-26	
+field:value/guard.rs:DecisionStore.working	K	runtime identity/interner/reconvergence key or cache DecisionStore.working	arena-scoped canonical identity/cache, no independent semantic evaluation	keep		R3b construction root audit, 2026-10-26	
+field:value/guard.rs:ExactDecisionKey.when_false	K	runtime identity/interner/reconvergence key or cache ExactDecisionKey.when_false	arena-scoped canonical identity/cache, no independent semantic evaluation	keep		R3b construction root audit, 2026-10-26	
+field:value/guard.rs:ExactDecisionKey.when_true	K	runtime identity/interner/reconvergence key or cache ExactDecisionKey.when_true	arena-scoped canonical identity/cache, no independent semantic evaluation	keep		R3b construction root audit, 2026-10-26	
+field:value/guard.rs:GuardedUnion.decision	G	guard context GuardedUnion.decision	canonical correlated runtime guard DAG	keep		R3b construction root audit, 2026-10-26	
+field:value/guard.rs:GuardedUnion.survival	G	guard context GuardedUnion.survival	canonical correlated runtime guard DAG	keep		R3b construction root audit, 2026-10-26	
+field:value/guard.rs:Projection.necessary	D	derived runtime query/transfer/join plan Projection.necessary	per-call plan derived from canonical values and guards	keep		R3b construction root audit, 2026-10-26	
+field:value/guard.rs:Projection.sufficient	D	derived runtime query/transfer/join plan Projection.sufficient	per-call plan derived from canonical values and guards	keep		R3b construction root audit, 2026-10-26	
+field:value/heap.rs:InputPair.no	K	runtime identity/interner/reconvergence key or cache InputPair.no	arena-scoped canonical identity/cache, no independent semantic evaluation	keep		R3b construction root audit, 2026-10-26	
+field:value/heap.rs:InputPair.yes	K	runtime identity/interner/reconvergence key or cache InputPair.yes	arena-scoped canonical identity/cache, no independent semantic evaluation	keep		R3b construction root audit, 2026-10-26	
+field:value/invoke.rs:ArgumentAssembly.exits	V	canonical runtime value/control owner ArgumentAssembly.exits	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/invoke.rs:ArgumentAssembly.next	V	canonical runtime value/control owner ArgumentAssembly.next	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/invoke.rs:Assembled.pipe	V	canonical runtime value/control owner Assembled.pipe	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/invoke.rs:Assembled.state	V	canonical runtime value/control owner Assembled.state	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/invoke.rs:Assembled.values	V	canonical runtime value/control owner Assembled.values	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/invoke.rs:AssembledBuffer.values	V	canonical runtime value/control owner AssembledBuffer.values	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/invoke.rs:ComparisonCase.active	D	derived runtime query/transfer/join plan ComparisonCase.active	per-call plan derived from canonical values and guards	keep		R3b construction root audit, 2026-10-26	
+field:value/invoke.rs:ComparisonCase.first	D	derived runtime query/transfer/join plan ComparisonCase.first	per-call plan derived from canonical values and guards	keep		R3b construction root audit, 2026-10-26	
+field:value/invoke.rs:ComparisonExit.active	D	derived runtime query/transfer/join plan ComparisonExit.active	per-call plan derived from canonical values and guards	keep		R3b construction root audit, 2026-10-26	
+field:value/invoke.rs:ComparisonExit.flow	D	derived runtime query/transfer/join plan ComparisonExit.flow	per-call plan derived from canonical values and guards	keep		R3b construction root audit, 2026-10-26	
+field:value/invoke.rs:ValuePlan.failures	D	derived runtime query/transfer/join plan ValuePlan.failures	per-call plan derived from canonical values and guards	keep		R3b construction root audit, 2026-10-26	
+field:value/invoke.rs:ValuePlan.normal	D	derived runtime query/transfer/join plan ValuePlan.normal	per-call plan derived from canonical values and guards	keep		R3b construction root audit, 2026-10-26	
+field:value/invoke.rs:ValuePlan.value	D	derived runtime query/transfer/join plan ValuePlan.value	per-call plan derived from canonical values and guards	keep		R3b construction root audit, 2026-10-26	
+field:value/kinds.rs:InputTypeAlternative.condition	D	derived runtime query/transfer/join plan InputTypeAlternative.condition	per-call plan derived from canonical values and guards	keep		R3b construction root audit, 2026-10-26	
+field:value/kinds.rs:InputTypeAlternative.value	D	derived runtime query/transfer/join plan InputTypeAlternative.value	per-call plan derived from canonical values and guards	keep		R3b construction root audit, 2026-10-26	
+field:value/kinds.rs:InputTypeDomain.certain	D	derived runtime query/transfer/join plan InputTypeDomain.certain	per-call plan derived from canonical values and guards	keep		R3b construction root audit, 2026-10-26	
+field:value/kinds.rs:InputTypeDomain.possible	D	derived runtime query/transfer/join plan InputTypeDomain.possible	per-call plan derived from canonical values and guards	keep		R3b construction root audit, 2026-10-26	
+field:value/kinds.rs:ParameterPlan.success	D	derived runtime query/transfer/join plan ParameterPlan.success	per-call plan derived from canonical values and guards	keep		R3b construction root audit, 2026-10-26	
+field:value/kinds.rs:ParameterPlan.value	D	derived runtime query/transfer/join plan ParameterPlan.value	per-call plan derived from canonical values and guards	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:Arena.empty_snapshot	K	runtime identity/interner/reconvergence key or cache Arena.empty_snapshot	arena-scoped canonical identity/cache, no independent semantic evaluation	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:Arena.exact_decisions	K	runtime identity/interner/reconvergence key or cache Arena.exact_decisions	arena-scoped canonical identity/cache, no independent semantic evaluation	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:Arena.frontier	K	runtime identity/interner/reconvergence key or cache Arena.frontier	arena-scoped canonical identity/cache, no independent semantic evaluation	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:Arena.guards	K	runtime identity/interner/reconvergence key or cache Arena.guards	arena-scoped canonical identity/cache, no independent semantic evaluation	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:Arena.input_objects	K	runtime identity/interner/reconvergence key or cache Arena.input_objects	arena-scoped canonical identity/cache, no independent semantic evaluation	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:Arena.input_paths	K	runtime identity/interner/reconvergence key or cache Arena.input_paths	arena-scoped canonical identity/cache, no independent semantic evaluation	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:AssignmentBinding.binding	R	one assignment operation input	value owner	keep		S shrink: owned input, no independent fact producer	
+field:value/mod.rs:AssignmentBinding.scalar_dispatch	R	one assignment operation input	value owner	keep		S shrink: owned input, no independent fact producer	
+field:value/mod.rs:AssignmentBinding.truthy_reduction	R	one assignment operation input	value owner	keep		S shrink: owned input, no independent fact producer	
+field:value/mod.rs:CallOutcome.execution	V	canonical runtime value/control owner CallOutcome.execution	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:CompletedExecution.execution	V	canonical runtime value/control owner CompletedExecution.execution	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:CompletedExecution.helper_return	V	canonical runtime value/control owner CompletedExecution.helper_return	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:CompletedExecution.invocation	V	canonical runtime value/control owner CompletedExecution.invocation	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:ContentView.arms	D	borrowed view of sealed owner	value owner	keep		R2 reviewed design, seal	
+field:value/mod.rs:DecisionEdge.test	G	guard context DecisionEdge.test	canonical correlated runtime guard DAG	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:DocumentExecution.exits	O	executed observation DocumentExecution.exits	in-walk immutable read/text/site observations	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:DocumentExecution.observed_facts	O	executed observation DocumentExecution.observed_facts	in-walk immutable read/text/site observations	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:ExecutedInvocationRecord.condition	G	guard context ExecutedInvocationRecord.condition	canonical correlated runtime guard DAG	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:ExecutedSite.condition	G	guard context ExecutedSite.condition	canonical correlated runtime guard DAG	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:ExecutedSite.raw_format_inputs	O	executed observation ExecutedSite.raw_format_inputs	in-walk immutable read/text/site observations	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:ExecutedSite.value	S	pinned heap snapshot ExecutedSite.value	immutable observation of canonical Value and HeapVersion	keep		R3b construction root audit, 2026-10-26	field:fragment_eval/summary.rs:FragmentSummary.value,field:analysis_db.rs:ResolvedBoundHelperCall.resolution
+field:value/mod.rs:ExecutedText.condition	G	guard context ExecutedText.condition	canonical correlated runtime guard DAG	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:Execution.exits	V	canonical runtime value/control owner Execution.exits	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:Exit.flow	V	canonical runtime value/control owner Exit.flow	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:Exit.state	V	canonical runtime value/control owner Exit.state	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:ExitBuffer.exits	V	canonical runtime value/control owner ExitBuffer.exits	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:Frame.bindings	F	canonical live state owner Frame.bindings	sole Frame/Heap store	keep		R3b construction root audit, 2026-10-26	field:expr_eval.rs:HelperArgBindings.value,field:fragment_eval/eval.rs:Interpreter.root_value_dot
+field:value/mod.rs:Frame.dot	V	canonical runtime value/control owner Frame.dot	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:FrozenTest.runtime	G	guard context FrozenTest.runtime	canonical correlated runtime guard DAG	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:FrozenTest.when_false	G	guard context FrozenTest.when_false	canonical correlated runtime guard DAG	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:FrozenTest.when_true	G	guard context FrozenTest.when_true	canonical correlated runtime guard DAG	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:FrozenValue.heap	S	pinned heap snapshot FrozenValue.heap	immutable observation of canonical Value and HeapVersion	keep		R3b construction root audit, 2026-10-26	field:fragment_eval/summary.rs:FragmentSummary.value,field:analysis_db.rs:ResolvedBoundHelperCall.resolution
+field:value/mod.rs:FrozenValue.value	S	pinned heap snapshot FrozenValue.value	immutable observation of canonical Value and HeapVersion	keep		R3b construction root audit, 2026-10-26	field:fragment_eval/summary.rs:FragmentSummary.value,field:analysis_db.rs:ResolvedBoundHelperCall.resolution
+field:value/mod.rs:Heap.arena	V	canonical runtime value/control owner Heap.arena	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:Heap.version	V	canonical runtime value/control owner Heap.version	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:HeapVersion.pages	V	canonical runtime value/control owner HeapVersion.pages	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:HelperReturn.output	V	canonical runtime value/control owner HelperReturn.output	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:InputBacking.map_type	V	canonical runtime value/control owner InputBacking.map_type	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:InterfaceSequence.storage	V	canonical runtime value/control owner InterfaceSequence.storage	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:Invocation.operands	V	canonical runtime value/control owner Invocation.operands	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:Leaf.datum	V	canonical runtime value/control owner Leaf.datum	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:Leaf.origin	V	canonical runtime value/control owner Leaf.origin	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
 field:value/mod.rs:LocalSlot.binding	F	live local binding, including its leaf metadata and branch selections	slot owner	R3b	R2	R1b residual: binding tree remains the lexical slot value	field:symbolic_local_state/mod.rs:SymbolicLocalState.fragment_values,field:symbolic_local_state/mod.rs:VariableLocalState.fragment_value
 field:value/mod.rs:LocalSlot.default_paths	F	transposed LocalSlot.default_paths	slot owner	R3b	R2	R1b residual: every exit must carry Some(paths); untouched range exit has None; leaf union loses presence	field:symbolic_local_state/mod.rs:SymbolicLocalState.default_paths,field:symbolic_local_state/mod.rs:VariableLocalState.default_paths
 field:value/mod.rs:LocalSlot.definite_range_member_value	F	transposed LocalSlot.definite_range_member_value	slot owner	R3b	R2	R1b residual: universal iteration identity required	field:symbolic_local_state/mod.rs:SymbolicLocalState.definite_range_member_values,field:symbolic_local_state/mod.rs:VariableLocalState.definite_range_member_value
@@ -336,9 +444,92 @@ field:value/mod.rs:LocalSlot.truthiness_abstained	F	transposed LocalSlot.truthin
 field:value/mod.rs:LocalSlot.truthiness_cleared	F	transposed LocalSlot.truthiness_cleared	slot owner	R3b	R2	R1b residual: sticky non-monotone write history	field:symbolic_local_state/mod.rs:SymbolicLocalState.truthiness_clears
 field:value/mod.rs:LocalSlot.truthy_reduction	F	transposed LocalSlot.truthy_reduction	slot owner	R3b	R2	R1b residual: control-exit accumulator is not a leaf fold	field:symbolic_local_state/mod.rs:SymbolicLocalState.truthy_reductions,field:symbolic_local_state/mod.rs:VariableLocalState.truthy_reduction
 field:value/mod.rs:LocalSlot.typeof_source	F	transposed LocalSlot.typeof_source	slot owner	R3b	R2	R1b residual: equal-exit provenance and metadata-only bindings are unproven	field:symbolic_local_state/mod.rs:SymbolicLocalState.typeof_sources,field:symbolic_local_state/mod.rs:VariableLocalState.typeof_source
+field:value/mod.rs:LocalSlotView.binding	D	borrowed view of sealed owner	value owner	keep		R2 reviewed design, seal	
+field:value/mod.rs:LocalSlotView.default_paths	D	borrowed view of sealed owner	value owner	keep		R2 reviewed design, seal	
+field:value/mod.rs:LocalSlotView.definite_range_member_value	D	borrowed view of sealed owner	value owner	keep		R2 reviewed design, seal	
+field:value/mod.rs:LocalSlotView.get_binding	D	borrowed view of sealed owner	value owner	keep		R2 reviewed design, seal	
+field:value/mod.rs:LocalSlotView.int_cast_source	D	borrowed view of sealed owner	value owner	keep		R2 reviewed design, seal	
+field:value/mod.rs:LocalSlotView.output_meta	D	borrowed view of sealed owner	value owner	keep		R2 reviewed design, seal	
+field:value/mod.rs:LocalSlotView.scalar_dispatch	D	borrowed view of sealed owner	value owner	keep		R2 reviewed design, seal	
+field:value/mod.rs:LocalSlotView.truthy_reduction	D	borrowed view of sealed owner	value owner	keep		R2 reviewed design, seal	
+field:value/mod.rs:LocalSlotView.typeof_source	D	borrowed view of sealed owner	value owner	keep		R2 reviewed design, seal	
+field:value/mod.rs:Normal.value	V	canonical runtime value/control owner Normal.value	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:ObjectVersion.data	F	canonical live state owner ObjectVersion.data	sole Frame/Heap store	keep		R3b construction root audit, 2026-10-26	field:eval_effect.rs:Effects.local_set_mutations,field:fragment_eval/eval.rs:Interpreter.member_host_conversions
+field:value/mod.rs:Operand.value	V	canonical runtime value/control owner Operand.value	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:Origin.identity	V	canonical runtime value/control owner Origin.identity	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:Origin.influences	V	canonical runtime value/control owner Origin.influences	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:RawFormatInput.condition	G	guard context RawFormatInput.condition	canonical correlated runtime guard DAG	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:RawFormatInput.path	V	canonical runtime value/control owner RawFormatInput.path	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:RenderedContainerUse.condition	G	guard context RenderedContainerUse.condition	canonical correlated runtime guard DAG	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:RenderedContainerUse.path	V	canonical runtime value/control owner RenderedContainerUse.path	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
 field:value/mod.rs:RootSlot.dispatch	F	transposed RootSlot.dispatch	slot owner	R3b	R2	R1a builder	field:eval_effect.rs:Effects.root_set_value_dispatches,field:eval_env.rs:EvalEnv.root_value_dispatches
 field:value/mod.rs:RootSlot.truth	F	transposed RootSlot.truth	slot owner	R3b	R2	R1a builder	field:eval_effect.rs:Effects.root_set_predicates,field:eval_env.rs:EvalEnv.root_truthy_predicates
 field:value/mod.rs:RootSlot.value	F	transposed RootSlot.value	slot owner	R3b	R2	R1a builder	field:eval_effect.rs:Effects.root_set_mutations,field:eval_env.rs:EvalEnv.root_fields
+field:value/mod.rs:RootSlotView.dispatch	D	borrowed view of sealed owner	value owner	keep		R2 reviewed design, seal	
+field:value/mod.rs:RootSlotView.truth	D	borrowed view of sealed owner	value owner	keep		R2 reviewed design, seal	
+field:value/mod.rs:RootSlotView.value	D	borrowed view of sealed owner	value owner	keep		R2 reviewed design, seal	
+field:value/mod.rs:RuntimeRead.condition	G	guard context RuntimeRead.condition	canonical correlated runtime guard DAG	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:RuntimeRead.path	O	executed observation RuntimeRead.path	in-walk immutable read/text/site observations	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:ScalarValue.content	D	canonical type/content leaf or borrowed kind view	value owner	keep		R2 reviewed design, Go-type leaf	
+field:value/mod.rs:ScalarValue.go_type	D	canonical type/content leaf or borrowed kind view	value owner	keep		R2 reviewed design, Go-type leaf	
+field:value/mod.rs:ScalarValueDispatch.complete	R	dispatch coverage	value owner	R3b	R2	R2 reviewed design, seal	
+field:value/mod.rs:State.active	G	guard context State.active	canonical correlated runtime guard DAG	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:State.frames	V	canonical runtime value/control owner State.frames	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:State.heap	V	canonical runtime value/control owner State.heap	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:State.invocation_count	V	canonical runtime value/control owner State.invocation_count	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:State.invocations	V	canonical runtime value/control owner State.invocations	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:State.observation_count	V	canonical runtime value/control owner State.observation_count	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:State.output	O	executed observation State.output	in-walk immutable read/text/site observations	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:State.reads	O	executed observation State.reads	in-walk immutable read/text/site observations	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:State.sites	O	executed observation State.sites	in-walk immutable read/text/site observations	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:State.text_sites	O	executed observation State.text_sites	in-walk immutable read/text/site observations	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:StateBuffer.exits	V	canonical runtime value/control owner StateBuffer.exits	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:TextBuffer.arena	V	canonical runtime value/control owner TextBuffer.arena	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:TextBuffer.counts	V	canonical runtime value/control owner TextBuffer.counts	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:TextBuffer.parts	V	canonical runtime value/control owner TextBuffer.parts	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:UnknownValue.types	V	canonical runtime value/control owner UnknownValue.types	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:Value.node	V	canonical runtime value/control owner Value.node	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:ValueAlternative.condition	G	guard context ValueAlternative.condition	canonical correlated runtime guard DAG	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:ValueAlternative.value	V	canonical runtime value/control owner ValueAlternative.value	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/operations.rs:MapFields.fields	D	derived runtime query/transfer/join plan MapFields.fields	per-call plan derived from canonical values and guards	keep		R3b construction root audit, 2026-10-26	
+field:value/operations.rs:TransferInput.arguments	V	canonical runtime value/control owner TransferInput.arguments	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/operations.rs:TransferInput.first	V	canonical runtime value/control owner TransferInput.first	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/operations.rs:TransferInput.influences	V	canonical runtime value/control owner TransferInput.influences	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/operations.rs:TransferInput.last	V	canonical runtime value/control owner TransferInput.last	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/output.rs:BranchCounts.domain	D	derived branch count expression BranchCounts.domain	output precision budget derived from executed conditional text	keep		R3b construction root audit, 2026-10-26	
+field:value/output.rs:BranchCounts.state	D	derived branch count expression BranchCounts.state	output precision budget derived from executed conditional text	keep		R3b construction root audit, 2026-10-26	
+field:value/output.rs:BudgetSlot.condition	G	guard context BudgetSlot.condition	canonical correlated runtime guard DAG	keep		R3b construction root audit, 2026-10-26	
+field:value/output.rs:CountExpression.kind	D	derived branch count expression CountExpression.kind	output precision budget derived from executed conditional text	keep		R3b construction root audit, 2026-10-26	
+field:value/output.rs:CountExpression.threshold	K	bounded count threshold query cache CountExpression.threshold	derived count-query memo, no independent semantic producer	keep		R3b construction root audit, 2026-10-26	
+field:value/output.rs:CountThreshold.results	K	bounded count threshold query cache CountThreshold.results	derived count-query memo, no independent semantic producer	keep		R3b construction root audit, 2026-10-26	
+field:value/output.rs:CountThresholdResult.guard	K	bounded count threshold query cache CountThresholdResult.guard	derived count-query memo, no independent semantic producer	keep		R3b construction root audit, 2026-10-26	
+field:value/output.rs:RawFormatArm.condition	G	guard context RawFormatArm.condition	canonical correlated runtime guard DAG	keep		R3b construction root audit, 2026-10-26	
+field:value/output.rs:RawFormatArm.value	V	canonical runtime value/control owner RawFormatArm.value	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/output.rs:SpanTextAlternative.condition	G	guard context SpanTextAlternative.condition	canonical correlated runtime guard DAG	keep		R3b construction root audit, 2026-10-26	
+field:value/output.rs:SpanTextPiece.condition	G	guard context SpanTextPiece.condition	canonical correlated runtime guard DAG	keep		R3b construction root audit, 2026-10-26	
+field:value/output.rs:TextQuery.text	V	canonical runtime value/control owner TextQuery.text	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/output.rs:TextQuery.uncertainty	V	canonical runtime value/control owner TextQuery.uncertainty	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/output.rs:TextQuery.values	V	canonical runtime value/control owner TextQuery.values	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/output.rs:TextQuery.widened	V	canonical runtime value/control owner TextQuery.widened	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/output.rs:TextQuery.widening_domains	V	canonical runtime value/control owner TextQuery.widening_domains	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/output.rs:TextRetention.buffers	V	canonical runtime value/control owner TextRetention.buffers	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/output_layout.rs:SkeletonQuery.condition	G	guard context SkeletonQuery.condition	canonical correlated runtime guard DAG	keep		R3b construction root audit, 2026-10-26	
+field:value/output_layout.rs:SkeletonQuery.target	V	canonical runtime value/control owner SkeletonQuery.target	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/read_set.rs:Node.entry	V	canonical runtime value/control owner Node.entry	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/read_set.rs:Node.left	V	canonical runtime value/control owner Node.left	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/read_set.rs:Node.right	V	canonical runtime value/control owner Node.right	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/read_set.rs:ReadIter.pending	D	derived runtime query/transfer/join plan ReadIter.pending	per-call plan derived from canonical values and guards	keep		R3b construction root audit, 2026-10-26	
+field:value/read_set.rs:ReadSet.root	V	canonical runtime value/control owner ReadSet.root	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/session.rs:Piece.site	V	canonical runtime value/control owner Piece.site	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/state.rs:ContinuationJoin.active	D	derived runtime query/transfer/join plan ContinuationJoin.active	per-call plan derived from canonical values and guards	keep		R3b construction root audit, 2026-10-26	
+field:value/state.rs:ContinuationJoin.decision	D	derived runtime query/transfer/join plan ContinuationJoin.decision	per-call plan derived from canonical values and guards	keep		R3b construction root audit, 2026-10-26	
+field:value/state.rs:RootSnapshot.observed	S	State facade: transposed RootSetState.observed	slot owner	R3b		R3a: replaces nonbaseline slot plumbing; locals and roots retain their distinct snapshot boundaries	field:fragment_eval/control.rs:RootSetState.dispatches_observed,field:fragment_eval/control.rs:RootSetState.mutations_observed,field:fragment_eval/control.rs:RootSetState.predicates_observed
+field:value/state.rs:RootSnapshot.root	S	State facade: transposed RootSetState.root	slot owner	R3b		R3a: replaces nonbaseline slot plumbing; locals and roots retain their distinct snapshot boundaries	field:fragment_eval/control.rs:RootSetState.bindings,field:fragment_eval/control.rs:RootSetState.dispatches,field:fragment_eval/control.rs:RootSetState.truthy
+field:value/state.rs:State.observed	S	State facade: transposed Interpreter.root_writes	slot owner	R3b		R3a: replaces nonbaseline slot plumbing; locals and roots retain their distinct snapshot boundaries	field:fragment_eval/eval.rs:Interpreter.root_set_mutations_observed,field:fragment_eval/eval.rs:Interpreter.root_set_predicates_observed,field:fragment_eval/eval.rs:Interpreter.root_value_dispatches_observed
+field:value/state.rs:State.roots	F	State facade: transposed Interpreter.root_slots	slot owner	R3b		R3a: replaces nonbaseline slot plumbing; locals and roots retain their distinct snapshot boundaries	field:fragment_eval/eval.rs:Interpreter.root_bindings,field:fragment_eval/eval.rs:Interpreter.root_truthy_predicates,field:fragment_eval/eval.rs:Interpreter.root_value_dispatches
+field:value/state.rs:State.scopes	S	State facade: transposed SymbolicLocalState.scopes	slot owner	R3b		R3a: replaces nonbaseline slot plumbing; locals and roots retain their distinct snapshot boundaries	field:symbolic_local_state/mod.rs:LocalScopeFrame.previous_values,field:symbolic_local_state/mod.rs:SymbolicLocalState.local_scopes
+field:value/state.rs:State.slots	F	State facade: transposed SymbolicLocalState.slots	slot owner	R3b		R3a: replaces nonbaseline slot plumbing; locals and roots retain their distinct snapshot boundaries	field:symbolic_local_state/mod.rs:SymbolicLocalState.default_paths,field:symbolic_local_state/mod.rs:SymbolicLocalState.definite_range_member_values,field:symbolic_local_state/mod.rs:SymbolicLocalState.fragment_values,field:symbolic_local_state/mod.rs:SymbolicLocalState.get_bindings,field:symbolic_local_state/mod.rs:SymbolicLocalState.int_cast_sources,field:symbolic_local_state/mod.rs:SymbolicLocalState.output_meta,field:symbolic_local_state/mod.rs:SymbolicLocalState.range_domains,field:symbolic_local_state/mod.rs:SymbolicLocalState.range_member_values,field:symbolic_local_state/mod.rs:SymbolicLocalState.scalar_dispatches,field:symbolic_local_state/mod.rs:SymbolicLocalState.truthiness_abstentions,field:symbolic_local_state/mod.rs:SymbolicLocalState.truthiness_clears,field:symbolic_local_state/mod.rs:SymbolicLocalState.truthy_reductions,field:symbolic_local_state/mod.rs:SymbolicLocalState.typeof_sources,field:bound_value_analysis.rs:BoundValueContext.get_bindings,field:bound_value_analysis.rs:BoundValueContext.range_domains
+field:value/window_exits.rs:TerminalRun.tree	V	canonical runtime value/control owner TerminalRun.tree	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
 field:value_path_context/mod.rs:RangeSubject.influence_paths	F	range alternatives carrier	V iterable + member identity	R3b		rework2	
 field:value_path_context/mod.rs:RangeSubject.input_identity	F	range alternatives carrier	V iterable + member identity	R3b		rework2	
 field:value_path_context/mod.rs:RangeSubject.member_identity	F	range alternatives carrier	V iterable + member identity	R3b		rework2	
@@ -432,6 +623,7 @@ fn:helper_literal_dispatch.rs:helper_literal_dispatch	E	syntactic helper-output 
 fn:resource_identity.rs:static_literal_outputs	E	apiVersion helper-output evaluator	O buffer of executed helper	R3b		rework3	
 fn:resource_identity.rs:with_helper_body	E	apiVersion helper-output evaluator	O buffer of executed helper	R3b		rework3	
 fn:static_file_template.rs:collect_template_requests_from_helper	E	syntactic helper walk	evaluator	R3b		rework2	
+fn:value/helpers.rs:helper	V	sole same-heap helper body executor	canonical runtime invocation completion	keep		R3b construction root audit, 2026-10-26	
 fn:value_path_context/condition_predicate.rs:constant_scalar	E	condition re-evaluation	consume hole EvalResult where env/resolver identical, else R3b	R3b		R3a context audit: operand result is not retained in enclosing hole result; context evaluator has no bound-helper resolver; defer to R3b	
 fn:value_path_context/condition_predicate.rs:decoded_field_condition_predicate	E	condition re-evaluation	consume hole EvalResult where env/resolver identical, else R3b	R3b		R3a context audit: context dot may prefer a fragment value; hole uses current_value_dot; context env omits active predicates and member-host conversions; defer to R3b	
 fn:value_path_context/condition_predicate.rs:decoded_variable_condition_predicate	E	condition re-evaluation	consume hole EvalResult where env/resolver identical, else R3b	R3b		R3a context audit: context env and bound-helper hole env differ; consumes condition-local binding policy before fallback; defer to R3b	
@@ -462,7 +654,17 @@ needle:fragment_eval/hole_effects.rs:pub(super) fn required_call_subjects(expr: 
 needle:fragment_eval/hole_effects.rs:pub(super) fn subject_is_statically_helm_empty(expr: &TemplateExpr) -> bool {	E	AST required lane	evaluator required consumer	R3b		R2 reviewed design: required subject and negated truth deferred whole	
 needle:fragment_eval/summary.rs:fn scalar_dispatch_from_fragment(	E	fragment-to-output fallback	in-walk output	R3b		rework2	
 needle:fragment_expr_eval/mod.rs:pub(crate) fn document_result_from_expr(	D	delegates to the evaluator once	-	keep		rework2	
+needle:function_semantics.rs:pub(crate) enum LegacySuppliedOperands {	R	legacy supplied-operand compatibility policy	actual invocation signature validation	R3b		R2 foundation scope decision	
+needle:function_semantics.rs:pub(crate) fn go_type_schema_type(	R	legacy Go-name to JSON-class aliases	exact runtime type queries	R3b		R2 foundation scope decision	
 needle:resource_identity.rs:pub(crate) struct HelperOutputEvaluator {	E	apiVersion helper-output evaluator	O buffer of executed helper	R3b		rework2	
+needle:value/control.rs:pub(super) fn parsed_body(	V	same-state parsed body executor	canonical runtime	keep		R3b construction root audit, 2026-10-26	
+needle:value/eval.rs:pub(super) fn expression(	V	sole expression executor	canonical runtime	keep		R3b construction root audit, 2026-10-26	
+needle:value/invoke.rs:pub(super) fn invoke(	V	single consumed operand assembly and invocation dispatch	canonical runtime	keep		R3b construction root audit, 2026-10-26	
+needle:value/kinds.rs:pub(crate) enum LegacyTypeView	R	legacy JSON-class compatibility projection	exact runtime type queries	R3b		R2 foundation scope decision	
+needle:value/operations.rs:pub(super) fn transfer(	V	typed consumed operand transfer dispatcher	canonical runtime	keep		R3b construction root audit, 2026-10-26	
+needle:value/output.rs:pub(super) fn emit(&mut self, value: FrozenValue)	V	frozen value output recorder	canonical runtime	keep		R3b construction root audit, 2026-10-26	
+needle:value/query.rs:pub(super) fn selector_field(	V	runtime selector transfer	canonical runtime	keep		R3b construction root audit, 2026-10-26	
+needle:value/query.rs:pub(super) fn test(	V	runtime truth test projection	canonical runtime	keep		R3b construction root audit, 2026-10-26	
 needle:value_path_context/path_resolution.rs:pub(crate) fn paths_for_expr(&self, expr: &TemplateExpr) -> BTreeSet<String> {	E	paths re-derived by evaluation	V provenance	R3b		rework2	
 variant:abstract_value.rs:AbstractValue::Choice	R	runtime-shaped value variant	H object / V sequence / guarded alternatives	R3b		rework2	
 variant:abstract_value.rs:AbstractValue::DerivedBoolean	R	path/scalar value variant	V leaf + provenance	R3b		rework2	
@@ -518,6 +720,7 @@ variant:fragment_eval/domain.rs:StringPart::Splice	O	output fragment	O buffer	ke
 variant:fragment_eval/domain.rs:StringPart::Taint	O	output fragment	O buffer	keep		rework3	
 variant:fragment_eval/eval.rs:ParentShell::Entry	O	output structure	O buffer	keep		rework3	
 variant:fragment_eval/summary.rs:StructuralDispatch::Known	E	fragment-to-output fallback	in-walk output	R3b		rework3	
+variant:function_semantics.rs:SuccessType::Fixed	R	fixed normal-return type	catalog return owner	keep		R2-C	
 variant:scalar_value.rs:ScalarRenderPart::Identity	R	rendered text part	V text term	keep		rework3	
 variant:scalar_value.rs:ScalarValue::Identity	R	content leaf	V leaf	keep		rework3	
 variant:scalar_value.rs:ScalarValue::Length	R	content leaf	V leaf	keep		rework3	
@@ -527,27 +730,8 @@ variant:scalar_value.rs:ScalarValue::Rendered	R	content leaf	V leaf	keep		rework
 variant:scalar_value.rs:ScalarValue::SplitLength	R	content leaf	V leaf	keep		rework3	
 variant:scalar_value.rs:TruthCondition::Exact	R	truth query result	query result type	keep		rework3	
 variant:scalar_value.rs:TruthCondition::Partial	R	truth query result	query result type	keep		rework3	
-variant:value_path_context/condition_predicate.rs:Decoded::Approximate	D	condition decoding result	-	keep		rework3	
-variant:value_path_context/condition_predicate.rs:Decoded::Exact	D	condition decoding result	-	keep		rework3	
-field:value/mod.rs:ContentView.arms	D	borrowed view of sealed owner	value owner	keep		R2 reviewed design, seal	
-field:value/mod.rs:LocalSlotView.binding	D	borrowed view of sealed owner	value owner	keep		R2 reviewed design, seal	
-field:value/mod.rs:LocalSlotView.default_paths	D	borrowed view of sealed owner	value owner	keep		R2 reviewed design, seal	
-field:value/mod.rs:LocalSlotView.definite_range_member_value	D	borrowed view of sealed owner	value owner	keep		R2 reviewed design, seal	
-field:value/mod.rs:LocalSlotView.get_binding	D	borrowed view of sealed owner	value owner	keep		R2 reviewed design, seal	
-field:value/mod.rs:LocalSlotView.int_cast_source	D	borrowed view of sealed owner	value owner	keep		R2 reviewed design, seal	
-field:value/mod.rs:LocalSlotView.output_meta	D	borrowed view of sealed owner	value owner	keep		R2 reviewed design, seal	
-field:value/mod.rs:LocalSlotView.scalar_dispatch	D	borrowed view of sealed owner	value owner	keep		R2 reviewed design, seal	
-field:value/mod.rs:LocalSlotView.truthy_reduction	D	borrowed view of sealed owner	value owner	keep		R2 reviewed design, seal	
-field:value/mod.rs:LocalSlotView.typeof_source	D	borrowed view of sealed owner	value owner	keep		R2 reviewed design, seal	
-field:value/mod.rs:RootSlotView.dispatch	D	borrowed view of sealed owner	value owner	keep		R2 reviewed design, seal	
-field:value/mod.rs:RootSlotView.truth	D	borrowed view of sealed owner	value owner	keep		R2 reviewed design, seal	
-field:value/mod.rs:RootSlotView.value	D	borrowed view of sealed owner	value owner	keep		R2 reviewed design, seal	
-field:value/mod.rs:ScalarValueDispatch.complete	R	dispatch coverage	value owner	R3b	R2	R2 reviewed design, seal	
-field:value/mod.rs:AssignmentBinding.binding	R	one assignment operation input	value owner	keep		S shrink: owned input, no independent fact producer	
-field:value/mod.rs:AssignmentBinding.scalar_dispatch	R	one assignment operation input	value owner	keep		S shrink: owned input, no independent fact producer	
-field:value/mod.rs:AssignmentBinding.truthy_reduction	R	one assignment operation input	value owner	keep		S shrink: owned input, no independent fact producer	
-field:value/mod.rs:ScalarValue.content	D	canonical type/content leaf or borrowed kind view	value owner	keep		R2 reviewed design, Go-type leaf	
-field:value/mod.rs:ScalarValue.go_type	D	canonical type/content leaf or borrowed kind view	value owner	keep		R2 reviewed design, Go-type leaf	
+variant:value/guard.rs:CachedGuard::Branch	R	representation of CachedGuard::Branch	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+variant:value/guard.rs:RuntimeGuard::Branch	R	representation of RuntimeGuard::Branch	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
 variant:value/kinds.rs:GoType::Bool	D	canonical type/content leaf or borrowed kind view	value owner	keep		R2 reviewed design, Go-type leaf	
 variant:value/kinds.rs:GoType::Float64	D	canonical type/content leaf or borrowed kind view	value owner	keep		R2 reviewed design, Go-type leaf	
 variant:value/kinds.rs:GoType::Int	D	canonical type/content leaf or borrowed kind view	value owner	keep		R2 reviewed design, Go-type leaf	
@@ -558,21 +742,38 @@ variant:value/kinds.rs:GoType::Slice	D	canonical type/content leaf or borrowed k
 variant:value/kinds.rs:GoType::String	D	canonical type/content leaf or borrowed kind view	value owner	keep		R2 reviewed design, Go-type leaf	
 variant:value/kinds.rs:GoType::Uint64	D	canonical type/content leaf or borrowed kind view	value owner	keep		R2 reviewed design, Go-type leaf	
 variant:value/kinds.rs:GoType::Unknown	D	canonical type/content leaf or borrowed kind view	value owner	keep		R2 reviewed design, Go-type leaf	
-variant:value/kinds.rs:LegacyTypeView::Identity	D	canonical type/content leaf or borrowed compatibility view	exact runtime query in the coupled value interpreter	R3b		R2 foundation scope: family and compatibility cut-over deferred to R3b	
-field:function_semantics.rs:FunctionSemantics.parameters	R	actual positional parameter types	catalog signature owner	keep		R2-C	
-field:function_semantics.rs:FunctionSemantics.variadic	R	actual variadic parameter type	catalog signature owner	keep		R2-C	
-field:function_semantics.rs:FunctionSemantics.success	R	normal-return type	catalog return owner	keep		R2-C	
-variant:function_semantics.rs:SuccessType::Fixed	R	fixed normal-return type	catalog return owner	keep		R2-C	
-variant:value/kinds.rs:LegacyTypeView::JsonDecoded	R	legacy decoded fragment projection	exact runtime query in the coupled value interpreter	R3b		R2 foundation scope: family and compatibility cut-over deferred to R3b	
 variant:value/kinds.rs:LegacyTypeView::Alternatives	R	legacy fragment alternatives	exact runtime query in the coupled value interpreter	R3b		R2 foundation scope: family and compatibility cut-over deferred to R3b	
 variant:value/kinds.rs:LegacyTypeView::FirstTruthy	R	legacy fragment selection	exact runtime query in the coupled value interpreter	R3b		R2 foundation scope: family and compatibility cut-over deferred to R3b	
-needle:function_semantics.rs:pub(crate) enum LegacySuppliedOperands {	R	legacy supplied-operand compatibility policy	actual invocation signature validation	R3b		R2 foundation scope decision	
-needle:value/kinds.rs:pub(crate) enum LegacyTypeView	R	legacy JSON-class compatibility projection	exact runtime type queries	R3b		R2 foundation scope decision	
-needle:function_semantics.rs:pub(crate) fn go_type_schema_type(	R	legacy Go-name to JSON-class aliases	exact runtime type queries	R3b		R2 foundation scope decision	
-field:eval_env.rs:EvalEnv.state	F	State facade: transposed EvalEnv.local_slots	slot owner	R3b		R3a: replaces nonbaseline slot plumbing; locals and roots retain their distinct snapshot boundaries	field:eval_env.rs:EvalEnv.bound_values,field:eval_env.rs:EvalEnv.local_default_paths,field:eval_env.rs:EvalEnv.local_output_meta,field:eval_env.rs:EvalEnv.local_scalar_dispatches,field:eval_env.rs:EvalEnv.local_truthy_reductions,field:eval_env.rs:EvalEnv.root_fields,field:eval_env.rs:EvalEnv.root_truthy_predicates,field:eval_env.rs:EvalEnv.root_value_dispatches
-field:value/state.rs:State.slots	F	State facade: transposed SymbolicLocalState.slots	slot owner	R3b		R3a: replaces nonbaseline slot plumbing; locals and roots retain their distinct snapshot boundaries	field:symbolic_local_state/mod.rs:SymbolicLocalState.default_paths,field:symbolic_local_state/mod.rs:SymbolicLocalState.definite_range_member_values,field:symbolic_local_state/mod.rs:SymbolicLocalState.fragment_values,field:symbolic_local_state/mod.rs:SymbolicLocalState.get_bindings,field:symbolic_local_state/mod.rs:SymbolicLocalState.int_cast_sources,field:symbolic_local_state/mod.rs:SymbolicLocalState.output_meta,field:symbolic_local_state/mod.rs:SymbolicLocalState.range_domains,field:symbolic_local_state/mod.rs:SymbolicLocalState.range_member_values,field:symbolic_local_state/mod.rs:SymbolicLocalState.scalar_dispatches,field:symbolic_local_state/mod.rs:SymbolicLocalState.truthiness_abstentions,field:symbolic_local_state/mod.rs:SymbolicLocalState.truthiness_clears,field:symbolic_local_state/mod.rs:SymbolicLocalState.truthy_reductions,field:symbolic_local_state/mod.rs:SymbolicLocalState.typeof_sources,field:bound_value_analysis.rs:BoundValueContext.get_bindings,field:bound_value_analysis.rs:BoundValueContext.range_domains
-field:value/state.rs:State.scopes	S	State facade: transposed SymbolicLocalState.scopes	slot owner	R3b		R3a: replaces nonbaseline slot plumbing; locals and roots retain their distinct snapshot boundaries	field:symbolic_local_state/mod.rs:LocalScopeFrame.previous_values,field:symbolic_local_state/mod.rs:SymbolicLocalState.local_scopes
-field:value/state.rs:State.roots	F	State facade: transposed Interpreter.root_slots	slot owner	R3b		R3a: replaces nonbaseline slot plumbing; locals and roots retain their distinct snapshot boundaries	field:fragment_eval/eval.rs:Interpreter.root_bindings,field:fragment_eval/eval.rs:Interpreter.root_truthy_predicates,field:fragment_eval/eval.rs:Interpreter.root_value_dispatches
-field:value/state.rs:State.observed	S	State facade: transposed Interpreter.root_writes	slot owner	R3b		R3a: replaces nonbaseline slot plumbing; locals and roots retain their distinct snapshot boundaries	field:fragment_eval/eval.rs:Interpreter.root_set_mutations_observed,field:fragment_eval/eval.rs:Interpreter.root_set_predicates_observed,field:fragment_eval/eval.rs:Interpreter.root_value_dispatches_observed
-field:value/state.rs:RootSnapshot.root	S	State facade: transposed RootSetState.root	slot owner	R3b		R3a: replaces nonbaseline slot plumbing; locals and roots retain their distinct snapshot boundaries	field:fragment_eval/control.rs:RootSetState.bindings,field:fragment_eval/control.rs:RootSetState.dispatches,field:fragment_eval/control.rs:RootSetState.truthy
-field:value/state.rs:RootSnapshot.observed	S	State facade: transposed RootSetState.observed	slot owner	R3b		R3a: replaces nonbaseline slot plumbing; locals and roots retain their distinct snapshot boundaries	field:fragment_eval/control.rs:RootSetState.dispatches_observed,field:fragment_eval/control.rs:RootSetState.mutations_observed,field:fragment_eval/control.rs:RootSetState.predicates_observed
+variant:value/kinds.rs:LegacyTypeView::Identity	D	canonical type/content leaf or borrowed compatibility view	exact runtime query in the coupled value interpreter	R3b		R2 foundation scope: family and compatibility cut-over deferred to R3b	
+variant:value/kinds.rs:LegacyTypeView::JsonDecoded	R	legacy decoded fragment projection	exact runtime query in the coupled value interpreter	R3b		R2 foundation scope: family and compatibility cut-over deferred to R3b	
+variant:value/mod.rs:CompletionInput::Executed	R	representation of CompletionInput::Executed	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+variant:value/mod.rs:CompletionInput::Invocation	R	representation of CompletionInput::Invocation	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+variant:value/mod.rs:CompletionInput::Summarized	R	representation of CompletionInput::Summarized	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+variant:value/mod.rs:Datum::Scalar	R	representation of Datum::Scalar	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+variant:value/mod.rs:Datum::Sequence	R	representation of Datum::Sequence	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+variant:value/mod.rs:Datum::Unknown	R	representation of Datum::Unknown	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+variant:value/mod.rs:Field::Present	R	representation of Field::Present	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+variant:value/mod.rs:Field::Select	R	representation of Field::Select	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+variant:value/mod.rs:Flow::Normal	R	representation of Flow::Normal	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+variant:value/mod.rs:ObjectData::Map	R	representation of ObjectData::Map	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+variant:value/mod.rs:ObjectData::Strings	R	representation of ObjectData::Strings	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+variant:value/mod.rs:ObjectData::Widened	R	representation of ObjectData::Widened	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+variant:value/mod.rs:TextPart::Frozen	R	representation of TextPart::Frozen	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+variant:value/mod.rs:TextPart::Select	R	representation of TextPart::Select	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+variant:value/mod.rs:TextPart::Unknown	R	representation of TextPart::Unknown	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+variant:value/mod.rs:ValueNode::Leaf	R	representation of ValueNode::Leaf	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+variant:value/mod.rs:ValueNode::Select	R	representation of ValueNode::Select	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+variant:value/output.rs:CountExpressionKind::Increment	R	representation of CountExpressionKind::Increment	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+variant:value/output.rs:CountExpressionKind::Select	R	representation of CountExpressionKind::Select	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+variant:value/output.rs:CountState::Exact	R	representation of CountState::Exact	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+variant:value/window_exits.rs:TerminalTree::Concat	R	representation of TerminalTree::Concat	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+variant:value/window_exits.rs:TerminalTree::Leaf	R	representation of TerminalTree::Leaf	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+variant:value/window_exits.rs:WindowBuffer::Compact	R	representation of WindowBuffer::Compact	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+variant:value/window_exits.rs:WindowBuffer::Expanded	R	representation of WindowBuffer::Expanded	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+variant:value/window_exits.rs:WindowChunk::Single	R	representation of WindowChunk::Single	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+variant:value/window_exits.rs:WindowChunk::Terminal	R	representation of WindowChunk::Terminal	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+variant:value/window_exits.rs:WindowExits::Compact	R	representation of WindowExits::Compact	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+variant:value/window_exits.rs:WindowExits::Expanded	R	representation of WindowExits::Expanded	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+variant:value/window_exits.rs:WindowSlot::Terminal	R	representation of WindowSlot::Terminal	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+variant:value_path_context/condition_predicate.rs:Decoded::Approximate	D	condition decoding result	-	keep		rework3	
+variant:value_path_context/condition_predicate.rs:Decoded::Exact	D	condition decoding result	-	keep		rework3	
