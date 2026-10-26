@@ -288,3 +288,77 @@ fn bounded_guard_construction_stops_recursion_without_poisoning_exact_queries() 
     }
     Ok(())
 }
+
+#[test]
+fn direct_guard_choice_matches_boolean_expansion_for_correlated_operands() -> eyre::Result<()> {
+    use super::{Arena, Coverage, DecisionEdge, GuardWorkBudget, RuntimeGuard};
+    use helm_schema_core::Predicate;
+
+    let arena = Arena::default();
+    let [a, b, c] = ["a", "b", "c"].map(|path| {
+        let predicate = Predicate::truthy_path(path);
+        let test = arena.decision(predicate.clone(), predicate.negated(), Coverage::Exact);
+        arena.runtime_path(&[DecisionEdge { test, taken: true }])
+    });
+    let operands = [
+        RuntimeGuard::False,
+        RuntimeGuard::True,
+        a.clone(),
+        b.clone(),
+        c.clone(),
+        arena.complement_runtime_guard(&a),
+        arena.intersect_runtime_guards(&a, &b),
+        arena.union_runtime_guards(&b, &c),
+    ];
+    // Canonical identity checks all assignments, including shared variables among operands.
+    for condition in &operands {
+        for yes in &operands {
+            for no in &operands {
+                let actual = arena
+                    .select_runtime_guard_bounded(
+                        condition,
+                        yes,
+                        no,
+                        &mut GuardWorkBudget::new(32768),
+                    )
+                    .map_err(|reason| eyre::eyre!("choice exhausted: {reason:?}"))?;
+                let expected = arena.union_runtime_guards(
+                    &arena.intersect_runtime_guards(condition, yes),
+                    &arena.intersect_runtime_guards(&arena.complement_runtime_guard(condition), no),
+                );
+                sim_assert_eq!(have: actual.id(), want: expected.id());
+            }
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn newest_guard_choice_constructs_only_its_final_node() -> eyre::Result<()> {
+    use super::{Arena, Coverage, DecisionEdge, GuardWorkBudget};
+    use helm_schema_core::Predicate;
+
+    let arena = Arena::default();
+    let [yes, no, condition] = ["yes", "no", "condition"].map(|path| {
+        let predicate = Predicate::truthy_path(path);
+        let test = arena.decision(predicate.clone(), predicate.negated(), Coverage::Exact);
+        arena.runtime_path(&[DecisionEdge { test, taken: true }])
+    });
+    let before = arena.guards.borrow().next_node;
+    assert!(
+        arena
+            .select_runtime_guard_bounded(&condition, &yes, &no, &mut GuardWorkBudget::new(0))
+            .is_err()
+    );
+    sim_assert_eq!(have: arena.guards.borrow().next_node, want: before);
+    let result = arena
+        .select_runtime_guard_bounded(&condition, &yes, &no, &mut GuardWorkBudget::new(2))
+        .map_err(|reason| eyre::eyre!("single-node choice exhausted: {reason:?}"))?;
+    sim_assert_eq!(have: arena.guards.borrow().next_node - before, want: 1);
+    let cached = arena
+        .select_runtime_guard_bounded(&condition, &yes, &no, &mut GuardWorkBudget::new(0))
+        .map_err(|reason| eyre::eyre!("cached choice exhausted: {reason:?}"))?;
+    sim_assert_eq!(have: cached.id(), want: result.id());
+    sim_assert_eq!(have: arena.intersect_runtime_guards(&result, &condition).id(), want: arena.intersect_runtime_guards(&yes, &condition).id());
+    Ok(())
+}

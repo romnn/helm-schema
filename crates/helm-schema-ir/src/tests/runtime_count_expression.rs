@@ -226,3 +226,167 @@ fn guard_work_exhaustion_does_not_publish_a_threshold_or_poison_a_clone() {
     assert!(!independent.is_exhausted());
     assert!(independent.below(128, &state.heap.arena).is_ok());
 }
+
+#[test]
+fn fully_admitted_domain_preserves_the_exact_ambient_guard() -> eyre::Result<()> {
+    use helm_schema_core::{Guard, ValuesPath};
+
+    let mut state = State::new(Value::nil());
+    let arena = Rc::clone(&state.heap.arena);
+    let predicate = Predicate::all(
+        (0..300)
+            .map(|index| {
+                Predicate::from(Guard::Truthy {
+                    path: ValuesPath::parse(&format!("choice{index}")),
+                })
+            })
+            .collect(),
+    );
+    let decision = arena.decision(predicate.clone(), predicate.negated(), Coverage::Exact);
+    let counts = conditional_cost(&BranchCounts::default(), &decision, 1, 128, &arena);
+    state.active.push(DecisionEdge {
+        test: Rc::clone(&decision),
+        taken: true,
+    });
+    let active = arena.runtime_path(&state.active);
+    let admitted = counts.restrict(&active, &arena);
+    let (slots, rejected) = precise(state.reserve_count(&admitted, 17))?;
+
+    // The live arm has room even though the global count bounds include a full sibling.
+    // Its existing control guard does not need a bounded budget projection.
+    sim_assert_eq!(have: rejected, want: false);
+    sim_assert_eq!(have: slots.len(), want: 1);
+    let slot = slots.first().ok_or_eyre("missing admitted observation")?;
+    sim_assert_eq!(have: slot.coverage_exact, want: true);
+    sim_assert_eq!(have: slot.condition.clone().normalize_boolean(), want: state.path_predicate().normalize_boolean());
+    sim_assert_eq!(have: slot.ordinal, want: 17);
+
+    state.active = vec![DecisionEdge {
+        test: decision,
+        taken: false,
+    }];
+    let active = arena.runtime_path(&state.active);
+    let full = counts.restrict(&active, &arena);
+    let (slots, rejected) = precise(state.reserve_count(&full, 18))?;
+    sim_assert_eq!(have: slots.len(), want: 0);
+    sim_assert_eq!(have: rejected, want: true);
+    Ok(())
+}
+
+#[test]
+fn every_counter_carry_preserves_both_live_branches() -> eyre::Result<()> {
+    let arena = Arena::default();
+    let tests = ["choice", "unused_b", "unused_c"].map(|path| {
+        let condition = Predicate::truthy_path(path);
+        arena.decision(condition.clone(), condition.negated(), Coverage::Exact)
+    });
+    let [choice, _, _] = &tests;
+    for initial in 0..=129 {
+        let yes = BranchCounts::constant_on(initial, RuntimeGuard::True);
+        let no = BranchCounts::constant_on(129 - initial, RuntimeGuard::True);
+        let mut counts = BranchCounts::selected(choice, &yes, &no, &arena);
+        for increments in 0..3 {
+            let expected = std::array::from_fn(|mask| {
+                let count = if mask & 1 != 0 {
+                    initial
+                } else {
+                    129 - initial
+                };
+                (count + increments).min(129)
+            });
+            check_counts(&counts, &expected, [true; 8], &tests, &arena)?;
+            counts.increment();
+        }
+    }
+    Ok(())
+}
+
+fn collect_guard_scratch(arena: &Arena, phase: &str) {
+    for index in 0..4096 {
+        let predicate = Predicate::truthy_path(format!("{phase}{index}"));
+        let test = arena.decision(predicate.clone(), predicate.negated(), Coverage::Exact);
+        let _ = arena.runtime_path(&[DecisionEdge { test, taken: true }]);
+    }
+    let _ = arena.budget_test(RuntimeGuard::True);
+}
+
+#[test]
+fn threshold_memo_releases_replaced_results_and_dropped_count_graphs() -> eyre::Result<()> {
+    let arena = Arena::default();
+    let [a, b] = ["a", "b"].map(|path| {
+        let condition = Predicate::truthy_path(path);
+        let test = arena.decision(condition.clone(), condition.negated(), Coverage::Exact);
+        arena.runtime_path(&[DecisionEdge { test, taken: true }])
+    });
+    let inner = CountExpression::selected(
+        b,
+        &CountExpression::constant(0),
+        &CountExpression::constant(1),
+    );
+    let outer = CountExpression::selected(a.clone(), &inner, &CountExpression::constant(2));
+    let first = precise(CountThreshold::default().below(&outer, 1, &arena))?;
+    let RuntimeGuard::Branch(node) = &first else {
+        eyre::bail!("compound threshold missing");
+    };
+    let replaced = Rc::downgrade(node);
+    drop(first);
+    // The next threshold is just `a`; its graph does not need the old `a and b` result.
+    let second = precise(CountThreshold::default().below(&outer, 2, &arena))?;
+    sim_assert_eq!(have: second.id(), want: a.id());
+    collect_guard_scratch(&arena, "replace");
+    assert!(replaced.upgrade().is_none());
+
+    let result = precise(CountThreshold::default().below(&outer, 1, &arena))?;
+    let RuntimeGuard::Branch(node) = &result else {
+        eyre::bail!("recreated compound threshold missing");
+    };
+    let cached = Rc::downgrade(node);
+    drop(result);
+    collect_guard_scratch(&arena, "retain");
+    assert!(cached.upgrade().is_some());
+    let increment = CountExpression::increment(&outer);
+    precise(CountThreshold::default().below(&increment, 2, &arena))?;
+    assert!(increment.threshold.borrow().is_none());
+    drop(increment);
+    drop(outer);
+    drop(inner);
+    collect_guard_scratch(&arena, "drop");
+    assert!(cached.upgrade().is_none());
+    Ok(())
+}
+
+#[test]
+fn cancelling_thresholds_remain_exact_and_release_internal_memo_results() -> eyre::Result<()> {
+    for branches in [8, 16, 32] {
+        let arena = Arena::default();
+        let mut condition = RuntimeGuard::False;
+        for index in 0..branches {
+            let predicate = Predicate::truthy_path(format!("branch{index}"));
+            let test = arena.decision(predicate.clone(), predicate.negated(), Coverage::Exact);
+            let atom = arena.runtime_path(&[DecisionEdge { test, taken: true }]);
+            condition = arena.union_runtime_guards(&condition, &atom);
+        }
+        let child = CountExpression::selected(
+            condition.clone(),
+            &CountExpression::constant(1),
+            &CountExpression::constant(0),
+        );
+        let root = CountExpression::selected(condition, &child, &CountExpression::constant(1));
+        // The inner threshold is large, but the outer correlated choice cancels it completely.
+        sim_assert_eq!(have: precise(CountThreshold::default().below(&root, 1, &arena))?, want: RuntimeGuard::False);
+        let retained = child.threshold.borrow();
+        let result = retained
+            .as_ref()
+            .ok_or_eyre("inner threshold memo missing")?;
+        let RuntimeGuard::Branch(node) = &result.guard else {
+            eyre::bail!("inner threshold graph missing");
+        };
+        let weak = Rc::downgrade(node);
+        drop(retained);
+        drop(root);
+        drop(child);
+        collect_guard_scratch(&arena, "cancel");
+        assert!(weak.upgrade().is_none());
+    }
+    Ok(())
+}

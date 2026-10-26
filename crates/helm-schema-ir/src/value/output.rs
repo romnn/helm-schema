@@ -14,6 +14,11 @@ impl TextBuffer {
         }
     }
 
+    #[tracing::instrument(
+        skip_all,
+        level = "debug",
+        target = "helm_schema_ir::value::output_work"
+    )]
     fn push(&mut self, part: TextPart) {
         self.parts.push(part);
         self.counts.increment();
@@ -46,13 +51,17 @@ impl TextBuffer {
                 self.counts = BranchCounts::constant_on(1, self.counts.domain.clone());
                 return;
             }
+            let allowed = arena.complement_runtime_guard(&overflow);
             let decision = arena.budget_test(overflow.clone());
-            let allowed = arena.runtime_path(&[super::DecisionEdge {
-                test: std::rc::Rc::clone(&decision),
-                taken: false,
-            }]);
             let exact = std::rc::Rc::new(Self::immutable_text(self.parts.clone()));
-            let exact = TextRetention::default().retain(&exact, &allowed);
+            let exact = {
+                let _span = tracing::debug_span!(
+                    target: "helm_schema_ir::value::output_work",
+                    "retain_output"
+                )
+                .entered();
+                TextRetention::default().retain(&exact, &allowed)
+            };
             self.parts = vec![TextPart::Select {
                 decision,
                 yes: std::rc::Rc::new(unknown),
@@ -75,6 +84,11 @@ impl TextBuffer {
         self.arena = Some(std::rc::Rc::clone(arena));
     }
 
+    #[tracing::instrument(
+        skip_all,
+        level = "debug",
+        target = "helm_schema_ir::value::output_work"
+    )]
     fn inputs(&self) -> BTreeSet<helm_schema_core::ValuesPath> {
         let mut inputs = BTreeSet::new();
         let mut pending = vec![self];
@@ -99,6 +113,11 @@ impl TextBuffer {
         inputs
     }
 
+    #[tracing::instrument(
+        skip_all,
+        level = "debug",
+        target = "helm_schema_ir::value::output_work"
+    )]
     pub(super) fn is_widened_under(
         &self,
         active: &super::guard::RuntimeGuard,
@@ -814,8 +833,16 @@ fn collect_scalar_projection(
 }
 
 #[derive(Debug)]
+struct CountThresholdResult {
+    threshold: usize,
+    guard: super::guard::RuntimeGuard,
+}
+
+#[derive(Debug)]
 struct CountExpression {
-    thresholds: std::cell::RefCell<BTreeMap<usize, super::guard::CachedGuard>>,
+    // A select retains only its latest exact threshold, until its count graph dies.
+    // Increment nodes forward queries without keeping another strong guard owner.
+    threshold: std::cell::RefCell<Option<CountThresholdResult>>,
     minimum: usize,
     maximum: usize,
     kind: CountExpressionKind,
@@ -839,7 +866,7 @@ impl CountExpression {
             minimum: count,
             maximum: count,
             kind: CountExpressionKind::Constant(count),
-            thresholds: std::cell::RefCell::default(),
+            threshold: std::cell::RefCell::default(),
         })
     }
 
@@ -851,7 +878,7 @@ impl CountExpression {
             minimum: source.minimum.saturating_add(1).min(129),
             maximum: source.maximum.saturating_add(1).min(129),
             kind: CountExpressionKind::Increment(std::rc::Rc::clone(source)),
-            thresholds: std::cell::RefCell::default(),
+            threshold: std::cell::RefCell::default(),
         })
     }
 
@@ -872,7 +899,7 @@ impl CountExpression {
         std::rc::Rc::new(Self {
             minimum: yes.minimum.min(no.minimum),
             maximum: yes.maximum.max(no.maximum),
-            thresholds: std::cell::RefCell::default(),
+            threshold: std::cell::RefCell::default(),
             kind: CountExpressionKind::Select {
                 condition,
                 yes: std::rc::Rc::clone(yes),
@@ -934,15 +961,15 @@ impl CountThreshold {
             .checked_sub(1)
             .ok_or(super::BoundReason::BudgetNodes)?;
         let cached = expression
-            .thresholds
+            .threshold
             .borrow()
-            .get(&threshold)
-            .and_then(super::guard::CachedGuard::upgrade);
+            .as_ref()
+            .filter(|result| result.threshold == threshold)
+            .map(|result| result.guard.clone());
         if let Some(result) = cached {
             self.results.insert(key, result.clone());
             return Ok(result);
         }
-        expression.thresholds.borrow_mut().remove(&threshold);
         let result = match &expression.kind {
             CountExpressionKind::Constant(count) => {
                 if *count < threshold {
@@ -960,10 +987,19 @@ impl CountThreshold {
                 self.select(condition, &yes, &no, arena)?
             }
         };
-        expression
-            .thresholds
-            .borrow_mut()
-            .insert(threshold, super::guard::CachedGuard::new(&result));
+        if matches!(
+            &expression.kind,
+            CountExpressionKind::Select {
+                condition: _,
+                yes: _,
+                no: _
+            }
+        ) {
+            *expression.threshold.borrow_mut() = Some(CountThresholdResult {
+                threshold,
+                guard: result.clone(),
+            });
+        }
         self.results.insert(key, result.clone());
         Ok(result)
     }
@@ -1109,6 +1145,11 @@ impl BranchCounts {
         self.below_with(threshold, arena, &mut CountThreshold::default())
     }
 
+    #[tracing::instrument(
+        skip_all,
+        level = "debug",
+        target = "helm_schema_ir::value::budget_work"
+    )]
     fn overflow(
         &self,
         arena: &super::Arena,
@@ -1123,13 +1164,21 @@ impl BranchCounts {
             return Ok(self.domain.clone());
         }
         let mut query = CountThreshold::default();
-        let below = self.below_with(129, arena, &mut query)?;
-        let result = query.select(
-            &below,
-            &super::guard::RuntimeGuard::False,
-            &self.domain,
-            arena,
-        );
+        // D ∧ ¬(D ∧ L) = D ∧ ¬L: mask the raw threshold once, after complementing it.
+        let result = match &*self.state.borrow() {
+            CountState::Exact(expression) => {
+                query.below(expression, 129, arena).and_then(|below| {
+                    query.select(
+                        &below,
+                        &super::guard::RuntimeGuard::False,
+                        &self.domain,
+                        arena,
+                    )
+                })
+            }
+            CountState::Empty => Ok(super::guard::RuntimeGuard::False),
+            CountState::Exhausted => Err(super::BoundReason::BudgetNodes),
+        };
         if result.is_err() {
             self.exhaust();
         }
@@ -1151,7 +1200,7 @@ impl BranchCounts {
         *source = std::rc::Rc::new(CountExpression {
             minimum: source.minimum.min(1),
             maximum: 128,
-            thresholds: std::cell::RefCell::default(),
+            threshold: std::cell::RefCell::default(),
             kind: CountExpressionKind::Select {
                 condition: overflow,
                 yes: CountExpression::constant(1),
@@ -1206,6 +1255,11 @@ pub(super) struct BudgetSlot {
 }
 
 impl super::State {
+    #[tracing::instrument(
+        skip_all,
+        level = "debug",
+        target = "helm_schema_ir::value::output_work"
+    )]
     fn reserve_count(
         &self,
         count: &BranchCounts,
@@ -1214,21 +1268,25 @@ impl super::State {
         if count.is_empty() {
             return Ok((Vec::new(), false));
         }
+        let ambient_slot = || {
+            vec![BudgetSlot {
+                condition: self.path_predicate(),
+                ordinal,
+                coverage_exact: true,
+            }]
+        };
         // Storage ordinals preserve event order; only admission consumes the branch-local budget.
         if count.definitely_below(128) {
-            return Ok((
-                vec![BudgetSlot {
-                    condition: self.path_predicate(),
-                    ordinal,
-                    coverage_exact: true,
-                }],
-                false,
-            ));
+            return Ok((ambient_slot(), false));
         }
         let admitted = count.below(128, &self.heap.arena)?;
         let rejected = admitted != count.domain;
         if admitted.is_impossible() {
             return Ok((Vec::new(), rejected));
+        }
+        // The active domain already carries this guard when every live branch has room.
+        if !rejected {
+            return Ok((ambient_slot(), false));
         }
         let admitted = self.heap.arena.budget_test(admitted);
         Ok((
@@ -1330,6 +1388,11 @@ impl super::State {
         }
     }
 
+    #[tracing::instrument(
+        skip_all,
+        level = "debug",
+        target = "helm_schema_ir::value::output_work"
+    )]
     pub(super) fn emit_bytes(
         &mut self,
         span: helm_schema_syntax::Span,
@@ -1363,6 +1426,11 @@ impl super::State {
             });
         }
     }
+    #[tracing::instrument(
+        skip_all,
+        level = "debug",
+        target = "helm_schema_ir::value::output_work"
+    )]
     pub(super) fn observe(
         &mut self,
         span: helm_schema_syntax::Span,

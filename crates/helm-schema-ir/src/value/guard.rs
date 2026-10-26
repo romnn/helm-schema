@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 use std::rc::{Rc, Weak};
 
 use helm_schema_core::{Predicate, PredicateKind};
@@ -53,6 +53,13 @@ struct ApplyKey {
     operation: Operation,
     left: u64,
     right: u64,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+struct ChoiceKey {
+    condition: u64,
+    yes: u64,
+    no: u64,
 }
 
 #[derive(Clone, Debug)]
@@ -149,6 +156,7 @@ pub(super) struct DecisionStore {
     working: Vec<Rc<DecisionNode>>,
     nodes: BTreeMap<NodeKey, Weak<DecisionNode>>,
     applications: BTreeMap<ApplyKey, CachedGuard>,
+    choices: BTreeMap<ChoiceKey, CachedGuard>,
     negations: BTreeMap<u64, CachedGuard>,
     projections: BTreeMap<ProjectionKey, Projection>,
     tests: BTreeMap<ProjectionKey, Weak<FrozenTest>>,
@@ -310,6 +318,11 @@ impl FrozenTest {
 }
 
 impl DecisionStore {
+    #[tracing::instrument(
+        skip_all,
+        level = "debug",
+        target = "helm_schema_ir::value::guard_storage"
+    )]
     fn collect_unused(&mut self) {
         if self.nodes.len() < self.collection_limit.max(4096) {
             return;
@@ -317,7 +330,7 @@ impl DecisionStore {
         // Only execution handles keep guards alive across collection.
         self.working.clear();
         self.nodes.retain(|_, node| node.strong_count() != 0);
-        let live: BTreeSet<_> = [0, 1]
+        let live: std::collections::HashSet<_> = [0, 1]
             .into_iter()
             .chain(
                 self.nodes
@@ -328,6 +341,12 @@ impl DecisionStore {
             .collect();
         self.applications.retain(|key, result| {
             live.contains(&key.left) && live.contains(&key.right) && result.upgrade().is_some()
+        });
+        self.choices.retain(|key, result| {
+            live.contains(&key.condition)
+                && live.contains(&key.yes)
+                && live.contains(&key.no)
+                && result.upgrade().is_some()
         });
         self.negations
             .retain(|guard, result| live.contains(guard) && result.upgrade().is_some());
@@ -507,6 +526,17 @@ impl DecisionStore {
         no: &RuntimeGuard,
         work: &mut W,
     ) -> Result<RuntimeGuard, W::Error> {
+        self.choice_query(condition, yes, no, work, &mut BTreeMap::new())
+    }
+
+    fn choice_query<W: GuardWork>(
+        &mut self,
+        condition: &RuntimeGuard,
+        yes: &RuntimeGuard,
+        no: &RuntimeGuard,
+        work: &mut W,
+        results: &mut BTreeMap<ChoiceKey, RuntimeGuard>,
+    ) -> Result<RuntimeGuard, W::Error> {
         if condition.is_impossible() {
             return Ok(no.clone());
         }
@@ -519,16 +549,54 @@ impl DecisionStore {
         if yes == &RuntimeGuard::True {
             return self.apply_with_work(Operation::Or, condition, no, work);
         }
-        let opposite = self.negate_with_work(condition, work)?;
-        if yes.is_impossible() {
-            return self.apply_with_work(Operation::And, &opposite, no, work);
+        if yes.is_impossible() && no == &RuntimeGuard::True {
+            return self.negate_with_work(condition, work);
         }
-        if no == &RuntimeGuard::True {
-            return self.apply_with_work(Operation::Or, &opposite, yes, work);
+        let key = ChoiceKey {
+            condition: condition.id(),
+            yes: yes.id(),
+            no: no.id(),
+        };
+        if let Some(result) = results.get(&key) {
+            return Ok(result.clone());
         }
-        let selected_yes = self.apply_with_work(Operation::And, condition, yes, work)?;
-        let selected_no = self.apply_with_work(Operation::And, &opposite, no, work)?;
-        self.apply_with_work(Operation::Or, &selected_yes, &selected_no, work)
+        if let Some(result) = self.choices.get(&key).and_then(CachedGuard::upgrade) {
+            results.insert(key, result.clone());
+            return Ok(result);
+        }
+        work.charge()?;
+        let Some(test) = condition
+            .decision()
+            .into_iter()
+            .chain(yes.decision())
+            .chain(no.decision())
+            .max_by_key(|test| test.id)
+        else {
+            return Ok(RuntimeGuard::False);
+        };
+        let selected_yes = self.choice_query(
+            &condition.arm(test.id, true),
+            &yes.arm(test.id, true),
+            &no.arm(test.id, true),
+            work,
+            results,
+        )?;
+        let selected_no = self.choice_query(
+            &condition.arm(test.id, false),
+            &yes.arm(test.id, false),
+            &no.arm(test.id, false),
+            work,
+            results,
+        )?;
+        let result = self.select_with_work(Rc::clone(test), selected_yes, selected_no, work)?;
+        // Constant results can add cache entries without growing the node interner.
+        // Keep query-local results independent of eviction, so one query never loses its work.
+        if self.choices.len() >= 32768 {
+            self.choices.clear();
+        }
+        self.choices.insert(key.clone(), CachedGuard::new(&result));
+        results.insert(key, result.clone());
+        Ok(result)
     }
 
     fn edge(&mut self, edge: &DecisionEdge) -> RuntimeGuard {
@@ -878,6 +946,10 @@ impl Arena {
 }
 
 impl Arena {
+    pub(super) fn complement_runtime_guard(&self, guard: &RuntimeGuard) -> RuntimeGuard {
+        self.guards.borrow_mut().negate(guard)
+    }
+
     pub(super) fn select_runtime_guard_bounded(
         &self,
         condition: &RuntimeGuard,
