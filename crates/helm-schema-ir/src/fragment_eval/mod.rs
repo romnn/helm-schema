@@ -24,7 +24,7 @@ mod project;
 pub(crate) mod summary;
 
 #[cfg(test)]
-pub(crate) use domain::{StringPart, TaintPart};
+pub(crate) use domain::{AbstractFragment, EntryKey, Guarded, StringPart, TaintPart};
 #[cfg(test)]
 pub(crate) use dump::dump_document;
 #[cfg(test)]

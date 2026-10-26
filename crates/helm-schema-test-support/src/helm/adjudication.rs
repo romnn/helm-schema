@@ -34,6 +34,14 @@ use crate::helm::invocation::{
 };
 use crate::helm::kubernetes_version::chart_kubernetes_version;
 
+/// A defaults or context Kubernetes control the oracle cannot use: its
+/// render holds resources no pinned schema decides, or new assertions
+/// versus the defaults. The pinned oracle cannot decide such a document;
+/// nothing failed to execute.
+#[derive(Debug, thiserror::Error)]
+#[error("{0}")]
+pub struct UnusableControl(pub String);
+
 /// Values obtained from template-free Helm execution, before chart mutation.
 #[derive(Clone)]
 pub struct CoalescedValues(Value);
@@ -127,7 +135,15 @@ struct DefaultsControlKey {
 }
 
 /// Defaults evidence shared only under the same Kubernetes version and validator inputs.
-type DefaultsEvaluation = Result<Arc<ResourceEvidence>, String>;
+type DefaultsEvaluation = Result<Arc<ResourceEvidence>, DefaultsFailure>;
+
+/// A memoized defaults-control failure: its message, and whether the
+/// control was unusable rather than failed.
+#[derive(Clone, Debug)]
+struct DefaultsFailure {
+    message: String,
+    unusable: bool,
+}
 
 /// Private copies share chart inputs and differ only in their template bodies.
 pub struct PinnedHelmChart {
@@ -1395,12 +1411,22 @@ impl OfflineKubernetesValidator {
                 .or_insert_with(|| {
                     self.evaluate_defaults(chart, kubernetes_version)
                         .map(Arc::new)
-                        .map_err(|err| format!("{err:#}"))
+                        .map_err(|err| DefaultsFailure {
+                            message: format!("{err:#}"),
+                            unusable: err.downcast_ref::<UnusableControl>().is_some(),
+                        })
                 });
-            evaluated
-                .as_ref()
-                .map(Arc::clone)
-                .map_err(|err| eyre::eyre!("defaults render could not be adjudicated: {err}"))?
+            evaluated.as_ref().map(Arc::clone).map_err(|failure| {
+                let message = format!(
+                    "defaults render could not be adjudicated: {}",
+                    failure.message
+                );
+                if failure.unusable {
+                    eyre::Report::new(UnusableControl(message))
+                } else {
+                    eyre::eyre!(message)
+                }
+            })?
         };
         Ok(self.probe_evidence(chart, probe)?.compare(&defaults))
     }
@@ -1435,16 +1461,18 @@ impl OfflineKubernetesValidator {
                 self.control_evidence(chart, context, "context")?
             };
             let comparison = evidence.compare(&defaults_evidence);
-            eyre::ensure!(
-                comparison.new_violations.is_empty(),
-                "unusable context Kubernetes control: new assertions versus defaults: {}",
-                comparison
-                    .new_violations
-                    .iter()
-                    .map(ToString::to_string)
-                    .collect::<Vec<_>>()
-                    .join("; ")
-            );
+            if !comparison.new_violations.is_empty() {
+                return Err(UnusableControl(format!(
+                    "unusable context Kubernetes control: new assertions versus defaults: {}",
+                    comparison
+                        .new_violations
+                        .iter()
+                        .map(ToString::to_string)
+                        .collect::<Vec<_>>()
+                        .join("; ")
+                ))
+                .into());
+            }
             applicable.push(evidence);
         }
         if applicable.is_empty() {
@@ -1466,11 +1494,13 @@ impl OfflineKubernetesValidator {
             "unusable {label} render control"
         );
         let evidence = self.probe_evidence(chart, control)?;
-        eyre::ensure!(
-            evidence.uncertain.is_empty(),
-            "unusable {label} Kubernetes control: uncertainty: {}",
-            evidence.uncertain.join("; ")
-        );
+        if !evidence.uncertain.is_empty() {
+            return Err(UnusableControl(format!(
+                "unusable {label} Kubernetes control: uncertainty: {}",
+                evidence.uncertain.join("; ")
+            ))
+            .into());
+        }
         Ok(evidence)
     }
 
@@ -1797,9 +1827,9 @@ pub fn decode(runner: &HelmRunner, rendered: &[u8], case: &Path) -> eyre::Result
         decoder_documents(&output.stdout, &case, empty)
     } else {
         Err(format!(
-            "Helm YAML decoding failed; evidence={}: {}",
-            crate::helm::invocation::preserve_failure(&case).display(),
-            String::from_utf8_lossy(&output.stderr)
+            "Helm YAML decoding failed: {}; evidence={}",
+            String::from_utf8_lossy(&output.stderr),
+            crate::helm::invocation::preserve_failure(&case).display()
         ))
     };
     Ok(Decoded {
