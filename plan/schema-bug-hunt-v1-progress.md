@@ -9472,4 +9472,16 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   deletions; ≤ +1,500; C03 speed; 0 prior-pass regressions) and C04b later (whole-tree initializer and scheduling,
   design-first with a cost model and reuse of main's chart preparation). The blocked snapshot stays as a reference
   (transfer-C04-blocked.patch, sha 130b02ff…). Orchestrator.
-Next: F20 rework → re-review → landing 18; R3b C04a hand-back → review → commit; C04b design inputs → design review.
+- 21:45 (Oct 26) — **Landing 18 merged (ca889e9c): hermetic value-algebra unit controls; receipt round8-landing18-run1
+  sha256 844203f9…. R3b C04a committed (0f92f524) as a non-landable checkpoint with recorded speed debt; C04b and a
+  parallel perf lane started.** CI on the pushed c7cb0843: bench, lint, build, integration and network green (the mise.lock fix
+  works); the unit `test` job failed on all three platforms because two T0 unit tests shelled out to `mise exec helm@4.2.3`.
+  4e004300 moved the live parity checks to an integration test (unit tests pass with Helm off PATH: 1,762). Process fix queued:
+  the chain's unit step should run without Helm, as CI does. C04a: +1,233 LOC, 5 closures, 0 new FR, 1,527 prior-pass tests
+  green. Median debug CPU-s C03 → C04a: kube-prometheus-stack 8.74 → 14.37, kyverno 3.97 → 8.20, datadog 14.93 → 7.87.
+  Causes: correct namespace availability executes more helpers (kyverno +3.9 s, two closures), and immediate sealing loses
+  cross-file guard reuse (kube-prometheus-stack +4.9 s). Orchestrator decision: commit as a checkpoint; the speed debt goes to
+  the perf lane (astra 20261026T210802-5ff8deba, branch r3b/perf-c04a, which also produces one consistent main/C03/C04a
+  benchmark); the R3b builder starts C04b per astra's design review 20261026T185132-38095010 (one ordered guarded
+  initializer, reuse main's chart/values.rs, +700 to +1,250 LOC). Orchestrator.
+Next: user pushes main → CI fully green; F20 rework → re-review → landing 19; R3b C04b and perf lane hand-backs.
