@@ -277,7 +277,7 @@ impl Executor<'_> {
                             continue;
                         }
                         let mut state = exit.state.fork(Rc::clone(&test), taken);
-                        if state.path_predicate().normalize_boolean() == Predicate::False {
+                        if state.path_is_infeasible() {
                             continue;
                         }
                         if taken {

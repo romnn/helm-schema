@@ -201,6 +201,8 @@ struct Arena {
     aggregate_summary: Cell<Option<u64>>,
     input_objects: RefCell<BTreeMap<ValuesPath, InputBacking>>,
     input_paths: RefCell<BTreeMap<ObjectId, ValuesPath>>,
+    /// The analysis's Boolean normalization cache; results equal uncached normalization.
+    predicate_memo: Rc<helm_schema_core::PredicateMemo>,
 }
 
 #[derive(Clone, Debug)]

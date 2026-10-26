@@ -297,7 +297,10 @@ pub(super) fn begin_file(
 }
 
 fn initial_state(db: &crate::analysis_db::IrAnalysisDb) -> State {
-    let mut state = State::new(Value::nil());
+    let mut state = State::with_heap(
+        Value::nil(),
+        super::Heap::with_predicate_memo(std::rc::Rc::clone(db.predicate_memo())),
+    );
     let root = state.heap.map(Remainder::Open);
     if let Some(id) = state.map_target(&root) {
         let path = ValuesPath::default();

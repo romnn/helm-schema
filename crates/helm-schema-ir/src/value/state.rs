@@ -10,8 +10,7 @@ pub(super) struct ContinuationJoin {
 }
 
 impl State {
-    pub(super) fn new(argument: Value) -> Self {
-        let heap = Heap::new();
+    pub(super) fn with_heap(argument: Value, heap: Heap) -> Self {
         let frame = Frame::call(argument, heap.arena.call());
         Self {
             heap,

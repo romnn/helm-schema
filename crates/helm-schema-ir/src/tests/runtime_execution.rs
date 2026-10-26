@@ -11,6 +11,20 @@ use test_util::prelude::sim_assert_eq;
 #[path = "runtime_reconvergence.rs"]
 mod reconvergence_laws;
 
+impl super::Heap {
+    /// A session heap with a private predicate memo, for tests that build heaps directly.
+    pub(super) fn new() -> Self {
+        Self::with_predicate_memo(std::rc::Rc::default())
+    }
+}
+
+impl super::State {
+    /// A session's first state over a private heap, for tests that build states directly.
+    pub(super) fn new(argument: super::Value) -> Self {
+        Self::with_heap(argument, super::Heap::new())
+    }
+}
+
 fn texts(source: &str) -> Vec<Option<String>> {
     let db = IrAnalysisDb::new(&DefineIndex::new());
     execute_document(source, Some("templates/test.yaml"), &db)

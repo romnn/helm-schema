@@ -216,6 +216,16 @@ impl State {
         }
     }
 
+    /// Whether [`Self::path_predicate`] normalizes to `false`, decided through the analysis-wide
+    /// predicate memo.
+    pub(super) fn path_is_infeasible(&self) -> bool {
+        self.heap
+            .arena
+            .predicate_memo
+            .normalize(self.path_predicate())
+            == Predicate::False
+    }
+
     pub(super) fn path_predicate(&self) -> Predicate {
         if self.heap.arena.runtime_path(&self.active).is_impossible() {
             return Predicate::False;

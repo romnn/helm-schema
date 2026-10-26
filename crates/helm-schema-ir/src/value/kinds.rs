@@ -300,7 +300,7 @@ fn finish_parameter_plan(state: super::State, plan: ParameterPlan) -> Vec<super:
             let mut exits = Vec::new();
             for taken in [true, false] {
                 let branch = state.fork(std::rc::Rc::clone(&success), taken);
-                if branch.path_predicate().normalize_boolean() == Predicate::False {
+                if branch.path_is_infeasible() {
                     continue;
                 }
                 exits.push(super::Exit {
@@ -465,7 +465,7 @@ fn validate_selected_parameter(
             test: Rc::clone(decision),
             taken,
         });
-        let plan = if state.path_predicate().normalize_boolean() == Predicate::False {
+        let plan = if state.path_is_infeasible() {
             ParameterPlan::rejected(state, super::Value::unknown())
         } else {
             validate_parameter_inner(
@@ -607,7 +607,7 @@ pub(super) fn required_subject(state: super::State, subject: super::Value) -> Ve
     let mut exits = Vec::new();
     for taken in [true, false] {
         let branch = state.fork(Rc::clone(&decision), taken);
-        if branch.path_predicate().normalize_boolean() != Predicate::False {
+        if !branch.path_is_infeasible() {
             exits.push(Exit {
                 state: branch,
                 flow: if taken {

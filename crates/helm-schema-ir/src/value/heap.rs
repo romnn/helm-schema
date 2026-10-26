@@ -25,8 +25,12 @@ impl Arena {
 }
 
 impl Heap {
-    pub(super) fn new() -> Self {
-        let arena = Rc::new(Arena::default());
+    /// A heap whose session normalizes predicates through `predicate_memo`.
+    pub(super) fn with_predicate_memo(predicate_memo: Rc<helm_schema_core::PredicateMemo>) -> Self {
+        let arena = Rc::new(Arena {
+            predicate_memo,
+            ..Arena::default()
+        });
         Self {
             version: Rc::new(HeapVersion {
                 id: arena.snapshot(),

@@ -248,7 +248,7 @@ impl Executor<'_> {
                                     continue;
                                 }
                                 let state = exit.state.fork(Rc::clone(&test), taken);
-                                if state.path_predicate().normalize_boolean() == Predicate::False {
+                                if state.path_is_infeasible() {
                                     continue;
                                 }
                                 if taken == (function == "or") {
@@ -392,7 +392,7 @@ impl Executor<'_> {
                 let mut result = super::ExitBuffer::default();
                 for taken in [true, false] {
                     let branch = state.fork(Rc::clone(decision), taken);
-                    if branch.path_predicate().normalize_boolean() != Predicate::False {
+                    if !branch.path_is_infeasible() {
                         let mut selected = invocation.clone();
                         for operand in &mut selected.operands {
                             operand.value = branch.consumed(&operand.value);
@@ -538,7 +538,7 @@ fn transfer_values(invocation: &Invocation, state: &mut State, remaining: &mut u
                     test: Rc::clone(decision),
                     taken,
                 });
-                let plan = if state.path_predicate().normalize_boolean() == Predicate::False {
+                let plan = if state.path_is_infeasible() {
                     ValuePlan {
                         value: Value::unknown(),
                         normal: constant_value_test(state, false),
@@ -637,7 +637,7 @@ fn finish_value_plan(plan: ValuePlan, state: State) -> Vec<Exit> {
     let mut exits = Vec::new();
     if success.constant_outcome() != Some(false) {
         let branch = state.fork(success, true);
-        if branch.path_predicate().normalize_boolean() != Predicate::False {
+        if !branch.path_is_infeasible() {
             exits.extend(normal(branch, value));
         }
     }
@@ -646,7 +646,7 @@ fn finish_value_plan(plan: ValuePlan, state: State) -> Vec<Exit> {
             continue;
         }
         let branch = state.fork(failed, true);
-        if branch.path_predicate().normalize_boolean() != Predicate::False {
+        if !branch.path_is_infeasible() {
             exits.push(Exit {
                 state: branch,
                 flow: Flow::Abort(reason),
@@ -808,7 +808,7 @@ fn first_comparison_cases(
         let depth = state.active.len();
         for taken in [true, false] {
             comparison_push(state, Rc::clone(decision), taken);
-            if state.path_predicate().normalize_boolean() != Predicate::False {
+            if !state.path_is_infeasible() {
                 cases.extend(first_comparison_cases(
                     state,
                     &first.under(decision, taken),
@@ -886,7 +886,7 @@ fn comparison_walk(
                     let depth = state.active.len();
                     for taken in [true, false] {
                         comparison_push(state, Rc::clone(&test), taken);
-                        if state.path_predicate().normalize_boolean() != Predicate::False {
+                        if !state.path_is_infeasible() {
                             if taken {
                                 result.push(comparison_normal(
                                     state,
@@ -1076,7 +1076,7 @@ fn compare_pair_inner(
         let depth = state.active.len();
         for taken in [true, false] {
             comparison_push(state, Rc::clone(&decision), taken);
-            if state.path_predicate().normalize_boolean() != Predicate::False {
+            if !state.path_is_infeasible() {
                 exits.extend(compare_pair_inner(
                     state,
                     &left.under(&decision, taken),
@@ -1115,7 +1115,7 @@ fn compare_pair_inner(
         if outcome.is_none() {
             comparison_push(state, Rc::clone(&decision), taken);
         }
-        if state.path_predicate().normalize_boolean() != Predicate::False {
+        if !state.path_is_infeasible() {
             exits.push(ComparisonExit {
                 active: state.active.clone(),
                 flow: if taken {
