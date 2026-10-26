@@ -495,3 +495,32 @@ fn templated_crds_decode_yaml_1_1_and_refuse_merge_keys() {
     );
     sim_assert_eq!(have: projected(merge, true), want: Vec::new());
 }
+
+#[test]
+fn templated_colliding_mapping_keys_do_not_keep_a_stale_schema() {
+    let source = indoc! {r"
+        apiVersion: apiextensions.k8s.io/v1
+        kind: CustomResourceDefinition
+        spec:
+          group: example.com
+          names:
+            kind: Widget
+          versions:
+            - name: v1
+              served: true
+              schema:
+                openAPIV3Schema: {type: string}
+          {{ .Values.key }}: {{ .Values.replacement }}
+    "};
+    // Every dynamic key form can render as `versions` and replace the literal schema.
+    let quoted = source.replace("{{ .Values.key }}:", "\"{{ .Values.key }}\":");
+    let open = source.replace(
+        "{{ .Values.key }}: {{ .Values.replacement }}",
+        indoc! {"
+            {{ .Values.key }}:
+                replacement: value"},
+    );
+    for source in [source, quoted.as_str(), open.as_str()] {
+        sim_assert_eq!(have: projected(source, true), want: Vec::new());
+    }
+}

@@ -2,7 +2,8 @@ use helm_schema_k8s::{
     LocalResourceSchema, LocalSchemaUniverse, resource_schemas_from_crd_document_with_source,
 };
 use helm_schema_syntax::{
-    HelmYamlDocument, HelmYamlKey, MappingEntry, Node, Span, TemplatedDocument, helm_yaml_documents,
+    HelmYamlDocument, HelmYamlKey, MappingEntry, Node, OpaqueKind, Span, TemplatedDocument,
+    helm_yaml_documents,
 };
 use serde_json::{Value, json};
 
@@ -46,8 +47,15 @@ pub(crate) fn local_resource_schemas_from_template_source(
     }
 
     let document = TemplatedDocument::parse(source);
+    let unresolved_keys = unresolved_key_spans(document.roots());
     let mut resource_schemas = Vec::new();
     for span in document.document_spans() {
+        if unresolved_keys
+            .iter()
+            .any(|key| key.start >= span.start && key.start < span.end)
+        {
+            continue;
+        }
         let Some(crd) = crd_document_from_nodes(&document, document.roots(), Some(*span)) else {
             continue;
         };
@@ -60,9 +68,38 @@ pub(crate) fn local_resource_schemas_from_template_source(
     resource_schemas
 }
 
-/// The CRDs of a literal source, decoded as Helm decodes them. A document
-/// Helm refuses installs nothing; a version schema holding a value this
-/// reader cannot reproduce is open.
+/// An action-led inline key can be attached below its preceding mapping in
+/// the CST, so its possible collision cannot be confined to that subtree.
+fn unresolved_key_spans(nodes: &[Node]) -> Vec<Span> {
+    let mut spans = Vec::new();
+    let mut pending = nodes.iter().collect::<Vec<_>>();
+    while let Some(node) = pending.pop() {
+        match node {
+            Node::Mapping(entry) => pending.extend(&entry.children),
+            Node::Sequence(item) => pending.extend(&item.children),
+            Node::Control(region) => {
+                for branch in &region.branches {
+                    pending.extend(&branch.body);
+                }
+            }
+            Node::Opaque(opaque) => match opaque.kind {
+                OpaqueKind::ActionLineText => spans.push(opaque.span),
+                OpaqueKind::TemplateComment
+                | OpaqueKind::Assignment
+                | OpaqueKind::Break
+                | OpaqueKind::Continue
+                | OpaqueKind::InlineRegion
+                | OpaqueKind::ParseError => {}
+            },
+            Node::Output(_) | Node::Comment(_) | Node::Scalar(_) => {}
+        }
+    }
+    spans
+}
+
+/// The CRDs of a literal source, decoded as Helm decodes them.
+/// Rejected and unsupported documents contribute no schemas.
+/// A version schema containing an unknown value stays open.
 fn resource_schemas_from_literal_documents(
     source: &str,
     source_id: &str,
@@ -208,9 +245,9 @@ fn mapping_child<'nodes>(
     mapping_entry(document, &entry.children, None, key)
 }
 
-/// The entry for `key` among `nodes`. A merge key or a second entry for
-/// `key` decides Helm's value in ways not followed here, so neither yields
-/// an entry.
+/// The entry for `key` among `nodes`.
+/// A merge, duplicate or unresolved key can replace the requested value,
+/// so the enclosing mapping stays unknown.
 fn mapping_entry<'nodes>(
     document: &TemplatedDocument<'_>,
     nodes: &'nodes [Node],
@@ -226,13 +263,13 @@ fn mapping_entry<'nodes>(
             continue;
         }
         match document.literal_key(&entry.key) {
-            Some(HelmYamlKey::Merge) => return None,
+            Some(HelmYamlKey::Merge | HelmYamlKey::Unknown) | None => return None,
             Some(HelmYamlKey::Key(name)) if name == key => {
                 if found.replace(entry).is_some() {
                     return None;
                 }
             }
-            Some(HelmYamlKey::Key(_) | HelmYamlKey::Unknown) | None => {}
+            Some(HelmYamlKey::Key(_)) => {}
         }
     }
     found
