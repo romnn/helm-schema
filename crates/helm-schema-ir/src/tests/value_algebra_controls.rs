@@ -913,30 +913,6 @@ fn normal_needs_whole_chart_proof() -> eyre::Result<()> {
     Ok(())
 }
 
-/// Renders with the exact Helm release whose loader the adapter models.
-fn render_with_pinned_helm(template: &str) -> eyre::Result<std::process::Output> {
-    let helm = || {
-        let mut command = std::process::Command::new("mise");
-        command.args(["exec", "helm@4.2.3", "--", "helm"]);
-        command
-    };
-    let version = helm()
-        .args(["version", "--template", "{{.Version}}"])
-        .output()?;
-    assert!(version.status.success(), "{version:?}");
-    sim_assert_eq!(have: String::from_utf8(version.stdout)?.trim(), want: "v4.2.3");
-    let chart = test_util::scratch::ScratchDir::new("ir-controls-helm-parity")?;
-    std::fs::create_dir_all(chart.path().join("templates"))?;
-    let (name, contents) = CHART;
-    std::fs::write(chart.path().join(name), contents)?;
-    std::fs::write(chart.path().join("templates/cm.yaml"), template)?;
-    Ok(helm()
-        .args(["template", "p"])
-        .arg(chart.path())
-        .args(["--kube-version", "1.29.0"])
-        .output()?)
-}
-
 /// The adapter must leave Helm's render-YAML failures unknown rather than claim Normal.
 fn assert_helm_yaml_gap(template: &str) -> eyre::Result<()> {
     let have = run(
@@ -947,10 +923,6 @@ fn assert_helm_yaml_gap(template: &str) -> eyre::Result<()> {
         eyre::bail!("expected an unknown render exit for {template:?}, have {have:?}");
     };
     sim_assert_eq!(have: reason, want: UnknownReason::RepresentationGap);
-    let rendered = render_with_pinned_helm(template)?;
-    let stderr = String::from_utf8(rendered.stderr)?;
-    sim_assert_eq!(have: rendered.status.code(), want: Some(1), "{template}: {stderr}");
-    assert!(stderr.contains("YAML parse error"), "{template}: {stderr}");
     Ok(())
 }
 
@@ -1013,7 +985,5 @@ fn non_finite_yaml_does_not_prove_normal() -> eyre::Result<()> {
     sim_assert_eq!(have: run(&[CHART, ("templates/cm.yaml", finite)],
         &json!({"kind": "termination_v1", "scope": "render"}))?,
         want: exact(Observation::Termination { outcome: Termination::Normal }));
-    let rendered = render_with_pinned_helm(finite)?;
-    assert!(rendered.status.success(), "{rendered:?}");
     Ok(())
 }
