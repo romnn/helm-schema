@@ -12,7 +12,7 @@ fn assignment_header_results_cross_a_mutation_boundary() -> eyre::Result<()> {
         {{- define "r3a.read" -}}{{ .context.Values.left }}{{- end -}}
     "#};
     let mut defines = DefineIndex::new();
-    defines.add_file_source("header.tpl", helper);
+    defines.add_file_source("_helpers.tpl", helper);
     let db = IrAnalysisDb::new(&defines);
     let source = indoc! {r#"
         {{- $_ := set .Values "left" "left" -}}

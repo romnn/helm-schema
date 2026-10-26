@@ -1,4 +1,6 @@
-use color_eyre::eyre;
+use std::collections::BTreeMap;
+
+use color_eyre::eyre::{self, OptionExt as _};
 use std::collections::BTreeSet;
 
 use super::{IrAnalysisDb, ParsedDefines, extract_define_blocks};
@@ -361,8 +363,16 @@ fn parsed_defines_share_parses_and_preserve_file_roles() {
     );
     let parsed = ParsedDefines::new(&defines);
     let db = IrAnalysisDb::with_parsed_policy(&parsed, crate::symbolic::SymbolicPolicy::default());
-    sim_assert_eq!(have: parsed.define_body("leaf"), want: Some("value"));
-    assert!(db.has_helper("leaf"));
+    let declarations: Vec<_> = parsed
+        .template_sources()
+        .iter()
+        .flat_map(|source| &source.declarations)
+        .map(|definition| (definition.name.as_str(), definition.program.source()))
+        .collect();
+    sim_assert_eq!(have: declarations, want: vec![("leaf", "value")]);
+    let execution = crate::value::execute_document(r#"{{ include "leaf" . }}"#, None, &db);
+    sim_assert_eq!(have: execution.abort_predicate(), want: Predicate::False);
+    sim_assert_eq!(have: execution.text().map(|(_, text)| text.exact_text()).collect::<Vec<_>>(), want: vec![Some("value".to_string())]);
     assert!(db.file_source("templates/_helpers.tpl").is_some());
     sim_assert_eq!(have: db.file_source_paths(), want: vec!["templates/_helpers.tpl"]);
 }
@@ -395,23 +405,143 @@ pub(crate) fn widen_large_bound_value_ref(
 }
 
 #[test]
-fn repeated_helper_lookups_share_one_parsed_program() -> eyre::Result<()> {
-    use color_eyre::eyre::OptionExt as _;
-    let db = helper_db(r#"{{ define "leaf" }}{{ .Values.x }}{{ end }}"#);
-    let first = db
-        .parsed_helper_body("leaf")
-        .ok_or_eyre("first helper missing")?;
-    let second = db
-        .parsed_helper_body("leaf")
-        .ok_or_eyre("second helper missing")?;
-    assert!(std::ptr::eq(first.syntax, second.syntax));
-    assert!(std::ptr::eq(
-        &raw const first.syntax.tree,
-        &raw const second.syntax.tree
-    ));
-    assert!(std::ptr::eq(
-        &raw const first.syntax.expressions,
-        &raw const second.syntax.expressions
-    ));
+fn static_file_define_text_is_not_a_namespace_declaration() {
+    let mut defines = DefineIndex::new();
+    defines.add_files_get_source(
+        "files/program.tpl",
+        r#"{{ define "payload" }}text{{ end }}"#,
+    );
+    let parsed = ParsedDefines::new(&defines);
+    assert!(parsed.template_sources().is_empty());
+    let db = IrAnalysisDb::with_parsed_policy(&parsed, crate::symbolic::SymbolicPolicy::default());
+    sim_assert_eq!(have: db.file_source("files/program.tpl"), want: Some(r#"{{ define "payload" }}text{{ end }}"#));
+}
+
+#[test]
+fn parsed_sources_and_body_syntax_are_reused_without_namespace_winner_state() -> eyre::Result<()> {
+    use std::rc::Rc;
+    let parsed = ParsedDefines::new(&DefineIndex::new());
+    let first = parsed.parsed_source(
+        r#"{{ define "leaf" }}value{{ end }}"#,
+        Some("chart/templates/_h.tpl"),
+        "chart/templates/_h.tpl",
+    );
+    let second = parsed.parsed_source(
+        r#"{{ define "leaf" }}value{{ end }}"#,
+        Some("chart/templates/_h.tpl"),
+        "chart/templates/_h.tpl",
+    );
+    assert!(Rc::ptr_eq(&first, &second));
+    let definition = first
+        .declarations
+        .first()
+        .ok_or_eyre("missing leaf declaration")?;
+    let first_syntax = definition
+        .program
+        .syntax()
+        .ok_or_eyre("missing parsed syntax")?;
+    let second_syntax = definition
+        .program
+        .syntax()
+        .ok_or_eyre("missing reused syntax")?;
+    assert!(std::ptr::eq(first_syntax, second_syntax));
+    Ok(())
+}
+
+#[test]
+fn initializer_policy_preserves_pinned_kubernetes_and_release_scalar_fields() {
+    let static_root_strings = std::collections::BTreeMap::from([(
+        vec!["Release".to_string(), "Name".to_string()],
+        "test-release".to_string(),
+    )]);
+    let db = IrAnalysisDb::with_policy(
+        &DefineIndex::new(),
+        crate::symbolic::SymbolicPolicy {
+            kubernetes_version: Some("v1.34.2".to_string()),
+            static_root_strings,
+            chart_default_strings: BTreeMap::default(),
+        },
+    );
+    let expected: BTreeMap<Vec<String>, String> = BTreeMap::from(
+        [
+            (vec!["Release", "Name"], "test-release"),
+            (vec!["Capabilities", "KubeVersion", "Version"], "v1.34.2"),
+            (vec!["Capabilities", "KubeVersion", "GitVersion"], "v1.34.2"),
+            (vec!["Capabilities", "KubeVersion", "Major"], "1"),
+            (vec!["Capabilities", "KubeVersion", "Minor"], "34"),
+        ]
+        .map(|(path, value)| {
+            (
+                path.into_iter().map(str::to_owned).collect(),
+                value.to_owned(),
+            )
+        }),
+    );
+    sim_assert_eq!(have: db.static_root_strings(), want: &expected);
+}
+
+#[test]
+fn source_catalog_does_not_choose_between_conflicting_namespace_candidates() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source("chart/templates/a.tpl", r#"{{ define "h" }}a{{ end }}"#);
+    defines.add_file_source("chart/templates/z.tpl", r#"{{ define "h" }}z{{ end }}"#);
+    let parsed = ParsedDefines::new(&defines);
+    let mut declarations: Vec<_> = parsed
+        .template_sources()
+        .iter()
+        .flat_map(|source| &source.declarations)
+        .map(|definition| {
+            (
+                definition.name.as_str(),
+                definition.program.source_path(),
+                definition.program.source(),
+            )
+        })
+        .collect();
+    declarations.sort_unstable();
+    sim_assert_eq!(
+        have: declarations,
+        want: vec![
+            ("h", Some("chart/templates/a.tpl"), "a"),
+            ("h", Some("chart/templates/z.tpl"), "z"),
+        ]
+    );
+}
+
+#[test]
+fn partial_execution_catalog_does_not_prove_function_parse_invalidity() {
+    let parsed = ParsedDefines::new(&DefineIndex::new());
+    // Declaration inventory completeness does not certify the function-name registry.
+    for function in ["randAlphaNum", "unregisteredNearMiss"] {
+        let source = format!("{{{{ define \"h\" }}}}{{{{ {function} 8 }}}}{{{{ end }}}}");
+        let program = parsed.parsed_source(&source, None, "gotpl");
+        sim_assert_eq!(have: program.error.is_none(), want: true);
+        sim_assert_eq!(have: program.inventory, want: super::DefinitionInventory::Complete);
+    }
+    let duplicate = parsed.parsed_source(
+        r#"{{ define "h" }}{{ randAlphaNum 8 }}{{ end }}{{ define "h" }}other{{ end }}"#,
+        None,
+        "gotpl",
+    );
+    sim_assert_eq!(have: duplicate.error.as_ref().map(ToString::to_string), want: Some(r#"multiple definition of template "h""#.to_string()));
+}
+
+#[test]
+fn receiver_call_cache_preserves_selector_syntax_and_negative_entries() -> eyre::Result<()> {
+    use helm_schema_ast::TemplateExpr;
+
+    let db = IrAnalysisDb::new(&DefineIndex::new());
+    for _ in 0..2 {
+        let receiver = db
+            .receiver_call(".Files.Get")
+            .ok_or_eyre("receiver missing")?;
+        sim_assert_eq!(have: receiver.name, want: "Get");
+        sim_assert_eq!(have: receiver.receiver, want: TemplateExpr::Field(vec!["Files".to_owned()]));
+        assert!(db.receiver_call("printf").is_none());
+    }
+    sim_assert_eq!(have: db.receiver_calls.borrow().len(), want: 2);
+    sim_assert_eq!(have: db.receiver_calls.borrow().get("printf"), want: Some(&None));
+    assert!(db.receiver_call(".Values.Table").is_some());
+    sim_assert_eq!(have: db.receiver_calls.borrow().len(), want: 3);
     Ok(())
 }

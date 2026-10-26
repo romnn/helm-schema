@@ -362,3 +362,598 @@ fn newest_guard_choice_constructs_only_its_final_node() -> eyre::Result<()> {
     sim_assert_eq!(have: arena.intersect_runtime_guards(&result, &condition).id(), want: arena.intersect_runtime_guards(&yes, &condition).id());
     Ok(())
 }
+
+#[test]
+fn partial_projection_skips_only_an_absorbed_sibling_for_both_purposes() -> eyre::Result<()> {
+    use std::rc::Rc;
+
+    use super::{Arena, Coverage, ProjectionKey, ProjectionPurpose, RuntimeGuard};
+    use helm_schema_core::Predicate;
+
+    for purpose in [ProjectionPurpose::Control, ProjectionPurpose::Budget] {
+        for exact_outer in [false, true] {
+            for constant_yes in [None, Some(true), Some(false)] {
+                let arena = Arena::default();
+                let a = Predicate::truthy_path("a");
+                let input = arena.decision(a.clone(), a.negated(), Coverage::Exact);
+                let sibling = arena.guards.borrow_mut().select(
+                    input,
+                    RuntimeGuard::True,
+                    RuntimeGuard::False,
+                );
+                let unknown = arena.decision(Predicate::True, Predicate::True, Coverage::Partial);
+                let yes = constant_yes.map_or_else(
+                    || {
+                        arena.guards.borrow_mut().select(
+                            unknown,
+                            RuntimeGuard::True,
+                            RuntimeGuard::False,
+                        )
+                    },
+                    |value| {
+                        if value {
+                            RuntimeGuard::True
+                        } else {
+                            RuntimeGuard::False
+                        }
+                    },
+                );
+                let outer_predicate = Predicate::truthy_path("outer");
+                let outer = if exact_outer {
+                    arena.decision(
+                        outer_predicate.clone(),
+                        outer_predicate.negated(),
+                        Coverage::Exact,
+                    )
+                } else {
+                    arena.decision(Predicate::True, Predicate::True, Coverage::Partial)
+                };
+                let guard =
+                    arena
+                        .guards
+                        .borrow_mut()
+                        .select(Rc::clone(&outer), yes, sibling.clone());
+                let sibling_key = ProjectionKey {
+                    guard: sibling.id(),
+                    purpose,
+                };
+                assert!(!arena.guards.borrow().projections.contains_key(&sibling_key));
+                let projection =
+                    arena
+                        .guards
+                        .borrow_mut()
+                        .project(&guard, purpose, &arena.predicate_memo);
+                let absorbed = !exact_outer && constant_yes.is_none();
+                sim_assert_eq!(
+                    have: arena.guards.borrow().projections.contains_key(&sibling_key),
+                    want: !absorbed,
+                    "purpose={purpose:?}, exact_outer={exact_outer}, yes={constant_yes:?}"
+                );
+                if absorbed {
+                    sim_assert_eq!(have: projection.necessary.clone(), want: Predicate::True);
+                    sim_assert_eq!(have: projection.sufficient.clone(), want: Predicate::False);
+                }
+                verify_partial_projection_outcomes(&projection, exact_outer, constant_yes)?;
+            }
+        }
+    }
+    Ok(())
+}
+
+fn verify_partial_projection_outcomes(
+    projection: &super::Projection,
+    exact_outer: bool,
+    constant_yes: Option<bool>,
+) -> eyre::Result<()> {
+    use helm_schema_core::ValuesPath;
+    use std::collections::BTreeSet;
+    // Enumerate every input assignment and every unconstrained runtime choice.
+    // Existential/universal outcomes independently specify necessary/sufficient proofs.
+    for input_a in [false, true] {
+        for input_outer in [false, true] {
+            let mut paths = BTreeSet::new();
+            if input_a {
+                paths.insert(ValuesPath::parse("a"));
+            }
+            if input_outer {
+                paths.insert(ValuesPath::parse("outer"));
+            }
+            let mut outcomes = Vec::new();
+            for runtime_outer in [false, true] {
+                for runtime_yes in [false, true] {
+                    let taken = if exact_outer {
+                        input_outer
+                    } else {
+                        runtime_outer
+                    };
+                    outcomes.push(if taken {
+                        constant_yes.unwrap_or(runtime_yes)
+                    } else {
+                        input_a
+                    });
+                }
+            }
+            let necessary = outcomes.iter().any(|value| *value);
+            let sufficient = outcomes.iter().all(|value| *value);
+            sim_assert_eq!(have: fixture_truth(&projection.necessary, &paths)?, want: necessary);
+            sim_assert_eq!(have: fixture_truth(&projection.sufficient, &paths)?, want: sufficient);
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn native_choice_matches_composed_runtime_and_exact_partial_input_proofs() -> eyre::Result<()> {
+    use super::{Arena, Coverage, DecisionEdge};
+    use helm_schema_core::{Predicate, ValuesPath};
+    use std::collections::BTreeSet;
+    use std::rc::Rc;
+
+    for exact_condition in [false, true] {
+        for exact_yes in [false, true] {
+            for exact_no in [false, true] {
+                let arena = Arena::default();
+                let tests = [
+                    ("condition", exact_condition),
+                    ("yes", exact_yes),
+                    ("no", exact_no),
+                ]
+                .map(|(name, exact)| {
+                    if exact {
+                        let predicate = Predicate::truthy_path(name);
+                        arena.decision(predicate.clone(), predicate.negated(), Coverage::Exact)
+                    } else {
+                        arena.decision(Predicate::False, Predicate::False, Coverage::Partial)
+                    }
+                });
+                let [condition, yes, no] = tests;
+                let selected =
+                    arena.choose_test(Rc::clone(&condition), Rc::clone(&yes), Rc::clone(&no));
+                let composed = arena.surviving_decision(
+                    &[
+                        DecisionEdge {
+                            test: Rc::clone(&condition),
+                            taken: true,
+                        },
+                        DecisionEdge {
+                            test: yes,
+                            taken: true,
+                        },
+                    ],
+                    &[
+                        DecisionEdge {
+                            test: condition,
+                            taken: false,
+                        },
+                        DecisionEdge {
+                            test: no,
+                            taken: true,
+                        },
+                    ],
+                );
+                sim_assert_eq!(have: selected.runtime.clone(), want: composed.runtime.clone());
+                sim_assert_eq!(have: selected.when_true.clone(), want: composed.when_true.clone());
+                sim_assert_eq!(have: selected.when_false.clone(), want: composed.when_false.clone());
+                for input_bits in 0..8 {
+                    let inputs = [
+                        input_bits & 1 != 0,
+                        input_bits & 2 != 0,
+                        input_bits & 4 != 0,
+                    ];
+                    let paths: BTreeSet<_> = ["condition", "yes", "no"]
+                        .into_iter()
+                        .zip(inputs)
+                        .filter(|(_, value)| *value)
+                        .map(|(name, _)| ValuesPath::parse(name))
+                        .collect();
+                    let outcomes: Vec<_> = (0..8)
+                        .map(|runtime_bits| {
+                            let [input_condition, input_yes, input_no] = inputs;
+                            let condition = if exact_condition {
+                                input_condition
+                            } else {
+                                runtime_bits & 1 != 0
+                            };
+                            let yes = if exact_yes {
+                                input_yes
+                            } else {
+                                runtime_bits & 2 != 0
+                            };
+                            let no = if exact_no {
+                                input_no
+                            } else {
+                                runtime_bits & 4 != 0
+                            };
+                            if condition { yes } else { no }
+                        })
+                        .collect();
+                    sim_assert_eq!(have: fixture_truth(&selected.when_true, &paths)?, want: outcomes.iter().all(|value| *value));
+                    sim_assert_eq!(have: fixture_truth(&selected.when_false, &paths)?, want: !outcomes.iter().any(|value| *value));
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+impl super::Arena {
+    pub(in crate::value) fn surviving_decision(
+        &self,
+        yes: &[crate::value::DecisionEdge],
+        no: &[crate::value::DecisionEdge],
+    ) -> std::rc::Rc<crate::value::FrozenTest> {
+        let mut store = self.guards.borrow_mut();
+        let yes = store.conjunction(yes);
+        let no = store.conjunction(no);
+        let runtime = store.apply(super::Operation::Or, &yes, &no);
+        self.guard_test(&mut store, runtime, super::ProjectionPurpose::Control)
+    }
+}
+
+fn truth_query_atoms(guard: &super::RuntimeGuard) -> std::collections::BTreeSet<u64> {
+    use super::RuntimeGuard;
+    use std::collections::BTreeSet;
+    let mut pending = vec![guard];
+    let mut visited = BTreeSet::new();
+    let mut atoms = BTreeSet::new();
+    while let Some(guard) = pending.pop() {
+        match guard {
+            RuntimeGuard::False | RuntimeGuard::True => {}
+            RuntimeGuard::Branch(node) => {
+                if visited.insert(node.id) {
+                    atoms.insert(node.test.id);
+                    pending.extend([&node.yes, &node.no]);
+                }
+            }
+        }
+    }
+    atoms
+}
+
+fn truth_query_results(
+    guard: &super::RuntimeGuard,
+    assigned: &std::collections::BTreeMap<u64, bool>,
+) -> std::collections::BTreeSet<bool> {
+    use super::RuntimeGuard;
+    match guard {
+        RuntimeGuard::False => std::collections::BTreeSet::from([false]),
+        RuntimeGuard::True => std::collections::BTreeSet::from([true]),
+        RuntimeGuard::Branch(node) => match assigned.get(&node.test.id) {
+            Some(true) => truth_query_results(&node.yes, assigned),
+            Some(false) => truth_query_results(&node.no, assigned),
+            None => truth_query_results(&node.yes, assigned)
+                .union(&truth_query_results(&node.no, assigned))
+                .copied()
+                .collect(),
+        },
+    }
+}
+
+#[test]
+fn query_local_unknown_preserves_known_and_unknown_leaf_relations() {
+    use super::{Coverage, DecisionEdge};
+    use crate::value::{State, Value};
+    use helm_schema_core::Predicate;
+    use std::collections::{BTreeMap, BTreeSet};
+    use std::rc::Rc;
+
+    let state = State::new(Value::nil());
+    let arena = &state.heap.arena;
+    let outer = arena.decision(Predicate::False, Predicate::False, Coverage::Partial);
+    let inner = arena.decision(Predicate::False, Predicate::False, Coverage::Partial);
+    let value = Value::select(
+        Rc::clone(&outer),
+        Value::select(
+            Rc::clone(&inner),
+            Value::literal(helm_schema_core::GuardValue::Bool(true)),
+            Value::unknown(),
+        ),
+        Value::select(
+            Rc::clone(&inner),
+            Value::literal(helm_schema_core::GuardValue::Bool(false)),
+            Value::influenced(BTreeSet::from([helm_schema_core::ValuesPath::parse(
+                "other",
+            )])),
+        ),
+    );
+    let queried = state.test(&value);
+    let runtime = arena.runtime_path(&[DecisionEdge {
+        test: queried,
+        taken: true,
+    }]);
+    for selected_outer in [false, true] {
+        for selected_inner in [false, true] {
+            let expected = if selected_inner {
+                BTreeSet::from([selected_outer])
+            } else {
+                BTreeSet::from([false, true])
+            };
+            sim_assert_eq!(
+                have: truth_query_results(&runtime, &BTreeMap::from([(outer.id, selected_outer), (inner.id, selected_inner)])),
+                want: expected,
+            );
+        }
+    }
+    let fresh: BTreeSet<_> = truth_query_atoms(&runtime)
+        .difference(&BTreeSet::from([outer.id, inner.id]))
+        .copied()
+        .collect();
+    sim_assert_eq!(have: fresh.len(), want: 1);
+}
+
+#[test]
+fn separate_truth_queries_keep_independent_fallback_choices() {
+    use super::DecisionEdge;
+    use crate::value::{State, Value};
+    use std::rc::Rc;
+    let state = State::new(Value::nil());
+    let first = state.test(&Value::unknown());
+    let second = state.test(&Value::unknown());
+    assert_ne!(first.id, second.id);
+    for yes in [false, true] {
+        for no in [false, true] {
+            let guard = state.heap.arena.runtime_path(&[
+                DecisionEdge {
+                    test: Rc::clone(&first),
+                    taken: yes,
+                },
+                DecisionEdge {
+                    test: Rc::clone(&second),
+                    taken: no,
+                },
+            ]);
+            assert!(!guard.is_impossible());
+        }
+    }
+}
+
+#[test]
+fn selected_unknown_truth_queries_allocate_one_fresh_atom_at_every_size() -> eyre::Result<()> {
+    use super::{Coverage, DecisionEdge};
+    use crate::value::{State, Value};
+    use helm_schema_core::{Predicate, ValuesPath};
+    use std::collections::BTreeSet;
+    use std::rc::Rc;
+
+    for leaves in [8, 16, 32, 64, 128] {
+        let state = State::new(Value::nil());
+        let arena = &state.heap.arena;
+        let mut old_atoms = BTreeSet::new();
+        let mut values: Vec<_> = (0..leaves)
+            .map(|index| {
+                Value::influenced(BTreeSet::from([ValuesPath::parse(&format!("leaf{index}"))]))
+            })
+            .collect();
+        while values.len() > 1 {
+            let decision = arena.decision(Predicate::False, Predicate::False, Coverage::Partial);
+            old_atoms.insert(decision.id);
+            let (pairs, remainder) = values.as_chunks::<2>();
+            assert!(remainder.is_empty(), "balanced fixture pair missing");
+            values = pairs
+                .iter()
+                .map(|[yes, no]| Value::select(Rc::clone(&decision), yes.clone(), no.clone()))
+                .collect();
+        }
+        let value = values.pop().ok_or_eyre("balanced fixture root missing")?;
+        let before = arena.guards.borrow().next_node;
+        let query = state.test(&value);
+        let guard = arena.runtime_path(&[DecisionEdge {
+            test: query,
+            taken: true,
+        }]);
+        let fresh: BTreeSet<_> = truth_query_atoms(&guard)
+            .difference(&old_atoms)
+            .copied()
+            .collect();
+        sim_assert_eq!(have: fresh.len(), want: 1);
+        assert!(arena.guards.borrow().next_node - before <= 2 * leaves + 4);
+        sim_assert_eq!(have: truth_query_results(&guard, &std::collections::BTreeMap::new()), want: BTreeSet::from([false, true]));
+    }
+    Ok(())
+}
+
+#[test]
+fn truth_query_exhaustion_remains_a_free_result_only_under_its_hole() -> eyre::Result<()> {
+    use super::{Coverage, DecisionEdge};
+    use crate::value::{State, Value};
+    use helm_schema_core::{GuardValue, Predicate, ValuesPath};
+    use std::collections::{BTreeMap, BTreeSet};
+    use std::rc::Rc;
+
+    let state = State::new(Value::nil());
+    let arena = &state.heap.arena;
+    let mut decisions = Vec::new();
+    let mut value = Value::literal(GuardValue::Bool(false));
+    // Each link visits its true leaf before the next link; the tail exceeds 255 visits.
+    for index in 0..130 {
+        let decision = arena.decision(Predicate::False, Predicate::False, Coverage::Partial);
+        let yes = Value::with_influences(
+            Value::literal(GuardValue::Bool(true)),
+            BTreeSet::from([ValuesPath::parse(&format!("known{index}"))]),
+        );
+        value = Value::select(Rc::clone(&decision), yes, value);
+        decisions.push(decision);
+    }
+    decisions.reverse();
+    let outer = arena.decision(Predicate::False, Predicate::False, Coverage::Partial);
+    value = Value::select(
+        Rc::clone(&outer),
+        Value::literal(GuardValue::Bool(false)),
+        value,
+    );
+    let query = state.test(&value);
+    let runtime = arena.runtime_path(&[DecisionEdge {
+        test: query,
+        taken: true,
+    }]);
+    let first = decisions.first().ok_or_eyre("first selector missing")?;
+    let second = decisions.get(1).ok_or_eyre("second selector missing")?;
+    for choose_outer in [false, true] {
+        for choose_first in [false, true] {
+            for choose_second in [false, true] {
+                let mut assigned: BTreeMap<_, _> =
+                    decisions.iter().map(|test| (test.id, false)).collect();
+                assigned.extend([
+                    (outer.id, choose_outer),
+                    (first.id, choose_first),
+                    (second.id, choose_second),
+                ]);
+                let expected = if choose_outer {
+                    BTreeSet::from([false])
+                } else if choose_first || choose_second {
+                    BTreeSet::from([true])
+                } else {
+                    BTreeSet::from([false, true])
+                };
+                sim_assert_eq!(have: truth_query_results(&runtime, &assigned), want: expected);
+            }
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn invocation_operand_fallback_sharing_preserves_selected_leaf_relations() {
+    use super::{Coverage, DecisionEdge};
+    use crate::value::{State, Value};
+    use helm_schema_core::{GuardValue, Predicate, ValuesPath};
+    use std::collections::{BTreeMap, BTreeSet};
+    use std::rc::Rc;
+
+    for known_yes in [None, Some(false), Some(true)] {
+        let mut state = State::new(Value::nil());
+        let selector =
+            state
+                .heap
+                .arena
+                .decision(Predicate::False, Predicate::False, Coverage::Partial);
+        let yes = known_yes.map_or_else(
+            || Value::influenced(BTreeSet::from([ValuesPath::parse("yes")])),
+            |value| Value::literal(GuardValue::Bool(value)),
+        );
+        let no = Value::influenced(BTreeSet::from([ValuesPath::parse("no")]));
+        let mut fallback = None;
+        state.active.push(DecisionEdge {
+            test: Rc::clone(&selector),
+            taken: true,
+        });
+        let yes = state.test_with_unknown(&yes, &mut fallback);
+        state.active.pop();
+        state.active.push(DecisionEdge {
+            test: Rc::clone(&selector),
+            taken: false,
+        });
+        let no = state.test_with_unknown(&no, &mut fallback);
+        state.active.pop();
+        let query = state.heap.arena.choose_test(Rc::clone(&selector), yes, no);
+        let guard = state.heap.arena.runtime_path(&[DecisionEdge {
+            test: query,
+            taken: true,
+        }]);
+        let fresh: BTreeSet<_> = truth_query_atoms(&guard)
+            .difference(&BTreeSet::from([selector.id]))
+            .copied()
+            .collect();
+        sim_assert_eq!(have: fresh.len(), want: 1);
+        for taken in [false, true] {
+            let expected = if taken {
+                known_yes.map_or_else(
+                    || BTreeSet::from([false, true]),
+                    |value| BTreeSet::from([value]),
+                )
+            } else {
+                BTreeSet::from([false, true])
+            };
+            sim_assert_eq!(have: truth_query_results(&guard, &BTreeMap::from([(selector.id, taken)])), want: expected);
+        }
+    }
+}
+
+#[test]
+fn operand_and_invocation_fallback_scopes_remain_independent() {
+    use super::DecisionEdge;
+    use crate::value::{State, Value};
+    use std::rc::Rc;
+    let state = State::new(Value::nil());
+    let mut first_operand = None;
+    let mut second_operand = None;
+    let mut next_invocation = None;
+    let first = state.test_with_unknown(&Value::unknown(), &mut first_operand);
+    let repeated = state.test_with_unknown(&Value::unknown(), &mut first_operand);
+    sim_assert_eq!(have: first.id, want: repeated.id);
+    for other in [
+        state.test_with_unknown(&Value::unknown(), &mut second_operand),
+        state.test_with_unknown(&Value::unknown(), &mut next_invocation),
+    ] {
+        assert_ne!(first.id, other.id);
+        for first_taken in [false, true] {
+            for other_taken in [false, true] {
+                let guard = state.heap.arena.runtime_path(&[
+                    DecisionEdge {
+                        test: Rc::clone(&first),
+                        taken: first_taken,
+                    },
+                    DecisionEdge {
+                        test: Rc::clone(&other),
+                        taken: other_taken,
+                    },
+                ]);
+                assert!(!guard.is_impossible());
+            }
+        }
+    }
+}
+
+#[test]
+fn not_invocation_dispatch_keeps_one_unknown_atom_for_its_selected_operand() -> eyre::Result<()> {
+    use super::{Coverage, DecisionEdge};
+    use crate::value::{
+        ArgumentForm, Callee, CompletionInput, Flow, Invocation, Operand, State, Value,
+    };
+    use helm_schema_core::{Predicate, ValuesPath};
+    use std::collections::BTreeSet;
+    use std::rc::Rc;
+
+    let state = State::new(Value::nil());
+    let arena = Rc::clone(&state.heap.arena);
+    let selector = arena.decision(Predicate::False, Predicate::False, Coverage::Partial);
+    let operand = Value::select(
+        Rc::clone(&selector),
+        Value::influenced(BTreeSet::from([ValuesPath::parse("a")])),
+        Value::influenced(BTreeSet::from([ValuesPath::parse("b")])),
+    );
+    let db = IrAnalysisDb::new(&DefineIndex::new());
+    let exits = crate::value::eval::Executor { db: &db }
+        .complete(CompletionInput::Invocation {
+            invocation: Invocation {
+                callee: Callee::Function("not".to_owned()),
+                operands: vec![Operand {
+                    value: operand,
+                    site: 0,
+                    form: ArgumentForm::Evaluated,
+                }],
+                site: 0,
+            },
+            state,
+        })
+        .into_exits();
+    sim_assert_eq!(have: exits.len(), want: 1);
+    let exit = exits.first().ok_or_eyre("not invocation exit missing")?;
+    let Flow::Normal(normal) = &exit.flow else {
+        eyre::bail!("not invocation aborted")
+    };
+    let query = exit.state.test(&normal.value);
+    let guard = arena.runtime_path(&[DecisionEdge {
+        test: query,
+        taken: true,
+    }]);
+    let fresh: BTreeSet<_> = truth_query_atoms(&guard)
+        .difference(&BTreeSet::from([selector.id]))
+        .copied()
+        .collect();
+    sim_assert_eq!(have: fresh.len(), want: 1);
+    for taken in [false, true] {
+        sim_assert_eq!(have: truth_query_results(&guard, &std::collections::BTreeMap::from([(selector.id, taken)])), want: BTreeSet::from([false, true]));
+    }
+    Ok(())
+}

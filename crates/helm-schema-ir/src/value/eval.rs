@@ -30,14 +30,14 @@ impl Executor<'_> {
             ),
             TemplateExpr::Field(path) => {
                 let value = state.dot().cloned().unwrap_or_else(Value::unknown);
-                Self::selector(state, value, path)
+                self.selector(state, value, path, site)
             }
             TemplateExpr::Selector { operand, path } => {
                 let mut result = super::ExitBuffer::default();
                 for exit in self.expression(operand, state, site) {
                     match exit.flow {
                         Flow::Normal(normal) => {
-                            result.extend(Self::selector(exit.state, normal.value, path));
+                            result.extend(self.selector(exit.state, normal.value, path, site));
                         }
                         flow => result.push(Exit {
                             state: exit.state,
@@ -100,12 +100,28 @@ impl Executor<'_> {
                             exit.state,
                             site,
                         )),
-                        TemplateExpr::Literal(_)
-                        | TemplateExpr::Field(_)
+                        TemplateExpr::Field(_)
                         | TemplateExpr::Selector {
                             operand: _,
                             path: _,
+                        } => {
+                            if let Some(receiver) =
+                                crate::analysis_db::ReceiverCall::from_expression(stage)
+                            {
+                                next.extend(self.invoke_receiver(
+                                    receiver,
+                                    &[],
+                                    Some(&normal.value),
+                                    exit.state,
+                                    site,
+                                ));
+                            } else {
+                                let mut state = exit.state;
+                                super::operations::invalidate(&mut state);
+                                next.extend(normal_exit(state, Value::unknown()));
+                            }
                         }
+                        TemplateExpr::Literal(_)
                         | TemplateExpr::Variable(_)
                         | TemplateExpr::Pipeline(_)
                         | TemplateExpr::Parenthesized(_)
@@ -127,14 +143,52 @@ impl Executor<'_> {
         }
         exits
     }
-    fn selector(mut state: State, mut value: Value, path: &[String]) -> Vec<Exit> {
+    fn selector(&self, state: State, value: Value, path: &[String], site: usize) -> Vec<Exit> {
         let live = state.selector_live_domain(&value);
+        let mut exits = normal(state, value);
         for key in path {
-            state.record_selector_host(&value, &live);
-            value = state.selector_field(&value, key);
+            let mut next = super::ExitBuffer::default();
+            for exit in exits {
+                let Exit { mut state, flow } = exit;
+                match flow {
+                    Flow::Normal(Normal { value }) => {
+                        let candidate = crate::function_semantics::Method::resolve(
+                            crate::function_semantics::MethodReceiver::Values,
+                            key,
+                        );
+                        let receiver = (!candidate.is_foreign()).then(|| state.consumed(&value));
+                        let descriptor = receiver
+                            .as_ref()
+                            .map_or(candidate, |receiver| super::hosts::method(receiver, key));
+                        if descriptor.is_foreign() {
+                            state.record_selector_host(&value, &live);
+                            let value = state.selector_field(&value, key);
+                            next.extend(normal(state, value));
+                        } else {
+                            next.extend(self.invoke_callee(
+                                super::Callee::Method {
+                                    receiver: receiver.unwrap_or(value),
+                                    descriptor,
+                                },
+                                &[],
+                                None,
+                                state,
+                                site,
+                            ));
+                        }
+                    }
+                    flow => next.push(Exit { state, flow }),
+                }
+            }
+            exits = next.finish();
         }
-        state.record_value_read(&value, super::ReadCoverage::ExactPath);
-        normal(state, value)
+        for exit in &mut exits {
+            if let Flow::Normal(Normal { value }) = &exit.flow {
+                exit.state
+                    .record_value_read(value, super::ReadCoverage::ExactPath);
+            }
+        }
+        exits
     }
 }
 pub(super) fn normal(state: State, value: Value) -> Vec<Exit> {

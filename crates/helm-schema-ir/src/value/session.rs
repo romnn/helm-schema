@@ -1,9 +1,16 @@
-use super::eval::Executor;
+use std::collections::{BTreeMap, BTreeSet};
+use std::rc::Rc;
+
+use super::eval::{Executor, normal};
+use super::namespace::{Namespace, TemplateLookup, TemplateResolution};
 use super::{
-    Datum, DocumentExecution, Field, Flow, Leaf, MapType, ObjectData, Origin, Remainder, State,
-    TextBuffer, Value, ValueNode,
+    AbortReason, Datum, DocumentExecution, Exit, Field, Flow, Leaf, MapType, ObjectData, Origin,
+    Remainder, State, TextBuffer, Value, ValueNode,
 };
-use crate::abstract_value::AbstractValue;
+use crate::analysis_db::{
+    DefinitionInventory, IrAnalysisDb, ParsedProgram, ParsedProgramId, ParsedTemplateSource,
+    helm_template_order,
+};
 use helm_schema_core::ValuesPath;
 
 pub(super) struct FileOccurrence {
@@ -11,7 +18,6 @@ pub(super) struct FileOccurrence {
     pub(super) call: u64,
     template: super::ObjectId,
 }
-
 impl FileOccurrence {
     pub(super) fn new(state: &State) -> Self {
         Self {
@@ -20,112 +26,189 @@ impl FileOccurrence {
             template: state.heap.arena.object(),
         }
     }
+    fn for_body(&self, state: &State) -> Self {
+        Self {
+            program: state.heap.arena.program(),
+            call: self.call,
+            template: self.template.clone(),
+        }
+    }
 }
 
+pub(super) struct FileExecution {
+    pub(super) exits: Vec<Exit>,
+    programs: BTreeMap<ParsedProgramId, ExecutedProgram>,
+}
+struct ExecutedProgram {
+    program: Rc<ParsedProgram>,
+    occurrence: FileOccurrence,
+}
+
+#[cfg(test)]
 #[tracing::instrument(skip_all)]
 pub(crate) fn execute_document(
     source: &str,
     source_path: Option<&str>,
-    db: &crate::analysis_db::IrAnalysisDb,
+    db: &IrAnalysisDb,
 ) -> DocumentExecution {
-    let mut state = initial_state(db);
-    let occurrence = FileOccurrence::new(&state);
-    let root = state.read_root().cloned().unwrap_or_else(Value::unknown);
-    begin_file(&mut state, &root, source_path, &occurrence);
-    let syntax = crate::analysis_db::ParsedProgramSyntax::parse(source);
-    DocumentExecution::new(finish_file(
-        Executor { db }.parsed_file_body(source, source_path, syntax.as_ref(), state, &occurrence),
-        db.predicate_memo(),
-    ))
+    let mut document = DocumentExecution::new(Vec::new());
+    execute_files(
+        vec![db.parsed_source(source, source_path, source_path.unwrap_or("gotpl"))],
+        db,
+        |_, execution| document = DocumentExecution::new(execution.exits),
+    );
+    document
 }
 
-#[tracing::instrument(skip_all)]
-pub(crate) fn execute_documents(
+pub(crate) fn project_documents(
+    sources: Vec<Rc<ParsedTemplateSource>>,
+    db: &IrAnalysisDb,
+    mut seal: impl FnMut(usize, Option<&ParsedProgram>, &DocumentExecution),
+) {
+    execute_files(sources, db, |index, execution| {
+        let FileExecution {
+            exits,
+            mut programs,
+        } = execution;
+        let Some((_, last)) = programs.pop_last() else {
+            seal(index, None, &DocumentExecution::new(exits));
+            return;
+        };
+        for program in programs.into_values() {
+            let mut document = DocumentExecution::new(exits.clone());
+            document.root_programs = BTreeSet::from([program.occurrence.program]);
+            seal(index, Some(&program.program), &document);
+        }
+        let mut document = DocumentExecution::new(exits);
+        document.root_programs = BTreeSet::from([last.occurrence.program]);
+        seal(index, Some(&last.program), &document);
+    });
+}
+
+#[cfg(test)]
+pub(super) fn prepared_sources(
     sources: &[crate::symbolic::SymbolicTemplate<'_>],
-    db: &crate::analysis_db::IrAnalysisDb,
-) -> Vec<DocumentExecution> {
+    db: &IrAnalysisDb,
+) -> Vec<Rc<ParsedTemplateSource>> {
+    sources
+        .iter()
+        .map(|source| db.parsed_source(source.source, Some(source.source_path), source.source_path))
+        .collect()
+}
+
+pub(super) fn execute_files(
+    sources: Vec<Rc<ParsedTemplateSource>>,
+    db: &IrAnalysisDb,
+    mut seal: impl FnMut(usize, FileExecution),
+) {
+    if sources.is_empty() {
+        return;
+    }
     let state = initial_state(db);
     let root = state.read_root().cloned().unwrap_or_else(Value::unknown);
-    let mut states = vec![state];
-    let mut documents: Vec<_> = sources
+    let mut seen = BTreeSet::new();
+    let roster = db
+        .template_sources()
         .iter()
-        .map(|_| DocumentExecution::new(Vec::new()))
+        .chain(&sources)
+        .filter(|source| seen.insert(source.root.id()))
+        .cloned()
         .collect();
-    let mut order: Vec<_> = (0..sources.len()).collect();
-    order.sort_by(|left, right| {
-        let Some(left) = sources.get(*left) else {
-            return std::cmp::Ordering::Equal;
-        };
-        let Some(right) = sources.get(*right) else {
-            return std::cmp::Ordering::Equal;
-        };
-        right
-            .source_path
-            .bytes()
-            .filter(|byte| *byte == b'/')
-            .count()
-            .cmp(
-                &left
-                    .source_path
-                    .bytes()
-                    .filter(|byte| *byte == b'/')
-                    .count(),
-            )
-            .then_with(|| right.source_path.cmp(left.source_path))
-    });
-    for index in order {
-        let Some(source) = sources.get(index) else {
-            continue;
-        };
-        let Some(first) = states.first() else {
-            continue;
-        };
-        let occurrence = FileOccurrence::new(first);
-        let syntax = crate::analysis_db::ParsedProgramSyntax::parse(source.source);
-        let file_span = tracing::debug_span!(
-            "execute_file",
-            path = source.source_path,
-            incoming_states = states.len(),
-            active_edges = states.iter().map(|state| state.active.len()).max(),
-            heap_objects = states
-                .iter()
-                .map(|state| state
-                    .heap
-                    .version
-                    .pages
-                    .values()
-                    .map(|page| page.len())
-                    .sum::<usize>())
-                .max()
-        );
-        let _entered = file_span.enter();
-        let mut exits = super::ExitBuffer::default();
-        for mut state in states {
-            begin_file(&mut state, &root, Some(source.source_path), &occurrence);
-            exits.extend(Executor { db }.parsed_file_body(
-                source.source,
-                Some(source.source_path),
-                syntax.as_ref(),
-                state,
-                &occurrence,
-            ));
+    let build = Namespace::from_sources(roster, DefinitionInventory::Unknown, &state.heap.arena);
+    let mut states = Vec::new();
+    let mut startup = Vec::new();
+    for exit in build.install(state) {
+        match exit.flow {
+            Flow::Normal(_) => states.push(exit.state),
+            flow => startup.push(Exit {
+                state: exit.state,
+                flow,
+            }),
         }
-        let exits = finish_file(
-            super::control::reconverge(exits.finish()),
-            db.predicate_memo(),
-        );
-        if let Some(document) = documents.get_mut(index) {
-            *document = DocumentExecution::new(exits.clone());
-        }
-        states = exits
-            .into_iter()
-            .filter_map(|exit| match exit.flow {
-                Flow::Normal(_) => Some(exit.state),
-                Flow::Abort(_) | Flow::Break(_) | Flow::Continue(_) => None,
-            })
-            .collect();
     }
-    documents
+    let mut files: Vec<_> = sources.into_iter().enumerate().collect();
+    files.sort_by(|(_, left), (_, right)| helm_template_order(&left.name, &right.name));
+    for (index, source) in files {
+        let mut execution = execute_file(&mut states, &source, &root, db);
+        execution.exits.splice(0..0, std::mem::take(&mut startup));
+        seal(index, execution);
+    }
+}
+
+#[tracing::instrument(skip_all, level = "debug", fields(path = %source.name, incoming_states = states.len()))]
+fn execute_file(
+    states: &mut Vec<State>,
+    source: &ParsedTemplateSource,
+    root: &Value,
+    db: &IrAnalysisDb,
+) -> FileExecution {
+    let mut programs = BTreeMap::new();
+    let Some(first) = states.first() else {
+        return FileExecution {
+            exits: Vec::new(),
+            programs,
+        };
+    };
+    let occurrence = FileOccurrence::new(first);
+    let mut exits = super::ExitBuffer::default();
+    for mut state in std::mem::take(states) {
+        begin_file(&mut state, root, source.root.source_path(), &occurrence);
+        let namespace = Rc::clone(&state.namespace);
+        for lookup in namespace.resolve(&source.name, state) {
+            exits.extend(execute_lookup(lookup, &occurrence, &mut programs, db));
+        }
+    }
+    let exits = finish_file(exits.finish(), db.predicate_memo());
+    *states = exits
+        .iter()
+        .filter_map(|exit| match exit.flow {
+            Flow::Normal(_) => {
+                let mut state = exit.state.clone();
+                clear_file(&mut state);
+                Some(state)
+            }
+            Flow::Abort(_) | Flow::Break(_) | Flow::Continue(_) => None,
+        })
+        .collect();
+    FileExecution { exits, programs }
+}
+
+fn execute_lookup(
+    TemplateLookup {
+        mut state,
+        resolution,
+    }: TemplateLookup,
+    occurrence: &FileOccurrence,
+    programs: &mut BTreeMap<ParsedProgramId, ExecutedProgram>,
+    db: &IrAnalysisDb,
+) -> Vec<Exit> {
+    match resolution {
+        TemplateResolution::Found(program) => {
+            let body = programs
+                .entry(program.id())
+                .or_insert_with(|| ExecutedProgram {
+                    program: Rc::clone(&program),
+                    occurrence: occurrence.for_body(&state),
+                });
+            Executor { db }.parsed_file_body(
+                program.source(),
+                program.source_path(),
+                program.syntax(),
+                state,
+                &body.occurrence,
+            )
+        }
+        TemplateResolution::Missing => vec![Exit {
+            state,
+            flow: Flow::Abort(AbortReason::MissingTemplate),
+        }],
+        TemplateResolution::Unknown => {
+            state.mark_invocation_incomplete();
+            super::operations::invalidate(&mut state);
+            state.output.emit(state.heap.freeze(&Value::unknown()));
+            normal(state, Value::unknown())
+        }
+    }
 }
 
 fn finish_file(
@@ -249,19 +332,8 @@ pub(super) fn begin_file(
     source_path: Option<&str>,
     occurrence: &FileOccurrence,
 ) {
-    state.frames.clear();
+    clear_file(state);
     state.enter_file_call(root.clone(), occurrence);
-    state.output = TextBuffer::default();
-    state.output_widened = false;
-    state.observation_count = super::output::BranchCounts::default();
-    state.invocation_count = super::output::BranchCounts::default();
-    state.sites.clear();
-    state.text_sites.clear();
-    state.reads.clear();
-    state.invocations.clear();
-    state.invocation_records_complete = true;
-    state.calls.clear();
-    state.loops.clear();
     let Some(source_path) = source_path else {
         return;
     };
@@ -296,47 +368,87 @@ pub(super) fn begin_file(
     }
 }
 
-fn initial_state(db: &crate::analysis_db::IrAnalysisDb) -> State {
+pub(super) fn clear_file(state: &mut State) {
+    state.frames.clear();
+    state.program = 0;
+    state.output = TextBuffer::default();
+    state.output_widened = false;
+    state.observation_count = super::output::BranchCounts::default();
+    state.invocation_count = super::output::BranchCounts::default();
+    state.sites.clear();
+    state.text_sites.clear();
+    state.reads.clear();
+    state.invocations.clear();
+    state.invocation_records_complete = true;
+    state.calls.clear();
+    state.loops.clear();
+}
+
+fn initial_state(db: &IrAnalysisDb) -> State {
     let mut state = State::with_heap(
         Value::nil(),
-        super::Heap::with_predicate_memo(std::rc::Rc::clone(db.predicate_memo())),
+        super::Heap::with_predicate_memo(Rc::clone(db.predicate_memo())),
     );
-    let root = state.heap.map(Remainder::Open);
-    if let Some(id) = state.map_target(&root) {
-        let path = ValuesPath::default();
-        let input = Value::input(path.clone());
-        if let Some(target) = state.map_target(&input) {
-            let values = Value {
-                node: std::rc::Rc::new(ValueNode::Leaf(Leaf {
-                    datum: Datum::Map {
-                        view: MapType::Values,
-                        target: Some(target),
-                    },
-                    origin: Origin {
-                        identity: Some(path),
-                        influences: std::collections::BTreeSet::default(),
-                    },
-                })),
-            };
-            state.heap.write(&id, "Values", Field::Present(values));
+    let root = state.heap.map(Remainder::Closed);
+    let Some(id) = state.map_target(&root) else {
+        return state;
+    };
+    let path = ValuesPath::default();
+    let input = Value::input(path.clone());
+    if let Some(target) = state.map_target(&input) {
+        let values = Value {
+            node: Rc::new(ValueNode::Leaf(Leaf {
+                datum: Datum::Map {
+                    view: MapType::Values,
+                    target: Some(target),
+                },
+                origin: Origin {
+                    identity: Some(path),
+                    influences: BTreeSet::default(),
+                },
+            })),
+        };
+        state.heap.write(&id, "Values", Field::Present(values));
+    }
+    for key in ["Chart", "Release", "Capabilities", "Subcharts", "Template"] {
+        let value = Value::unknown();
+        state.heap.write(&id, key, Field::Present(value));
+    }
+    let files = state.heap.allocate(
+        ObjectData::Opaque {
+            reachable: super::AliasSet::RenderGraph,
+        },
+        super::Multiplicity::Singleton,
+    );
+    state.heap.write(
+        &id,
+        "Files",
+        Field::Present(Value::leaf(Datum::Unknown(super::UnknownValue {
+            types: super::TypeCoverage::Unresolved,
+            aliases: super::AliasSet::Known(BTreeSet::from([files])),
+        }))),
+    );
+    for (path, text) in db.static_root_strings() {
+        let mut parent = root.clone();
+        let Some((last, parents)) = path.split_last() else {
+            continue;
+        };
+        for key in parents {
+            let next = state.get_field(&parent, key);
+            if state.map_target(&next).is_some() {
+                parent = next;
+            } else {
+                let next = state.heap.map(Remainder::Open);
+                if let Some(target) = state.map_target(&parent) {
+                    state.heap.write(&target, key, Field::Present(next.clone()));
+                }
+                parent = next;
+            }
         }
-        let files = state.heap.allocate(
-            ObjectData::Opaque {
-                reachable: super::AliasSet::RenderGraph,
-            },
-            super::Multiplicity::Singleton,
-        );
-        state.heap.write(
-            &id,
-            "Files",
-            Field::Present(Value::leaf(Datum::Unknown(super::UnknownValue {
-                types: super::TypeCoverage::Unresolved,
-                aliases: super::AliasSet::Known(std::collections::BTreeSet::from([files])),
-            }))),
-        );
-        for (key, value) in db.static_root_fields() {
-            let value = initial_value(value, &mut state);
-            state.heap.write(&id, key, Field::Present(value));
+        if let Some(target) = state.map_target(&parent) {
+            state
+                .heap
+                .write(&target, last, Field::Present(Value::string(text)));
         }
     }
     if let Some(frame) = state.frames.first_mut() {
@@ -344,51 +456,4 @@ fn initial_state(db: &crate::analysis_db::IrAnalysisDb) -> State {
         frame.dot = Some(root);
     }
     state
-}
-fn initial_value(value: &AbstractValue, state: &mut State) -> Value {
-    match value {
-        AbstractValue::Dict(fields) => {
-            let value = state.heap.map(Remainder::Open);
-            if let Some(id) = state.map_target(&value) {
-                for (key, value) in fields {
-                    let value = initial_value(value, state);
-                    state.heap.write(&id, key, Field::Present(value));
-                }
-            }
-            value
-        }
-        AbstractValue::StringSet(strings) if strings.len() == 1 => strings
-            .first()
-            .map_or_else(Value::unknown, |value| Value::string(value)),
-        AbstractValue::ValuesPath(path) => Value::input(path.clone()),
-        AbstractValue::Top
-        | AbstractValue::Unknown
-        | AbstractValue::JsonDecodedPath(_)
-        | AbstractValue::RangeKey(_)
-        | AbstractValue::KeysList(_)
-        | AbstractValue::OutputPath(_, _)
-        | AbstractValue::RootContext
-        | AbstractValue::StringSet(_)
-        | AbstractValue::DerivedBoolean(_)
-        | AbstractValue::List(_)
-        | AbstractValue::Overlay {
-            entries: _,
-            fallback: _,
-        }
-        | AbstractValue::Choice(_)
-        | AbstractValue::FirstTruthy(_)
-        | AbstractValue::MergedLayers(_)
-        | AbstractValue::SplitList {
-            source_paths: _,
-            separator: _,
-            total_text_preimage: _,
-        }
-        | AbstractValue::SplitSegment {
-            source_paths: _,
-            separator: _,
-            last: _,
-            total_text_preimage: _,
-        }
-        | AbstractValue::Widened(_) => Value::unknown(),
-    }
 }

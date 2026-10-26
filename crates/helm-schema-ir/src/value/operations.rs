@@ -10,8 +10,9 @@ pub(super) fn transfer(
     invocation: &super::Invocation,
     state: &mut State,
 ) -> Result<Value, AbortReason> {
-    let super::Callee::Function(function) = &invocation.callee;
-    let function = function.as_str();
+    let Some(function) = invocation.callee.function_name() else {
+        return Ok(Value::unknown());
+    };
     let values: Vec<_> = invocation
         .operands
         .iter()
@@ -121,7 +122,7 @@ fn transfer_semver_compare(input: TransferInput<'_>) -> Value {
         return Value::influenced(influences);
     };
     let result = helm_schema_ast::semver_constraint_matches_version(constraint, version);
-    with_influences(
+    Value::with_influences(
         result.map_or_else(
             || Value::scalar(super::ScalarType::Bool, None),
             |result| Value::literal(GuardValue::Bool(result)),
@@ -212,7 +213,7 @@ fn transfer_write_map(input: TransferInput<'_>, state: &mut State) -> Result<Val
     };
     state.heap.write(&id, key, field);
     let returned_inputs = state.heap.freeze(&first).inputs();
-    Ok(with_influences(
+    Ok(Value::with_influences(
         Value::leaf(Datum::Map {
             view: MapType::Interface,
             target: Some(id),
@@ -563,7 +564,7 @@ fn transfer_deserialize(input: TransferInput<'_>, state: &mut State) -> Value {
         };
     }
     if matches!(function, "fromJson" | "fromYaml") && !parsed.is_mapping() {
-        return with_influences(state.heap.map(Remainder::Open), influences.clone());
+        return Value::with_influences(state.heap.map(Remainder::Open), influences.clone());
     }
     if matches!(function, "fromJsonArray" | "fromYamlArray") && !parsed.is_sequence() {
         return unknown_decoded(function, influences.clone(), state);
@@ -1000,7 +1001,7 @@ fn copy(
             origin: _,
         }) => {
             if sequence.storage.is_none() {
-                return with_influences(Value::nil_sequence(), influences);
+                return Value::with_influences(Value::nil_sequence(), influences);
             }
             let Some(items) = sequence.items() else {
                 return Value::influenced(influences);
@@ -1048,14 +1049,7 @@ fn copy(
             copy(no, state, &mut seen.clone(), depth + 1),
         ),
     };
-    with_influences(copied, influences)
-}
-
-fn with_influences(mut value: Value, influences: BTreeSet<helm_schema_core::ValuesPath>) -> Value {
-    if let ValueNode::Leaf(Leaf { datum: _, origin }) = Rc::make_mut(&mut value.node) {
-        origin.influences.extend(influences);
-    }
-    value
+    Value::with_influences(copied, influences)
 }
 
 fn copy_field(
@@ -1100,7 +1094,7 @@ fn string_slice(function: &str, first: &Value, state: &mut State) -> Value {
                 },
                 super::Multiplicity::Singleton,
             );
-            return with_influences(Value::strings(backing, 1), influences);
+            return Value::with_influences(Value::strings(backing, 1), influences);
         } else {
             if function == "sortAlpha" {
                 invalidate(state);
@@ -1117,7 +1111,7 @@ fn string_slice(function: &str, first: &Value, state: &mut State) -> Value {
         let backing = state
             .heap
             .allocate(ObjectData::Strings(strings), super::Multiplicity::Singleton);
-        with_influences(
+        Value::with_influences(
             Value::leaf(Datum::Strings(super::StringSlice {
                 backing,
                 start: 0,
@@ -1451,7 +1445,7 @@ fn slice(arguments: &[Value], state: &mut State) -> Result<Value, AbortReason> {
         ValueNode::Leaf(Leaf {
             datum: Datum::Sequence(sequence),
             origin: _,
-        }) => with_influences(
+        }) => Value::with_influences(
             Value::leaf(Datum::Sequence(super::InterfaceSequence {
                 storage: sequence.storage.clone(),
                 start: sequence.start + start,
@@ -1463,7 +1457,7 @@ fn slice(arguments: &[Value], state: &mut State) -> Result<Value, AbortReason> {
         ValueNode::Leaf(Leaf {
             datum: Datum::Strings(slice),
             origin: _,
-        }) => with_influences(
+        }) => Value::with_influences(
             Value::leaf(Datum::Strings(super::StringSlice {
                 backing: slice.backing.clone(),
                 start: slice.start + start,
@@ -1524,7 +1518,7 @@ fn merge(arguments: &[Value], state: &mut State, overwrite: bool) -> Value {
                 })
             )
         }) {
-            return with_influences(
+            return Value::with_influences(
                 Value::leaf(Datum::Map {
                     view: MapType::Interface,
                     target: None,
@@ -1542,7 +1536,7 @@ fn merge(arguments: &[Value], state: &mut State, overwrite: bool) -> Value {
         if !overwrite_scalar_sources(&target, arguments, state) {
             return Value::influenced(influences);
         }
-        return with_influences(
+        return Value::with_influences(
             Value::leaf(Datum::Map {
                 view: MapType::Interface,
                 target: Some(target),
@@ -1559,7 +1553,7 @@ fn merge(arguments: &[Value], state: &mut State, overwrite: bool) -> Value {
         let mut affected = arguments.to_vec();
         affected.push(destination.clone());
         widen_operands(&affected, state);
-        return with_influences(
+        return Value::with_influences(
             Value::leaf(Datum::Map {
                 view: MapType::Interface,
                 target: Some(target),
@@ -1575,7 +1569,7 @@ fn merge(arguments: &[Value], state: &mut State, overwrite: bool) -> Value {
             break;
         }
     }
-    with_influences(
+    Value::with_influences(
         Value::leaf(Datum::Map {
             view: MapType::Interface,
             target: Some(target),
@@ -1751,7 +1745,7 @@ fn merge_maps(
     true
 }
 
-fn widen_operands(arguments: &[Value], state: &mut State) {
+pub(super) fn widen_operands(arguments: &[Value], state: &mut State) {
     let influences = Rc::new(inputs(arguments, state));
     let mut pending = arguments.to_vec();
     let mut objects = BTreeSet::new();
@@ -1853,17 +1847,17 @@ fn unknown_decoded(
     state: &mut State,
 ) -> Value {
     if function == "fromYaml" {
-        return with_influences(state.heap.map(Remainder::Open), influences);
+        return Value::with_influences(state.heap.map(Remainder::Open), influences);
     }
     if function == "fromJson" {
-        let nil = with_influences(
+        let nil = Value::with_influences(
             Value::leaf(Datum::Map {
                 view: MapType::Interface,
                 target: None,
             }),
             influences.clone(),
         );
-        let map = with_influences(state.heap.map(Remainder::Open), influences);
+        let map = Value::with_influences(state.heap.map(Remainder::Open), influences);
         let decision = state.heap.arena.decision(
             helm_schema_core::Predicate::False,
             helm_schema_core::Predicate::False,
@@ -2047,7 +2041,7 @@ fn string_map(
         ObjectData::Map { fields, remainder },
         super::Multiplicity::Singleton,
     );
-    with_influences(
+    Value::with_influences(
         Value::leaf(Datum::Map {
             view: MapType::String,
             target: Some(target),
@@ -2133,7 +2127,7 @@ fn copy_string_slice(
             },
             super::Multiplicity::Singleton,
         );
-        return with_influences(
+        return Value::with_influences(
             Value::leaf(Datum::Strings(super::StringSlice {
                 backing,
                 start: 0,
@@ -2240,7 +2234,7 @@ fn interface_map_view(first: &Value, state: &mut State) -> Value {
             },
         ),
     };
-    with_influences(view, state.heap.freeze(first).inputs())
+    Value::with_influences(view, state.heap.freeze(first).inputs())
 }
 
 fn overwrite_scalar_sources(

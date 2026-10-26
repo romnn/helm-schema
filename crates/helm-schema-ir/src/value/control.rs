@@ -23,19 +23,23 @@ struct RangeEntry {
 }
 impl Executor<'_> {
     pub(super) fn body(&self, source: &str, path: Option<&str>, state: State) -> Vec<Exit> {
-        let syntax = crate::analysis_db::ParsedProgramSyntax::parse(source);
-        self.parsed_body(source, path, syntax.as_ref(), state)
+        let source = self.db.parsed_source(source, path, path.unwrap_or("gotpl"));
+        self.parsed_body(&source.root, state)
     }
 
     pub(super) fn parsed_body(
         &self,
-        source: &str,
-        path: Option<&str>,
-        syntax: Option<&crate::analysis_db::ParsedProgramSyntax>,
+        parsed: &crate::analysis_db::ParsedProgram,
         state: State,
     ) -> Vec<Exit> {
         let program = state.heap.arena.program();
-        self.execute_parsed_body(source, path, syntax, state, program)
+        self.execute_parsed_body(
+            parsed.source(),
+            parsed.source_path(),
+            parsed.syntax(),
+            state,
+            program,
+        )
     }
 
     pub(super) fn parsed_file_body(
@@ -59,6 +63,7 @@ impl Executor<'_> {
     ) -> Vec<Exit> {
         state.program = program;
         let Some(syntax) = syntax.filter(|syntax| !syntax.tree.root_node().has_error()) else {
+            state.invocation_records_complete = false;
             super::operations::invalidate(&mut state);
             state.output.emit(state.heap.freeze(&Value::unknown()));
             return normal(state, Value::unknown());
@@ -224,8 +229,8 @@ impl Executor<'_> {
             return normal(state, Value::nil());
         }
         if kind == ControlKind::Block {
-            let mut exits = if let Some(call) = block_call(program, opener.span.start) {
-                self.expression(&call, state, opener.span.start)
+            let mut exits = if let Some(call) = program.syntax.block_calls.get(&opener.span.start) {
+                self.expression(call, state, opener.span.start)
             } else {
                 super::operations::invalidate(&mut state);
                 normal(state, Value::unknown())
@@ -550,24 +555,6 @@ impl Executor<'_> {
         }
     }
 }
-fn block_call(program: &Program<'_>, start: usize) -> Option<TemplateExpr> {
-    let node = node_at(program.syntax.tree.root_node(), start, "block_action")?;
-    let names =
-        helm_schema_ast::node_expressions(node.child_by_field_name("name")?, program.source);
-    let arguments =
-        helm_schema_ast::node_expressions(node.child_by_field_name("argument")?, program.source);
-    let [name] = names.as_slice() else {
-        return None;
-    };
-    let [argument] = arguments.as_slice() else {
-        return None;
-    };
-    Some(TemplateExpr::Call {
-        function: "template".to_owned(),
-        args: vec![name.clone(), argument.clone()],
-    })
-}
-
 fn literal_span(program: &Program<'_>, next: usize, span: Span) -> Span {
     let previous = next
         .checked_sub(1)
@@ -698,8 +685,7 @@ fn node_at<'a>(
 }
 
 pub(super) fn bound_exits(exits: Vec<Exit>) -> Vec<Exit> {
-    const MAX_EXECUTION_ALTERNATIVES: usize = 4096;
-    if exits.len() <= MAX_EXECUTION_ALTERNATIVES {
+    if exits.len() <= super::MAX_EXECUTION_ALTERNATIVES {
         return exits;
     }
     tracing::debug!(
@@ -754,8 +740,12 @@ pub(super) fn summarize_exits(exits: Vec<Exit>) -> Vec<Exit> {
                 }
             }
             let mut representative = group.pop()?;
-            for exit in group {
-                representative.state.namespace_unknown |= exit.state.namespace_unknown;
+            if group
+                .iter()
+                .any(|exit| exit.state.namespace.id() != representative.state.namespace.id())
+            {
+                representative.state.namespace =
+                    super::namespace::Namespace::unknown(&representative.state.heap.arena);
             }
             representative.state.reads = reads;
             representative.state.invocation_records_complete = false;
@@ -873,7 +863,8 @@ struct PathKey {
 struct ContinuationContext {
     program: u64,
     frames: Vec<FrameShape>,
-    calls: Vec<String>,
+    calls: Vec<super::CallKey>,
+    namespace: super::namespace::NamespaceId,
     loops: Vec<LoopShape>,
 }
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -932,6 +923,7 @@ impl FrontierIndex {
                 })
                 .collect(),
             calls: state.calls.clone(),
+            namespace: state.namespace.id(),
             loops: state
                 .loops
                 .iter()

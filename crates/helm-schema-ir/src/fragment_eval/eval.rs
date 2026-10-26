@@ -55,6 +55,7 @@ pub(crate) struct ValueRead {
     pub dependency: bool,
 }
 
+#[cfg(test)]
 /// Execute once, then place the resulting observations in the YAML layout.
 #[tracing::instrument(skip_all)]
 pub(crate) fn eval_document(
@@ -66,9 +67,21 @@ pub(crate) fn eval_document(
     project_execution(source, source_path, db, &execution)
 }
 
+#[cfg(test)]
 pub(crate) fn project_execution(
     source: &str,
     source_path: Option<&str>,
+    db: &IrAnalysisDb,
+    execution: &DocumentExecution,
+) -> EvaluatedDocument {
+    project_execution_at_offset(source, source_path, 0, db, execution)
+}
+
+#[tracing::instrument(skip_all, level = "debug", fields(source_path))]
+pub(crate) fn project_execution_at_offset(
+    source: &str,
+    source_path: Option<&str>,
+    source_offset: usize,
     db: &IrAnalysisDb,
     execution: &DocumentExecution,
 ) -> EvaluatedDocument {
@@ -89,6 +102,7 @@ pub(crate) fn project_execution(
     let projection = Projection {
         source,
         source_path,
+        source_offset,
         execution,
         resources,
         db,
@@ -104,6 +118,7 @@ pub(crate) fn project_execution(
 struct Projection<'a> {
     source: &'a str,
     source_path: Option<&'a str>,
+    source_offset: usize,
     execution: &'a DocumentExecution,
     resources: Vec<ResourceSpan>,
     db: &'a IrAnalysisDb,
@@ -442,9 +457,12 @@ impl Projection<'_> {
             .iter()
             .filter(|resource| resource.start <= span.start && span.start < resource.end)
             .min_by_key(|resource| resource.end.saturating_sub(resource.start));
-        let provenance = self.source_path.map(|path| {
-            ContractProvenance::new(path, SourceSpan::new(span.start, span.end), Vec::new())
-        });
+        // Syntax and execution queries stay body-local; provenance names the original file.
+        let start = self.source_offset.checked_add(span.start)?;
+        let end = self.source_offset.checked_add(span.end)?;
+        let provenance = self
+            .source_path
+            .map(|path| ContractProvenance::new(path, SourceSpan::new(start, end), Vec::new()));
         if resource.is_none() && provenance.is_none() {
             return None;
         }

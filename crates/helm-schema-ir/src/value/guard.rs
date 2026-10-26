@@ -632,7 +632,12 @@ impl DecisionStore {
     }
 
     #[tracing::instrument(skip_all)]
-    fn project(&mut self, guard: &RuntimeGuard, purpose: ProjectionPurpose) -> Projection {
+    fn project(
+        &mut self,
+        guard: &RuntimeGuard,
+        purpose: ProjectionPurpose,
+        memo: &helm_schema_core::PredicateMemo,
+    ) -> Projection {
         let key = ProjectionKey {
             guard: guard.id(),
             purpose,
@@ -650,8 +655,16 @@ impl DecisionStore {
                 sufficient: Predicate::True,
             },
             RuntimeGuard::Branch(node) => {
-                let yes = self.project(&node.yes, purpose);
-                let no = self.project(&node.no, purpose);
+                let yes = self.project(&node.yes, purpose, memo);
+                // A partial arm with both outcomes possible absorbs the sibling's input proofs.
+                if node.test.coverage == Coverage::Partial
+                    && yes.necessary == Predicate::True
+                    && yes.sufficient == Predicate::False
+                {
+                    self.projections.insert(key, yes.clone());
+                    return yes;
+                }
+                let no = self.project(&node.no, purpose, memo);
                 match node.test.coverage {
                     Coverage::Exact => {
                         let exact =
@@ -662,6 +675,7 @@ impl DecisionStore {
                                 Predicate::all(vec![node.test.when_false.clone(), no.necessary]),
                             ],
                             purpose,
+                            memo,
                         );
                         // An exact decision partitions its domain. Adding both child proofs
                         // again is redundant and doubles expressions after normalization caps.
@@ -680,6 +694,7 @@ impl DecisionStore {
                                     ]),
                                 ],
                                 purpose,
+                                memo,
                             )
                             .unwrap_or(Predicate::False)
                         };
@@ -689,12 +704,13 @@ impl DecisionStore {
                         }
                     }
                     Coverage::Partial => Projection {
-                        necessary: project_union(vec![yes.necessary, no.necessary], purpose)
+                        necessary: project_union(vec![yes.necessary, no.necessary], purpose, memo)
                             .unwrap_or(Predicate::True),
                         sufficient: bounded_projection(
                             Predicate::all(vec![yes.sufficient, no.sufficient]),
                             purpose,
                         )
+                        .map(fold_conjunction_constants)
                         .unwrap_or(Predicate::False),
                     },
                 }
@@ -736,7 +752,11 @@ fn bounded_projection(predicate: Predicate, purpose: ProjectionPurpose) -> Optio
     Some(predicate)
 }
 
-fn project_union(mut parts: Vec<Predicate>, purpose: ProjectionPurpose) -> Option<Predicate> {
+fn project_union(
+    mut parts: Vec<Predicate>,
+    purpose: ProjectionPurpose,
+    memo: &helm_schema_core::PredicateMemo,
+) -> Option<Predicate> {
     parts.retain(|part| part != &Predicate::False);
     let terms: Vec<std::collections::BTreeSet<_>> = parts
         .iter()
@@ -758,10 +778,10 @@ fn project_union(mut parts: Vec<Predicate>, purpose: ProjectionPurpose) -> Optio
     });
     if common.is_empty() {
         return bounded_projection(Predicate::Or(parts), purpose)
-            .and_then(|value| bounded_projection(value.normalize_boolean(), purpose));
+            .and_then(|value| bounded_projection(memo.normalize(value), purpose));
     }
     // Retain a shared sequential prefix instead of distributing it over both decision arms.
-    let suffix = bounded_projection(
+    let suffix = memo.normalize(bounded_projection(
         Predicate::Or(
             terms
                 .iter()
@@ -769,12 +789,32 @@ fn project_union(mut parts: Vec<Predicate>, purpose: ProjectionPurpose) -> Optio
                 .collect(),
         ),
         purpose,
-    )?
-    .normalize_boolean();
+    )?);
     bounded_projection(
         Predicate::all(common.into_iter().chain([suffix]).collect()),
         purpose,
     )
+    .map(fold_conjunction_constants)
+}
+
+fn fold_conjunction_constants(predicate: Predicate) -> Predicate {
+    if predicate.contains_approximation() {
+        return predicate;
+    }
+    let PredicateKind::And(parts) = predicate.kind() else {
+        return predicate;
+    };
+    if parts.contains(&Predicate::False) {
+        Predicate::False
+    } else {
+        Predicate::all(
+            parts
+                .iter()
+                .filter(|part| *part != &Predicate::True)
+                .cloned()
+                .collect(),
+        )
+    }
 }
 
 impl Arena {
@@ -862,39 +902,23 @@ impl Arena {
         yes: Rc<FrozenTest>,
         no: Rc<FrozenTest>,
     ) -> Rc<FrozenTest> {
-        self.surviving_decision(
-            &[
-                DecisionEdge {
-                    test: Rc::clone(&decision),
-                    taken: true,
-                },
-                DecisionEdge {
-                    test: yes,
-                    taken: true,
-                },
-            ],
-            &[
-                DecisionEdge {
-                    test: decision,
-                    taken: false,
-                },
-                DecisionEdge {
-                    test: no,
-                    taken: true,
-                },
-            ],
-        )
-    }
-
-    pub(super) fn surviving_decision(
-        &self,
-        yes: &[DecisionEdge],
-        no: &[DecisionEdge],
-    ) -> Rc<FrozenTest> {
         let mut store = self.guards.borrow_mut();
-        let yes = store.conjunction(yes);
-        let no = store.conjunction(no);
-        let runtime = store.apply(Operation::Or, &yes, &no);
+        let condition = store.edge(&DecisionEdge {
+            test: decision,
+            taken: true,
+        });
+        let yes = store.edge(&DecisionEdge {
+            test: yes,
+            taken: true,
+        });
+        let no = store.edge(&DecisionEdge {
+            test: no,
+            taken: true,
+        });
+        let runtime = match store.choice_with_work(&condition, &yes, &no, &mut ExactGuardWork) {
+            Ok(runtime) => runtime,
+            Err(never) => match never {},
+        };
         self.guard_test(&mut store, runtime, ProjectionPurpose::Control)
     }
 
@@ -906,7 +930,7 @@ impl Arena {
         skip_all,
         level = "debug",
         target = "helm_schema_ir::value::guard_storage",
-        fields(nodes = store.nodes.len(), applications = store.applications.len(), projections = store.projections.len(), tests = store.tests.len())
+        fields(purpose = ?purpose, nodes = store.nodes.len(), applications = store.applications.len(), projections = store.projections.len(), tests = store.tests.len())
     )]
     fn guard_test(
         &self,
@@ -925,7 +949,7 @@ impl Arena {
         let Projection {
             necessary,
             sufficient,
-        } = store.project(&runtime, purpose);
+        } = store.project(&runtime, purpose, &self.predicate_memo);
         let coverage = if necessary == sufficient {
             Coverage::Exact
         } else {

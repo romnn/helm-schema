@@ -111,19 +111,45 @@ impl SymbolicIrContext {
         &self,
         sources: &[SymbolicTemplate<'_>],
     ) -> Vec<ContractIr> {
-        crate::value::execute_documents(sources, &self.analysis_db)
+        let mut contracts: Vec<_> = sources.iter().map(|_| ContractIr::default()).collect();
+        let prepared = sources
             .iter()
-            .zip(sources)
-            .map(|(execution, source)| {
-                let document = crate::fragment_eval::project_execution(
+            .map(|source| {
+                self.analysis_db.parsed_source(
                     source.source,
                     Some(source.source_path),
+                    source.source_path,
+                )
+            })
+            .collect();
+        crate::value::project_documents(
+            prepared,
+            &self.analysis_db,
+            |index, program, execution| {
+                let Some(source) = sources.get(index) else {
+                    return;
+                };
+                let (source, path, offset) =
+                    program.map_or((source.source, Some(source.source_path), 0), |program| {
+                        (
+                            program.source(),
+                            program.source_path(),
+                            program.body_offset(),
+                        )
+                    });
+                let document = crate::fragment_eval::project_execution_at_offset(
+                    source,
+                    path,
+                    offset,
                     &self.analysis_db,
                     execution,
                 );
-                self.contract_from_document(&document)
-            })
-            .collect()
+                if let Some(contract) = contracts.get_mut(index) {
+                    contract.append(self.contract_from_document(&document));
+                }
+            },
+        );
+        contracts
     }
 
     /// Executes a fresh single-template session and projects its fragment.
@@ -141,8 +167,32 @@ impl SymbolicIrContext {
         src: &str,
         source_path: Option<&str>,
     ) -> ContractIr {
-        let document = crate::fragment_eval::eval_document(src, source_path, &self.analysis_db);
-        self.contract_from_document(&document)
+        let parsed =
+            self.analysis_db
+                .parsed_source(src, source_path, source_path.unwrap_or("gotpl"));
+        let mut contract = ContractIr::default();
+        crate::value::project_documents(
+            vec![parsed],
+            &self.analysis_db,
+            |_, program, execution| {
+                let (source, path, offset) = program.map_or((src, source_path, 0), |program| {
+                    (
+                        program.source(),
+                        program.source_path(),
+                        program.body_offset(),
+                    )
+                });
+                let document = crate::fragment_eval::project_execution_at_offset(
+                    source,
+                    path,
+                    offset,
+                    &self.analysis_db,
+                    execution,
+                );
+                contract.append(self.contract_from_document(&document));
+            },
+        );
+        contract
     }
 
     fn contract_from_document(

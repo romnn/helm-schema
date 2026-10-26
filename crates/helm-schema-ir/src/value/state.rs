@@ -12,6 +12,7 @@ pub(super) struct ContinuationJoin {
 impl State {
     pub(super) fn with_heap(argument: Value, heap: Heap) -> Self {
         let frame = Frame::call(argument, heap.arena.call());
+        let namespace = super::namespace::Namespace::unknown(&heap.arena);
         Self {
             heap,
             frames: vec![frame],
@@ -25,11 +26,15 @@ impl State {
             reads: super::read_set::ReadSet::default(),
             calls: Vec::new(),
             program: 0,
-            namespace_unknown: false,
+            namespace,
             invocations: super::history::History::default(),
             invocation_records_complete: true,
             loops: Vec::new(),
         }
+    }
+
+    pub(super) fn mark_invocation_incomplete(&mut self) {
+        self.invocation_records_complete = false;
     }
 
     pub(super) fn join_local_values(
@@ -184,7 +189,7 @@ impl State {
             reads: self.reads.clone(),
             calls: self.calls.clone(),
             program: self.program,
-            namespace_unknown: self.namespace_unknown,
+            namespace: Rc::clone(&self.namespace),
             invocations: self.invocations.clone(),
             invocation_records_complete: self.invocation_records_complete,
             loops: self.loops.clone(),
@@ -244,7 +249,7 @@ impl State {
             reads: yes_reads,
             calls: yes_calls,
             program: yes_program,
-            namespace_unknown: yes_namespace,
+            namespace: yes_namespace,
             loops: yes_loops,
             output: _,
             output_widened: _,
@@ -262,7 +267,7 @@ impl State {
             reads: no_reads,
             calls: no_calls,
             program: no_program,
-            namespace_unknown: no_namespace,
+            namespace: no_namespace,
             loops: no_loops,
             output: _,
             output_widened: _,
@@ -275,6 +280,7 @@ impl State {
         } = no;
         if !Rc::ptr_eq(&yes_heap.arena, &no_heap.arena)
             || yes_program != no_program
+            || yes_namespace.id() != no_namespace.id()
             || yes_calls != no_calls
             || yes_loops != no_loops
             || yes_frames.len() != no_frames.len()
@@ -312,7 +318,7 @@ impl State {
             reads: yes_reads.union(no_reads),
             calls: yes_calls.clone(),
             program: *yes_program,
-            namespace_unknown: *yes_namespace || *no_namespace,
+            namespace: Rc::clone(yes_namespace),
             invocations: super::history::History::default(),
             invocation_records_complete: true,
             loops: yes_loops.clone(),

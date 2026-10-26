@@ -26,7 +26,16 @@ struct ValuePlan {
 }
 
 fn transfers_values(invocation: &Invocation) -> bool {
-    let Callee::Function(function) = &invocation.callee;
+    let function = match &invocation.callee {
+        Callee::Function(function) => function,
+        Callee::Method {
+            receiver: _,
+            descriptor,
+        } => {
+            return descriptor.semantics().heap_effect
+                == crate::function_semantics::HeapEffect::ReadOnly;
+        }
+    };
     if matches!(function.as_str(), "eq" | "ne") {
         return false;
     }
@@ -52,7 +61,7 @@ fn transfers_values(invocation: &Invocation) -> bool {
 }
 
 impl Executor<'_> {
-    #[tracing::instrument(skip_all)]
+    #[tracing::instrument(skip_all, fields(function, site))]
     pub(super) fn invoke(
         &self,
         function: &str,
@@ -61,23 +70,79 @@ impl Executor<'_> {
         state: State,
         site: usize,
     ) -> Vec<Exit> {
+        if let Some(receiver) = self.db.receiver_call(function) {
+            return self.invoke_receiver(receiver, arguments, pipe.as_ref(), state, site);
+        }
+        self.invoke_callee(
+            Callee::Function(function.to_owned()),
+            arguments,
+            pipe,
+            state,
+            site,
+        )
+    }
+
+    pub(super) fn invoke_receiver(
+        &self,
+        receiver: crate::analysis_db::ReceiverCall,
+        arguments: &[TemplateExpr],
+        pipe: Option<&Value>,
+        state: State,
+        site: usize,
+    ) -> Vec<Exit> {
+        let crate::analysis_db::ReceiverCall { receiver, name } = receiver;
+        let mut exits = super::ExitBuffer::default();
+        for exit in self.expression(&receiver, state, site) {
+            match exit.flow {
+                Flow::Normal(normal) => {
+                    let receiver = exit.state.consumed(&normal.value);
+                    let descriptor = super::hosts::method(&receiver, &name);
+                    exits.extend(self.invoke_callee(
+                        Callee::Method {
+                            receiver,
+                            descriptor,
+                        },
+                        arguments,
+                        pipe.cloned(),
+                        exit.state,
+                        site,
+                    ));
+                }
+                flow => exits.push(Exit {
+                    state: exit.state,
+                    flow,
+                }),
+            }
+        }
+        super::control::reconverge(exits.finish())
+    }
+
+    pub(super) fn invoke_callee(
+        &self,
+        callee: Callee,
+        arguments: &[TemplateExpr],
+        pipe: Option<Value>,
+        state: State,
+        site: usize,
+    ) -> Vec<Exit> {
         let count = arguments.len() + usize::from(pipe.is_some());
-        let semantics = function_semantics(function);
+        let semantics = callee.semantics();
+        let function = callee.function_name();
         if (semantics.accepts_arity(count) == Some(false)
-            && !(function == "template" && count == 1))
-            || (matches!(function, "and" | "or") && count == 0)
+            && !(function == Some("template") && count == 1))
+            || (matches!(function, Some("and" | "or")) && count == 0)
         {
             return vec![Exit {
                 state,
                 flow: Flow::Abort(AbortReason::Arity),
             }];
         }
-        if matches!(function, "and" | "or") {
+        if let Some(function @ ("and" | "or")) = function {
             let exits = self.short_circuit(function, arguments, pipe.as_ref(), state, site);
             return self
                 .complete(CompletionInput::Executed {
                     invocation: Invocation {
-                        callee: Callee::Function(function.to_owned()),
+                        callee,
                         operands: Vec::new(),
                         site: site as u64,
                     },
@@ -136,7 +201,7 @@ impl Executor<'_> {
                         exits.extend(
                             self.complete(CompletionInput::Invocation {
                                 invocation: Invocation {
-                                    callee: Callee::Function(function.to_owned()),
+                                    callee: consumed_callee(&callee, &exit.state),
                                     operands,
                                     site: site as u64,
                                 },
@@ -276,16 +341,26 @@ impl Executor<'_> {
     pub(super) fn complete(&self, input: CompletionInput) -> CallOutcome {
         let mut completed = match input {
             CompletionInput::Invocation { invocation, state } => {
-                let Callee::Function(function) = &invocation.callee;
-                if matches!(function.as_str(), "include" | "template" | "tpl") {
-                    return self.helper(invocation, state, true);
-                }
                 let mut remaining = super::MAX_SCALAR_DISPATCH_STATES;
+                if matches!(
+                    invocation.callee.function_name(),
+                    Some("include" | "template" | "tpl")
+                ) {
+                    return CallOutcome {
+                        execution: Execution {
+                            exits: self.helper_alternatives(invocation, state, &mut remaining),
+                        },
+                    };
+                }
                 let exits = if transfers_values(&invocation) {
                     let mut state = state;
-                    let plan = transfer_values(&invocation, &mut state, &mut remaining);
+                    // Each operand has one truth query across mutually exclusive value cases.
+                    // Different operands and invocations retain independent fallback choices.
+                    let mut queries = std::collections::BTreeMap::new();
+                    let plan =
+                        transfer_values(&invocation, &mut state, &mut remaining, &mut queries);
                     finish_value_plan(plan, state)
-                } else if matches!(function.as_str(), "eq" | "ne") {
+                } else if matches!(invocation.callee.function_name(), Some("eq" | "ne")) {
                     Self::transfer_invocation(&invocation, state)
                 } else {
                     Self::transfer_alternatives(&invocation, state, &mut remaining)
@@ -325,11 +400,12 @@ impl Executor<'_> {
         };
         let invocation = first.state.heap.arena.next_invocation.get();
         first.state.heap.arena.next_invocation.set(invocation + 1);
-        let Callee::Function(function) = &completed.invocation.callee;
+        let function = completed.invocation.callee.name();
         for exit in &mut completed.execution.exits {
             let mut wrapper = None;
             if let Some(helper) = &completed.helper_return {
                 exit.state.program = helper.program;
+                exit.state.namespace = Rc::clone(&helper.namespace);
                 exit.state.leave_call();
                 exit.state.calls.pop();
                 exit.state.loops = helper.loops.clone();
@@ -353,7 +429,7 @@ impl Executor<'_> {
                         invocation,
                         program: exit.state.program,
                         site: completed.invocation.site,
-                        function: function.clone(),
+                        function: function.to_owned(),
                         wrapper: wrapper.clone(),
                     });
             }
@@ -361,6 +437,41 @@ impl Executor<'_> {
         CallOutcome {
             execution: completed.execution,
         }
+    }
+
+    fn helper_alternatives(
+        &self,
+        mut invocation: Invocation,
+        state: State,
+        remaining: &mut usize,
+    ) -> Vec<Exit> {
+        if *remaining > 0 {
+            *remaining -= 1;
+            if let Some(operand) = invocation.operands.first_mut() {
+                operand.value = state.consumed(&operand.value);
+                if let ValueNode::Select {
+                    decision,
+                    yes: _,
+                    no: _,
+                } = operand.value.node.as_ref()
+                {
+                    let decision = Rc::clone(decision);
+                    let mut exits = super::ExitBuffer::default();
+                    for taken in [true, false] {
+                        let branch = state.fork(Rc::clone(&decision), taken);
+                        if !branch.path_is_infeasible() {
+                            exits.extend(self.helper_alternatives(
+                                invocation.clone(),
+                                branch,
+                                remaining,
+                            ));
+                        }
+                    }
+                    return super::control::reconverge(exits.finish());
+                }
+            }
+        }
+        self.helper(invocation, state, true).into_exits()
     }
     fn transfer_alternatives(
         invocation: &Invocation,
@@ -408,7 +519,16 @@ impl Executor<'_> {
     #[tracing::instrument(skip_all)]
     fn transfer_invocation(invocation: &Invocation, mut state: State) -> Vec<Exit> {
         state.record_invocation_reads(invocation);
-        let Callee::Function(function) = &invocation.callee;
+        let function = match &invocation.callee {
+            Callee::Function(function) => function,
+            Callee::Method {
+                receiver: _,
+                descriptor: _,
+            } => {
+                let plan = host_value_plan(invocation, &mut state);
+                return finish_value_plan(plan, state);
+            }
+        };
         let function = function.as_str();
         let arguments: Vec<Value> = invocation
             .operands
@@ -447,9 +567,15 @@ impl Executor<'_> {
         }
     }
 }
-fn value_leaf(invocation: &Invocation, state: &mut State) -> Result<Value, AbortReason> {
+fn value_leaf(
+    invocation: &Invocation,
+    state: &mut State,
+    queries: &mut std::collections::BTreeMap<usize, Option<Rc<super::FrozenTest>>>,
+) -> Result<Value, AbortReason> {
     state.record_invocation_reads(invocation);
-    let Callee::Function(function) = &invocation.callee;
+    let Callee::Function(function) = &invocation.callee else {
+        return Ok(Value::unknown());
+    };
     let arguments: Vec<_> = invocation
         .operands
         .iter()
@@ -462,25 +588,33 @@ fn value_leaf(invocation: &Invocation, state: &mut State) -> Result<Value, Abort
         }
         "fail" => return Err(AbortReason::Fail),
         "not" | "empty" => Value::select(
-            state.test(&first),
+            state.test_with_unknown(&first, queries.entry(0).or_default()),
             Value::literal(GuardValue::Bool(false)),
             Value::literal(GuardValue::Bool(true)),
         ),
         "default" => {
             let given = arguments.get(1).cloned().unwrap_or_else(|| first.clone());
-            Value::select(state.test(&given), given, first)
+            Value::select(
+                state.test_with_unknown(&given, queries.entry(1).or_default()),
+                given,
+                first,
+            )
         }
         "coalesce" => {
             let mut result = Value::nil();
-            for argument in arguments.iter().rev() {
-                result = Value::select(state.test(argument), argument.clone(), result);
+            for (index, argument) in arguments.iter().enumerate().rev() {
+                result = Value::select(
+                    state.test_with_unknown(argument, queries.entry(index).or_default()),
+                    argument.clone(),
+                    result,
+                );
             }
             result
         }
         "ternary" => {
             let condition = arguments.get(2).cloned().unwrap_or_else(Value::unknown);
             Value::select(
-                state.test(&condition),
+                state.test_with_unknown(&condition, queries.entry(2).or_default()),
                 first,
                 arguments.get(1).cloned().unwrap_or_else(Value::unknown),
             )
@@ -509,14 +643,47 @@ fn constant_value_test(state: &State, value: bool) -> Rc<super::FrozenTest> {
     )
 }
 
-fn transfer_values(invocation: &Invocation, state: &mut State, remaining: &mut usize) -> ValuePlan {
+fn consumed_callee(callee: &Callee, state: &State) -> Callee {
+    match callee {
+        Callee::Function(name) => Callee::Function(name.clone()),
+        Callee::Method {
+            receiver,
+            descriptor,
+        } => Callee::Method {
+            receiver: state.consumed(receiver),
+            descriptor: descriptor.clone(),
+        },
+    }
+}
+
+fn host_value_plan(invocation: &Invocation, state: &mut State) -> ValuePlan {
+    ValuePlan {
+        value: super::hosts::transfer(invocation, state),
+        normal: constant_value_test(state, true),
+        failures: std::collections::BTreeMap::default(),
+    }
+}
+
+fn transfer_values(
+    invocation: &Invocation,
+    state: &mut State,
+    remaining: &mut usize,
+    queries: &mut std::collections::BTreeMap<usize, Option<Rc<super::FrozenTest>>>,
+) -> ValuePlan {
     if *remaining == 0 {
         state.record_invocation_reads(invocation);
-        let values: Vec<_> = invocation
+        let mut values: Vec<_> = invocation
             .operands
             .iter()
             .map(|operand| operand.value.clone())
             .collect();
+        match &invocation.callee {
+            Callee::Function(_) => {}
+            Callee::Method {
+                receiver,
+                descriptor: _,
+            } => values.push(receiver.clone()),
+        }
         return ValuePlan {
             value: Value::influenced(super::operations::inputs(&values, state)),
             normal: constant_value_test(state, true),
@@ -524,8 +691,18 @@ fn transfer_values(invocation: &Invocation, state: &mut State, remaining: &mut u
         };
     }
     *remaining -= 1;
-    for operand in &invocation.operands {
-        let value = state.consumed(&operand.value);
+    let receiver = match &invocation.callee {
+        Callee::Function(_) => None,
+        Callee::Method {
+            receiver,
+            descriptor: _,
+        } => Some(receiver),
+    };
+    for value in receiver
+        .into_iter()
+        .chain(invocation.operands.iter().map(|operand| &operand.value))
+    {
+        let value = state.consumed(value);
         if let ValueNode::Select {
             decision,
             yes: _,
@@ -546,52 +723,29 @@ fn transfer_values(invocation: &Invocation, state: &mut State, remaining: &mut u
                     }
                 } else {
                     let mut invocation = invocation.clone();
+                    invocation.callee = consumed_callee(&invocation.callee, state);
                     for operand in &mut invocation.operands {
                         operand.value = state.consumed(&operand.value);
                     }
-                    transfer_values(&invocation, state, remaining)
+                    transfer_values(&invocation, state, remaining, queries)
                 };
                 state.active.truncate(depth);
                 plan
             });
-            let normal = state
-                .heap
-                .arena
-                .choose_test(Rc::clone(decision), yes.normal, no.normal);
-            let reasons: std::collections::BTreeSet<_> = yes
-                .failures
-                .keys()
-                .chain(no.failures.keys())
-                .copied()
-                .collect();
-            let failures = reasons
-                .into_iter()
-                .map(|reason| {
-                    let yes = yes
-                        .failures
-                        .get(&reason)
-                        .cloned()
-                        .unwrap_or_else(|| constant_value_test(state, false));
-                    let no = no
-                        .failures
-                        .get(&reason)
-                        .cloned()
-                        .unwrap_or_else(|| constant_value_test(state, false));
-                    (
-                        reason,
-                        state.heap.arena.choose_test(Rc::clone(decision), yes, no),
-                    )
-                })
-                .collect();
-            let value = state.join_local_values(Rc::clone(decision), &yes.value, &no.value);
-            return ValuePlan {
-                value,
-                normal,
-                failures,
-            };
+            return join_value_plans(state, decision, yes, no);
         }
     }
-    match value_leaf(invocation, state) {
+    if matches!(
+        &invocation.callee,
+        Callee::Method {
+            receiver: _,
+            descriptor: _
+        }
+    ) {
+        state.record_invocation_reads(invocation);
+        return host_value_plan(invocation, state);
+    }
+    match value_leaf(invocation, state, queries) {
         Ok(value) => ValuePlan {
             value,
             normal: constant_value_test(state, true),
@@ -605,6 +759,56 @@ fn transfer_values(invocation: &Invocation, state: &mut State, remaining: &mut u
                 constant_value_test(state, true),
             )]),
         },
+    }
+}
+
+fn join_value_plans(
+    state: &mut State,
+    decision: &Rc<super::FrozenTest>,
+    yes: ValuePlan,
+    no: ValuePlan,
+) -> ValuePlan {
+    let ValuePlan {
+        value: yes_value,
+        normal: yes_normal,
+        failures: yes_failures,
+    } = yes;
+    let ValuePlan {
+        value: no_value,
+        normal: no_normal,
+        failures: no_failures,
+    } = no;
+    let normal = state
+        .heap
+        .arena
+        .choose_test(Rc::clone(decision), yes_normal, no_normal);
+    let reasons: std::collections::BTreeSet<_> = yes_failures
+        .keys()
+        .chain(no_failures.keys())
+        .copied()
+        .collect();
+    let failures = reasons
+        .into_iter()
+        .map(|reason| {
+            let yes = yes_failures
+                .get(&reason)
+                .cloned()
+                .unwrap_or_else(|| constant_value_test(state, false));
+            let no = no_failures
+                .get(&reason)
+                .cloned()
+                .unwrap_or_else(|| constant_value_test(state, false));
+            (
+                reason,
+                state.heap.arena.choose_test(Rc::clone(decision), yes, no),
+            )
+        })
+        .collect();
+    let value = state.join_local_values(Rc::clone(decision), &yes_value, &no_value);
+    ValuePlan {
+        value,
+        normal,
+        failures,
     }
 }
 

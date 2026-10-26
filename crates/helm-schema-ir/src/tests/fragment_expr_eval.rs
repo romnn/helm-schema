@@ -13,6 +13,38 @@ use crate::helper_meta::HelperOutputMeta;
 use crate::observed_facts::CaptureKind;
 use test_util::prelude::sim_assert_eq;
 
+fn policy_root_bindings(db: &IrAnalysisDb) -> HashMap<String, AbstractValue> {
+    let strings = db.static_root_strings().clone();
+    let mut fields = BTreeMap::new();
+    for (path, value) in strings {
+        insert_policy_string(&mut fields, &path, value);
+    }
+    fields.into_iter().collect()
+}
+
+fn insert_policy_string(
+    fields: &mut BTreeMap<String, AbstractValue>,
+    path: &[String],
+    value: String,
+) {
+    let Some((head, tail)) = path.split_first() else {
+        return;
+    };
+    if tail.is_empty() {
+        fields.insert(
+            head.clone(),
+            AbstractValue::StringSet(BTreeSet::from([value])),
+        );
+        return;
+    }
+    let entry = fields
+        .entry(head.clone())
+        .or_insert_with(|| AbstractValue::Dict(BTreeMap::new()));
+    if let AbstractValue::Dict(nested) = entry {
+        insert_policy_string(nested, tail, value);
+    }
+}
+
 #[derive(Debug)]
 struct ExecutedObservation {
     execution: crate::value::DocumentExecution,
@@ -1441,7 +1473,7 @@ fn semver_selected_print_helper_keeps_policy_default_dispatch() {
         },
     );
     let context = helper_context(&analysis_db);
-    let mut root_bindings = analysis_db.static_root_fields().clone();
+    let mut root_bindings = policy_root_bindings(&analysis_db);
     root_bindings.insert("Values".to_string(), values_path!(""));
     let expr =
         single_expr(r#"eq (include "capabilities.ingress.apiVersion" .) "networking.k8s.io/v1""#);
@@ -1506,7 +1538,7 @@ fn root_context_forwarding_keeps_static_capability_scalars() {
         },
     );
     let context = helper_context(&analysis_db);
-    let mut root_bindings = analysis_db.static_root_fields().clone();
+    let mut root_bindings = policy_root_bindings(&analysis_db);
     root_bindings.insert("Values".to_string(), values_path!(""));
     let expr = single_expr(r#"eq (include "capabilities.forward" (dict "context" .)) "modern""#);
     let mut seen = HashSet::new();
@@ -1770,7 +1802,7 @@ fn chart_annotation_policy_decides_helper_output() {
         },
     );
     let context = helper_context(&analysis_db);
-    let mut root_bindings = analysis_db.static_root_fields().clone();
+    let mut root_bindings = policy_root_bindings(&analysis_db);
     root_bindings.insert("Values".to_string(), values_path!(""));
     let expr = single_expr(r#"include "common.fips.enabled" ."#);
     let mut seen = HashSet::new();

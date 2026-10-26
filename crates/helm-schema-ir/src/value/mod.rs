@@ -5,8 +5,10 @@ mod guard;
 mod heap;
 mod helpers;
 mod history;
+mod hosts;
 mod invoke;
 pub(crate) mod kinds;
+mod namespace;
 mod operations;
 mod output;
 mod output_layout;
@@ -17,7 +19,11 @@ mod session;
 mod shape_summary;
 mod state;
 mod window_exits;
-pub(crate) use session::{execute_document, execute_documents};
+#[cfg(test)]
+pub(crate) use session::execute_document;
+pub(crate) use session::project_documents;
+#[cfg(test)]
+pub(crate) use tests::execute_documents;
 
 use std::cell::{Cell, RefCell};
 use std::collections::{BTreeMap, BTreeSet};
@@ -197,6 +203,7 @@ struct Arena {
     next_decision: Cell<u64>,
     next_call: Cell<u64>,
     next_program: Cell<u64>,
+    next_namespace: Cell<u64>,
     next_invocation: Cell<u64>,
     aggregate_summary: Cell<Option<u64>>,
     input_objects: RefCell<BTreeMap<ValuesPath, InputBacking>>,
@@ -288,12 +295,18 @@ pub(crate) struct State {
     sites: history::History<ExecutedSite>,
     text_sites: history::History<ExecutedText>,
     reads: read_set::ReadSet,
-    calls: Vec<String>,
+    calls: Vec<CallKey>,
     program: u64,
-    namespace_unknown: bool,
+    namespace: Rc<namespace::Namespace>,
     invocations: history::History<ExecutedInvocationRecord>,
     invocation_records_complete: bool,
     loops: Vec<LoopId>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+struct CallKey {
+    namespace: namespace::NamespaceId,
+    program: Option<crate::analysis_db::ParsedProgramId>,
 }
 
 #[derive(Clone, Debug)]
@@ -340,6 +353,8 @@ enum AbortReason {
     Type,
     Required,
     Fail,
+    MissingTemplate,
+    TemplateParse,
 }
 
 #[derive(Clone, Debug)]
@@ -352,6 +367,42 @@ struct Invocation {
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum Callee {
     Function(String),
+    Method {
+        receiver: Value,
+        descriptor: crate::function_semantics::Method,
+    },
+}
+
+impl Callee {
+    fn semantics(&self) -> crate::function_semantics::FunctionSemantics {
+        match self {
+            Self::Function(name) => crate::function_semantics::function_semantics(name),
+            Self::Method {
+                receiver: _,
+                descriptor,
+            } => descriptor.semantics(),
+        }
+    }
+
+    fn function_name(&self) -> Option<&str> {
+        match self {
+            Self::Function(name) => Some(name),
+            Self::Method {
+                receiver: _,
+                descriptor: _,
+            } => None,
+        }
+    }
+
+    fn name(&self) -> &str {
+        match self {
+            Self::Function(name) => name,
+            Self::Method {
+                receiver: _,
+                descriptor,
+            } => descriptor.name(),
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -613,6 +664,7 @@ enum CompletionInput {
 }
 struct HelperReturn {
     program: u64,
+    namespace: Rc<namespace::Namespace>,
     output: TextBuffer,
     loops: Vec<LoopId>,
     wrapper: Option<ProgramWrapperMetadata>,
@@ -661,3 +713,9 @@ mod member_host_tests;
 #[cfg(test)]
 #[path = "../tests/runtime_span_text.rs"]
 mod span_text_tests;
+
+const MAX_EXECUTION_ALTERNATIVES: usize = 4096;
+
+#[cfg(test)]
+#[path = "../tests/runtime_hosts.rs"]
+mod host_tests;

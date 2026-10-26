@@ -8,6 +8,13 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::rc::Rc;
 
 impl Value {
+    pub(super) fn with_influences(mut self, inputs: BTreeSet<ValuesPath>) -> Self {
+        if let ValueNode::Leaf(Leaf { datum: _, origin }) = Rc::make_mut(&mut self.node) {
+            origin.influences.extend(inputs);
+        }
+        self
+    }
+
     pub(super) fn literal(value: GuardValue) -> Self {
         let kind = match &value {
             GuardValue::String(_) => ScalarType::String,
@@ -190,14 +197,27 @@ impl State {
     }
 
     pub(super) fn record_invocation_reads(&mut self, invocation: &super::Invocation) {
-        use crate::function_semantics::{InputRead, function_semantics};
-        let super::Callee::Function(function) = &invocation.callee;
+        use crate::function_semantics::InputRead;
+        let semantics = invocation.callee.semantics();
+        let receiver = match &invocation.callee {
+            super::Callee::Function(_) => None,
+            super::Callee::Method {
+                receiver,
+                descriptor: _,
+            } => Some(receiver),
+        };
+        if let Some(receiver) = receiver {
+            self.record_value_read(receiver, super::ReadCoverage::ExactPath);
+        }
         for operand in &invocation.operands {
             self.record_value_read(&operand.value, super::ReadCoverage::ExactPath);
         }
-        match function_semantics(function).input_read {
+        match semantics.input_read {
             InputRead::Value => {}
             InputRead::Contents => {
+                if let Some(receiver) = receiver {
+                    self.record_container_read(receiver);
+                }
                 for operand in &invocation.operands {
                     self.record_container_read(&operand.value);
                 }
@@ -630,9 +650,18 @@ impl State {
         }
     }
     pub(super) fn test(&self, value: &Value) -> Rc<FrozenTest> {
+        self.test_with_unknown(value, &mut None)
+    }
+
+    pub(super) fn test_with_unknown(
+        &self,
+        value: &Value,
+        unknown: &mut Option<Rc<FrozenTest>>,
+    ) -> Rc<FrozenTest> {
         let mut budget = TruthBudget {
             visits: 255,
             leaves: 128,
+            unknown,
         };
         truth_test(self, value, &mut budget)
     }
@@ -735,17 +764,28 @@ impl State {
         }
     }
 }
-struct TruthBudget {
+struct TruthBudget<'a> {
     visits: usize,
     leaves: usize,
+    unknown: &'a mut Option<Rc<FrozenTest>>,
 }
 
-fn truth_test(state: &State, value: &Value, budget: &mut TruthBudget) -> Rc<FrozenTest> {
+impl TruthBudget<'_> {
+    fn unknown(&mut self, state: &State) -> Rc<FrozenTest> {
+        // Only one leaf supplies this query's Boolean result. Fresh fallback choices have no
+        // other observers, so one independent bit preserves every (existing decisions, result) pair.
+        Rc::clone(self.unknown.get_or_insert_with(|| {
+            state
+                .heap
+                .arena
+                .decision(Predicate::False, Predicate::False, Coverage::Partial)
+        }))
+    }
+}
+
+fn truth_test(state: &State, value: &Value, budget: &mut TruthBudget<'_>) -> Rc<FrozenTest> {
     if budget.visits == 0 {
-        return state
-            .heap
-            .arena
-            .decision(Predicate::False, Predicate::False, Coverage::Partial);
+        return budget.unknown(state);
     }
     budget.visits -= 1;
     let value = state.consumed(value);
@@ -763,11 +803,7 @@ fn truth_test(state: &State, value: &Value, budget: &mut TruthBudget) -> Rc<Froz
             origin: _,
         }) => {
             if budget.leaves == 0 {
-                return state.heap.arena.decision(
-                    Predicate::False,
-                    Predicate::False,
-                    Coverage::Partial,
-                );
+                return budget.unknown(state);
             }
             budget.leaves -= 1;
             let condition = if let Some(truth) = state.truth(&value) {
@@ -779,11 +815,7 @@ fn truth_test(state: &State, value: &Value, budget: &mut TruthBudget) -> Rc<Froz
             } else if let Some(path) = value.identity() {
                 Predicate::from(Guard::Truthy { path: path.clone() })
             } else {
-                return state.heap.arena.decision(
-                    Predicate::False,
-                    Predicate::False,
-                    Coverage::Partial,
-                );
+                return budget.unknown(state);
             };
             state
                 .heap

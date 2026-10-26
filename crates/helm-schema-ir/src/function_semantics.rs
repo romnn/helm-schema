@@ -349,7 +349,8 @@ impl FunctionSemantics {
 
     /// Checks only the Go call signature; builtin transfer preconditions remain separate.
     pub(crate) fn accepts_arity(self, count: usize) -> Option<bool> {
-        if self.parameters.is_empty()
+        if !self.known
+            && self.parameters.is_empty()
             && self.variadic.is_none()
             && self.success == SuccessType::Selected
         {
@@ -888,5 +889,55 @@ pub(crate) fn strict_collection_item_pattern(
             Some(concat!("^(", ipv4_pattern!(), "|", ipv6_pattern!(), ")$",))
         }
         _ => None,
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum MethodReceiver {
+    Values,
+    Other,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) enum Method {
+    ValuesAsMap,
+    ValuesTable,
+    ValuesYaml,
+    Foreign(std::string::String),
+}
+
+impl Method {
+    pub(crate) fn resolve(receiver: MethodReceiver, name: &str) -> Self {
+        match (receiver, name) {
+            (MethodReceiver::Values, "AsMap") => Self::ValuesAsMap,
+            (MethodReceiver::Values, "Table") => Self::ValuesTable,
+            (MethodReceiver::Values, "YAML") => Self::ValuesYaml,
+            (MethodReceiver::Values | MethodReceiver::Other, _) => Self::Foreign(name.to_owned()),
+        }
+    }
+
+    pub(crate) fn name(&self) -> &str {
+        match self {
+            Self::ValuesAsMap => "AsMap",
+            Self::ValuesTable => "Table",
+            Self::ValuesYaml => "YAML",
+            Self::Foreign(name) => name,
+        }
+    }
+
+    pub(crate) fn semantics(&self) -> FunctionSemantics {
+        match self {
+            Self::ValuesAsMap => KNOWN.selected(&[], None).reading(InputRead::Contents),
+            Self::ValuesTable => STRICT.selected(&[Text], None),
+            Self::ValuesYaml => KNOWN.fixed(&[], Text).reading(InputRead::Contents),
+            Self::Foreign(_) => UNKNOWN.reading(InputRead::Contents),
+        }
+    }
+
+    pub(crate) fn is_foreign(&self) -> bool {
+        match self {
+            Self::ValuesAsMap | Self::ValuesTable | Self::ValuesYaml => false,
+            Self::Foreign(_) => true,
+        }
     }
 }

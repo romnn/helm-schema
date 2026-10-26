@@ -23,6 +23,7 @@ use super::eval::EvaluatedDocument;
 
 /// Project an evaluated document into the contract graph.
 #[must_use]
+#[tracing::instrument(skip_all, level = "debug", fields(reads = document.reads.len()))]
 pub(crate) fn contract_ir_from_document(
     document: &EvaluatedDocument,
     predicate_memo: &PredicateMemo,

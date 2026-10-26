@@ -39,12 +39,12 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 HERE = ROOT / "plan/value-algebra-r0-inventory"
 SRC = "crates/helm-schema-ir/src"
 BASE = {"Predicate", "TruthCondition", "ScalarValueDispatch", "ScalarValue", "AbstractValue", "ValuesPath",
-        "HelperOutputMeta", "GoType"}
+        "HelperOutputMeta", "GoType", "IrAnalysisDb", "Namespace"}
 ALL_VARIANTS = {"AbstractValue", "ScalarValue", "ScalarContent", "GoType"}
 # Semantic landings use the admission ratchet rather than consolidation-only producer counts.
 SEMANTIC_STAGES = {"R3b"}
 REEXEC = (r"^(crate::expr_eval::)?(eval_expr|eval_expr_with_helper_calls|eval_expr_with_[a-z_]+)\(|"
-          r"parsed_helper_body\(|Interpreter::(for_source|with_body_facts)\(")
+          r"self\.execute_helper_branch\(|parsed_helper_body\(|Interpreter::(for_source|with_body_facts)\(")
 NAME_KEYED = re.compile(r"(HashMap|BTreeMap|HashSet|BTreeSet)<String")
 COLUMNS = ["key", "class", "fact", "destination", "delete", "seal", "review", "replaces"]
 CLASSES = set("FSDKGORVEX")
@@ -170,7 +170,7 @@ def check(found, rows, baseline, landed, producers, relocations=(), retirements=
         seen_receipts.add(key)
         if key not in by_key:
             problems.append("unknown declaration")
-        if receipt["checkpoint"] not in {"C02", "C03"}:
+        if receipt["checkpoint"] not in {"C02", "C03", "C04"}:
             problems.append("invalid checkpoint")
         if not receipt.get("reviewer", "").strip():
             problems.append("missing reviewer")
@@ -317,6 +317,7 @@ def self_test(found, rows, baseline):
         return check(declarations, classified, receipt_rows, set(), mappings,
                      retirements=receipts)
     assert not receipt_check([receipt]), "reviewed retirement failed"
+    assert not receipt_check([dict(receipt, checkpoint="C04")]), "C04 retirement failed"
     assert retired_row["delete"] == "keep", "receipt rewrote baseline stage"
     for changed in (dict(receipt, key="unknown"), dict(receipt, checkpoint="R3b"),
                     dict(receipt, replacement="absent"), dict(receipt, replacement=old),
@@ -337,6 +338,17 @@ def self_test(found, rows, baseline):
         {target["key"]: "pub value: Predicate"}, [retired_row, sealed], receipt_rows,
         {"R2"}, [mapping], retirements=[receipt]))
     print("self-test: checkpoint receipts preserve fail-closed ownership checks", file=sys.stderr)
+    fixture = "tools/value-algebra-inventory/fixtures/context-admission.rs"
+    admitted = candidates(fixture)
+    expected = {f"field:{fixture}:IrAnalysisDb.receiver_calls",
+                f"field:{fixture}:BorrowedContext.database",
+                f"field:{fixture}:BorrowedContext.namespace", f"fn:{fixture}:helper"}
+    assert set(admitted) == expected, f"stable context/executor admission differs: {sorted(admitted)}"
+    context_rows = [dict.fromkeys(COLUMNS, "") | {"key": key, "class": "D"} for key in expected]
+    assert not check(admitted, context_rows, context_rows, set(), []), "context fixture failed"
+    assert any("unclassified candidate" in e for e in check(admitted, [], [], set(), []))
+    print("self-test: syntax cache, context, namespace and helper execution stay inventoried", file=sys.stderr)
+
 
 
 

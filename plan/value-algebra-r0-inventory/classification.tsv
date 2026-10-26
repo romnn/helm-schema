@@ -33,6 +33,7 @@ field:analysis_db.rs:IrAnalysisDb.chart_default_strings	X	policy	-	keep		rework2
 field:analysis_db.rs:IrAnalysisDb.custom_merge_helpers	K	helper-shape recognizer result	executed body (if reproduced)	R3b		rework2	
 field:analysis_db.rs:IrAnalysisDb.helper_seen_footprints	K	recursion footprints	-	keep		rework2	
 field:analysis_db.rs:IrAnalysisDb.nil_scrub_helpers	K	helper-shape recognizer result	executed body (if reproduced)	R3b		rework2	
+field:analysis_db.rs:IrAnalysisDb.receiver_calls	K	structural receiver callable syntax cache including negative entries	analysis-scoped AST plans only; no runtime value or effect replay	keep		C04a source-owner reconciliation, 2026-10-26	
 field:analysis_db.rs:IrAnalysisDb.static_root_fields	S	initial root fields	heap initialization	R3b		rework2	
 field:analysis_db.rs:ParsedDefinesInner.define_bodies	X	parse cache	-	keep		rework2	
 field:analysis_db.rs:ParsedDefinesInner.define_names	X	parse cache	-	keep		rework2	
@@ -304,6 +305,7 @@ field:observed_facts.rs:ObservedFacts.values_root_overlays	X	phase artifact	-	ke
 field:observed_facts.rs:ValuesRootOverlay.source_path	X	phase artifact	-	keep		rework2	
 field:observed_facts.rs:ValuesRootOverlay.target_path	X	phase artifact	-	keep		rework2	
 field:range_modes.rs:RangeModes.modes	G	range modes	frozen guard context	keep		rework2	
+field:resource_identity.rs:HeaderParts.branches	D	executed helper branch views used for resource header placement	resource identity consumer; retained C06 placement precision obligations	keep		C04a source-owner reconciliation, 2026-10-26	
 field:resource_identity.rs:HelperOutputEvaluator.seen	E	apiVersion helper-output evaluator	consume evaluator output	R3b		rework2	
 field:resource_identity.rs:IdentitySource.db	X	db handle	-	keep		rework3	
 field:resource_identity.rs:IdentitySource.execution	D	borrowed phase projection IdentitySource.execution	pure projection of DocumentExecution	keep		R3b construction root audit, 2026-10-26	
@@ -370,6 +372,7 @@ field:value/guard.rs:Projection.necessary	D	derived runtime query/transfer/join 
 field:value/guard.rs:Projection.sufficient	D	derived runtime query/transfer/join plan Projection.sufficient	per-call plan derived from canonical values and guards	keep		R3b construction root audit, 2026-10-26	
 field:value/heap.rs:InputPair.no	K	runtime identity/interner/reconvergence key or cache InputPair.no	arena-scoped canonical identity/cache, no independent semantic evaluation	keep		R3b construction root audit, 2026-10-26	
 field:value/heap.rs:InputPair.yes	K	runtime identity/interner/reconvergence key or cache InputPair.yes	arena-scoped canonical identity/cache, no independent semantic evaluation	keep		R3b construction root audit, 2026-10-26	
+field:value/helpers.rs:HelperBranch.state	V	one helper execution alternative carrying canonical State	sole runtime State with shared heap and namespace; no parallel evaluator	keep		C04a source-owner reconciliation, 2026-10-26	
 field:value/invoke.rs:ArgumentAssembly.exits	V	canonical runtime value/control owner ArgumentAssembly.exits	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
 field:value/invoke.rs:ArgumentAssembly.next	V	canonical runtime value/control owner ArgumentAssembly.next	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
 field:value/invoke.rs:Assembled.pipe	V	canonical runtime value/control owner Assembled.pipe	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
@@ -425,9 +428,11 @@ field:value/mod.rs:FrozenValue.value	S	pinned heap snapshot FrozenValue.value	im
 field:value/mod.rs:Heap.arena	V	canonical runtime value/control owner Heap.arena	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
 field:value/mod.rs:Heap.version	V	canonical runtime value/control owner Heap.version	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
 field:value/mod.rs:HeapVersion.pages	V	canonical runtime value/control owner HeapVersion.pages	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:HelperReturn.namespace	V	caller namespace restored after helper or tpl execution	canonical namespace handle in the existing helper return frame	keep		C04a source-owner reconciliation, 2026-10-26	
 field:value/mod.rs:HelperReturn.output	V	canonical runtime value/control owner HelperReturn.output	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
 field:value/mod.rs:InputBacking.map_type	V	canonical runtime value/control owner InputBacking.map_type	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
 field:value/mod.rs:InterfaceSequence.storage	V	canonical runtime value/control owner InterfaceSequence.storage	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:Invocation.callee	V	typed function or receiver method call target	single invocation boundary; receiver remains canonical Value	keep		C04a source-owner reconciliation, 2026-10-26	
 field:value/mod.rs:Invocation.operands	V	canonical runtime value/control owner Invocation.operands	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
 field:value/mod.rs:Leaf.datum	V	canonical runtime value/control owner Leaf.datum	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
 field:value/mod.rs:Leaf.origin	V	canonical runtime value/control owner Leaf.origin	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
@@ -478,6 +483,7 @@ field:value/mod.rs:State.frames	V	canonical runtime value/control owner State.fr
 field:value/mod.rs:State.heap	V	canonical runtime value/control owner State.heap	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
 field:value/mod.rs:State.invocation_count	V	canonical runtime value/control owner State.invocation_count	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
 field:value/mod.rs:State.invocations	V	canonical runtime value/control owner State.invocations	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/mod.rs:State.namespace	V	active runtime definition namespace	canonical persistent parsed-program bindings	keep		C04a source-owner reconciliation, 2026-10-26	
 field:value/mod.rs:State.observation_count	V	canonical runtime value/control owner State.observation_count	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
 field:value/mod.rs:State.output	O	executed observation State.output	in-walk immutable read/text/site observations	keep		R3b construction root audit, 2026-10-26	
 field:value/mod.rs:State.reads	O	executed observation State.reads	in-walk immutable read/text/site observations	keep		R3b construction root audit, 2026-10-26	
@@ -491,6 +497,9 @@ field:value/mod.rs:UnknownValue.types	V	canonical runtime value/control owner Un
 field:value/mod.rs:Value.node	V	canonical runtime value/control owner Value.node	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
 field:value/mod.rs:ValueAlternative.condition	G	guard context ValueAlternative.condition	canonical correlated runtime guard DAG	keep		R3b construction root audit, 2026-10-26	
 field:value/mod.rs:ValueAlternative.value	V	canonical runtime value/control owner ValueAlternative.value	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/namespace.rs:Namespace.definitions	V	sole parsed program binding table for active definitions	runtime namespace resolves helper and tpl programs; no mirrored body map	keep		C04a source-owner reconciliation, 2026-10-26	
+field:value/namespace.rs:NamespaceBuild.namespace	V	namespace produced by source parse roster	same immutable runtime namespace installed into State	keep		C04a source-owner reconciliation, 2026-10-26	
+field:value/namespace.rs:TemplateLookup.state	V	lookup alternative carrying canonical execution State	existing runtime branch and namespace resolution	keep		C04a source-owner reconciliation, 2026-10-26	
 field:value/operations.rs:MapFields.fields	D	derived runtime query/transfer/join plan MapFields.fields	per-call plan derived from canonical values and guards	keep		R3b construction root audit, 2026-10-26	
 field:value/operations.rs:TransferInput.arguments	V	canonical runtime value/control owner TransferInput.arguments	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
 field:value/operations.rs:TransferInput.first	V	canonical runtime value/control owner TransferInput.first	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
@@ -515,11 +524,13 @@ field:value/output.rs:TextQuery.widening_domains	V	canonical runtime value/contr
 field:value/output.rs:TextRetention.buffers	V	canonical runtime value/control owner TextRetention.buffers	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
 field:value/output_layout.rs:SkeletonQuery.condition	G	guard context SkeletonQuery.condition	canonical correlated runtime guard DAG	keep		R3b construction root audit, 2026-10-26	
 field:value/output_layout.rs:SkeletonQuery.target	V	canonical runtime value/control owner SkeletonQuery.target	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/query.rs:TruthBudget.unknown	V	fresh hidden truth-query fallback decision	single runtime query; shared only across mutually exclusive cases of one invocation operand	keep		C04a scoped choice ownership, 2026-10-26	
 field:value/read_set.rs:Node.entry	V	canonical runtime value/control owner Node.entry	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
 field:value/read_set.rs:Node.left	V	canonical runtime value/control owner Node.left	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
 field:value/read_set.rs:Node.right	V	canonical runtime value/control owner Node.right	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
 field:value/read_set.rs:ReadIter.pending	D	derived runtime query/transfer/join plan ReadIter.pending	per-call plan derived from canonical values and guards	keep		R3b construction root audit, 2026-10-26	
 field:value/read_set.rs:ReadSet.root	V	canonical runtime value/control owner ReadSet.root	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/session.rs:FileExecution.exits	O	completed exits of the single file execution owner	same-execution sealed observations projected directly per file	keep		C04a source-owner reconciliation, 2026-10-26	
 field:value/session.rs:Piece.site	V	canonical runtime value/control owner Piece.site	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
 field:value/state.rs:ContinuationJoin.active	D	derived runtime query/transfer/join plan ContinuationJoin.active	per-call plan derived from canonical values and guards	keep		R3b construction root audit, 2026-10-26	
 field:value/state.rs:ContinuationJoin.decision	D	derived runtime query/transfer/join plan ContinuationJoin.decision	per-call plan derived from canonical values and guards	keep		R3b construction root audit, 2026-10-26	
@@ -635,6 +646,8 @@ fn:value_path_context/condition_predicate.rs:truthy_predicate	E	condition re-eva
 fn:value_path_context/condition_predicate.rs:type_descriptor_subject_sources	E	condition re-evaluation	consume hole EvalResult where env/resolver identical, else R3b	R3b		R3a type audit: descriptor result does not retain its subject EvalResult; fallback evaluates the subject with NoHelperCallResolver after assignment mutation handling in the condition context, whereas the hole evaluates the enclosing descriptor with bound helpers; preserve ordered or-source attribution and defer to R3b	
 fn:value_path_context/condition_predicate.rs:type_is_predicate	E	condition re-evaluation	consume hole EvalResult where env/resolver identical, else R3b	R3b		R3a type audit: evaluates the subject operand with NoHelperCallResolver in the condition context, while the hole retains the enclosing type-test result under bound helpers and possibly a different dot/refinement; legacy int64/float64 abstention awaits R2 C compatibility view; defer to R3b	
 fn:value_path_context/path_resolution.rs:resolved_values_paths_from_expr	E	paths re-derived by evaluation	V provenance	R3b		rework3	
+needle:analysis_db.rs:pub(crate) struct ParsedProgram {	X	stable parsed program body and source provenance	syntax-only source identity; no output or heap cache	keep		C04a source-owner reconciliation, 2026-10-26	
+needle:analysis_db.rs:struct ProgramCatalog {	X	interned parse-only source and program catalog	one syntax owner; runtime namespace resolves parsed program bindings	keep		C04a source-owner reconciliation, 2026-10-26	
 needle:eval_env.rs:pub(crate) fn apply_local_set_mutations(	E	mutation replay	H write	R3b		rework2	
 needle:expr_call_eval/comparisons.rs:// Literal and intrinsic return types survive preceding argument mutations.	E	syntactic ternary kind list	exact runtime query in the coupled value interpreter	R3b		R2 foundation scope: family and compatibility cut-over deferred to R3b	
 needle:expr_call_eval/mod.rs:"required" if matches!(args, [_, _]) => {	E	negated-truth required arm	required_subject over kinds	R3b		R2 reviewed design: required subject and negated truth deferred whole	
@@ -665,6 +678,8 @@ needle:value/operations.rs:pub(super) fn transfer(	V	typed consumed operand tran
 needle:value/output.rs:pub(super) fn emit(&mut self, value: FrozenValue)	V	frozen value output recorder	canonical runtime	keep		R3b construction root audit, 2026-10-26	
 needle:value/query.rs:pub(super) fn selector_field(	V	runtime selector transfer	canonical runtime	keep		R3b construction root audit, 2026-10-26	
 needle:value/query.rs:pub(super) fn test(	V	runtime truth test projection	canonical runtime	keep		R3b construction root audit, 2026-10-26	
+needle:value/session.rs:fn initial_state(	V	canonical single-source root heap construction	live root State replaces separate static root-field mirror	keep		C04a source-owner reconciliation, 2026-10-26	
+needle:value/session.rs:struct ExecutedProgram {	O	program and occurrence attribution for completed file execution	one file runner seals existing DocumentExecution into pure projection	keep		C04a source-owner reconciliation, 2026-10-26	
 needle:value_path_context/path_resolution.rs:pub(crate) fn paths_for_expr(&self, expr: &TemplateExpr) -> BTreeSet<String> {	E	paths re-derived by evaluation	V provenance	R3b		rework2	
 variant:abstract_value.rs:AbstractValue::Choice	R	runtime-shaped value variant	H object / V sequence / guarded alternatives	R3b		rework2	
 variant:abstract_value.rs:AbstractValue::DerivedBoolean	R	path/scalar value variant	V leaf + provenance	R3b		rework2	
@@ -746,6 +761,7 @@ variant:value/kinds.rs:LegacyTypeView::Alternatives	R	legacy fragment alternativ
 variant:value/kinds.rs:LegacyTypeView::FirstTruthy	R	legacy fragment selection	exact runtime query in the coupled value interpreter	R3b		R2 foundation scope: family and compatibility cut-over deferred to R3b	
 variant:value/kinds.rs:LegacyTypeView::Identity	D	canonical type/content leaf or borrowed compatibility view	exact runtime query in the coupled value interpreter	R3b		R2 foundation scope: family and compatibility cut-over deferred to R3b	
 variant:value/kinds.rs:LegacyTypeView::JsonDecoded	R	legacy decoded fragment projection	exact runtime query in the coupled value interpreter	R3b		R2 foundation scope: family and compatibility cut-over deferred to R3b	
+variant:value/mod.rs:Callee::Method	R	receiver Value and typed minimal Values method descriptor	single invocation representation; Files and Capabilities precision deferred	keep		C04a source-owner reconciliation, 2026-10-26	
 variant:value/mod.rs:CompletionInput::Executed	R	representation of CompletionInput::Executed	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
 variant:value/mod.rs:CompletionInput::Invocation	R	representation of CompletionInput::Invocation	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
 variant:value/mod.rs:CompletionInput::Summarized	R	representation of CompletionInput::Summarized	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	

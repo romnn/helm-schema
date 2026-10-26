@@ -2,7 +2,7 @@ use std::collections::BTreeSet;
 use std::fmt::Write as _;
 
 use crate::analysis_db::IrAnalysisDb;
-use crate::value::execute_document;
+use crate::value::{DocumentExecution, execute_document};
 use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_ast::DefineIndex;
 use helm_schema_core::Predicate;
@@ -31,6 +31,26 @@ fn texts(source: &str) -> Vec<Option<String>> {
         .text()
         .map(|(_, text)| text.exact_text())
         .collect()
+}
+
+pub(crate) fn execute_documents(
+    sources: &[crate::symbolic::SymbolicTemplate<'_>],
+    db: &IrAnalysisDb,
+) -> Vec<DocumentExecution> {
+    let mut documents: Vec<_> = sources
+        .iter()
+        .map(|_| DocumentExecution::new(Vec::new()))
+        .collect();
+    super::session::execute_files(
+        super::session::prepared_sources(sources, db),
+        db,
+        |index, execution| {
+            if let Some(document) = documents.get_mut(index) {
+                *document = DocumentExecution::new(execution.exits);
+            }
+        },
+    );
+    documents
 }
 
 #[test]
@@ -1974,7 +1994,11 @@ mod scheduled_file_occurrence_laws {
                 .decision(predicate.clone(), predicate.negated(), Coverage::Exact);
         let occurrence = crate::value::session::FileOccurrence::new(&state);
         let db = IrAnalysisDb::new(&DefineIndex::new());
-        let syntax = crate::analysis_db::ParsedProgramSyntax::parse("# done");
+        let parsed = db.parsed_source(
+            "# done",
+            Some("chart/templates/a.yaml"),
+            "chart/templates/a.yaml",
+        );
         let mut exits = Vec::new();
         for taken in [true, false] {
             let mut branch = state.fork(Rc::clone(&decision), taken);
@@ -1983,7 +2007,7 @@ mod scheduled_file_occurrence_laws {
             exits.extend(crate::value::eval::Executor { db: &db }.parsed_file_body(
                 "# done",
                 Some("chart/templates/a.yaml"),
-                syntax.as_ref(),
+                parsed.root.syntax(),
                 branch,
                 &occurrence,
             ));
@@ -3290,3 +3314,132 @@ mod comparisons;
 
 #[path = "runtime_join_maps.rs"]
 mod join_map_laws;
+
+#[test]
+fn selected_root_body_keeps_defining_source_offsets_and_resource_identity() -> eyre::Result<()> {
+    use crate::symbolic::{SymbolicIrContext, SymbolicTemplate};
+    use helm_schema_core::{ContractProvenance, ResourceRef, SourceSpan, ValuesPath};
+
+    let defining_path = "chart/templates/a.tpl";
+    let scheduled_path = "chart/templates/z.yaml";
+    let source = indoc::indoc! {r#"
+        {{- define "chart/templates/z.yaml" -}}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: selected
+        data:
+          payload: {{ .Values.payload }}
+        {{- end -}}
+    "#};
+    let expression = "{{ .Values.payload }}";
+    let start = source
+        .find(expression)
+        .ok_or_eyre("payload expression missing")?;
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(defining_path, source);
+    let db = IrAnalysisDb::new(&defines);
+    let defining = db.parsed_source(source, Some(defining_path), defining_path);
+    let body = defining
+        .declarations
+        .iter()
+        .find(|definition| definition.name == scheduled_path)
+        .ok_or_eyre("named body program missing")?;
+    assert!(body.program.body_offset() > 0);
+    sim_assert_eq!(have: body.program.source_path(), want: Some(defining_path));
+    sim_assert_eq!(
+        have: body.program.source().find(expression).map(|offset| offset + body.program.body_offset()),
+        want: Some(start)
+    );
+
+    let context = SymbolicIrContext::new(&defines);
+    let mut batch = context.generate_contract_irs_for_sources(&[SymbolicTemplate {
+        source: "not selected",
+        source_path: scheduled_path,
+    }]);
+    sim_assert_eq!(have: batch.len(), want: 1);
+    let batch = batch
+        .pop()
+        .ok_or_eyre("scheduled source contract missing")?;
+    let single = context.generate_contract_ir_for_source("not selected", scheduled_path);
+    for contract in [batch, single] {
+        let finalized = contract.finalize();
+        let uses: Vec<_> = finalized
+            .uses()
+            .iter()
+            .filter(|use_| {
+                use_.source_expr == ValuesPath::parse("payload") && use_.resource.is_some()
+            })
+            .collect();
+        assert!(!uses.is_empty(), "{:#?}", finalized.uses());
+        let resource = ResourceRef::concrete("v1".to_string(), "ConfigMap".to_string());
+        for use_ in &uses {
+            sim_assert_eq!(have: use_.resource.as_ref(), want: Some(&resource));
+        }
+        let provenance: BTreeSet<_> = uses
+            .iter()
+            .flat_map(|use_| use_.provenance.iter().cloned())
+            .collect();
+        sim_assert_eq!(have: provenance, want: BTreeSet::from([ContractProvenance::new(
+            defining_path,
+            SourceSpan::new(start, start + expression.len()),
+            Vec::new(),
+        )]));
+    }
+    Ok(())
+}
+
+#[test]
+fn sealed_projection_releases_observation_snapshots_before_the_next_file() -> eyre::Result<()> {
+    use std::rc::{Rc, Weak};
+
+    let db = IrAnalysisDb::new(&DefineIndex::new());
+    let sources = vec![
+        db.parsed_source(
+            "later",
+            Some("chart/templates/a.txt"),
+            "chart/templates/a.txt",
+        ),
+        db.parsed_source(
+            r#"{{ $m := dict "key" "old" }}{{ $m }}{{ $_ := set $m "key" "new" }}"#,
+            Some("chart/templates/z.txt"),
+            "chart/templates/z.txt",
+        ),
+    ];
+    let mut previous: Option<Weak<crate::value::HeapVersion>> = None;
+    let mut order = Vec::new();
+    let mut checks = Vec::new();
+    crate::value::project_documents(sources, &db, |index, _, execution| {
+        let check = (|| -> eyre::Result<usize> {
+            order.push(index);
+            match index {
+                1 => {
+                    // The later write separates the frozen emission from the carried live heap.
+                    let site = execution
+                        .sites()
+                        .find(|site| site.value().json() == Some(serde_json::json!({"key": "old"})))
+                        .ok_or_eyre("frozen old map observation missing")?;
+                    let snapshot = Rc::downgrade(&site.value().heap);
+                    assert!(snapshot.upgrade().is_some());
+                    previous = Some(snapshot);
+                }
+                0 => {
+                    // The preceding callback's borrowed document has now been released.
+                    assert!(
+                        previous
+                            .as_ref()
+                            .is_some_and(|snapshot| snapshot.upgrade().is_none())
+                    );
+                }
+                _ => eyre::bail!("unexpected source index {index}"),
+            }
+            Ok(index)
+        })();
+        checks.push(check);
+    });
+    sim_assert_eq!(have: order, want: vec![1, 0]);
+    let mut projected = checks.into_iter().collect::<eyre::Result<Vec<_>>>()?;
+    projected.sort_unstable();
+    sim_assert_eq!(have: projected, want: vec![0, 1]);
+    Ok(())
+}
