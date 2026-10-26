@@ -319,22 +319,69 @@ fn termination(execution: &Execution) -> Result<Termination, String> {
     }
     for (name, run) in &execution.files {
         for document in serde_yaml::Deserializer::from_str(&run.source) {
-            match serde_yaml::Value::deserialize(document) {
-                Ok(serde_yaml::Value::Null | serde_yaml::Value::Mapping(_)) => {}
-                Ok(_) => {
-                    return Err(format!(
-                        "{name}: a document Helm's manifest splitter may refuse"
-                    ));
-                }
-                Err(error) => {
-                    return Err(format!(
-                        "{name}: rendered YAML parity is unverified: {error}"
-                    ));
-                }
+            let document = serde_yaml::Value::deserialize(document)
+                .map_err(|error| format!("{name}: rendered YAML parity is unverified: {error}"))?;
+            if let Some(problem) = helm_header_problem(&document) {
+                return Err(format!("{name}: {problem}"));
             }
         }
     }
     Ok(Termination::Normal)
+}
+
+/// Why Helm 4.2.3's `SimpleHead` decoding of a rendered document is not
+/// proven to succeed: `apiVersion` and `kind` must be unambiguous strings,
+/// `metadata` a mapping whose `name` is a string and whose `annotations`
+/// map strings to strings, and no hook annotation may steer the render.
+/// An empty document is skipped by Helm. `None` when it provably decodes.
+fn helm_header_problem(document: &serde_yaml::Value) -> Option<String> {
+    if serde_json::to_value(document).is_err() {
+        return Some("the rendered document is outside Helm's JSON loader domain".into());
+    }
+    let text = |value: Option<&serde_yaml::Value>, optional: bool| match value {
+        None | Some(serde_yaml::Value::Null) => optional,
+        Some(serde_yaml::Value::String(text)) => !text.is_empty() && !yaml_one_one_ambiguous(text),
+        Some(_) => false,
+    };
+    let header = match document {
+        serde_yaml::Value::Null => return None,
+        serde_yaml::Value::Mapping(header) => header,
+        _ => return Some("a document Helm's manifest head cannot decode".into()),
+    };
+    if !text(header.get("apiVersion"), false) || !text(header.get("kind"), false) {
+        return Some("apiVersion and kind are not proven strings".into());
+    }
+    let metadata = match header.get("metadata") {
+        None | Some(serde_yaml::Value::Null) => return None,
+        Some(serde_yaml::Value::Mapping(metadata)) => metadata,
+        Some(_) => return Some("metadata is not a mapping".into()),
+    };
+    if !text(metadata.get("name"), true) {
+        return Some("metadata.name is not a proven string".into());
+    }
+    match metadata.get("annotations") {
+        None | Some(serde_yaml::Value::Null) => None,
+        Some(serde_yaml::Value::Mapping(annotations)) => {
+            let proven = annotations.iter().all(|(key, value)| {
+                matches!(key, serde_yaml::Value::String(key) if !key.starts_with("helm.sh/hook"))
+                    && text(Some(value), true)
+            });
+            (!proven).then(|| "metadata.annotations are not proven string pairs".into())
+        }
+        Some(_) => Some("metadata.annotations is not a mapping".into()),
+    }
+}
+
+/// Whether the plain spelling `text` may decode to something other than
+/// this string in YAML 1.1.
+fn yaml_one_one_ambiguous(text: &str) -> bool {
+    let lower = text.to_ascii_lowercase();
+    matches!(
+        lower.as_str(),
+        "y" | "yes" | "n" | "no" | "on" | "off" | "true" | "false" | "null" | "~"
+    ) || text
+        .chars()
+        .all(|character| character.is_ascii_digit() || "+-.:_eEoOxX".contains(character))
 }
 
 /// What a selection found once the render's exit is known.
@@ -447,15 +494,7 @@ fn decode_plain_or_quoted(raw: &str) -> Result<serde_yaml::Value, String> {
         return Ok(value);
     }
     let ambiguous = match &value {
-        serde_yaml::Value::String(text) => {
-            let lower = text.to_ascii_lowercase();
-            matches!(
-                lower.as_str(),
-                "y" | "yes" | "n" | "no" | "on" | "off" | "true" | "false" | "null" | "~"
-            ) || text
-                .chars()
-                .all(|character| character.is_ascii_digit() || "+-.:_eEoOxX".contains(character))
-        }
+        serde_yaml::Value::String(text) => yaml_one_one_ambiguous(text),
         serde_yaml::Value::Bool(_) => !matches!(raw, "true" | "false"),
         serde_yaml::Value::Number(_) => {
             let digits = raw.strip_prefix('-').unwrap_or(raw);
@@ -480,7 +519,7 @@ fn decode_plain_or_quoted(raw: &str) -> Result<serde_yaml::Value, String> {
 fn run(files: &[(&str, &str)], query: &Value) -> eyre::Result<ControlResult> {
     let scratch = test_util::scratch::ScratchDir::new("ir-controls")?;
     let mut builder = controls::RegistryBuilder::new(&scratch.path().join("registry"))?;
-    let input = builder.render_input(files, "{}\n", &json!({}))?;
+    let input = builder.render_input(files, "")?;
     let blobs = ControlBlobs::new(scratch.path().join("registry/blobs"));
     let query: Query = serde_json::from_value(query.clone())?;
     Ok(observe(&blobs, &input, &query))
@@ -737,8 +776,9 @@ fn unexecuted_fails_are_not_claimed_aborts() -> eyre::Result<()> {
     Ok(())
 }
 
-/// Charts whose file selection the adapter does not model are gaps even
-/// when every template is static.
+/// A `.helmignore` selects which files Helm loads, which the adapter does
+/// not model, so the chart is a gap even when every template is static.
+/// Subcharts and chart defaults are refused before any runner sees them.
 #[test]
 fn unmodeled_chart_file_selection_is_a_gap() -> eyre::Result<()> {
     let static_map = indoc! {"
@@ -747,27 +787,19 @@ fn unmodeled_chart_file_selection_is_a_gap() -> eyre::Result<()> {
         data:
           a: b
     "};
-    for extra in [
+    let files = [
+        CHART,
+        ("templates/cm.yaml", static_map),
         (".helmignore", "templates/fail.yaml\n"),
-        (
-            "charts/sub/Chart.yaml",
-            indoc! {"
-                apiVersion: v2
-                name: sub
-                version: 0.1.0
-            "},
-        ),
-    ] {
-        let files = [CHART, ("templates/cm.yaml", static_map), extra];
-        let have = run(
-            &files,
-            &json!({"kind": "termination_v1", "scope": "render"}),
-        )?;
-        let ControlResult::AbstractUnknown { reason, .. } = have else {
-            eyre::bail!("{}: expected abstract_unknown, have {have:?}", extra.0);
-        };
-        sim_assert_eq!(have: reason, want: UnknownReason::RepresentationGap);
-    }
+    ];
+    let have = run(
+        &files,
+        &json!({"kind": "termination_v1", "scope": "render"}),
+    )?;
+    let ControlResult::AbstractUnknown { reason, .. } = have else {
+        eyre::bail!("expected abstract_unknown, have {have:?}");
+    };
+    sim_assert_eq!(have: reason, want: UnknownReason::RepresentationGap);
     Ok(())
 }
 
@@ -775,7 +807,7 @@ fn unmodeled_chart_file_selection_is_a_gap() -> eyre::Result<()> {
 /// abort: the adapter must not claim `template_eval`. Helm 4.2.3 reports
 /// `parse error at (c/templates/bad.yaml:1): function "nope" not defined`.
 #[test]
-fn an_unparseable_file_beside_a_fail_is_a_gap() -> eyre::Result<()> {
+fn an_unparsable_file_beside_a_fail_is_a_gap() -> eyre::Result<()> {
     let termination = json!({"kind": "termination_v1", "scope": "render"});
     for other in [
         ("templates/bad.yaml", "{{ nope }}\n"),
@@ -785,6 +817,7 @@ fn an_unparseable_file_beside_a_fail_is_a_gap() -> eyre::Result<()> {
             "{{/* a comment Go accepts but the adapter does not prove */}}\n",
         ),
     ] {
+        let (name, _) = other;
         let files = [
             CHART,
             ("templates/fail.yaml", "{{ fail \"boom\" }}\n"),
@@ -792,7 +825,7 @@ fn an_unparseable_file_beside_a_fail_is_a_gap() -> eyre::Result<()> {
         ];
         let have = run(&files, &termination)?;
         let ControlResult::AbstractUnknown { reason, .. } = have else {
-            eyre::bail!("{}: expected abstract_unknown, have {have:?}", other.0);
+            eyre::bail!("{name}: expected abstract_unknown, have {have:?}");
         };
         sim_assert_eq!(have: reason, want: UnknownReason::RepresentationGap);
     }
@@ -800,9 +833,10 @@ fn an_unparseable_file_beside_a_fail_is_a_gap() -> eyre::Result<()> {
 }
 
 /// A normal exit needs every template file, partials included, to be
-/// provably parseable and every rendered document a mapping: Helm 4.2.3
-/// aborts `list.yaml` with `YAML parse error on c/templates/list.yaml: ...
-/// cannot unmarshal array into Go value of type util.SimpleHead`.
+/// provably parseable and every rendered document's head to decode as
+/// Helm 4.2.3's `SimpleHead`, which aborts `list.yaml` with `YAML parse
+/// error on c/templates/list.yaml: ... cannot unmarshal array into Go value
+/// of type util.SimpleHead` and `meta.yaml` (`metadata: []`) likewise.
 #[test]
 fn normal_needs_whole_chart_proof() -> eyre::Result<()> {
     let termination = json!({"kind": "termination_v1", "scope": "render"});
@@ -825,11 +859,20 @@ fn normal_needs_whole_chart_proof() -> eyre::Result<()> {
             "},
         ),
         ("templates/scalar.yaml", "just text\n"),
+        (
+            "templates/meta.yaml",
+            indoc! {"
+                apiVersion: v1
+                kind: ConfigMap
+                metadata: []
+            "},
+        ),
     ] {
+        let (name, _) = other;
         let files = [CHART, ("templates/cm.yaml", static_map), other];
         let have = run(&files, &termination)?;
         let ControlResult::AbstractUnknown { reason, .. } = have else {
-            eyre::bail!("{}: expected abstract_unknown, have {have:?}", other.0);
+            eyre::bail!("{name}: expected abstract_unknown, have {have:?}");
         };
         sim_assert_eq!(have: reason, want: UnknownReason::RepresentationGap);
     }

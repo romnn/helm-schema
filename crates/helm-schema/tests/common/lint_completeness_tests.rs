@@ -84,6 +84,7 @@ fn external_pair_rejects_stale_chart_context_instead_of_certifying_zero_lint_doc
     let roster = super::lint_probes::ImportedRoster {
         sha256: "roster-control".into(),
         rows: BTreeMap::from([("external".into(), vec![row])]),
+        rebind: false,
     };
     let comparison = external_comparison(screen_external(&chart, Some(&roster))?)?;
     assert!(

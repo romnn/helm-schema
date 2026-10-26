@@ -3,29 +3,27 @@
 //! directory new, and every policy decision is made here, in typed code.
 
 use std::collections::{BTreeMap, BTreeSet};
-use std::io::Write as _;
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
-use super::admission::{self, AdmissionOutcome};
+use super::admission;
 use super::build::dir_sha256;
 use super::capture::{ArtifactPair, DumpPair, VerifiedDump};
 use super::compare::{
-    ConstructionRequest, LedgerRow, OutcomeTable, PriorSets, RegressionKey, SeedReview,
-    construction_policy, keys,
+    ConstructionRequest, LedgerRow, OutcomeTable, PriorSets, SeedReview, construction_policy, keys,
 };
 use super::controls::{
     ControlBlobs, ControlCase, ControlResult, ObservationOutcome, classify_observation,
 };
 use super::history::{
-    Attempt, BlobStore, ControlRecord, FORMAT_VERSION, GateHead, HistoryPlan, Receipt, ReceiptKind,
-    Universe, UniverseState, WitnessMode, WitnessRecord, canonical_json, canonical_sha256,
-    write_new,
+    BlobStore, ControlRecord, FORMAT_VERSION, GateHead, HistoryLock, HistoryPlan, Receipt,
+    ReceiptKind, Universe, UniverseState, WitnessMode, WitnessRecord, canonical_json,
+    canonical_sha256, write_new,
 };
 use super::revision::{
-    Capture, file_sha256, io, json_line, open_capture, replay_observation, write_lines,
+    Capture, file_sha256, io, json_line, open_capture, read_lines, replay_observation, write_lines,
 };
 use super::{
     ArtifactChange, ComparisonRun, DiffError, EquivalenceCertificate, RunOptions, artifact_changes,
@@ -52,8 +50,6 @@ pub enum Verdict {
 pub struct LiveOptions {
     /// The pinned helmsweep; `None` judges with the schemas alone.
     pub helmsweep: Option<PathBuf>,
-    /// The context roster, which must be the one both captures retained.
-    pub contexts: Option<PathBuf>,
     /// The charts to compare; `None` compares every chart.
     pub selection: Option<BTreeSet<String>>,
     /// The run's private scratch directory.
@@ -72,8 +68,8 @@ pub struct Experiment {
     pub provider: String,
     /// helmsweep, the pinned Helm and the Kubernetes release.
     pub helm: String,
-    /// The context roster, when one was retained.
-    pub contexts: Option<String>,
+    /// The reviewed context roster both captures retained.
+    pub contexts: String,
 }
 
 impl Experiment {
@@ -110,7 +106,7 @@ impl Experiment {
 struct LiveInputs {
     helm: Option<&'static HelmRunner>,
     kubernetes: Option<OfflineKubernetesValidator>,
-    contexts: Option<ImportedRoster>,
+    contexts: ImportedRoster,
 }
 
 /// The Helm runner, validator and roster for `options`, each required to be
@@ -118,27 +114,20 @@ struct LiveInputs {
 fn live_inputs(
     options: &LiveOptions,
     charts: &BTreeSet<String>,
+    main: &Capture,
     experiment: &Experiment,
-    helmsweep_sha256: &str,
 ) -> Result<LiveInputs, DiffError> {
-    let contexts_sha256 = options.contexts.as_deref().map(file_sha256).transpose()?;
-    if contexts_sha256 != experiment.contexts {
-        return Err(DiffError::Identity(
-            "--contexts is not the roster both captures retained".into(),
-        ));
-    }
+    let helmsweep_sha256 = &main.manifest.helmsweep_sha256;
     let testdata = test_util::workspace_testdata();
     if dir_sha256(&testdata.join(PROVIDER_BUNDLE))? != experiment.provider {
         return Err(DiffError::Identity(
             "this checkout's provider bundle is not the captured one".into(),
         ));
     }
-    let contexts = options
-        .contexts
-        .as_ref()
-        .map(|path| ImportedRoster::read(path, charts))
-        .transpose()
-        .map_err(|error| DiffError::Request(format!("context roster: {error:#}")))?;
+    // The roster main retained, which open_capture rehashed and both
+    // captures' equal experiments bind.
+    let contexts = ImportedRoster::read_rebinding(&main.root.join("contexts.json"), charts)
+        .map_err(|error| DiffError::Identity(format!("context roster: {error:#}")))?;
     let Some(helmsweep) = &options.helmsweep else {
         return Ok(LiveInputs {
             helm: None,
@@ -146,7 +135,7 @@ fn live_inputs(
             contexts,
         });
     };
-    if file_sha256(helmsweep)? != helmsweep_sha256 {
+    if file_sha256(helmsweep)? != *helmsweep_sha256 {
         return Err(DiffError::Identity(
             "--helmsweep is not the helmsweep both captures pinned".into(),
         ));
@@ -178,8 +167,6 @@ struct Comparison {
     artifacts: Vec<ArtifactPair>,
     /// Witnesses the universe does not hold, schema and observation.
     new_witnesses: Vec<WitnessRecord>,
-    /// Failures after discovery; the caller journals first.
-    failures: Vec<String>,
 }
 
 /// A comparison's observation witnesses.
@@ -223,7 +210,7 @@ fn observation_cases(
             }
             let id = case.witness_id()?;
             if let Some(existing) = cases.get(&id) {
-                if canonical_case(existing)? != canonical_case(case)? {
+                if json_line(existing)? != json_line(case)? {
                     return Err(DiffError::Identity(format!(
                         "control {} redefines observation witness {id}; migrate the history",
                         case.id
@@ -240,12 +227,6 @@ fn observation_cases(
         new,
         grounding_only: grounding_only.len(),
     })
-}
-
-fn canonical_case(case: &ControlCase) -> Result<Vec<u8>, DiffError> {
-    serde_json::to_value(case)
-        .map(|value| canonical_json(&value))
-        .map_err(|error| DiffError::Infrastructure(format!("serialize: {error}")))
 }
 
 /// The persistent record of a scored control, its case and closure stored
@@ -276,7 +257,7 @@ fn observation_record(
         instance: None,
         document: None,
         control: Some(ControlRecord {
-            case_blob: blobs.put(&canonical_case(case)?)?,
+            case_blob: blobs.put(json_line(case)?.as_bytes())?,
             blobs: closure.into_iter().collect(),
         }),
         origins: vec![origin.to_string()],
@@ -286,13 +267,17 @@ fn observation_record(
 
 /// Classifies every observation witness: each capture answers from its own
 /// record when it has one, else its retained runner replays the case.
+///
+/// # Errors
+///
+/// The first control that cannot be answered or classified.
 fn observation_outcomes(
     main: &Capture,
     candidate: &Capture,
     cases: &BTreeMap<String, ControlCase>,
     blobs: &BlobStore,
     scratch: &Path,
-) -> (Vec<ObservationOutcome>, Vec<String>) {
+) -> Result<Vec<ObservationOutcome>, DiffError> {
     let source = ControlBlobs::store(blobs.root());
     let answer = |capture: &Capture, id: &str, case: &ControlCase, run: PathBuf| match capture
         .controls
@@ -305,7 +290,6 @@ fn observation_outcomes(
         }
     };
     let mut outcomes = Vec::new();
-    let mut failures = Vec::new();
     for (index, (id, case)) in cases.iter().enumerate() {
         let answers: Result<(ControlResult, ControlResult), DiffError> =
             answer(main, id, case, scratch.join(format!("main-{index:04}"))).and_then(|left| {
@@ -317,13 +301,13 @@ fn observation_outcomes(
                 )
                 .map(|right| (left, right))
             });
-        match answers.and_then(|(left, right)| classify_observation(case, &left, &right)) {
-            Ok(outcome) => outcomes.push(outcome),
-            Err(error) => failures.push(format!("control {}: {error}", case.id)),
-        }
+        let outcome = answers
+            .and_then(|(left, right)| classify_observation(case, &left, &right))
+            .map_err(|error| DiffError::Infrastructure(format!("control {}: {error}", case.id)))?;
+        outcomes.push(outcome);
     }
     outcomes.sort_by(|left, right| left.witness.cmp(&right.witness));
-    (outcomes, failures)
+    Ok(outcomes)
 }
 
 /// The contract-document pairs of two captures.
@@ -388,12 +372,7 @@ fn compare_captures(
         helm,
         kubernetes,
         contexts,
-    } = live_inputs(
-        options,
-        &labels,
-        &experiment,
-        &main.manifest.helmsweep_sha256,
-    )?;
+    } = live_inputs(options, &labels, main, &experiment)?;
     let ObservationCases {
         cases,
         new: observed_new,
@@ -405,7 +384,7 @@ fn compare_captures(
         blobs,
         RunOptions {
             kubernetes,
-            contexts,
+            contexts: Some(contexts),
             pool: PoolLimits::from_env()
                 .map_err(|error| DiffError::Request(format!("pool limits: {error:#}")))?,
             selection: options.selection.clone(),
@@ -413,13 +392,13 @@ fn compare_captures(
             helm,
         },
     )?;
-    let (observations, observation_failures) = observation_outcomes(
+    let observations = observation_outcomes(
         main,
         candidate,
         &cases,
         blobs,
         &options.scratch.join("observations"),
-    );
+    )?;
     if let Some(coverage) = run.coverage.as_object_mut() {
         coverage.insert(
             "observations".into(),
@@ -429,8 +408,6 @@ fn compare_captures(
     }
     run.table.observations = observations;
     run.table.admissions = admissions;
-    let mut failures = std::mem::take(&mut run.failures);
-    failures.extend(observation_failures);
     let mut new_witnesses = std::mem::take(&mut run.new_witnesses);
     new_witnesses.extend(observed_new);
     let mut artifacts = pair.artifacts();
@@ -439,7 +416,6 @@ fn compare_captures(
         run,
         artifacts,
         new_witnesses,
-        failures,
     })
 }
 
@@ -494,16 +470,19 @@ struct Tables {
 /// receipt depends on swept scratch.
 fn retain_evidence(out: &Path, table: &mut OutcomeTable) -> Result<(), DiffError> {
     for outcome in &mut table.outcomes {
-        let Some(detail) = &outcome.detail else {
+        let Some(evidence) = &outcome.evidence else {
             continue;
         };
-        let source = PathBuf::from(detail);
-        if !source.is_absolute() || !source.is_dir() {
-            continue;
+        let source = PathBuf::from(evidence);
+        if !source.is_dir() {
+            return Err(DiffError::Infrastructure(format!(
+                "{}: its evidence {evidence} is gone",
+                outcome.witness
+            )));
         }
         let relative = format!("evidence/{}", outcome.witness);
         copy_tree(&source, &out.join(&relative))?;
-        outcome.detail = Some(relative);
+        outcome.evidence = Some(relative);
     }
     Ok(())
 }
@@ -531,17 +510,7 @@ struct PayloadIndex {
     /// [`FORMAT_VERSION`].
     format_version: u32,
     /// The files, sorted by path.
-    files: Vec<PayloadFile>,
-}
-
-/// One published file.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct PayloadFile {
-    /// Its path relative to the payload, `/`-separated.
-    path: String,
-    /// SHA-256 of its bytes.
-    sha256: String,
+    files: BTreeMap<String, String>,
 }
 
 /// Parses a payload index, refusing another format or an escaping path.
@@ -551,8 +520,8 @@ fn read_payload(bytes: &[u8]) -> Result<PayloadIndex, DiffError> {
     if index.format_version != FORMAT_VERSION
         || index
             .files
-            .iter()
-            .any(|file| !super::controls::is_normal_relative(&file.path))
+            .keys()
+            .any(|path| !super::controls::is_normal_relative(path))
     {
         return Err(DiffError::Identity("payload.json is malformed".into()));
     }
@@ -561,7 +530,7 @@ fn read_payload(bytes: &[u8]) -> Result<PayloadIndex, DiffError> {
 
 /// Writes the payload index of every file under `out` except `scratch/`.
 fn write_payload(out: &Path) -> Result<String, DiffError> {
-    let mut files = Vec::new();
+    let mut files = BTreeMap::new();
     let mut pending = vec![out.to_path_buf()];
     while let Some(dir) = pending.pop() {
         for entry in std::fs::read_dir(&dir).map_err(|error| io(&dir, &error))? {
@@ -577,14 +546,10 @@ fn write_payload(out: &Path) -> Result<String, DiffError> {
             if path.is_dir() {
                 pending.push(path);
             } else {
-                files.push(PayloadFile {
-                    sha256: file_sha256(&path)?,
-                    path: relative,
-                });
+                files.insert(relative, file_sha256(&path)?);
             }
         }
     }
-    files.sort_by(|left, right| left.path.cmp(&right.path));
     let index = serde_json::to_value(PayloadIndex {
         format_version: FORMAT_VERSION,
         files,
@@ -643,7 +608,6 @@ fn write_tables(
     let mut coverage = run.coverage.clone();
     if let Some(members) = coverage.as_object_mut() {
         members.insert("artifact_changes".into(), json!(changes.len()));
-        members.insert("failures".into(), json!(comparison.failures));
     }
     let coverage = serde_json::to_vec_pretty(&coverage)
         .map_err(|error| DiffError::Infrastructure(format!("serialize: {error}")))?;
@@ -653,12 +617,6 @@ fn write_tables(
         hashes,
         payload_sha256: String::new(),
     })
-}
-
-/// Seals the payload of `out` after every file is written.
-fn seal_payload(out: &Path, tables: &mut Tables) -> Result<(), DiffError> {
-    tables.payload_sha256 = write_payload(out)?;
-    Ok(())
 }
 
 /// Problems with changed artifacts no certificate accounts for.
@@ -680,12 +638,6 @@ fn unadjudicated_changes(changes: &[ArtifactChange]) -> Vec<String> {
 /// One canonical JSON line per item, serialized one at a time.
 fn jsonl<T: Serialize>(items: impl IntoIterator<Item = T>) -> Result<Vec<String>, DiffError> {
     items.into_iter().map(|item| json_line(&item)).collect()
-}
-
-/// Reports infrastructure `problems` (exit code 3) and fails with them.
-fn infrastructure(out: &Path, problems: &[String]) -> Result<Verdict, DiffError> {
-    write_report(out, 3, problems)?;
-    Err(DiffError::Infrastructure(problems.join("; ")))
 }
 
 fn write_report(out: &Path, exit_code: u8, problems: &[String]) -> Result<(), DiffError> {
@@ -739,7 +691,6 @@ pub fn self_test(
     if comparison.run.witness_count == 0 || comparison.run.table.observations.is_empty() {
         problems.push("vacuous: no schema witness or observation was judged".to_string());
     }
-    problems.extend(comparison.failures.iter().cloned());
     let report = json!({
         "mode": "self-test",
         "main": main.hash, "candidate": candidate.hash,
@@ -753,9 +704,6 @@ pub fn self_test(
     let bytes = serde_json::to_vec_pretty(&report)
         .map_err(|error| DiffError::Infrastructure(format!("serialize: {error}")))?;
     write_new(&out.join("report.json"), &bytes)?;
-    if !comparison.failures.is_empty() {
-        return Err(DiffError::Infrastructure(comparison.failures.join("; ")));
-    }
     Ok(if problems.is_empty() {
         Verdict::Pass
     } else {
@@ -782,24 +730,13 @@ impl History {
         Ok((HistoryPlan::read(&path)?, file_sha256(&path)?))
     }
 
-    fn gate_head(&self) -> Result<GateHead, DiffError> {
-        let path = self.root.join("gate-head.json");
-        let bytes = std::fs::read(&path).map_err(|error| io(&path, &error))?;
-        serde_json::from_slice(&bytes)
-            .map_err(|error| DiffError::Identity(format!("{}: {error}", path.display())))
-    }
-
-    fn tables_dir(&self, seal: &str) -> PathBuf {
-        self.root.join("tables").join(seal)
-    }
-
-    fn payload_dir(&self, payload: &str) -> PathBuf {
-        self.root.join("payloads").join(payload)
+    fn transaction(&self, seal: &str) -> PathBuf {
+        self.root.join("transactions").join(seal)
     }
 
     /// The prior sets a trusted receipt recorded, rehashed against it.
     fn prior_sets(&self, receipt: &Receipt) -> Result<PriorSets, DiffError> {
-        let path = self.tables_dir(&receipt.seal_sha256).join("sets.json");
+        let path = self.transaction(&receipt.seal_sha256).join("sets.json");
         let bytes = std::fs::read(&path).map_err(|error| io(&path, &error))?;
         let sets: PriorSets = serde_json::from_slice(&bytes)
             .map_err(|error| DiffError::Identity(format!("{}: {error}", path.display())))?;
@@ -815,65 +752,50 @@ impl History {
         Ok(sets)
     }
 
-    /// Publishes `receipt`, its sets, its payload copied from `out` and its
-    /// capture under the history.
+    /// Writes and verifies a whole transaction before making its head visible.
     fn publish(
         &self,
+        lock: &HistoryLock,
+        universe: &UniverseState,
         receipt: &Receipt,
         sets: &PriorSets,
         out: &Path,
         capture: Option<&Capture>,
-    ) -> Result<PathBuf, DiffError> {
-        let tables = self.tables_dir(&receipt.seal_sha256);
-        let bytes = serde_json::to_vec_pretty(sets)
+    ) -> Result<(), DiffError> {
+        let parent = self.root.join("transactions");
+        std::fs::create_dir_all(&parent).map_err(|error| io(&parent, &error))?;
+        let staging = tempfile::tempdir_in(&parent).map_err(|error| io(&parent, &error))?;
+        let bytes = serde_json::to_vec(sets)
             .map_err(|error| DiffError::Infrastructure(format!("serialize: {error}")))?;
-        write_new(&tables.join("sets.json"), &bytes)?;
-        let payload = self.payload_dir(&receipt.payload_index_sha256);
-        if !payload.exists() {
-            copy_payload(out, &payload)?;
-        }
-        let path = self.root.join("receipts").join(format!(
-            "{:02}-{:?}-{}.json",
-            receipt.checkpoint_ordinal, receipt.kind, receipt.seal_sha256
-        ));
-        receipt.write(&path)?;
+        write_new(&staging.path().join("sets.json"), &bytes)?;
+        let payload = staging.path().join("payload");
+        copy_payload(out, &payload)?;
+        rehash_payload(&payload, &receipt.payload_index_sha256)?;
+        receipt.write(&staging.path().join("receipt.json"))?;
         if let Some(capture) = capture {
-            let line = json_line(&json!({
-                "ordinal": receipt.checkpoint_ordinal,
-                "capture_hash": capture.hash,
-                "path": capture.root,
-                "receipt": receipt.seal_sha256,
-            }))?;
-            let registry = self.root.join("captures.jsonl");
-            let mut file = std::fs::OpenOptions::new()
-                .create(true)
-                .append(true)
-                .open(&registry)
-                .map_err(|error| io(&registry, &error))?;
-            writeln!(file, "{line}").map_err(|error| io(&registry, &error))?;
+            write_new(
+                &staging.path().join("capture.json"),
+                &serde_json::to_vec(&capture.root)
+                    .map_err(|error| DiffError::Infrastructure(format!("serialize: {error}")))?,
+            )?;
         }
-        Ok(path)
-    }
-
-    /// Advances the trusted gate head to `receipt` at `path`.
-    fn advance(&self, receipt: &Receipt, path: &Path) -> Result<(), DiffError> {
-        let head = GateHead {
-            format_version: FORMAT_VERSION,
-            seal_sha256: receipt.seal_sha256.clone(),
-            receipt: path
-                .strip_prefix(&self.root)
-                .unwrap_or(path)
-                .to_string_lossy()
-                .into_owned(),
-        };
-        let bytes = serde_json::to_vec_pretty(&head)
-            .map_err(|error| DiffError::Infrastructure(format!("serialize: {error}")))?;
-        let next = self
-            .root
-            .join(format!("gate-head.{}.json", receipt.seal_sha256));
-        write_new(&next, &bytes)?;
-        std::fs::rename(&next, self.root.join("gate-head.json"))
-            .map_err(|error| io(&self.root, &error))
+        let target = self.transaction(&receipt.seal_sha256);
+        if target.exists() {
+            return Err(DiffError::Identity(format!(
+                "transaction {} already exists",
+                receipt.seal_sha256
+            )));
+        }
+        std::fs::rename(staging.path(), &target).map_err(|error| io(&target, &error))?;
+        self.universe.publish(
+            lock,
+            universe,
+            Some(GateHead {
+                format_version: FORMAT_VERSION,
+                seal_sha256: receipt.seal_sha256.clone(),
+                receipt: format!("transactions/{}/receipt.json", receipt.seal_sha256),
+            }),
+        )
     }
 }
 
@@ -881,9 +803,9 @@ impl History {
 fn copy_payload(out: &Path, target: &Path) -> Result<(), DiffError> {
     let index = std::fs::read(out.join("payload.json")).map_err(|error| io(out, &error))?;
     write_new(&target.join("payload.json"), &index)?;
-    for file in read_payload(&index)?.files {
-        let bytes = std::fs::read(out.join(&file.path)).map_err(|error| io(out, &error))?;
-        write_new(&target.join(&file.path), &bytes)?;
+    for path in read_payload(&index)?.files.keys() {
+        let bytes = std::fs::read(out.join(path)).map_err(|error| io(out, &error))?;
+        write_new(&target.join(path), &bytes)?;
     }
     Ok(())
 }
@@ -966,7 +888,7 @@ fn receipt(
         universe_parent_hash: predecessor.map(|receipt| receipt.universe_hash.clone()),
         universe_hash: universe.hash()?,
         universe_journal_head_sha256: universe.head.clone(),
-        witness_batch_hashes: universe.batch_hashes(),
+        witness_batch_hashes: universe.batches.clone(),
         artifact_manifest_hashes: [Some(*main), *candidate]
             .into_iter()
             .flatten()
@@ -990,26 +912,13 @@ fn receipt(
     .seal()
 }
 
-/// Journals `witnesses` as one batch; returns its hash when it grew.
-fn journal(
+/// Stages completed discoveries without publishing any history state.
+fn stage_witnesses(
     history: &History,
     witnesses: Vec<WitnessRecord>,
-    capture: &Capture,
-    reason: &str,
 ) -> Result<(UniverseState, Option<String>), DiffError> {
-    let lock = history.universe.lock()?;
     let mut universe = history.universe.load()?;
-    let grown = history.universe.append(
-        &lock,
-        &mut universe,
-        witnesses,
-        Attempt {
-            run_id: run_id(),
-            capture_hash: Some(capture.hash.clone()),
-            reason: reason.into(),
-        },
-    )?;
-    drop(lock);
+    let grown = history.universe.append(&mut universe, witnesses)?;
     Ok((universe, grown))
 }
 
@@ -1029,6 +938,7 @@ pub fn init(
     options: &LiveOptions,
 ) -> Result<Verdict, DiffError> {
     new_dir(out)?;
+    let lock = HistoryLock::acquire(out)?;
     if options.helmsweep.is_none() || options.selection.is_some() {
         return Err(DiffError::Request(
             "genesis adjudicates every chart live; pass --helmsweep and no --chart".into(),
@@ -1044,6 +954,11 @@ pub fn init(
             "the plan pins main {}, the capture is {}",
             plan_value.main_commit, main.manifest.commit
         )));
+    }
+    if plan_value.context_roster_sha256 != main.manifest.contexts_sha256 {
+        return Err(DiffError::Identity(
+            "main retained another context roster than the plan's reviewed one".into(),
+        ));
     }
     let suite = admission::read_checked_suite(&test_util::workspace_testdata().join(SUITE_DIR))?;
     let disagreements = admission::main_disagreements(&suite, &main.admissions);
@@ -1065,19 +980,11 @@ pub fn init(
         options,
         "attempt:genesis",
     )?;
-    let (universe, _) = journal(
-        &history,
-        std::mem::take(&mut comparison.new_witnesses),
-        &main,
-        "genesis",
-    )?;
+    let (universe, _) = stage_witnesses(&history, std::mem::take(&mut comparison.new_witnesses))?;
     let tables_out = out.join("genesis");
     std::fs::create_dir_all(&tables_out).map_err(|error| io(&tables_out, &error))?;
     let changes = changes_of(&main, &main, &comparison, &[], None)?;
     let mut tables = write_tables(&tables_out, &mut comparison, &changes)?;
-    if !comparison.failures.is_empty() {
-        return Err(DiffError::Infrastructure(comparison.failures.join("; ")));
-    }
     let mut problems = comparison.run.table.inequalities();
     if !changes.is_empty() || comparison.run.witness_count == 0 {
         problems.push(format!(
@@ -1089,7 +996,7 @@ pub fn init(
     if !problems.is_empty() {
         return Err(DiffError::Infrastructure(problems.join("; ")));
     }
-    seal_payload(&tables_out, &mut tables)?;
+    tables.payload_sha256 = write_payload(&tables_out)?;
     let sets = PriorSets::default();
     let genesis = receipt(
         &ReceiptInputs {
@@ -1106,8 +1013,7 @@ pub fn init(
         0,
         &sets,
     )?;
-    let path = history.publish(&genesis, &sets, &tables_out, Some(&main))?;
-    history.advance(&genesis, &path)?;
+    history.publish(&lock, &universe, &genesis, &sets, &tables_out, Some(&main))?;
     Ok(Verdict::Pass)
 }
 
@@ -1147,7 +1053,7 @@ fn trusted_predecessor(
     plan_sha256: &str,
 ) -> Result<Receipt, DiffError> {
     let receipt = Receipt::read(previous)?;
-    let head = history.gate_head()?;
+    let head = history.universe.gate_head()?;
     if head.seal_sha256 != receipt.seal_sha256 {
         return Err(DiffError::Identity(format!(
             "{} is not the trusted gate head {}",
@@ -1166,26 +1072,27 @@ fn trusted_predecessor(
             receipt.tool_version_and_hash
         )));
     }
+    // A successor builds only on a fully verified chain: every payload,
+    // capture, retained runner and journal batch back to genesis.
+    verify_history(&history.root, previous)?;
     Ok(receipt)
 }
 
-/// Everything a checkpoint comparison checked before comparing.
-struct Checkpoint {
-    history: History,
-    plan: HistoryPlan,
-    plan_sha256: String,
-    predecessor: Receipt,
-    main: Capture,
-    candidate: Capture,
-    ordinal: u32,
-    semantic: bool,
-    prior: PriorSets,
-    ledger: Vec<LedgerRow>,
-    seed: Option<SeedReview>,
-}
-
-/// Checks a compare request's inputs, chain and experiment identity.
-fn checkpoint(request: &CompareRequest) -> Result<Checkpoint, DiffError> {
+/// Compares one construction checkpoint with main over the persistent
+/// universe and applies construction policy. A completed comparison that grows
+/// the universe publishes its discoveries for a reviewed amendment. A passing
+/// comparison atomically publishes its receipt and the new gate head.
+///
+/// # Errors
+///
+/// [`DiffError`] when an input, identity or chain is invalid or the
+/// comparison cannot run.
+#[expect(
+    clippy::too_many_lines,
+    reason = "one locked transaction validates, compares and publishes a construction checkpoint"
+)]
+pub fn compare(request: &CompareRequest) -> Result<Verdict, DiffError> {
+    let lock = HistoryLock::acquire(&request.history)?;
     let CompareRequest {
         main,
         candidate,
@@ -1243,46 +1150,8 @@ fn checkpoint(request: &CompareRequest) -> Result<Checkpoint, DiffError> {
     }
     let semantic = plan.checkpoint(ordinal)?.kind == super::history::CheckpointKind::Semantic;
     let prior = history.prior_sets(&predecessor)?;
-    Ok(Checkpoint {
-        ledger: read_json(ledger)?,
-        seed: seed_review.as_deref().map(read_json).transpose()?,
-        history,
-        plan,
-        plan_sha256,
-        predecessor,
-        main,
-        candidate,
-        ordinal,
-        semantic,
-        prior,
-    })
-}
-
-/// Compares one construction checkpoint with main over the persistent
-/// universe and applies the construction policy. Fresh discoveries are
-/// journaled before anything else can fail; a grown universe stops the
-/// comparison until a reviewed amendment backfills history. A passing
-/// comparison publishes its receipt and advances the gate head.
-///
-/// # Errors
-///
-/// [`DiffError`] when an input, identity or chain is invalid or the
-/// comparison cannot run.
-pub fn compare(request: &CompareRequest) -> Result<Verdict, DiffError> {
-    let Checkpoint {
-        history,
-        plan,
-        plan_sha256,
-        predecessor,
-        main,
-        candidate,
-        ordinal,
-        semantic,
-        prior,
-        ledger,
-        seed,
-    } = checkpoint(request)?;
-    let out = &request.out;
+    let ledger: Vec<LedgerRow> = read_json(ledger)?;
+    let seed: Option<SeedReview> = seed_review.as_deref().map(read_json).transpose()?;
     new_dir(out)?;
     let universe = history.universe.load()?;
     if universe.head != predecessor.universe_journal_head_sha256 {
@@ -1299,12 +1168,8 @@ pub fn compare(request: &CompareRequest) -> Result<Verdict, DiffError> {
         &format!("attempt:checkpoint-{ordinal}"),
     )?;
     let discovered = comparison.new_witnesses.len();
-    let (universe, grown) = journal(
-        &history,
-        std::mem::take(&mut comparison.new_witnesses),
-        &candidate,
-        "discovery",
-    )?;
+    let (universe, grown) =
+        stage_witnesses(&history, std::mem::take(&mut comparison.new_witnesses))?;
     let changes = changes_of(
         &main,
         &candidate,
@@ -1313,9 +1178,6 @@ pub fn compare(request: &CompareRequest) -> Result<Verdict, DiffError> {
         Some(&plan.reviewer),
     )?;
     let mut tables = write_tables(out, &mut comparison, &changes)?;
-    if !comparison.failures.is_empty() {
-        return infrastructure(out, &comparison.failures);
-    }
     let mut problems = unadjudicated_changes(&changes);
     if let Some(batch) = &grown {
         problems.push(format!(
@@ -1333,14 +1195,16 @@ pub fn compare(request: &CompareRequest) -> Result<Verdict, DiffError> {
         reviewer: &plan.reviewer,
     })?;
     if !policy.infrastructure.is_empty() {
-        return infrastructure(out, &policy.infrastructure);
+        write_report(out, 3, &policy.infrastructure)?;
+        return Err(DiffError::Infrastructure(policy.infrastructure.join("; ")));
     }
     problems.extend(policy.semantic);
     if !problems.is_empty() {
         write_report(out, 1, &problems)?;
+        history.universe.publish(&lock, &universe, None)?;
         return Ok(Verdict::Fail(problems));
     }
-    seal_payload(out, &mut tables)?;
+    tables.payload_sha256 = write_payload(out)?;
     let sets = PriorSets {
         ordinal,
         regressions: comparison.run.table.regressions(),
@@ -1365,9 +1229,7 @@ pub fn compare(request: &CompareRequest) -> Result<Verdict, DiffError> {
         ordinal,
         &sets,
     )?;
-    sealed.write(&out.join("receipt.json"))?;
-    let path = history.publish(&sealed, &sets, out, Some(&candidate))?;
-    history.advance(&sealed, &path)?;
+    history.publish(&lock, &universe, &sealed, &sets, out, Some(&candidate))?;
     Ok(Verdict::Pass)
 }
 
@@ -1402,60 +1264,31 @@ pub fn amend(
     out: &Path,
     live: &LiveOptions,
 ) -> Result<Verdict, DiffError> {
+    let lock = HistoryLock::acquire(history_dir)?;
     new_dir(out)?;
     if live.helmsweep.is_none() || live.selection.is_some() {
         return Err(DiffError::Request(
             "an amendment adjudicates every chart live; pass --helmsweep and no --chart".into(),
         ));
     }
+    let amendment = amendment(history_dir, previous, review)?;
+    if amendment.review.batch_sha256 != witness_batch {
+        return Err(DiffError::Request(format!(
+            "--witness-batch {witness_batch} is not the reviewed batch {}",
+            amendment.review.batch_sha256
+        )));
+    }
+    let (prior, problems) = backfill_chain(&amendment, live, out)?;
     let Amendment {
         history,
         plan,
         plan_sha256,
         predecessor,
         review,
-        universe_head,
-        batch,
-        captures,
+        batch: _,
+        captures: _,
         main,
-    } = amendment(history_dir, previous, review)?;
-    if review.batch_sha256 != witness_batch {
-        return Err(DiffError::Request(format!(
-            "--witness-batch {witness_batch} is not the reviewed batch {}",
-            review.batch_sha256
-        )));
-    }
-    let mut prior = PriorSets::default();
-    let mut problems = Vec::new();
-    for ordinal in 1..=predecessor.checkpoint_ordinal {
-        let entry = captures
-            .iter()
-            .find(|entry| entry.ordinal == ordinal)
-            .ok_or_else(|| DiffError::Identity(format!("checkpoint {ordinal} is not retained")))?;
-        let table = backfill_run(
-            &history,
-            &main,
-            entry,
-            universe_head.as_deref(),
-            live,
-            out,
-            &mut problems,
-        )?;
-        problems.extend(backfill_problems(&Backfill {
-            ordinal,
-            seed_ordinal: plan.seed_ordinal,
-            table: &table,
-            accepted: &history.prior_sets_at(ordinal)?,
-            prior: &prior,
-            batch: &batch,
-            seed_extension: &review.seed_extension,
-        }));
-        prior = PriorSets {
-            ordinal,
-            regressions: table.regressions(),
-            closures: table.closures(),
-        };
-    }
+    } = amendment;
     if !problems.is_empty() {
         write_report(out, 1, &problems)?;
         return Ok(Verdict::Fail(problems));
@@ -1464,7 +1297,7 @@ pub fn amend(
         hashes: BTreeMap::new(),
         payload_sha256: String::new(),
     };
-    seal_payload(out, &mut tables)?;
+    tables.payload_sha256 = write_payload(out)?;
     let seed_ledger_sha256 = if review.seed_extension.is_empty() {
         predecessor.seed_ledger_sha256.clone()
     } else {
@@ -1478,11 +1311,6 @@ pub fn amend(
         ..prior
     };
     let universe = history.universe.load()?;
-    if universe.head != universe_head {
-        return Err(DiffError::Identity(
-            "the universe moved during the amendment".into(),
-        ));
-    }
     let sealed = receipt(
         &ReceiptInputs {
             plan: &plan,
@@ -1498,9 +1326,7 @@ pub fn amend(
         predecessor.checkpoint_ordinal,
         &sets,
     )?;
-    sealed.write(&out.join("receipt.json"))?;
-    let path = history.publish(&sealed, &sets, out, None)?;
-    history.advance(&sealed, &path)?;
+    history.publish(&lock, &universe, &sealed, &sets, out, None)?;
     Ok(Verdict::Pass)
 }
 
@@ -1511,7 +1337,6 @@ struct Amendment {
     plan_sha256: String,
     predecessor: Receipt,
     review: AmendmentReview,
-    universe_head: Option<String>,
     batch: BTreeSet<String>,
     captures: Vec<RetainedCapture>,
     main: Capture,
@@ -1530,7 +1355,7 @@ fn amendment(history_dir: &Path, previous: &Path, review: &Path) -> Result<Amend
     }
     let universe = history.universe.load()?;
     let covered = predecessor.witness_batch_hashes.len();
-    let batches = universe.batch_hashes();
+    let batches = universe.batches.clone();
     if batches.get(..covered) != Some(&predecessor.witness_batch_hashes[..])
         || batches.get(covered) != Some(&review.batch_sha256)
         || batches.len() != covered + 1
@@ -1557,11 +1382,53 @@ fn amendment(history_dir: &Path, previous: &Path, review: &Path) -> Result<Amend
         plan_sha256,
         predecessor,
         review,
-        universe_head: universe.head,
         batch,
         captures,
         main,
     })
+}
+
+/// Backfills every retained checkpoint over the expanded universe; returns
+/// the reconstructed sets at the head and every problem.
+fn backfill_chain(
+    amendment: &Amendment,
+    live: &LiveOptions,
+    out: &Path,
+) -> Result<(PriorSets, Vec<String>), DiffError> {
+    let Amendment {
+        history,
+        plan,
+        plan_sha256: _,
+        predecessor,
+        review,
+        batch,
+        captures,
+        main,
+    } = amendment;
+    let mut prior = PriorSets::default();
+    let mut problems = Vec::new();
+    for ordinal in 1..=predecessor.checkpoint_ordinal {
+        let entry = captures
+            .iter()
+            .find(|entry| entry.ordinal == ordinal)
+            .ok_or_else(|| DiffError::Identity(format!("checkpoint {ordinal} is not retained")))?;
+        let table = backfill_run(history, main, entry, live, out, &mut problems)?;
+        problems.extend(backfill_problems(&Backfill {
+            ordinal,
+            seed_ordinal: plan.seed_ordinal,
+            table: &table,
+            accepted: &history.prior_sets_at(predecessor, ordinal)?,
+            prior: &prior,
+            batch,
+            seed_extension: &review.seed_extension,
+        }));
+        prior = PriorSets {
+            ordinal,
+            regressions: table.regressions(),
+            closures: table.closures(),
+        };
+    }
+    Ok((prior, problems))
 }
 
 /// Compares main with the retained checkpoint `entry` over the expanded
@@ -1571,18 +1438,12 @@ fn backfill_run(
     history: &History,
     main: &Capture,
     entry: &RetainedCapture,
-    universe_head: Option<&str>,
     live: &LiveOptions,
     out: &Path,
     problems: &mut Vec<String>,
 ) -> Result<OutcomeTable, DiffError> {
     // Each backfill consumes a fresh load, so no two universes are held.
     let universe = history.universe.load()?;
-    if universe.head.as_deref() != universe_head {
-        return Err(DiffError::Identity(
-            "the universe moved during the amendment".into(),
-        ));
-    }
     let ordinal = entry.ordinal;
     let candidate = open_capture(&entry.path)?;
     if candidate.hash != entry.capture_hash {
@@ -1592,7 +1453,6 @@ fn backfill_run(
     }
     let options = LiveOptions {
         helmsweep: live.helmsweep.clone(),
-        contexts: live.contexts.clone(),
         selection: None,
         scratch: live.scratch.join(format!("checkpoint-{ordinal:02}")),
     };
@@ -1610,12 +1470,6 @@ fn backfill_run(
             comparison.new_witnesses.len()
         ));
     }
-    problems.extend(
-        comparison
-            .failures
-            .iter()
-            .map(|failure| format!("checkpoint {ordinal}: {failure}")),
-    );
     let changes = changes_of(main, &candidate, &comparison, &[], None)?;
     let dir = out.join(format!("checkpoint-{ordinal:02}"));
     std::fs::create_dir_all(&dir).map_err(|error| io(&dir, &error))?;
@@ -1703,7 +1557,7 @@ fn backfill_problems(backfill: &Backfill<'_>) -> Vec<String> {
 }
 
 /// One retained capture of the history.
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug)]
 struct RetainedCapture {
     ordinal: u32,
     capture_hash: String,
@@ -1711,34 +1565,82 @@ struct RetainedCapture {
 }
 
 fn retained_captures(history: &History) -> Result<Vec<RetainedCapture>, DiffError> {
-    let path = history.root.join("captures.jsonl");
-    let text = std::fs::read_to_string(&path).map_err(|error| io(&path, &error))?;
-    text.lines()
-        .filter(|line| !line.is_empty())
-        .map(|line| {
-            serde_json::from_str(line)
-                .map_err(|error| DiffError::Identity(format!("{}: {error}", path.display())))
+    history
+        .receipts()?
+        .values()
+        .filter(|receipt| matches!(receipt.kind, ReceiptKind::Genesis | ReceiptKind::Checkpoint))
+        .map(|receipt| {
+            Ok(RetainedCapture {
+                ordinal: receipt.checkpoint_ordinal,
+                capture_hash: receipt
+                    .capture_hash
+                    .clone()
+                    .unwrap_or_else(|| receipt.baseline_capture_hash.clone()),
+                path: read_json(
+                    &history
+                        .transaction(&receipt.seal_sha256)
+                        .join("capture.json"),
+                )?,
+            })
         })
         .collect()
 }
 
 impl History {
-    /// The sets of the last accepted receipt at `ordinal`: an amendment's
-    /// when one replaced the checkpoint's.
-    fn prior_sets_at(&self, ordinal: u32) -> Result<PriorSets, DiffError> {
-        let dir = self.root.join("receipts");
-        let entries = std::fs::read_dir(&dir).map_err(|error| io(&dir, &error))?;
-        let prefix = format!("{ordinal:02}-Checkpoint-");
-        for entry in entries {
-            let entry = entry.map_err(|error| io(&dir, &error))?;
-            if entry.file_name().to_string_lossy().starts_with(&prefix) {
-                let receipt = Receipt::read(&entry.path())?;
-                return self.prior_sets(&receipt);
+    /// Only published receipts on the trusted chain, by seal.
+    fn receipts(&self) -> Result<BTreeMap<String, Receipt>, DiffError> {
+        let mut seal = Some(self.universe.gate_head()?.seal_sha256);
+        let mut receipts = BTreeMap::new();
+        while let Some(hash) = seal {
+            let receipt = Receipt::read(&self.transaction(&hash).join("receipt.json"))?;
+            if receipt.seal_sha256 != hash || receipts.contains_key(&hash) {
+                return Err(DiffError::Identity(
+                    "receipt chain is substituted or cyclic".into(),
+                ));
             }
+            seal = receipt.predecessor_receipt_sha256.clone();
+            receipts.insert(hash, receipt);
         }
-        Err(DiffError::Identity(format!(
-            "no accepted receipt at {ordinal}"
-        )))
+        Ok(receipts)
+    }
+
+    /// The accepted sets at `ordinal` on the verified chain ending at `head`:
+    /// the newest amendment's reconstruction of it, else its checkpoint's.
+    fn prior_sets_at(&self, head: &Receipt, ordinal: u32) -> Result<PriorSets, DiffError> {
+        let receipts = self.receipts()?;
+        let mut current = head.clone();
+        loop {
+            let reconstructed = self
+                .transaction(&current.seal_sha256)
+                .join("payload")
+                .join(format!("checkpoint-{ordinal:02}"));
+            match current.kind {
+                ReceiptKind::Amendment if reconstructed.is_dir() => {
+                    let table = read_outcomes(&reconstructed)?;
+                    return Ok(PriorSets {
+                        ordinal,
+                        regressions: table.regressions(),
+                        closures: table.closures(),
+                    });
+                }
+                ReceiptKind::Checkpoint | ReceiptKind::Landing
+                    if current.checkpoint_ordinal == ordinal =>
+                {
+                    return self.prior_sets(&current);
+                }
+                ReceiptKind::Amendment
+                | ReceiptKind::Checkpoint
+                | ReceiptKind::Landing
+                | ReceiptKind::Genesis
+                | ReceiptKind::Migration => {}
+            }
+            let previous = current
+                .predecessor_receipt_sha256
+                .as_ref()
+                .and_then(|seal| receipts.get(seal))
+                .ok_or_else(|| DiffError::Identity(format!("no accepted receipt at {ordinal}")))?;
+            current = previous.clone();
+        }
     }
 }
 
@@ -1751,21 +1653,16 @@ pub fn verify_capture(root: &Path) -> Result<Verdict, DiffError> {
     open_capture(root).map(|_| Verdict::Pass)
 }
 
-/// Rehashes a receipt's payload: its index, every file it lists, and the
-/// table hashes the receipt names.
-fn verify_payload(history: &History, receipt: &Receipt) -> Result<(), DiffError> {
-    let dir = history.payload_dir(&receipt.payload_index_sha256);
-    let index = std::fs::read(dir.join("payload.json")).map_err(|error| {
-        DiffError::Identity(format!("payload of {}: {error}", receipt.seal_sha256))
-    })?;
-    if sha256_hex(&index) != receipt.payload_index_sha256 {
-        return Err(DiffError::Identity(format!(
-            "the payload of {} changed",
-            receipt.seal_sha256
-        )));
+/// Rehashes the payload directory `dir` against its index hash `sha256`;
+/// returns every listed file's hash by path.
+fn rehash_payload(dir: &Path, sha256: &str) -> Result<BTreeMap<String, String>, DiffError> {
+    let index = std::fs::read(dir.join("payload.json"))
+        .map_err(|error| DiffError::Identity(format!("payload {sha256}: {error}")))?;
+    if sha256_hex(&index) != sha256 {
+        return Err(DiffError::Identity(format!("the payload {sha256} changed")));
     }
     let mut listed = BTreeMap::new();
-    for PayloadFile { path, sha256 } in read_payload(&index)?.files {
+    for (path, sha256) in read_payload(&index)?.files {
         let actual = file_sha256(&dir.join(&path))
             .map_err(|error| DiffError::Identity(format!("payload file {path}: {error}")))?;
         if actual != sha256 {
@@ -1773,6 +1670,16 @@ fn verify_payload(history: &History, receipt: &Receipt) -> Result<(), DiffError>
         }
         listed.insert(path, actual);
     }
+    Ok(listed)
+}
+
+/// Rehashes a receipt's payload: its index, every file it lists, and the
+/// table hashes the receipt names.
+fn verify_payload(history: &History, receipt: &Receipt) -> Result<(), DiffError> {
+    let listed = rehash_payload(
+        &history.transaction(&receipt.seal_sha256).join("payload"),
+        &receipt.payload_index_sha256,
+    )?;
     let named = |prefix: &str, file: &str, hash: &str| -> Result<(), DiffError> {
         let path = if prefix.is_empty() {
             file.to_string()
@@ -1828,7 +1735,7 @@ fn follows(current: &Receipt, previous: &Receipt) -> Result<(), DiffError> {
 
 /// Verifies a receipt against its history: its seal, its predecessor chain
 /// back to genesis, its sets, its payload, its plan, its experiment, the
-/// universe journal it names and every capture and retained runner it
+/// universe batches it names and every capture and retained runner it
 /// references.
 ///
 /// # Errors
@@ -1838,24 +1745,24 @@ pub fn verify_history(history_dir: &Path, receipt_path: &Path) -> Result<Verdict
     let history = History::new(history_dir);
     let (plan, plan_sha256) = history.plan()?;
     let universe = history.universe.load()?;
-    let mut receipts = BTreeMap::new();
-    let dir = history.root.join("receipts");
-    for entry in std::fs::read_dir(&dir).map_err(|error| io(&dir, &error))? {
-        let entry = entry.map_err(|error| io(&dir, &error))?;
-        let receipt = Receipt::read(&entry.path())?;
-        receipts.insert(receipt.seal_sha256.clone(), receipt);
-    }
+    let receipts = history.receipts()?;
     let captures = retained_captures(&history)?
         .into_iter()
         .map(|entry| (entry.capture_hash.clone(), entry))
         .collect::<BTreeMap<_, _>>();
-    let check_capture = |hash: &str| -> Result<(), DiffError> {
+    // Each retained capture is reopened, rehashed in full, once.
+    let mut verified = BTreeSet::new();
+    let mut check_capture = |hash: &str| -> Result<(), DiffError> {
+        if verified.contains(hash) {
+            return Ok(());
+        }
         let entry = captures
             .get(hash)
             .ok_or_else(|| DiffError::Identity(format!("capture {hash} is not retained")))?;
         if open_capture(&entry.path)?.hash != hash {
             return Err(DiffError::Identity(format!("capture {hash} changed")));
         }
+        verified.insert(hash.to_string());
         Ok(())
     };
     let mut current = Receipt::read(receipt_path)?;
@@ -1865,13 +1772,14 @@ pub fn verify_history(history_dir: &Path, receipt_path: &Path) -> Result<Verdict
                 "a receipt belongs to another history or plan".into(),
             ));
         }
+        history.universe.verify_snapshot(&current)?;
         history.prior_sets(&current)?;
         verify_payload(&history, &current)?;
         check_capture(&current.baseline_capture_hash)?;
         if let Some(capture) = &current.capture_hash {
             check_capture(capture)?;
         }
-        let batches = universe.batch_hashes();
+        let batches = universe.batches.clone();
         if batches.get(..current.witness_batch_hashes.len())
             != Some(&current.witness_batch_hashes[..])
         {
@@ -1897,40 +1805,14 @@ pub fn verify_history(history_dir: &Path, receipt_path: &Path) -> Result<Verdict
     }
 }
 
-/// The admission outcomes of a comparison output directory.
-///
-/// # Errors
-///
-/// [`DiffError::Identity`] when `admissions.jsonl` is missing or malformed.
-pub fn read_admissions(out: &Path) -> Result<Vec<AdmissionOutcome>, DiffError> {
-    read_table(&out.join("admissions.jsonl"))
-}
-
-fn read_table<T: for<'de> Deserialize<'de>>(path: &Path) -> Result<Vec<T>, DiffError> {
-    let text = std::fs::read_to_string(path).map_err(|error| io(path, &error))?;
-    text.lines()
-        .filter(|line| !line.is_empty())
-        .map(|line| {
-            serde_json::from_str(line)
-                .map_err(|error| DiffError::Identity(format!("{}: {error}", path.display())))
-        })
-        .collect()
-}
-
 /// The outcome table of a comparison output directory.
 ///
 /// # Errors
 ///
 /// [`DiffError::Identity`] when a table is missing or malformed.
 pub fn read_outcomes(out: &Path) -> Result<OutcomeTable, DiffError> {
-    let mut table = OutcomeTable::new(read_table(&out.join("outcomes.jsonl"))?);
-    table.observations = read_table(&out.join("observations.jsonl"))?;
-    table.admissions = read_table(&out.join("admissions.jsonl"))?;
+    let mut table = OutcomeTable::new(read_lines(&out.join("outcomes.jsonl"))?);
+    table.observations = read_lines(&out.join("observations.jsonl"))?;
+    table.admissions = read_lines(&out.join("admissions.jsonl"))?;
     Ok(table)
-}
-
-/// The regression keys of `table`, for writing a ledger.
-#[must_use]
-pub fn regression_keys(table: &OutcomeTable) -> BTreeSet<RegressionKey> {
-    table.regressions()
 }

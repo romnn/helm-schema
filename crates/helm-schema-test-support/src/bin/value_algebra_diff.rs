@@ -3,17 +3,17 @@
 //!
 //! ```text
 //! value_algebra_diff capture --checkout DIR --commit SHA --helmsweep PATH --helm PATH
-//!                            --build-target DIR --controls DIR [--contexts FILE]
+//!                            --build-target DIR --controls DIR --contexts FILE
 //!                            [--synthetic] --out NEW_DIR
 //! value_algebra_diff compare --self-test --main CAPTURE --candidate CAPTURE --out NEW_DIR
-//!                            [--helmsweep PATH] [--contexts FILE] [--chart LABEL]... [--certificates FILE]
+//!                            [--helmsweep PATH] [--chart LABEL]... [--certificates FILE]
 //! value_algebra_diff init --main CAPTURE --plan HISTORY_PLAN --out NEW_HISTORY_DIR
-//!                         [--helmsweep PATH] [--contexts FILE]
+//!                         [--helmsweep PATH]
 //! value_algebra_diff compare --main CAPTURE --candidate CAPTURE --history DIR --previous RECEIPT
 //!                            --ledger FILE --out NEW_DIR --helmsweep PATH [--seed-review FILE]
-//!                            [--certificates FILE] [--contexts FILE]
+//!                            [--certificates FILE]
 //! value_algebra_diff amend --history DIR --previous RECEIPT --witness-batch SHA --review FILE
-//!                          --out NEW_DIR --helmsweep PATH [--contexts FILE]
+//!                          --out NEW_DIR --helmsweep PATH
 //! value_algebra_diff verify (--capture DIR | --history DIR --receipt FILE)
 //! value_algebra_diff ground --cases FILE --helm PATH --out NEW_REGISTRY_DIR
 //! ```
@@ -136,7 +136,6 @@ impl Options {
         let charts = self.values.remove("--chart").unwrap_or_default();
         Ok(LiveOptions {
             helmsweep: self.optional_path("--helmsweep")?,
-            contexts: self.optional_path("--contexts")?,
             selection: (!charts.is_empty()).then(|| charts.into_iter().collect()),
             scratch: out.join("scratch"),
         })
@@ -152,7 +151,7 @@ impl Options {
             helm: self.path("--helm")?,
             build_target: self.path("--build-target")?,
             controls: self.path("--controls")?,
-            contexts: self.optional_path("--contexts")?,
+            contexts: self.path("--contexts")?,
             out: self.path("--out")?,
             synthetic: self.flags.contains("--synthetic"),
         })

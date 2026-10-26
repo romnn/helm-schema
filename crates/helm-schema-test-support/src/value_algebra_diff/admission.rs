@@ -35,6 +35,8 @@ pub struct AdmissionRecord {
     pub declared_types: String,
     /// `accept` or `reject`.
     pub verdict: String,
+    /// The canonical identities of the assertions a rejection fails.
+    pub violations: Vec<String>,
     /// [`admission::inputs_sha256`] of the cell.
     pub inputs_sha256: String,
     /// [`admission::document_sha256`] of the validated document.
@@ -149,6 +151,7 @@ pub fn measure(
             cell: cell.id.clone(),
             declared_types: cell.declared_types.as_arg().to_string(),
             verdict: verdict_name(verdict).to_string(),
+            violations: crate::acceptance::discovery::violation_identities(schema, &document),
             inputs_sha256: admission::inputs_sha256(root, cell)
                 .map_err(|error| DiffError::Infrastructure(format!("{}: {error:#}", cell.id)))?,
             document_sha256: admission::document_sha256(&document)
@@ -317,7 +320,9 @@ pub fn compare(
         };
         let (class, direction) = match (record.verdict == truth, other.verdict == truth) {
             (true, true) => (Class::Identical, None),
-            (false, false) => (Class::Inherited, None),
+            (false, false) if record.violations == other.violations => (Class::Inherited, None),
+            // Wrong both times, but failing other assertions: a new wrong answer.
+            (false, false) => (Class::Regression, Some("changed-failure")),
             (true, false) => (Class::Regression, Some(error(&other.verdict))),
             (false, true) => (Class::Closure, Some(error(&record.verdict))),
         };
@@ -329,7 +334,9 @@ pub fn compare(
             candidate_verdict: other.verdict.clone(),
             class,
             direction: direction.map(str::to_string),
-            answer_sha256: sha256_hex(&canonical_json(&json!({"verdict": other.verdict}))),
+            answer_sha256: sha256_hex(&canonical_json(
+                &json!({"verdict": other.verdict, "violations": other.violations}),
+            )),
         });
     }
     outcomes.sort_by(|left, right| left.witness.cmp(&right.witness));

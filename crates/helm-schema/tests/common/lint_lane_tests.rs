@@ -531,6 +531,7 @@ fn live_grouped_outcomes_fold_in_original_probe_order() -> eyre::Result<()> {
                 (0, flip + 1),
                 super::AcceptanceResult::Probe(Box::new(super::AdjudicatedProbe {
                     flip,
+                    key: case.clone(),
                     case: case.clone(),
                     document_kind: Some(AcceptanceDocument::LintRaw),
                     kubernetes_version: "1.29.0".into(),

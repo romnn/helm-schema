@@ -36,7 +36,9 @@ use helm_schema_test_support::value_algebra_diff::controls::{
     ExactCoverage, ExecutionEvidence, GroundCoverage, Observation, ProjectionStatus, Query,
     RegistryBuilder, Role, Runner, Score, Selection, Termination, UnknownReason, UnsupportedReason,
 };
-use helm_schema_test_support::value_algebra_diff::history::{FORMAT_VERSION, GateHead, Receipt};
+use helm_schema_test_support::value_algebra_diff::history::{
+    FORMAT_VERSION, HistoryLock, Receipt, Universe,
+};
 use helm_schema_test_support::value_algebra_diff::revision::{
     self, CaptureManifest, open_capture, record_controls,
 };
@@ -361,7 +363,7 @@ fn grounded(
     spec: &Spec,
     scratch: &Path,
 ) -> eyre::Result<ControlCase> {
-    let input = builder.render_input(&spec.files, "", &json!({}))?;
+    let input = builder.render_input(&spec.files, "")?;
     let grounding = builder.ground(helm, &input, &spec.query, &scratch.join(spec.id))?;
     Ok(ControlCase {
         format_version: controls::PROTOCOL_VERSION,
@@ -473,6 +475,7 @@ fn recorded_admissions() -> eyre::Result<Vec<AdmissionRecord>> {
                 "reject"
             }
             .into(),
+            violations: Vec::new(),
             inputs_sha256: coalesced.inputs_sha256.clone(),
             document_sha256: coalesced.document_sha256.clone(),
         });
@@ -578,7 +581,7 @@ fn capture(
         helm_sha256: file_sha(helm)?,
         kubernetes_release: "v1.29.0-standalone-strict".into(),
         suite_sha256: revision::suite_sha256(&dump)?,
-        contexts_sha256: None,
+        contexts_sha256: write_roster(&root.join("contexts.json"))?,
         controls,
     };
     std::fs::write(
@@ -587,6 +590,25 @@ fn capture(
     )?;
     open_capture(root)?;
     Ok(root.to_path_buf())
+}
+
+/// Writes the fixture's one-row context roster to `path`; returns its
+/// content identity.
+fn write_roster(path: &Path) -> eyre::Result<String> {
+    let empty = sha256_hex(b"{}");
+    let row = json!({
+        "id": "deployed-defaults", "chart": common::CHART, "overlay": {},
+        "transport": "values-file", "kubernetes_version": "1.29.0",
+        "chart_sha256": "", "baseline_sha256": "", "candidate_sha256": "",
+        "canonical_overlay_sha256": empty, "values_file": "{}\n",
+        "values_file_sha256": sha256_hex(b"{}\n"),
+        "context_overlay": {}, "context_overlay_sha256": empty,
+    });
+    std::fs::write(
+        path,
+        serde_json::to_vec(&json!({"version": 2, "rows": [row]}))?,
+    )?;
+    Ok(sha256_hex(&std::fs::read(path)?))
 }
 
 fn identity_message<T: std::fmt::Debug>(result: Result<T, DiffError>) -> eyre::Result<String> {
@@ -689,7 +711,7 @@ fn groundings_are_resolved_and_rederived() -> eyre::Result<()> {
         ],
         ..literal()
     };
-    let input = builder.render_input(&spec.files, "", &json!({}))?;
+    let input = builder.render_input(&spec.files, "")?;
     let message = request_message(builder.ground(
         &helm,
         &input,
@@ -774,9 +796,9 @@ fn the_witness_is_the_input_and_query_identity() -> eyre::Result<()> {
     let mut regrounded = base.clone();
     regrounded.grounding.evidence_sha256 = "1".repeat(64);
     sim_assert_eq!(have: regrounded.witness_id()?, want: base.witness_id()?);
-    let mut requeried = base.clone();
-    requeried.query = Some(output_query("templates/cm.yaml", "/data/other"));
-    sim_assert_eq!(have: requeried.witness_id()? == base.witness_id()?, want: false);
+    let mut changed_query = base.clone();
+    changed_query.query = Some(output_query("templates/cm.yaml", "/data/other"));
+    sim_assert_eq!(have: changed_query.witness_id()? == base.witness_id()?, want: false);
     let mut released = base.clone();
     released.input.release.namespace = "other".into();
     sim_assert_eq!(have: released.witness_id()? == base.witness_id()?, want: false);
@@ -1044,11 +1066,6 @@ fn a_capture_retains_its_runner_and_answers() -> eyre::Result<()> {
     Ok(())
 }
 
-/// Reads a JSON file into `T`.
-fn read<T: for<'de> serde::Deserialize<'de>>(path: &Path) -> eyre::Result<T> {
-    Ok(serde_json::from_slice(&std::fs::read(path)?)?)
-}
-
 /// The history driven through its public commands.
 struct Chain {
     root: PathBuf,
@@ -1062,14 +1079,13 @@ impl Chain {
     fn live(&self, out: &Path) -> LiveOptions {
         LiveOptions {
             helmsweep: Some(self.helmsweep.clone()),
-            contexts: None,
             selection: None,
             scratch: out.join("scratch"),
         }
     }
 
     fn head(&self) -> eyre::Result<PathBuf> {
-        let head: GateHead = read(&self.history.join("gate-head.json"))?;
+        let head = Universe::new(self.history.join("universe")).gate_head()?;
         Ok(self.history.join(head.receipt))
     }
 
@@ -1123,8 +1139,8 @@ impl Chain {
     fn amend(&mut self, seed_extension: &[LedgerRow]) -> eyre::Result<Result<Verdict, DiffError>> {
         let previous = self.head()?;
         let receipt = Receipt::read(&previous)?;
-        let journal = std::fs::read_to_string(self.history.join("universe/journal.jsonl"))?;
-        let batch = last_batch(&journal)?;
+        let universe = Universe::new(self.history.join("universe")).load()?;
+        let batch = universe.batches.last().ok_or_eyre("no batches")?.clone();
         eyre::ensure!(
             !receipt.witness_batch_hashes.contains(&batch),
             "no new batch to amend"
@@ -1228,9 +1244,25 @@ fn base_answers(visible: ControlResult) -> Vec<(&'static str, ControlResult)> {
     ]
 }
 
+fn write_history_plan(root: &Path, main: &Path) -> eyre::Result<PathBuf> {
+    let plan = root.join("plan.json");
+    let checkpoints = (1..=10)
+        .map(|ordinal| json!({"ordinal": ordinal, "subject": format!("C{ordinal:02}"), "kind": if ordinal == 3 { "semantic" } else { "representation" }}))
+        .collect::<Vec<_>>();
+    std::fs::write(
+        &plan,
+        serde_json::to_vec(&json!({
+            "format_version": 1, "history_id": "r3b-test", "main_commit": "c0ffee",
+            "checkpoints": checkpoints, "seed_ordinal": 2, "reviewer": "reviewer",
+            "context_roster_sha256": sha256_hex(&std::fs::read(main.join("contexts.json"))?),
+        }))?,
+    )?;
+    Ok(plan)
+}
+
 /// Genesis, an unsupported C01 refused, C01, an unreviewed C02 refused and
 /// the reviewed C02.
-fn through_c02(root: &Path) -> eyre::Result<Story> {
+fn through_c02(root: &Path, late_seed_loss: bool) -> eyre::Result<Story> {
     let helm = fake_helm(&root.join("helm"))?;
     let bin = root.join("bin");
     let first = base(&root.join("registry-1"), &helm)?;
@@ -1252,18 +1284,24 @@ fn through_c02(root: &Path) -> eyre::Result<Story> {
         &helm,
     )?;
     let c01 = capture(&root.join("c01"), MAIN_SCHEMA, &first.root, &correct, &helm)?;
-    let c02 = capture(&root.join("c02"), TIGHTENED, &first.root, &correct, &helm)?;
-    let plan = root.join("plan.json");
-    let checkpoints = (1..=10)
-        .map(|ordinal| json!({"ordinal": ordinal, "subject": format!("C{ordinal:02}"), "kind": if ordinal == 3 { "semantic" } else { "representation" }}))
-        .collect::<Vec<_>>();
-    std::fs::write(
-        &plan,
-        serde_json::to_vec(&json!({
-            "format_version": 1, "history_id": "r3b-test", "main_commit": "c0ffee",
-            "checkpoints": checkpoints, "seed_ordinal": 2, "reviewer": "reviewer",
-        }))?,
+    let seed_runner = revision_runner(
+        &bin,
+        "seed-runner",
+        if late_seed_loss {
+            r#"{"x":"new"}"#
+        } else {
+            r#"{"x":"old"}"#
+        },
+        exact(alias(true)),
     )?;
+    let c02 = capture(
+        &root.join("c02"),
+        TIGHTENED,
+        &first.root,
+        &seed_runner,
+        &helm,
+    )?;
+    let plan = write_history_plan(root, &main)?;
     let mut chain = Chain {
         root: root.to_path_buf(),
         history: root.join("history"),
@@ -1370,7 +1408,7 @@ fn c03_regresses(story: &mut Story, root: &Path) -> eyre::Result<()> {
         ],
     )?;
     let c03 = capture(&root.join("c03"), TIGHTENED, &second.root, wrong, helm)?;
-    let receipts_before = every_file(&chain.history.join("receipts"))?;
+    let receipts_before = every_file(&chain.history.join("transactions"))?;
     let captures_before = (every_file(main)?, every_file(c01)?, every_file(c02)?);
     let (_, verdict) = chain.compare("c03-discovery", main, &c03, seed, None, certificates)?;
     let found = problems(verdict)?;
@@ -1381,7 +1419,7 @@ fn c03_regresses(story: &mut Story, root: &Path) -> eyre::Result<()> {
         "{found:?}"
     );
     sim_assert_eq!(have: chain.amend(&[])??, want: Verdict::Pass);
-    let receipts_after = every_file(&chain.history.join("receipts"))?;
+    let receipts_after = every_file(&chain.history.join("transactions"))?;
     for (path, hash) in &receipts_before {
         sim_assert_eq!(have: receipts_after.get(path), want: Some(hash));
     }
@@ -1422,19 +1460,11 @@ fn c03_regresses(story: &mut Story, root: &Path) -> eyre::Result<()> {
     Ok(())
 }
 
-/// The batch hash of the journal's last line.
-fn last_batch(journal: &str) -> eyre::Result<String> {
-    let last: Value = serde_json::from_str(journal.lines().last().ok_or_eyre("empty journal")?)?;
-    Ok(last
-        .get("batch_sha256")
-        .and_then(Value::as_str)
-        .ok_or_eyre("batch")?
-        .to_string())
-}
-
-/// A comparison that fails after discovery still journals what it
-/// discovered: C04's runner cannot answer the journaled snapshot.
-fn c04_journals_before_failing(story: &mut Story, root: &Path) -> eyre::Result<()> {
+/// A comparison that cannot judge everything publishes nothing: C04's
+/// runner cannot answer the journaled snapshot, so neither its discoveries
+/// nor a receipt reach the history, and the lock is released for a rerun.
+/// A held lock refuses a second writer before it reads anything.
+fn c04_failing_publishes_nothing(story: &mut Story, root: &Path) -> eyre::Result<()> {
     let third = registry(
         &root.join("registry-3"),
         &story.helm,
@@ -1450,8 +1480,8 @@ fn c04_journals_before_failing(story: &mut Story, root: &Path) -> eyre::Result<(
         &forgetful,
         &story.helm,
     )?;
-    let journal = story.chain.history.join("universe/journal.jsonl");
-    let batches_before = std::fs::read_to_string(&journal)?.lines().count();
+    let history = story.chain.history.clone();
+    let before = every_file(&history)?;
     let (_, verdict) = story.chain.compare(
         "c04-failing",
         &story.main,
@@ -1465,21 +1495,28 @@ fn c04_journals_before_failing(story: &mut Story, root: &Path) -> eyre::Result<(
         message.contains("control serialized-map-snapshot"),
         "{message}"
     );
-    let lines = std::fs::read_to_string(&journal)?;
-    sim_assert_eq!(have: lines.lines().count(), want: batches_before + 1);
-    let batch = std::fs::read_to_string(
-        story
-            .chain
-            .history
-            .join("universe/batches")
-            .join(format!("{}.jsonl", last_batch(&lines)?)),
+    // Content-addressed blobs it stored stay unreferenced; nothing else moved.
+    let published = |files: BTreeMap<PathBuf, String>| {
+        files
+            .into_iter()
+            .filter(|(path, _)| {
+                !path.starts_with(history.join("universe/blobs"))
+                    && !path.starts_with(history.join("universe/batches"))
+            })
+            .collect::<BTreeMap<_, _>>()
+    };
+    sim_assert_eq!(have: published(every_file(&history)?), want: published(before));
+    let held = HistoryLock::acquire(&history)?;
+    let (_, verdict) = story.chain.compare(
+        "c04-locked",
+        &story.main,
+        &c04,
+        &story.seed,
+        None,
+        &story.certificates,
     )?;
-    let late = third
-        .cases
-        .get("late-literal")
-        .ok_or_eyre("case")?
-        .witness_id()?;
-    sim_assert_eq!(have: batch.contains(&late), want: true);
+    assert!(identity_message(verdict)?.contains("locked"));
+    drop(held);
     Ok(())
 }
 
@@ -1492,26 +1529,40 @@ fn c04_journals_before_failing(story: &mut Story, root: &Path) -> eyre::Result<(
 fn non_schema_output_regression_replays_with_identical_schema() -> eyre::Result<()> {
     let scratch = ScratchDir::new("vac-chain")?;
     let root = scratch.path().to_path_buf();
-    let mut story = through_c02(&root)?;
+    let mut story = through_c02(&root, false)?;
     c03_regresses(&mut story, &root)?;
-    c04_journals_before_failing(&mut story, &root)?;
+    c04_failing_publishes_nothing(&mut story, &root)?;
 
+    let interrupted = story.chain.history.join("transactions/interrupted-staging");
+    std::fs::create_dir_all(&interrupted)?;
+    std::fs::write(interrupted.join("receipt.json"), b"partial")?;
     // The chain verifies; a changed payload file or a lost retained runner does not.
-    let Story { chain, c02, .. } = &story;
-    let head = chain.head()?;
-    sim_assert_eq!(have: commands::verify_history(&chain.history, &head)?, want: Verdict::Pass);
-    let payload = Receipt::read(&head)?.payload_index_sha256;
-    let table = chain
+    let head = story.chain.head()?;
+    sim_assert_eq!(have: commands::verify_history(&story.chain.history, &head)?, want: Verdict::Pass);
+    let seal = Receipt::read(&head)?.seal_sha256;
+    let table = story
+        .chain
         .history
-        .join("payloads")
-        .join(&payload)
+        .join("transactions")
+        .join(&seal)
+        .join("payload")
         .join("checkpoint-01/outcomes.jsonl");
     let original = std::fs::read(&table)?;
     std::fs::write(&table, b"")?;
-    identity_message(commands::verify_history(&chain.history, &head))?;
+    identity_message(commands::verify_history(&story.chain.history, &head))?;
     std::fs::write(&table, &original)?;
-    std::fs::remove_file(c02.join("bin/protocol-runner"))?;
-    identity_message(commands::verify_history(&chain.history, &head))?;
+    std::fs::remove_file(story.c02.join("bin/protocol-runner"))?;
+    identity_message(commands::verify_history(&story.chain.history, &head))?;
+    // A successor is refused on the broken chain before it compares.
+    let (_, verdict) = story.chain.compare(
+        "c04-broken-chain",
+        &story.main,
+        &story.c02,
+        &story.seed,
+        None,
+        &story.certificates,
+    )?;
+    identity_message(verdict)?;
     Ok(())
 }
 
@@ -1561,5 +1612,129 @@ fn runners_never_see_the_grounding() -> eyre::Result<()> {
             sim_assert_eq!(have: have.contains(output), want: inputs.contains(output));
         }
     }
+    Ok(())
+}
+
+/// Grounding checks defaults and original values with null-deletion semantics.
+#[test]
+fn grounding_verifies_the_composed_document() -> eyre::Result<()> {
+    let scratch = ScratchDir::new("vac-composition")?;
+    let helm = fake_helm(&scratch.path().join("helm"))?;
+    let mut builder = RegistryBuilder::new(&scratch.path().join("registry"))?;
+    let mut spec = literal();
+    spec.files
+        .push(("values.yaml", "nested: {drop: 1, keep: 2}\n"));
+    let input = builder.render_input(&spec.files, "nested: {drop: null}\n")?;
+    sim_assert_eq!(have: builder.blobs().chart(&input)?.coalesced, want: json!({"nested": {"keep": 2}}));
+    let grounding = builder.ground(&helm, &input, &spec.query, &scratch.path().join("ground"))?;
+    let mut case = ControlCase {
+        format_version: controls::PROTOCOL_VERSION,
+        id: spec.id.into(),
+        role: Role::Scored,
+        input,
+        query: Some(spec.query),
+        claim: None,
+        grounding,
+    };
+    case.check_grounding(&builder.blobs())?;
+    case.input.coalesced_document_sha256 = builder.blob(b"{}")?;
+    assert!(
+        identity_message(case.check_grounding(&builder.blobs()))?.contains("coalesced document")
+    );
+    Ok(())
+}
+
+/// Later amendments retain a seed extension accepted by an earlier amendment.
+#[test]
+fn a_second_amendment_retains_the_reviewed_seed_extension() -> eyre::Result<()> {
+    let scratch = ScratchDir::new("vac-second-amendment")?;
+    let root = scratch.path();
+    let mut story = through_c02(root, true)?;
+    let registry2 = registry(
+        &root.join("registry-2"),
+        &story.helm,
+        &[literal(), direct_abort(), static_alias(), snapshot()],
+    )?;
+    let candidate = capture(
+        &root.join("discover-snapshot"),
+        TIGHTENED,
+        &registry2.root,
+        &story.wrong,
+        &story.helm,
+    )?;
+    let (_, verdict) = story.chain.compare(
+        "discover-snapshot",
+        &story.main,
+        &candidate,
+        &story.seed,
+        None,
+        &story.certificates,
+    )?;
+    problems(verdict)?;
+    let batch = Universe::new(story.chain.history.join("universe"))
+        .load()?
+        .batches
+        .pop()
+        .ok_or_eyre("batch")?;
+    let review_path = root.join("empty-extension.json");
+    std::fs::write(
+        &review_path,
+        serde_json::to_vec(&AmendmentReview {
+            format_version: FORMAT_VERSION,
+            reviewer: story.chain.reviewer.clone(),
+            batch_sha256: batch.clone(),
+            seed_extension: vec![],
+        })?,
+    )?;
+    let out = story.chain.out("measure-extension");
+    let previous = story.chain.head()?;
+    problems(commands::amend(
+        &story.chain.history,
+        &previous,
+        &batch,
+        &review_path,
+        &out,
+        &story.chain.live(&out),
+    ))?;
+    let original = story
+        .seed
+        .iter()
+        .map(|row| &row.witness)
+        .collect::<std::collections::BTreeSet<_>>();
+    let extension = rows(&out.join("checkpoint-02"))?
+        .into_iter()
+        .filter(|row| !original.contains(&row.witness))
+        .collect::<Vec<_>>();
+    sim_assert_eq!(have: extension.len(), want: 1);
+    sim_assert_eq!(have: story.chain.amend(&extension)??, want: Verdict::Pass);
+    let registry3 = registry(
+        &root.join("registry-3"),
+        &story.helm,
+        &[
+            literal(),
+            direct_abort(),
+            static_alias(),
+            snapshot(),
+            write_alias(),
+        ],
+    )?;
+    let candidate = capture(
+        &root.join("discover-alias"),
+        TIGHTENED,
+        &registry3.root,
+        &story.wrong,
+        &story.helm,
+    )?;
+    let (_, verdict) = story.chain.compare(
+        "discover-alias",
+        &story.main,
+        &candidate,
+        &story.seed,
+        None,
+        &story.certificates,
+    )?;
+    problems(verdict)?;
+    sim_assert_eq!(have: story.chain.amend(&[])??, want: Verdict::Pass);
+    sim_assert_eq!(have: commands::verify_history(&story.chain.history, &story.chain.head()?)?, want: Verdict::Pass);
     Ok(())
 }

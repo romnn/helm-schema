@@ -3,23 +3,21 @@
 //! Every witness ever discovered is kept as an immutable, version-1 record
 //! whose identity excludes everything a candidate can move: its schema
 //! digest, a JSON pointer, an ordinal or a checkpoint number. Records arrive
-//! in append-only batches. Each batch is journaled under an exclusive lock,
-//! and the journal's head hash chains every batch to its predecessor, so a
-//! dropped batch, a rolled-back head or a substituted record fails
-//! verification. Large shared bytes live in a content-addressed blob store
-//! and are rehashed on every read.
+//! in immutable batches. One writer stages and verifies each transaction
+//! before atomically publishing its gate and complete batch list. Shared bytes
+//! live in a content-addressed blob store and are rehashed on every read.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::io::Write as _;
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
-use serde_json::{Map, Value};
+use serde_json::Value;
 
 use super::DiffError;
 use crate::source_digest::sha256_hex;
 
-/// The only witness, journal, plan and receipt format this tool reads.
+/// The only witness, plan and receipt format this tool reads.
 pub const FORMAT_VERSION: u32 = 1;
 
 /// The observation every schema witness answers.
@@ -28,25 +26,10 @@ pub const SCHEMA_ACCEPTANCE: &str = "schema-acceptance";
 /// `value` as canonical JSON: object members sorted by key, no whitespace.
 #[must_use]
 pub fn canonical_json(value: &Value) -> Vec<u8> {
-    fn sorted(value: &Value) -> Value {
-        match value {
-            Value::Object(members) => {
-                let mut keys = members.keys().collect::<Vec<_>>();
-                keys.sort();
-                let mut sorted_members = Map::new();
-                for key in keys {
-                    if let Some(member) = members.get(key) {
-                        sorted_members.insert(key.clone(), sorted(member));
-                    }
-                }
-                Value::Object(sorted_members)
-            }
-            Value::Array(items) => Value::Array(items.iter().map(sorted).collect()),
-            Value::Null | Value::Bool(_) | Value::Number(_) | Value::String(_) => value.clone(),
-        }
-    }
+    let mut sorted = value.clone();
+    sorted.sort_all_objects();
     // Serializing a `Value` cannot fail.
-    serde_json::to_vec(&sorted(value)).unwrap_or_default()
+    serde_json::to_vec(&sorted).unwrap_or_default()
 }
 
 /// SHA-256 of `value`'s canonical JSON.
@@ -381,288 +364,255 @@ impl WitnessRecord {
     }
 }
 
-/// Who added a batch to the universe.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Attempt {
-    /// The run that discovered or added the batch.
-    pub run_id: String,
-    /// The capture whose comparison discovered it, if any.
-    pub capture_hash: Option<String>,
-    /// Why: `genesis`, `discovery`, `amendment` or `migration`.
-    pub reason: String,
-}
-
-/// One journal record: a batch chained to its predecessor.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct JournalRecord {
-    /// [`FORMAT_VERSION`].
-    pub format_version: u32,
-    /// Zero-based position in the journal.
-    pub sequence: u64,
-    /// SHA-256 of the previous record, `None` for the first.
-    pub previous_sha256: Option<String>,
-    /// SHA-256 of the batch file.
-    pub batch_sha256: String,
-    /// Witnesses in the batch.
-    pub witnesses: usize,
-    /// Who added it.
-    pub attempt: Attempt,
-}
-
-/// The append-only witness universe of one history.
+/// Immutable witness batches and their content-addressed blobs.
 #[derive(Debug)]
 pub struct Universe {
     root: PathBuf,
     blobs: BlobStore,
 }
 
-/// A loaded universe: every witness, by id, with its journal head.
+/// The complete witness union of a transaction.
 #[derive(Debug, Default)]
 pub struct UniverseState {
-    /// Every witness ever journaled, by id, origins merged.
+    /// Every witness, by id, with origins merged.
     pub witnesses: BTreeMap<String, WitnessRecord>,
-    /// Every journal record, in order.
-    pub journal: Vec<JournalRecord>,
-    /// SHA-256 of the last journal record, `None` when empty.
+    /// Immutable batch hashes, in publication order.
+    pub batches: Vec<String>,
+    /// The hash of the ordered batch list, or `None` before genesis.
     pub head: Option<String>,
 }
 
 impl UniverseState {
-    /// SHA-256 of the sorted witness ids: the universe's content identity.
+    /// The content identity of the sorted witness ids.
     ///
     /// # Errors
     ///
-    /// [`DiffError::Infrastructure`] when the ids cannot be serialized.
+    /// [`DiffError::Infrastructure`] when serialization fails.
     pub fn hash(&self) -> Result<String, DiffError> {
         canonical_sha256(&self.witnesses.keys().collect::<Vec<_>>())
     }
-
-    /// The batch hashes, in journal order.
-    #[must_use]
-    pub fn batch_hashes(&self) -> Vec<String> {
-        self.journal
-            .iter()
-            .map(|record| record.batch_sha256.clone())
-            .collect()
-    }
 }
 
-/// Holds the history's exclusive lock until dropped.
+/// One atomic publication point for both the gate and witness union.
+#[derive(Debug, Default, Serialize, Deserialize)]
+struct HistoryHead {
+    gate: Option<GateHead>,
+    batches: Vec<String>,
+}
+
+/// Holds the history's single writer lock for the whole transaction.
 #[derive(Debug)]
 pub struct HistoryLock {
-    path: PathBuf,
+    file: std::fs::File,
+}
+
+impl HistoryLock {
+    /// Acquires the lock before reading any history state.
+    ///
+    /// # Errors
+    ///
+    /// [`DiffError::Identity`] if another writer holds the lock.
+    pub fn acquire(root: &Path) -> Result<Self, DiffError> {
+        std::fs::create_dir_all(root).map_err(|error| io(root, &error))?;
+        let path = root.join(".lock");
+        let file = std::fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(false)
+            .open(&path)
+            .map_err(|error| io(&path, &error))?;
+        file.try_lock().map_err(|error| {
+            DiffError::Identity(format!("history is locked ({}): {error}", path.display()))
+        })?;
+        Ok(Self { file })
+    }
 }
 
 impl Drop for HistoryLock {
     fn drop(&mut self) {
-        // A stale lock blocks the next writer, which is the safe failure.
-        let _removed = std::fs::remove_file(&self.path);
+        if let Err(err) = self.file.unlock() {
+            tracing::error!(?err, "release history lock");
+        }
     }
 }
 
 impl Universe {
-    /// The universe under `root`.
+    /// Opens the universe under `root`.
     #[must_use]
     pub fn new(root: PathBuf) -> Self {
         let blobs = BlobStore::new(root.join("blobs"));
         Self { root, blobs }
     }
 
-    /// The universe's blob store.
+    /// Its immutable blob store.
     #[must_use]
     pub fn blobs(&self) -> &BlobStore {
         &self.blobs
-    }
-
-    /// Takes the exclusive lock.
-    ///
-    /// # Errors
-    ///
-    /// [`DiffError::Identity`] when another writer holds it.
-    pub fn lock(&self) -> Result<HistoryLock, DiffError> {
-        std::fs::create_dir_all(&self.root).map_err(|error| io(&self.root, &error))?;
-        let path = self.root.join(".lock");
-        std::fs::OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&path)
-            .map_err(|error| {
-                DiffError::Identity(format!("history is locked ({}): {error}", path.display()))
-            })?;
-        Ok(HistoryLock { path })
-    }
-
-    fn journal_path(&self) -> PathBuf {
-        self.root.join("journal.jsonl")
-    }
-
-    fn head_path(&self) -> PathBuf {
-        self.root.join("head")
     }
 
     fn batch_path(&self, sha256: &str) -> PathBuf {
         self.root.join("batches").join(format!("{sha256}.jsonl"))
     }
 
-    /// The witness ids of the journaled batch `sha256`.
+    fn read_head(&self) -> Result<HistoryHead, DiffError> {
+        let path = self.root.join("head.json");
+        match std::fs::read(&path) {
+            Ok(bytes) => serde_json::from_slice(&bytes)
+                .map_err(|error| DiffError::Identity(format!("{}: {error}", path.display()))),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                Ok(HistoryHead::default())
+            }
+            Err(error) => Err(io(&path, &error)),
+        }
+    }
+
+    /// The trusted gate published with this universe.
     ///
     /// # Errors
     ///
-    /// [`DiffError::Identity`] when the batch is missing or changed.
+    /// [`DiffError::Identity`] if genesis has not been published.
+    pub fn gate_head(&self) -> Result<GateHead, DiffError> {
+        self.read_head()?
+            .gate
+            .filter(|head| head.format_version == FORMAT_VERSION)
+            .ok_or_else(|| DiffError::Identity("history has no supported gate head".into()))
+    }
+
+    /// The witness ids of an immutable batch.
+    ///
+    /// # Errors
+    ///
+    /// [`DiffError`] if the batch is missing or changed.
     pub fn batch_ids(&self, sha256: &str) -> Result<BTreeSet<String>, DiffError> {
-        let batch = read(&self.batch_path(sha256))?;
-        if sha256_hex(&batch) != sha256 {
-            return Err(DiffError::Identity(format!("batch {sha256} changed")));
-        }
-        Ok(parse_batch(&batch)?
+        Ok(self
+            .read_batch(sha256)?
             .into_iter()
             .map(|record| record.id)
             .collect())
     }
 
-    /// Loads and verifies the whole universe: the chain, every batch, every
-    /// record and blob.
+    fn read_batch(&self, sha256: &str) -> Result<Vec<WitnessRecord>, DiffError> {
+        let bytes = read(&self.batch_path(sha256))?;
+        if sha256_hex(&bytes) != sha256 {
+            return Err(DiffError::Identity(format!("batch {sha256} changed")));
+        }
+        parse_batch(&bytes)
+    }
+
+    /// Loads every published batch, verifying all records and blobs.
     ///
     /// # Errors
     ///
-    /// [`DiffError::Identity`] on any broken link, hash or record.
+    /// [`DiffError`] for missing, changed or inconsistent inputs.
     pub fn load(&self) -> Result<UniverseState, DiffError> {
         let mut state = UniverseState::default();
-        let journal = match std::fs::read(self.journal_path()) {
-            Ok(bytes) => bytes,
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-                if self.head_path().exists() {
-                    return Err(DiffError::Identity("universe head without journal".into()));
-                }
-                return Ok(state);
-            }
-            Err(error) => return Err(io(&self.journal_path(), &error)),
-        };
-        for (sequence, line) in journal.split(|byte| *byte == b'\n').enumerate() {
-            if line.is_empty() {
-                continue;
-            }
-            let record: JournalRecord = serde_json::from_slice(line).map_err(|error| {
-                DiffError::Identity(format!("journal record {sequence}: {error}"))
-            })?;
-            if record.format_version != FORMAT_VERSION
-                || usize::try_from(record.sequence).ok() != Some(state.journal.len())
-                || record.previous_sha256 != state.head
-            {
-                return Err(DiffError::Identity(format!(
-                    "journal record {sequence} breaks the chain"
-                )));
-            }
-            let batch = read(&self.batch_path(&record.batch_sha256))?;
-            if sha256_hex(&batch) != record.batch_sha256 {
-                return Err(DiffError::Identity(format!(
-                    "batch {} changed",
-                    record.batch_sha256
-                )));
-            }
-            let records = parse_batch(&batch)?;
-            if records.len() != record.witnesses {
-                return Err(DiffError::Identity(format!(
-                    "batch {} holds {} witnesses, journaled {}",
-                    record.batch_sha256,
-                    records.len(),
-                    record.witnesses
-                )));
-            }
-            for witness in records {
+        for batch in self.read_head()?.batches {
+            for witness in self.read_batch(&batch)? {
                 witness.verify(&self.blobs)?;
                 merge(&mut state.witnesses, witness)?;
             }
-            state.head = Some(canonical_sha256(&record)?);
-            state.journal.push(record);
+            state.batches.push(batch);
         }
-        let head = std::fs::read_to_string(self.head_path())
-            .map_err(|error| io(&self.head_path(), &error))?;
-        if Some(head.trim()) != state.head.as_deref() {
-            return Err(DiffError::Identity(
-                "universe head does not match its journal".to_string(),
-            ));
+        if !state.batches.is_empty() {
+            state.head = Some(canonical_sha256(&state.batches)?);
         }
         Ok(state)
     }
 
-    /// Journals `witnesses` as one batch after the current head and advances
-    /// the head; the caller holds the lock. An empty batch journals nothing.
+    /// Verifies a receipt's union and batch-list identities against published batches.
     ///
     /// # Errors
     ///
-    /// [`DiffError::Identity`] when the universe's head moved since `state`
-    /// was loaded; [`DiffError::Infrastructure`] when a file cannot be written.
-    pub fn append(
-        &self,
-        _lock: &HistoryLock,
-        state: &mut UniverseState,
-        witnesses: Vec<WitnessRecord>,
-        attempt: Attempt,
-    ) -> Result<Option<String>, DiffError> {
-        let current = match std::fs::read_to_string(self.head_path()) {
-            Ok(head) => Some(head.trim().to_string()),
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => None,
-            Err(error) => return Err(io(&self.head_path(), &error)),
-        };
-        if current != state.head {
+    /// [`DiffError`] for a dropped batch or a substituted union identity.
+    pub fn verify_snapshot(&self, receipt: &Receipt) -> Result<(), DiffError> {
+        let mut ids = BTreeSet::new();
+        for batch in &receipt.witness_batch_hashes {
+            ids.extend(self.batch_ids(batch)?);
+        }
+        if canonical_sha256(&ids)? != receipt.universe_hash
+            || Some(canonical_sha256(&receipt.witness_batch_hashes)?)
+                != receipt.universe_journal_head_sha256
+        {
             return Err(DiffError::Identity(
-                "the universe head moved since it was loaded".to_string(),
+                "receipt universe identity does not match its batches".into(),
             ));
         }
+        Ok(())
+    }
+
+    /// Stages one batch in `state`; it remains invisible until [`Self::publish`].
+    ///
+    /// # Errors
+    ///
+    /// [`DiffError`] for invalid records or filesystem errors.
+    pub fn append(
+        &self,
+        state: &mut UniverseState,
+        mut witnesses: Vec<WitnessRecord>,
+    ) -> Result<Option<String>, DiffError> {
         if witnesses.is_empty() {
             return Ok(None);
         }
-        let mut sorted = witnesses;
-        sorted.sort_by(|left, right| left.id.cmp(&right.id));
-        let mut batch = Vec::new();
-        for witness in &sorted {
-            let value = serde_json::to_value(witness)
+        witnesses.sort_by(|left, right| left.id.cmp(&right.id));
+        let mut bytes = Vec::new();
+        for witness in &witnesses {
+            witness.verify(&self.blobs)?;
+            serde_json::to_writer(&mut bytes, witness)
                 .map_err(|error| DiffError::Infrastructure(format!("serialize: {error}")))?;
-            batch.extend(canonical_json(&value));
-            batch.push(b'\n');
+            bytes.push(b'\n');
         }
-        let batch_sha256 = sha256_hex(&batch);
-        let path = self.batch_path(&batch_sha256);
+        if witnesses
+            .windows(2)
+            .any(|pair| matches!(pair, [left, right] if left.id == right.id))
+        {
+            return Err(DiffError::Identity(
+                "duplicate witness in a staged batch".into(),
+            ));
+        }
+        let hash = sha256_hex(&bytes);
+        let path = self.batch_path(&hash);
         if path.exists() {
-            if read(&path)? != batch {
-                return Err(DiffError::Identity(format!("batch {batch_sha256} differs")));
+            if read(&path)? != bytes {
+                return Err(DiffError::Identity(format!("batch {hash} changed")));
             }
         } else {
-            write_new(&path, &batch)?;
+            write_new(&path, &bytes)?;
         }
-        let record = JournalRecord {
-            format_version: FORMAT_VERSION,
-            sequence: u64::try_from(state.journal.len()).unwrap_or(u64::MAX),
-            previous_sha256: state.head.clone(),
-            batch_sha256: batch_sha256.clone(),
-            witnesses: sorted.len(),
-            attempt,
-        };
-        let record_value = serde_json::to_value(&record)
-            .map_err(|error| DiffError::Infrastructure(format!("serialize: {error}")))?;
-        let mut line = canonical_json(&record_value);
-        line.push(b'\n');
-        let mut journal = std::fs::OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(self.journal_path())
-            .map_err(|error| io(&self.journal_path(), &error))?;
-        journal
-            .write_all(&line)
-            .and_then(|()| journal.sync_all())
-            .map_err(|error| io(&self.journal_path(), &error))?;
-        let head = canonical_sha256(&record)?;
-        let next_head = self.root.join(format!("head.{}", record.sequence));
-        write_new(&next_head, head.as_bytes())?;
-        std::fs::rename(&next_head, self.head_path())
-            .map_err(|error| io(&self.head_path(), &error))?;
-        for witness in sorted {
+        for witness in witnesses {
             merge(&mut state.witnesses, witness)?;
         }
-        state.head = Some(head);
-        state.journal.push(record);
-        Ok(Some(batch_sha256))
+        state.batches.push(hash.clone());
+        state.head = Some(canonical_sha256(&state.batches)?);
+        Ok(Some(hash))
+    }
+
+    /// Atomically publishes a complete transaction's union and optional new gate.
+    ///
+    /// # Errors
+    ///
+    /// [`DiffError`] when the head cannot be written.
+    pub fn publish(
+        &self,
+        _lock: &HistoryLock,
+        state: &UniverseState,
+        gate: Option<GateHead>,
+    ) -> Result<(), DiffError> {
+        let head = HistoryHead {
+            gate: gate.or(self.read_head()?.gate),
+            batches: state.batches.clone(),
+        };
+        let bytes = serde_json::to_vec(&head)
+            .map_err(|error| DiffError::Infrastructure(format!("serialize: {error}")))?;
+        let mut temporary =
+            tempfile::NamedTempFile::new_in(&self.root).map_err(|error| io(&self.root, &error))?;
+        temporary
+            .write_all(&bytes)
+            .and_then(|()| temporary.as_file().sync_all())
+            .map_err(|error| io(&self.root, &error))?;
+        temporary
+            .persist(self.root.join("head.json"))
+            .map_err(|error| io(&self.root, &error.error))?;
+        Ok(())
     }
 }
 
@@ -777,6 +727,8 @@ pub struct HistoryPlan {
     pub seed_ordinal: u32,
     /// The reviewer whose identity seed and amendment reviews must carry.
     pub reviewer: String,
+    /// SHA-256 of the reviewed context roster every capture must retain.
+    pub context_roster_sha256: String,
 }
 
 impl HistoryPlan {
@@ -789,13 +741,12 @@ impl HistoryPlan {
     pub fn read(path: &Path) -> Result<Self, DiffError> {
         let plan: Self = serde_json::from_slice(&read(path)?)
             .map_err(|error| DiffError::Request(format!("plan {}: {error}", path.display())))?;
-        let ordinals = plan
-            .checkpoints
-            .iter()
-            .map(|checkpoint| checkpoint.ordinal)
-            .collect::<Vec<_>>();
         if plan.format_version != FORMAT_VERSION
-            || ordinals != (1..=10).collect::<Vec<_>>()
+            || !plan
+                .checkpoints
+                .iter()
+                .map(|checkpoint| checkpoint.ordinal)
+                .eq(1..=10)
             || plan.seed_ordinal != 2
             || plan.history_id.is_empty()
             || plan.reviewer.is_empty()
@@ -847,7 +798,7 @@ pub struct Receipt {
     /// SHA-256 of the scored control registry, `None` before controls are captured.
     pub controls_hash: Option<String>,
     /// SHA-256 of the context roster's exact bytes, `None` without one.
-    pub context_roster_hash: Option<String>,
+    pub context_roster_hash: String,
     /// The provider bundle's input digest.
     pub provider_hash: String,
     /// The pinned Helm engine's identity.
@@ -860,9 +811,9 @@ pub struct Receipt {
     pub universe_parent_hash: Option<String>,
     /// [`UniverseState::hash`] the comparison used.
     pub universe_hash: String,
-    /// The universe journal head the comparison used.
+    /// The ordered batch-list hash the comparison used.
     pub universe_journal_head_sha256: Option<String>,
-    /// Every journaled batch, in order.
+    /// Every published batch, in order.
     pub witness_batch_hashes: Vec<String>,
     /// SHA-256 of each compared dump's manifest: main's, then the candidate's.
     pub artifact_manifest_hashes: Vec<String>,

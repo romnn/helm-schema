@@ -1759,9 +1759,9 @@ pub fn decode(runner: &HelmRunner, rendered: &[u8], case: &Path) -> eyre::Result
         decoder_documents(&output.stdout, &case, empty)
     } else {
         Err(format!(
-            "Helm YAML decoding failed; evidence={}: {}",
-            crate::helm::invocation::preserve_failure(&case).display(),
-            String::from_utf8_lossy(&output.stderr)
+            "Helm YAML decoding failed: {}; evidence={}",
+            String::from_utf8_lossy(&output.stderr),
+            crate::helm::invocation::preserve_failure(&case).display()
         ))
     };
     Ok(Decoded {

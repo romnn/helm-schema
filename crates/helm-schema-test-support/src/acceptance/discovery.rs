@@ -350,13 +350,7 @@ impl ProfileSchemas {
         if !transition || self.lean.is_valid(instance) {
             return Vec::new();
         }
-        let mut violations = violations(&self.lean, instance)
-            .iter()
-            .map(ToString::to_string)
-            .collect::<Vec<_>>();
-        violations.sort();
-        violations.dedup();
-        violations
+        violation_identities(&self.lean, instance)
     }
 
     /// Both schemas' violations of Helm's coalesced `values`.
@@ -984,6 +978,19 @@ fn synthesized_guard_witness_candidates(
     }
     let omitted = total.saturating_sub(candidates.len());
     (candidates, omitted)
+}
+
+/// The canonical identities of the violations `validator` reports on
+/// `instance`, sorted and unique: what a rejection's answer is.
+#[must_use]
+pub fn violation_identities(validator: &Validator, instance: &Value) -> Vec<String> {
+    let mut violations = violations(validator, instance)
+        .iter()
+        .map(ToString::to_string)
+        .collect::<Vec<_>>();
+    violations.sort();
+    violations.dedup();
+    violations
 }
 
 /// The violations `validator` reports on a values document.

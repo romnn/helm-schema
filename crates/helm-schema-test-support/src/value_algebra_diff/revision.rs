@@ -7,6 +7,7 @@
 //! every hash the manifest records and every binary the build receipt names;
 //! logs, run directories and scratch are diagnostics and are not bound.
 
+use crate::acceptance::screen::ImportedRoster;
 use std::collections::{BTreeMap, BTreeSet};
 use std::io::Write as _;
 use std::path::{Path, PathBuf};
@@ -78,8 +79,8 @@ pub struct CaptureManifest {
     pub kubernetes_release: String,
     /// SHA-256 of the dump's registry entries and recipe inputs.
     pub suite_sha256: String,
-    /// SHA-256 of the context roster's exact bytes, when one was captured.
-    pub contexts_sha256: Option<String>,
+    /// SHA-256 of the reviewed context roster's exact bytes.
+    pub contexts_sha256: String,
     /// The observation controls.
     pub controls: ControlsCapture,
 }
@@ -190,8 +191,8 @@ pub struct CaptureRequest {
     pub build_target: PathBuf,
     /// The control registry.
     pub controls: PathBuf,
-    /// The context roster to retain, if any.
-    pub contexts: Option<PathBuf>,
+    /// The required reviewed version-2 context roster.
+    pub contexts: PathBuf,
     /// The new capture directory.
     pub out: PathBuf,
     /// Allows a dirty tree, marking the capture synthetic.
@@ -269,7 +270,7 @@ pub(crate) fn write_lines(path: &Path, lines: &[String]) -> Result<String, DiffE
     Ok(sha256_hex(&bytes))
 }
 
-fn read_lines<T: for<'de> Deserialize<'de>>(path: &Path) -> Result<Vec<T>, DiffError> {
+pub(crate) fn read_lines<T: for<'de> Deserialize<'de>>(path: &Path) -> Result<Vec<T>, DiffError> {
     let bytes = std::fs::read(path).map_err(|error| io(path, &error))?;
     bytes
         .split(|byte| *byte == b'\n')
@@ -329,10 +330,14 @@ fn record_admissions(
     write_lines(&out.join("admission.jsonl"), &lines)
 }
 
-/// Copies `from` to `to`; returns the copy's hash.
-fn copy_hashed(from: &Path, to: &Path) -> Result<String, DiffError> {
-    std::fs::copy(from, to).map_err(|error| io(from, &error))?;
-    file_sha256(to)
+/// Checks the reviewed context roster against the dump's charts and keeps a
+/// copy; returns its content identity.
+fn record_contexts(contexts: &Path, dump: &VerifiedDump, out: &Path) -> Result<String, DiffError> {
+    let labels = super::capture::chart_keys(dump)?.into_keys().collect();
+    let roster = ImportedRoster::read_rebinding(contexts, &labels)
+        .map_err(|error| DiffError::Request(format!("context roster: {error:#}")))?;
+    std::fs::copy(contexts, out.join("contexts.json")).map_err(|error| io(contexts, &error))?;
+    Ok(roster.sha256)
 }
 
 /// Captures one revision: builds its binaries, runs its producer, exporter,
@@ -376,7 +381,7 @@ pub fn capture(request: &CaptureRequest) -> Result<Capture, DiffError> {
     let producer = bin.join("corpus_generation");
     run(
         &producer,
-        &["--out", &dump_arg, "--helm-ready"],
+        &["--out", &dump_arg, "--helm-ready", "--jobs", "1"],
         checkout,
         &log,
     )?;
@@ -391,7 +396,7 @@ pub fn capture(request: &CaptureRequest) -> Result<Capture, DiffError> {
     let export_dir = out.join("export");
     run(
         &bin.join("contract_export"),
-        &["--out", &export_dir.to_string_lossy()],
+        &["--out", &export_dir.to_string_lossy(), "--jobs", "1"],
         checkout,
         &log,
     )?;
@@ -408,10 +413,7 @@ pub fn capture(request: &CaptureRequest) -> Result<Capture, DiffError> {
     let admission_sha256 = record_admissions(&suite_root, &testdata, &bin, out)?;
     let controls = record_controls(out, controls, &provenance, helm)?;
     let helmsweep_version = run(helmsweep, &["version"], checkout, &log)?;
-    let contexts_sha256 = contexts
-        .as_deref()
-        .map(|path| copy_hashed(path, &out.join("contexts.json")))
-        .transpose()?;
+    let contexts_sha256 = record_contexts(contexts, &dump, out)?;
     if build::tree_sha256(checkout)? != tree_before {
         return Err(DiffError::Identity(format!(
             "{} changed during the capture",
@@ -719,9 +721,8 @@ pub fn open_capture(root: &Path) -> Result<Capture, DiffError> {
     let contracts = verify_export(&root.join("export"), &dump, &manifest.provenance)?;
     let admissions = read_lines(&root.join("admission.jsonl"))?;
     let controls = open_controls(&root.join("controls"), &bin, &manifest.controls)?;
-    if let Some(expected) = &manifest.contexts_sha256
-        && file_sha256(&root.join("contexts.json"))? != *expected
-    {
+    let contexts = file_sha256(&root.join("contexts.json"))?;
+    if contexts != manifest.contexts_sha256 {
         return Err(stale());
     }
     Ok(Capture {

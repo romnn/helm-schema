@@ -742,6 +742,7 @@ pub fn adjudicate_probe(
     let Some(probe) = live.flips.get(flip) else {
         return AdjudicatedProbe {
             flip,
+            key: format!("{}: missing flip {flip}", live.label),
             case: format!("{}: flip {flip}", live.label),
             document_kind: None,
             kubernetes_version: String::new(),
@@ -805,6 +806,7 @@ pub fn adjudicate_probe(
     };
     AdjudicatedProbe {
         flip,
+        key: super::probe_key(&live.label, probe),
         case,
         document_kind: probe.document.as_ref().map(|document| document.kind),
         kubernetes_version,

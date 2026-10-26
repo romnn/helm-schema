@@ -18,7 +18,7 @@ use super::admission::AdmissionOutcome;
 use super::controls::ObservationOutcome;
 use super::history::{
     BlobStore, DocumentRecord, FORMAT_VERSION, InstanceRecord, SCHEMA_ACCEPTANCE, WitnessIdentity,
-    WitnessMode, WitnessRecord, canonical_json, canonical_sha256,
+    WitnessMode, WitnessRecord, canonical_json,
 };
 use crate::acceptance::discovery::ProbeInstance;
 use crate::acceptance::screen::{ScreenedDocument, ScreenedProbe};
@@ -84,8 +84,10 @@ pub struct WitnessOutcome {
     pub class: Class,
     /// The error direction of a regression or closure.
     pub direction: Option<String>,
-    /// The adjudication's evidence directory or failure message.
+    /// The adjudication's failure message, if it failed.
     pub detail: Option<String>,
+    /// The adjudication's evidence directory, retained under the payload.
+    pub evidence: Option<String>,
     /// SHA-256 of the candidate's semantic answer: its verdict, the oracle's
     /// answer and verdict, and the assertions it newly fails.
     pub answer_sha256: String,
@@ -156,8 +158,13 @@ fn verdict_answer(verdict: &HelmFlipVerdict) -> (OracleAnswer, Option<bool>) {
 pub struct JudgedWitness {
     /// The witness id.
     pub id: String,
-    /// `chart: name`, the case its adjudication reports.
+    /// `chart: name`, for reports only.
     pub case: String,
+    /// [`crate::acceptance::probe_key`] of its probe: what joins it to its
+    /// adjudication.
+    pub key: String,
+    /// Whether screening proposed it to the oracle.
+    pub screened: bool,
     /// Whether the baseline accepts it.
     pub baseline_accepts: bool,
     /// Whether the candidate accepts it.
@@ -175,6 +182,8 @@ impl JudgedWitness {
         Self {
             id,
             case: witness.case(),
+            key: crate::acceptance::probe_key(&witness.chart, &witness.probe),
+            screened: witness.screened,
             baseline_accepts: witness.baseline_accepts,
             candidate_accepts: witness.candidate_accepts,
             transition: witness.transition,
@@ -183,23 +192,24 @@ impl JudgedWitness {
     }
 }
 
-/// Classifies `witness` given its adjudication, if any.
-#[must_use]
-pub fn classify(
-    witness: &JudgedWitness,
-    adjudication: Option<&AdjudicationRecord>,
-) -> WitnessOutcome {
-    let witness_id = witness.id.as_str();
-    let (baseline, candidate) = (witness.baseline_accepts, witness.candidate_accepts);
-    let unchanged = baseline == candidate && !witness.transition;
-    let (oracle, implied, detail, infrastructure, severity) = match adjudication
+/// What one adjudication says.
+struct Reading {
+    oracle: OracleAnswer,
+    /// The candidate verdict the oracle's answer implies, if any.
+    implied: Option<bool>,
+    detail: Option<String>,
+    infrastructure: bool,
+    severity: String,
+}
+
+fn reading(record: Option<&AdjudicationRecord>) -> Reading {
+    let (oracle, implied, detail, infrastructure, severity) = match record
         .map(|record| &record.outcome)
     {
         None => (OracleAnswer::NotAsked, None, None, false, String::new()),
-        Some(Ok((verdict, evidence))) => {
+        Some(Ok((verdict, _))) => {
             let (oracle, implied) = verdict_answer(verdict);
-            let detail = Some(evidence.display().to_string());
-            (oracle, implied, detail, false, format!("{verdict:?}"))
+            (oracle, implied, None, false, format!("{verdict:?}"))
         }
         Some(Err(AdjudicationFailure { kind, message })) => {
             let severity = format!("{kind:?}");
@@ -215,6 +225,34 @@ pub fn classify(
             }
         }
     };
+    Reading {
+        oracle,
+        implied,
+        detail,
+        infrastructure,
+        severity,
+    }
+}
+
+/// Classifies `witness` given what the oracle said. A proposed witness the
+/// live oracle never answered is UNADJUDICATED, never IDENTICAL.
+#[must_use]
+pub fn classify(witness: &JudgedWitness, record: Option<&AdjudicationRecord>) -> WitnessOutcome {
+    let witness_id = witness.id.as_str();
+    let (baseline, candidate) = (witness.baseline_accepts, witness.candidate_accepts);
+    let unchanged = baseline == candidate && !witness.transition;
+    let missing = witness.screened && record.is_none();
+    let evidence = record
+        .and_then(|record| record.evidence.as_ref())
+        .map(|path| path.display().to_string());
+    let Reading {
+        oracle,
+        implied,
+        detail,
+        infrastructure,
+        severity,
+    } = reading(record);
+
     let answer_sha256 = sha256_hex(&canonical_json(&json!({
         "candidate_accepts": candidate,
         "oracle": oracle,
@@ -224,12 +262,15 @@ pub fn classify(
     let mut direction = None;
     let class = if infrastructure {
         Class::Infrastructure
+    } else if missing {
+        Class::Unadjudicated
     } else if implied.is_some_and(|implied| implied != candidate) {
         // Helm's coalesced document and the screened composition disagree.
         Class::Unadjudicated
     } else {
         match oracle {
-            OracleAnswer::NotAsked if adjudication.is_some() || unchanged => Class::Identical,
+            // A collapsed flip: another identical execution answered it.
+            OracleAnswer::NotAsked if record.is_some() => Class::Identical,
             OracleAnswer::NotAsked | OracleAnswer::Undecided => {
                 if unchanged {
                     Class::Identical
@@ -282,7 +323,12 @@ pub fn classify(
         oracle,
         class,
         direction,
-        detail,
+        detail: if missing {
+            Some("the live oracle returned no adjudication for this proposed witness".into())
+        } else {
+            detail
+        },
+        evidence,
         answer_sha256,
     }
 }
@@ -801,13 +847,4 @@ pub fn replay_witness(
         transition: false,
         candidate_violations: Vec::new(),
     })
-}
-
-/// SHA-256 of the canonical serialization of `value`, for receipts.
-///
-/// # Errors
-///
-/// [`DiffError::Infrastructure`] when it cannot be serialized.
-pub fn table_hash<T: Serialize>(value: &T) -> Result<String, DiffError> {
-    canonical_sha256(value)
 }

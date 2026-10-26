@@ -70,10 +70,14 @@ pub struct ContextRoster {
 
 /// A verified context roster, grouped by chart.
 pub struct ImportedRoster {
-    /// SHA-256 of the roster file's exact bytes.
+    /// SHA-256 of the reviewed roster file's exact bytes.
     pub sha256: String,
     /// Each chart's rows, sorted by identity.
     pub rows: BTreeMap<String, Vec<ContextRow>>,
+    /// Whether each row's recorded chart and schema hashes are rebound to the
+    /// pair being compared, as a comparison history's one reviewed roster
+    /// must be across checkpoints.
+    pub rebind: bool,
 }
 
 impl ImportedRoster {
@@ -83,6 +87,20 @@ impl ImportedRoster {
     ///
     /// Returns an error when the file is too large, malformed, or a row is inconsistent or names an unselected chart.
     pub fn read(path: &Path, charts: &BTreeSet<String>) -> eyre::Result<Self> {
+        Self::parse(path, charts, false)
+    }
+
+    /// [`ImportedRoster::read`] for a comparison history: rows are rebound to
+    /// each compared pair; its exact reviewed bytes remain its identity.
+    ///
+    /// # Errors
+    ///
+    /// As [`ImportedRoster::read`].
+    pub fn read_rebinding(path: &Path, charts: &BTreeSet<String>) -> eyre::Result<Self> {
+        Self::parse(path, charts, true)
+    }
+
+    fn parse(path: &Path, charts: &BTreeSet<String>, rebind: bool) -> eyre::Result<Self> {
         eyre::ensure!(
             std::fs::metadata(path)?.len() <= MAX_ROSTER_BYTES,
             "context roster exceeds byte cap"
@@ -167,6 +185,7 @@ impl ImportedRoster {
         Ok(Self {
             sha256: sha256_hex(&bytes),
             rows,
+            rebind,
         })
     }
 }
@@ -538,7 +557,7 @@ pub fn screen(request: &ScreenRequest<'_>) -> eyre::Result<LintScreen> {
 }
 
 /// Receives each witness a recording screen judges.
-pub type Recorder<'a> = &'a mut dyn FnMut(ScreenedWitness);
+pub type Recorder<'a> = &'a mut dyn FnMut(ScreenedWitness) -> eyre::Result<()>;
 
 /// [`screen`], also handing every composed document as a witness of
 /// `chart` to the recorder when given.
@@ -617,7 +636,7 @@ pub fn screen_recording(
                             screened: flip,
                             transition,
                             candidate_violations,
-                        });
+                        })?;
                     }
                     if flip {
                         counts.flips += 1;
@@ -813,7 +832,7 @@ impl ScreenedProbes {
         coverage: &mut ProbeCoverage,
     ) {
         self.probes_checked += 1;
-        if !witness.screened || known.contains(&witness.case()) {
+        if !witness.screened || known.contains(&super::probe_key(&witness.chart, &witness.probe)) {
             return;
         }
         match accounting {
@@ -882,7 +901,11 @@ impl ScreenedProbes {
     }
 }
 
-/// Screens the structural probe battery against both schemas.
+/// Screens both schemas, recording every reachable probe when requested.
+///
+/// # Errors
+///
+/// Returns a recording failure immediately, before judging another probe.
 pub fn screen_template_probes(
     chart_dir: &std::path::Path,
     profiles: &ProfileSchemas,
@@ -890,29 +913,8 @@ pub fn screen_template_probes(
     probes: Vec<(String, ProbeInstance)>,
     coverage: &mut ProbeCoverage,
     adjudicate_live: bool,
-) -> ScreenedProbes {
-    screen_template_probes_recording(
-        chart_dir,
-        profiles,
-        defaults,
-        probes,
-        coverage,
-        adjudicate_live,
-        None,
-    )
-}
-
-/// [`screen_template_probes`], also handing every reachable probe as a
-/// witness rendered for `kubernetes_version` to the recorder when given.
-pub fn screen_template_probes_recording(
-    chart_dir: &std::path::Path,
-    profiles: &ProfileSchemas,
-    defaults: &serde_json::Value,
-    probes: Vec<(String, ProbeInstance)>,
-    coverage: &mut ProbeCoverage,
-    adjudicate_live: bool,
     mut witnesses: Option<(&str, Recorder<'_>)>,
-) -> ScreenedProbes {
+) -> eyre::Result<ScreenedProbes> {
     let label = &coverage.label;
     let probes_checked = probes.len();
     let mut flips = Vec::new();
@@ -958,7 +960,7 @@ pub fn screen_template_probes_recording(
                 candidate_accepts,
                 screened: flip,
                 transition: flip,
-            });
+            })?;
         }
         if !flip {
             continue;
@@ -977,12 +979,12 @@ pub fn screen_template_probes_recording(
             ));
         }
     }
-    ScreenedProbes {
+    Ok(ScreenedProbes {
         probes_checked,
         flips,
         failures,
         screened,
-    }
+    })
 }
 
 /// Compiles both profiles, generates the chart's probe battery and screens
@@ -1063,19 +1065,14 @@ pub fn screen_chart_recording(
         helm: std::collections::BTreeMap::new(),
     };
     let version = crate::helm::kubernetes_version::chart_kubernetes_version(chart_dir.path())?;
-    let mut discovered = BTreeSet::new();
-    let mut sink_error = None;
     let mut record = |witness: ScreenedWitness| {
-        discovered.insert(witness.case());
-        if let Some(sink) = sink
-            && sink_error.is_none()
-            && let Err(error) = sink(witness)
-        {
-            sink_error = Some(error);
+        if let Some(sink) = sink {
+            sink(witness)?;
         }
+        Ok(())
     };
     let screening = std::time::Instant::now();
-    let mut result = screen_template_probes_recording(
+    let mut result = screen_template_probes(
         chart_dir.path(),
         &profiles,
         &defaults,
@@ -1084,52 +1081,61 @@ pub fn screen_chart_recording(
         adjudicate_live,
         sink.is_some()
             .then_some((version, &mut record as Recorder<'_>)),
-    );
+    )?;
     let lint_started = std::time::Instant::now();
-    let imported = roster
+    let mut imported = roster
         .and_then(|roster| roster.rows.get(&label))
-        .map_or(&[][..], Vec::as_slice);
+        .map_or_else(Vec::new, Clone::clone);
+    if roster.is_some_and(|roster| roster.rebind) {
+        let chart_sha256 = tree_sha256(chart_dir.path())?;
+        for row in &mut imported {
+            row.chart_sha256.clone_from(&chart_sha256);
+            row.baseline_sha256 = sha256_hex(&lint_schemas.baseline);
+            row.candidate_sha256 = sha256_hex(&lint_schemas.candidate);
+        }
+    }
     let lint = screen_recording(
         &ScreenRequest {
             chart: chart_dir.path(),
             schemas: &lint_schemas,
             kubernetes_version: version,
-            imported,
+            imported: &imported,
             roster_sha256: roster.map(|roster| roster.sha256.clone()),
             available_probes: MAX_PROBES_PER_CHART.saturating_sub(result.probes_checked),
         },
         sink.is_some()
             .then_some((label.as_str(), &mut record as Recorder<'_>)),
     );
+    if sink.is_some()
+        && let Err(err) = &lint
+    {
+        return Err(eyre::eyre!("record lint: {err:#}"));
+    }
     let accounting = LintAccounting::new(adjudicate_live, baseline_bytes == candidate_bytes);
     result.append_lint(lint, &lint_schemas, &mut coverage, accounting);
     cost.lint_screening_ms = elapsed_ms(lint_started);
-    if let Some(error) = sink_error {
-        return Err(error);
-    }
-    let known = discovered
+    let known = result
+        .screened
         .iter()
-        .cloned()
-        .chain(
-            result
-                .screened
-                .iter()
-                .map(|probe| format!("{}: {}", coverage.label, probe.name)),
-        )
+        .map(|probe| super::probe_key(&coverage.label, probe))
         .collect::<BTreeSet<_>>();
     let mut inputs = None;
     for witness in replay {
+        let witness = witness?;
+        eyre::ensure!(
+            witness.probe.document.is_some() || witness.kubernetes_version == version,
+            "replayed template witness {} has another Kubernetes version; use an explicit document witness",
+            witness.case()
+        );
         let witness = rejudge(
             chart_dir.path(),
             &profiles,
             &lint_schemas,
             &mut inputs,
-            witness?,
+            witness,
         )?;
         result.append_replayed(&witness, &known, accounting, &mut coverage);
-        if let Some(sink) = sink
-            && !discovered.contains(&witness.case())
-        {
+        if let Some(sink) = sink {
             sink(witness)?;
         }
     }
@@ -1140,6 +1146,11 @@ pub fn screen_chart_recording(
         failures,
         screened,
     } = result;
+    let mut screened = screened;
+    if sink.is_some() {
+        let mut unique = BTreeSet::new();
+        screened.retain(|probe| unique.insert(super::probe_key(&label, probe)));
+    }
     let live = (!screened.is_empty()).then(|| LiveChart {
         label: label.clone(),
         path: test_util::workspace_testdata()

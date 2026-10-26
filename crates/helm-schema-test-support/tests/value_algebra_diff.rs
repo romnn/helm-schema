@@ -2,7 +2,7 @@
 //! persistent witness universe and its chain, sealed receipts, witness
 //! classification and the construction policy.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 
 use color_eyre::eyre::{self, OptionExt as _};
@@ -12,6 +12,7 @@ use helm_schema_test_support::acceptance::{
     AdjudicationFailure, AdjudicationRecord, FailureKind, HelmFlipVerdict, ScreenedWitness,
 };
 use helm_schema_test_support::manifest::{MANIFEST_FILE, Manifest};
+use helm_schema_test_support::source_digest::sha256_hex;
 use helm_schema_test_support::value_algebra_diff::capture::{ArtifactPair, DumpPair, VerifiedDump};
 use helm_schema_test_support::value_algebra_diff::compare::{
     ChartIdentity, Class, ConstructionRequest, JudgedWitness, LedgerRow, OracleAnswer,
@@ -22,12 +23,13 @@ use helm_schema_test_support::value_algebra_diff::controls::{
     ControlResult, EngineMode, ObservationOutcome, Score, UnsupportedReason,
 };
 use helm_schema_test_support::value_algebra_diff::history::{
-    Attempt, BlobStore, HistoryPlan, Receipt, ReceiptKind, Universe, UniverseState, WitnessRecord,
+    BlobStore, HistoryLock, HistoryPlan, Receipt, ReceiptKind, Universe, WitnessRecord,
     canonical_json,
 };
 use helm_schema_test_support::value_algebra_diff::{
     DiffError, EquivalenceCertificate, artifact_changes,
 };
+use indoc::indoc;
 use serde_json::{Value, json};
 use test_util::helm_values::AcceptanceDocument;
 use test_util::prelude::sim_assert_eq;
@@ -218,6 +220,17 @@ fn witness_records_rebuild_their_exact_documents() -> eyre::Result<()> {
         "attempt:other",
     )?;
     let first = witness_record(&witness, &chart_identity(&defaults), &blobs, "attempt:test")?;
+    let original_key =
+        helm_schema_test_support::acceptance::probe_key(&witness.chart, &witness.probe);
+    let mut other = witness.clone();
+    other.probe.name = "another label".into();
+    sim_assert_eq!(have: helm_schema_test_support::acceptance::probe_key(&other.chart, &other.probe), want: original_key.clone());
+    other.probe.name.clone_from(&witness.probe.name);
+    other.probe.overlay = json!({"different": true});
+    assert_ne!(
+        helm_schema_test_support::acceptance::probe_key(&other.chart, &other.probe),
+        original_key
+    );
     sim_assert_eq!(have: renamed.id, want: first.id);
     Ok(())
 }
@@ -237,74 +250,36 @@ fn records(blobs: &BlobStore, overlays: &[Value]) -> eyre::Result<Vec<WitnessRec
         .collect()
 }
 
-fn attempt(reason: &str) -> Attempt {
-    Attempt {
-        run_id: "run".into(),
-        capture_hash: None,
-        reason: reason.into(),
-    }
-}
-
 #[test]
-fn the_universe_only_grows_along_its_chain() -> eyre::Result<()> {
+fn the_universe_publishes_complete_transactions() -> eyre::Result<()> {
     let scratch = ScratchDir::new("vad-universe")?;
     let universe = Universe::new(scratch.path().join("universe"));
+    let lock = HistoryLock::acquire(scratch.path())?;
+    assert!(identity_error(HistoryLock::acquire(scratch.path()))?.contains("locked"));
     let mut state = universe.load()?;
-    let lock = universe.lock()?;
-    assert!(identity_error(universe.lock())?.contains("locked"));
     let first = records(
         universe.blobs(),
         &[json!({"enabled": true}), json!({"enabled": null})],
     )?;
-    let first_batch = universe
-        .append(&lock, &mut state, first, attempt("genesis"))?
-        .ok_or_eyre("no batch")?;
+    let batch = universe.append(&mut state, first)?.ok_or_eyre("no batch")?;
+    sim_assert_eq!(have: universe.load()?.witnesses.len(), want: 0);
+    universe.publish(&lock, &state, None)?;
+    sim_assert_eq!(have: universe.load()?.witnesses.len(), want: 2);
     let second = records(universe.blobs(), &[json!({"enabled": "x"})])?;
-    universe.append(&lock, &mut state, second, attempt("discovery"))?;
-    drop(lock);
+    universe.append(&mut state, second)?;
+    sim_assert_eq!(have: universe.load()?.witnesses.len(), want: 2);
+    universe.publish(&lock, &state, None)?;
     let loaded = universe.load()?;
     sim_assert_eq!(have: loaded.witnesses.len(), want: 3);
-    sim_assert_eq!(have: &loaded.head, want: &state.head);
-    sim_assert_eq!(have: loaded.batch_hashes().len(), want: 2);
-
-    // A stale writer cannot append after the head moved.
-    let mut outdated = UniverseState {
-        witnesses: loaded.witnesses.clone(),
-        journal: loaded.journal.clone(),
-        head: None,
-    };
-    let lock = universe.lock()?;
-    assert!(
-        identity_error(universe.append(
-            &lock,
-            &mut outdated,
-            records(universe.blobs(), &[json!({"enabled": 1})])?,
-            attempt("discovery")
-        ))?
-        .contains("moved")
-    );
-    drop(lock);
-
-    // Rolling the head back, dropping a batch or editing one breaks the chain.
-    let head = scratch.path().join("universe/head");
-    let current = std::fs::read(&head)?;
-    let journal = std::fs::read_to_string(scratch.path().join("universe/journal.jsonl"))?;
-    let first_record = journal.lines().next().ok_or_eyre("empty journal")?;
-    let rolled_back = helm_schema_test_support::source_digest::sha256_hex(first_record.as_bytes());
-    std::fs::write(&head, rolled_back)?;
-    assert!(identity_error(universe.load())?.contains("head"));
-    std::fs::write(&head, current)?;
-    let batch = scratch
+    sim_assert_eq!(have: loaded.head, want: state.head);
+    sim_assert_eq!(have: loaded.batches.len(), want: 2);
+    let path = scratch
         .path()
-        .join(format!("universe/batches/{first_batch}.jsonl"));
-    let bytes = std::fs::read(&batch)?;
-    std::fs::remove_file(&batch)?;
-    assert!(universe.load().is_err());
-    let mut edited = bytes.clone();
-    edited.extend_from_slice(b"\n");
-    std::fs::write(&batch, &edited)?;
+        .join(format!("universe/batches/{batch}.jsonl"));
+    let original = std::fs::read(&path)?;
+    std::fs::write(&path, b"partial")?;
     assert!(identity_error(universe.load())?.contains("changed"));
-    std::fs::write(&batch, &bytes)?;
+    std::fs::write(&path, original)?;
     universe.load()?;
     Ok(())
 }
@@ -322,7 +297,7 @@ fn receipt() -> Receipt {
         baseline_capture_hash: "main".into(),
         suite_hash: "suite".into(),
         controls_hash: None,
-        context_roster_hash: None,
+        context_roster_hash: "roster".into(),
         provider_hash: "provider".into(),
         helm_identity: "helm".into(),
         predecessor_receipt_sha256: None,
@@ -374,7 +349,7 @@ fn a_plan_declares_ten_checkpoints_seeded_at_two() -> eyre::Result<()> {
         json!({
             "format_version": 1, "history_id": "r3b", "main_commit": "main",
             "checkpoints": ordinals.into_iter().map(|ordinal| json!({"ordinal": ordinal, "subject": "s", "kind": "semantic"})).collect::<Vec<_>>(),
-            "seed_ordinal": seed, "reviewer": "reviewer",
+            "seed_ordinal": seed, "reviewer": "reviewer", "context_roster_sha256": "roster",
         })
     };
     std::fs::write(&path, serde_json::to_vec(&plan((1..=10).collect(), 2))?)?;
@@ -405,6 +380,7 @@ fn verdict_witness(baseline: bool, candidate: bool, transition: bool) -> Screene
 
 fn adjudicated(outcome: Result<HelmFlipVerdict, (FailureKind, &str)>) -> AdjudicationRecord {
     AdjudicationRecord {
+        key: "probe".into(),
         case: format!("{CHART}: probe"),
         outcome: outcome
             .map(|verdict| (verdict, PathBuf::from("/evidence")))
@@ -412,6 +388,7 @@ fn adjudicated(outcome: Result<HelmFlipVerdict, (FailureKind, &str)>) -> Adjudic
                 kind,
                 message: message.into(),
             }),
+        evidence: None,
     }
 }
 
@@ -436,7 +413,8 @@ fn check(cases: Vec<Case>) {
     {
         let witness = verdict_witness(baseline, candidate, transition);
         let record = adjudication.map(adjudicated);
-        let outcome = classify(&JudgedWitness::of("id".into(), &witness), record.as_ref());
+        let adjudication = record.as_ref();
+        let outcome = classify(&JudgedWitness::of("id".into(), &witness), adjudication);
         sim_assert_eq!(
             have: (outcome.class, outcome.oracle, outcome.direction.as_deref()),
             want: (class, oracle, direction)
@@ -585,6 +563,7 @@ fn outcome(witness: &str, class: Class, direction: Option<&str>) -> WitnessOutco
         class,
         direction: direction.map(str::to_string),
         detail: None,
+        evidence: None,
         answer_sha256: "answer".into(),
     }
 }
@@ -1027,7 +1006,6 @@ fn displaced_universe_witnesses_still_replay_and_flip() -> eyre::Result<()> {
             helm: None,
         },
     )?;
-    sim_assert_eq!(have: run.failures, want: Vec::<String>::new());
     for record in [&template, &document] {
         let outcome = run
             .table
@@ -1077,5 +1055,304 @@ fn the_tree_digest_covers_links_edits_and_untracked_files() -> eyre::Result<()> 
     sim_assert_eq!(have: edited == relinked, want: false);
     std::fs::write(root.join("new.txt"), "c")?;
     sim_assert_eq!(have: tree_sha256(root)? == edited, want: false);
+    Ok(())
+}
+
+/// A witness proposed to the live oracle and never answered is
+/// UNADJUDICATED, even when both schemas agree on it.
+#[test]
+fn a_missing_adjudication_is_never_identical() {
+    for transition in [false, true] {
+        let mut witness = JudgedWitness::of("id".into(), &verdict_witness(true, true, transition));
+        witness.screened = true;
+        let outcome = classify(&witness, None);
+        sim_assert_eq!(have: outcome.class, want: Class::Unadjudicated);
+    }
+}
+
+/// Both captures wrong on a cell Helm passes: the same failed assertions are
+/// INHERITED, other ones are a changed-failure REGRESSION.
+#[test]
+fn an_admission_rejection_answers_with_its_violations() -> eyre::Result<()> {
+    use helm_schema_test_support::admission::{self as suite_admission, HelmClass};
+    use helm_schema_test_support::value_algebra_diff::admission::{AdmissionRecord, compare};
+
+    let suite = suite_admission::read_suite(
+        &test_util::workspace_testdata().join(suite_admission::SUITE_DIR),
+    )?;
+    let cell = suite
+        .cells
+        .iter()
+        .find(|cell| cell.helm == HelmClass::Pass)
+        .ok_or_eyre("no passing cell")?;
+    let record = |violations: &[&str]| AdmissionRecord {
+        cell: cell.id.clone(),
+        declared_types: cell.declared_types.as_arg().to_string(),
+        verdict: "reject".into(),
+        violations: violations
+            .iter()
+            .map(|violation| (*violation).to_string())
+            .collect(),
+        inputs_sha256: "inputs".into(),
+        document_sha256: "document".into(),
+    };
+    let [same] = <[_; 1]>::try_from(compare(&suite, &[record(&["a"])], &[record(&["a"])])?)
+        .map_err(|_| eyre::eyre!("one outcome"))?;
+    sim_assert_eq!(have: same.class, want: Class::Inherited);
+    let [changed] = <[_; 1]>::try_from(compare(&suite, &[record(&["a"])], &[record(&["b"])])?)
+        .map_err(|_| eyre::eyre!("one outcome"))?;
+    sim_assert_eq!(have: (changed.class, changed.direction), want: (Class::Regression, Some("changed-failure".to_string())));
+    Ok(())
+}
+
+/// One Helm render grounds a control completely only when every template
+/// action provably renders the same every time.
+#[test]
+fn only_deterministic_charts_ground_completely() {
+    use helm_schema_test_support::value_algebra_diff::controls::provably_deterministic;
+
+    let chart = |template: &str| {
+        BTreeMap::from([(
+            "templates/cm.yaml".to_string(),
+            template.as_bytes().to_vec(),
+        )])
+    };
+    for (template, deterministic) in [
+        ("data: {}\n", true),
+        (
+            indoc! {r#"
+                {{- $d := dict "x" "old" -}}
+                v: {{ toJson $d | quote }}
+            "#},
+            true,
+        ),
+        ("{{ fail \"boom\" }}\n", true),
+        ("v: {{ randAlphaNum 4 }}\n", false),
+        (
+            "{{ range keys (dict \"a\" 1 \"b\" 2) }}{{ . }}{{ end }}\n",
+            false,
+        ),
+        ("v: {{ now }}\n", false),
+        ("v: {{ \n", false),
+    ] {
+        sim_assert_eq!(have: provably_deterministic(&chart(template)), want: deterministic, "{template}");
+    }
+}
+
+/// A reviewed roster binds its exact bytes while comparisons rebind row hashes.
+#[test]
+fn a_roster_binds_its_exact_reviewed_bytes() -> eyre::Result<()> {
+    use helm_schema_test_support::acceptance::screen::ImportedRoster;
+
+    let scratch = ScratchDir::new("vad-roster")?;
+    let empty = sha256_hex(b"{}");
+    let roster = |pair: &str| {
+        json!({"version": 2, "rows": [{
+            "id": "row", "chart": CHART, "overlay": {}, "transport": "values-file",
+            "kubernetes_version": "1.29.0", "chart_sha256": pair, "baseline_sha256": pair,
+            "candidate_sha256": pair, "canonical_overlay_sha256": empty,
+            "values_file": "{}\n", "values_file_sha256": sha256_hex(b"{}\n"),
+            "context_overlay": {}, "context_overlay_sha256": empty,
+        }]})
+    };
+    let (first, second) = (scratch.path().join("a.json"), scratch.path().join("b.json"));
+    std::fs::write(&first, serde_json::to_vec(&roster("one"))?)?;
+    std::fs::write(&second, serde_json::to_vec(&roster("two"))?)?;
+    let charts = BTreeSet::from([CHART.to_string()]);
+    let read = ImportedRoster::read_rebinding(&first, &charts)?;
+    sim_assert_eq!(have: read.sha256, want: sha256_hex(&std::fs::read(&first)?));
+    assert_ne!(
+        ImportedRoster::read_rebinding(&second, &charts)?.sha256,
+        sha256_hex(&std::fs::read(&first)?)
+    );
+    sim_assert_eq!(have: read.rebind, want: true);
+    Ok(())
+}
+
+/// A recorder error stops screening before a second witness is judged.
+#[test]
+fn recording_failure_stops_screening() -> eyre::Result<()> {
+    use helm_schema_test_support::acceptance::discovery::{ProbeCoverage, ProfileSchemas};
+    use helm_schema_test_support::acceptance::screen::screen_template_probes;
+    let defaults = json!({});
+    let schema = json!({"type": "object"});
+    let profiles = ProfileSchemas::compile(&schema, &schema, defaults.clone())?;
+    let chart = test_util::workspace_testdata().join("charts/dict-config");
+    let probes = vec![
+        ("first".into(), ProbeInstance::Defaults),
+        ("second".into(), ProbeInstance::Defaults),
+    ];
+    let mut coverage = ProbeCoverage::default();
+    let mut calls = 0;
+    let mut recorder = |_: ScreenedWitness| -> eyre::Result<()> {
+        calls += 1;
+        eyre::bail!("injected recording failure")
+    };
+    let result = screen_template_probes(
+        &chart,
+        &profiles,
+        &defaults,
+        probes,
+        &mut coverage,
+        true,
+        Some(("1.29.0", &mut recorder)),
+    );
+    assert!(result.is_err());
+    sim_assert_eq!(have: calls, want: 1);
+    Ok(())
+}
+
+/// Ordinary roster accounting keeps named cases; recording compares input identities.
+#[test]
+fn probe_deduplication_is_only_for_recording_comparisons() -> eyre::Result<()> {
+    use helm_schema_test_support::acceptance::Replay;
+    use helm_schema_test_support::acceptance::discovery::read_coalesced_defaults;
+    use helm_schema_test_support::acceptance::screen::screen_chart_recording;
+    let scratch = ScratchDir::new("vad-named-cases")?;
+    let baseline = scratch.path().join("main");
+    let candidate = scratch.path().join("candidate");
+    write_dump(&baseline, br#"{"type":"object"}"#)?;
+    write_dump(
+        &candidate,
+        br#"{"type":"object","properties":{"ingress":{"properties":{"enabled":{"const":false}}}}}"#,
+    )?;
+    let pair = DumpPair::new(
+        VerifiedDump::open(&baseline)?,
+        VerifiedDump::open(&candidate)?,
+        &test_util::workspace_testdata(),
+    )?;
+    let defaults = read_coalesced_defaults(CHART)?;
+    let first = template_witness(
+        "origin-a",
+        json!({"ingress": {"enabled": true}, "displaced-duplicate": true}),
+        &defaults,
+    );
+    let mut second = first.clone();
+    second.probe.name = "origin-b".into();
+    let sink = |_: ScreenedWitness| -> eyre::Result<()> { Ok(()) };
+    for (recording, expected) in [(false, 2), (true, 1)] {
+        let mut charts = pair.compared_charts(None)?;
+        let mut chart = charts.pop().ok_or_eyre("missing chart")?;
+        chart.replay = Replay::new(vec![Ok(first.clone()), Ok(second.clone())].into_iter());
+        let sink: Option<&helm_schema_test_support::acceptance::WitnessSink> =
+            recording.then_some(&sink);
+        let (_, live) = screen_chart_recording(chart, true, None, sink, None)?;
+        let live = live.ok_or_eyre("no live flips")?;
+        let cases = live
+            .flips
+            .iter()
+            .filter(|probe| matches!(probe.name.as_str(), "origin-a" | "origin-b"))
+            .count();
+        sim_assert_eq!(have: cases, want: expected);
+    }
+    Ok(())
+}
+
+/// A fresh unproposed input cannot suppress its historical forced audit.
+#[test]
+fn historical_forced_audits_survive_fresh_discovery() -> eyre::Result<()> {
+    use helm_schema_test_support::acceptance::Replay;
+    use helm_schema_test_support::acceptance::screen::screen_chart_recording;
+    use std::sync::{
+        Arc, Mutex,
+        atomic::{AtomicBool, Ordering},
+    };
+    let scratch = ScratchDir::new("vad-forced-replay")?;
+    let baseline = scratch.path().join("main");
+    let candidate = scratch.path().join("candidate");
+    write_dump(&baseline, b"false")?;
+    write_dump(&candidate, b"false")?;
+    let pair = DumpPair::new(
+        VerifiedDump::open(&baseline)?,
+        VerifiedDump::open(&candidate)?,
+        &test_util::workspace_testdata(),
+    )?;
+    let captured = Arc::new(Mutex::new(Vec::new()));
+    let captured_records = Arc::clone(&captured);
+    let collect = move |witness: ScreenedWitness| -> eyre::Result<()> {
+        captured_records
+            .lock()
+            .map_err(|_| eyre::eyre!("recorder poisoned"))?
+            .push(witness);
+        Ok(())
+    };
+    let chart = pair
+        .compared_charts(None)?
+        .pop()
+        .ok_or_eyre("missing chart")?;
+    screen_chart_recording(chart, true, None, Some(&collect), None)?;
+    let mut historical = captured
+        .lock()
+        .map_err(|_| eyre::eyre!("recorder poisoned"))?
+        .iter()
+        .find(|witness| {
+            witness.probe.document.as_ref().is_some_and(|document| {
+                document.kind == AcceptanceDocument::LintRaw && !document.lint_control
+            })
+        })
+        .cloned()
+        .ok_or_eyre("no unproposed raw lint input")?;
+    assert!(!historical.screened);
+    historical.probe.name = "forced-historical".into();
+    historical
+        .probe
+        .document
+        .as_mut()
+        .ok_or_eyre("missing document")?
+        .lint_control = true;
+    let seen = Arc::new(AtomicBool::new(false));
+    let recorded = Arc::clone(&seen);
+    let record = move |witness: ScreenedWitness| -> eyre::Result<()> {
+        if witness.probe.name == "forced-historical" {
+            recorded.store(witness.screened, Ordering::SeqCst);
+        }
+        Ok(())
+    };
+    let mut chart = pair
+        .compared_charts(None)?
+        .pop()
+        .ok_or_eyre("missing chart")?;
+    chart.replay = Replay::new(std::iter::once(Ok(historical)));
+    let (_, live) = screen_chart_recording(chart, true, None, Some(&record), None)?;
+    assert!(seen.load(Ordering::SeqCst));
+    let live = live.ok_or_eyre("no live chart")?;
+    sim_assert_eq!(have: live.flips.iter().filter(|probe| probe.name == "forced-historical").count(), want: 1);
+    Ok(())
+}
+
+/// Structural probes use the chart's pinned version; other versions need document witnesses.
+#[test]
+fn replay_cannot_relabel_a_template_probes_kubernetes_version() -> eyre::Result<()> {
+    use helm_schema_test_support::acceptance::Replay;
+    use helm_schema_test_support::acceptance::discovery::read_coalesced_defaults;
+    use helm_schema_test_support::acceptance::screen::screen_chart_recording;
+    let scratch = ScratchDir::new("vad-replay-version")?;
+    let baseline = scratch.path().join("main");
+    let candidate = scratch.path().join("candidate");
+    write_dump(&baseline, br#"{"type":"object"}"#)?;
+    write_dump(&candidate, br#"{"type":"object"}"#)?;
+    let pair = DumpPair::new(
+        VerifiedDump::open(&baseline)?,
+        VerifiedDump::open(&candidate)?,
+        &test_util::workspace_testdata(),
+    )?;
+    let mut historical = template_witness(
+        "another-version",
+        json!({}),
+        &read_coalesced_defaults(CHART)?,
+    );
+    historical.kubernetes_version = "v999.0.0".into();
+    let mut chart = pair
+        .compared_charts(None)?
+        .pop()
+        .ok_or_eyre("missing chart")?;
+    chart.replay = Replay::new(std::iter::once(Ok(historical)));
+    match screen_chart_recording(chart, true, None, None, None) {
+        Ok(_) => eyre::bail!("a structural probe was judged under another version"),
+        Err(err) => assert!(
+            err.to_string().contains("another Kubernetes version"),
+            "{err:#}"
+        ),
+    }
     Ok(())
 }

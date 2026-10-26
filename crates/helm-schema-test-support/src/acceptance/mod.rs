@@ -31,6 +31,7 @@ use pool::{Ordinal, PoolLimits, PoolPeaks, run_ordered};
 use screen::{ImportedRoster, LintSchemas, ScreenedProbe, probe_groups, screen_chart_recording};
 
 use crate::helm::adjudication::{OfflineKubernetesValidator, PinnedHelmChart};
+use crate::source_digest::sha256_hex;
 
 /// Everything a comparison decides besides its charts.
 pub struct ComparisonConfig {
@@ -304,13 +305,53 @@ impl ScreenedWitness {
     }
 }
 
+/// The stable identity of a screened probe of `chart`: its overlay
+/// and, for a document, its kind, exact values-file bytes, Kubernetes
+/// version and controls. A witness and the adjudication of its flip carry
+/// the same probe, so they join by this key, never by display name.
+#[must_use]
+pub fn probe_key(chart: &str, probe: &ScreenedProbe) -> String {
+    let ScreenedProbe {
+        name: _,
+        overlay,
+        document,
+    } = probe;
+    let document = document.as_ref().map(|document| {
+        let screen::ScreenedDocument {
+            kind,
+            lint_control: _,
+            values: _,
+            defaults: _,
+            kubernetes_version,
+            origins: _,
+            values_file,
+            control_overlays,
+        } = document;
+        serde_json::json!({
+            "kind": format!("{kind:?}"),
+            "kubernetes_version": kubernetes_version,
+            "values_file_sha256": sha256_hex(values_file),
+            "control_overlays": control_overlays,
+        })
+    });
+    sha256_hex(
+        serde_json::json!({"chart": chart, "overlay": overlay, "document": document})
+            .to_string()
+            .as_bytes(),
+    )
+}
+
 /// The live adjudication of one screened flip, as recorded.
 #[derive(Debug)]
 pub struct AdjudicationRecord {
+    /// [`probe_key`] of the flip.
+    pub key: String,
     /// `chart: probe` of the flip.
     pub case: String,
     /// The verdict and its evidence directory, or why there is none.
     pub outcome: Result<(HelmFlipVerdict, PathBuf), AdjudicationFailure>,
+    /// The evidence directory, of a verdict or of a failure that names one.
+    pub evidence: Option<PathBuf>,
 }
 
 /// Why the comparison core could not produce a complete comparison.
@@ -624,6 +665,8 @@ pub struct ScreenedChart {
 pub struct AdjudicatedProbe {
     /// The flip's index among its chart's screened flips.
     pub flip: usize,
+    /// [`probe_key`] of the flip.
+    pub key: String,
     /// `chart: probe` of the flip.
     pub case: String,
     /// The document a document-lane flip judges; `None` for the exact-template lane.
@@ -804,24 +847,30 @@ pub fn fold_results(
                 }
                 match probe.outcome {
                     Err(failure) => {
-                        comparison.helm_adjudication.adjudication_failures.push(
-                            ObservedFailure::from_adjudication(
-                                probe.case.clone(),
-                                probe.kubernetes_version,
-                                &failure.message,
-                                probe.input,
-                            ),
+                        let observed = ObservedFailure::from_adjudication(
+                            probe.case.clone(),
+                            probe.kubernetes_version,
+                            &failure.message,
+                            probe.input,
                         );
                         comparison.adjudications.push(AdjudicationRecord {
+                            key: probe.key,
                             case: probe.case,
                             outcome: Err(failure),
+                            evidence: observed.evidence.clone(),
                         });
+                        comparison
+                            .helm_adjudication
+                            .adjudication_failures
+                            .push(observed);
                     }
                     Ok((verdict, evidence)) => {
                         eprintln!("HELM_FLIP {verdict:?}: evidence={}", evidence.display());
                         comparison.adjudications.push(AdjudicationRecord {
+                            key: probe.key,
                             case: probe.case.clone(),
                             outcome: Ok((verdict.clone(), evidence.clone())),
+                            evidence: Some(evidence.clone()),
                         });
                         if let Some(candidate_accepts) = comparison
                             .helm_adjudication

@@ -17,7 +17,11 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
 
+use helm_schema_ast::TemplateExpr;
 use serde::{Deserialize, Serialize};
+use test_util::helm_values::{AcceptanceDocument, AcceptanceInputs, ValuesOptions};
+use test_util::scratch::ScratchDir;
+
 use serde_json::{Value, json};
 
 use super::DiffError;
@@ -430,6 +434,19 @@ impl ControlCase {
         {
             return Err(problem(
                 "the grounding evidence is not the pinned render of this input".into(),
+            ));
+        }
+        let chart = blobs.chart(&self.input)?;
+        if chart.coalesced != compose_input(blobs, &self.input)? {
+            return Err(problem(
+                "the coalesced document does not match the chart and original values".into(),
+            ));
+        }
+        if self.grounding.coverage == GroundCoverage::Complete
+            && !provably_deterministic(&chart.files)
+        {
+            return Err(problem(
+                "one Helm sample of a chart that may render differently is labeled complete".into(),
             ));
         }
         let stdout = blobs.read(&evidence.stdout_sha256)?;
@@ -863,20 +880,16 @@ impl ControlRegistry {
                 "controls manifest: unknown format_version".into(),
             ));
         }
-        let ids = manifest.cases.iter().map(|entry| entry.id.as_str());
-        if !ids
-            .clone()
-            .zip(ids.skip(1))
-            .all(|(left, right)| left < right)
+        if !manifest
+            .cases
+            .is_sorted_by(|left, right| left.id < right.id)
         {
             return Err(DiffError::Request(
                 "controls manifest: cases must be sorted and unique".into(),
             ));
         }
         let blob_names = manifest.blobs.iter().collect::<BTreeSet<_>>();
-        if blob_names.len() != manifest.blobs.len()
-            || !blob_names.iter().copied().eq(manifest.blobs.iter())
-        {
+        if !manifest.blobs.is_sorted_by(|left, right| left < right) {
             return Err(DiffError::Request(
                 "controls manifest: blobs must be sorted and unique".into(),
             ));
@@ -1673,7 +1686,7 @@ impl RegistryBuilder {
 
     /// Runs the pinned Helm `helm` on `input` as [`grounding_argv`] says,
     /// in the new directory `scratch`, stores the evidence and returns the
-    /// grounding of `query` it derives, complete.
+    /// grounding of `query`; only a determinism proof makes it complete.
     ///
     /// # Errors
     ///
@@ -1722,7 +1735,11 @@ impl RegistryBuilder {
             .map_err(DiffError::Request)?;
         Ok(Grounding {
             evidence_sha256: self.blob(&canonical_json(&value))?,
-            coverage: GroundCoverage::Complete,
+            coverage: if provably_deterministic(&self.blobs().chart(input)?.files) {
+                GroundCoverage::Complete
+            } else {
+                GroundCoverage::Sampled
+            },
             alternatives: vec![observation],
         })
     }
@@ -1765,17 +1782,15 @@ impl RegistryBuilder {
         Ok(sha)
     }
 
-    /// Stores a chart and its documents and returns a render-mode input with
-    /// the default release, context, recipe and bounds.
+    /// Stores a chart and its original values, deriving the composed document.
     ///
     /// # Errors
     ///
-    /// [`DiffError::Infrastructure`] when a blob cannot be written.
+    /// [`DiffError`] when parsing, composition or a blob write fails.
     pub fn render_input(
         &mut self,
         files: &[(&str, &str)],
         values: &str,
-        coalesced: &Value,
     ) -> Result<ControlInput, DiffError> {
         let mut tree = BTreeMap::new();
         for (name, contents) in files {
@@ -1786,10 +1801,10 @@ impl RegistryBuilder {
             files: tree,
         })
         .map_err(|error| DiffError::Infrastructure(format!("chart tree: {error}")))?;
-        Ok(ControlInput {
+        let mut input = ControlInput {
             chart_tree_sha256: self.blob(&canonical_json(&tree))?,
             original_values_sha256: self.blob(values.as_bytes())?,
-            coalesced_document_sha256: self.blob(&canonical_json(coalesced))?,
+            coalesced_document_sha256: String::new(),
             context_sha256: self.blob(&canonical_json(&json!({"capabilities": "default"})))?,
             release: Release {
                 name: "p".into(),
@@ -1800,7 +1815,10 @@ impl RegistryBuilder {
             recipe_sha256: self.blob(&canonical_json(&json!({"recipe": "default"})))?,
             bound_policy_sha256: self.blob(&canonical_json(&json!({"bounds": "default"})))?,
             cache_mode: CacheMode::Default,
-        })
+        };
+        input.coalesced_document_sha256 =
+            self.blob(&canonical_json(&compose_input(&self.blobs(), &input)?))?;
+        Ok(input)
     }
 
     /// Adds `case` as `cases/<id>.json`.
@@ -1842,6 +1860,71 @@ impl RegistryBuilder {
     }
 }
 
+/// Rebuilds composition from the exact retained chart and values bytes.
+fn compose_input(blobs: &ControlBlobs, input: &ControlInput) -> Result<Value, DiffError> {
+    let compose = || -> color_eyre::Result<Value> {
+        let scratch = ScratchDir::new("control-compose")?;
+        let staged = StagedChart::new(blobs, input, scratch.path())?;
+        let overlay = ValuesOptions {
+            value_files: vec![staged.values.clone()],
+            ..ValuesOptions::default()
+        }
+        .merge_values()?;
+        Ok(AcceptanceInputs::load(&staged.chart)?
+            .compose(overlay, AcceptanceDocument::Template)?
+            .root)
+    };
+    compose().map_err(|error| DiffError::Identity(format!("control composition: {error:#}")))
+}
+
+/// Template functions whose result depends only on their arguments and the
+/// chart, so one Helm render is every render. Anything else, `keys` and
+/// `values` included (their order is random), leaves a grounding a sample.
+const DETERMINISTIC_FUNCTIONS: &[&str] = &[
+    "and", "default", "dict", "empty", "eq", "fail", "ge", "get", "gt", "hasKey", "include",
+    "indent", "le", "len", "list", "lower", "lt", "ne", "nindent", "not", "or", "print", "printf",
+    "quote", "required", "set", "squote", "template", "toJson", "toString", "toYaml", "trim",
+    "upper",
+];
+
+/// Whether every template action in `files` provably renders the same on
+/// every run: it parses, and calls only [`DETERMINISTIC_FUNCTIONS`].
+#[must_use]
+pub fn provably_deterministic(files: &BTreeMap<String, Vec<u8>>) -> bool {
+    files
+        .iter()
+        .filter(|(name, _)| name.split('/').any(|part| part == "templates"))
+        .all(|(_, bytes)| {
+            let Ok(text) = std::str::from_utf8(bytes) else {
+                return false;
+            };
+            match helm_schema_ast::contains_template_action(text) {
+                Ok(false) => return true,
+                Ok(true) => {}
+                Err(_) => return false,
+            }
+            let expressions = helm_schema_ast::parse_action_expressions(text);
+            let mut deterministic = !expressions.is_empty();
+            for expression in &expressions {
+                expression.walk(|node| match node {
+                    TemplateExpr::Call { function, .. } => {
+                        deterministic &= DETERMINISTIC_FUNCTIONS.contains(&function.as_str());
+                    }
+                    TemplateExpr::Unknown(_) => deterministic = false,
+                    TemplateExpr::Literal(_)
+                    | TemplateExpr::Field(_)
+                    | TemplateExpr::Selector { .. }
+                    | TemplateExpr::Variable(_)
+                    | TemplateExpr::Pipeline(_)
+                    | TemplateExpr::Parenthesized(_)
+                    | TemplateExpr::VariableDefinition { .. }
+                    | TemplateExpr::Assignment { .. } => {}
+                });
+            }
+            deterministic
+        })
+}
+
 /// One case of a registry specification.
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -1877,7 +1960,7 @@ pub fn ground_registry(spec: &Path, helm: &Path, out: &Path) -> Result<ControlRe
             .iter()
             .map(|(name, contents)| (name.as_str(), contents.as_str()))
             .collect::<Vec<_>>();
-        let input = builder.render_input(&files, "", &json!({}))?;
+        let input = builder.render_input(&files, "")?;
         let grounding = builder.ground(helm, &input, &query, &scratch.join(&id))?;
         builder.case(&ControlCase {
             format_version: PROTOCOL_VERSION,

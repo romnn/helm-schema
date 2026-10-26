@@ -83,21 +83,19 @@ pub struct ComparisonRun {
     pub coverage: Value,
     /// The acceptance core's own report, its witnesses moved out.
     pub comparison: AcceptanceComparison,
-    /// Coverage, screening and replay failures found after discovery: they
-    /// fail the comparison, but only after its discoveries are journaled.
-    pub failures: Vec<String>,
 }
 
 /// Compares `pair` over fresh discovery and every universe witness of the
-/// selected charts, outside discovery caps. Coverage and screening failures
-/// do not discard what was discovered: they are returned in
-/// [`ComparisonRun::failures`] beside every witness record.
+/// selected charts, outside discovery caps. Every proposed witness joins its
+/// one adjudication by probe identity.
 ///
 /// # Errors
 ///
 /// [`DiffError::Identity`] when a universe witness belongs to other chart
-/// inputs or no longer rebuilds; [`DiffError::Infrastructure`] when the
-/// comparison cannot run at all.
+/// inputs or no longer rebuilds; [`DiffError::Infrastructure`] when anything
+/// was left unjudged: a recording, coverage or screening failure, a universe
+/// witness not replayed, or a flip adjudicated twice. Nothing of a failed
+/// comparison is journaled or published; it is rerun.
 pub fn run_comparison(
     pair: &DumpPair,
     universe: UniverseState,
@@ -135,45 +133,45 @@ pub fn run_comparison(
     let mut comparison = compare_charts(charts, &config)
         .map_err(|error| DiffError::Infrastructure(format!("compare: {error:#}")))?;
     drop(config);
-    let Judged {
-        witnesses,
-        new,
-        failures: mut recorded_failures,
-    } = Arc::into_inner(recorder)
+    let Judged { witnesses, new } = Arc::into_inner(recorder)
         .and_then(|recorder| recorder.judged.into_inner().ok())
         .ok_or_else(|| DiffError::Infrastructure("the witness recorder is still shared".into()))?;
+    let mut problems = Vec::new();
     comparison.charts_checked = comparison.coverage.len();
-    let mut failures = Vec::new();
     if let Err(error) = AcceptanceComparison::validate_lint_coverages(&comparison.coverage, live) {
-        failures.push(format!("lint coverage: {error:#}"));
+        problems.push(format!("lint coverage: {error:#}"));
     }
     for chart in &comparison.coverage {
         if let Err(error) = validate_probe_coverage(chart) {
-            failures.push(format!("probe coverage: {error:#}"));
+            problems.push(format!("probe coverage: {error:#}"));
         }
     }
-    failures.extend(
+    problems.extend(
         comparison
             .screening_failures
             .iter()
             .map(|failure| format!("screening failure: {failure}")),
     );
-    failures.append(&mut recorded_failures);
-    let adjudications = comparison
-        .adjudications
-        .iter()
-        .map(|record| (record.case.clone(), record))
-        .collect::<BTreeMap<_, _>>();
-    let outcomes = witnesses
-        .values()
-        .map(|witness| classify(witness, adjudications.get(&witness.case).copied()))
-        .collect();
     let missing = expected
         .iter()
         .filter(|id| !witnesses.contains_key(*id))
         .collect::<Vec<_>>();
     if !missing.is_empty() {
-        failures.push(format!("universe witnesses were not judged: {missing:?}"));
+        problems.push(format!("universe witnesses were not judged: {missing:?}"));
+    }
+    let mut adjudications = BTreeMap::new();
+    for record in &comparison.adjudications {
+        if adjudications.insert(record.key.as_str(), record).is_some() {
+            problems.push(format!("{}: adjudicated more than once", record.case));
+        }
+    }
+    let outcomes = witnesses
+        .values()
+        .map(|witness| classify(witness, adjudications.get(witness.key.as_str()).copied()))
+        .collect();
+    // A comparison that did not judge everything publishes nothing.
+    if !problems.is_empty() {
+        return Err(DiffError::Infrastructure(problems.join("; ")));
     }
     let new_witnesses = new.into_values().collect::<Vec<_>>();
     let table = OutcomeTable::new(outcomes);
@@ -196,7 +194,6 @@ pub fn run_comparison(
         artifacts: pair.artifacts(),
         coverage,
         comparison,
-        failures,
     })
 }
 
@@ -206,7 +203,6 @@ pub fn run_comparison(
 struct Judged {
     witnesses: BTreeMap<String, JudgedWitness>,
     new: BTreeMap<String, WitnessRecord>,
-    failures: Vec<String>,
 }
 
 /// Turns each witness the screening workers judge into its record, storing
@@ -221,26 +217,22 @@ struct Recorder {
 
 impl Recorder {
     fn record(&self, witness: &ScreenedWitness) -> color_eyre::Result<()> {
-        let record = match self.identities.get(&witness.chart) {
-            Some(identity) => Some(witness_record(
-                witness,
-                identity,
-                &self.blobs,
-                &self.origin,
-            )?),
-            None => None,
-        };
+        let identity = self.identities.get(&witness.chart).ok_or_else(|| {
+            color_eyre::eyre::eyre!("witness of unselected chart {}", witness.chart)
+        })?;
+        let record = witness_record(witness, identity, &self.blobs, &self.origin)?;
         let mut judged = self
             .judged
             .lock()
             .map_err(|_| color_eyre::eyre::eyre!("a witness recorder panicked"))?;
-        let Some(record) = record else {
-            judged
-                .failures
-                .push(format!("witness of unselected chart {}", witness.chart));
-            return Ok(());
-        };
-        if judged.witnesses.contains_key(&record.id) {
+        if let Some(existing) = judged.witnesses.get_mut(&record.id) {
+            color_eyre::eyre::ensure!(
+                existing.baseline_accepts == witness.baseline_accepts
+                    && existing.candidate_accepts == witness.candidate_accepts,
+                "one witness has inconsistent verdicts"
+            );
+            existing.screened |= witness.screened;
+            existing.transition |= witness.transition;
             return Ok(());
         }
         judged.witnesses.insert(
