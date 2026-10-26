@@ -17,7 +17,9 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use base64::Engine as _;
-use libyaml_safer::{EventData, MappingStyle, Parser, ScalarStyle, Scanner, SequenceStyle};
+use libyaml_safer::{
+    EventData, MappingStyle, Parser, ScalarStyle, Scanner, SequenceStyle, TokenData,
+};
 use serde_json::{Map, Number, Value};
 
 use crate::yaml_dialect::{YAML_1_1_BOOLEANS, yaml_style_float};
@@ -186,19 +188,22 @@ fn load(source: &str) -> Result<Tree, HelmYamlError> {
 /// flow collection and errors outside one.
 ///
 /// A tag starts at a `!` that begins a token, so after a blank, a line
-/// break, a byte-order mark or an indicator. For each such `!` whose tag
-/// characters run up to a `,`, the source before that `,` is scanned with
-/// a non-blank terminator instead, which makes a tag at the `!` fail at
-/// once. Candidates are checked in the order of their `,`, so every `,`
-/// inside a later scan has already been cleared.
+/// break, a byte-order mark or an indicator. Every `,` that ends the tag
+/// characters after such a `!` is a candidate. One scan with each
+/// candidate replaced by `` ` `` usually settles all of them (see
+/// [`candidates_are_text`]); otherwise each candidate's prefix is scanned
+/// in turn, within a budget linear in the source, and an exhausted budget
+/// declines the document.
 fn tag_ends_at_comma(source: &str) -> bool {
-    // The reader consumes a leading byte-order mark before the scanner counts.
-    let bom = if source.starts_with('\u{feff}') {
-        '\u{feff}'.len_utf8()
-    } else {
-        0
-    };
-    let mut candidates = Vec::new();
+    let bytes = source.as_bytes();
+    let tag_byte =
+        |byte: u8| byte.is_ascii_alphanumeric() || b"-_;/?:@&=+$.%!~*'()".contains(&byte);
+    // Runs and `>` searches resume where the previous one stopped, so every
+    // byte is visited a bounded number of times.
+    let mut run = 0..0;
+    let mut next_gt = (0, None);
+    let mut starts = Vec::new();
+    let mut commas = Vec::new();
     let mut previous = None;
     for (start, c) in source.char_indices() {
         let token_start = previous.is_none_or(|previous| {
@@ -227,23 +232,126 @@ fn tag_ends_at_comma(source: &str) -> bool {
         if c != '!' || !token_start {
             continue;
         }
-        let tail = source.get(start + 1..).unwrap_or_default();
-        let length = if tail.starts_with('<') {
+        let from = start + 1;
+        let end = if bytes.get(from) == Some(&b'<') {
             // A verbatim tag `!<…>` ends at its first `>`.
-            tail.find('>').map_or(tail.len(), |end| end + 1)
+            if next_gt.1.is_none_or(|gt| gt < from) {
+                let searched = next_gt.0.max(from);
+                let found = bytes
+                    .get(searched..)
+                    .and_then(|rest| rest.iter().position(|&byte| byte == b'>'))
+                    .map(|offset| searched + offset);
+                next_gt = (found.unwrap_or(bytes.len()), found);
+            }
+            next_gt.1.map_or(bytes.len(), |gt| gt + 1)
         } else {
-            tail.find(|c: char| !(c.is_ascii_alphanumeric() || "-_;/?:@&=+$.%!~*'()".contains(c)))
-                .unwrap_or(tail.len())
+            if !run.contains(&from) {
+                let length = bytes
+                    .get(from..)
+                    .unwrap_or_default()
+                    .iter()
+                    .take_while(|&&byte| tag_byte(byte))
+                    .count();
+                run = from..from + length;
+            }
+            run.end
         };
-        let end = start + 1 + length;
-        if source.get(end..).is_some_and(|rest| rest.starts_with(',')) {
-            candidates.push((end, start));
+        if bytes.get(end) == Some(&b',') {
+            starts.push(start);
+            commas.push(end);
         }
     }
-    candidates.sort_unstable();
-    candidates
-        .into_iter()
-        .any(|(end, start)| tag_starts_at(source.get(..end).unwrap_or_default(), start - bom))
+    let bom = bom_length(source);
+    if commas.is_empty() || candidates_are_text(bytes, &commas, bom) {
+        return false;
+    }
+    let mut candidates = starts.into_iter().zip(commas).collect::<Vec<_>>();
+    // Ordered by `,`, every `,` inside a later prefix has been cleared.
+    candidates.sort_unstable_by_key(|&(start, comma)| (comma, start));
+    let mut budget = 16 * source.len() + (1 << 20);
+    for (start, comma) in candidates {
+        let Some(rest) = budget.checked_sub(comma) else {
+            return true;
+        };
+        budget = rest;
+        if tag_starts_at(source.get(..comma).unwrap_or_default(), start - bom) {
+            return true;
+        }
+    }
+    false
+}
+
+/// The reader consumes a leading byte-order mark before the scanner counts.
+fn bom_length(source: &str) -> usize {
+    if source.starts_with('\u{feff}') {
+        '\u{feff}'.len_utf8()
+    } else {
+        0
+    }
+}
+
+/// Whether one scan with every candidate `,` replaced by `` ` `` keeps each
+/// replacement as text of a quoted, block or block-context plain scalar or
+/// a comment, where `,` is text too. The scan then follows the source's
+/// tokens throughout, so no tag ends at a candidate. A scanner error or a
+/// replacement inside a plain scalar of a flow collection, which `,` would
+/// have ended, settles nothing.
+fn candidates_are_text(bytes: &[u8], commas: &[usize], bom: usize) -> bool {
+    let mut modified = bytes.to_vec();
+    for &comma in commas {
+        if let Some(byte) = modified.get_mut(comma) {
+            *byte = b'`';
+        }
+    }
+    let mut sorted = commas
+        .iter()
+        .map(|&comma| (comma - bom) as u64)
+        .collect::<Vec<_>>();
+    sorted.sort_unstable();
+    let mut scanner = Scanner::new();
+    scanner.set_input(modified.as_slice());
+    let mut depth = 0_usize;
+    for token in scanner {
+        let Ok(token) = token else {
+            return false;
+        };
+        match token.data {
+            TokenData::FlowSequenceStart | TokenData::FlowMappingStart => depth += 1,
+            TokenData::FlowSequenceEnd | TokenData::FlowMappingEnd => {
+                depth = depth.saturating_sub(1);
+            }
+            TokenData::Scalar {
+                style: ScalarStyle::Plain,
+                ..
+            } if depth > 0 => {
+                let first = sorted.partition_point(|&comma| comma < token.start_mark.index);
+                if sorted
+                    .get(first)
+                    .is_some_and(|&comma| comma < token.end_mark.index)
+                {
+                    return false;
+                }
+            }
+            TokenData::StreamStart { .. }
+            | TokenData::StreamEnd
+            | TokenData::VersionDirective { .. }
+            | TokenData::TagDirective { .. }
+            | TokenData::DocumentStart
+            | TokenData::DocumentEnd
+            | TokenData::BlockSequenceStart
+            | TokenData::BlockMappingStart
+            | TokenData::BlockEnd
+            | TokenData::BlockEntry
+            | TokenData::FlowEntry
+            | TokenData::Key
+            | TokenData::Value
+            | TokenData::Alias { .. }
+            | TokenData::Anchor { .. }
+            | TokenData::Tag { .. }
+            | TokenData::Scalar { .. } => {}
+        }
+    }
+    true
 }
 
 /// Whether scanning `prefix`, ended by a character that cannot end a tag,

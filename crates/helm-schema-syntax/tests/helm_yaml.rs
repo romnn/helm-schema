@@ -334,3 +334,45 @@ fn ambiguous_keys_do_not_claim_a_deterministic_go_rejection() {
         want: vec![HelmYamlDocument::Failed(HelmYamlError::Unsupported)]
     );
 }
+
+/// Tag lookalikes ending at `,` cost one extra scan, not one per lookalike.
+#[test]
+fn tag_lookalikes_before_commas_decode_in_linear_time() {
+    let count = 50_000;
+    let text = "!a, ".repeat(count);
+    let quoted = format!("a: \"{text}\"\n");
+    let commented = format!("a: 1 # {text}\nb: [x, # {text}\n  z]\n");
+    let started = std::time::Instant::now();
+    sim_assert_eq!(
+        have: helm_yaml_documents(&quoted),
+        want: vec![HelmYamlDocument::Decoded { value: json!({"a": text}), unknown: Vec::new() }]
+    );
+    sim_assert_eq!(
+        have: helm_yaml_documents(&commented),
+        want: vec![HelmYamlDocument::Decoded { value: json!({"a": 1, "b": ["x", "z"]}), unknown: Vec::new() }]
+    );
+    // Single-quoted flow items need a scan per lookalike; past a linear budget they are declined.
+    let items = format!("[{}]\n", "'!a', ".repeat(count));
+    sim_assert_eq!(
+        have: helm_yaml_documents(&items),
+        want: vec![HelmYamlDocument::Failed(HelmYamlError::Unsupported)]
+    );
+    assert!(started.elapsed() < std::time::Duration::from_secs(30));
+}
+
+#[test]
+fn tag_lookalikes_inside_flow_scalars_decode_exactly() {
+    for (source, value) in [
+        ("['!a', b]\n", json!(["!a", "b"])),
+        ("[x !a, b]\n", json!(["x !a", "b"])),
+        (
+            "{k: '!a', l: \"!b, c\"}\n",
+            json!({"k": "!a", "l": "!b, c"}),
+        ),
+    ] {
+        sim_assert_eq!(
+            have: helm_yaml_documents(source),
+            want: vec![HelmYamlDocument::Decoded { value, unknown: Vec::new() }]
+        );
+    }
+}
