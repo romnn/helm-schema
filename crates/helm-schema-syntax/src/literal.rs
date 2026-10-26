@@ -1,7 +1,8 @@
 use serde_json::{Map, Value};
 
 use crate::{
-    BlockScalar, MappingEntry, Node, ScalarPart, ScalarParts, SequenceItem, TemplatedDocument,
+    BlockScalar, HelmYamlDocument, HelmYamlKey, MappingEntry, Node, ScalarPart, ScalarParts,
+    SequenceItem, TemplatedDocument, helm_yaml_documents, helm_yaml_key,
 };
 
 impl TemplatedDocument<'_> {
@@ -38,14 +39,21 @@ impl TemplatedDocument<'_> {
     /// Projects scalar parts when they contain no template-action hole.
     #[must_use]
     pub fn literal_scalar(&self, scalar: &ScalarParts) -> Option<Value> {
-        if scalar
-            .parts
-            .iter()
-            .any(|part| matches!(part, ScalarPart::Hole(_)))
-        {
+        if has_hole(scalar) {
             return None;
         }
         self.literal_source(scalar.span.start, scalar.span.end)
+    }
+
+    /// How Helm reads a mapping key without a template-action hole.
+    #[must_use]
+    pub fn literal_key(&self, key: &ScalarParts) -> Option<HelmYamlKey> {
+        if has_hole(key) {
+            return None;
+        }
+        Some(helm_yaml_key(
+            self.source.get(key.span.start..key.span.end)?,
+        ))
     }
 
     fn literal_nodes(&self, nodes: &[Node]) -> Option<Value> {
@@ -60,11 +68,15 @@ impl TemplatedDocument<'_> {
                         return None;
                     }
                     shape = Some(true);
-                    let key = self.literal_scalar(&entry.key)?;
-                    mapping.insert(
-                        key.as_str()?.to_string(),
-                        self.literal_mapping_value(entry)?,
-                    );
+                    // A merge key, or a duplicate whose reading may depend on
+                    // its key's type, leaves the mapping unknown.
+                    let Some(HelmYamlKey::Key(key)) = self.literal_key(&entry.key) else {
+                        return None;
+                    };
+                    if mapping.contains_key(&key) {
+                        return None;
+                    }
+                    mapping.insert(key, self.literal_mapping_value(entry)?);
                 }
                 Node::Sequence(item) => {
                     if shape == Some(true) {
@@ -85,16 +97,33 @@ impl TemplatedDocument<'_> {
         }
     }
 
+    /// Read alone, a block scalar loses its trailing blank lines and its
+    /// parent's indentation, so keep chomping and an explicit indentation
+    /// indicator stay unknown.
     fn literal_block(&self, block: &BlockScalar) -> Option<Value> {
-        if !block.holes.is_empty() {
+        let header = self.source.get(block.header.start..block.header.end)?;
+        if !block.holes.is_empty() || header.contains(|c: char| c == '+' || c.is_ascii_digit()) {
             return None;
         }
         self.literal_source(block.header.start, block.body.end.max(block.header.end))
     }
 
+    /// The literal text as Helm decodes it, when that is fully known.
     fn literal_source(&self, start: usize, end: usize) -> Option<Value> {
         let source = self.source.get(start..end)?.trim();
-        let yaml = serde_yaml::from_str::<serde_yaml::Value>(source).ok()?;
-        serde_json::to_value(yaml).ok()
+        match helm_yaml_documents(source).as_slice() {
+            [] => Some(Value::Null),
+            [HelmYamlDocument::Decoded { value, unknown }] if unknown.is_empty() => {
+                Some(value.clone())
+            }
+            _ => None,
+        }
     }
+}
+
+fn has_hole(scalar: &ScalarParts) -> bool {
+    scalar
+        .parts
+        .iter()
+        .any(|part| matches!(part, ScalarPart::Hole(_)))
 }

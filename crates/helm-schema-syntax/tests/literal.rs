@@ -53,3 +53,46 @@ fn rejects_a_hole_inside_a_scalar_value() -> eyre::Result<()> {
 
     Ok(())
 }
+
+#[test]
+fn block_scalars_read_as_in_their_document() -> eyre::Result<()> {
+    // Helm reads each block scalar followed by its line break; a block that
+    // needs its trailing blank lines or parent indentation stays unknown.
+    let source = indoc! {r"
+        root:
+          clip: |
+            a
+            b
+          strip: |-
+            a
+          folded: >
+            a
+            b
+        kept:
+          keep: |+
+            a
+
+        indented:
+          explicit: |2
+              a
+    "};
+    let document = TemplatedDocument::parse(source);
+    let mut values = Vec::new();
+    for node in document.roots() {
+        let Node::Mapping(entry) = node else {
+            return Err(eyre::eyre!("root node is not a mapping entry"));
+        };
+        values.push(document.literal_mapping_value(entry));
+    }
+
+    sim_assert_eq!(
+        have: values,
+        want: vec![
+            Some(json!({"clip": "a\nb\n", "strip": "a", "folded": "a b\n"})),
+            None,
+            None,
+        ]
+    );
+
+    Ok(())
+}
