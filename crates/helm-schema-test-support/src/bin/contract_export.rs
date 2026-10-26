@@ -98,14 +98,10 @@ fn run() -> Result<(), ExportError> {
                 while let Some((index, (key, recipe))) =
                     queue.lock().ok().and_then(|mut queue| queue.pop())
                 {
-                    match export_one(&out, index, &recipe) {
-                        Ok((contract, schema)) => {
+                    match export_one(&out, index, &key, &recipe) {
+                        Ok(row) => {
                             if let Ok(mut rows) = rows.lock() {
-                                rows.push(ExportEntry {
-                                    key,
-                                    contract,
-                                    schema,
-                                });
+                                rows.push(row);
                             }
                         }
                         Err(message) => {
@@ -137,20 +133,14 @@ fn run() -> Result<(), ExportError> {
         .map_err(|source| ExportError::Io { path, source })
 }
 
-/// Writes one recipe's contract document and schema; returns both files.
+/// Writes one recipe's contract document and schema; returns their index entry.
 fn export_one(
     out: &Path,
     index: usize,
+    key: &str,
     recipe: &registry::ChartRecipe,
-) -> Result<(ExportFile, ExportFile), String> {
+) -> Result<ExportEntry, String> {
     let session = AnalysisSession::new(generate_options(recipe));
-    let contract = session
-        .contract_document()
-        .map_err(|error| format!("contract document: {error}"))?;
-    let contract = serde_json::to_vec_pretty(&contract).map_err(|error| error.to_string())?;
-    let schema = session_schema(&session, recipe).map_err(|error| format!("{error:#}"))?;
-    let mut schema = serde_json::to_vec_pretty(&schema).map_err(|error| error.to_string())?;
-    schema.push(b'\n');
     let write = |suffix: &str, bytes: &[u8]| -> Result<ExportFile, String> {
         let file = format!("{index:04}.{suffix}.json");
         std::fs::write(out.join(&file), bytes).map_err(|error| format!("{file}: {error}"))?;
@@ -159,5 +149,21 @@ fn export_one(
             sha256: sha256_hex(bytes),
         })
     };
-    Ok((write("contract", &contract)?, write("schema", &schema)?))
+    // Release the owned contract projection before schema lowering allocates its projection.
+    let contract = {
+        let document = session
+            .contract_document()
+            .map_err(|error| format!("contract document: {error}"))?;
+        let bytes = serde_json::to_vec_pretty(&document).map_err(|error| error.to_string())?;
+        write("contract", &bytes)?
+    };
+    let schema = session_schema(&session, recipe).map_err(|error| format!("{error:#}"))?;
+    drop(session);
+    let mut bytes = serde_json::to_vec_pretty(&schema).map_err(|error| error.to_string())?;
+    bytes.push(b'\n');
+    Ok(ExportEntry {
+        key: key.to_string(),
+        contract,
+        schema: write("schema", &bytes)?,
+    })
 }
