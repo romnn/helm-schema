@@ -15,8 +15,8 @@
 //! under an otherwise identical key.
 //!
 //! A completed execution is stored under its key as one directory published
-//! by an atomic rename of a synced staging directory. Readers verify the
-//! request and output hashes; an incomplete or corrupt entry is a miss.
+//! by an atomic rename after syncing every file and, on Unix, directory metadata.
+//! Readers verify the request and output hashes; an incomplete or corrupt entry is a miss.
 
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
@@ -1297,9 +1297,13 @@ fn publish_entry(
         file.write_all(bytes)?;
         file.sync_all()?;
     }
-    fs::File::open(staged.path())?.sync_all()?;
+    // Portable File::open cannot open Windows directories for syncing.
+    // Files are synced on every host, and readers reject incomplete entries after a crash.
+    if cfg!(unix) {
+        fs::File::open(staged.path())?.sync_all()?;
+    }
     // A rename never replaces a complete entry: the target is a non-empty directory.
-    if fs::rename(staged.path(), entry).is_ok() {
+    if fs::rename(staged.path(), entry).is_ok() && cfg!(unix) {
         fs::File::open(parent)?.sync_all()?;
     }
     Ok(())

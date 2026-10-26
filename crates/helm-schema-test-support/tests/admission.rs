@@ -157,9 +157,13 @@ fn the_suite_holds_no_zero_byte_file() -> eyre::Result<()> {
     sim_assert_eq!(have: suite(root, CELLS, BAD_ROW)?.empty_files()?, want: Vec::<String>::new());
     fs::create_dir_all(root.join("charts/c/templates"))?;
     fs::write(root.join("charts/c/templates/_helpers.tpl"), "")?;
+    let relative = Path::new("charts")
+        .join("c")
+        .join("templates")
+        .join("_helpers.tpl");
     sim_assert_eq!(
         have: read_suite(root)?.empty_files()?,
-        want: vec!["charts/c/templates/_helpers.tpl: a zero-byte file; delete it".to_string()],
+        want: vec![format!("{}: a zero-byte file; delete it", relative.display())],
     );
     Ok(())
 }

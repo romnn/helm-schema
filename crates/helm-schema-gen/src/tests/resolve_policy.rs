@@ -61,7 +61,9 @@ fn conditional_schema_acceptance_memo_bypasses_external_resources() -> eyre::Res
     let directory = ScratchDir::new("resolve_policy")?;
     let referenced = directory.path().join("member.json");
     std::fs::write(&referenced, r#"{ "type": "string" }"#)?;
-    let external = serde_json::json!({ "$ref": format!("file://{}", referenced.display()) });
+    let reference = url::Url::from_file_path(&referenced)
+        .map_err(|()| eyre::eyre!("cannot form a file URL for {}", referenced.display()))?;
+    let external = serde_json::json!({ "$ref": reference.as_str() });
     let mut memo = ConditionalSchemaAcceptanceMemo::default();
 
     sim_assert_eq!(have: memo.accepts(&external, &serde_json::json!("ok")), want: true);

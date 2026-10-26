@@ -460,47 +460,35 @@ fn validate_helm_adjudication_coverage_with_contexts(
             "adjudicated flip outcome accounting mismatch: {coverage:?}"
         ));
     }
-    let mut unlisted_undecided = Vec::new();
     for observed in &coverage.loosenings_with_uncertain_kubernetes {
         let listed = undecided_roster
             .iter()
             .any(|group| group.lists(&observed.case, &observed.uncertain))
             || context_undecided_lists(contextual_undecided, observed)?;
         if !listed {
-            unlisted_undecided.push(format!(
-                "{} ({:?}){}",
+            problems.push(format!(
+                "accepted cell whose changed resources Kubernetes could not decide, missing \
+                 from KNOWN_UNDECIDED_ACCEPTANCES: {} ({:?}){}",
                 observed.case,
                 observed.uncertain,
                 preserved_evidence(observed.evidence.as_ref())
             ));
         }
     }
-    if !unlisted_undecided.is_empty() {
-        problems.push(format!(
-            "accepted cells whose changed resources Kubernetes could not decide, missing \
-             from KNOWN_UNDECIDED_ACCEPTANCES: {unlisted_undecided:?}"
-        ));
-    }
-    let mut unlisted = Vec::new();
     for observed in &coverage.false_acceptances {
         let listed = roster
             .iter()
             .any(|group| group.lists(&observed.case, observed.rejection, observed.baseline))
             || context_false_is_known(contextual_false, observed)?;
         if !listed {
-            unlisted.push(format!(
-                "{} ({:?}, {:?}){}",
+            problems.push(format!(
+                "false acceptance missing from KNOWN_FALSE_ACCEPTANCES: {} ({:?}, {:?}){}",
                 observed.case,
                 observed.rejection,
                 observed.baseline,
                 preserved_evidence(observed.evidence.as_ref())
             ));
         }
-    }
-    if !unlisted.is_empty() {
-        problems.push(format!(
-            "false acceptances missing from KNOWN_FALSE_ACCEPTANCES: {unlisted:?}"
-        ));
     }
     let mut fixed = false_acceptance_rows_not_observed(coverage, roster);
     for group in undecided_roster {

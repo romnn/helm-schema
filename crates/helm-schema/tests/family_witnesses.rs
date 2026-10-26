@@ -708,7 +708,7 @@ fn chart_problems(chart: &str, layout: &Layout) -> eyre::Result<Vec<String>> {
         if in_charts && relative.extension().is_some_and(|ext| ext == "tgz") {
             problems.push(format!(
                 "chart {chart}: packaged dependency {} is not modelled",
-                relative.display()
+                portable_relative_path(&relative)
             ));
         }
         // A dependency manifest sits at the chart root or at the root of a
@@ -742,7 +742,7 @@ fn chart_problems(chart: &str, layout: &Layout) -> eyre::Result<Vec<String>> {
             if imports {
                 problems.push(format!(
                     "chart {chart}: import-values in {} is not modelled",
-                    relative.display()
+                    portable_relative_path(&relative)
                 ));
             }
         }
@@ -793,7 +793,7 @@ fn override_problems(family: Family, witness: &Witness, layout: &Layout) -> Vec<
             if !named {
                 problems.push(format!(
                     "{id}: a values file is {family:?}/{id}.yaml, not {}",
-                    relative.display()
+                    portable_relative_path(relative)
                 ));
             }
             if let Err(error) = witness.overrides.overlay(&layout.values_files) {
@@ -908,19 +908,27 @@ fn overrides_text(overrides: &Overrides, layout: &Layout) -> eyre::Result<String
     Ok(text)
 }
 
-/// Digest of every file under a chart directory, by relative path.
+/// Digest of every file under a chart directory, by slash-separated relative path.
 #[tracing::instrument(target = "helm_schema", skip_all, fields(path = %dir.display()))]
 fn chart_tree_digest(dir: &Path) -> eyre::Result<String> {
     let mut hasher = Sha256::new();
     for relative in chart_files(dir)? {
         let path = dir.join(&relative);
         let bytes = std::fs::read(&path).wrap_err_with(|| format!("read {}", path.display()))?;
-        hasher.update(relative.to_string_lossy().as_bytes());
+        hasher.update(portable_relative_path(&relative).as_bytes());
         hasher.update([0]);
         hasher.update(u64::try_from(bytes.len())?.to_le_bytes());
         hasher.update(&bytes);
     }
     Ok(hex(&hasher.finalize()))
+}
+
+// Frozen adjudications and catalog diagnostics use the same paths on every host.
+fn portable_relative_path(path: &Path) -> String {
+    path.iter()
+        .map(|component| component.to_string_lossy())
+        .collect::<Vec<_>>()
+        .join("/")
 }
 
 /// Every file under `dir`, relative to it, sorted.
@@ -1748,6 +1756,25 @@ fn default_output_obligation_counts_final_annotations() -> eyre::Result<()> {
         let row = evaluate_size(Family::F74, &obligation, &layout)?;
         sim_assert_eq!(have: row.have, want: row.want);
     }
+    Ok(())
+}
+
+#[test]
+fn chart_tree_digest_pins_portable_relative_paths_and_file_bytes() -> eyre::Result<()> {
+    let root = test_util::scratch::ScratchDir::new("family-witness-digest")?;
+    std::fs::create_dir(root.path().join("templates"))?;
+    std::fs::write(root.path().join("Chart.yaml"), "name: probe\n")?;
+    std::fs::write(
+        root.path().join("templates").join("probe.yaml"),
+        "kind: ConfigMap\n",
+    )?;
+
+    // Pin the canonical path spelling and byte framing without deriving the expectation
+    // through the host's path formatter.
+    sim_assert_eq!(
+        have: chart_tree_digest(root.path())?,
+        want: "f8fba76bee89b4420ea6c9ab68c3b2be69483d39634ed138abfb65bab1a0d848"
+    );
     Ok(())
 }
 
