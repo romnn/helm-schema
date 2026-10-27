@@ -102,7 +102,7 @@ fn no_templates_gate_null_context_screens_no_hypothetical_twice_lint_flip() -> e
         transport: "values-file".to_string(),
         kubernetes_version: "1.29.0".to_string(),
         chart_sha256: tree_sha256(chart.path())?,
-        baseline_sha256: sha256_hex(&schemas.baseline),
+        baseline_sha256: schemas.baseline_sha256.clone(),
         candidate_sha256: sha256_hex(&schemas.candidate),
         canonical_overlay_sha256: sha256_hex(&serde_json::to_vec(&overlay)?),
         values_file_sha256: sha256_hex(values_file.as_bytes()),

@@ -13,12 +13,12 @@ use test_util::scratch::ScratchDir;
 use super::lint_probes::{ImportedRoster, LintSchemas};
 
 #[test]
-fn baseline_binds_the_normalized_bytes_installed_for_helm() -> eyre::Result<()> {
+fn baseline_binds_input_bytes_and_installs_the_normalized_schema() -> eyre::Result<()> {
     let baseline =
         br#" { "pattern": "^\\u0000\\u00FF$", "patternProperties": {"^\\u007F$": {}} } "#;
     let expected = br#"{"pattern":"^\\x00\\xFF$","patternProperties":{"^\\x7F$":{}}}"#;
     let schemas = LintSchemas::compile_bytes(baseline, &json!({}), None)?;
-    sim_assert_eq!(have: sha256_hex(&schemas.baseline), want: sha256_hex(expected));
+    sim_assert_eq!(have: schemas.baseline_sha256, want: sha256_hex(baseline));
     sim_assert_eq!(have: schemas.baseline, want: expected.to_vec());
     Ok(())
 }
@@ -68,10 +68,22 @@ fn baseline_shortens_only_above_the_sweep_helm_file_limit() -> eyre::Result<()> 
     let mut exact_limit = vec![b' '; 5 * 1024 * 1024 - 2];
     exact_limit.extend_from_slice(b"{}");
     let exact = LintSchemas::compile_bytes(&exact_limit, &json!({}), None)?;
+    sim_assert_eq!(have: exact.baseline_sha256, want: sha256_hex(&exact_limit));
     sim_assert_eq!(have: exact.baseline, want: b"{}".to_vec());
     exact_limit.push(b'\n');
     let oversized = LintSchemas::compile_bytes(&exact_limit, &json!({}), None)?;
+    sim_assert_eq!(have: oversized.baseline_sha256, want: sha256_hex(b"{}\n"));
     sim_assert_eq!(have: oversized.baseline, want: b"{}\n".to_vec());
+    Ok(())
+}
+
+#[test]
+fn oversized_baseline_binds_prepared_input_before_pattern_normalization() -> eyre::Result<()> {
+    let mut baseline = vec![b' '; helm_schema::output::HELM_MAX_CHART_FILE_BYTES + 1];
+    baseline.extend_from_slice(br#"{"pattern":"^\\u0000$"}"#);
+    let schemas = LintSchemas::compile_bytes(&baseline, &json!({}), None)?;
+    sim_assert_eq!(have: schemas.baseline_sha256, want: sha256_hex(b"{\"pattern\":\"^\\\\u0000$\"}\n"));
+    sim_assert_eq!(have: schemas.baseline, want: b"{\"pattern\":\"^\\\\x00$\"}\n".to_vec());
     Ok(())
 }
 
