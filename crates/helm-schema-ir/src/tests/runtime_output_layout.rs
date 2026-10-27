@@ -1,3 +1,5 @@
+use std::collections::BTreeSet;
+
 use std::rc::Rc;
 
 use helm_schema_core::{PlainScalarPlacement, Predicate, PredicateMemo, ValuesPath};
@@ -56,7 +58,7 @@ fn fixture(prefix: &str, suffix: &str) -> Fixture {
 fn placement(fixture: &Fixture) -> PlainScalarPlacement {
     OutputPlacement::new(
         Rc::new(fixture.state.output.clone()),
-        Predicate::True,
+        &Predicate::True,
         &fixture.memo,
         crate::value::FileOutput::Manifest,
     )
@@ -286,4 +288,191 @@ fn nested_capture_contexts_share_the_marker_provenance() {
             want: vec![false, false]
         );
     }
+}
+
+#[test]
+fn independent_scalar_choices_share_one_ownership_context() {
+    let mut fixture = fixture("", "");
+    fixture.state.output = TextBuffer::default();
+    for index in 0..12 {
+        fixture.state.output.bytes(&format!("value{index}: \""));
+        let predicate = Predicate::truthy_path(format!("enabled{index}"));
+        let decision = fixture.state.heap.arena.decision(
+            predicate.clone(),
+            predicate.negated(),
+            Coverage::Exact,
+        );
+        let mut branches = Vec::new();
+        for side in ["left", "right"] {
+            let mut branch = TextBuffer::default();
+            branch.emit(
+                fixture
+                    .state
+                    .heap
+                    .freeze(&Value::input(ValuesPath::parse(&format!("{side}{index}")))),
+            );
+            branches.push(Rc::new(branch));
+        }
+        let mut branches = branches.into_iter();
+        if let (Some(yes), Some(no)) = (branches.next(), branches.next()) {
+            fixture
+                .state
+                .output
+                .parts
+                .push(TextPart::Select { decision, yes, no }.into());
+        }
+        fixture.state.output.bytes("\"\n");
+    }
+    let placement = OutputPlacement::new(
+        Rc::new(fixture.state.output),
+        &Predicate::True,
+        &fixture.memo,
+        crate::value::FileOutput::Manifest,
+    );
+    sim_assert_eq!(have: placement.layouts.len(), want: 1);
+    sim_assert_eq!(have: placement.unknown, want: Predicate::False);
+    let inputs = placement
+        .layouts
+        .iter()
+        .flat_map(|layout| {
+            layout.documents.iter().flat_map(move |document| {
+                let placed = super::PlacedDocument {
+                    condition: document.condition.clone(),
+                    ownership: &document.ownership,
+                    layout,
+                    document,
+                };
+                placed
+                    .terms(Span::new(0, document.ownership.skeleton.text.len()))
+                    .filter(|term| term.placeholder)
+                    .map(|term| term.inputs())
+                    .collect::<Vec<_>>()
+            })
+        })
+        .collect::<Vec<_>>();
+    sim_assert_eq!(have: inputs.len(), want: 12);
+    for (index, inputs) in inputs.into_iter().enumerate() {
+        sim_assert_eq!(have: inputs, want: BTreeSet::from([
+            ValuesPath::parse(&format!("left{index}")), ValuesPath::parse(&format!("right{index}")),
+        ]));
+    }
+}
+
+#[test]
+fn shared_layouts_keep_concatenated_emissions_separate() {
+    let source = "value: {{ if .Values.enabled }}{{ .Values.a }}{{ .Values.b }}{{ else }}{{ .Values.c }}{{ .Values.d }}{{ end }}";
+    let db = crate::analysis_db::IrAnalysisDb::new(&helm_schema_ast::DefineIndex::new());
+    let execution = crate::value::execute_document(source, Some("templates/probe.yaml"), &db);
+    let slots = execution
+        .placed_documents()
+        .map(|document| {
+            document
+                .terms(Span::new(0, document.ownership.skeleton.text.len()))
+                .filter(|term| term.placeholder)
+                .count()
+        })
+        .collect::<Vec<_>>();
+    sim_assert_eq!(have: slots, want: vec![2]);
+    sim_assert_eq!(have: execution.sites().filter(|site| site.rendered()).map(|site| site.plain_scalar_placement).collect::<Vec<_>>(),
+        want: vec![PlainScalarPlacement::Unknown; 4]);
+}
+
+#[test]
+fn infeasible_structural_choices_do_not_consume_the_layout_budget() {
+    let fixture = fixture("value: \"", "\"\n");
+    let mut impossible = TextBuffer::default();
+    impossible.bytes("unused: ");
+    for index in 0..6 {
+        let guard = Predicate::truthy_path(format!("branch{index}"));
+        let mut yes = TextBuffer::default();
+        yes.bytes("a");
+        let mut no = TextBuffer::default();
+        no.bytes("b");
+        impossible.parts.push(
+            TextPart::Select {
+                decision: fixture.state.heap.arena.decision(
+                    guard.clone(),
+                    guard.negated(),
+                    Coverage::Exact,
+                ),
+                yes: Rc::new(yes),
+                no: Rc::new(no),
+            }
+            .into(),
+        );
+    }
+    let active = Predicate::truthy_path("active");
+    let graph = TextBuffer {
+        parts: vec![
+            TextPart::Select {
+                decision: fixture.state.heap.arena.decision(
+                    active.clone().negated(),
+                    active.clone(),
+                    Coverage::Exact,
+                ),
+                yes: Rc::new(impossible),
+                no: Rc::new(fixture.state.output),
+            }
+            .into(),
+        ],
+        ..TextBuffer::default()
+    };
+    let placement = OutputPlacement::new(
+        Rc::new(graph),
+        &active,
+        &fixture.memo,
+        crate::value::FileOutput::Manifest,
+    );
+    sim_assert_eq!(have: placement.layouts.len(), want: 1);
+    sim_assert_eq!(have: placement.unknown, want: Predicate::False);
+}
+
+#[test]
+fn exhausted_shared_occurrence_queries_remain_unknown() {
+    let fixture = fixture("value: ", "\n");
+    let id = ObservationId {
+        program: fixture.site.program,
+        ordinal: fixture.site.ordinal,
+        span: fixture.site.span,
+    };
+    let mut graph = Rc::new(TextBuffer {
+        parts: vec![OutputNode {
+            occurrences: vec![id],
+            part: TextPart::Frozen(fixture.site.value),
+        }],
+        ..TextBuffer::default()
+    });
+    for index in 0..8 {
+        let guard = Predicate::truthy_path(format!("branch{index}"));
+        graph = Rc::new(TextBuffer {
+            parts: vec![OutputNode {
+                occurrences: vec![id],
+                part: TextPart::Select {
+                    decision: fixture.state.heap.arena.decision(
+                        guard.clone(),
+                        guard.negated(),
+                        Coverage::Exact,
+                    ),
+                    yes: Rc::clone(&graph),
+                    no: graph,
+                },
+            }],
+            ..TextBuffer::default()
+        });
+    }
+    let node = super::NodeRef {
+        buffer: graph,
+        index: 0,
+        start: 0,
+        indentation: 0,
+        context: Rc::new(Vec::new()),
+    };
+    let term = super::PlacedTerm {
+        range: Span::new(0, 8),
+        placeholder: true,
+        source_offset: None,
+        node: &node,
+    };
+    sim_assert_eq!(have: term.occurrence_guard(id), want: None);
+    sim_assert_eq!(have: term.inputs(), want: BTreeSet::from([ValuesPath::parse("value")]));
 }

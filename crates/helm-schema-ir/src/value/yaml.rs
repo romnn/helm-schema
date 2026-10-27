@@ -41,14 +41,63 @@ impl NodeRef {
     fn node(&self) -> Option<&OutputNode> {
         self.buffer.parts.get(self.index)
     }
+
+    fn selected(&self, other: &Self, decision: &Rc<FrozenTest>) -> Option<Self> {
+        let Self {
+            buffer: _,
+            index: _,
+            start,
+            indentation,
+            context,
+        } = self;
+        let Self {
+            buffer: _,
+            index: _,
+            start: other_start,
+            indentation: other_indentation,
+            context: other_context,
+        } = other;
+        if start != other_start || indentation != other_indentation || context != other_context {
+            return None;
+        }
+        let yes = self.node()?;
+        let no = other.node()?;
+        // Keep the original frozen payloads while sharing their YAML ownership bytes.
+        let selected = OutputNode {
+            occurrences: yes
+                .occurrences
+                .iter()
+                .chain(&no.occurrences)
+                .copied()
+                .collect::<BTreeSet<_>>()
+                .into_iter()
+                .collect(),
+            part: TextPart::Select {
+                decision: Rc::clone(decision),
+                yes: Rc::new(TextBuffer {
+                    parts: vec![yes.clone()],
+                    ..TextBuffer::default()
+                }),
+                no: Rc::new(TextBuffer {
+                    parts: vec![no.clone()],
+                    ..TextBuffer::default()
+                }),
+            },
+        };
+        Some(Self {
+            buffer: Rc::new(TextBuffer {
+                parts: vec![selected],
+                ..TextBuffer::default()
+            }),
+            index: 0,
+            start: *start,
+            indentation: *indentation,
+            context: Rc::clone(context),
+        })
+    }
 }
 
-#[derive(Clone)]
-enum Pending {
-    Node(NodeRef),
-    ChoiceEnd(usize),
-}
-
+#[derive(Clone, PartialEq, Eq)]
 struct SelectedSpan {
     range: Span,
     condition: Predicate,
@@ -91,11 +140,10 @@ pub(crate) struct PlacedTerm<'a> {
     pub(crate) range: Span,
     pub(crate) placeholder: bool,
     pub(crate) source_offset: Option<usize>,
-    pub(crate) value: Option<&'a FrozenValue>,
     node: &'a NodeRef,
 }
 
-impl PlacedTerm<'_> {
+impl<'a> PlacedTerm<'a> {
     pub(crate) fn occurrences(&self) -> impl Iterator<Item = ObservationId> + '_ {
         self.node
             .node()
@@ -103,6 +151,79 @@ impl PlacedTerm<'_> {
             .flat_map(|node| node.occurrences.iter().copied())
             .chain(self.context())
     }
+    fn emitted_nodes(&self) -> Option<Vec<(Predicate, &'a OutputNode)>> {
+        let mut pending = vec![(Predicate::True, self.node.node()?)];
+        let mut values = Vec::new();
+        let mut remaining = 128_usize;
+        while let Some((condition, node)) = pending.pop() {
+            remaining = remaining.checked_sub(1)?;
+            match node.content() {
+                TextPart::Frozen(_) | TextPart::Bytes(_) | TextPart::Unknown(_) => {
+                    values.push((condition, node));
+                }
+                TextPart::Select { decision, yes, no } => {
+                    let FrozenTest {
+                        id: _,
+                        when_true,
+                        when_false,
+                        coverage,
+                        runtime: _,
+                    } = decision.as_ref();
+                    if *coverage != Coverage::Exact
+                        || when_true.contains_approximation()
+                        || when_false.contains_approximation()
+                    {
+                        return None;
+                    }
+                    for (branch, guard) in [(no, when_false), (yes, when_true)] {
+                        let [node] = branch.parts.as_slice() else {
+                            return None;
+                        };
+                        pending
+                            .push((Predicate::all(vec![condition.clone(), guard.clone()]), node));
+                    }
+                }
+            }
+        }
+        Some(values)
+    }
+
+    pub(crate) fn frozen_alternatives(&self) -> Option<Vec<(Predicate, &'a FrozenValue)>> {
+        self.emitted_nodes()?
+            .into_iter()
+            .map(|(guard, node)| match node.content() {
+                TextPart::Frozen(value) => Some((guard, value)),
+                TextPart::Bytes(_)
+                | TextPart::Unknown(_)
+                | TextPart::Select {
+                    decision: _,
+                    yes: _,
+                    no: _,
+                } => None,
+            })
+            .collect()
+    }
+
+    pub(crate) fn occurrence_guard(&self, id: ObservationId) -> Option<Predicate> {
+        match self.node.node().map(OutputNode::content) {
+            Some(TextPart::Frozen(_) | TextPart::Bytes(_) | TextPart::Unknown(_)) => {
+                return Some(Predicate::True);
+            }
+            None => return None,
+            Some(TextPart::Select {
+                decision: _,
+                yes: _,
+                no: _,
+            }) => {}
+        }
+        Some(Predicate::Or(
+            self.emitted_nodes()?
+                .into_iter()
+                .filter_map(|(guard, node)| node.occurrences.contains(&id).then_some(guard))
+                .collect(),
+        ))
+    }
+
     pub(crate) fn context(&self) -> impl Iterator<Item = ObservationId> + '_ {
         self.node.context.iter().copied()
     }
@@ -110,15 +231,12 @@ impl PlacedTerm<'_> {
         match self.node.node().map(OutputNode::content) {
             Some(TextPart::Frozen(value)) => value.inputs(),
             Some(TextPart::Unknown(inputs)) => inputs.clone(),
-            Some(
-                TextPart::Bytes(_)
-                | TextPart::Select {
-                    decision: _,
-                    yes: _,
-                    no: _,
-                },
-            )
-            | None => BTreeSet::new(),
+            Some(TextPart::Select {
+                decision: _,
+                yes,
+                no,
+            }) => yes.inputs().into_iter().chain(no.inputs()).collect(),
+            Some(TextPart::Bytes(_)) | None => BTreeSet::new(),
         }
     }
 }
@@ -142,16 +260,6 @@ impl PlacedDocument<'_> {
                     return None;
                 }
                 let node = self.layout.terms.get(piece)?;
-                let value = match node.node()?.content() {
-                    TextPart::Frozen(value) => Some(value),
-                    TextPart::Bytes(_)
-                    | TextPart::Unknown(_)
-                    | TextPart::Select {
-                        decision: _,
-                        yes: _,
-                        no: _,
-                    } => None,
-                };
                 Some(PlacedTerm {
                     range,
                     placeholder,
@@ -160,7 +268,6 @@ impl PlacedDocument<'_> {
                         && !placeholder)
                         .then(|| (range.start + self.document.offset).checked_sub(node.start))
                         .flatten(),
-                    value,
                     node,
                 })
             })
@@ -214,36 +321,34 @@ struct MarkerProvenance {
 impl OutputPlacement {
     fn new(
         graph: Rc<TextBuffer>,
-        condition: Predicate,
+        condition: &Predicate,
         memo: &PredicateMemo,
         output: FileOutput,
     ) -> Self {
         let mut build = LayoutBuilder {
-            skeleton: Skeleton {
-                text: String::new(),
-                segments: Vec::new(),
-            },
-            terms: Vec::new(),
             layouts: Vec::new(),
             unknown: Vec::new(),
             remaining: 1024,
             lexical: LexicalTransfers::default(),
-            selections: Vec::new(),
             root_condition: condition.clone(),
             output,
             markers: MarkerProvenance::default(),
             memo,
         };
-        build.walk(
-            vec![Pending::Node(NodeRef {
-                buffer: Rc::clone(&graph),
-                index: 0,
-                start: 0,
-                indentation: 0,
-                context: Rc::new(Vec::new()),
-            })],
-            condition,
-        );
+        let LayoutContexts { known, unknown } =
+            build.walk(&graph, 0, &Rc::new(Vec::new()), condition);
+        // Graph-local unknown coverage gains the file's path condition only at sealing.
+        let unknown = memo.normalize(Predicate::all(vec![condition.clone(), unknown]));
+        if unknown != Predicate::False {
+            build.unknown.push(unknown);
+        }
+        for mut context in known {
+            context.condition =
+                memo.normalize(Predicate::all(vec![condition.clone(), context.condition]));
+            if context.condition != Predicate::False {
+                build.finish_layout(context);
+            }
+        }
         build.markers.incomplete |= !build.unknown.is_empty();
         Self {
             graph,
@@ -415,7 +520,7 @@ impl FilePlacement {
             let memo = &exit.state.heap.arena.predicate_memo;
             let graph = Rc::new(exit.state.output.clone());
             let placement = if matches!(exit.flow, Flow::Normal(_)) {
-                OutputPlacement::new(graph, condition.clone(), memo, output)
+                OutputPlacement::new(graph, &condition, memo, output)
             } else {
                 OutputPlacement {
                     graph,
@@ -502,123 +607,275 @@ impl FilePlacement {
 }
 
 struct LayoutBuilder<'a> {
-    skeleton: Skeleton,
-    terms: Vec<NodeRef>,
     layouts: Vec<Layout>,
     unknown: Vec<Predicate>,
     remaining: usize,
     lexical: LexicalTransfers,
-    selections: Vec<SelectedSpan>,
     root_condition: Predicate,
     output: FileOutput,
     markers: MarkerProvenance,
     memo: &'a PredicateMemo,
 }
 
+#[derive(Clone)]
+struct LayoutContext {
+    skeleton: Skeleton,
+    terms: Vec<NodeRef>,
+    selections: Vec<SelectedSpan>,
+    condition: Predicate,
+}
+
+struct LayoutContexts {
+    known: Vec<LayoutContext>,
+    unknown: Predicate,
+}
+
 impl LayoutBuilder<'_> {
-    fn walk(&mut self, mut pending: Vec<Pending>, condition: Predicate) {
-        if condition == Predicate::False {
-            return;
+    fn walk(
+        &mut self,
+        graph: &Rc<TextBuffer>,
+        indentation: usize,
+        context: &Rc<Vec<ObservationId>>,
+        ambient: &Predicate,
+    ) -> LayoutContexts {
+        if !self.feasible(ambient, &Predicate::True) {
+            return LayoutContexts {
+                known: Vec::new(),
+                unknown: Predicate::False,
+            };
         }
-        while let Some(next) = pending.pop() {
-            let node = match next {
-                Pending::Node(node) => node,
-                Pending::ChoiceEnd(index) => {
-                    if let Some(selection) = self.selections.get_mut(index) {
-                        selection.range.end = self.skeleton.text.len();
-                    }
-                    continue;
-                }
-            };
-            let Some(part) = node.node().map(OutputNode::content) else {
-                continue;
-            };
-            if self.remaining == 0 || self.layouts.len() >= 32 {
-                self.unknown.push(condition);
-                return;
+        let mut contexts = LayoutContexts {
+            known: vec![LayoutContext::empty()],
+            unknown: Predicate::False,
+        };
+        for (index, output) in graph.parts.iter().enumerate() {
+            if contexts.known.is_empty() {
+                break;
+            }
+            if self.remaining == 0 {
+                contexts.unknown = self.memo.normalize(Predicate::Or(
+                    std::iter::once(contexts.unknown)
+                        .chain(contexts.known.drain(..).map(|layout| layout.condition))
+                        .collect(),
+                ));
+                break;
             }
             self.remaining -= 1;
-            pending.push(Pending::Node(NodeRef {
-                buffer: Rc::clone(&node.buffer),
-                index: node.index + 1,
+            let node = NodeRef {
+                buffer: Rc::clone(graph),
+                index,
                 start: 0,
-                indentation: node.indentation,
-                context: Rc::clone(&node.context),
-            }));
-            if let TextPart::Select { decision, yes, no } = part {
-                self.choices(decision, [yes, no], &node, &pending, &condition);
-                return;
-            }
-            if let TextPart::Frozen(value) = part
-                && let Some(capture) = captured_layout(value, &mut 128)
-            {
-                if !self.append(&capture.prefix, false, node.clone()) {
-                    self.unknown.push(condition);
-                    return;
-                }
-                pending.push(Pending::Node(NodeRef {
-                    buffer: capture.graph,
-                    index: 0,
-                    start: 0,
-                    indentation: node.indentation.saturating_add(capture.indentation),
-                    context: Rc::new(
-                        node.context
-                            .iter()
-                            .copied()
-                            .chain(
-                                node.node()
-                                    .into_iter()
-                                    .flat_map(|node| node.occurrences.iter().copied()),
-                            )
-                            .collect(),
-                    ),
-                }));
-                continue;
-            }
-            let text = match part {
-                TextPart::Bytes(bytes) => Some(bytes.clone()),
-                TextPart::Frozen(value) => value.exact_text(),
-                TextPart::Unknown(_)
-                | TextPart::Select {
-                    decision: _,
-                    yes: _,
-                    no: _,
-                } => None,
+                indentation,
+                context: Rc::clone(context),
             };
-            let bytes = text.as_deref().unwrap_or("00000000");
-            if !self.append(bytes, text.is_none(), node) {
-                self.unknown.push(condition);
-                return;
+            match output.content() {
+                TextPart::Select { decision, yes, no } => {
+                    let active = self.active(&contexts, ambient);
+                    let delta = self.choices(decision, [yes, no], &node, &active);
+                    contexts = self.then(contexts, delta, ambient);
+                }
+                TextPart::Frozen(value) => {
+                    if let Some(capture) = captured_layout(value, &mut 128) {
+                        self.append(&mut contexts, &capture.prefix, false, &node);
+                        if !contexts.known.is_empty() {
+                            let active = self.active(&contexts, ambient);
+                            let nested = self.walk(
+                                &capture.graph,
+                                indentation.saturating_add(capture.indentation),
+                                &Rc::new(
+                                    context.iter().chain(&output.occurrences).copied().collect(),
+                                ),
+                                &active,
+                            );
+                            contexts = self.then(contexts, nested, ambient);
+                        }
+                    } else {
+                        let text = value.exact_text();
+                        self.append(
+                            &mut contexts,
+                            text.as_deref().unwrap_or("00000000"),
+                            text.is_none(),
+                            &node,
+                        );
+                    }
+                }
+                TextPart::Bytes(bytes) => self.append(&mut contexts, bytes, false, &node),
+                TextPart::Unknown(_) => self.append(&mut contexts, "00000000", true, &node),
             }
         }
-        self.finish_layout(condition);
+        contexts
+    }
+
+    fn feasible(&self, ambient: &Predicate, condition: &Predicate) -> bool {
+        self.memo
+            .normalize(Predicate::all(vec![ambient.clone(), condition.clone()]))
+            != Predicate::False
+    }
+
+    fn active(&self, contexts: &LayoutContexts, ambient: &Predicate) -> Predicate {
+        self.memo.normalize(Predicate::all(vec![
+            ambient.clone(),
+            Predicate::Or(
+                contexts
+                    .known
+                    .iter()
+                    .map(|layout| layout.condition.clone())
+                    .collect(),
+            ),
+        ]))
+    }
+
+    fn append(
+        &self,
+        contexts: &mut LayoutContexts,
+        bytes: &str,
+        placeholder: bool,
+        node: &NodeRef,
+    ) {
+        let mut lost = Vec::new();
+        contexts.known.retain_mut(|layout| {
+            if layout.append(bytes, placeholder, node.clone()) {
+                true
+            } else {
+                lost.push(layout.condition.clone());
+                false
+            }
+        });
+        if !lost.is_empty() {
+            contexts.unknown = self.memo.normalize(Predicate::Or(
+                std::iter::once(contexts.unknown.clone())
+                    .chain(lost)
+                    .collect(),
+            ));
+        }
     }
 
     fn choices(
         &mut self,
-        decision: &FrozenTest,
+        decision: &Rc<FrozenTest>,
         branches: [&Rc<TextBuffer>; 2],
         node: &NodeRef,
-        pending: &[Pending],
-        condition: &Predicate,
-    ) {
+        ambient: &Predicate,
+    ) -> LayoutContexts {
         let [yes, no] = branches;
         let FrozenTest {
-            id,
+            id: _,
             when_true,
             when_false,
             coverage,
             runtime: _,
-        } = decision;
+        } = decision.as_ref();
         let exact = *coverage == Coverage::Exact
             && !when_true.contains_approximation()
             && !when_false.contains_approximation();
-        let bytes = self.skeleton.text.len();
-        let segments = self.skeleton.segments.len();
-        let terms = self.terms.len();
-        let choices = self.selections.len();
-        for (taken, branch, guard) in [(true, yes, when_true), (false, no, when_false)] {
-            let guard = if exact {
+        // Reconverge each branch before appending the shared continuation.
+        let mut branch = |graph, guard: &Predicate| {
+            let active = self.memo.normalize(Predicate::all(vec![
+                ambient.clone(),
+                if exact {
+                    guard.clone()
+                } else {
+                    Predicate::True
+                },
+            ]));
+            self.walk(graph, node.indentation, &node.context, &active)
+        };
+        let LayoutContexts {
+            known: yes,
+            unknown: yes_unknown,
+        } = branch(yes, when_true);
+        let LayoutContexts {
+            known: mut no,
+            unknown: no_unknown,
+        } = branch(no, when_false);
+        let mut result = LayoutContexts {
+            known: Vec::new(),
+            unknown: self.memo.normalize(Predicate::Or(vec![
+                Predicate::all(vec![
+                    yes_unknown,
+                    if exact {
+                        when_true.clone()
+                    } else {
+                        Predicate::True
+                    },
+                ]),
+                Predicate::all(vec![
+                    no_unknown,
+                    if exact {
+                        when_false.clone()
+                    } else {
+                        Predicate::True
+                    },
+                ]),
+            ])),
+        };
+        for candidate in yes {
+            let merged = exact
+                .then(|| {
+                    no.iter().enumerate().find_map(|(index, other)| {
+                        self.zip(decision, &candidate, other)
+                            .map(|merged| (index, merged))
+                    })
+                })
+                .flatten();
+            if let Some((index, merged)) = merged {
+                no.remove(index);
+                if self.feasible(ambient, &merged.condition) {
+                    result.known.push(merged);
+                }
+            } else {
+                self.selected(&mut result, candidate, decision, true, exact, ambient);
+            }
+        }
+        for candidate in no {
+            self.selected(&mut result, candidate, decision, false, exact, ambient);
+        }
+        result
+    }
+
+    fn selected(
+        &self,
+        result: &mut LayoutContexts,
+        layout: LayoutContext,
+        decision: &FrozenTest,
+        taken: bool,
+        exact: bool,
+        ambient: &Predicate,
+    ) {
+        let FrozenTest {
+            id,
+            when_true,
+            when_false,
+            coverage: _,
+            runtime: _,
+        } = decision;
+        let guard = if taken { when_true } else { when_false };
+        let LayoutContext {
+            skeleton,
+            terms,
+            mut selections,
+            condition,
+        } = layout;
+        let condition = self.memo.normalize(Predicate::all(vec![
+            condition,
+            if exact {
+                guard.clone()
+            } else {
+                Predicate::True
+            },
+        ]));
+        if !self.feasible(ambient, &condition) {
+            return;
+        }
+        if result.known.len() >= 32 {
+            result.unknown = self
+                .memo
+                .normalize(Predicate::Or(vec![result.unknown.clone(), condition]));
+            return;
+        }
+        selections.push(SelectedSpan {
+            range: Span::new(0, skeleton.text.len()),
+            condition: if exact {
                 guard.clone()
             } else {
                 Predicate::approximate_output_selection(
@@ -626,41 +883,149 @@ impl LayoutBuilder<'_> {
                     BTreeSet::new(),
                     Predicate::False,
                 )
-            };
-            let mut continuation = pending.to_vec();
-            self.selections.push(SelectedSpan {
-                range: Span::new(bytes, bytes),
-                condition: guard.clone(),
-            });
-            continuation.push(Pending::ChoiceEnd(choices));
-            continuation.push(Pending::Node(NodeRef {
-                buffer: Rc::clone(branch),
-                index: 0,
-                start: 0,
-                indentation: node.indentation,
-                context: Rc::clone(&node.context),
-            }));
-            self.walk(
-                continuation,
-                self.memo.normalize(Predicate::all(vec![
-                    condition.clone(),
-                    if exact { guard } else { Predicate::True },
-                ])),
-            );
-            self.skeleton.text.truncate(bytes);
-            self.skeleton.segments.truncate(segments);
-            self.terms.truncate(terms);
-            self.selections.truncate(choices);
-        }
+            },
+        });
+        result.known.push(LayoutContext {
+            skeleton,
+            terms,
+            selections,
+            condition,
+        });
     }
 
-    fn finish_layout(&mut self, condition: Predicate) {
-        let removed = marker_ranges(&self.skeleton.text);
-        self.markers.record(&self.skeleton, &self.terms, &removed);
+    fn zip(
+        &self,
+        decision: &Rc<FrozenTest>,
+        yes: &LayoutContext,
+        no: &LayoutContext,
+    ) -> Option<LayoutContext> {
+        let LayoutContext {
+            skeleton: yes_skeleton,
+            terms: yes_terms,
+            selections: yes_selections,
+            condition: yes_condition,
+        } = yes;
+        let LayoutContext {
+            skeleton: no_skeleton,
+            terms: no_terms,
+            selections: no_selections,
+            condition: no_condition,
+        } = no;
+        if yes_skeleton != no_skeleton
+            || yes_condition != no_condition
+            || yes_selections != no_selections
+            || yes_terms.len() != no_terms.len()
+        {
+            return None;
+        }
+        let terms = yes_terms
+            .iter()
+            .zip(no_terms)
+            .map(|(yes, no)| yes.selected(no, decision))
+            .collect::<Option<Vec<_>>>()?;
+        let FrozenTest {
+            id: _,
+            when_true,
+            when_false,
+            coverage: _,
+            runtime: _,
+        } = decision.as_ref();
+        let covered = self
+            .memo
+            .normalize(Predicate::Or(vec![when_true.clone(), when_false.clone()]));
+        let mut selections = yes_selections.clone();
+        if covered != Predicate::True {
+            selections.push(SelectedSpan {
+                range: Span::new(0, yes_skeleton.text.len()),
+                condition: covered.clone(),
+            });
+        }
+        Some(LayoutContext {
+            skeleton: yes_skeleton.clone(),
+            terms,
+            selections,
+            condition: self
+                .memo
+                .normalize(Predicate::all(vec![yes_condition.clone(), covered])),
+        })
+    }
+
+    fn then(
+        &self,
+        prefix: LayoutContexts,
+        suffix: LayoutContexts,
+        ambient: &Predicate,
+    ) -> LayoutContexts {
+        let LayoutContexts {
+            known: prefixes,
+            unknown: prefix_unknown,
+        } = prefix;
+        let LayoutContexts {
+            known: suffixes,
+            unknown: suffix_unknown,
+        } = suffix;
+        let prefix_condition = Predicate::Or(
+            prefixes
+                .iter()
+                .map(|layout| layout.condition.clone())
+                .collect(),
+        );
+        let suffix_unknown = Predicate::all(vec![prefix_condition, suffix_unknown]);
+        let mut result = LayoutContexts {
+            known: Vec::new(),
+            unknown: self
+                .memo
+                .normalize(Predicate::Or(vec![prefix_unknown, suffix_unknown])),
+        };
+        let append =
+            |mut prefix: LayoutContext, suffix: &LayoutContext, result: &mut LayoutContexts| {
+                let condition = self.memo.normalize(Predicate::all(vec![
+                    prefix.condition.clone(),
+                    suffix.condition.clone(),
+                ]));
+                if !self.feasible(ambient, &condition) {
+                    return;
+                }
+                if result.known.len() >= 32 || !prefix.extend(suffix) {
+                    result.unknown = self
+                        .memo
+                        .normalize(Predicate::Or(vec![result.unknown.clone(), condition]));
+                    return;
+                }
+                prefix.condition = condition;
+                result.known.push(prefix);
+            };
+        // A single suffix appends in place; distinct layouts duplicate the accumulated prefix.
+        match suffixes.as_slice() {
+            [suffix] => {
+                for prefix in prefixes {
+                    append(prefix, suffix, &mut result);
+                }
+            }
+            suffixes => {
+                for prefix in prefixes {
+                    for suffix in suffixes {
+                        append(prefix.clone(), suffix, &mut result);
+                    }
+                }
+            }
+        }
+        result
+    }
+
+    fn finish_layout(&mut self, context: LayoutContext) {
+        let LayoutContext {
+            skeleton,
+            terms,
+            selections,
+            condition,
+        } = context;
+        let removed = marker_ranges(&skeleton.text);
+        self.markers.record(&skeleton, &terms, &removed);
         let owned_documents = match self.output {
             FileOutput::Text => Vec::new(),
             FileOutput::Manifest => {
-                let Some(documents) = documents(&self.skeleton, &removed) else {
+                let Some(documents) = documents(&skeleton, &removed) else {
                     self.unknown.push(condition);
                     return;
                 };
@@ -673,7 +1038,7 @@ impl LayoutBuilder<'_> {
             document.condition = self.memo.normalize(Predicate::all(
                 std::iter::once(self.root_condition.clone())
                     .chain(
-                        self.selections
+                        selections
                             .iter()
                             .filter(|selection| {
                                 !removed.is_empty()
@@ -684,12 +1049,7 @@ impl LayoutBuilder<'_> {
                     )
                     .collect(),
             ));
-            let result = quoted_tokens(
-                &document.ownership,
-                &self.terms,
-                &mut self.lexical,
-                self.memo,
-            );
+            let result = quoted_tokens(&document.ownership, &terms, &mut self.lexical, self.memo);
             failures.push(result.invalid);
             document.boundaries = result.boundaries;
             documents.push(document);
@@ -697,17 +1057,80 @@ impl LayoutBuilder<'_> {
         self.layouts.push(Layout {
             condition,
             documents,
-            terms: self.terms.clone(),
-            placeholders: self
-                .skeleton
+            placeholders: skeleton
                 .segments
                 .iter()
                 .filter(|segment| segment.placeholder)
                 .count(),
             invalid: self.memo.normalize(Predicate::Or(failures)),
             source_mapped: removed.is_empty(),
-            empty: self.skeleton.text.trim().is_empty(),
+            empty: skeleton.text.trim().is_empty(),
+            terms,
         });
+    }
+}
+
+impl LayoutContext {
+    fn empty() -> Self {
+        Self {
+            skeleton: Skeleton {
+                text: String::new(),
+                segments: Vec::new(),
+            },
+            terms: Vec::new(),
+            selections: Vec::new(),
+            condition: Predicate::True,
+        }
+    }
+
+    fn extend(&mut self, suffix: &Self) -> bool {
+        let Self {
+            skeleton,
+            terms: suffix_terms,
+            selections,
+            condition: _,
+        } = suffix;
+        let bytes = self.skeleton.text.len();
+        if bytes.saturating_add(skeleton.text.len()) > 64 * 1024 {
+            return false;
+        }
+        let terms = self.terms.len();
+        self.skeleton.text.push_str(&skeleton.text);
+        for segment in &skeleton.segments {
+            let SkeletonSegment {
+                range,
+                piece,
+                placeholder,
+            } = *segment;
+            self.skeleton.segments.push(SkeletonSegment {
+                range: Span::new(bytes + range.start, bytes + range.end),
+                piece: terms + piece,
+                placeholder,
+            });
+        }
+        for NodeRef {
+            buffer,
+            index,
+            start,
+            indentation,
+            context,
+        } in suffix_terms
+        {
+            self.terms.push(NodeRef {
+                buffer: Rc::clone(buffer),
+                index: *index,
+                start: bytes + start,
+                indentation: *indentation,
+                context: Rc::clone(context),
+            });
+        }
+        for SelectedSpan { range, condition } in selections {
+            self.selections.push(SelectedSpan {
+                range: Span::new(bytes + range.start, bytes + range.end),
+                condition: condition.clone(),
+            });
+        }
+        true
     }
 
     fn append(&mut self, bytes: &str, placeholder: bool, mut node: NodeRef) -> bool {

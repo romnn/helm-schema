@@ -1,6 +1,6 @@
 //! Fragment projection from the file's sealed executed-output ownership.
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeSet;
 use std::rc::Rc;
 
 use helm_schema_core::{GuardDnf, Predicate};
@@ -9,16 +9,16 @@ use helm_schema_syntax::{ScalarStyle, Span, YamlNode, YamlNodeKind};
 use crate::analysis_db::IrAnalysisDb;
 use crate::observed_facts::ObservedFacts;
 use crate::resource_identity::PlacedResource;
-use crate::value::Observation;
 use crate::value::yaml::{PlacedDocument, PlacedTerm};
 use crate::value::{DocumentExecution, ExecutedSite, RenderedContainerUse};
+use crate::value::{Observation, ObservationId};
 use crate::{ContractProvenance, ResourceRef, SourceSpan, ValueKind};
 
 use super::domain::{
     AbstractFragment, AbstractString, EntryKey, Guarded, Mapping, MappingEntry, Sequence,
     SiteFacts, Splice, SpliceMeta, StringPart, TaintPart, stamp_fragment_sites,
 };
-use super::lower::{LowerScope, lower_scalar_dispatch, lower_scalar_dispatch_arms};
+use super::lower::{lower_scalar_dispatch, lower_scalar_dispatch_arms};
 /// The result of evaluating one template source: the abstract rendered
 /// document plus the pathless value reads observed along the way.
 #[derive(Debug, Default)]
@@ -320,10 +320,14 @@ impl Projection<'_> {
                     if !site.rendered() {
                         continue;
                     }
+                    let Some(guard) = term.occurrence_guard(id) else {
+                        continue;
+                    };
                     found = true;
                     let mut fragment =
                         self.emission(site, kind, suppressed, &terms, span, term.range);
-                    self.stamp(&mut fragment, term, span);
+                    fragment.guard_all(&guard, self.db.predicate_memo());
+                    self.stamp(&mut fragment, term, span, Some(id));
                     result.extend(fragment);
                 }
             }
@@ -333,7 +337,7 @@ impl Projection<'_> {
                         parts: vec![StringPart::Taint(TaintPart::abstaining(term.inputs()))],
                         suppressed,
                     }));
-                self.stamp(&mut fragment, term, span);
+                self.stamp(&mut fragment, term, span, None);
                 result.extend(fragment);
             }
         }
@@ -372,9 +376,7 @@ impl Projection<'_> {
         let mut fragment = if kind == ValueKind::Scalar {
             site.rendered_scalar()
                 .as_ref()
-                .and_then(|scalar| {
-                    Self::with_scope(|scope| lower_scalar_dispatch(scalar, kind, scope))
-                })
+                .and_then(|scalar| lower_scalar_dispatch(scalar, kind))
                 .unwrap_or_else(|| {
                     Guarded::unconditional(AbstractFragment::Scalar(AbstractString {
                         parts: vec![StringPart::Taint(TaintPart::abstaining(
@@ -387,11 +389,7 @@ impl Projection<'_> {
             let parts = site
                 .rendered_scalar()
                 .as_ref()
-                .and_then(|scalar| {
-                    Self::with_scope(|scope| {
-                        lower_scalar_dispatch_arms(scalar, ValueKind::PartialScalar, scope)
-                    })
-                })
+                .and_then(|scalar| lower_scalar_dispatch_arms(scalar, ValueKind::PartialScalar))
                 .unwrap_or_else(|| {
                     vec![(
                         Predicate::True,
@@ -458,9 +456,16 @@ impl Projection<'_> {
         fragment
     }
 
-    fn stamp(&self, fragment: &mut Guarded<AbstractFragment>, term: &PlacedTerm<'_>, span: Span) {
+    fn stamp(
+        &self,
+        fragment: &mut Guarded<AbstractFragment>,
+        term: &PlacedTerm<'_>,
+        span: Span,
+        occurrence: Option<ObservationId>,
+    ) {
         let provenance = term
             .context()
+            .chain(occurrence)
             .chain(term.occurrences())
             .flat_map(|id| self.execution.observations(id))
             .find_map(|observation| {
@@ -516,26 +521,5 @@ impl Projection<'_> {
             output.extend(contribution);
         }
         *fragment = output;
-    }
-
-    fn with_scope<T>(project: impl FnOnce(&LowerScope<'_>) -> T) -> T {
-        let paths = BTreeSet::new();
-        let metadata = BTreeMap::new();
-        project(&LowerScope {
-            defaulted_paths: &paths,
-            encoded_paths: &paths,
-            derived_text_paths: &paths,
-            merge_operand_paths: &paths,
-            yaml_serialized_paths: &paths,
-            templated_yaml_paths: &paths,
-            shape_erased_paths: &paths,
-            stringified_paths: &paths,
-            nil_omitting_paths: &paths,
-            plain_slot_string_format_paths: &paths,
-            json_serialized_paths: &paths,
-            chart_value_defaults: &paths,
-            local_source_paths: &paths,
-            local_output_meta: &metadata,
-        })
     }
 }

@@ -53,7 +53,7 @@ pub(crate) fn collect_resource_spans(
                 .filter_map(|(index, _)| projection.headers(index).kind)
                 .filter_map(|index| document.ownership.nodes.get(index))
                 .flat_map(|node| document.terms(node.span))
-                .filter(|term| term.value.is_some())
+                .filter(|term| term.frozen_alternatives().is_some())
                 .flat_map(|term| term.occurrences().map(|id| id.span).collect::<Vec<_>>())
                 .collect::<BTreeSet<_>>();
             let Some(span) = source_span(&document, span, execution, source_path) else {

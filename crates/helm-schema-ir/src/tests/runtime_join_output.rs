@@ -8,6 +8,39 @@ use crate::analysis_db::IrAnalysisDb;
 use crate::value::{Flow, execute_document};
 
 #[test]
+fn output_budget_neighbors_keep_exact_text_and_all_widened_dependencies() {
+    use std::collections::BTreeSet;
+
+    use crate::value::{State, Value};
+    use helm_schema_core::ValuesPath;
+
+    for count in [127, 128, 129] {
+        let mut state = State::new(Value::nil());
+        let paths = (0..count)
+            .map(|index| ValuesPath::parse(&format!("items.{index}")))
+            .collect::<BTreeSet<_>>();
+        for path in &paths {
+            // Known text can still carry dependencies from the expression that produced it.
+            let value = Value::string("x").with_influences(BTreeSet::from([path.clone()]));
+            state.output.emit(state.heap.freeze(&value));
+        }
+        let captured = state
+            .heap
+            .freeze(&crate::value::text::capture(&state.output, false));
+
+        // Exact neighbors remain renderable; overflow keeps every influencing input.
+        sim_assert_eq!(
+            have: captured.exact_text(),
+            want: (count <= 128).then(|| "x".repeat(count)),
+            "count={count}"
+        );
+        if count > 128 {
+            sim_assert_eq!(have: captured.inputs(), want: paths);
+        }
+    }
+}
+
+#[test]
 fn thirty_two_element_ranges_keep_both_surviving_output_histories() {
     let db = IrAnalysisDb::new(&DefineIndex::new());
     let execution = execute_document(

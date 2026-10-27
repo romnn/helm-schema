@@ -1,7 +1,7 @@
 //! Projection: contract claims read off the fragment tree.
 //!
-//! A value use is one `(values_path, yaml_path, condition)` claim: splices and
-//! taint attribute at their tree position with the root-to-leaf conditions
+//! A value use is one `(values_path, yaml_path, condition)` claim: splices
+//! attribute at their tree position with the root-to-leaf conditions
 //! projected to the contract predicate vocabulary; pathless reads
 //! (conditions, assignment right-hand sides, helper-internal guard reads)
 //! carry the condition recorded at their read site. Row facts beyond the
@@ -383,7 +383,7 @@ fn project_parts(
 ) {
     for part in &scalar.parts {
         match part {
-            StringPart::Text(_) => {}
+            StringPart::Text(_) | StringPart::Taint(_) => {}
             StringPart::Splice(splice) => {
                 let mut row =
                     splice_row(splice, path, conditions, &std::collections::BTreeSet::new());
@@ -392,28 +392,6 @@ fn project_parts(
                 }
                 if !row.condition.is_never() {
                     contract.push(row);
-                }
-            }
-            StringPart::Taint(taint) => {
-                if !taint.claims_value_kind {
-                    continue;
-                }
-                for taint_path in &taint.paths {
-                    if taint_path.segments().next().is_none() {
-                        continue;
-                    }
-                    contract.push(placed_row(
-                        taint_path.clone(),
-                        path,
-                        if scalar.suppressed {
-                            ValueKind::Serialized
-                        } else {
-                            ValueKind::PartialScalar
-                        },
-                        GuardDnf::from_conjunction(conditions.iter().cloned()),
-                        taint.site.as_deref(),
-                        &taint.provenance,
-                    ));
                 }
             }
         }

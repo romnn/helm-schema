@@ -294,7 +294,7 @@ fn scalar_names(
             if hole.is_some() {
                 return None;
             }
-            hole = Some(term.value?);
+            hole = Some(term.frozen_alternatives()?);
         } else if hole.is_some() {
             after.push_str(document.ownership.skeleton.text.get(start..end)?);
         } else {
@@ -310,20 +310,23 @@ fn scalar_names(
         });
     };
     let mut names = Vec::new();
-    for alternative in value.alternatives() {
-        let condition = memo.normalize(Predicate::all(vec![
-            document.condition.clone(),
-            alternative.condition().clone(),
-        ]));
-        if condition == Predicate::False {
-            continue;
+    for (guard, value) in value {
+        for alternative in value.alternatives() {
+            let condition = memo.normalize(Predicate::all(vec![
+                document.condition.clone(),
+                guard.clone(),
+                alternative.condition().clone(),
+            ]));
+            if condition == Predicate::False {
+                continue;
+            }
+            if !alternative.coverage_exact() {
+                return None;
+            }
+            let text = alternative.value().exact_text()?;
+            let text = decoded_name(&format!("{before}{text}{after}"))?;
+            names.push(NamedValue { condition, text });
         }
-        if !alternative.coverage_exact() {
-            return None;
-        }
-        let text = alternative.value().exact_text()?;
-        let text = decoded_name(&format!("{before}{text}{after}"))?;
-        names.push(NamedValue { condition, text });
     }
     Some(names)
 }

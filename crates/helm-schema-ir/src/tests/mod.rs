@@ -22,7 +22,6 @@ mod expr_eval_helper_hooks;
 mod fragment_dict_config_guards;
 mod fragment_eval_header;
 mod fragment_expr_eval;
-mod fragment_fanout;
 mod fragment_golden;
 mod fragment_scope_eval;
 mod function_semantics;

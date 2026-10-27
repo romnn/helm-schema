@@ -231,58 +231,13 @@ pub(crate) enum StringPart {
 pub(crate) struct TaintPart {
     /// The `.Values` paths that flowed into the unknown text.
     pub paths: BTreeSet<ValuesPath>,
-    /// Exact structure serialized into this text, retained so a later
-    /// `fromJson` can recover the value shape across a helper boundary.
-    pub(crate) structured_value: Option<crate::abstract_value::AbstractValue>,
-    /// Whether `structured_value` was serialized as JSON at this boundary.
-    pub(crate) json_serialized: bool,
-    /// Whether this unknown text may publish a value-kind claim.
-    pub(crate) claims_value_kind: bool,
-    /// The render site the taint was observed at.
-    pub site: Option<Rc<SiteFacts>>,
-    /// Helper-body source sites the taint was derived through (spliced
-    /// summary content keeps its body sites here).
-    pub provenance: Vec<ContractProvenance>,
-}
-
-impl Default for TaintPart {
-    fn default() -> Self {
-        Self::new(BTreeSet::new())
-    }
 }
 
 impl TaintPart {
-    /// Taint with no resolved site (stamped later by the interpreter).
-    #[must_use]
-    pub fn new(paths: BTreeSet<ValuesPath>) -> Self {
-        Self {
-            paths,
-            structured_value: None,
-            json_serialized: false,
-            claims_value_kind: true,
-            site: None,
-            provenance: Vec::new(),
-        }
-    }
-
-    /// Provenance-only taint used when bounded fanout must abstain.
+    /// Unknown text retaining its input dependencies.
     #[must_use]
     pub(crate) fn abstaining(paths: BTreeSet<ValuesPath>) -> Self {
-        Self {
-            claims_value_kind: false,
-            ..Self::new(paths)
-        }
-    }
-
-    pub(crate) fn from_json_serialized(value: crate::abstract_value::AbstractValue) -> Self {
-        Self {
-            paths: value.fragment_rendered_paths(),
-            structured_value: Some(value),
-            json_serialized: true,
-            claims_value_kind: true,
-            site: None,
-            provenance: Vec::new(),
-        }
+        Self { paths }
     }
 }
 
@@ -489,22 +444,17 @@ fn stamp_node_sites(node: &mut AbstractFragment, site: Option<&Rc<SiteFacts>>) {
     }
 }
 
-/// Stamp `site` onto every splice and taint part that has no site yet.
+/// Stamp `site` onto every splice that has no site yet.
 pub(crate) fn stamp_part_sites(parts: &mut [StringPart], site: Option<&Rc<SiteFacts>>) {
     if site.is_none() {
         return;
     }
     for part in parts {
         match part {
-            StringPart::Text(_) => {}
+            StringPart::Text(_) | StringPart::Taint(_) => {}
             StringPart::Splice(splice) => {
                 if splice.meta.site.is_none() {
                     splice.meta.site = site.cloned();
-                }
-            }
-            StringPart::Taint(taint) => {
-                if taint.site.is_none() {
-                    taint.site = site.cloned();
                 }
             }
         }

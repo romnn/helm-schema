@@ -8,8 +8,6 @@ mod lower;
 mod project;
 
 #[cfg(test)]
-pub(crate) use domain::{StringPart, TaintPart};
-#[cfg(test)]
 pub(crate) use dump::dump_document;
 pub(crate) use eval::EvaluatedDocument;
 pub(crate) use eval::ValueRead;
@@ -18,6 +16,4 @@ pub(crate) use eval::eval_document;
 #[cfg(test)]
 pub(crate) use eval::project_execution;
 pub(crate) use eval::project_execution_at_offset;
-#[cfg(test)]
-pub(crate) use lower::over_cap_scalar_taint;
 pub(crate) use project::contract_ir_from_document;

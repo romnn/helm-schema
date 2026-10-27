@@ -285,36 +285,7 @@ fn yaml_string(text: &str) -> Result<String, Unresolved> {
     if !text.bytes().all(|byte| byte.is_ascii_alphabetic()) {
         return Err(Unresolved::Unknown);
     }
-    if text.is_empty()
-        || matches!(
-            text,
-            "null"
-                | "Null"
-                | "NULL"
-                | "true"
-                | "True"
-                | "TRUE"
-                | "false"
-                | "False"
-                | "FALSE"
-                | "yes"
-                | "Yes"
-                | "YES"
-                | "no"
-                | "No"
-                | "NO"
-                | "on"
-                | "On"
-                | "ON"
-                | "off"
-                | "Off"
-                | "OFF"
-                | "y"
-                | "Y"
-                | "n"
-                | "N"
-        )
-    {
+    if helm_schema_syntax::plain_scalar_divergence(text, true).is_some() {
         Ok(format!("\"{text}\""))
     } else {
         Ok(text.to_owned())

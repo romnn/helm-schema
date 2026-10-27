@@ -1,3 +1,6 @@
+use std::collections::BTreeSet;
+use std::fmt::Write as _;
+
 use color_eyre::eyre;
 use helm_schema_ast::DefineIndex;
 use helm_schema_core::{Guard, Predicate, PredicateKind, ValuesPath};
@@ -505,7 +508,7 @@ fn an_unknown_body_keeps_resource_diagnostics_without_inventing_placed_fields() 
     let contract = crate::SymbolicIrContext::new(&defines)
         .generate_contract_ir(source)
         .finalize();
-    sim_assert_eq!(have: contract.schema_signals().observed_resources(), want: &std::collections::BTreeSet::from([
+    sim_assert_eq!(have: contract.schema_signals().observed_resources(), want: &BTreeSet::from([
         helm_schema_core::ResourceRef::concrete("autoscaling/v2beta1".to_owned(), "HorizontalPodAutoscaler".to_owned())
     ]));
     assert!(contract.uses().iter().all(|use_| use_.resource.is_none()));
@@ -524,4 +527,116 @@ fn root_flow_mapping_ignores_a_valid_token_after_its_end() -> eyre::Result<()> {
     let nested = format!("value: {source}");
     sim_assert_eq!(have: rejection(&nested, &json!({"x": "\"}tail"}))?, want: true);
     Ok(())
+}
+
+#[test]
+fn independent_scalar_choices_preserve_guarded_lexical_continuations() -> eyre::Result<()> {
+    let mut source = String::new();
+    let mut values = serde_json::Map::new();
+    for index in 0..12 {
+        writeln!(
+            source,
+            "value{index}: \"{{{{ if .Values.enabled{index} }}}}{{{{ .Values.left{index} }}}}{{{{ else }}}}{{{{ .Values.right{index} }}}}{{{{ end }}}}\""
+        )?;
+        values.insert(format!("enabled{index}"), Value::Bool(index % 2 == 0));
+        values.insert(format!("left{index}"), json!("safe"));
+        values.insert(format!("right{index}"), json!("safe"));
+    }
+    source.push_str("tail: \"{{ .Values.tail }}\"\n");
+    values.insert("tail".to_owned(), json!("safe"));
+    sim_assert_eq!(have: rejection(&source, &Value::Object(values.clone()))?, want: false);
+    values.insert("tail".to_owned(), json!("a\"b"));
+    sim_assert_eq!(have: rejection(&source, &Value::Object(values.clone()))?, want: true);
+    values.insert("tail".to_owned(), json!("safe"));
+    values.insert("left0".to_owned(), json!("a\"b"));
+    sim_assert_eq!(have: rejection(&source, &Value::Object(values.clone()))?, want: true);
+    values.insert("enabled0".to_owned(), Value::Bool(false));
+    sim_assert_eq!(have: rejection(&source, &Value::Object(values))?, want: false);
+    Ok(())
+}
+
+#[test]
+fn shared_scalar_slots_retain_guarded_resource_names() -> eyre::Result<()> {
+    let source = indoc::indoc! {r#"
+        apiVersion: v1
+        kind: {{ if .Values.outer }}{{ ternary "ConfigMap" "Secret" .Values.inner }}{{ else }}{{ ternary "Secret" "ConfigMap" .Values.inner }}{{ end }}
+    "#};
+    let db = IrAnalysisDb::new(&DefineIndex::new());
+    let execution = execute_document(source, Some("templates/probe.yaml"), &db);
+    let resources = execution
+        .placed_documents()
+        .flat_map(|document| crate::resource_identity::placed_resources(&document, &execution))
+        .collect::<Vec<_>>();
+    for outer in [true, false] {
+        for inner in [true, false] {
+            let values = json!({"outer": outer, "inner": inner});
+            let mut kinds = BTreeSet::new();
+            for resource in &resources {
+                if matches(&resource.condition, &values)? {
+                    kinds.insert(resource.resource.kind.as_str());
+                }
+            }
+            sim_assert_eq!(have: kinds, want: BTreeSet::from([
+                if outer == inner { "ConfigMap" } else { "Secret" },
+            ]));
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn shared_scalar_slots_retain_each_emission_source_span() {
+    let source =
+        "value: {{ if .Values.enabled }}{{ .Values.left }}{{ else }}{{ .Values.right }}{{ end }}";
+    let path = Some("templates/probe.yaml");
+    let db = IrAnalysisDb::new(&DefineIndex::new());
+    let execution = execute_document(source, path, &db);
+    let expected = execution
+        .sites()
+        .filter(|site| site.rendered())
+        .flat_map(|site| {
+            site.value().inputs().into_iter().map(move |path| {
+                (
+                    path,
+                    helm_schema_core::SourceSpan::new(site.span().start, site.span().end),
+                )
+            })
+        })
+        .collect::<BTreeSet<_>>();
+    let projected = crate::fragment_eval::project_execution(source, path, &db, &execution);
+    let contract =
+        crate::fragment_eval::contract_ir_from_document(&projected, db.predicate_memo()).finalize();
+    let actual = contract
+        .uses()
+        .iter()
+        .filter(|row| row.path.0 == ["value"])
+        .flat_map(|row| {
+            row.provenance
+                .iter()
+                .map(move |provenance| (row.source_expr.clone(), provenance.span))
+        })
+        .collect::<BTreeSet<_>>();
+    sim_assert_eq!(have: actual, want: expected);
+}
+
+#[test]
+fn shared_scalar_choices_do_not_guard_unrelated_documents() {
+    let source = indoc::indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        value: "{{ if .Values.enabled }}{{ .Values.left }}{{ else }}{{ .Values.right }}{{ end }}"
+        ---
+        apiVersion: v1
+        kind: Secret
+        data: {}
+    "#};
+    let db = IrAnalysisDb::new(&DefineIndex::new());
+    let execution = execute_document(source, Some("templates/probe.yaml"), &db);
+    let guards = execution
+        .placed_documents()
+        .flat_map(|document| crate::resource_identity::placed_resources(&document, &execution))
+        .filter(|resource| resource.resource.kind == "Secret")
+        .map(|resource| resource.condition)
+        .collect::<BTreeSet<_>>();
+    sim_assert_eq!(have: guards, want: BTreeSet::from([Predicate::True]));
 }
