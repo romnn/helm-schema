@@ -24,8 +24,12 @@ struct RangeEntry {
 }
 enum RangeInput {
     Exact(Vec<RangeEntry>),
-    Summary { nonempty: bool },
+    Summary(RangeSummary),
     Invalid,
+}
+struct RangeSummary {
+    nonempty: bool,
+    member: Value,
 }
 impl Executor<'_> {
     pub(super) fn body(&self, source: &str, path: Option<&str>, state: State) -> Vec<Exit> {
@@ -386,14 +390,14 @@ impl Executor<'_> {
             }
             let entries = match range_domain(&exit.state, &value.value, bindings.key.is_some()) {
                 RangeInput::Exact(entries) => entries,
-                RangeInput::Summary { nonempty } => {
+                RangeInput::Summary(summary) => {
                     results.extend(self.unknown_range(
                         program,
                         boundaries,
                         &exit.state,
                         &value.value,
                         &bindings,
-                        nonempty,
+                        summary,
                     ));
                     continue;
                 }
@@ -490,7 +494,7 @@ impl Executor<'_> {
         pending.extend(breaks.finish());
         pending
     }
-    #[tracing::instrument(skip_all, fields(nonempty))]
+    #[tracing::instrument(skip_all, fields(nonempty = summary.nonempty))]
     fn unknown_range(
         &self,
         program: &Program<'_>,
@@ -498,8 +502,9 @@ impl Executor<'_> {
         state: &State,
         value: &Value,
         bindings: &RangeBindings,
-        nonempty: bool,
+        summary: RangeSummary,
     ) -> Vec<Exit> {
+        let RangeSummary { nonempty, member } = summary;
         let mut exits = Vec::new();
         let mut state = if nonempty {
             state.clone()
@@ -513,17 +518,17 @@ impl Executor<'_> {
             state.fork(test, true)
         };
         widen_loop_writes(program, bindings, value, &mut state);
-        state.enter_scope(Some(Value::influenced(value.inputs())));
-        for name in [bindings.key.as_deref(), bindings.value.as_deref()]
-            .into_iter()
-            .flatten()
-        {
+        state.enter_scope(Some(member.clone()));
+        if let Some(name) = &bindings.key {
             bind_range(
                 &mut state,
                 name,
                 Value::influenced(value.inputs()),
                 bindings.assignment,
             );
+        }
+        if let Some(name) = &bindings.value {
+            bind_range(&mut state, name, member, bindings.assignment);
         }
         let id = state.loop_id(bindings.body.start as u64);
         if let Some(id) = id {
@@ -612,11 +617,49 @@ fn range_domain(state: &State, value: &Value, two_variables: bool) -> RangeInput
     }
     match entries(state, &value) {
         Some(entries) if entries.len() <= 32 => RangeInput::Exact(entries),
-        Some(_) => {
+        Some(entries) => {
             tracing::debug!(reason = ?super::BoundReason::LoopMembers, "widen range");
-            RangeInput::Summary { nonempty: true }
+            let member = summarized_member(state, &entries, value.inputs());
+            RangeInput::Summary(RangeSummary {
+                nonempty: true,
+                member,
+            })
         }
-        None => RangeInput::Summary { nonempty: false },
+        None => RangeInput::Summary(RangeSummary {
+            nonempty: false,
+            member: Value::influenced(value.inputs()),
+        }),
+    }
+}
+
+// A final iteration may use any entry; only their common scalar type survives the summary.
+fn summarized_member(
+    state: &State,
+    entries: &[RangeEntry],
+    inputs: BTreeSet<helm_schema_core::ValuesPath>,
+) -> Value {
+    let mut common = None;
+    for entry in entries {
+        let value = state.consumed(&entry.value);
+        let ValueNode::Leaf(Leaf {
+            datum:
+                Datum::Scalar {
+                    go_type,
+                    content: _,
+                },
+            origin: _,
+        }) = value.node.as_ref()
+        else {
+            return Value::influenced(inputs);
+        };
+        if common.is_some_and(|common| common != *go_type) {
+            return Value::influenced(inputs);
+        }
+        common = Some(*go_type);
+    }
+    match common {
+        Some(kind) => Value::with_influences(Value::scalar(kind, None), inputs),
+        None => Value::influenced(inputs),
     }
 }
 
@@ -632,14 +675,23 @@ fn integer_entries(value: &Value, two_variables: bool) -> RangeInput {
         origin: _,
     }) = value.node.as_ref()
     else {
-        return RangeInput::Summary { nonempty: false };
+        return RangeInput::Summary(RangeSummary {
+            nonempty: false,
+            member: Value::influenced(value.inputs()),
+        });
     };
     let Some(GuardValue::Int(count)) = value.constant() else {
-        return RangeInput::Summary { nonempty: false };
+        return RangeInput::Summary(RangeSummary {
+            nonempty: false,
+            member: Value::with_influences(Value::scalar(*go_type, None), value.inputs()),
+        });
     };
     if *count > 32 {
         tracing::debug!(reason = ?super::BoundReason::LoopMembers, "widen range");
-        return RangeInput::Summary { nonempty: true };
+        return RangeInput::Summary(RangeSummary {
+            nonempty: true,
+            member: Value::with_influences(Value::scalar(*go_type, None), value.inputs()),
+        });
     }
     RangeInput::Exact(
         (0..*count)

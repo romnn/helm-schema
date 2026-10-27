@@ -226,3 +226,112 @@ fn allocation_collapse_keeps_exact_ids_and_frozen_versions() -> eyre::Result<()>
     assert!(state.heap.freeze(&summary).json().is_none());
     Ok(())
 }
+
+#[test]
+fn summary_range_keeps_scalar_member_types_across_the_unroll_bound() {
+    let db = IrAnalysisDb::new(&DefineIndex::new());
+    for count in [31, 32, 33] {
+        for collection in [
+            count.to_string(),
+            format!("list {}", vec!["1"; count].join(" ")),
+        ] {
+            let source = format!(
+                r"{{{{ range ({collection}) }}}}{{{{ lower . }}}}{{{{ break }}}}{{{{ end }}}}"
+            );
+            sim_assert_eq!(have: execute_document(&source, None, &db).abort_predicate(), want: Predicate::True, "{source}");
+        }
+    }
+}
+
+#[test]
+fn allocation_collapse_preserves_a_reserved_occurrence_and_its_snapshots() -> eyre::Result<()> {
+    use crate::value::{Field, Multiplicity, ObjectData, Remainder};
+    use std::collections::BTreeMap;
+
+    let mut state = State::new(Value::nil());
+    let value = state.heap.map(Remainder::Closed);
+    let id = state
+        .map_target(&value)
+        .ok_or_eyre("missing reserved object")?;
+    state
+        .heap
+        .write(&id, "old", Field::Present(Value::string("frozen")));
+    let frozen = state.heap.freeze(&value);
+    for _ in 1..4096 {
+        state.heap.map(Remainder::Closed);
+    }
+    // Reinstalling an already reserved identity does not add a live allocation class.
+    let installed = state.heap.allocate_at(
+        Some(&id),
+        ObjectData::Map {
+            fields: BTreeMap::from([("new".to_owned(), Field::Present(Value::string("current")))]),
+            remainder: Remainder::Closed,
+        },
+        Multiplicity::Singleton,
+    );
+    sim_assert_eq!(have: installed, want: id);
+    sim_assert_eq!(have: frozen.json(), want: Some(serde_json::json!({"old": "frozen"})));
+    sim_assert_eq!(have: state.heap.freeze(&value).json(), want: Some(serde_json::json!({"new": "current"})));
+    assert!(state.heap.arena.aggregate_summary.get().is_none());
+    Ok(())
+}
+
+#[test]
+fn summary_scalar_type_never_comes_from_only_the_first_member() {
+    let db = IrAnalysisDb::new(&DefineIndex::new());
+    let members = std::iter::once(r#""ok""#)
+        .chain(std::iter::repeat_n("1", 32))
+        .collect::<Vec<_>>()
+        .join(" ");
+    let source = format!(
+        r"{{{{ range list {members} }}}}{{{{ $_ := lower . }}}}{{{{ break }}}}{{{{ end }}}}"
+    );
+    sim_assert_eq!(have: execute_document(&source, None, &db).abort_predicate(), want: Predicate::False);
+    let members = [r#""ok""#; 33].join(" ");
+    let source = format!(
+        r#"{{{{ range list {members} }}}}{{{{ if kindIs "string" . }}}}{{{{ fail "string member" }}}}{{{{ end }}}}{{{{ end }}}}"#
+    );
+    sim_assert_eq!(have: execute_document(&source, None, &db).abort_predicate(), want: Predicate::True);
+}
+
+#[test]
+fn allocation_collapse_keeps_aliases_in_the_unknown_write_region() -> eyre::Result<()> {
+    use crate::value::{Datum, Field, MapType, Multiplicity, ObjectData, Remainder, operations};
+    use std::collections::BTreeMap;
+
+    for count in [4095, 4096, 4097] {
+        let mut state = State::new(Value::nil());
+        let child = state.heap.map(Remainder::Closed);
+        let child_id = state
+            .map_target(&child)
+            .ok_or_eyre("missing child target")?;
+        state
+            .heap
+            .write(&child_id, "x", Field::Present(Value::string("old")));
+        let frozen = state.heap.freeze(&child);
+        let scalar = state.get_field(&child, "x");
+        let saved_scalar = state.heap.freeze(&scalar);
+        let saved_truth = state.test(&scalar);
+        for _ in 1..count {
+            state.heap.map(Remainder::Closed);
+        }
+        let parent_id = state.heap.allocate(
+            ObjectData::Map {
+                fields: BTreeMap::from([("child".to_owned(), Field::Present(child.clone()))]),
+                remainder: Remainder::Closed,
+            },
+            Multiplicity::Singleton,
+        );
+        let parent = Value::leaf(Datum::Map {
+            view: MapType::Interface,
+            target: Some(parent_id),
+        });
+        // A widened wrapper must still permit a writer to reach its formerly exact child.
+        operations::widen_operands(&[parent], &mut state);
+        assert!(state.heap.freeze(&child).json().is_none());
+        sim_assert_eq!(have: frozen.json(), want: Some(serde_json::json!({"x": "old"})));
+        sim_assert_eq!(have: saved_scalar.json(), want: Some(serde_json::json!("old")));
+        sim_assert_eq!(have: saved_truth.when_true.clone(), want: Predicate::True);
+    }
+    Ok(())
+}

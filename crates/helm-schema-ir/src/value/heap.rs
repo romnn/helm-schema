@@ -89,7 +89,8 @@ impl Heap {
             .values()
             .map(|page| page.len())
             .sum::<usize>();
-        if classes >= 4096 {
+        let existing = occurrence.is_some_and(|id| self.version.object(id).is_some());
+        if !existing && classes >= 4096 {
             tracing::debug!(reason = ?super::BoundReason::ObjectClasses, "widen allocation");
             let ordinal = if let Some(ordinal) = self.arena.aggregate_summary.get() {
                 ordinal

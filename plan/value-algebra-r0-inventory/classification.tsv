@@ -353,6 +353,7 @@ field:value/control.rs:PathKey.continuation	K	runtime identity/interner/reconver
 field:value/control.rs:PreparedContinuation.plan	D	derived runtime query/transfer/join plan PreparedContinuation.plan	per-call plan derived from canonical values and guards	keep		R3b construction root audit, 2026-10-26	
 field:value/control.rs:RangeEntry.key	V	canonical runtime value/control owner RangeEntry.key	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
 field:value/control.rs:RangeEntry.value	V	canonical runtime value/control owner RangeEntry.value	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
+field:value/control.rs:RangeSummary.member	V	bounded range member carried by the canonical loop runner	single runtime Value; common captured scalar type without representative content	keep		C05 summary member owner audit, 2026-10-27	""
 field:value/eval.rs:Executor.db	D	derived runtime query/transfer/join plan Executor.db	per-call plan derived from canonical values and guards	keep		R3b construction root audit, 2026-10-26	
 field:value/guard.rs:DecisionNode.no	V	canonical runtime value/control owner DecisionNode.no	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
 field:value/guard.rs:DecisionNode.test	V	canonical runtime value/control owner DecisionNode.test	private canonical Value/Flow/frame/invocation data	keep		R3b construction root audit, 2026-10-26	
@@ -802,6 +803,7 @@ field:value/yaml.rs:Arm.pieces	D	bounded executed text projection	temporary froz
 field:value/yaml.rs:QuotedPrefix.invalid	D	proven lexical failure domain	quoted-token transition composition over executed pieces	keep		C06a frozen-output review, 2026-10-27	""
 field:value/yaml.rs:QuotedPrefix.preserved	D	certified prefix context domain	positive continuation proof; missing coverage remains unknown	keep		C06a frozen-output review, 2026-10-27	""
 variant:value/control.rs:RangeInput::Exact	V	executed range-entry snapshot in the canonical loop runner	single runtime range classification; no replay or source-derived value	keep		C05 first-step owner audit, 2026-10-27	
+variant:value/control.rs:RangeInput::Summary	V	bounded range outcome in the canonical loop runner	single runtime range classification; no replay or source-derived value	keep		C05 summary member owner audit, 2026-10-27	""
 variant:value/yaml.rs:Piece::Input	D	raw string preimage identity	projection of a frozen values identity, constrained to supported text	keep		C06a frozen-output review, 2026-10-27	""
 alias:value/yaml.rs:States	D	guarded lexical boundary-state projection	derived preimages from frozen graph-node transfers	keep		C06a sealed placement and frozen-text ownership audit, 2026-10-27	""
 field:fragment_eval/eval.rs:KeyArm.condition	D	guarded executed mapping-key alternative	key projection preserves frozen branch predicates	keep		C06a sealed placement and frozen-text ownership audit, 2026-10-27	""
