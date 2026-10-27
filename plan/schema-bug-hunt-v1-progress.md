@@ -9484,4 +9484,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   the perf lane (astra 20261026T210802-5ff8deba, branch r3b/perf-c04a, which also produces one consistent main/C03/C04a
   benchmark); the R3b builder starts C04b per astra's design review 20261026T185132-38095010 (one ordered guarded
   initializer, reuse main's chart/values.rs, +700 to +1,250 LOC). Orchestrator.
-Next: user pushes main → CI fully green; F20 rework → re-review → landing 19; R3b C04b and perf lane hand-backs.
+- 03:37 (Oct 27) — **Landing 19 merged (4656872e): Windows replay-store publication race; receipt round8-landing19-run1
+  sha256 0fcf4c58…; 0 fixtures adopted.** CI on the pushed e04ff166 was green except the Windows integration job, which failed
+  when a replay-store rename raced a concurrent identical publication; 8b79ffd8 accepts the race when the stored bytes equal the
+  staged bytes (content address). Chain steps: dump 01:30, unit 01:34, lint 01:39, battery 01:42 (55 min), integration 02:37,
+  sweep 02:54 (40 min), finalize 03:34, green 03:36. Family re-tally (sol 20261027T011538-1df60314, counted from code at ca889e9c):
+  10/83 strict closures (F34 added by landing 10d), 32 PARTIAL, 39 OPEN, 2 by policy; of the 71 open, an inferred 48 are owned by
+  R3b alone, 12 by R3b plus main, 11 by main only. Roster attribution (sol 20261027T012655-21b1bf3d) of 790 unattributed rows:
+  35 map to existing families, 755 NEW, of which 503 share one main-only cause (emitted `\u` URI patterns refused by Go's
+  validator) and 24 are an oracle error (apiextensions.k8s.io/v1 CRDs classified "not served"); both queued main-track.
+  C06 design review (astra 20261027T011249-21c60d51) completed; C06a correctness lane started (astra 20261027T012507-feefdfc2,
+  clone round8-r3b-c06, branch r3b/c06a-placement from 0f92f524) on the 166 loop-free R3b false acceptances. Orchestrator.
+Next: user pushes main → CI fully green; F20 rework → re-review → landing; perf lane hand-back → C04b part 2; C06a first hand-back (FA count); main-track lane: `\u` regex dialect (503 rows).
