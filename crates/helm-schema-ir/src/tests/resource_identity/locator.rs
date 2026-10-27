@@ -63,7 +63,7 @@ fn attribution_index(source: &str) -> SpanLocator {
     let document = helm_schema_syntax::TemplatedDocument::parse_with_root(source, tree.root_node());
     let execution = crate::value::execute_document(source, None, &analysis_db);
     SpanLocator {
-        spans: crate::resource_identity::collect_resource_spans(
+        spans: crate::resource_identity::test_support::collect_resource_spans(
             &document,
             tree.root_node(),
             &execution,

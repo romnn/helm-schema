@@ -668,8 +668,11 @@ fn reconverged_span_does_not_drop_the_missing_conditional_suffix() {
     let source = "prefix{{ if .Values.flag }}suffix{{ end }}";
     let db = IrAnalysisDb::new(&DefineIndex::new());
     let execution = execute_document(source, None, &db);
-    let span = helm_schema_syntax::Span::new(0, source.len());
-    let outcomes = execution.text_for_span(span, None).collect::<Vec<_>>();
+    let outcomes = execution
+        .executed_outputs()
+        .into_iter()
+        .map(|output| (output.condition, output.text))
+        .collect::<Vec<_>>();
 
     // Both complete strings retain their executed guard; no unconditional concatenation is valid.
     let flag = Predicate::truthy_path("flag");
@@ -700,13 +703,17 @@ fn reconverged_api_version_suffix_never_becomes_the_only_literal() -> eyre::Resu
     // Each API version is complete and belongs only to its executed control arm.
     let legacy = Predicate::truthy_path("legacy");
     sim_assert_eq!(
-        have: execution.text_for_span(span, None).collect::<BTreeSet<_>>(),
+        have: execution.placed_documents().flat_map(|document| {
+            crate::resource_identity::placed_resources(&document, &execution)
+                .into_iter()
+                .map(|resource| (resource.condition, Some(resource.resource.api_version)))
+        }).collect::<BTreeSet<_>>(),
         want: BTreeSet::from([
             (legacy.clone(), Some("apps/v1beta1".to_owned())),
             (legacy.negated().normalize_boolean(), Some("apps/v1".to_owned())),
         ])
     );
-    let body = crate::resource_identity::executed_scalar_body(&execution, span, None);
+    let body = crate::resource_identity::test_support::executed_scalar_body(&execution, span, None);
     sim_assert_eq!(have: body.all_literals(), want: vec!["apps/v1beta1".to_owned(), "apps/v1".to_owned()]);
     Ok(())
 }
@@ -760,7 +767,7 @@ mod joined_query_cases {
         source.push_str("present");
         let span = Span::new(start, source.len());
         source.push_str("{{ else }}absent{{ end }}");
-        execute(&source).condition_for_span(span, None)
+        execute(&source).observed_marker_condition(span)
     }
 
     #[test]

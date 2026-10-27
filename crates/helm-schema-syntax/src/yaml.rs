@@ -118,6 +118,8 @@ pub struct YamlNode {
 pub enum YamlNodeKind {
     /// A YAML document.
     Document,
+    /// An explicit `...` document-end token.
+    DocumentEnd,
     /// A block mapping.
     Mapping,
     /// A block mapping entry.
@@ -356,6 +358,7 @@ fn collect_nodes(
     let kind = match node.kind() {
         "tag" | "anchor" | "alias" => return Err(LayoutUncertainty::TagOrAlias),
         "document" => Some(YamlNodeKind::Document),
+        "..." => Some(YamlNodeKind::DocumentEnd),
         "block_mapping" => Some(YamlNodeKind::Mapping),
         "block_mapping_pair" => Some(YamlNodeKind::Pair),
         "block_sequence" => Some(YamlNodeKind::Sequence),

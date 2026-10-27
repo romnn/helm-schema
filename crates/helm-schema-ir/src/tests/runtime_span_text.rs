@@ -15,13 +15,11 @@ fn execute(source: &str) -> DocumentExecution {
     execute_document(source, None, &db)
 }
 
-fn alternatives(
-    execution: &DocumentExecution,
-    span: Span,
-) -> BTreeSet<(Predicate, Option<String>)> {
+fn alternatives(execution: &DocumentExecution) -> BTreeSet<(Predicate, Option<String>)> {
     execution
-        .text_for_span(span, None)
-        .map(|(condition, text)| (condition.normalize_boolean(), text))
+        .executed_outputs()
+        .into_iter()
+        .map(|output| (output.condition.normalize_boolean(), output.text))
         .collect()
 }
 
@@ -38,9 +36,8 @@ fn document(state: State) -> DocumentExecution {
 }
 
 #[test]
-fn a_literal_span_retains_its_executed_equality_guard() -> eyre::Result<()> {
+fn a_literal_span_retains_its_executed_equality_guard() {
     let source = "{{ if eq .Values.mode \"left\" }}L{{ end }}";
-    let start = source.find('L').ok_or_eyre("literal span missing")?;
     let guard = Predicate::from(Guard::Eq {
         path: ValuesPath::parse("mode"),
         value: GuardValue::String("left".to_owned()),
@@ -59,38 +56,41 @@ fn a_literal_span_retains_its_executed_equality_guard() -> eyre::Result<()> {
             schema_type: "string".to_owned(),
         }),
     ]);
-    let successful = Predicate::Or(vec![guard.clone(), comparable.clone()]);
     sim_assert_eq!(
-        have: alternatives(&execute(source), Span::new(start, start + 1)),
+        have: alternatives(&execute(source)),
         want: BTreeSet::from([
-            (Predicate::all(vec![guard.clone(), comparable]).normalize_boolean(), Some("L".to_owned())),
-            (Predicate::all(vec![guard.negated(), successful]).normalize_boolean(), Some(String::new())),
+            (Predicate::all(vec![guard.clone(), comparable.clone()]).normalize_boolean(), Some("L".to_owned())),
+            (Predicate::all(vec![guard.negated(), comparable]).normalize_boolean(), Some(String::new())),
         ])
     );
-    Ok(())
 }
 
 #[test]
 fn mutually_exclusive_pieces_at_one_span_are_never_concatenated() -> eyre::Result<()> {
     let guard = Predicate::truthy_path("a");
     let span = Span::new(0, 1);
-    let mut state = State::new(Value::nil());
-    state.emit_bytes(span, None, "L");
-    state
-        .text_sites
-        .iter_mut()
-        .next()
-        .ok_or_eyre("missing first text site")?
-        .condition = guard.clone();
-    state.emit_bytes(span, None, "R");
-    state
-        .text_sites
-        .iter_mut()
-        .nth(1)
-        .ok_or_eyre("missing second text site")?
-        .condition = guard.negated();
+    let initial = State::new(Value::nil());
+    let decision = initial.heap.arena.decision(
+        guard.clone(),
+        guard.negated(),
+        crate::value::Coverage::Exact,
+    );
+    let mut yes = initial.fork(std::rc::Rc::clone(&decision), true);
+    yes.emit_bytes(span, None, "L");
+    let mut no = initial.fork(std::rc::Rc::clone(&decision), false);
+    no.emit_bytes(span, None, "R");
+    let state = State::join_branches(
+        &crate::value::state::ContinuationJoin {
+            decision,
+            active: Vec::new(),
+            taken: true,
+        },
+        &yes,
+        &no,
+    )
+    .ok_or_eyre("mutually exclusive output histories did not join")?;
     sim_assert_eq!(
-        have: alternatives(&document(state), span),
+        have: alternatives(&document(state)),
         want: BTreeSet::from([
             (guard.clone(), Some("L".to_owned())),
             (guard.negated().normalize_boolean(), Some("R".to_owned())),
@@ -120,7 +120,7 @@ fn independent_executed_forks_keep_all_four_text_alternatives() {
             Some(text.to_owned()),
         )
     });
-    sim_assert_eq!(have: alternatives(&execute(source), Span::new(0, source.len())), want: BTreeSet::from(expected));
+    sim_assert_eq!(have: alternatives(&execute(source)), want: BTreeSet::from(expected));
 }
 
 #[test]
@@ -128,7 +128,7 @@ fn an_unknown_or_inexact_piece_only_invalidates_its_included_arm() -> eyre::Resu
     let source = "{{ if .Values.a }}{{ .Values.unknown }}{{ end }}";
     let guard = Predicate::truthy_path("a");
     sim_assert_eq!(
-        have: alternatives(&execute(source), Span::new(0, source.len())),
+        have: alternatives(&execute(source)),
         want: BTreeSet::from([
             (guard.clone(), None),
             (guard.negated().normalize_boolean(), Some(String::new())),
@@ -144,23 +144,24 @@ fn an_unknown_or_inexact_piece_only_invalidates_its_included_arm() -> eyre::Resu
         .ok_or_eyre("missing text site")?;
     site.condition = guard.clone();
     site.coverage_exact = false;
+    let execution = document(state);
+    sim_assert_eq!(have: execution.observed_marker_complete(span), want: false);
+    sim_assert_eq!(have: execution.observed_marker_condition(span), want: guard);
+    // Observation metadata cannot rewrite the already frozen, unconditional output.
     sim_assert_eq!(
-        have: alternatives(&document(state), span),
-        want: BTreeSet::from([
-            (guard.clone(), None),
-            (guard.negated().normalize_boolean(), Some(String::new())),
-        ])
+        have: alternatives(&execution),
+        want: BTreeSet::from([(Predicate::True, Some("L".to_owned()))])
     );
     Ok(())
 }
 
 #[test]
-fn too_many_span_alternatives_return_one_explicit_unknown() -> eyre::Result<()> {
+fn bounded_frozen_output_projection_returns_one_explicit_unknown() -> eyre::Result<()> {
     let mut source = String::new();
-    for index in 0..8 {
+    for index in 0..16 {
         write!(source, "{{{{ if .Values.b{index} }}}}X{{{{ end }}}}")?;
     }
-    sim_assert_eq!(have: alternatives(&execute(&source), Span::new(0, source.len())), want: BTreeSet::from([(Predicate::True, None)]));
+    sim_assert_eq!(have: alternatives(&execute(&source)), want: BTreeSet::from([(Predicate::True, None)]));
     Ok(())
 }
 
@@ -189,39 +190,31 @@ fn literal_resource_kinds_survive_unknown_sibling_values() -> eyre::Result<()> {
             .ok_or_eyre("kind header missing")?
             + "kind: ".len();
         let span = Span::new(start, start + kind.len());
-        let texts = alternatives(&execution, span);
-        let history = execution
-            .exits
-            .iter()
-            .map(|exit| {
-                (
-                    exit.state.output_widened,
-                    exit.state.path_predicate(),
-                    exit.state
-                        .text_sites
-                        .iter()
-                        .filter(|site| site.span.start < span.end && span.start < site.span.end)
-                        .map(|site| {
-                            (
-                                site.coverage_exact,
-                                site.rendered_unchanged,
-                                &site.condition,
-                                &site.bytes,
-                            )
-                        })
-                        .collect::<Vec<_>>(),
-                )
+        let observed = execution
+            .text_sites()
+            .filter(|site| site.span().start <= span.start && span.end <= site.span().end)
+            .map(|site| {
+                let start = span.start - site.span().start;
+                let end = span.end - site.span().start;
+                (site.coverage_exact(), site.bytes().get(start..end))
             })
             .collect::<Vec<_>>();
         eyre::ensure!(
-            texts.iter().all(|(_, text)| text.is_some()),
-            "kind={kind}, texts={texts:#?}, history={history:#?}"
+            !observed.is_empty(),
+            "missing literal kind observation: {kind}"
         );
         eyre::ensure!(
-            texts.iter().any(|(_, text)| text.as_deref() == Some(kind)),
-            "kind={kind}, texts={texts:#?}, history={history:#?}"
+            observed
+                .iter()
+                .all(|(complete, text)| *complete && *text == Some(kind))
         );
     }
+    let kinds = execution
+        .placed_documents()
+        .flat_map(|document| crate::resource_identity::placed_resources(&document, &execution))
+        .map(|resource| resource.resource.kind)
+        .collect::<BTreeSet<_>>();
+    sim_assert_eq!(have: kinds, want: BTreeSet::from(["ConfigMap".to_owned(), "Service".to_owned()]));
     Ok(())
 }
 
@@ -235,10 +228,14 @@ fn later_unknown_output_does_not_discard_complete_earlier_literal_history() {
         .output
         .parts
         .push(crate::value::TextPart::Unknown(BTreeSet::new()).into());
-    sim_assert_eq!(
-        have: alternatives(&document(state), span),
-        want: BTreeSet::from([(Predicate::True, Some("Kind".to_owned()))])
-    );
+    let execution = document(state);
+    let observed = execution
+        .text_sites()
+        .filter(|site| site.span() == span)
+        .map(|site| (site.coverage_exact(), site.bytes().to_owned()))
+        .collect::<Vec<_>>();
+    sim_assert_eq!(have: observed, want: vec![(true, "Kind".to_owned())]);
+    sim_assert_eq!(have: alternatives(&execution), want: BTreeSet::from([(Predicate::True, None)]));
 }
 
 #[test]
@@ -249,8 +246,7 @@ fn dropped_observations_keep_even_an_earlier_literal_query_incomplete() {
     for _ in 0..128 {
         state.emit_bytes(Span::new(10, 11), None, "X");
     }
-    sim_assert_eq!(
-        have: alternatives(&document(state), span),
-        want: BTreeSet::from([(Predicate::True, None)])
-    );
+    let execution = document(state);
+    sim_assert_eq!(have: execution.observed_marker_complete(span), want: false);
+    sim_assert_eq!(have: alternatives(&execution), want: BTreeSet::from([(Predicate::True, None)]));
 }

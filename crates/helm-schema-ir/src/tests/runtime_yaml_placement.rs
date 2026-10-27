@@ -112,6 +112,29 @@ fn helm_decodes_only_the_first_document_in_each_manifest_chunk() -> eyre::Result
 }
 
 #[test]
+fn explicit_document_end_finalizes_only_the_first_document() -> eyre::Result<()> {
+    for tail in [
+        "...\n",
+        indoc::indoc! {r#"
+            ...
+            ignored: "unterminated
+        "#},
+        indoc::indoc! {"
+            ---
+            other: safe
+        "},
+    ] {
+        let source = indoc::formatdoc! {r#"
+            value: "{{{{ .Values.t }}}}"
+            {tail}
+        "#};
+        sim_assert_eq!(have: rejection(&source, &json!({"t": "a\\"}))?, want: true);
+        sim_assert_eq!(have: rejection(&source, &json!({"t": "safe"}))?, want: false);
+    }
+    Ok(())
+}
+
+#[test]
 fn quoted_escapes_match_helm_and_finalize_only_at_a_proven_boundary() -> eyre::Result<()> {
     let source = r#"value: "{{ .Values.t }}{{ .Values.x }}""#;
     for (text, next, rejected) in [
@@ -175,6 +198,53 @@ fn indentation_composes_with_captured_text_before_placement() -> eyre::Result<()
     "#};
     sim_assert_eq!(have: rejection(source, &json!({"t": "a\"b"}))?, want: true);
     sim_assert_eq!(have: rejection(source, &json!({"t": "safe"}))?, want: false);
+    Ok(())
+}
+
+#[test]
+fn stripped_captures_compose_without_reexecuting_their_inputs() -> eyre::Result<()> {
+    let source = indoc::indoc! {r#"
+        {{- $text := tpl "{{ .Values.t }}" . -}}
+        {{- $_ := set .Values "t" "safe" -}}
+        value: "{{ $text }}{{ .Values.x }}"
+    "#};
+    for (text, next, rejected) in [
+        ("a\"b", "abc", true),
+        (r"a\x4", "g", true),
+        (r"a\x4", "1", false),
+        (r"a\x<no value>4", "1", false),
+        ("safe", "abc", false),
+    ] {
+        sim_assert_eq!(have: rejection(source, &json!({"t": text, "x": next}))?, want: rejected);
+    }
+    Ok(())
+}
+
+#[test]
+fn serialized_yaml_and_indentation_are_placed_before_the_next_scalar() -> eyre::Result<()> {
+    for function in ["toYaml", "toYamlPretty"] {
+        let source = indoc::formatdoc! {r#"
+            prefix:{{{{ {function} (dict "items" (list "hello" "world")) | indent 1 | nindent 1 }}}}
+            value: "{{{{ .Values.x }}}}"
+        "#};
+        sim_assert_eq!(have: rejection(&source, &json!({"x": "a\"b"}))?, want: true);
+        sim_assert_eq!(have: rejection(&source, &json!({"x": "safe"}))?, want: false);
+    }
+    Ok(())
+}
+
+#[test]
+fn encoded_prefixes_preserve_the_following_lexical_obligation() -> eyre::Result<()> {
+    for function in ["b64enc", "sha1sum", "sha256sum", "sha512sum", "adler32sum"] {
+        let source = format!(r#"value: "{{{{ .Values.t | {function} }}}}{{{{ .Values.x }}}}""#);
+        for (text, next, rejected) in [("a\"b", "a\"b", true), ("a\"b", "safe", false)] {
+            sim_assert_eq!(have: rejection(&source, &json!({"t": text, "x": next}))?, want: rejected, "{function}");
+        }
+    }
+    let source =
+        r#"value: "{{ ternary (b64enc .Values.t) .Values.u .Values.flag }}{{ .Values.x }}""#;
+    sim_assert_eq!(have: rejection(source, &json!({"flag":true,"t":"a\"b","u":"\" # ","x":"a\"b"}))?, want: true);
+    sim_assert_eq!(have: rejection(source, &json!({"flag":false,"t":"a\"b","u":"\" # ","x":"a\"b"}))?, want: false);
     Ok(())
 }
 

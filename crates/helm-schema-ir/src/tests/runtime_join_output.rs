@@ -303,7 +303,7 @@ fn restricting_a_join_keeps_the_under_budget_output_and_observations_exact() -> 
         }],
         crate::value::FileOutput::Manifest,
     );
-    sim_assert_eq!(have: execution.text_for_span(span, None).collect::<Vec<_>>(), want: vec![(no.path_predicate(), Some("R!?".to_owned()))]);
+    sim_assert_eq!(have: execution.executed_outputs().into_iter().map(|output| (output.condition, output.text)).collect::<Vec<_>>(), want: vec![(no.path_predicate(), Some("R!?".to_owned()))]);
     Ok(())
 }
 

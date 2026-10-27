@@ -1521,6 +1521,33 @@ pub(super) fn flow_may_continue(flow: &Flow, active: &[super::DecisionEdge]) -> 
 
 impl FrozenValue {
     pub(crate) fn exact_text(&self) -> Option<String> {
+        match self.value.node.as_ref() {
+            ValueNode::Leaf(Leaf {
+                datum: Datum::Text(text),
+                origin: _,
+            }) => return text.exact_text(),
+            ValueNode::Leaf(Leaf {
+                datum:
+                    Datum::Scalar {
+                        go_type: _,
+                        content: _,
+                    }
+                    | Datum::Map { view: _, target: _ }
+                    | Datum::Sequence(_)
+                    | Datum::Strings(_)
+                    | Datum::Slot {
+                        backing: _,
+                        index: _,
+                    }
+                    | Datum::Unknown(_),
+                origin: _,
+            })
+            | ValueNode::Select {
+                decision: _,
+                yes: _,
+                no: _,
+            } => {}
+        }
         match self.literal()? {
             GuardValue::String(text) => Some(text.clone()),
             GuardValue::Float(_) => None,
@@ -1532,7 +1559,28 @@ impl FrozenValue {
         project(&self.value, &self.heap, &mut BTreeSet::new(), 0)
     }
     pub(super) fn json(&self) -> Option<serde_json::Value> {
-        json(&self.value, &self.heap, &mut BTreeSet::new(), 0)
+        json(
+            &self.value,
+            &self.heap,
+            &mut BTreeSet::new(),
+            0,
+            false,
+            &mut None,
+        )
+    }
+    pub(super) fn json_for_yaml(
+        &self,
+        pretty: bool,
+        remaining: &mut usize,
+    ) -> Option<serde_json::Value> {
+        json(
+            &self.value,
+            &self.heap,
+            &mut BTreeSet::new(),
+            0,
+            pretty,
+            &mut Some(remaining),
+        )
     }
 }
 fn project_sequence(
@@ -1682,6 +1730,8 @@ fn json_string_slice(
     heap: &super::HeapVersion,
     seen: &BTreeSet<super::ObjectId>,
     depth: usize,
+    preserve_nil_collections: bool,
+    remaining: &mut Option<&mut usize>,
 ) -> Option<serde_json::Value> {
     let super::ObjectVersion {
         data: ObjectData::Strings(slots),
@@ -1695,7 +1745,103 @@ fn json_string_slice(
     Some(serde_json::Value::Array(
         slots
             .iter()
-            .map(|value| json(value, heap, &mut seen.clone(), depth + 1))
+            .map(|value| {
+                json(
+                    value,
+                    heap,
+                    &mut seen.clone(),
+                    depth + 1,
+                    preserve_nil_collections,
+                    remaining,
+                )
+            })
+            .collect::<Option<Vec<_>>>()?,
+    ))
+}
+
+fn json_map(
+    id: &super::ObjectId,
+    heap: &super::HeapVersion,
+    seen: &BTreeSet<super::ObjectId>,
+    depth: usize,
+    preserve_nil_collections: bool,
+    remaining: &mut Option<&mut usize>,
+) -> Option<serde_json::Value> {
+    let super::ObjectVersion {
+        data:
+            ObjectData::Map {
+                fields,
+                remainder: super::Remainder::Closed,
+            },
+        revision: _,
+        multiplicity: _,
+    } = heap.object(id)?
+    else {
+        return None;
+    };
+    let mut result = serde_json::Map::new();
+    for (key, field) in fields {
+        if let Some(remaining) = remaining.as_mut()
+            && key.len() > 64 * 1024
+        {
+            **remaining = 0;
+            return None;
+        }
+        match field {
+            super::Field::Present(value) => {
+                result.insert(
+                    key.clone(),
+                    json(
+                        value,
+                        heap,
+                        &mut seen.clone(),
+                        depth + 1,
+                        preserve_nil_collections,
+                        remaining,
+                    )?,
+                );
+            }
+            super::Field::Absent => {}
+            super::Field::Unknown
+            | super::Field::Select {
+                decision: _,
+                yes: _,
+                no: _,
+            } => return None,
+        }
+    }
+    Some(serde_json::Value::Object(result))
+}
+
+fn json_sequence(
+    sequence: &super::InterfaceSequence,
+    heap: &super::HeapVersion,
+    seen: &BTreeSet<super::ObjectId>,
+    depth: usize,
+    preserve_nil_collections: bool,
+    remaining: &mut Option<&mut usize>,
+) -> Option<serde_json::Value> {
+    if sequence.storage.is_none() {
+        return Some(if preserve_nil_collections {
+            serde_json::Value::Array(Vec::new())
+        } else {
+            serde_json::Value::Null
+        });
+    }
+    Some(serde_json::Value::Array(
+        sequence
+            .items()?
+            .iter()
+            .map(|value| {
+                json(
+                    value,
+                    heap,
+                    &mut seen.clone(),
+                    depth + 1,
+                    preserve_nil_collections,
+                    remaining,
+                )
+            })
             .collect::<Option<Vec<_>>>()?,
     ))
 }
@@ -1705,11 +1851,22 @@ fn json(
     heap: &super::HeapVersion,
     seen: &mut BTreeSet<super::ObjectId>,
     depth: usize,
+    preserve_nil_collections: bool,
+    remaining: &mut Option<&mut usize>,
 ) -> Option<serde_json::Value> {
+    if let Some(remaining) = remaining {
+        **remaining = remaining.checked_sub(1)?;
+    }
     if depth > 32 {
         return None;
     }
     if let Some(literal) = value.constant() {
+        if let (Some(remaining), GuardValue::String(text)) = (remaining.as_mut(), literal)
+            && text.len() > 64 * 1024
+        {
+            **remaining = 0;
+            return None;
+        }
         if matches!(literal, GuardValue::Float(_)) {
             return None;
         }
@@ -1719,7 +1876,14 @@ fn json(
         ValueNode::Leaf(Leaf {
             datum: Datum::Strings(slice),
             origin: _,
-        }) => json_string_slice(slice, heap, seen, depth),
+        }) => json_string_slice(
+            slice,
+            heap,
+            seen,
+            depth,
+            preserve_nil_collections,
+            remaining,
+        ),
         ValueNode::Leaf(Leaf {
             datum:
                 Datum::Map {
@@ -1728,60 +1892,30 @@ fn json(
                 },
             origin: _,
         }) if seen.insert(id.clone()) => {
-            let super::ObjectVersion {
-                data:
-                    ObjectData::Map {
-                        fields,
-                        remainder: super::Remainder::Closed,
-                    },
-                revision: _,
-                multiplicity: _,
-            } = heap.object(id)?
-            else {
-                return None;
-            };
-            let mut result = serde_json::Map::new();
-            for (key, field) in fields {
-                match field {
-                    super::Field::Present(value) => {
-                        result.insert(
-                            key.clone(),
-                            json(value, heap, &mut seen.clone(), depth + 1)?,
-                        );
-                    }
-                    super::Field::Absent => {}
-                    super::Field::Unknown
-                    | super::Field::Select {
-                        decision: _,
-                        yes: _,
-                        no: _,
-                    } => return None,
-                }
-            }
-            Some(serde_json::Value::Object(result))
+            json_map(id, heap, seen, depth, preserve_nil_collections, remaining)
         }
         ValueNode::Leaf(Leaf {
             datum: Datum::Sequence(sequence),
             origin: _,
-        }) => {
-            if sequence.storage.is_none() {
-                return Some(serde_json::Value::Null);
-            }
-            Some(serde_json::Value::Array(
-                sequence
-                    .items()?
-                    .iter()
-                    .map(|value| json(value, heap, &mut seen.clone(), depth + 1))
-                    .collect::<Option<Vec<_>>>()?,
-            ))
-        }
+        }) => json_sequence(
+            sequence,
+            heap,
+            seen,
+            depth,
+            preserve_nil_collections,
+            remaining,
+        ),
         ValueNode::Leaf(Leaf {
             datum: Datum::Map {
                 target: None,
                 view: _,
             },
             origin: _,
-        }) => Some(serde_json::Value::Null),
+        }) => Some(if preserve_nil_collections {
+            serde_json::Value::Object(serde_json::Map::new())
+        } else {
+            serde_json::Value::Null
+        }),
         ValueNode::Leaf(Leaf {
             datum:
                 Datum::Text(_)

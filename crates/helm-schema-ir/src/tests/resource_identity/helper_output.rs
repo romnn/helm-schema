@@ -24,7 +24,7 @@ fn evaluate_helper(name: &str, helpers: &DefineIndex) -> HelperBranchBody {
     let analysis_db = crate::analysis_db::IrAnalysisDb::new(helpers);
     let source = format!("{{{{ include {name:?} . }}}}");
     let execution = crate::value::execute_document(&source, None, &analysis_db);
-    crate::resource_identity::executed_scalar_body(
+    crate::resource_identity::test_support::executed_scalar_body(
         &execution,
         helm_schema_syntax::Span::new(0, source.len()),
         None,

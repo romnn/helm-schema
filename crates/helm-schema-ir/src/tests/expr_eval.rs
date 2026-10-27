@@ -79,27 +79,13 @@ impl Observation {
         self.marker(self.false_span, "other")
     }
 
-    fn marker(&self, span: Span, marker: &str) -> Predicate {
-        Predicate::Or(
-            self.execution
-                .text_for_span(span, None)
-                .filter_map(|(condition, text)| {
-                    (text.as_deref() == Some(marker)).then_some(condition)
-                })
-                .collect(),
-        )
-        .normalize_boolean()
+    fn marker(&self, span: Span, _marker: &str) -> Predicate {
+        self.execution.observed_marker_condition(span)
     }
 
     fn truth(&self) -> Option<Predicate> {
-        if self
-            .execution
-            .text_for_span(self.true_span, None)
-            .any(|(_, text)| text.is_none())
-            || self
-                .execution
-                .text_for_span(self.false_span, None)
-                .any(|(_, text)| text.is_none())
+        if !self.execution.observed_marker_complete(self.true_span)
+            || !self.execution.observed_marker_complete(self.false_span)
         {
             return None;
         }

@@ -3,9 +3,8 @@ use std::collections::BTreeSet;
 use test_util::prelude::sim_assert_eq;
 
 use crate::function_semantics::{
-    CollectionShape, LegacySuppliedOperands, NilBehavior, OutputBehavior, PredicateSemantics,
-    ProvenanceBehavior, function_semantics, strict_collection_item_pattern,
-    strict_parser_operand_pattern,
+    CollectionShape, NilBehavior, OutputBehavior, PredicateSemantics, ProvenanceBehavior,
+    function_semantics, strict_collection_item_pattern, strict_parser_operand_pattern,
 };
 
 const KNOWN_FUNCTIONS: &[&str] = &[
@@ -160,7 +159,6 @@ fn argument_evaluation_mode_preserves_grouping() {
 #[test]
 fn overlapping_function_facets_are_intentional() {
     let quote = function_semantics("quote");
-    sim_assert_eq!(have: quote.legacy_operands, want: LegacySuppliedOperands::All);
     sim_assert_eq!(have: quote.behavior, want: OutputBehavior::Stringify);
 
     let indent = function_semantics("indent");
@@ -178,7 +176,6 @@ fn overlapping_function_facets_are_intentional() {
 
     let semver = function_semantics("semverCompare");
     sim_assert_eq!(have: semver.predicate, want: PredicateSemantics::String);
-    sim_assert_eq!(have: semver.legacy_operands, want: LegacySuppliedOperands::All);
     sim_assert_eq!(
         have: strict_parser_operand_pattern(semver, 2).map(|(index, _)| index),
         want: Some(1)
@@ -186,7 +183,6 @@ fn overlapping_function_facets_are_intentional() {
 
     let split = function_semantics("split");
     sim_assert_eq!(have: split.collection, want: CollectionShape::StringSplit);
-    sim_assert_eq!(have: split.legacy_operands, want: LegacySuppliedOperands::All);
 
     let merge = function_semantics("merge");
     sim_assert_eq!(have: merge.collection, want: CollectionShape::Merge);
@@ -199,7 +195,27 @@ fn overlapping_function_facets_are_intentional() {
 }
 
 #[test]
-fn signatures_distinguish_parameters_from_legacy_supplied_operands() {
+fn encoders_declare_their_output_alphabet_without_changing_string_parameters() {
+    use crate::function_semantics::OutputAlphabet;
+    use crate::value::kinds::GoType;
+
+    for (function, alphabet) in [
+        ("b64enc", OutputAlphabet::Base64),
+        ("sha1sum", OutputAlphabet::Hexadecimal),
+        ("sha256sum", OutputAlphabet::Hexadecimal),
+        ("sha512sum", OutputAlphabet::Hexadecimal),
+        ("adler32sum", OutputAlphabet::Decimal),
+    ] {
+        let semantics = function_semantics(function);
+        sim_assert_eq!(have: semantics.behavior, want: OutputBehavior::Encoded(alphabet));
+        sim_assert_eq!(have: semantics.parameter(0), want: Some(GoType::String));
+        sim_assert_eq!(have: semantics.parameter(1), want: None);
+    }
+    sim_assert_eq!(have: function_semantics("b64dec").behavior, want: OutputBehavior::Transform);
+}
+
+#[test]
+fn signatures_preserve_declared_parameters_and_success_types() {
     use crate::function_semantics::SuccessType;
     use crate::value::kinds::GoType;
     let round = function_semantics("round");
@@ -207,7 +223,6 @@ fn signatures_distinguish_parameters_from_legacy_supplied_operands() {
     let lower = function_semantics("lower");
     sim_assert_eq!(have: lower.parameter(0), want: Some(GoType::String));
     sim_assert_eq!(have: lower.parameter(1), want: None);
-    sim_assert_eq!(have: lower.legacy_operand_indices(2), want: vec![1]);
     for name in ["quote", "squote", "toString", "urlquery"] {
         sim_assert_eq!(have: function_semantics(name).parameter(0), want: Some(GoType::Unknown));
     }

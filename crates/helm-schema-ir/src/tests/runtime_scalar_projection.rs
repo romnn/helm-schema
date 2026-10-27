@@ -6,6 +6,77 @@ use color_eyre::eyre;
 use helm_schema_core::{GuardValue, Predicate, ValuesPath};
 use test_util::prelude::sim_assert_eq;
 
+pub(crate) struct ExecutedOutput {
+    pub(crate) condition: Predicate,
+    pub(crate) text: Option<String>,
+}
+
+impl crate::value::DocumentExecution {
+    pub(crate) fn executed_outputs(&self) -> Vec<ExecutedOutput> {
+        let memo = helm_schema_core::PredicateMemo::new();
+        let mut outputs = Vec::new();
+        for (exit, graph) in self.exits.iter().zip(self.placement.output_graphs()) {
+            if !matches!(exit.flow, crate::value::Flow::Normal(_)) {
+                continue;
+            }
+            let value = crate::value::text::capture(graph, false)
+                .under_runtime(&crate::value::guard::RuntimeGuard::True);
+            for alternative in exit.state.heap.freeze(&value).alternatives() {
+                let condition = memo.normalize(Predicate::all(vec![
+                    exit.state.path_predicate(),
+                    alternative.condition().clone(),
+                ]));
+                if condition != Predicate::False {
+                    outputs.push(ExecutedOutput {
+                        condition,
+                        text: alternative
+                            .coverage_exact()
+                            .then(|| alternative.value().exact_text())
+                            .flatten(),
+                    });
+                }
+            }
+        }
+        outputs
+    }
+
+    pub(crate) fn observed_marker_condition(&self, span: helm_schema_syntax::Span) -> Predicate {
+        Predicate::Or(
+            self.text_sites()
+                .filter(|site| site.span().start < span.end && span.start < site.span().end)
+                .map(|site| site.condition().clone())
+                .collect(),
+        )
+        .normalize_boolean()
+    }
+
+    pub(crate) fn observed_marker_complete(&self, span: helm_schema_syntax::Span) -> bool {
+        self.exits
+            .iter()
+            .filter(|exit| matches!(exit.flow, crate::value::Flow::Normal(_)))
+            .all(|exit| {
+                !exit.state.path_predicate().contains_approximation()
+                    && !exit.state.observation_count.overflow_under(
+                        &exit.state.heap.arena.runtime_path(&exit.state.active),
+                        &exit.state.heap.arena,
+                    )
+                    && exit
+                        .state
+                        .active
+                        .iter()
+                        .all(|edge| edge.test.coverage == Coverage::Exact)
+            })
+            && self
+                .text_sites()
+                .filter(|site| site.span().start < span.end && span.start < site.span().end)
+                .all(|site| {
+                    site.coverage_exact()
+                        && site.rendered_unchanged
+                        && !site.condition().contains_approximation()
+                })
+    }
+}
+
 fn site(state: &State, value: &Value) -> ExecutedSite {
     ExecutedSite {
         program: 0,

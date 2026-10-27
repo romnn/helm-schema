@@ -226,109 +226,11 @@ pub(super) fn finish_file(mut exits: Vec<super::Exit>) -> Vec<super::Exit> {
             continue;
         }
         let state = &mut exit.state;
-        let original = state.output.exact_text();
         let stripped = state.output.stripped_value();
-        // Helm removes the marker after concatenation, including across emission boundaries.
-        if original
-            .as_ref()
-            .is_none_or(|text| text.contains("<no value>"))
-        {
-            demote_stripped_sites(state, original.as_deref());
-        }
         state.output = TextBuffer::default();
         state.output.emit(state.heap.freeze(&stripped));
     }
     exits
-}
-
-fn demote_stripped_sites(state: &mut State, original: Option<&str>) {
-    #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-    enum Site {
-        Text(usize),
-        Value(usize),
-    }
-    struct Piece {
-        ordinal: usize,
-        site: Site,
-        text: String,
-    }
-    let mut pieces = Vec::new();
-    for (index, site) in state.text_sites.iter().enumerate() {
-        if site.program == state.program {
-            pieces.push(Piece {
-                ordinal: site.ordinal,
-                site: Site::Text(index),
-                text: site.bytes.clone(),
-            });
-        }
-    }
-    let mut complete = true;
-    for (index, site) in state.sites.iter().enumerate() {
-        if site.program == state.program && site.rendered {
-            if let Some(text) = site.value.exact_text() {
-                pieces.push(Piece {
-                    ordinal: site.ordinal,
-                    site: Site::Value(index),
-                    text,
-                });
-            } else {
-                complete = false;
-            }
-        }
-    }
-    pieces.sort_by_key(|piece| piece.ordinal);
-    let joined: String = pieces.iter().map(|piece| piece.text.as_str()).collect();
-    let mut affected = std::collections::BTreeSet::new();
-    if let Some(original) = original.filter(|original| complete && *original == joined) {
-        let removed: Vec<_> = original
-            .match_indices("<no value>")
-            .map(|(start, text)| start..start + text.len())
-            .collect();
-        let mut offset = 0;
-        for piece in &pieces {
-            let end = offset + piece.text.len();
-            if removed
-                .iter()
-                .any(|removed| offset < removed.end && removed.start < end)
-            {
-                affected.insert(piece.site);
-            }
-            offset = end;
-        }
-    } else {
-        // Unknown neighbors can complete only a marker prefix or suffix of a known piece.
-        for piece in &pieces {
-            if may_be_stripped(&piece.text) {
-                affected.insert(piece.site);
-            }
-        }
-        for (index, site) in state.sites.iter().enumerate() {
-            if site.program == state.program && site.rendered && site.value.exact_text().is_none() {
-                affected.insert(Site::Value(index));
-            }
-        }
-    }
-    for (index, site) in state.text_sites.iter_mut().enumerate() {
-        if site.program == state.program && affected.contains(&Site::Text(index)) {
-            site.rendered_unchanged = false;
-        }
-    }
-    for (index, site) in state.sites.iter_mut().enumerate() {
-        if site.program == state.program && site.rendered && affected.contains(&Site::Value(index))
-        {
-            site.rendered_unchanged = false;
-        }
-    }
-}
-
-fn may_be_stripped(text: &str) -> bool {
-    const REMOVED: &str = "<no value>";
-    text.contains(REMOVED)
-        || (!text.is_empty() && REMOVED.contains(text))
-        || (1..REMOVED.len()).any(|length| {
-            text.ends_with(&REMOVED[..length])
-                || text.starts_with(&REMOVED[REMOVED.len() - length..])
-        })
 }
 
 pub(super) fn begin_file(

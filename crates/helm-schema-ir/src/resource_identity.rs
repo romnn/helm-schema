@@ -340,9 +340,7 @@ fn decoded_name(text: &str) -> Option<String> {
 
 #[cfg(test)]
 #[path = "tests/resource_identity_compat.rs"]
-mod compatibility;
-#[cfg(test)]
-pub(crate) use compatibility::{collect_resource_spans, executed_scalar_body};
+pub(crate) mod test_support;
 
 pub(crate) fn literal_key(document: &PlacedDocument<'_>, span: Span) -> Option<String> {
     let text = document.ownership.skeleton.text.get(span.start..span.end)?;

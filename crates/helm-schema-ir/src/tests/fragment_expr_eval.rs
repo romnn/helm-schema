@@ -118,23 +118,13 @@ impl ExecutedObservation {
             // Guarded Boolean values remain exact when their rendered bytes differ by branch.
             return self.captured_boolean_truth();
         }
-        (!self
-            .execution
-            .text_for_span(self.truth_span, None)
-            .any(|(_, text)| text.is_none()))
-        .then(|| self.execution.condition_for_span(self.truth_span, None))
+        self.execution
+            .observed_marker_complete(self.truth_span)
+            .then(|| self.execution.observed_marker_condition(self.truth_span))
     }
 
     fn when_true(&self) -> Predicate {
-        Predicate::Or(
-            self.execution
-                .text_for_span(self.truth_span, None)
-                .filter_map(|(condition, text)| {
-                    (text.as_deref() == Some("selected")).then_some(condition)
-                })
-                .collect(),
-        )
-        .normalize_boolean()
+        self.execution.observed_marker_condition(self.truth_span)
     }
 
     fn output_paths(&self) -> BTreeSet<ValuesPath> {

@@ -168,7 +168,10 @@ impl Projection<'_> {
             }
             YamlNodeKind::Scalar(style) => self.scalar(span, style, false),
             YamlNodeKind::BlockScalar => self.scalar(span, ScalarStyle::Plain, true),
-            YamlNodeKind::Pair | YamlNodeKind::FlowPair | YamlNodeKind::Comment => Guarded::empty(),
+            YamlNodeKind::Pair
+            | YamlNodeKind::FlowPair
+            | YamlNodeKind::Comment
+            | YamlNodeKind::DocumentEnd => Guarded::empty(),
         };
         result.guard_all(&self.document.condition, self.db.predicate_memo());
         result
@@ -299,8 +302,9 @@ impl Projection<'_> {
                     continue;
                 }
                 for observation in self.execution.observations(id) {
-                    let Observation::Value(site) = observation else {
-                        continue;
+                    let site = match observation {
+                        Observation::Text(_) => continue,
+                        Observation::Value(site) => site,
                     };
                     if !site.rendered() {
                         continue;

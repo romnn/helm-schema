@@ -202,10 +202,22 @@ pub(super) struct OutputPlacement {
     graph: Rc<TextBuffer>,
     layouts: Vec<Layout>,
     unknown: Predicate,
+    markers: MarkerProvenance,
+}
+
+#[derive(Debug, Default)]
+struct MarkerProvenance {
+    affected: BTreeSet<ObservationId>,
+    incomplete: bool,
 }
 
 impl OutputPlacement {
-    fn new(graph: Rc<TextBuffer>, condition: Predicate, memo: &PredicateMemo) -> Self {
+    fn new(
+        graph: Rc<TextBuffer>,
+        condition: Predicate,
+        memo: &PredicateMemo,
+        output: FileOutput,
+    ) -> Self {
         let mut build = LayoutBuilder {
             skeleton: Skeleton {
                 text: String::new(),
@@ -218,6 +230,8 @@ impl OutputPlacement {
             lexical: LexicalTransfers::default(),
             selections: Vec::new(),
             root_condition: condition.clone(),
+            output,
+            markers: MarkerProvenance::default(),
             memo,
         };
         build.walk(
@@ -230,10 +244,12 @@ impl OutputPlacement {
             })],
             condition,
         );
+        build.markers.incomplete |= !build.unknown.is_empty();
         Self {
             graph,
             layouts: build.layouts,
             unknown: memo.normalize(Predicate::Or(build.unknown)),
+            markers: build.markers,
         }
     }
 
@@ -399,16 +415,16 @@ impl FilePlacement {
             let condition = exit.state.path_predicate();
             let memo = &exit.state.heap.arena.predicate_memo;
             let graph = Rc::new(exit.state.output.clone());
-            let placement =
-                if matches!(output, FileOutput::Manifest) && matches!(exit.flow, Flow::Normal(_)) {
-                    OutputPlacement::new(graph, condition.clone(), memo)
-                } else {
-                    OutputPlacement {
-                        graph,
-                        layouts: Vec::new(),
-                        unknown: Predicate::True,
-                    }
-                };
+            let placement = if matches!(exit.flow, Flow::Normal(_)) {
+                OutputPlacement::new(graph, condition.clone(), memo, output)
+            } else {
+                OutputPlacement {
+                    graph,
+                    layouts: Vec::new(),
+                    unknown: Predicate::True,
+                    markers: MarkerProvenance::default(),
+                }
+            };
             if super::output::exit_may_continue(exit) {
                 let invalid = if exit
                     .state
@@ -439,8 +455,38 @@ impl FilePlacement {
 
     pub(super) fn certify_sites(&self, exits: &mut [Exit]) {
         for (exit, placement) in exits.iter_mut().zip(&self.outputs) {
+            if !matches!(exit.flow, Flow::Normal(_)) {
+                continue;
+            }
             let state = &mut exit.state;
+            for site in &mut state.text_sites {
+                let id = ObservationId {
+                    program: site.program,
+                    ordinal: site.ordinal,
+                    span: site.span,
+                };
+                if placement.markers.affected.contains(&id)
+                    || (placement.markers.incomplete && may_be_stripped(&site.bytes))
+                {
+                    site.rendered_unchanged = false;
+                }
+            }
             for site in &mut state.sites {
+                let id = ObservationId {
+                    program: site.program,
+                    ordinal: site.ordinal,
+                    span: site.span,
+                };
+                if site.rendered
+                    && (placement.markers.affected.contains(&id)
+                        || (placement.markers.incomplete
+                            && site
+                                .value
+                                .exact_text()
+                                .is_none_or(|text| may_be_stripped(&text))))
+                {
+                    site.rendered_unchanged = false;
+                }
                 site.plain_scalar_placement = if !state.output_widened
                     && site.program == state.program
                     && site.rendered
@@ -465,6 +511,8 @@ struct LayoutBuilder<'a> {
     lexical: LexicalTransfers,
     selections: Vec<SelectedSpan>,
     root_condition: Predicate,
+    output: FileOutput,
+    markers: MarkerProvenance,
     memo: &'a PredicateMemo,
 }
 
@@ -608,9 +656,17 @@ impl LayoutBuilder<'_> {
     }
 
     fn finish_layout(&mut self, condition: Predicate) {
-        let Some(owned_documents) = documents(&self.skeleton) else {
-            self.unknown.push(condition);
-            return;
+        let removed = marker_ranges(&self.skeleton.text);
+        self.markers.record(&self.skeleton, &self.terms, &removed);
+        let owned_documents = match self.output {
+            FileOutput::Text => Vec::new(),
+            FileOutput::Manifest => {
+                let Some(documents) = documents(&self.skeleton, &removed) else {
+                    self.unknown.push(condition);
+                    return;
+                };
+                documents
+            }
         };
         let mut failures = Vec::new();
         let mut documents = Vec::new();
@@ -621,7 +677,7 @@ impl LayoutBuilder<'_> {
                         self.selections
                             .iter()
                             .filter(|selection| {
-                                self.skeleton.text.contains("<no value>")
+                                !removed.is_empty()
                                     || (selection.range.start <= document.scope.end
                                         && document.scope.start <= selection.range.end)
                             })
@@ -650,7 +706,7 @@ impl LayoutBuilder<'_> {
                 .filter(|segment| segment.placeholder)
                 .count(),
             invalid: self.memo.normalize(Predicate::Or(failures)),
-            source_mapped: !self.skeleton.text.contains("<no value>"),
+            source_mapped: removed.is_empty(),
             empty: self.skeleton.text.trim().is_empty(),
         });
     }
@@ -694,12 +750,32 @@ struct CapturedLayout {
 
 fn captured_layout(value: &FrozenValue, remaining: &mut usize) -> Option<CapturedLayout> {
     *remaining = remaining.checked_sub(1)?;
-    let ValueNode::Leaf(Leaf {
-        datum: Datum::Text(text),
-        origin: _,
-    }) = value.value.node.as_ref()
-    else {
-        return None;
+    let text = match value.value.node.as_ref() {
+        ValueNode::Leaf(Leaf {
+            datum: Datum::Text(text),
+            origin: _,
+        }) => text,
+        ValueNode::Leaf(Leaf {
+            datum:
+                Datum::Scalar {
+                    go_type: _,
+                    content: _,
+                }
+                | Datum::Map { view: _, target: _ }
+                | Datum::Sequence(_)
+                | Datum::Strings(_)
+                | Datum::Slot {
+                    backing: _,
+                    index: _,
+                }
+                | Datum::Unknown(_),
+            origin: _,
+        })
+        | ValueNode::Select {
+            decision: _,
+            yes: _,
+            no: _,
+        } => return None,
     };
     match text.0.as_ref() {
         super::text::TextTerm::Capture {
@@ -729,12 +805,16 @@ fn captured_layout(value: &FrozenValue, remaining: &mut usize) -> Option<Capture
         | super::text::TextTerm::Yaml {
             value: _,
             pretty: _,
+        }
+        | super::text::TextTerm::Encoded {
+            value: _,
+            alphabet: _,
         } => None,
     }
 }
 
-fn documents(skeleton: &Skeleton) -> Option<Vec<DocumentLayout>> {
-    let skeleton = stripped_skeleton(skeleton);
+fn documents(skeleton: &Skeleton, removed: &[Span]) -> Option<Vec<DocumentLayout>> {
+    let skeleton = stripped_skeleton(skeleton, removed);
     let Ok(splitter) = &*SPLITTER else {
         return None;
     };
@@ -792,12 +872,79 @@ fn documents(skeleton: &Skeleton) -> Option<Vec<DocumentLayout>> {
     Some(documents)
 }
 
-fn stripped_skeleton(skeleton: &Skeleton) -> Skeleton {
-    let removed: Vec<_> = skeleton
-        .text
-        .match_indices("<no value>")
+const REMOVED_MARKER: &str = "<no value>";
+
+fn marker_ranges(text: &str) -> Vec<Span> {
+    text.match_indices(REMOVED_MARKER)
         .map(|(start, marker)| Span::new(start, start + marker.len()))
-        .collect();
+        .collect()
+}
+
+impl MarkerProvenance {
+    fn record(&mut self, skeleton: &Skeleton, terms: &[NodeRef], removed: &[Span]) {
+        let mut affected = BTreeSet::new();
+        let mut mark = |span: Span| {
+            let start = skeleton
+                .segments
+                .partition_point(|segment| segment.range.end <= span.start);
+            affected.extend(
+                skeleton
+                    .segments
+                    .get(start..)
+                    .into_iter()
+                    .flatten()
+                    .take_while(|segment| segment.range.start < span.end)
+                    .map(|segment| segment.piece),
+            );
+        };
+        for span in removed {
+            mark(*span);
+        }
+        for segment in skeleton
+            .segments
+            .iter()
+            .filter(|segment| segment.placeholder)
+        {
+            mark(segment.range);
+            let before = &skeleton.text[..segment.range.start];
+            let after = &skeleton.text[segment.range.end..];
+            for length in 1..REMOVED_MARKER.len() {
+                if before.ends_with(&REMOVED_MARKER[..length]) {
+                    mark(Span::new(segment.range.start - length, segment.range.start));
+                }
+                if after.starts_with(&REMOVED_MARKER[REMOVED_MARKER.len() - length..]) {
+                    mark(Span::new(segment.range.end, segment.range.end + length));
+                }
+            }
+        }
+        for index in affected {
+            let Some(term) = terms.get(index) else {
+                self.incomplete = true;
+                continue;
+            };
+            let ids = term
+                .node()
+                .into_iter()
+                .flat_map(|node| node.occurrences.iter())
+                .chain(term.context.iter())
+                .copied()
+                .collect::<Vec<_>>();
+            self.incomplete |= ids.is_empty();
+            self.affected.extend(ids);
+        }
+    }
+}
+
+fn may_be_stripped(text: &str) -> bool {
+    text.contains(REMOVED_MARKER)
+        || (!text.is_empty() && REMOVED_MARKER.contains(text))
+        || (1..REMOVED_MARKER.len()).any(|length| {
+            text.ends_with(&REMOVED_MARKER[..length])
+                || text.starts_with(&REMOVED_MARKER[REMOVED_MARKER.len() - length..])
+        })
+}
+
+fn stripped_skeleton(skeleton: &Skeleton, removed: &[Span]) -> Skeleton {
     let translate = |position: usize| {
         position
             - removed
@@ -805,8 +952,15 @@ fn stripped_skeleton(skeleton: &Skeleton) -> Skeleton {
                 .map(|range| position.min(range.end).saturating_sub(range.start))
                 .sum::<usize>()
     };
+    let mut text = String::with_capacity(skeleton.text.len());
+    let mut start = 0;
+    for range in removed {
+        text.push_str(&skeleton.text[start..range.start]);
+        start = range.end;
+    }
+    text.push_str(&skeleton.text[start..]);
     Skeleton {
-        text: skeleton.text.replace("<no value>", ""),
+        text,
         segments: skeleton
             .segments
             .iter()
@@ -868,11 +1022,11 @@ impl Default for LexicalTransfers {
 
 impl LexicalTransfers {
     fn value(&mut self, value: &FrozenValue, state: LexicalState, memo: &PredicateMemo) -> States {
-        let key = (
-            Rc::as_ptr(&value.heap),
-            Rc::as_ptr(&value.value.node),
-            state,
-        );
+        let FrozenValue {
+            heap,
+            value: super::Value { node },
+        } = value;
+        let key = (Rc::as_ptr(heap), Rc::as_ptr(node), state);
         if let Some(result) = self.values.get(&key) {
             return result.clone();
         }
@@ -966,8 +1120,22 @@ impl LexicalTransfers {
         match text.0.as_ref() {
             super::text::TextTerm::Capture {
                 graph,
-                strip_marker: false,
-            } => self.buffer(graph, state, memo),
+                strip_marker: _,
+            } => {
+                // Retained paths contain no marker start before an irreparable invalid prefix.
+                self.buffer(graph, state, memo)
+            }
+            super::text::TextTerm::Encoded { value: _, alphabet } => match alphabet {
+                crate::function_semantics::OutputAlphabet::Hexadecimal
+                | crate::function_semantics::OutputAlphabet::Decimal
+                | crate::function_semantics::OutputAlphabet::Base64 => {
+                    if matches!(state, LexicalState::Double | LexicalState::Single) {
+                        initial
+                    } else {
+                        States::new()
+                    }
+                }
+            },
             super::text::TextTerm::Quote { value } => {
                 let nil = super::kinds::nilness(&value.value)
                     .map(|nil| {
@@ -1006,11 +1174,7 @@ impl LexicalTransfers {
                 }
                 result
             }
-            super::text::TextTerm::Capture {
-                graph: _,
-                strip_marker: true,
-            }
-            | super::text::TextTerm::Yaml {
+            super::text::TextTerm::Yaml {
                 value: _,
                 pretty: _,
             } => States::new(),
@@ -1024,8 +1188,19 @@ impl LexicalTransfers {
         terms: &[NodeRef],
         memo: &PredicateMemo,
     ) -> States {
-        let YamlNodeKind::Scalar(style) = node.kind else {
-            return States::new();
+        let style = match node.kind {
+            YamlNodeKind::Scalar(style) => style,
+            YamlNodeKind::Document
+            | YamlNodeKind::DocumentEnd
+            | YamlNodeKind::Mapping
+            | YamlNodeKind::Pair
+            | YamlNodeKind::Sequence
+            | YamlNodeKind::Item
+            | YamlNodeKind::FlowMapping
+            | YamlNodeKind::FlowPair
+            | YamlNodeKind::FlowSequence
+            | YamlNodeKind::BlockScalar
+            | YamlNodeKind::Comment => return States::new(),
         };
         let (state, skip) = match style {
             ScalarStyle::DoubleQuoted => (LexicalState::Double, 1),
@@ -1169,6 +1344,7 @@ fn quoted_tokens(
         let style = match node.kind {
             YamlNodeKind::Scalar(style) => style,
             YamlNodeKind::Document
+            | YamlNodeKind::DocumentEnd
             | YamlNodeKind::Mapping
             | YamlNodeKind::Pair
             | YamlNodeKind::Sequence
@@ -1207,10 +1383,15 @@ fn quoted_tokens(
                 .remove(&LexicalState::Invalid)
                 .unwrap_or(Predicate::False),
         ]));
+        let document_end = owned
+            .nodes
+            .iter()
+            .find(|end| end.kind == YamlNodeKind::DocumentEnd && node.span.end <= end.span.start)
+            .map_or(owned.skeleton.text.len(), |end| end.span.start);
         if owned
             .skeleton
             .text
-            .get(node.span.end..)
+            .get(node.span.end..document_end)
             .is_some_and(|tail| tail.trim().is_empty())
         {
             failures.push(Predicate::all(vec![

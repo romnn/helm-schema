@@ -13,15 +13,6 @@ pub(crate) fn is_files_get(function: &str) -> bool {
     function == "Files.Get" || function.ends_with(".Files.Get")
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum LegacySuppliedOperands {
-    None,
-    All,
-    Declared { minimum: usize },
-    Last,
-    FirstAndLast,
-}
-
 /// Classifies whether a nil operand aborts, including the direct-access distinction.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum NilBehavior {
@@ -47,9 +38,16 @@ pub(crate) enum OutputBehavior {
     NonEmpty,
     Transform,
     Stringify,
-    Checksum,
+    Encoded(OutputAlphabet),
     NumericCast,
     Arithmetic,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum OutputAlphabet {
+    Hexadecimal,
+    Decimal,
+    Base64,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -108,7 +106,6 @@ pub(crate) struct FunctionSemantics {
     pub(crate) success: SuccessType,
     parameters: &'static [GoType],
     variadic: Option<GoType>,
-    pub(crate) legacy_operands: LegacySuppliedOperands,
     pub(crate) nil_behavior: NilBehavior,
     pub(crate) behavior: OutputBehavior,
     pub(crate) collection: CollectionShape,
@@ -125,7 +122,6 @@ const UNKNOWN: FunctionSemantics = FunctionSemantics {
     success: SuccessType::Selected,
     parameters: &[],
     variadic: None,
-    legacy_operands: LegacySuppliedOperands::None,
     nil_behavior: NilBehavior::Tolerates,
     behavior: OutputBehavior::Opaque,
     collection: CollectionShape::None,
@@ -143,9 +139,8 @@ const KNOWN: FunctionSemantics = FunctionSemantics {
 
 use CollectionShape::{Merge, StringSplit};
 use GoType::{Bool, Float64, Int, Int64, Map, Slice, String as Text, Unknown};
-use LegacySuppliedOperands::{All, Declared, FirstAndLast, Last};
 use NilBehavior::{AlwaysAborts, DirectAccessAborts};
-use OutputBehavior::{Arithmetic, Checksum, NonEmpty, NumericCast, Stringify, Transform};
+use OutputBehavior::{Arithmetic, Encoded, NonEmpty, NumericCast, Stringify, Transform};
 use PredicateSemantics::{String as StringPredicate, TypeDescriptor};
 use ProvenanceBehavior::Preserve;
 
@@ -154,11 +149,13 @@ const ARITHMETIC: FunctionSemantics = FunctionSemantics {
     ..KNOWN
 };
 
-const CHECKSUM: FunctionSemantics = FunctionSemantics {
-    legacy_operands: Last,
-    behavior: Checksum,
-    ..KNOWN
-};
+const fn encoded(alphabet: OutputAlphabet) -> FunctionSemantics {
+    FunctionSemantics {
+        behavior: Encoded(alphabet),
+        ..KNOWN
+    }
+    .fixed(&[Text], Text)
+}
 
 const STRICT: FunctionSemantics = FunctionSemantics {
     nil_behavior: AlwaysAborts,
@@ -166,13 +163,11 @@ const STRICT: FunctionSemantics = FunctionSemantics {
 };
 
 const TRANSFORM: FunctionSemantics = FunctionSemantics {
-    legacy_operands: All,
     behavior: Transform,
     ..KNOWN
 };
 
 const STRING_PREDICATE: FunctionSemantics = FunctionSemantics {
-    legacy_operands: All,
     predicate: StringPredicate,
     ..KNOWN
 };
@@ -204,7 +199,6 @@ const MAP_LOOKUP: FunctionSemantics = FunctionSemantics {
 };
 
 const INDENT: FunctionSemantics = FunctionSemantics {
-    legacy_operands: Last,
     behavior: Transform,
     provenance: Preserve,
     ..KNOWN
@@ -221,17 +215,6 @@ const DESCRIPTOR: FunctionSemantics = FunctionSemantics {
     ..KNOWN
 };
 
-const STRING_LOOKUP: FunctionSemantics = FunctionSemantics {
-    legacy_operands: All,
-    ..KNOWN
-};
-
-const LAST_TRANSFORM: FunctionSemantics = FunctionSemantics {
-    legacy_operands: Last,
-    behavior: Transform,
-    ..KNOWN
-};
-
 const MAP_MERGE: FunctionSemantics = FunctionSemantics {
     input_read: InputRead::Contents,
     heap_effect: HeapEffect::Operands,
@@ -241,7 +224,6 @@ const MAP_MERGE: FunctionSemantics = FunctionSemantics {
 };
 
 const DURATION_PARSER: FunctionSemantics = FunctionSemantics {
-    legacy_operands: Declared { minimum: 1 },
     predicate: StringPredicate,
     parser: ParserSemantics::Duration,
     ..KNOWN
@@ -256,38 +238,32 @@ const FORMATTER: FunctionSemantics = FunctionSemantics {
 
 const STRINGIFIER: FunctionSemantics = FunctionSemantics {
     input_read: InputRead::Contents,
-    legacy_operands: All,
     behavior: Stringify,
     ..KNOWN
 };
 
 const REGEX_SPLIT: FunctionSemantics = FunctionSemantics {
-    legacy_operands: Declared { minimum: 3 },
     collection: StringSplit,
     ..KNOWN
 };
 
 const SEMVER_PARSER: FunctionSemantics = FunctionSemantics {
-    legacy_operands: All,
     predicate: StringPredicate,
     parser: ParserSemantics::Semver,
     ..KNOWN
 };
 
 const SPLIT: FunctionSemantics = FunctionSemantics {
-    legacy_operands: All,
     collection: StringSplit,
     ..KNOWN
 };
 
 const LIMITED_SPLIT: FunctionSemantics = FunctionSemantics {
-    legacy_operands: FirstAndLast,
     collection: StringSplit,
     ..KNOWN
 };
 
 const URL_PARSER: FunctionSemantics = FunctionSemantics {
-    legacy_operands: All,
     predicate: StringPredicate,
     parser: ParserSemantics::Url,
     ..KNOWN
@@ -381,9 +357,11 @@ pub(crate) fn function_semantics(function: &str) -> FunctionSemantics {
         "add1" => ARITHMETIC.fixed(&[Unknown], Int64),
         "add1f" | "ceil" | "floor" => ARITHMETIC.fixed(&[Unknown], Float64),
         "addf" => ARITHMETIC.variadic(&[], Unknown, Float64),
-        "adler32sum" | "sha1sum" | "sha256sum" | "sha512sum" => CHECKSUM.fixed(&[Text], Text),
+        "adler32sum" => encoded(OutputAlphabet::Decimal),
+        "sha1sum" | "sha256sum" | "sha512sum" => encoded(OutputAlphabet::Hexadecimal),
         "and" | "coalesce" | "or" => UNKNOWN.selected(&[], Some(Unknown)),
-        "b64dec" | "b64enc" => TRANSFORM.fixed(&[Text], Text),
+        "b64dec" | "lower" | "trim" | "upper" => TRANSFORM.fixed(&[Text], Text),
+        "b64enc" => encoded(OutputAlphabet::Base64),
         "chunk" | "mustChunk" => UNKNOWN.selected(&[Int, Unknown], None),
         "concat" => STRICT.selected(&[], Some(Unknown)),
         "contains" | "hasPrefix" | "hasSuffix" | "mustRegexMatch" | "regexMatch" => STRING_MATCH,
@@ -415,8 +393,7 @@ pub(crate) fn function_semantics(function: &str) -> FunctionSemantics {
         "int64" => NUMERIC_CAST.fixed(&[Unknown], Int64),
         "kindOf" | "typeOf" => DESCRIPTOR.fixed(&[Unknown], Text),
         "kindIs" | "typeIs" | "typeIsLike" => DESCRIPTOR.fixed(&[Text, Unknown], Bool),
-        "lookup" => STRING_LOOKUP.fixed(&[Text, Text, Text, Text], Map),
-        "lower" | "trim" | "upper" => LAST_TRANSFORM.fixed(&[Text], Text),
+        "lookup" => KNOWN.fixed(&[Text, Text, Text, Text], Map),
         "max" | "min" | "mul" => ARITHMETIC.variadic(&[Unknown], Unknown, Int64),
         "maxf" | "minf" | "mulf" | "subf" => ARITHMETIC.variadic(&[Unknown], Unknown, Float64),
         "mustDateModify" => DURATION_PARSER.selected(&[Text, Unknown], None),
@@ -444,7 +421,7 @@ pub(crate) fn function_semantics(function: &str) -> FunctionSemantics {
         }
         "randInt" => UNKNOWN.fixed(&[Int, Int], Int),
         "regexSplit" => REGEX_SPLIT.fixed(&[Text, Text, Int], Slice),
-        "repeat" | "trunc" => LAST_TRANSFORM.fixed(&[Int, Text], Text),
+        "repeat" | "trunc" => TRANSFORM.fixed(&[Int, Text], Text),
         "required" => UNKNOWN.selected(&[Text, Unknown], None),
         "round" => ARITHMETIC.variadic(&[Unknown, Int], Float64, Float64),
         "semverCompare" => SEMVER_PARSER.fixed(&[Text, Text], Bool),
@@ -453,7 +430,7 @@ pub(crate) fn function_semantics(function: &str) -> FunctionSemantics {
         "splitList" => SPLIT.fixed(&[Text, Text], Slice),
         "splitn" => LIMITED_SPLIT.fixed(&[Text, Int, Text], Map),
         "sub" => ARITHMETIC.fixed(&[Unknown, Unknown], Int64),
-        "substr" => LAST_TRANSFORM.fixed(&[Int, Int, Text], Text),
+        "substr" => TRANSFORM.fixed(&[Int, Int, Text], Text),
         "ternary" => STRICT.selected(&[Unknown, Unknown, Bool], None),
         "toString" => STRINGIFIER.fixed(&[Unknown], Text),
         "toYaml" | "toYamlPretty" => PRESERVING
@@ -532,19 +509,6 @@ impl FunctionSemantics {
         self.known
     }
 
-    #[must_use]
-    pub(crate) const fn is_string_transform(self) -> bool {
-        matches!(
-            self.behavior,
-            OutputBehavior::Transform | OutputBehavior::Stringify
-        )
-    }
-
-    #[must_use]
-    pub(crate) const fn is_total_stringification(self) -> bool {
-        matches!(self.behavior, OutputBehavior::Stringify)
-    }
-
     /// Reports whether a nil operand aborts at a strict-kind position.
     ///
     /// `evaluation_mode` says how nil reaches the parameter, which decides one whole class of
@@ -581,32 +545,6 @@ impl FunctionSemantics {
             NilBehavior::DirectAccessAborts => {
                 !matches!(evaluation_mode, ArgumentEvaluationMode::Evaluated)
             }
-        }
-    }
-
-    /// Selects supplied operands under main's legacy call-shape policy.
-    ///
-    /// `argument_count` includes a pipeline input, which Go templates append as the final
-    /// argument.
-    /// Parameter types are declared by the signature; this policy preserves invalid-arity behavior.
-    #[must_use]
-    pub(crate) fn legacy_operand_indices(self, argument_count: usize) -> Vec<usize> {
-        if argument_count == 0 {
-            return Vec::new();
-        }
-        match self.legacy_operands {
-            LegacySuppliedOperands::All => (0..argument_count).collect(),
-            LegacySuppliedOperands::Last => vec![argument_count - 1],
-            LegacySuppliedOperands::FirstAndLast if argument_count >= 3 => {
-                vec![0, argument_count - 1]
-            }
-            LegacySuppliedOperands::Declared { minimum } if argument_count >= minimum => (0
-                ..argument_count)
-                .filter(|&index| self.parameter(index) == Some(Text))
-                .collect(),
-            LegacySuppliedOperands::None
-            | LegacySuppliedOperands::FirstAndLast
-            | LegacySuppliedOperands::Declared { .. } => Vec::new(),
         }
     }
 }

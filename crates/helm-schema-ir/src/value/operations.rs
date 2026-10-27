@@ -29,16 +29,27 @@ pub(super) fn transfer(
         first,
         last,
     };
+    match crate::function_semantics::function_semantics(function).behavior {
+        crate::function_semantics::OutputBehavior::Encoded(alphabet) => {
+            return Ok(Value::frozen_text(
+                super::text::TextTerm::Encoded {
+                    value: state.heap.freeze(&input.first),
+                    alphabet,
+                },
+                input.influences,
+            ));
+        }
+        crate::function_semantics::OutputBehavior::Opaque
+        | crate::function_semantics::OutputBehavior::NonEmpty
+        | crate::function_semantics::OutputBehavior::Transform
+        | crate::function_semantics::OutputBehavior::Stringify
+        | crate::function_semantics::OutputBehavior::NumericCast
+        | crate::function_semantics::OutputBehavior::Arithmetic => {}
+    }
     match function {
         "semverCompare" => Ok(transfer_semver_compare(input)),
         "dict" => Ok(transfer_dictionary(input, state)),
-        "list" | "tuple" => {
-            if input.arguments.len() > 128 {
-                tracing::debug!(reason = ?super::BoundReason::StringSlots, "widen sequence");
-                return Ok(Value::influenced(input.influences.clone()));
-            }
-            Ok(Value::sequence(input.arguments.to_vec()))
-        }
+        "list" | "tuple" => Ok(transfer_sequence(input)),
         "set" | "unset" => transfer_write_map(input, state),
         "get" => {
             let Some(GuardValue::String(key)) = input.arguments.get(1).and_then(Value::constant)
@@ -105,6 +116,22 @@ struct TransferInput<'a> {
     influences: BTreeSet<helm_schema_core::ValuesPath>,
     first: Value,
     last: Value,
+}
+
+fn transfer_sequence(input: TransferInput<'_>) -> Value {
+    let TransferInput {
+        arguments,
+        influences,
+        function: _,
+        first: _,
+        last: _,
+    } = input;
+    if arguments.len() > 128 {
+        tracing::debug!(reason = ?super::BoundReason::StringSlots, "widen sequence");
+        Value::influenced(influences)
+    } else {
+        Value::sequence(arguments.to_vec())
+    }
 }
 
 fn transfer_semver_compare(input: TransferInput<'_>) -> Value {

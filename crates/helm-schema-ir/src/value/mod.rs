@@ -760,10 +760,6 @@ mod member_host_tests;
 #[path = "../tests/runtime_span_text.rs"]
 mod span_text_tests;
 
-#[cfg(test)]
-#[path = "../tests/runtime_span_compat.rs"]
-mod span_compat;
-
 const MAX_EXECUTION_ALTERNATIVES: usize = 4096;
 
 #[cfg(test)]

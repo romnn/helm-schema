@@ -12,7 +12,12 @@ fn collect_spans(src: &str, analysis_db: &IrAnalysisDb) -> Vec<helm_schema_ast::
     };
     let document = helm_schema_syntax::TemplatedDocument::parse_with_root(src, tree.root_node());
     let execution = crate::value::execute_document(src, None, analysis_db);
-    crate::resource_identity::collect_resource_spans(&document, tree.root_node(), &execution, None)
+    crate::resource_identity::test_support::collect_resource_spans(
+        &document,
+        tree.root_node(),
+        &execution,
+        None,
+    )
 }
 
 fn detect(src: &str, defines: &DefineIndex) -> Option<crate::ResourceRef> {

@@ -8,6 +8,12 @@ use super::OutputPlacement;
 use crate::value::{Coverage, Value};
 use crate::value::{ExecutedSite, ObservationId, OutputNode, State, TextBuffer, TextPart};
 
+impl super::FilePlacement {
+    pub(in crate::value) fn output_graphs(&self) -> impl Iterator<Item = &TextBuffer> {
+        self.outputs.iter().map(|output| output.graph.as_ref())
+    }
+}
+
 struct Fixture {
     state: State,
     site: ExecutedSite,
@@ -52,6 +58,7 @@ fn placement(fixture: &Fixture) -> PlainScalarPlacement {
         Rc::new(fixture.state.output.clone()),
         Predicate::True,
         &fixture.memo,
+        crate::value::FileOutput::Manifest,
     )
     .plain_placement(&fixture.site, &fixture.memo)
 }
@@ -215,4 +222,68 @@ fn selected_output_uses_the_target_condition_without_forking_state() {
     sim_assert_eq!(have: fixture.state.heap.arena.next_decision.get(), want: decisions);
     fixture.site.condition = Predicate::True;
     sim_assert_eq!(have: placement(&fixture), want: PlainScalarPlacement::Unknown);
+}
+
+#[test]
+fn marker_provenance_uses_graph_boundaries_for_manifests_and_notes() {
+    let db = crate::analysis_db::IrAnalysisDb::new(&helm_schema_ast::DefineIndex::new());
+    for path in ["templates/probe.yaml", "templates/NOTES.txt"] {
+        for (source, literal_unchanged) in [
+            (">safe{{ .Values.tail }}", true),
+            ("<no {{ .Values.tail }}", false),
+        ] {
+            let execution = crate::value::execute_document(source, Some(path), &db);
+            sim_assert_eq!(
+                have: execution.text_sites().map(|site| site.rendered_unchanged).collect::<Vec<_>>(),
+                want: vec![literal_unchanged],
+                "path={path}, source={source}"
+            );
+            sim_assert_eq!(
+                have: execution.sites().filter(|site| site.rendered()).map(|site| site.rendered_unchanged).collect::<Vec<_>>(),
+                want: vec![false],
+                "path={path}, source={source}"
+            );
+        }
+    }
+}
+
+#[test]
+fn complete_marker_provenance_demotes_split_emissions_but_keeps_safe_neighbours() {
+    let db = crate::analysis_db::IrAnalysisDb::new(&helm_schema_ast::DefineIndex::new());
+    for path in ["templates/probe.yaml", "templates/NOTES.txt"] {
+        let execution = crate::value::execute_document(
+            r#"A<no {{ "value" }}>B{{ "untouched" }}"#,
+            Some(path),
+            &db,
+        );
+        sim_assert_eq!(have: execution.text_sites().map(|site| site.rendered_unchanged).collect::<Vec<_>>(), want: vec![false, false]);
+        sim_assert_eq!(have: execution.sites().map(|site| site.rendered_unchanged).collect::<Vec<_>>(), want: vec![false, true]);
+        sim_assert_eq!(have: execution.text().map(|(_, output)| output.exact_text()).collect::<Vec<_>>(), want: vec![Some("ABuntouched".to_owned())]);
+    }
+}
+
+#[test]
+fn nested_capture_contexts_share_the_marker_provenance() {
+    let mut defines = helm_schema_ast::DefineIndex::new();
+    defines.add_file_source(
+        "templates/_helpers.tpl",
+        indoc::indoc! {r#"
+            {{- define "inner" -}}<no {{ .Values.part }}{{- end -}}
+            {{- define "outer" -}}{{ include "inner" . }}{{- end -}}
+        "#},
+    );
+    let db = crate::analysis_db::IrAnalysisDb::new(&defines);
+    for path in ["templates/probe.yaml", "templates/NOTES.txt"] {
+        let execution = crate::value::execute_document(
+            r#"A{{ include "outer" . }}B{{ "safe" }}"#,
+            Some(path),
+            &db,
+        );
+        sim_assert_eq!(have: execution.sites().filter(|site| site.rendered()).map(|site| site.rendered_unchanged).collect::<Vec<_>>(), want: vec![false, true]);
+        sim_assert_eq!(have: execution.text_sites().map(|site| site.rendered_unchanged).collect::<Vec<_>>(), want: vec![true, true]);
+        sim_assert_eq!(
+            have: execution.all_sites().filter(|site| site.rendered() && site.source_path() == Some("templates/_helpers.tpl")).map(|site| site.rendered_unchanged).collect::<Vec<_>>(),
+            want: vec![false, false]
+        );
+    }
 }

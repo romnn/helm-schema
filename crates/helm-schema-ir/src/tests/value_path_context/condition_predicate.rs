@@ -167,16 +167,14 @@ impl ConditionContext {
 
     fn condition_predicate_expr(&self, expression: &TemplateExpr) -> Predicate {
         let (execution, span) = self.execution(expression);
-        execution.condition_for_span(span, None)
+        execution.observed_marker_condition(span)
     }
 
     fn condition_lowering_is_faithful(&self, expression: &TemplateExpr) -> bool {
         let (execution, span) = self.execution(expression);
-        !execution
-            .text_for_span(span, None)
-            .any(|(_, text)| text.is_none())
+        execution.observed_marker_complete(span)
             && !execution
-                .condition_for_span(span, None)
+                .observed_marker_condition(span)
                 .contains_approximation()
     }
 
@@ -582,7 +580,7 @@ fn has_with_a_scalar_haystack_aborts_before_or_can_continue() -> eyre::Result<()
     let context = condition_context(HashMap::new());
     let (execution, span) = context.execution(&expression);
     sim_assert_eq!(have: execution.abort_predicate(), want: Predicate::True);
-    sim_assert_eq!(have: execution.condition_for_span(span, None), want: Predicate::False);
+    sim_assert_eq!(have: execution.observed_marker_condition(span), want: Predicate::False);
     Ok(())
 }
 
