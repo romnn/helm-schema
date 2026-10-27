@@ -1,5 +1,6 @@
 use crate::analysis_db::IrAnalysisDb;
 use crate::value::{AbortReason, Flow, State, Value, eval::Executor, execute_document};
+use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_ast::DefineIndex;
 use helm_schema_core::Predicate;
 use indoc::indoc;
@@ -122,4 +123,106 @@ fn range_precision_does_not_replace_integer_or_slice_runtime_types() {
     ] {
         sim_assert_eq!(have: execute_document(source, None, &db).abort_predicate(), want: Predicate::False, "{source}");
     }
+}
+
+#[test]
+fn summary_read_only_body_preserves_unwritten_bindings_and_maps() {
+    let db = IrAnalysisDb::new(&DefineIndex::new());
+    for subject in ["$saved", "$d.x"] {
+        let source = format!(
+            r#"{{{{ $saved := "old" }}}}{{{{ $d := dict "x" "old" }}}}{{{{ range 33 }}}}{{{{ $_ := printf "%v" . }}}}{{{{ end }}}}{{{{ if eq {subject} "old" }}}}{{{{ fail "preserved" }}}}{{{{ end }}}}"#
+        );
+        sim_assert_eq!(have: execute_document(&source, None, &db).abort_predicate(), want: Predicate::True, "{source}");
+    }
+}
+
+#[test]
+fn summary_retains_final_assignment_on_normal_break_and_continue() {
+    let db = IrAnalysisDb::new(&DefineIndex::new());
+    for tail in ["", "{{ break }}", "{{ continue }}"] {
+        let source = format!(
+            r#"{{{{ $x := "before" }}}}{{{{ range 33 }}}}{{{{ $x = "after" }}}}{tail}{{{{ end }}}}{{{{ if eq $x "after" }}}}{{{{ fail "final assignment" }}}}{{{{ end }}}}"#
+        );
+        sim_assert_eq!(have: execute_document(&source, None, &db).abort_predicate(), want: Predicate::True, "{source}");
+    }
+}
+
+#[test]
+fn summary_write_footprint_preserves_unrelated_objects_and_frozen_scalars() {
+    let db = IrAnalysisDb::new(&DefineIndex::new());
+    for subject in ["$other.x", "$saved"] {
+        let source = format!(
+            r#"{{{{ $d := dict "x" "old" }}}}{{{{ $alias := $d }}}}{{{{ $other := dict "x" "old" }}}}{{{{ $saved := $d.x }}}}{{{{ range 33 }}}}{{{{ $_ := set $alias "x" "new" }}}}{{{{ end }}}}{{{{ if eq {subject} "old" }}}}{{{{ fail "preserved" }}}}{{{{ end }}}}"#
+        );
+        sim_assert_eq!(have: execute_document(&source, None, &db).abort_predicate(), want: Predicate::True, "{source}");
+    }
+}
+
+#[test]
+fn summary_havocs_writes_in_later_iterations_and_conditional_suffixes() {
+    let db = IrAnalysisDb::new(&DefineIndex::new());
+    for source in [
+        r#"{{ $d := dict "x" "old" }}{{ range 33 }}{{ if eq . 32 }}{{ $_ := set $d "x" "new" }}{{ end }}{{ end }}{{ if eq $d.x "old" }}{{ fail "stale" }}{{ end }}"#,
+        r#"{{ $x := "old" }}{{ range 33 }}{{ if lt . 32 }}{{ continue }}{{ end }}{{ $x = "new" }}{{ end }}{{ if eq $x "old" }}{{ fail "stale" }}{{ end }}"#,
+        r#"{{ $d := dict "x" "old" }}{{ $alias := $d }}{{ range 33 }}{{ if eq . 0 }}{{ $alias = dict }}{{ else }}{{ $_ := set $alias "x" "new" }}{{ end }}{{ end }}{{ if ne $d.x "old" }}{{ fail "different target" }}{{ end }}"#,
+        r#"{{ $d := dict "x" "old" }}{{ range 33 }}{{ $_ := tpl `{{ $_ := set . "x" "new" }}` $d }}{{ end }}{{ if eq $d.x "old" }}{{ fail "hidden writer" }}{{ end }}"#,
+        r#"{{ $k := 0 }}{{ $v := "old" }}{{ range 33 }}{{ range $k, $v = list "new" }}{{ end }}{{ end }}{{ if eq $v "old" }}{{ fail "nested assignment" }}{{ end }}"#,
+    ] {
+        sim_assert_eq!(have: execute_document(source, None, &db).abort_predicate(), want: Predicate::False, "{source}");
+    }
+}
+
+#[test]
+fn summary_unknown_length_retains_zero_and_nonzero_final_bindings() {
+    let db = IrAnalysisDb::new(&DefineIndex::new());
+    let exits = Executor { db: &db }.body(
+        r#"{{ $x := "before" }}{{ range . }}{{ $x = "after" }}{{ end }}{{ if eq $x "before" }}{{ fail "zero" }}{{ end }}"#,
+        None,
+        State::new(Value::unknown()),
+    );
+    assert!(
+        exits
+            .iter()
+            .any(|exit| matches!(exit.flow, Flow::Normal(_)))
+    );
+    assert!(
+        exits
+            .iter()
+            .any(|exit| matches!(exit.flow, Flow::Abort(AbortReason::Fail)))
+    );
+}
+
+#[test]
+fn allocation_collapse_keeps_exact_ids_and_frozen_versions() -> eyre::Result<()> {
+    use crate::value::{Field, Multiplicity, Remainder};
+
+    let mut state = State::new(Value::nil());
+    let exact = state.heap.map(Remainder::Closed);
+    let exact_id = state
+        .map_target(&exact)
+        .ok_or_eyre("missing exact target")?;
+    state
+        .heap
+        .write(&exact_id, "x", Field::Present(Value::string("old")));
+    let frozen = state.heap.freeze(&exact);
+    for _ in 1..4096 {
+        state.heap.map(Remainder::Closed);
+    }
+    let summary = state.heap.map(Remainder::Closed);
+    let summary_id = state
+        .map_target(&summary)
+        .ok_or_eyre("missing summary target")?;
+    assert_ne!(summary_id, exact_id);
+    sim_assert_eq!(have: state.heap.version.object(&summary_id).map(|object| object.multiplicity), want: Some(Multiplicity::Summary));
+    state
+        .heap
+        .write(&summary_id, "x", Field::Present(Value::string("summary")));
+    state.heap.map(Remainder::Closed);
+    state
+        .heap
+        .write(&exact_id, "x", Field::Present(Value::string("new")));
+    sim_assert_eq!(have: frozen.json(), want: Some(serde_json::json!({"x": "old"})));
+    sim_assert_eq!(have: state.heap.freeze(&exact).json(), want: Some(serde_json::json!({"x": "new"})));
+    assert!(state.heap.freeze(&summary).json().is_none());
+    Ok(())
 }

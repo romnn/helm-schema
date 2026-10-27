@@ -396,3 +396,139 @@ fn cancelling_thresholds_remain_exact_and_release_internal_memo_results() -> eyr
     }
     Ok(())
 }
+
+#[test]
+fn reservations_freeze_admission_under_irrelevant_domain_extensions() -> eyre::Result<()> {
+    let mut state = State::new(Value::nil());
+    let arena = Rc::clone(&state.heap.arena);
+    let room = Predicate::truthy_path("room");
+    let decision = arena.decision(room.clone(), room.negated(), Coverage::Exact);
+    let ambient = Predicate::truthy_path("unrelated");
+    state.active.push(DecisionEdge {
+        test: arena.decision(ambient.clone(), ambient.negated(), Coverage::Exact),
+        taken: true,
+    });
+    let counts = conditional_cost(&BranchCounts::default(), &decision, 127, 128, &arena);
+    let domain = arena.runtime_path(&state.active);
+    let counts = counts.restrict(&domain, &arena);
+    let (slots, rejected) = precise(state.reserve_count(&counts, 3))?;
+    assert!(rejected);
+    let slot = slots.first().ok_or_eyre("missing partial reservation")?;
+    sim_assert_eq!(have: slot.condition.clone().normalize_boolean(), want: Predicate::all(vec![ambient.clone(), room]).normalize_boolean());
+    let (all, rejected) =
+        precise(state.reserve_count(&BranchCounts::default().restrict(&domain, &arena), 4))?;
+    assert!(!rejected);
+    let all = all.first().ok_or_eyre("missing ambient reservation")?;
+    state.active.clear();
+    sim_assert_eq!(have: all.condition.clone(), want: ambient);
+    sim_assert_eq!(have: state.path_predicate(), want: Predicate::True);
+    Ok(())
+}
+
+#[test]
+fn admission_keeps_correlations_between_partial_domain_and_threshold() -> eyre::Result<()> {
+    let mut state = State::new(Value::nil());
+    let arena = Rc::clone(&state.heap.arena);
+    let opaque = arena.decision(Predicate::False, Predicate::False, Coverage::Partial);
+    let input = Predicate::truthy_path("input");
+    let exact = arena.decision(input.clone(), input.negated(), Coverage::Exact);
+    let opaque_guard = arena.runtime_path(&[DecisionEdge {
+        test: Rc::clone(&opaque),
+        taken: true,
+    }]);
+    let input_guard = arena.runtime_path(&[DecisionEdge {
+        test: Rc::clone(&exact),
+        taken: true,
+    }]);
+    let domain = arena.union_runtime_guards(&opaque_guard, &input_guard);
+    state.active.push(DecisionEdge {
+        test: arena.budget_test(domain.clone()),
+        taken: true,
+    });
+    let under_opaque = conditional_cost(&BranchCounts::default(), &exact, 127, 128, &arena);
+    let counts = BranchCounts::selected(
+        &opaque,
+        &under_opaque,
+        &BranchCounts::constant_on(127, RuntimeGuard::True),
+        &arena,
+    )
+    .restrict(&domain, &arena);
+    let (slots, rejected) = precise(state.reserve_count(&counts, 5))?;
+    assert!(rejected);
+    let slot = slots.first().ok_or_eyre("missing correlated reservation")?;
+    // (opaque OR input) AND (NOT opaque OR input) is input, even with opaque coverage.
+    sim_assert_eq!(have: slot.condition.clone().normalize_boolean(), want: input);
+    assert!(slot.coverage_exact);
+    Ok(())
+}
+
+#[test]
+fn reservations_preserve_joined_127_128_129_boundaries() -> eyre::Result<()> {
+    let mut state = State::new(Value::nil());
+    let arena = Rc::clone(&state.heap.arena);
+    let branch = Predicate::truthy_path("branch");
+    let choice = arena.decision(branch.clone(), branch.negated(), Coverage::Exact);
+    let ambient = Predicate::truthy_path("ambient");
+    state.active.push(DecisionEdge {
+        test: arena.decision(ambient.clone(), ambient.negated(), Coverage::Exact),
+        taken: true,
+    });
+    let domain = arena.runtime_path(&state.active);
+    for yes in [127, 128, 129] {
+        for no in [127, 128, 129] {
+            let counts = BranchCounts::selected(
+                &choice,
+                &BranchCounts::constant_on(yes, RuntimeGuard::True),
+                &BranchCounts::constant_on(no, RuntimeGuard::True),
+                &arena,
+            )
+            .restrict(&domain, &arena);
+            let (slots, rejected) = precise(state.reserve_count(&counts, 19))?;
+            sim_assert_eq!(have: rejected, want: yes >= 128 || no >= 128);
+            let actual = Predicate::Or(slots.iter().map(|slot| slot.condition.clone()).collect())
+                .normalize_boolean();
+            let expected = Predicate::all(vec![
+                ambient.clone(),
+                Predicate::Or(vec![
+                    if yes < 128 {
+                        branch.clone()
+                    } else {
+                        Predicate::False
+                    },
+                    if no < 128 {
+                        branch.negated()
+                    } else {
+                        Predicate::False
+                    },
+                ]),
+            ])
+            .normalize_boolean();
+            sim_assert_eq!(have: actual, want: expected, "yes={yes}, no={no}");
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn bounded_partial_projection_keeps_the_ambient_restriction() -> eyre::Result<()> {
+    let mut state = State::new(Value::nil());
+    let arena = Rc::clone(&state.heap.arena);
+    let large = Predicate::all(
+        (0..300)
+            .map(|index| Predicate::truthy_path(format!("part{index}")))
+            .collect(),
+    );
+    let choice = arena.decision(large.clone(), large.negated(), Coverage::Exact);
+    let ambient = Predicate::truthy_path("ambient");
+    state.active.push(DecisionEdge {
+        test: arena.decision(ambient.clone(), ambient.negated(), Coverage::Exact),
+        taken: true,
+    });
+    let counts = conditional_cost(&BranchCounts::default(), &choice, 127, 128, &arena)
+        .restrict(&arena.runtime_path(&state.active), &arena);
+    let (slots, _) = precise(state.reserve_count(&counts, 20))?;
+    let slot = slots.first().ok_or_eyre("bounded reservation missing")?;
+    assert!(!slot.coverage_exact);
+    sim_assert_eq!(have: slot.condition.clone().normalize_boolean(), want: ambient);
+    Ok(())
+}

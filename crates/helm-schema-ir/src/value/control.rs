@@ -5,6 +5,7 @@ use super::{
 use helm_schema_ast::TemplateExpr;
 use helm_schema_core::{GuardValue, Predicate};
 use helm_schema_syntax::{ActionKind, ControlKind, Span, TemplateAction, TextTrim, trim_text_span};
+use std::collections::BTreeSet;
 use std::rc::Rc;
 
 struct Program<'a> {
@@ -511,7 +512,7 @@ impl Executor<'_> {
             exits.extend(self.range_else(program, boundaries, state.fork(Rc::clone(&test), false)));
             state.fork(test, true)
         };
-        super::operations::invalidate(&mut state);
+        widen_loop_writes(program, bindings, value, &mut state);
         state.enter_scope(Some(Value::influenced(value.inputs())));
         for name in [bindings.key.as_deref(), bindings.value.as_deref()]
             .into_iter()
@@ -546,7 +547,7 @@ impl Executor<'_> {
                 Flow::Normal(_) => {}
                 Flow::Abort(_) | Flow::Break(_) | Flow::Continue(_) => continue,
             }
-            super::operations::invalidate(&mut exit.state);
+            // Entry widening covers every earlier iteration, so this can be the last one.
             exit.flow = Flow::Normal(Normal {
                 value: Value::unknown(),
             });
@@ -748,6 +749,178 @@ fn entries(state: &State, value: &Value) -> Option<Vec<RangeEntry>> {
         } => None,
     }
 }
+fn widen_loop_writes(
+    program: &Program<'_>,
+    bindings: &RangeBindings,
+    source: &Value,
+    state: &mut State,
+) {
+    use crate::function_semantics::{HeapEffect, function_semantics};
+
+    let actions = program
+        .syntax
+        .expressions
+        .starting_in(Span::new(bindings.body.start, bindings.body.end));
+    let rebound = loop_rebindings(program, bindings, actions);
+    let mut targets = Vec::new();
+    let mut unknown = false;
+    let mut malformed = false;
+    // This scans both arms and unreachable suffixes without evaluating an expression again.
+    for action in actions {
+        if matches!(
+            action.action.kind,
+            ActionKind::RegionOpen {
+                region: _,
+                kind: ControlKind::Block,
+                region_end: _
+            }
+        ) {
+            unknown = true;
+        }
+        for expression in action.expressions.iter() {
+            expression.walk(|expression| match expression {
+                TemplateExpr::Call { function, args } => {
+                    if let Some(operands) = loop_mutation_operands(function, args, state, &rebound)
+                    {
+                        targets.extend(operands);
+                    } else {
+                        unknown = true;
+                    }
+                }
+                TemplateExpr::Unknown(_) => malformed = true,
+                TemplateExpr::Pipeline(stages) => {
+                    unknown |= stages.iter().skip(1).any(|stage| {
+                        matches!(stage.deparen(), TemplateExpr::Call { function, args: _ }
+                            if function_semantics(function).heap_effect != HeapEffect::ReadOnly)
+                    });
+                }
+                TemplateExpr::Literal(_)
+                | TemplateExpr::Field(_)
+                | TemplateExpr::Selector {
+                    operand: _,
+                    path: _,
+                }
+                | TemplateExpr::Variable(_)
+                | TemplateExpr::Parenthesized(_)
+                | TemplateExpr::VariableDefinition { name: _, value: _ }
+                | TemplateExpr::Assignment { name: _, value: _ } => {}
+            });
+        }
+    }
+    if malformed || unknown {
+        super::operations::invalidate(state);
+    } else {
+        super::operations::widen_operands(&targets, state);
+    }
+    for name in rebound {
+        if let Some(previous) = state.read_local(&name) {
+            let mut inputs = source.inputs();
+            inputs.extend(previous.inputs());
+            state.assign(&name, Value::influenced(inputs));
+        }
+    }
+}
+
+fn loop_rebindings(
+    program: &Program<'_>,
+    bindings: &RangeBindings,
+    actions: &[helm_schema_ast::ParsedAction],
+) -> BTreeSet<String> {
+    let mut rebound: BTreeSet<String> = [bindings.key.as_deref(), bindings.value.as_deref()]
+        .into_iter()
+        .flatten()
+        .map(|name| local_name(name).to_owned())
+        .collect();
+    for action in actions {
+        if matches!(
+            action.action.kind,
+            ActionKind::RegionOpen {
+                region: _,
+                kind: ControlKind::Range,
+                region_end: _
+            }
+        ) {
+            let node = node_at(
+                program.syntax.tree.root_node(),
+                action.action.span.start,
+                "range_action",
+            );
+            let header = node
+                .and_then(|node| helm_schema_ast::range_header_from_source(node, program.source));
+            let nested = range_bindings(
+                node,
+                header.as_ref().map(helm_schema_ast::TemplateHeader::expr),
+                program.source,
+                bindings.body,
+            );
+            rebound.extend(
+                [nested.key, nested.value]
+                    .into_iter()
+                    .flatten()
+                    .map(|name| local_name(&name).to_owned()),
+            );
+        }
+        for expression in action.expressions.iter() {
+            expression.walk(|expression| {
+                if let TemplateExpr::Assignment { name, value: _ }
+                | TemplateExpr::VariableDefinition { name, value: _ } = expression
+                {
+                    rebound.insert(local_name(name).to_owned());
+                }
+            });
+        }
+    }
+    rebound
+}
+
+fn loop_mutation_operands(
+    function: &str,
+    args: &[TemplateExpr],
+    state: &State,
+    rebound: &BTreeSet<String>,
+) -> Option<Vec<Value>> {
+    use crate::function_semantics::{HeapEffect, function_semantics};
+    match function_semantics(function).heap_effect {
+        HeapEffect::ReadOnly => return Some(Vec::new()),
+        HeapEffect::Unknown => return None,
+        HeapEffect::Operands => {}
+    }
+    let operands = if matches!(function, "set" | "unset") {
+        args.get(..1)?
+    } else {
+        args
+    };
+    if operands.is_empty() {
+        return None;
+    }
+    operands
+        .iter()
+        .map(|operand| match operand.deparen() {
+            TemplateExpr::Literal(_) => Some(Value::nil()),
+            TemplateExpr::Variable(name) => {
+                let name = if name.is_empty() { "$" } else { name };
+                (!rebound.contains(name))
+                    .then(|| state.read_local(name).cloned())
+                    .flatten()
+            }
+            TemplateExpr::Field(_)
+            | TemplateExpr::Selector {
+                operand: _,
+                path: _,
+            }
+            | TemplateExpr::Call {
+                function: _,
+                args: _,
+            }
+            | TemplateExpr::Pipeline(_)
+            | TemplateExpr::Parenthesized(_)
+            | TemplateExpr::VariableDefinition { name: _, value: _ }
+            | TemplateExpr::Assignment { name: _, value: _ }
+            | TemplateExpr::Unknown(_) => None,
+        })
+        .collect()
+}
+
 fn bind_range(state: &mut State, name: &str, value: Value, assignment: bool) {
     let name = local_name(name);
     if assignment {

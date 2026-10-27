@@ -1356,3 +1356,23 @@ fn not_invocation_dispatch_keeps_one_unknown_atom_for_its_selected_operand() -> 
     }
     Ok(())
 }
+
+#[test]
+fn dead_guard_arms_do_not_spend_the_live_projection_budget() {
+    use helm_schema_core::{Predicate, PredicateMemo};
+    let memo = PredicateMemo::new();
+    let live = Predicate::truthy_path("live");
+    let large = Predicate::all(
+        (0..300)
+            .map(|index| Predicate::truthy_path(format!("dead{index}")))
+            .collect(),
+    );
+    let dead = Predicate::all(vec![large.clone(), Predicate::False]);
+    for purpose in [
+        super::ProjectionPurpose::Budget,
+        super::ProjectionPurpose::Control,
+    ] {
+        sim_assert_eq!(have: super::project_union(vec![live.clone(), dead.clone()], purpose, &memo), want: Some(live.clone()));
+    }
+    assert!(super::project_union(vec![large], super::ProjectionPurpose::Budget, &memo).is_none());
+}
