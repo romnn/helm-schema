@@ -6515,13 +6515,13 @@ window.BENCHMARK_DATA = {
             "name": "kubeview/full cpu",
             "value": 0.0835,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"cpu\",\"label\":\"CPU time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 0.079-0.093 s over 9 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"cpu\",\"label\":\"CPU time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 0.079-0.093 s over 9 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kubeview/full wall",
             "value": 0.0839,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"wall\",\"label\":\"Wall time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 0.079-0.093 s over 9 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"wall\",\"label\":\"Wall time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 0.079-0.093 s over 9 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kubeview/full peak-rss",
@@ -6551,37 +6551,37 @@ window.BENCHMARK_DATA = {
             "name": "kubeview/full phase:analyze_charts",
             "value": 0.0135,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:analyze_charts\",\"label\":\"Phase: template analysis (analyze_charts)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 0.079-0.093 s over 9 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:analyze_charts\",\"label\":\"Phase: template analysis (analyze_charts)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 0.079-0.093 s over 9 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kubeview/full phase:finalize",
             "value": 0.0013,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:finalize\",\"label\":\"Phase: contract finalization (finalize)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 0.079-0.093 s over 9 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:finalize\",\"label\":\"Phase: contract finalization (finalize)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 0.079-0.093 s over 9 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kubeview/full phase:generate_values_schema_with_report",
             "value": 0.0646,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:generate_values_schema_with_report\",\"label\":\"Phase: schema generation (generate_values_schema_with_report)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 0.079-0.093 s over 9 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:generate_values_schema_with_report\",\"label\":\"Phase: schema generation (generate_values_schema_with_report)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 0.079-0.093 s over 9 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kubeview/full phase:collect_conditional_schemas",
             "value": 0.0069,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:collect_conditional_schemas\",\"label\":\"Phase: conditional schemas (collect_conditional_schemas)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 0.079-0.093 s over 9 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:collect_conditional_schemas\",\"label\":\"Phase: conditional schemas (collect_conditional_schemas)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 0.079-0.093 s over 9 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kubeview/full phase:append_selected_constraints",
             "value": 0.0063,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:append_selected_constraints\",\"label\":\"Phase: selected constraints (append_selected_constraints)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 0.079-0.093 s over 9 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:append_selected_constraints\",\"label\":\"Phase: selected constraints (append_selected_constraints)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 0.079-0.093 s over 9 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kubeview/full phase:minimize_schema",
             "value": 0.0062,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:minimize_schema\",\"label\":\"Phase: minimization (minimize_schema)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 0.079-0.093 s over 9 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:minimize_schema\",\"label\":\"Phase: minimization (minimize_schema)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 0.079-0.093 s over 9 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "bitnami-redis/full instructions",
@@ -6593,13 +6593,13 @@ window.BENCHMARK_DATA = {
             "name": "bitnami-redis/full cpu",
             "value": 3.6636,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"cpu\",\"label\":\"CPU time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 3.637-3.716 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"cpu\",\"label\":\"CPU time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 3.637-3.716 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "bitnami-redis/full wall",
             "value": 3.6642,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"wall\",\"label\":\"Wall time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 3.637-3.716 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"wall\",\"label\":\"Wall time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 3.637-3.716 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "bitnami-redis/full peak-rss",
@@ -6629,49 +6629,49 @@ window.BENCHMARK_DATA = {
             "name": "bitnami-redis/full phase:analyze_charts",
             "value": 1.7966,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:analyze_charts\",\"label\":\"Phase: template analysis (analyze_charts)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 3.637-3.716 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:analyze_charts\",\"label\":\"Phase: template analysis (analyze_charts)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 3.637-3.716 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "bitnami-redis/full phase:finalize",
             "value": 0.3077,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:finalize\",\"label\":\"Phase: contract finalization (finalize)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 3.637-3.716 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:finalize\",\"label\":\"Phase: contract finalization (finalize)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 3.637-3.716 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "bitnami-redis/full phase:generate_values_schema_with_report",
             "value": 1.5815,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:generate_values_schema_with_report\",\"label\":\"Phase: schema generation (generate_values_schema_with_report)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 3.637-3.716 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:generate_values_schema_with_report\",\"label\":\"Phase: schema generation (generate_values_schema_with_report)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 3.637-3.716 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "bitnami-redis/full phase:collect_conditional_schemas",
             "value": 0.2349,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:collect_conditional_schemas\",\"label\":\"Phase: conditional schemas (collect_conditional_schemas)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 3.637-3.716 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:collect_conditional_schemas\",\"label\":\"Phase: conditional schemas (collect_conditional_schemas)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 3.637-3.716 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "bitnami-redis/full phase:append_selected_constraints",
             "value": 0.7871,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:append_selected_constraints\",\"label\":\"Phase: selected constraints (append_selected_constraints)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 3.637-3.716 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:append_selected_constraints\",\"label\":\"Phase: selected constraints (append_selected_constraints)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 3.637-3.716 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "bitnami-redis/full phase:minimize_schema",
             "value": 0.1783,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:minimize_schema\",\"label\":\"Phase: minimization (minimize_schema)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 3.637-3.716 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:minimize_schema\",\"label\":\"Phase: minimization (minimize_schema)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 3.637-3.716 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "bitnami-redis/lean cpu",
             "value": 2.5415,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"cpu\",\"label\":\"CPU time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 2.525-2.568 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"cpu\",\"label\":\"CPU time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 2.525-2.568 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "bitnami-redis/lean wall",
             "value": 2.5419,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"wall\",\"label\":\"Wall time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 2.525-2.568 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"wall\",\"label\":\"Wall time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 2.525-2.568 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "bitnami-redis/lean peak-rss",
@@ -6701,49 +6701,49 @@ window.BENCHMARK_DATA = {
             "name": "bitnami-redis/lean phase:analyze_charts",
             "value": 1.7721,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:analyze_charts\",\"label\":\"Phase: template analysis (analyze_charts)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 2.525-2.568 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:analyze_charts\",\"label\":\"Phase: template analysis (analyze_charts)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 2.525-2.568 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "bitnami-redis/lean phase:finalize",
             "value": 0.2938,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:finalize\",\"label\":\"Phase: contract finalization (finalize)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 2.525-2.568 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:finalize\",\"label\":\"Phase: contract finalization (finalize)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 2.525-2.568 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "bitnami-redis/lean phase:generate_values_schema_with_report",
             "value": 0.5652,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:generate_values_schema_with_report\",\"label\":\"Phase: schema generation (generate_values_schema_with_report)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 2.525-2.568 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:generate_values_schema_with_report\",\"label\":\"Phase: schema generation (generate_values_schema_with_report)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 2.525-2.568 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "bitnami-redis/lean phase:collect_conditional_schemas",
             "value": 0.2385,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:collect_conditional_schemas\",\"label\":\"Phase: conditional schemas (collect_conditional_schemas)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 2.525-2.568 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:collect_conditional_schemas\",\"label\":\"Phase: conditional schemas (collect_conditional_schemas)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 2.525-2.568 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "bitnami-redis/lean phase:append_selected_constraints",
             "value": 0.0521,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:append_selected_constraints\",\"label\":\"Phase: selected constraints (append_selected_constraints)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 2.525-2.568 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:append_selected_constraints\",\"label\":\"Phase: selected constraints (append_selected_constraints)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 2.525-2.568 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "bitnami-redis/lean phase:minimize_schema",
             "value": 0.012,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:minimize_schema\",\"label\":\"Phase: minimization (minimize_schema)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 2.525-2.568 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:minimize_schema\",\"label\":\"Phase: minimization (minimize_schema)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 2.525-2.568 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kube-prometheus-stack/full cpu",
             "value": 29.3595,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"cpu\",\"label\":\"CPU time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 28.610-29.438 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"cpu\",\"label\":\"CPU time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 28.610-29.438 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kube-prometheus-stack/full wall",
             "value": 29.3639,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"wall\",\"label\":\"Wall time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 28.610-29.438 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"wall\",\"label\":\"Wall time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 28.610-29.438 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kube-prometheus-stack/full peak-rss",
@@ -6773,49 +6773,49 @@ window.BENCHMARK_DATA = {
             "name": "kube-prometheus-stack/full phase:analyze_charts",
             "value": 3.5731,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:analyze_charts\",\"label\":\"Phase: template analysis (analyze_charts)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 28.610-29.438 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:analyze_charts\",\"label\":\"Phase: template analysis (analyze_charts)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 28.610-29.438 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kube-prometheus-stack/full phase:finalize",
             "value": 2.3432,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:finalize\",\"label\":\"Phase: contract finalization (finalize)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 28.610-29.438 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:finalize\",\"label\":\"Phase: contract finalization (finalize)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 28.610-29.438 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kube-prometheus-stack/full phase:generate_values_schema_with_report",
             "value": 23.338,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:generate_values_schema_with_report\",\"label\":\"Phase: schema generation (generate_values_schema_with_report)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 28.610-29.438 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:generate_values_schema_with_report\",\"label\":\"Phase: schema generation (generate_values_schema_with_report)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 28.610-29.438 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kube-prometheus-stack/full phase:collect_conditional_schemas",
             "value": 4.2378,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:collect_conditional_schemas\",\"label\":\"Phase: conditional schemas (collect_conditional_schemas)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 28.610-29.438 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:collect_conditional_schemas\",\"label\":\"Phase: conditional schemas (collect_conditional_schemas)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 28.610-29.438 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kube-prometheus-stack/full phase:append_selected_constraints",
             "value": 11.5318,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:append_selected_constraints\",\"label\":\"Phase: selected constraints (append_selected_constraints)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 28.610-29.438 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:append_selected_constraints\",\"label\":\"Phase: selected constraints (append_selected_constraints)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 28.610-29.438 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kube-prometheus-stack/full phase:minimize_schema",
             "value": 1.6918,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:minimize_schema\",\"label\":\"Phase: minimization (minimize_schema)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 28.610-29.438 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:minimize_schema\",\"label\":\"Phase: minimization (minimize_schema)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 28.610-29.438 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kube-prometheus-stack/lean cpu",
             "value": 17.8822,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"cpu\",\"label\":\"CPU time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 17.558-18.439 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"cpu\",\"label\":\"CPU time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 17.558-18.439 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kube-prometheus-stack/lean wall",
             "value": 17.9247,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"wall\",\"label\":\"Wall time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 17.558-18.439 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"wall\",\"label\":\"Wall time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 17.558-18.439 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kube-prometheus-stack/lean peak-rss",
@@ -6845,49 +6845,49 @@ window.BENCHMARK_DATA = {
             "name": "kube-prometheus-stack/lean phase:analyze_charts",
             "value": 3.4664,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:analyze_charts\",\"label\":\"Phase: template analysis (analyze_charts)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 17.558-18.439 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:analyze_charts\",\"label\":\"Phase: template analysis (analyze_charts)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 17.558-18.439 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kube-prometheus-stack/lean phase:finalize",
             "value": 2.1979,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:finalize\",\"label\":\"Phase: contract finalization (finalize)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 17.558-18.439 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:finalize\",\"label\":\"Phase: contract finalization (finalize)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 17.558-18.439 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kube-prometheus-stack/lean phase:generate_values_schema_with_report",
             "value": 12.6238,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:generate_values_schema_with_report\",\"label\":\"Phase: schema generation (generate_values_schema_with_report)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 17.558-18.439 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:generate_values_schema_with_report\",\"label\":\"Phase: schema generation (generate_values_schema_with_report)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 17.558-18.439 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kube-prometheus-stack/lean phase:collect_conditional_schemas",
             "value": 4.1597,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:collect_conditional_schemas\",\"label\":\"Phase: conditional schemas (collect_conditional_schemas)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 17.558-18.439 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:collect_conditional_schemas\",\"label\":\"Phase: conditional schemas (collect_conditional_schemas)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 17.558-18.439 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kube-prometheus-stack/lean phase:append_selected_constraints",
             "value": 4.1541,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:append_selected_constraints\",\"label\":\"Phase: selected constraints (append_selected_constraints)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 17.558-18.439 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:append_selected_constraints\",\"label\":\"Phase: selected constraints (append_selected_constraints)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 17.558-18.439 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kube-prometheus-stack/lean phase:minimize_schema",
             "value": 0.435,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:minimize_schema\",\"label\":\"Phase: minimization (minimize_schema)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 17.558-18.439 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:minimize_schema\",\"label\":\"Phase: minimization (minimize_schema)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 17.558-18.439 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "oncall/lean cpu",
             "value": 19.5856,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"cpu\",\"label\":\"CPU time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 19.506-19.617 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"cpu\",\"label\":\"CPU time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 19.506-19.617 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "oncall/lean wall",
             "value": 19.5896,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"wall\",\"label\":\"Wall time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 19.506-19.617 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"wall\",\"label\":\"Wall time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 19.506-19.617 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "oncall/lean peak-rss",
@@ -6917,37 +6917,37 @@ window.BENCHMARK_DATA = {
             "name": "oncall/lean phase:analyze_charts",
             "value": 3.2064,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:analyze_charts\",\"label\":\"Phase: template analysis (analyze_charts)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 19.506-19.617 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:analyze_charts\",\"label\":\"Phase: template analysis (analyze_charts)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 19.506-19.617 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "oncall/lean phase:finalize",
             "value": 2.0034,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:finalize\",\"label\":\"Phase: contract finalization (finalize)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 19.506-19.617 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:finalize\",\"label\":\"Phase: contract finalization (finalize)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 19.506-19.617 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "oncall/lean phase:generate_values_schema_with_report",
             "value": 15.6174,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:generate_values_schema_with_report\",\"label\":\"Phase: schema generation (generate_values_schema_with_report)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 19.506-19.617 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:generate_values_schema_with_report\",\"label\":\"Phase: schema generation (generate_values_schema_with_report)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 19.506-19.617 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "oncall/lean phase:collect_conditional_schemas",
             "value": 3.9028,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:collect_conditional_schemas\",\"label\":\"Phase: conditional schemas (collect_conditional_schemas)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 19.506-19.617 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:collect_conditional_schemas\",\"label\":\"Phase: conditional schemas (collect_conditional_schemas)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 19.506-19.617 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "oncall/lean phase:append_selected_constraints",
             "value": 7.6631,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:append_selected_constraints\",\"label\":\"Phase: selected constraints (append_selected_constraints)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 19.506-19.617 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:append_selected_constraints\",\"label\":\"Phase: selected constraints (append_selected_constraints)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 19.506-19.617 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "oncall/lean phase:minimize_schema",
             "value": 0.6792,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:minimize_schema\",\"label\":\"Phase: minimization (minimize_schema)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 19.506-19.617 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:minimize_schema\",\"label\":\"Phase: minimization (minimize_schema)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 19.506-19.617 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           }
         ]
       },
@@ -8387,13 +8387,13 @@ window.BENCHMARK_DATA = {
             "name": "kubeview/full cpu",
             "value": 0.1001,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"cpu\",\"label\":\"CPU time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 0.099-0.102 s over 9 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"cpu\",\"label\":\"CPU time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 0.099-0.102 s over 9 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kubeview/full wall",
             "value": 0.1007,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"wall\",\"label\":\"Wall time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 0.099-0.102 s over 9 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"wall\",\"label\":\"Wall time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 0.099-0.102 s over 9 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kubeview/full peak-rss",
@@ -8423,37 +8423,37 @@ window.BENCHMARK_DATA = {
             "name": "kubeview/full phase:analyze_charts",
             "value": 0.0166,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:analyze_charts\",\"label\":\"Phase: template analysis (analyze_charts)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 0.099-0.102 s over 9 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:analyze_charts\",\"label\":\"Phase: template analysis (analyze_charts)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 0.099-0.102 s over 9 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kubeview/full phase:finalize",
             "value": 0.0015,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:finalize\",\"label\":\"Phase: contract finalization (finalize)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 0.099-0.102 s over 9 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:finalize\",\"label\":\"Phase: contract finalization (finalize)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 0.099-0.102 s over 9 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kubeview/full phase:generate_values_schema_with_report",
             "value": 0.0796,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:generate_values_schema_with_report\",\"label\":\"Phase: schema generation (generate_values_schema_with_report)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 0.099-0.102 s over 9 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:generate_values_schema_with_report\",\"label\":\"Phase: schema generation (generate_values_schema_with_report)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 0.099-0.102 s over 9 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kubeview/full phase:collect_conditional_schemas",
             "value": 0.0082,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:collect_conditional_schemas\",\"label\":\"Phase: conditional schemas (collect_conditional_schemas)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 0.099-0.102 s over 9 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:collect_conditional_schemas\",\"label\":\"Phase: conditional schemas (collect_conditional_schemas)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 0.099-0.102 s over 9 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kubeview/full phase:append_selected_constraints",
             "value": 0.0077,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:append_selected_constraints\",\"label\":\"Phase: selected constraints (append_selected_constraints)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 0.099-0.102 s over 9 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:append_selected_constraints\",\"label\":\"Phase: selected constraints (append_selected_constraints)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 0.099-0.102 s over 9 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kubeview/full phase:minimize_schema",
             "value": 0.0073,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:minimize_schema\",\"label\":\"Phase: minimization (minimize_schema)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 0.099-0.102 s over 9 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:minimize_schema\",\"label\":\"Phase: minimization (minimize_schema)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 0.099-0.102 s over 9 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "bitnami-redis/full instructions",
@@ -8465,13 +8465,13 @@ window.BENCHMARK_DATA = {
             "name": "bitnami-redis/full cpu",
             "value": 4.5385,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"cpu\",\"label\":\"CPU time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 4.527-4.542 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"cpu\",\"label\":\"CPU time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 4.527-4.542 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "bitnami-redis/full wall",
             "value": 4.5414,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"wall\",\"label\":\"Wall time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 4.527-4.542 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"wall\",\"label\":\"Wall time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 4.527-4.542 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "bitnami-redis/full peak-rss",
@@ -8501,49 +8501,49 @@ window.BENCHMARK_DATA = {
             "name": "bitnami-redis/full phase:analyze_charts",
             "value": 2.1595,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:analyze_charts\",\"label\":\"Phase: template analysis (analyze_charts)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 4.527-4.542 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:analyze_charts\",\"label\":\"Phase: template analysis (analyze_charts)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 4.527-4.542 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "bitnami-redis/full phase:finalize",
             "value": 0.4452,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:finalize\",\"label\":\"Phase: contract finalization (finalize)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 4.527-4.542 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:finalize\",\"label\":\"Phase: contract finalization (finalize)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 4.527-4.542 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "bitnami-redis/full phase:generate_values_schema_with_report",
             "value": 1.9094,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:generate_values_schema_with_report\",\"label\":\"Phase: schema generation (generate_values_schema_with_report)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 4.527-4.542 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:generate_values_schema_with_report\",\"label\":\"Phase: schema generation (generate_values_schema_with_report)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 4.527-4.542 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "bitnami-redis/full phase:collect_conditional_schemas",
             "value": 0.2763,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:collect_conditional_schemas\",\"label\":\"Phase: conditional schemas (collect_conditional_schemas)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 4.527-4.542 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:collect_conditional_schemas\",\"label\":\"Phase: conditional schemas (collect_conditional_schemas)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 4.527-4.542 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "bitnami-redis/full phase:append_selected_constraints",
             "value": 0.9534,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:append_selected_constraints\",\"label\":\"Phase: selected constraints (append_selected_constraints)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 4.527-4.542 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:append_selected_constraints\",\"label\":\"Phase: selected constraints (append_selected_constraints)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 4.527-4.542 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "bitnami-redis/full phase:minimize_schema",
             "value": 0.2249,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:minimize_schema\",\"label\":\"Phase: minimization (minimize_schema)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 4.527-4.542 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:minimize_schema\",\"label\":\"Phase: minimization (minimize_schema)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 4.527-4.542 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "bitnami-redis/lean cpu",
             "value": 3.1973,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"cpu\",\"label\":\"CPU time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 3.172-3.220 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"cpu\",\"label\":\"CPU time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 3.172-3.220 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "bitnami-redis/lean wall",
             "value": 3.1982,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"wall\",\"label\":\"Wall time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 3.172-3.220 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"wall\",\"label\":\"Wall time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 3.172-3.220 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "bitnami-redis/lean peak-rss",
@@ -8573,49 +8573,49 @@ window.BENCHMARK_DATA = {
             "name": "bitnami-redis/lean phase:analyze_charts",
             "value": 2.1841,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:analyze_charts\",\"label\":\"Phase: template analysis (analyze_charts)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 3.172-3.220 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:analyze_charts\",\"label\":\"Phase: template analysis (analyze_charts)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 3.172-3.220 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "bitnami-redis/lean phase:finalize",
             "value": 0.4522,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:finalize\",\"label\":\"Phase: contract finalization (finalize)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 3.172-3.220 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:finalize\",\"label\":\"Phase: contract finalization (finalize)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 3.172-3.220 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "bitnami-redis/lean phase:generate_values_schema_with_report",
             "value": 0.6443,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:generate_values_schema_with_report\",\"label\":\"Phase: schema generation (generate_values_schema_with_report)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 3.172-3.220 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:generate_values_schema_with_report\",\"label\":\"Phase: schema generation (generate_values_schema_with_report)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 3.172-3.220 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "bitnami-redis/lean phase:collect_conditional_schemas",
             "value": 0.2781,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:collect_conditional_schemas\",\"label\":\"Phase: conditional schemas (collect_conditional_schemas)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 3.172-3.220 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:collect_conditional_schemas\",\"label\":\"Phase: conditional schemas (collect_conditional_schemas)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 3.172-3.220 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "bitnami-redis/lean phase:append_selected_constraints",
             "value": 0.0625,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:append_selected_constraints\",\"label\":\"Phase: selected constraints (append_selected_constraints)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 3.172-3.220 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:append_selected_constraints\",\"label\":\"Phase: selected constraints (append_selected_constraints)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 3.172-3.220 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "bitnami-redis/lean phase:minimize_schema",
             "value": 0.0133,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:minimize_schema\",\"label\":\"Phase: minimization (minimize_schema)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 3.172-3.220 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:minimize_schema\",\"label\":\"Phase: minimization (minimize_schema)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 3.172-3.220 s over 5 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kube-prometheus-stack/full cpu",
             "value": 36.0521,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"cpu\",\"label\":\"CPU time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 35.843-36.083 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"cpu\",\"label\":\"CPU time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 35.843-36.083 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kube-prometheus-stack/full wall",
             "value": 36.0583,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"wall\",\"label\":\"Wall time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 35.843-36.083 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"wall\",\"label\":\"Wall time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 35.843-36.083 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kube-prometheus-stack/full peak-rss",
@@ -8645,49 +8645,49 @@ window.BENCHMARK_DATA = {
             "name": "kube-prometheus-stack/full phase:analyze_charts",
             "value": 4.2916,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:analyze_charts\",\"label\":\"Phase: template analysis (analyze_charts)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 35.843-36.083 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:analyze_charts\",\"label\":\"Phase: template analysis (analyze_charts)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 35.843-36.083 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kube-prometheus-stack/full phase:finalize",
             "value": 2.7425,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:finalize\",\"label\":\"Phase: contract finalization (finalize)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 35.843-36.083 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:finalize\",\"label\":\"Phase: contract finalization (finalize)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 35.843-36.083 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kube-prometheus-stack/full phase:generate_values_schema_with_report",
             "value": 28.2523,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:generate_values_schema_with_report\",\"label\":\"Phase: schema generation (generate_values_schema_with_report)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 35.843-36.083 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:generate_values_schema_with_report\",\"label\":\"Phase: schema generation (generate_values_schema_with_report)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 35.843-36.083 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kube-prometheus-stack/full phase:collect_conditional_schemas",
             "value": 5.2125,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:collect_conditional_schemas\",\"label\":\"Phase: conditional schemas (collect_conditional_schemas)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 35.843-36.083 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:collect_conditional_schemas\",\"label\":\"Phase: conditional schemas (collect_conditional_schemas)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 35.843-36.083 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kube-prometheus-stack/full phase:append_selected_constraints",
             "value": 14.1905,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:append_selected_constraints\",\"label\":\"Phase: selected constraints (append_selected_constraints)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 35.843-36.083 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:append_selected_constraints\",\"label\":\"Phase: selected constraints (append_selected_constraints)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 35.843-36.083 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kube-prometheus-stack/full phase:minimize_schema",
             "value": 1.9784,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:minimize_schema\",\"label\":\"Phase: minimization (minimize_schema)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 35.843-36.083 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:minimize_schema\",\"label\":\"Phase: minimization (minimize_schema)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 35.843-36.083 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kube-prometheus-stack/lean cpu",
             "value": 22.5567,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"cpu\",\"label\":\"CPU time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 22.456-22.638 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"cpu\",\"label\":\"CPU time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 22.456-22.638 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kube-prometheus-stack/lean wall",
             "value": 22.5889,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"wall\",\"label\":\"Wall time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 22.456-22.638 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"wall\",\"label\":\"Wall time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 22.456-22.638 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kube-prometheus-stack/lean peak-rss",
@@ -8717,49 +8717,49 @@ window.BENCHMARK_DATA = {
             "name": "kube-prometheus-stack/lean phase:analyze_charts",
             "value": 4.3122,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:analyze_charts\",\"label\":\"Phase: template analysis (analyze_charts)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 22.456-22.638 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:analyze_charts\",\"label\":\"Phase: template analysis (analyze_charts)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 22.456-22.638 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kube-prometheus-stack/lean phase:finalize",
             "value": 2.7271,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:finalize\",\"label\":\"Phase: contract finalization (finalize)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 22.456-22.638 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:finalize\",\"label\":\"Phase: contract finalization (finalize)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 22.456-22.638 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kube-prometheus-stack/lean phase:generate_values_schema_with_report",
             "value": 16.609,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:generate_values_schema_with_report\",\"label\":\"Phase: schema generation (generate_values_schema_with_report)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 22.456-22.638 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:generate_values_schema_with_report\",\"label\":\"Phase: schema generation (generate_values_schema_with_report)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 22.456-22.638 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kube-prometheus-stack/lean phase:collect_conditional_schemas",
             "value": 5.4521,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:collect_conditional_schemas\",\"label\":\"Phase: conditional schemas (collect_conditional_schemas)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 22.456-22.638 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:collect_conditional_schemas\",\"label\":\"Phase: conditional schemas (collect_conditional_schemas)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 22.456-22.638 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kube-prometheus-stack/lean phase:append_selected_constraints",
             "value": 5.8711,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:append_selected_constraints\",\"label\":\"Phase: selected constraints (append_selected_constraints)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 22.456-22.638 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:append_selected_constraints\",\"label\":\"Phase: selected constraints (append_selected_constraints)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 22.456-22.638 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "kube-prometheus-stack/lean phase:minimize_schema",
             "value": 0.6051,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:minimize_schema\",\"label\":\"Phase: minimization (minimize_schema)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 22.456-22.638 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:minimize_schema\",\"label\":\"Phase: minimization (minimize_schema)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 22.456-22.638 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "oncall/lean cpu",
             "value": 23.9158,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"cpu\",\"label\":\"CPU time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 23.872-23.951 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"cpu\",\"label\":\"CPU time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 23.872-23.951 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "oncall/lean wall",
             "value": 23.9193,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"wall\",\"label\":\"Wall time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 23.872-23.951 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"wall\",\"label\":\"Wall time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 23.872-23.951 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "oncall/lean peak-rss",
@@ -8789,37 +8789,37 @@ window.BENCHMARK_DATA = {
             "name": "oncall/lean phase:analyze_charts",
             "value": 3.9525,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:analyze_charts\",\"label\":\"Phase: template analysis (analyze_charts)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 23.872-23.951 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:analyze_charts\",\"label\":\"Phase: template analysis (analyze_charts)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 23.872-23.951 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "oncall/lean phase:finalize",
             "value": 2.4993,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:finalize\",\"label\":\"Phase: contract finalization (finalize)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 23.872-23.951 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:finalize\",\"label\":\"Phase: contract finalization (finalize)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 23.872-23.951 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "oncall/lean phase:generate_values_schema_with_report",
             "value": 18.8147,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:generate_values_schema_with_report\",\"label\":\"Phase: schema generation (generate_values_schema_with_report)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 23.872-23.951 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:generate_values_schema_with_report\",\"label\":\"Phase: schema generation (generate_values_schema_with_report)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 23.872-23.951 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "oncall/lean phase:collect_conditional_schemas",
             "value": 4.5953,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:collect_conditional_schemas\",\"label\":\"Phase: conditional schemas (collect_conditional_schemas)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 23.872-23.951 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:collect_conditional_schemas\",\"label\":\"Phase: conditional schemas (collect_conditional_schemas)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 23.872-23.951 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "oncall/lean phase:append_selected_constraints",
             "value": 9.4273,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:append_selected_constraints\",\"label\":\"Phase: selected constraints (append_selected_constraints)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 23.872-23.951 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:append_selected_constraints\",\"label\":\"Phase: selected constraints (append_selected_constraints)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 23.872-23.951 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           },
           {
             "name": "oncall/lean phase:minimize_schema",
             "value": 0.8381,
             "unit": "s",
-            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:minimize_schema\",\"label\":\"Phase: minimization (minimize_schema)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"INTEL(R) XEON(R) PLATINUM 8573C\"}},\"text\":\"cpu 23.872-23.951 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:minimize_schema\",\"label\":\"Phase: minimization (minimize_schema)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"Xeon Platinum 8573C\"}},\"text\":\"cpu 23.872-23.951 s over 3 runs; INTEL(R) XEON(R) PLATINUM 8573C; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           }
         ]
       },
