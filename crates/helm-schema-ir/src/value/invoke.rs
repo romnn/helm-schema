@@ -412,7 +412,7 @@ impl Executor<'_> {
                 let returned = if function == "tpl" {
                     exit.state.output.stripped_value()
                 } else {
-                    exit.state.output.as_value()
+                    super::text::capture(&exit.state.output, false)
                 };
                 exit.state.output = helper.output.clone();
                 if let Flow::Normal(normal) = &mut exit.flow {

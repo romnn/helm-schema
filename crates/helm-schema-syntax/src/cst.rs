@@ -2,7 +2,7 @@
 //! output holes, and comments, all carrying byte spans into the source.
 
 /// A half-open byte range `[start, end)` into the parsed source.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Span {
     /// Inclusive byte offset where the range begins.
     pub start: usize,

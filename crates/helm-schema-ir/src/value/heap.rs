@@ -306,7 +306,8 @@ impl Value {
                     no,
                 } => pending.extend([yes, no]),
                 ValueNode::Leaf(Leaf { datum, origin: _ }) => match datum {
-                    Datum::Scalar {
+                    Datum::Text(_)
+                    | Datum::Scalar {
                         go_type: _,
                         content: _,
                     }
@@ -426,7 +427,8 @@ impl HeapVersion {
             },
             ValueNode::Leaf(Leaf {
                 datum:
-                    Datum::Scalar {
+                    Datum::Text(_)
+                    | Datum::Scalar {
                         go_type: _,
                         content: _,
                     }

@@ -226,8 +226,6 @@ pub(super) fn finish_file(mut exits: Vec<super::Exit>) -> Vec<super::Exit> {
             continue;
         }
         let state = &mut exit.state;
-        let memo = Rc::clone(&state.heap.arena.predicate_memo);
-        super::output_layout::certify_plain_scalar_placements(state, &memo);
         let original = state.output.exact_text();
         let stripped = state.output.stripped_value();
         // Helm removes the marker after concatenation, including across emission boundaries.

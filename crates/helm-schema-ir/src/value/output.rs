@@ -1,12 +1,14 @@
 use super::scalar_value::ScalarContent;
 use super::{Datum, Exit, Flow, FrozenValue, Leaf, ObjectData, Value, ValueNode};
-use super::{DocumentExecution, ExecutedSite, ExecutedText, TextBuffer, TextPart};
+use super::{
+    DocumentExecution, ExecutedSite, ExecutedText, ObservationId, OutputNode, TextBuffer, TextPart,
+};
 use crate::abstract_value::AbstractValue;
 use helm_schema_core::{GuardValue, Predicate};
 use std::collections::{BTreeMap, BTreeSet};
 
 impl TextBuffer {
-    fn immutable_text(parts: Vec<TextPart>) -> Self {
+    fn immutable_text(parts: Vec<OutputNode>) -> Self {
         Self {
             parts,
             counts: BranchCounts::empty(),
@@ -19,25 +21,25 @@ impl TextBuffer {
         level = "debug",
         target = "helm_schema_ir::value::output_work"
     )]
-    fn push(&mut self, part: TextPart) {
+    fn push(&mut self, part: OutputNode) {
         self.parts.push(part);
         self.counts.increment();
         if self.counts.is_empty() || self.counts.definitely_below(129) {
             return;
         }
         if self.counts.definitely_at_least(129) {
-            self.parts = vec![TextPart::Unknown(self.inputs())];
+            self.parts = vec![TextPart::Unknown(self.inputs()).into()];
             self.counts = BranchCounts::constant_on(1, self.counts.domain.clone());
             return;
         }
         if self.counts.is_exhausted() {
-            self.parts = vec![TextPart::Unknown(self.inputs())];
+            self.parts = vec![TextPart::Unknown(self.inputs()).into()];
             self.counts = BranchCounts::constant_on(1, self.counts.domain.clone());
             return;
         }
         if let Some(arena) = &self.arena {
             let Ok(overflow) = self.counts.overflow(arena) else {
-                self.parts = vec![TextPart::Unknown(self.inputs())];
+                self.parts = vec![TextPart::Unknown(self.inputs()).into()];
                 self.counts = BranchCounts::constant_on(1, self.counts.domain.clone());
                 return;
             };
@@ -45,7 +47,7 @@ impl TextBuffer {
                 return;
             }
             tracing::debug!(reason = ?super::BoundReason::OutputTerms, "widen output");
-            let unknown = Self::immutable_text(vec![TextPart::Unknown(self.inputs())]);
+            let unknown = Self::immutable_text(vec![TextPart::Unknown(self.inputs()).into()]);
             if overflow == self.counts.domain {
                 self.parts = unknown.parts;
                 self.counts = BranchCounts::constant_on(1, self.counts.domain.clone());
@@ -62,15 +64,18 @@ impl TextBuffer {
                 .entered();
                 TextRetention::default().retain(&exact, &allowed)
             };
-            self.parts = vec![TextPart::Select {
-                decision,
-                yes: std::rc::Rc::new(unknown),
-                no: exact,
-            }];
+            self.parts = vec![
+                TextPart::Select {
+                    decision,
+                    yes: std::rc::Rc::new(unknown),
+                    no: exact,
+                }
+                .into(),
+            ];
             self.counts.reset_overflow(overflow);
         } else {
             // Variable counts are produced only by joins/restriction, which attach the arena.
-            self.parts = vec![TextPart::Unknown(self.inputs())];
+            self.parts = vec![TextPart::Unknown(self.inputs()).into()];
             self.counts = BranchCounts::constant_on(1, self.counts.domain.clone());
         }
     }
@@ -89,7 +94,7 @@ impl TextBuffer {
         level = "debug",
         target = "helm_schema_ir::value::output_work"
     )]
-    fn inputs(&self) -> BTreeSet<helm_schema_core::ValuesPath> {
+    pub(super) fn inputs(&self) -> BTreeSet<helm_schema_core::ValuesPath> {
         let mut inputs = BTreeSet::new();
         let mut pending = vec![self];
         let mut seen = BTreeSet::new();
@@ -98,7 +103,7 @@ impl TextBuffer {
                 continue;
             }
             for part in &buffer.parts {
-                match part {
+                match part.content() {
                     TextPart::Bytes(_) => {}
                     TextPart::Frozen(value) => inputs.extend(value.inputs()),
                     TextPart::Unknown(paths) => inputs.extend(paths.iter().cloned()),
@@ -147,23 +152,26 @@ impl TextBuffer {
         let no = Self::immutable_text(no.parts.iter().skip(prefix).cloned().collect());
         if !yes.parts.is_empty() || !no.parts.is_empty() {
             // The selector stores alternatives; each execution pays only for its selected source terms.
-            output.parts.push(TextPart::Select {
-                decision,
-                yes: std::rc::Rc::new(yes),
-                no: std::rc::Rc::new(no),
-            });
+            output.parts.push(
+                TextPart::Select {
+                    decision,
+                    yes: std::rc::Rc::new(yes),
+                    no: std::rc::Rc::new(no),
+                }
+                .into(),
+            );
         }
         output
     }
 
     pub(super) fn bytes(&mut self, bytes: &str) {
         if !bytes.is_empty() {
-            self.push(TextPart::Bytes(bytes.to_owned()));
+            self.push(TextPart::Bytes(bytes.to_owned()).into());
         }
     }
 
     pub(super) fn emit(&mut self, value: FrozenValue) {
-        self.push(TextPart::Frozen(value));
+        self.push(TextPart::Frozen(value).into());
     }
 
     pub(crate) fn exact_text(&self) -> Option<String> {
@@ -171,11 +179,7 @@ impl TextBuffer {
     }
 
     pub(super) fn stripped_value(&self) -> Value {
-        strip_no_value(&self.as_value(), &mut 128).unwrap_or_else(|| unknown_text(self.inputs()))
-    }
-
-    pub(super) fn as_value(&self) -> Value {
-        TextQuery::default().as_value(self)
+        super::text::capture(self, true)
     }
 }
 
@@ -199,7 +203,7 @@ impl TextRetention {
         let mut changed = allowed.is_impossible() && !buffer.parts.is_empty();
         if !allowed.is_impossible() {
             for part in &buffer.parts {
-                match part {
+                match part.content() {
                     TextPart::Bytes(_) | TextPart::Frozen(_) | TextPart::Unknown(_) => {
                         parts.push(part.clone());
                     }
@@ -215,11 +219,14 @@ impl TextRetention {
                             let retained_no = self.retain(no, allowed);
                             changed |= !std::rc::Rc::ptr_eq(yes, &retained_yes)
                                 || !std::rc::Rc::ptr_eq(no, &retained_no);
-                            parts.push(TextPart::Select {
-                                decision: std::rc::Rc::clone(decision),
-                                yes: retained_yes,
-                                no: retained_no,
-                            });
+                            parts.push(
+                                TextPart::Select {
+                                    decision: std::rc::Rc::clone(decision),
+                                    yes: retained_yes,
+                                    no: retained_no,
+                                }
+                                .into(),
+                            );
                         }
                     }
                 }
@@ -237,12 +244,11 @@ impl TextRetention {
 
 // Each query visits the shared output graph, rather than re-expanding its execution paths.
 #[derive(Default)]
-struct TextQuery {
+pub(super) struct TextQuery {
     uncertainty: BTreeMap<*const TextBuffer, bool>,
     widening_domains: BTreeMap<*const TextBuffer, Option<super::guard::RuntimeGuard>>,
     widened: BTreeMap<(*const TextBuffer, u64), bool>,
     text: BTreeMap<*const TextBuffer, Option<String>>,
-    values: BTreeMap<*const TextBuffer, Value>,
 }
 
 impl TextQuery {
@@ -257,7 +263,7 @@ impl TextQuery {
         }
         let mut domain = Some(super::guard::RuntimeGuard::False);
         for part in &buffer.parts {
-            let widened = match part {
+            let widened = match part.content() {
                 TextPart::Bytes(_) | TextPart::Frozen(_) => Some(super::guard::RuntimeGuard::False),
                 TextPart::Unknown(_) => Some(super::guard::RuntimeGuard::True),
                 TextPart::Select { decision, yes, no } => {
@@ -304,7 +310,7 @@ impl TextQuery {
         if let Some(result) = self.uncertainty.get(&key) {
             return *result;
         }
-        let result = buffer.parts.iter().any(|part| match part {
+        let result = buffer.parts.iter().any(|part| match part.content() {
             TextPart::Bytes(_) | TextPart::Frozen(_) => false,
             TextPart::Unknown(_) => true,
             TextPart::Select { decision, yes, no } => {
@@ -337,7 +343,7 @@ impl TextQuery {
         if let Some(result) = self.widened.get(&key) {
             return *result;
         }
-        let result = buffer.parts.iter().any(|part| match part {
+        let result = buffer.parts.iter().any(|part| match part.content() {
             TextPart::Bytes(_) | TextPart::Frozen(_) => false,
             TextPart::Unknown(_) => true,
             TextPart::Select { decision, yes, no } => {
@@ -373,7 +379,7 @@ impl TextQuery {
         let mut output = String::new();
         let mut exact = true;
         for part in &buffer.parts {
-            let text = match part {
+            let text = match part.content() {
                 TextPart::Bytes(bytes) => Some(bytes.clone()),
                 TextPart::Frozen(value) => value.exact_text(),
                 TextPart::Unknown(_) => None,
@@ -397,67 +403,16 @@ impl TextQuery {
         self.text.insert(key, result.clone());
         result
     }
-
-    fn as_value(&mut self, buffer: &TextBuffer) -> Value {
-        let key = std::ptr::from_ref(buffer);
-        if let Some(value) = self.values.get(&key) {
-            return value.clone();
-        }
-        let value = if let Some(text) = self.exact_text(buffer) {
-            Value::string(&text)
-        } else {
-            let mut result = Value::string("");
-            for part in &buffer.parts {
-                let value = match part {
-                    TextPart::Bytes(bytes) => Value::string(bytes),
-                    TextPart::Frozen(value) => {
-                        let mut leaves = 0;
-                        frozen_text_value(value, &mut leaves)
-                            .unwrap_or_else(|| unknown_text(value.inputs()))
-                    }
-                    TextPart::Unknown(inputs) => unknown_text(inputs.clone()),
-                    TextPart::Select { decision, yes, no } => Value::select(
-                        std::rc::Rc::clone(decision),
-                        self.as_value(yes),
-                        self.as_value(no),
-                    ),
-                };
-                let mut leaves = 0;
-                let Some(joined) = concatenate_text(&result, &value, &mut leaves) else {
-                    tracing::debug!(reason = ?super::BoundReason::OutputTerms, "widen scalar output alternatives");
-                    result = unknown_text(buffer.inputs());
-                    break;
-                };
-                result = joined;
-            }
-            result
-        };
-        self.values.insert(key, value.clone());
-        value
-    }
 }
 
-fn strip_no_value(value: &Value, remaining: &mut usize) -> Option<Value> {
-    if *remaining == 0 {
-        return None;
-    }
-    *remaining -= 1;
-    match value.node.as_ref() {
-        ValueNode::Select { decision, yes, no } => Some(Value::select(
-            std::rc::Rc::clone(decision),
-            strip_no_value(yes, remaining)?,
-            strip_no_value(no, remaining)?,
-        )),
-        ValueNode::Leaf(Leaf {
-            datum: _,
-            origin: _,
-        }) => Some(match value.constant() {
-            Some(GuardValue::String(text)) => Value::string(&text.replace("<no value>", "")),
-            Some(
-                GuardValue::Null | GuardValue::Bool(_) | GuardValue::Int(_) | GuardValue::Float(_),
-            )
-            | None => unknown_text(value.inputs()),
-        }),
+impl OutputNode {
+    fn same_part(&self, other: &Self) -> bool {
+        let Self { occurrences, part } = self;
+        let Self {
+            occurrences: other_occurrences,
+            part: other_part,
+        } = other;
+        occurrences == other_occurrences && part.same_part(other_part)
     }
 }
 
@@ -482,114 +437,11 @@ fn same_frozen_value(left: &FrozenValue, right: &FrozenValue) -> bool {
     std::rc::Rc::ptr_eq(&left.heap, &right.heap) && left.value == right.value
 }
 
-fn unknown_text(inputs: BTreeSet<helm_schema_core::ValuesPath>) -> Value {
-    Value {
-        node: std::rc::Rc::new(ValueNode::Leaf(Leaf {
-            datum: Datum::Scalar {
-                go_type: super::ScalarType::String,
-                content: None,
-            },
-            origin: super::Origin {
-                identity: None,
-                influences: inputs,
-            },
-        })),
-    }
-}
-
-fn frozen_text_value(value: &FrozenValue, leaves: &mut usize) -> Option<Value> {
-    match value.value.node.as_ref() {
-        ValueNode::Select { decision, yes, no } => Some(Value::select(
-            std::rc::Rc::clone(decision),
-            frozen_text_value(
-                &FrozenValue {
-                    heap: std::rc::Rc::clone(&value.heap),
-                    value: yes.clone(),
-                },
-                leaves,
-            )?,
-            frozen_text_value(
-                &FrozenValue {
-                    heap: std::rc::Rc::clone(&value.heap),
-                    value: no.clone(),
-                },
-                leaves,
-            )?,
-        )),
-        ValueNode::Leaf(Leaf {
-            datum: _,
-            origin: _,
-        }) => {
-            *leaves += 1;
-            if *leaves > super::MAX_SCALAR_DISPATCH_STATES {
-                return None;
-            }
-            Some(
-                value
-                    .exact_text()
-                    .map_or_else(|| unknown_text(value.inputs()), |text| Value::string(&text)),
-            )
-        }
-    }
-}
-
-fn concatenate_text(left: &Value, right: &Value, leaves: &mut usize) -> Option<Value> {
-    match (left.node.as_ref(), right.node.as_ref()) {
-        (
-            ValueNode::Select { decision, yes, no },
-            ValueNode::Leaf(Leaf {
-                datum: _,
-                origin: _,
-            })
-            | ValueNode::Select {
-                decision: _,
-                yes: _,
-                no: _,
-            },
-        ) => Some(Value::select(
-            std::rc::Rc::clone(decision),
-            concatenate_text(yes, &right.under(decision, true), leaves)?,
-            concatenate_text(no, &right.under(decision, false), leaves)?,
-        )),
-        (
-            ValueNode::Leaf(Leaf {
-                datum: _,
-                origin: _,
-            }),
-            ValueNode::Select { decision, yes, no },
-        ) => Some(Value::select(
-            std::rc::Rc::clone(decision),
-            concatenate_text(left, yes, leaves)?,
-            concatenate_text(left, no, leaves)?,
-        )),
-        (
-            ValueNode::Leaf(Leaf {
-                datum: _,
-                origin: _,
-            }),
-            ValueNode::Leaf(Leaf {
-                datum: _,
-                origin: _,
-            }),
-        ) => {
-            *leaves += 1;
-            if *leaves > super::MAX_SCALAR_DISPATCH_STATES {
-                return None;
-            }
-            if let (Some(GuardValue::String(left)), Some(GuardValue::String(right))) =
-                (left.constant(), right.constant())
-            {
-                Some(Value::string(&format!("{left}{right}")))
-            } else {
-                Some(unknown_text(
-                    left.inputs().union(&right.inputs()).cloned().collect(),
-                ))
-            }
-        }
-    }
-}
-
 impl ExecutedSite {
+    pub(crate) fn plain_scalar_placement(&self) -> helm_schema_core::PlainScalarPlacement {
+        self.plain_scalar_placement
+    }
+
     fn same_site(&self, other: &Self) -> bool {
         let Self {
             program,
@@ -805,6 +657,7 @@ fn collect_scalar_projection(
             }
             *remaining -= 1;
             let content = match datum {
+                Datum::Text(_) => None,
                 Datum::Scalar {
                     go_type: _,
                     content: Some(content),
@@ -1399,17 +1252,28 @@ impl super::State {
         source_path: Option<&str>,
         bytes: &str,
     ) {
-        self.output.bytes(bytes);
+        if bytes.is_empty() {
+            return;
+        }
+        let slots = self.reserve_observation();
+        self.output.push(OutputNode {
+            occurrences: slots
+                .iter()
+                .map(|slot| ObservationId {
+                    program: self.program,
+                    ordinal: slot.ordinal,
+                    span,
+                })
+                .collect(),
+            part: TextPart::Bytes(bytes.to_owned()),
+        });
         if self.output.is_widened_under(
             &self.heap.arena.runtime_path(&self.active),
             &self.heap.arena,
         ) {
             self.output_widened = true;
         }
-        if bytes.is_empty() {
-            return;
-        }
-        for slot in self.reserve_observation() {
+        for slot in slots {
             self.text_sites.push(ExecutedText {
                 program: self.program,
                 rendered_unchanged: true,
@@ -1443,8 +1307,19 @@ impl super::State {
         }
         let value = self.heap.freeze(&self.consumed(value));
         let raw_format_inputs = raw_format_inputs(&value.value, self);
+        let slots = self.reserve_observation();
         if rendered {
-            self.output.emit(value.clone());
+            self.output.push(OutputNode {
+                occurrences: slots
+                    .iter()
+                    .map(|slot| ObservationId {
+                        program: self.program,
+                        ordinal: slot.ordinal,
+                        span,
+                    })
+                    .collect(),
+                part: TextPart::Frozen(value.clone()),
+            });
         }
         if self.output.is_widened_under(
             &self.heap.arena.runtime_path(&self.active),
@@ -1452,7 +1327,7 @@ impl super::State {
         ) {
             self.output_widened = true;
         }
-        for slot in self.reserve_observation() {
+        for slot in slots {
             self.sites.push(ExecutedSite {
                 program: self.program,
                 rendered_unchanged: true,
@@ -1473,71 +1348,19 @@ impl super::State {
         }
     }
 }
-struct SpanTextPiece {
-    ordinal: usize,
-    condition: Predicate,
-    text: Option<String>,
-}
-
-struct SpanTextAlternative {
-    condition: Predicate,
-    text: Option<String>,
-}
-
-fn partition_span_text(
-    condition: Predicate,
-    mut pieces: Vec<SpanTextPiece>,
-    memo: &helm_schema_core::PredicateMemo,
-) -> Option<Vec<SpanTextAlternative>> {
-    pieces.sort_by_key(|piece| piece.ordinal);
-    let mut alternatives = vec![SpanTextAlternative {
-        condition,
-        text: Some(String::new()),
-    }];
-    for SpanTextPiece {
-        ordinal: _,
-        condition: guard,
-        text: piece,
-    } in pieces
-    {
-        let mut next = Vec::new();
-        for SpanTextAlternative { condition, text } in alternatives {
-            let included = memo.normalize(Predicate::all(vec![condition.clone(), guard.clone()]));
-            let excluded = memo.normalize(Predicate::all(vec![condition, guard.clone().negated()]));
-            if !memo.exactly_implies(&included, &Predicate::False) {
-                next.push(SpanTextAlternative {
-                    condition: included,
-                    text: text.clone().zip(piece.as_ref()).map(|(mut text, piece)| {
-                        text.push_str(piece);
-                        text
-                    }),
-                });
-            }
-            if !memo.exactly_implies(&excluded, &Predicate::False) {
-                next.push(SpanTextAlternative {
-                    condition: excluded,
-                    text,
-                });
-            }
-            if next.len() > super::MAX_SCALAR_DISPATCH_STATES {
-                return None;
-            }
-        }
-        alternatives = next;
-    }
-    Some(alternatives)
-}
-
 impl DocumentExecution {
-    pub(super) fn new(exits: Vec<Exit>, output: super::FileOutput) -> Self {
-        let abort = super::yaml::abort_predicate(&exits, output);
+    pub(super) fn new(mut exits: Vec<Exit>, output: super::FileOutput) -> Self {
+        let site_index = super::site_index::SiteIndex::new(&exits);
+        let placement = super::yaml::FilePlacement::seal(&exits, output);
+        placement.certify_sites(&mut exits);
         let exits = super::session::finish_file(exits);
         let root_programs = exits.iter().map(|exit| exit.state.program).collect();
         let mut execution = Self {
             exits,
             root_programs,
+            site_index,
             observed_facts: crate::observed_facts::ObservedFacts::default(),
-            abort,
+            placement,
         };
         for read in execution
             .exits
@@ -1638,97 +1461,25 @@ impl DocumentExecution {
     pub(crate) fn observed_facts(&self) -> &crate::observed_facts::ObservedFacts {
         &self.observed_facts
     }
-    pub(crate) fn text_for_span<'a>(
-        &'a self,
-        span: helm_schema_syntax::Span,
-        source_path: Option<&'a str>,
-    ) -> impl Iterator<Item = (Predicate, Option<String>)> + 'a {
-        self.exits
-            .iter()
-            .filter(|exit| matches!(exit.flow, Flow::Normal(_)))
-            .flat_map(move |exit| {
-                let condition = exit.state.path_predicate();
-                let fallback = || vec![(condition.clone(), None)];
-                if condition.contains_approximation()
-                    || exit.state.observation_count.overflow_under(
-                        &exit.state.heap.arena.runtime_path(&exit.state.active),
-                        &exit.state.heap.arena,
-                    )
-                    || exit
-                        .state
-                        .active
-                        .iter()
-                        .any(|edge| edge.test.coverage == super::Coverage::Partial)
-                {
-                    return fallback();
-                }
-                let memo = helm_schema_core::PredicateMemo::new();
-                let mut pieces = Vec::new();
-                for site in &exit.state.text_sites {
-                    if !self.root_programs.contains(&site.program)
-                        || site.source_path.as_deref() != source_path
-                        || site.span.start >= span.end
-                        || span.start >= site.span.end
-                        || memo.exactly_implies(&condition, &site.condition.negated())
-                    {
-                        continue;
-                    }
-                    let start = span
-                        .start
-                        .saturating_sub(site.span.start)
-                        .min(site.bytes.len());
-                    let end = span
-                        .end
-                        .saturating_sub(site.span.start)
-                        .min(site.bytes.len());
-                    if site.condition.contains_approximation() {
-                        return fallback();
-                    }
-                    pieces.push(SpanTextPiece {
-                        ordinal: site.ordinal,
-                        condition: site.condition.clone(),
-                        text: (site.coverage_exact && site.rendered_unchanged)
-                            .then(|| site.bytes.get(start..end).map(str::to_owned))
-                            .flatten(),
-                    });
-                    if pieces.len() > super::MAX_SCALAR_DISPATCH_STATES {
-                        return fallback();
-                    }
-                }
-                for site in &exit.state.sites {
-                    if !self.root_programs.contains(&site.program)
-                        || !site.rendered
-                        || site.source_path.as_deref() != source_path
-                        || site.span.start >= span.end
-                        || span.start >= site.span.end
-                        || memo.exactly_implies(&condition, &site.condition.negated())
-                    {
-                        continue;
-                    }
-                    if site.condition.contains_approximation() {
-                        return fallback();
-                    }
-                    pieces.push(SpanTextPiece {
-                        ordinal: site.ordinal,
-                        condition: site.condition.clone(),
-                        text: (site.coverage_exact && site.rendered_unchanged)
-                            .then(|| site.value.exact_text())
-                            .flatten(),
-                    });
-                    if pieces.len() > super::MAX_SCALAR_DISPATCH_STATES {
-                        return fallback();
-                    }
-                }
-                let Some(alternatives) = partition_span_text(condition.clone(), pieces, &memo)
-                else {
-                    return fallback();
-                };
-                alternatives
-                    .into_iter()
-                    .map(|SpanTextAlternative { condition, text }| (condition, text))
-                    .collect()
-            })
+    pub(crate) fn observations(
+        &self,
+        id: super::ObservationId,
+    ) -> impl Iterator<Item = super::site_index::Observation<'_>> {
+        self.site_index.observations(&self.exits, id)
     }
+
+    pub(crate) fn is_root_observation(&self, id: super::ObservationId) -> bool {
+        self.root_programs.contains(&id.program)
+    }
+
+    pub(crate) fn placed_documents(&self) -> impl Iterator<Item = super::yaml::PlacedDocument<'_>> {
+        self.placement.documents(&self.root_programs)
+    }
+
+    pub(crate) fn placement_inputs(&self) -> BTreeSet<helm_schema_core::ValuesPath> {
+        self.placement.inputs()
+    }
+
     pub(crate) fn text_sites(&self) -> impl Iterator<Item = &super::ExecutedText> {
         self.exits
             .iter()
@@ -1753,36 +1504,8 @@ impl DocumentExecution {
             Flow::Abort(_) | Flow::Break(_) | Flow::Continue(_) => None,
         })
     }
-    pub(crate) fn condition_for_span(
-        &self,
-        span: helm_schema_syntax::Span,
-        source_path: Option<&str>,
-    ) -> Predicate {
-        let text = self
-            .exits
-            .iter()
-            .filter(|exit| matches!(exit.flow, Flow::Normal(_)))
-            .flat_map(|exit| &exit.state.text_sites)
-            .filter(|site| {
-                self.root_programs.contains(&site.program)
-                    && site.source_path.as_deref() == source_path
-                    && site.span.start < span.end
-                    && span.start < site.span.end
-            })
-            .map(|site| site.condition.clone());
-        let actions = self
-            .sites()
-            .filter(|site| {
-                self.root_programs.contains(&site.program)
-                    && site.source_path() == source_path
-                    && site.span.start < span.end
-                    && span.start < site.span.end
-            })
-            .map(|site| site.condition.clone());
-        Predicate::Or(text.chain(actions).collect()).normalize_boolean()
-    }
     pub(crate) fn abort_predicate(&self) -> Predicate {
-        self.abort.clone()
+        self.placement.abort.clone()
     }
 }
 pub(super) fn exit_may_continue(exit: &Exit) -> bool {
@@ -1939,7 +1662,8 @@ fn project(
         }) => AbstractValue::StringSet(BTreeSet::from([text.clone()])),
         ValueNode::Leaf(Leaf {
             datum:
-                Datum::Scalar {
+                Datum::Text(_)
+                | Datum::Scalar {
                     go_type: _,
                     content: _,
                 }
@@ -2060,7 +1784,8 @@ fn json(
         }) => Some(serde_json::Value::Null),
         ValueNode::Leaf(Leaf {
             datum:
-                Datum::Scalar {
+                Datum::Text(_)
+                | Datum::Scalar {
                     go_type: _,
                     content: _,
                 }
@@ -2207,7 +1932,8 @@ fn original_identity_path(
             types: _,
             aliases: _,
         }) => origin.identity.clone(),
-        Datum::Scalar {
+        Datum::Text(_)
+        | Datum::Scalar {
             go_type: _,
             content:
                 Some(

@@ -11,19 +11,21 @@ pub(crate) mod kinds;
 mod namespace;
 mod operations;
 mod output;
-mod output_layout;
 mod query;
 mod quoted;
 mod read_set;
 pub(crate) mod scalar_value;
 mod session;
 mod shape_summary;
+mod site_index;
 mod state;
+mod text;
 mod window_exits;
-mod yaml;
+pub(crate) mod yaml;
 #[cfg(test)]
 pub(crate) use session::execute_document;
 pub(crate) use session::project_documents;
+pub(crate) use site_index::Observation;
 #[cfg(test)]
 pub(crate) use tests::execute_documents;
 
@@ -59,6 +61,7 @@ struct Leaf {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum Datum {
+    Text(text::FrozenText),
     Scalar {
         go_type: ScalarType,
         content: Option<ScalarContent>,
@@ -424,9 +427,41 @@ enum ArgumentForm {
 
 #[derive(Clone, Debug, Default)]
 pub(crate) struct TextBuffer {
-    parts: Vec<TextPart>,
+    parts: Vec<OutputNode>,
     counts: output::BranchCounts,
     arena: Option<Rc<Arena>>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub(crate) struct ObservationId {
+    pub(crate) program: u64,
+    pub(crate) ordinal: usize,
+    pub(crate) span: helm_schema_syntax::Span,
+}
+
+#[derive(Clone, Debug)]
+struct OutputNode {
+    occurrences: Vec<ObservationId>,
+    part: TextPart,
+}
+
+impl From<TextPart> for OutputNode {
+    fn from(part: TextPart) -> Self {
+        Self {
+            occurrences: Vec::new(),
+            part,
+        }
+    }
+}
+
+impl OutputNode {
+    fn content(&self) -> &TextPart {
+        let Self {
+            occurrences: _,
+            part,
+        } = self;
+        part
+    }
 }
 #[derive(Clone, Debug)]
 enum TextPart {
@@ -482,8 +517,9 @@ pub(crate) struct RenderedContainerUse {
 pub(crate) struct DocumentExecution {
     exits: Vec<Exit>,
     root_programs: BTreeSet<u64>,
+    site_index: site_index::SiteIndex,
     observed_facts: crate::observed_facts::ObservedFacts,
-    abort: Predicate,
+    placement: yaml::FilePlacement,
 }
 
 #[derive(Clone, Copy)]
@@ -723,6 +759,10 @@ mod member_host_tests;
 #[cfg(test)]
 #[path = "../tests/runtime_span_text.rs"]
 mod span_text_tests;
+
+#[cfg(test)]
+#[path = "../tests/runtime_span_compat.rs"]
+mod span_compat;
 
 const MAX_EXECUTION_ALTERNATIVES: usize = 4096;
 

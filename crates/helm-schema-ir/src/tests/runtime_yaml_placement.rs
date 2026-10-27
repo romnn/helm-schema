@@ -49,6 +49,11 @@ fn matches(predicate: &Predicate, values: &Value) -> eyre::Result<bool> {
                 .and_then(Value::as_str)
                 .is_some_and(|text| pattern.find(text).is_none())
         }
+        PredicateKind::Guard(Guard::Absent { path }) => at(values, path).is_none(),
+        PredicateKind::Guard(Guard::Eq {
+            path,
+            value: helm_schema_core::GuardValue::Null,
+        }) => at(values, path) == Some(&Value::Null),
         PredicateKind::Guard(Guard::Truthy { path }) => {
             at(values, path).is_some_and(|value| match value {
                 Value::Null => false,
@@ -83,6 +88,94 @@ fn rejection(source: &str, values: &Value) -> eyre::Result<bool> {
     let db = IrAnalysisDb::new(&defines);
     let execution = execute_document(source, Some("templates/probe.yaml"), &db);
     matches(&execution.abort_predicate(), values)
+}
+
+#[test]
+fn helm_decodes_only_the_first_document_in_each_manifest_chunk() -> eyre::Result<()> {
+    for (separator, rejected) in [("...", false), ("---", true)] {
+        let source = indoc::formatdoc! {r#"
+            apiVersion: v1
+            kind: ConfigMap
+            {separator}
+            value: "{{{{ .Values.t }}}}"
+        "#};
+        sim_assert_eq!(have: rejection(&source, &json!({"t": "a\"b"}))?, want: rejected);
+    }
+    let source = indoc::indoc! {r#"
+        value: "{{ .Values.t }}"
+        ...
+        [unterminated
+    "#};
+    sim_assert_eq!(have: rejection(source, &json!({"t": "a\"b"}))?, want: true);
+    sim_assert_eq!(have: rejection(source, &json!({"t": "safe"}))?, want: false);
+    Ok(())
+}
+
+#[test]
+fn quoted_escapes_match_helm_and_finalize_only_at_a_proven_boundary() -> eyre::Result<()> {
+    let source = r#"value: "{{ .Values.t }}{{ .Values.x }}""#;
+    for (text, next, rejected) in [
+        (r"a\/", "", true),
+        (r"a\'", "", false),
+        (r"a\uD800", "", true),
+        (r"a\uD7FF", "", false),
+        (r"a\uE000", "", false),
+        (r"a\uD", "800", true),
+        (r"a\U00110000", "", true),
+        (r"a\U0010FFFF", "", false),
+        (r"a\U0001D800", "", false),
+        (r"a\U001", "10000", true),
+        ("a\\", "", true),
+    ] {
+        sim_assert_eq!(have: rejection(source, &json!({"t": text, "x": next}))?, want: rejected, "{text:?} + {next:?}");
+    }
+    // Escaping the source quote can continue into later literal text and close there.
+    sim_assert_eq!(have: rejection(r#"value: "{{ .Values.t }}" suffix " # tail"#, &json!({"t": "a\\"}))?, want: false);
+    Ok(())
+}
+
+#[test]
+fn captured_text_preserves_splice_composition_and_frozen_inputs() -> eyre::Result<()> {
+    let direct = r#"value: "{{ .Values.t }}{{ .Values.x }}""#;
+    let captured = indoc::indoc! {r#"
+        {{- define "inner" -}}{{ .Values.t }}{{- end -}}
+        {{- define "outer" -}}{{ include "inner" . }}{{- end -}}
+        {{- $text := include "outer" . -}}
+        {{- $_ := set .Values "t" "safe" -}}
+        value: "{{ $text }}{{ .Values.x }}"
+    "#};
+    for (text, next) in [
+        ("a\"b", "abc"),
+        (r"a\x4", "g"),
+        (r"a\x4", "1"),
+        ("safe", "abc"),
+    ] {
+        let values = json!({"t": text, "x": next});
+        sim_assert_eq!(have: rejection(captured, &values)?, want: rejection(direct, &values)?, "{text:?} + {next:?}");
+    }
+    Ok(())
+}
+
+#[test]
+fn captured_choices_keep_their_guard_when_placed_in_yaml() -> eyre::Result<()> {
+    let source = indoc::indoc! {r#"
+        {{- define "h" -}}{{ if .Values.a }}{{ .Values.t }}{{ else }}safe{{ end }}{{- end -}}
+        value: "{{ include "h" . }}"
+    "#};
+    sim_assert_eq!(have: rejection(source, &json!({"a": true, "t": "a\"b"}))?, want: true);
+    sim_assert_eq!(have: rejection(source, &json!({"a": false, "t": "a\"b"}))?, want: false);
+    Ok(())
+}
+
+#[test]
+fn indentation_composes_with_captured_text_before_placement() -> eyre::Result<()> {
+    let source = indoc::indoc! {r#"
+        {{- define "h" -}}value: "{{ .Values.t }}"{{- end -}}
+        data:{{ include "h" . | indent 1 | nindent 1 }}
+    "#};
+    sim_assert_eq!(have: rejection(source, &json!({"t": "a\"b"}))?, want: true);
+    sim_assert_eq!(have: rejection(source, &json!({"t": "safe"}))?, want: false);
+    Ok(())
 }
 
 #[test]
@@ -192,4 +285,47 @@ fn notes_are_text_and_yaml_failures_do_not_stop_the_file_schedule() {
     let documents = crate::value::execute_documents(&sources, &db);
     // YAML decoding follows the shared-heap schedule, so the later template still aborts.
     sim_assert_eq!(have: documents[1].abort_predicate(), want: Predicate::True);
+}
+
+#[test]
+fn nested_marker_removal_does_not_invent_a_resource_identity() {
+    let source = indoc::indoc! {r#"
+        {{ tpl "apiVersion: v1\nkind: Con<no <no value>value>figMap\nvalue: {{ .Values.t }}" . }}
+    "#};
+    let db = IrAnalysisDb::new(&DefineIndex::new());
+    let execution = execute_document(source, Some("templates/probe.yaml"), &db);
+    let resources = execution
+        .placed_documents()
+        .flat_map(|document| crate::resource_identity::placed_resources(&document, &execution))
+        .map(|resource| resource.resource.kind)
+        .collect::<Vec<_>>();
+    sim_assert_eq!(have: resources, want: Vec::<String>::new());
+}
+
+#[test]
+fn quote_operation_preserves_the_following_scalar_boundary() -> eyre::Result<()> {
+    let source = indoc::indoc! {r#"
+        before: {{ .Values.before | quote }}
+        value: "{{ .Values.t }}"
+    "#};
+    for before in [json!("a\"b"), json!(null), json!({"a": [1, 2]})] {
+        sim_assert_eq!(have: rejection(source, &json!({"before": before, "t": "a\"b"}))?, want: true);
+    }
+    Ok(())
+}
+
+#[test]
+fn a_manifest_failure_survives_an_uncertain_later_manifest() -> eyre::Result<()> {
+    let source = indoc::indoc! {r#"
+        value: "{{ .Values.t }}"
+        ---
+        {{ if randAlphaNum 1 }}
+        later: one
+        {{ else }}
+        later: two
+        {{ end }}
+    "#};
+    sim_assert_eq!(have: rejection(source, &json!({"t": "a\"b"}))?, want: true);
+    sim_assert_eq!(have: rejection(source, &json!({"t": "safe"}))?, want: false);
+    Ok(())
 }

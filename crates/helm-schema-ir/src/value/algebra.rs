@@ -79,10 +79,26 @@ impl Value {
         self.restricted(&|decision| guard.implies_test(decision))
     }
 
-    fn restricted(&self, outcome: &impl Fn(&FrozenTest) -> Option<bool>) -> Self {
+    fn restricted(&self, outcome: &dyn Fn(&FrozenTest) -> Option<bool>) -> Self {
         match self.node.as_ref() {
             ValueNode::Leaf(Leaf {
-                datum: _,
+                datum: Datum::Text(text),
+                origin: _,
+            }) => text.projected(self, outcome),
+            ValueNode::Leaf(Leaf {
+                datum:
+                    Datum::Scalar {
+                        go_type: _,
+                        content: _,
+                    }
+                    | Datum::Map { view: _, target: _ }
+                    | Datum::Sequence(_)
+                    | Datum::Strings(_)
+                    | Datum::Slot {
+                        backing: _,
+                        index: _,
+                    }
+                    | Datum::Unknown(_),
                 origin: _,
             }) => self.clone(),
             ValueNode::Select { decision, yes, no } => {
@@ -93,8 +109,12 @@ impl Value {
                         no.restricted(outcome)
                     }
                 } else {
-                    let selected_yes = yes.restricted(outcome);
-                    let selected_no = no.restricted(outcome);
+                    let selected_yes = yes.restricted(&|test| {
+                        outcome(test).or_else(|| decision.implies_outcome(true, test))
+                    });
+                    let selected_no = no.restricted(&|test| {
+                        outcome(test).or_else(|| decision.implies_outcome(false, test))
+                    });
                     if Rc::ptr_eq(&yes.node, &selected_yes.node)
                         && Rc::ptr_eq(&no.node, &selected_no.node)
                     {
@@ -103,7 +123,7 @@ impl Value {
                     if selected_yes == selected_no {
                         return selected_yes;
                     }
-                    // Specialization only removes nodes, so the retained decision stays normalized.
+                    // Retain the enclosing decision while text queries specialize under its arms.
                     Self {
                         node: Rc::new(ValueNode::Select {
                             decision: Rc::clone(decision),

@@ -1,4 +1,4 @@
-//! A partial YAML quoted-token transducer; missing transitions mean unknown.
+//! A partial YAML scalar-token transducer; missing transitions mean unknown.
 
 use std::cell::RefCell;
 use std::collections::BTreeMap;
@@ -7,18 +7,33 @@ use helm_schema_core::{Guard, Predicate, PredicateMemo, ValuesPath};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(super) enum LexicalState {
+    PlainStart,
+    Plain,
     Double,
     Single,
     SingleEnd,
     Closed,
     Escape,
-    Hex(u8),
+    Hex1,
+    Hex2,
+    Hex3,
+    Hex4,
+    Unicode4,
+    Unicode5,
+    Unicode5Max,
+    Unicode6,
+    Unicode7,
+    Unicode8,
+    Surrogate3,
     Invalid,
 }
 
 impl LexicalState {
     fn step(self, character: char) -> Option<Self> {
-        use LexicalState::{Closed, Double, Escape, Hex, Invalid, Single, SingleEnd};
+        use LexicalState::{
+            Closed, Double, Escape, Hex1, Hex2, Hex3, Hex4, Invalid, Plain, PlainStart, Single,
+            SingleEnd, Surrogate3, Unicode4, Unicode5, Unicode5Max, Unicode6, Unicode7, Unicode8,
+        };
         if self == Invalid {
             return Some(Invalid);
         }
@@ -28,6 +43,9 @@ impl LexicalState {
             return None;
         }
         Some(match self {
+            PlainStart if character.is_ascii_alphanumeric() || character == '_' => Plain,
+            Plain if character.is_ascii_alphanumeric() || " _./-".contains(character) => Plain,
+            PlainStart | Plain => return None,
             Double => match character {
                 '"' => Closed,
                 '\\' => Escape,
@@ -48,43 +66,114 @@ impl LexicalState {
                 Invalid
             }
             Escape => match character {
-                'x' => Hex(2),
-                'u' => Hex(4),
-                'U' => Hex(8),
-                '0' | 'a' | 'b' | 't' | 'n' | 'v' | 'f' | 'r' | 'e' | ' ' | '"' | '/' | '\\'
-                | '\'' | 'N' | '_' | 'L' | 'P' => Double,
+                'x' => Hex2,
+                'u' => Unicode4,
+                'U' => Unicode8,
+                '0' | 'a' | 'b' | 't' | 'n' | 'v' | 'f' | 'r' | 'e' | ' ' | '"' | '\\' | '\''
+                | 'N' | '_' | 'L' | 'P' => Double,
                 _ => Invalid,
             },
-            Hex(remaining) => {
-                if !character.is_ascii_hexdigit() {
-                    Invalid
-                } else if remaining == 1 {
-                    Double
+            Hex1 => hexadecimal(character, Double),
+            Hex2 => hexadecimal(character, Hex1),
+            Hex3 => hexadecimal(character, Hex2),
+            Hex4 => hexadecimal(character, Hex3),
+            Unicode4 => match character {
+                'd' | 'D' => Surrogate3,
+                _ => hexadecimal(character, Hex3),
+            },
+            Unicode5 => match character {
+                '0' => Unicode4,
+                _ => hexadecimal(character, Hex4),
+            },
+            Unicode5Max => {
+                if character == '0' {
+                    Hex4
                 } else {
-                    Hex(remaining - 1)
+                    Invalid
+                }
+            }
+            Unicode6 => match character {
+                '0' => Unicode5,
+                '1' => Unicode5Max,
+                _ => Invalid,
+            },
+            Unicode7 => {
+                if character == '0' {
+                    Unicode6
+                } else {
+                    Invalid
+                }
+            }
+            Unicode8 => {
+                if character == '0' {
+                    Unicode7
+                } else {
+                    Invalid
+                }
+            }
+            Surrogate3 => {
+                if matches!(character, '0'..='7') {
+                    Hex2
+                } else {
+                    Invalid
                 }
             }
             Invalid => Invalid,
         })
     }
+
+    pub(super) fn is_unterminated(self) -> bool {
+        match self {
+            Self::PlainStart | Self::Plain | Self::Closed | Self::SingleEnd | Self::Invalid => {
+                false
+            }
+            Self::Double
+            | Self::Single
+            | Self::Escape
+            | Self::Hex1
+            | Self::Hex2
+            | Self::Hex3
+            | Self::Hex4
+            | Self::Unicode4
+            | Self::Unicode5
+            | Self::Unicode5Max
+            | Self::Unicode6
+            | Self::Unicode7
+            | Self::Unicode8
+            | Self::Surrogate3 => true,
+        }
+    }
 }
 
-const STATES: [LexicalState; 14] = [
-    LexicalState::Double,
-    LexicalState::Single,
-    LexicalState::SingleEnd,
-    LexicalState::Closed,
-    LexicalState::Escape,
-    LexicalState::Hex(1),
-    LexicalState::Hex(2),
-    LexicalState::Hex(3),
-    LexicalState::Hex(4),
-    LexicalState::Hex(5),
-    LexicalState::Hex(6),
-    LexicalState::Hex(7),
-    LexicalState::Hex(8),
-    LexicalState::Invalid,
-];
+fn hexadecimal(character: char, next: LexicalState) -> LexicalState {
+    if character.is_ascii_hexdigit() {
+        next
+    } else {
+        LexicalState::Invalid
+    }
+}
+
+// Reachability derives the finite state set from the transition function.
+static STATES: std::sync::LazyLock<Vec<LexicalState>> = std::sync::LazyLock::new(|| {
+    let mut states = vec![
+        LexicalState::PlainStart,
+        LexicalState::Double,
+        LexicalState::Single,
+    ];
+    let mut index = 0;
+    while let Some(state) = states.get(index).copied() {
+        for byte in b' '..=b'~' {
+            if let Some(next) = state.step(char::from(byte))
+                && !states.contains(&next)
+            {
+                states.push(next);
+            }
+        }
+        index += 1;
+    }
+    states.sort();
+    states
+});
 
 type Languages = BTreeMap<LexicalState, String>;
 thread_local! {
@@ -119,7 +208,8 @@ pub(super) fn input(
         LANGUAGES.with_borrow_mut(|cache| {
             let languages = cache.entry(state).or_insert_with(|| {
                 STATES
-                    .into_iter()
+                    .iter()
+                    .copied()
                     .filter_map(|end| language(state, end).map(|pattern| (end, pattern)))
                     .collect()
             });
@@ -143,7 +233,7 @@ pub(super) fn input(
     result
 }
 
-fn merge(
+pub(super) fn merge(
     states: &mut BTreeMap<LexicalState, Predicate>,
     state: LexicalState,
     condition: Predicate,
@@ -171,9 +261,21 @@ fn language(start: LexicalState, end: LexicalState) -> Option<String> {
                 .collect();
             if !characters.is_empty() {
                 let mut class = String::from("[");
-                for byte in characters {
+                let mut characters = characters.into_iter().peekable();
+                while let Some(first) = characters.next() {
                     use std::fmt::Write as _;
-                    write!(class, "\\x{byte:02x}").ok()?;
+                    let mut last = first;
+                    while characters.peek() == Some(&(last + 1)) {
+                        last += 1;
+                        characters.next();
+                    }
+                    write!(class, "\\x{first:02x}").ok()?;
+                    if last > first {
+                        if last > first + 1 {
+                            class.push('-');
+                        }
+                        write!(class, "\\x{last:02x}").ok()?;
+                    }
                 }
                 class.push(']');
                 edges.insert((from, to), class);

@@ -4,6 +4,35 @@ use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_core::{Predicate, ValuesPath};
 use test_util::prelude::sim_assert_eq;
 
+impl TextBuffer {
+    pub(in crate::value) fn as_value(&self) -> Value {
+        let original = crate::value::text::capture(self, false);
+        let projected = original.under_runtime(&crate::value::guard::RuntimeGuard::True);
+        let mut pending = vec![&projected];
+        while let Some(value) = pending.pop() {
+            match value.node.as_ref() {
+                crate::value::ValueNode::Select {
+                    decision: _,
+                    yes,
+                    no,
+                } => pending.extend([yes, no]),
+                crate::value::ValueNode::Leaf(crate::value::Leaf {
+                    datum: _,
+                    origin: _,
+                }) => {
+                    if !matches!(
+                        value.constant(),
+                        Some(helm_schema_core::GuardValue::String(_))
+                    ) {
+                        return original;
+                    }
+                }
+            }
+        }
+        projected
+    }
+}
+
 struct SharedOutput {
     state: State,
     buffer: TextBuffer,
@@ -15,9 +44,12 @@ fn shared_output(depth: usize, unknown: bool) -> SharedOutput {
     left.bytes("x");
     let mut right = TextBuffer::default();
     if unknown {
-        right.push(TextPart::Unknown(std::collections::BTreeSet::from([
-            ValuesPath::parse("input"),
-        ])));
+        right.push(
+            TextPart::Unknown(std::collections::BTreeSet::from([ValuesPath::parse(
+                "input",
+            )]))
+            .into(),
+        );
     } else {
         right.emit(state.heap.freeze(&Value::string("x")));
     }
@@ -54,7 +86,7 @@ fn exact_shared_output_queries_visit_buffers_instead_of_execution_paths() {
         sim_assert_eq!(have: query.widened.len(), want: 0);
         sim_assert_eq!(have: query.exact_text(&buffer), want: Some("x".to_owned()));
         assert!(query.text.len() <= 4 * depth + 3);
-        sim_assert_eq!(have: query.as_value(&buffer).constant().cloned(), want: Some(helm_schema_core::GuardValue::String("x".to_owned())));
+        sim_assert_eq!(have: buffer.as_value().constant().cloned(), want: Some(helm_schema_core::GuardValue::String("x".to_owned())));
     }
 }
 
@@ -64,10 +96,15 @@ fn uncertain_shared_output_conversion_reuses_scalar_and_text_subqueries() {
         let SharedOutput { state: _, buffer } = shared_output(depth, true);
         let mut query = TextQuery::default();
         sim_assert_eq!(have: query.exact_text(&buffer), want: None);
-        let value = query.as_value(&buffer);
+        let value = buffer.as_value();
         sim_assert_eq!(have: value.inputs(), want: std::collections::BTreeSet::from([ValuesPath::parse("input")]));
         assert!(query.text.len() <= 4 * depth + 3);
-        assert!(query.values.len() <= 4 * depth + 3);
+        assert!(
+            matches!(value.node.as_ref(), crate::value::ValueNode::Leaf(crate::value::Leaf {
+            datum: crate::value::Datum::Text(text), origin: _,
+        }) if matches!(text.0.as_ref(), crate::value::text::TextTerm::Capture { graph, strip_marker: false }
+            if graph.parts.len() == buffer.parts.len()))
+        );
         sim_assert_eq!(have: buffer.inputs(), want: std::collections::BTreeSet::from([ValuesPath::parse("input")]));
     }
 }
@@ -110,7 +147,10 @@ fn repeated_output_overflow_releases_unreachable_frozen_heap_snapshots() -> eyre
                 sim_assert_eq!(have: state.output.parts.len(), want: 1);
                 assert!(matches!(
                     state.output.parts.as_slice(),
-                    [TextPart::Unknown(_)]
+                    [crate::value::OutputNode {
+                        occurrences: _,
+                        part: TextPart::Unknown(_)
+                    }]
                 ));
                 assert!(
                     snapshots
@@ -235,10 +275,14 @@ fn retention_rewrites_only_the_forced_path_and_keeps_untouched_sibling_identity(
         &state.heap.arena,
     ));
     let [
-        TextPart::Select {
-            decision: _,
-            yes: original_yes,
-            no: original_no,
+        crate::value::OutputNode {
+            occurrences: _,
+            part:
+                TextPart::Select {
+                    decision: _,
+                    yes: original_yes,
+                    no: original_no,
+                },
         },
     ] = original.parts.as_slice()
     else {
@@ -247,10 +291,14 @@ fn retention_rewrites_only_the_forced_path_and_keeps_untouched_sibling_identity(
     let retained = TextRetention::default().retain(&original, &allowed);
     assert!(!Rc::ptr_eq(&original, &retained));
     let [
-        TextPart::Select {
-            decision: _,
-            yes: retained_yes,
-            no: retained_no,
+        crate::value::OutputNode {
+            occurrences: _,
+            part:
+                TextPart::Select {
+                    decision: _,
+                    yes: retained_yes,
+                    no: retained_no,
+                },
         },
     ] = retained.parts.as_slice()
     else {
@@ -299,10 +347,14 @@ fn immutable_output_children_do_not_retain_historical_budget_guards() -> eyre::R
     assert!(!output.counts.is_empty());
     assert!(output.arena.is_some());
     let [
-        TextPart::Select {
-            decision: _,
-            yes: child_yes,
-            no: child_no,
+        crate::value::OutputNode {
+            occurrences: _,
+            part:
+                TextPart::Select {
+                    decision: _,
+                    yes: child_yes,
+                    no: child_no,
+                },
         },
     ] = output.parts.as_slice()
     else {

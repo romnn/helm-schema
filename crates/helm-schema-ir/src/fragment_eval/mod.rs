@@ -6,7 +6,6 @@ mod dump;
 mod eval;
 mod lower;
 mod project;
-pub(crate) mod summary;
 
 #[cfg(test)]
 pub(crate) use domain::{StringPart, TaintPart};

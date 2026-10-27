@@ -234,7 +234,7 @@ fn later_unknown_output_does_not_discard_complete_earlier_literal_history() {
     state
         .output
         .parts
-        .push(crate::value::TextPart::Unknown(BTreeSet::new()));
+        .push(crate::value::TextPart::Unknown(BTreeSet::new()).into());
     sim_assert_eq!(
         have: alternatives(&document(state), span),
         want: BTreeSet::from([(Predicate::True, Some("Kind".to_owned()))])

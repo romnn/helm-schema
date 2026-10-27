@@ -82,11 +82,11 @@ pub(super) fn transfer(
             Ok(transfer_deserialize(input, state))
         }
         "deepCopy" | "mustDeepCopy" => Ok(copy(&input.first, state, &mut BTreeSet::new(), 0)),
-        "quote" | "squote" => Ok(transfer_quote(input)),
+        "quote" | "squote" => Ok(transfer_quote(input, state)),
         "int" | "int64" | "float64" => Ok(transfer_numeric_cast(input)),
         "upper" | "lower" | "trim" | "toString" => Ok(transfer_string_transform(input)),
         "print" | "println" => Ok(transfer_print(input)),
-        "indent" | "nindent" => Ok(transfer_indent(input)),
+        "indent" | "nindent" => Ok(transfer_indent(input, state)),
         _ => {
             match crate::function_semantics::function_semantics(input.function).heap_effect {
                 crate::function_semantics::HeapEffect::ReadOnly => {}
@@ -498,17 +498,19 @@ fn transfer_serialize(input: TransferInput<'_>, state: &mut State) -> Value {
     } = input;
 
     if matches!(function, "toYaml" | "toYamlPretty") {
-        return Value::influenced(influences.clone());
+        return Value::frozen_text(
+            super::text::TextTerm::Yaml {
+                value: state.heap.freeze(&first),
+                pretty: function == "toYamlPretty",
+            },
+            influences.clone(),
+        );
     }
     let frozen = state.heap.freeze(&first);
     let Some(json) = frozen.json() else {
         return Value::influenced(first.inputs());
     };
-    let text = if matches!(function, "toYaml" | "toYamlPretty") {
-        serde_yaml::to_string(&json)
-            .ok()
-            .map(|text| text.trim_end_matches('\n').to_owned())
-    } else if function == "toPrettyJson" {
+    let text = if function == "toPrettyJson" {
         serde_json::to_string_pretty(&json).ok()
     } else {
         serde_json::to_string(&json).ok()
@@ -576,7 +578,7 @@ fn transfer_deserialize(input: TransferInput<'_>, state: &mut State) -> Value {
     )
 }
 
-fn transfer_quote(input: TransferInput<'_>) -> Value {
+fn transfer_quote(input: TransferInput<'_>, state: &State) -> Value {
     let TransferInput {
         function,
         arguments,
@@ -591,7 +593,16 @@ fn transfer_quote(input: TransferInput<'_>) -> Value {
             continue;
         }
         let Some(text) = scalar_text(value) else {
-            return Value::influenced(influences.clone());
+            return if function == "quote" && arguments.len() == 1 {
+                Value::frozen_text(
+                    super::text::TextTerm::Quote {
+                        value: state.heap.freeze(value),
+                    },
+                    influences.clone(),
+                )
+            } else {
+                Value::influenced(influences.clone())
+            };
         };
         if function == "quote"
             && (!text.is_ascii()
@@ -676,6 +687,17 @@ fn transfer_string_transform(input: TransferInput<'_>) -> Value {
         last,
     } = input;
 
+    if function == "toString"
+        && matches!(
+            last.node.as_ref(),
+            ValueNode::Leaf(Leaf {
+                datum: Datum::Text(_),
+                origin: _,
+            })
+        )
+    {
+        return last;
+    }
     let Some(text) = scalar_text(&last) else {
         return Value::influenced(last.inputs());
     };
@@ -723,7 +745,7 @@ fn transfer_print(input: TransferInput<'_>) -> Value {
     Value::string(&output)
 }
 
-fn transfer_indent(input: TransferInput<'_>) -> Value {
+fn transfer_indent(input: TransferInput<'_>, state: &State) -> Value {
     let TransferInput {
         function,
         arguments: _,
@@ -735,22 +757,22 @@ fn transfer_indent(input: TransferInput<'_>) -> Value {
     let Some(GuardValue::Int(width)) = first.constant() else {
         return Value::influenced(last.inputs());
     };
-    let Some(GuardValue::String(text)) = last.constant() else {
-        return Value::influenced(last.inputs());
-    };
     let Some(width) = usize::try_from(*width).ok().filter(|width| *width <= 4096) else {
         return Value::unknown();
     };
-    let prefix = " ".repeat(width);
-    let mut output = text
-        .split('\n')
-        .map(|line| format!("{prefix}{line}"))
-        .collect::<Vec<_>>()
-        .join("\n");
-    if function == "nindent" {
-        output.insert(0, '\n');
+    if let Some(GuardValue::String(text)) = last.constant() {
+        return Value::string(&super::text::indent(text, width, function == "nindent"));
     }
-    Value::string(&output)
+    let value = state.heap.freeze(&last);
+    let inputs = value.inputs();
+    Value::frozen_text(
+        super::text::TextTerm::Indent {
+            value,
+            width,
+            newline: function == "nindent",
+        },
+        inputs,
+    )
 }
 
 pub(super) fn inputs(arguments: &[Value], state: &State) -> BTreeSet<helm_schema_core::ValuesPath> {
@@ -1034,7 +1056,8 @@ fn copy(
         }
         ValueNode::Leaf(Leaf {
             datum:
-                Datum::Scalar {
+                Datum::Text(_)
+                | Datum::Scalar {
                     go_type: _,
                     content: _,
                 }
@@ -1601,7 +1624,8 @@ fn disjoint_closed_graph(
     }
     match value.node.as_ref() {
         ValueNode::Leaf(Leaf { datum, origin: _ }) => match datum {
-            Datum::Scalar {
+            Datum::Text(_)
+            | Datum::Scalar {
                 go_type: _,
                 content: _,
             }
@@ -1962,7 +1986,8 @@ fn immutable_scalar(value: &Value, remaining: &mut usize) -> bool {
     match value.node.as_ref() {
         ValueNode::Leaf(Leaf {
             datum:
-                Datum::Scalar {
+                Datum::Text(_)
+                | Datum::Scalar {
                     go_type: _,
                     content: _,
                 },
@@ -2290,7 +2315,8 @@ fn mutation_targets(
             pending.extend([yes.clone(), no.clone()]);
         }
         ValueNode::Leaf(Leaf { datum, origin: _ }) => match datum {
-            Datum::Scalar {
+            Datum::Text(_)
+            | Datum::Scalar {
                 go_type: _,
                 content: _,
             }

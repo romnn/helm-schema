@@ -28,7 +28,8 @@ pub(super) fn method(receiver: &Value, name: &str) -> Method {
             }) => MethodReceiver::Values,
             ValueNode::Leaf(Leaf {
                 datum:
-                    Datum::Scalar {
+                    Datum::Text(_)
+                    | Datum::Scalar {
                         go_type: _,
                         content: _,
                     }

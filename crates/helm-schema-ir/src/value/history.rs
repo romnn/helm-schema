@@ -32,6 +32,12 @@ impl<T> History<T> {
         self.length
     }
 
+    pub(super) fn get(&self, index: usize) -> Option<&T> {
+        self.chunks
+            .get(index / CHUNK_LENGTH)?
+            .get(index % CHUNK_LENGTH)
+    }
+
     pub(super) fn clear(&mut self) {
         *self = Self::default();
     }

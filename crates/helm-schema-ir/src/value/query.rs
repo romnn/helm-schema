@@ -77,7 +77,8 @@ impl Value {
             },
             ValueNode::Leaf(Leaf {
                 datum:
-                    Datum::Map { view: _, target: _ }
+                    Datum::Text(_)
+                    | Datum::Map { view: _, target: _ }
                     | Datum::Sequence(_)
                     | Datum::Strings(_)
                     | Datum::Slot {
@@ -125,7 +126,8 @@ impl Value {
                                 pending.extend(items.iter());
                             }
                         }
-                        Datum::Scalar {
+                        Datum::Text(_)
+                        | Datum::Scalar {
                             go_type: _,
                             content: _,
                         }
@@ -455,6 +457,7 @@ impl State {
                         types: super::TypeCoverage::InputNonMap,
                         aliases: _,
                     })
+                    | Datum::Text(_)
                     | Datum::Scalar {
                         go_type: _,
                         content: _,
@@ -582,6 +585,10 @@ impl State {
 
     pub(super) fn truth(&self, value: &Value) -> Option<bool> {
         let value = self.consumed(value);
+        self.truth_of_consumed(&value)
+    }
+
+    fn truth_of_consumed(&self, value: &Value) -> Option<bool> {
         if let Some(literal) = value.constant() {
             return Some(match literal {
                 GuardValue::Null => false,
@@ -624,14 +631,15 @@ impl State {
                     },
                 origin: _,
             }) => self
-                .map_length(&value)
+                .map_length_of_consumed(value)
                 .and_then(|length| match length.constant() {
                     Some(GuardValue::Int(length)) => Some(*length != 0),
                     _ => None,
                 }),
             ValueNode::Leaf(Leaf {
                 datum:
-                    Datum::Scalar {
+                    Datum::Text(_)
+                    | Datum::Scalar {
                         go_type: _,
                         content: _,
                     }
@@ -663,7 +671,8 @@ impl State {
             leaves: 128,
             unknown,
         };
-        truth_test(self, value, &mut budget)
+        let value = self.consumed(value);
+        truth_test(self, &value, &mut budget)
     }
     pub(super) fn map_target(&mut self, value: &Value) -> Option<super::ObjectId> {
         let value = self.consumed(value);
@@ -743,7 +752,8 @@ impl State {
             }
             ValueNode::Leaf(Leaf {
                 datum:
-                    Datum::Scalar {
+                    Datum::Text(_)
+                    | Datum::Scalar {
                         go_type: _,
                         content: _,
                     }
@@ -783,13 +793,13 @@ impl TruthBudget<'_> {
     }
 }
 
+// The caller specializes the whole tree once; residual captures are unknown leaves.
 fn truth_test(state: &State, value: &Value, budget: &mut TruthBudget<'_>) -> Rc<FrozenTest> {
     if budget.visits == 0 {
         return budget.unknown(state);
     }
     budget.visits -= 1;
-    let value = state.consumed(value);
-    if let Some(length) = state.map_length(&value) {
+    if let Some(length) = state.map_length_of_consumed(value) {
         return truth_test(state, &length, budget);
     }
     match value.node.as_ref() {
@@ -806,7 +816,7 @@ fn truth_test(state: &State, value: &Value, budget: &mut TruthBudget<'_>) -> Rc<
                 return budget.unknown(state);
             }
             budget.leaves -= 1;
-            let condition = if let Some(truth) = state.truth(&value) {
+            let condition = if let Some(truth) = state.truth_of_consumed(value) {
                 if truth {
                     Predicate::True
                 } else {
@@ -953,7 +963,8 @@ fn runtime_type(value: &Value, remaining: &mut usize) -> super::kinds::GoType {
             },
             Datum::Map { view: _, target: _ } => GoType::Map,
             Datum::Sequence(_) | Datum::Strings(_) => GoType::Slice,
-            Datum::Slot {
+            Datum::Text(_)
+            | Datum::Slot {
                 backing: _,
                 index: _,
             } => GoType::String,
@@ -1064,7 +1075,8 @@ impl State {
             }) => Some(Field::Absent),
             ValueNode::Leaf(Leaf {
                 datum:
-                    Datum::Scalar {
+                    Datum::Text(_)
+                    | Datum::Scalar {
                         go_type: _,
                         content: _,
                     }
@@ -1176,10 +1188,11 @@ impl State {
                 datum: Datum::Unknown(super::UnknownValue {
                     types: super::TypeCoverage::InputNonMap,
                     aliases: _,
-                }) | Datum::Scalar {
-                    go_type: _,
-                    content: _
-                },
+                }) | Datum::Text(_)
+                    | Datum::Scalar {
+                        go_type: _,
+                        content: _
+                    },
                 origin: _,
             })
         ) {
@@ -1288,11 +1301,15 @@ impl State {
 
     pub(super) fn map_length(&self, value: &Value) -> Option<Value> {
         let value = self.consumed(value);
+        self.map_length_of_consumed(&value)
+    }
+
+    fn map_length_of_consumed(&self, value: &Value) -> Option<Value> {
         match value.node.as_ref() {
             ValueNode::Select { decision, yes, no } => Some(Value::select(
                 Rc::clone(decision),
-                self.map_length(yes)?,
-                self.map_length(no)?,
+                self.map_length_of_consumed(yes)?,
+                self.map_length_of_consumed(no)?,
             )),
             ValueNode::Leaf(Leaf {
                 datum:
@@ -1325,7 +1342,19 @@ impl State {
                 Some(length)
             }
             ValueNode::Leaf(Leaf {
-                datum: _,
+                datum:
+                    Datum::Text(_)
+                    | Datum::Scalar {
+                        go_type: _,
+                        content: _,
+                    }
+                    | Datum::Sequence(_)
+                    | Datum::Strings(_)
+                    | Datum::Slot {
+                        backing: _,
+                        index: _,
+                    }
+                    | Datum::Unknown(_),
                 origin: _,
             }) => None,
         }
@@ -1435,7 +1464,8 @@ fn collect_value_children(
                     extend_aliases(aliases, heap, objects, expanded_render_graph);
                 }
             }
-            Datum::Scalar {
+            Datum::Text(_)
+            | Datum::Scalar {
                 go_type: _,
                 content: _,
             }

@@ -300,8 +300,29 @@ fn build_skeleton(
 ///
 /// Returns layout uncertainty for parse errors or unsupported YAML ownership.
 pub fn skeleton_ownership(skeleton: Skeleton) -> Result<YamlOwnership, LayoutUncertainty> {
+    ownership(skeleton, false)
+}
+
+/// Owns only the first document decoded from one Helm `SplitManifests` chunk.
+///
+/// # Errors
+///
+/// Returns layout uncertainty when that document has parse errors or unsupported ownership.
+pub fn first_document_ownership(skeleton: Skeleton) -> Result<YamlOwnership, LayoutUncertainty> {
+    ownership(skeleton, true)
+}
+
+fn ownership(skeleton: Skeleton, first_only: bool) -> Result<YamlOwnership, LayoutUncertainty> {
     let tree = parse_yaml(&skeleton.text).ok_or(LayoutUncertainty::Parse)?;
     let root = tree.root_node();
+    let mut cursor = root.walk();
+    let root = if first_only {
+        root.named_children(&mut cursor)
+            .find(|node| node.kind() == "document" || node.has_error())
+            .unwrap_or(root)
+    } else {
+        root
+    };
     if root.has_error() {
         return Err(LayoutUncertainty::Parse);
     }
@@ -333,7 +354,7 @@ fn collect_nodes(
     blocks: &mut Vec<BlockScalarOwnership>,
 ) -> Result<(), LayoutUncertainty> {
     let kind = match node.kind() {
-        "tag" | "alias" => return Err(LayoutUncertainty::TagOrAlias),
+        "tag" | "anchor" | "alias" => return Err(LayoutUncertainty::TagOrAlias),
         "document" => Some(YamlNodeKind::Document),
         "block_mapping" => Some(YamlNodeKind::Mapping),
         "block_mapping_pair" => Some(YamlNodeKind::Pair),

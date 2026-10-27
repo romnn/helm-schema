@@ -753,7 +753,8 @@ fn descriptor_name(value: &super::Value, kind_only: bool) -> Option<&'static str
             }),
             Datum::Sequence(_) => Some(if kind_only { "slice" } else { "[]interface {}" }),
             Datum::Strings(_) => Some(if kind_only { "slice" } else { "[]string" }),
-            Datum::Slot {
+            Datum::Text(_)
+            | Datum::Slot {
                 backing: _,
                 index: _,
             } => Some("string"),
@@ -790,7 +791,8 @@ pub(super) fn nilness(value: &super::Value) -> Option<bool> {
                 length: _,
                 capacity: _,
             }) => Some(storage.is_none()),
-            Datum::Strings(_)
+            Datum::Text(_)
+            | Datum::Strings(_)
             | Datum::Slot {
                 backing: _,
                 index: _,

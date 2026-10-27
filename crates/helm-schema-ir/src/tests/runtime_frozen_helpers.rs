@@ -35,6 +35,7 @@ impl FrozenValue {
                         backing: _,
                         index: _,
                     }
+                    | Datum::Text(_)
                     | Datum::Unknown(_),
                 origin: _,
             }) => Field::Unknown,

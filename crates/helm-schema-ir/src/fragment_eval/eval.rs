@@ -1,14 +1,16 @@
-//! YAML placement projected from frozen executions of the value runtime.
+//! Fragment projection from the file's sealed executed-output ownership.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::rc::Rc;
 
-use helm_schema_ast::ResourceSpan;
 use helm_schema_core::{GuardDnf, Predicate};
-use helm_schema_syntax::{Node, ScalarPart, ScalarParts, Span, TemplatedDocument};
+use helm_schema_syntax::{ScalarStyle, Span, YamlNode, YamlNodeKind};
 
 use crate::analysis_db::IrAnalysisDb;
 use crate::observed_facts::ObservedFacts;
+use crate::resource_identity::PlacedResource;
+use crate::value::Observation;
+use crate::value::yaml::{PlacedDocument, PlacedTerm};
 use crate::value::{DocumentExecution, ExecutedSite, RenderedContainerUse};
 use crate::{ContractProvenance, ResourceRef, SourceSpan, ValueKind};
 
@@ -56,7 +58,6 @@ pub(crate) struct ValueRead {
 }
 
 #[cfg(test)]
-/// Execute once, then place the resulting observations in the YAML layout.
 #[tracing::instrument(skip_all)]
 pub(crate) fn eval_document(
     source: &str,
@@ -79,36 +80,39 @@ pub(crate) fn project_execution(
 
 #[tracing::instrument(skip_all, level = "debug", fields(source_path))]
 pub(crate) fn project_execution_at_offset(
-    source: &str,
+    _source: &str,
     source_path: Option<&str>,
     source_offset: usize,
     db: &IrAnalysisDb,
     execution: &DocumentExecution,
 ) -> EvaluatedDocument {
-    let Some(tree) = helm_schema_syntax::parse_go_template(source) else {
-        return EvaluatedDocument {
-            reads: execution.projection_reads(),
-            observed_facts: execution.observed_facts().clone(),
-            ..EvaluatedDocument::default()
+    let mut root = Guarded::empty();
+    for document in execution.placed_documents() {
+        let resources = crate::resource_identity::placed_resources(&document, execution);
+        let mut children = vec![Vec::new(); document.ownership.nodes.len()];
+        let mut roots = Vec::new();
+        for (index, node) in document.ownership.nodes.iter().enumerate() {
+            if let Some(parent) = node.parent.and_then(|parent| children.get_mut(parent)) {
+                parent.push(index);
+            } else {
+                roots.push(index);
+            }
+        }
+        let projection = Projection {
+            document,
+            execution,
+            source_path,
+            source_offset,
+            db,
+            resources,
+            children,
         };
-    };
-    let document = TemplatedDocument::parse_with_root(source, tree.root_node());
-    let resources = crate::resource_identity::collect_resource_spans(
-        &document,
-        tree.root_node(),
-        execution,
-        source_path,
-    );
-    let projection = Projection {
-        source,
-        source_path,
-        source_offset,
-        execution,
-        resources,
-        db,
-    };
+        for index in roots {
+            root.extend(projection.node(index));
+        }
+    }
     EvaluatedDocument {
-        root: projection.nodes(document.roots()),
+        root,
         reads: execution.projection_reads(),
         observed_facts: execution.observed_facts().clone(),
         pre_rewrite_strict_paths: BTreeSet::new(),
@@ -116,250 +120,242 @@ pub(crate) fn project_execution_at_offset(
 }
 
 struct Projection<'a> {
-    source: &'a str,
+    document: PlacedDocument<'a>,
+    execution: &'a DocumentExecution,
     source_path: Option<&'a str>,
     source_offset: usize,
-    execution: &'a DocumentExecution,
-    resources: Vec<ResourceSpan>,
     db: &'a IrAnalysisDb,
+    resources: Vec<PlacedResource>,
+    children: Vec<Vec<usize>>,
+}
+
+struct KeyArm {
+    condition: Predicate,
+    key: EntryKey,
 }
 
 impl Projection<'_> {
-    fn nodes(&self, nodes: &[Node]) -> Guarded<AbstractFragment> {
-        let mut mapping = Mapping::default();
-        let mut sequence = Sequence::default();
-        let mut result = Guarded::empty();
-        for node in nodes {
-            match node {
-                Node::Mapping(entry) => {
-                    let key = self.entry_key(&entry.key);
-                    let mut value = if let Some(block) = &entry.block {
-                        self.span_scalar(block.body, true)
-                    } else if let Some(scalar) = &entry.value {
-                        self.scalar(scalar, false)
-                    } else {
-                        Guarded::empty()
-                    };
-                    value.extend(self.nodes(&entry.children));
-                    value.guard_all(
-                        &self
-                            .execution
-                            .condition_for_span(entry.span, self.source_path),
-                        self.db.predicate_memo(),
-                    );
-                    if !value.is_empty() {
-                        mapping.entries.push(MappingEntry { key, value });
-                    }
+    fn node(&self, index: usize) -> Guarded<AbstractFragment> {
+        let Some(node) = self.document.ownership.nodes.get(index) else {
+            return Guarded::empty();
+        };
+        let YamlNode {
+            parent: _,
+            kind,
+            key: _,
+            span,
+            pieces: _,
+        } = *node;
+        let mut result = match kind {
+            YamlNodeKind::Document | YamlNodeKind::Item => {
+                let mut result = Guarded::empty();
+                for child in self.children.get(index).into_iter().flatten() {
+                    result.extend(self.node(*child));
                 }
-                Node::Sequence(item) => {
-                    let mut value = if let Some(block) = &item.block {
-                        self.span_scalar(block.body, true)
-                    } else if let Some(scalar) = &item.value {
-                        self.scalar(scalar, false)
-                    } else {
-                        Guarded::empty()
-                    };
-                    value.extend(self.nodes(&item.children));
-                    value.guard_all(
-                        &self
-                            .execution
-                            .condition_for_span(item.span, self.source_path),
-                        self.db.predicate_memo(),
-                    );
-                    if !value.is_empty() {
-                        sequence.items.push(value);
-                    }
-                }
-                Node::Control(region) => {
-                    for branch in &region.branches {
-                        let branch = self.nodes(&branch.body);
-                        for (condition, fragment) in branch.arms {
-                            match fragment {
-                                AbstractFragment::Mapping(mut children) => {
-                                    for entry in &mut children.entries {
-                                        entry.value.guard_all(&condition, self.db.predicate_memo());
-                                    }
-                                    mapping.entries.extend(children.entries);
-                                }
-                                AbstractFragment::Sequence(mut children) => {
-                                    for item in &mut children.items {
-                                        item.guard_all(&condition, self.db.predicate_memo());
-                                    }
-                                    sequence.items.extend(children.items);
-                                }
-                                other => result.arms.push((condition, other)),
-                            }
-                        }
-                    }
-                }
-                Node::Output(output) => result.extend(self.hole(output.span, ValueKind::Fragment)),
-                Node::Scalar(line) => result.extend(self.scalar(&line.content, false)),
-                Node::Comment(_) => {}
-                Node::Opaque(opaque) => match opaque.kind {
-                    helm_schema_syntax::OpaqueKind::InlineRegion
-                    | helm_schema_syntax::OpaqueKind::ActionLineText
-                    | helm_schema_syntax::OpaqueKind::ParseError => {
-                        result.extend(self.span_scalar(opaque.span, true));
-                    }
-                    helm_schema_syntax::OpaqueKind::Assignment
-                    | helm_schema_syntax::OpaqueKind::Break
-                    | helm_schema_syntax::OpaqueKind::Continue
-                    | helm_schema_syntax::OpaqueKind::TemplateComment => {}
-                },
+                result
             }
-        }
-        if !mapping.entries.is_empty() {
-            result
-                .arms
-                .push((Predicate::True, AbstractFragment::Mapping(mapping)));
-        }
-        if !sequence.items.is_empty() {
-            result
-                .arms
-                .push((Predicate::True, AbstractFragment::Sequence(sequence)));
-        }
+            YamlNodeKind::Mapping | YamlNodeKind::FlowMapping => self.mapping(index),
+            YamlNodeKind::Sequence | YamlNodeKind::FlowSequence => {
+                let items = self
+                    .children
+                    .get(index)
+                    .into_iter()
+                    .flatten()
+                    .map(|child| self.node(*child))
+                    .filter(|item| !item.is_empty())
+                    .collect();
+                Guarded::unconditional(AbstractFragment::Sequence(Sequence { items }))
+            }
+            YamlNodeKind::Scalar(style) => self.scalar(span, style, false),
+            YamlNodeKind::BlockScalar => self.scalar(span, ScalarStyle::Plain, true),
+            YamlNodeKind::Pair | YamlNodeKind::FlowPair | YamlNodeKind::Comment => Guarded::empty(),
+        };
+        result.guard_all(&self.document.condition, self.db.predicate_memo());
         result
     }
 
-    fn entry_key(&self, key: &ScalarParts) -> EntryKey {
-        if key
-            .parts
-            .iter()
-            .all(|part| matches!(part, ScalarPart::Text(_)))
-        {
-            EntryKey::Literal(
-                helm_schema_syntax::parse_yaml_key(self.slice(key.span))
-                    .unwrap_or_else(|| self.slice(key.span).to_owned()),
-            )
-        } else {
-            let parts = self
-                .scalar(key, false)
-                .arms
-                .into_iter()
-                .flat_map(|(_, node)| match node {
-                    AbstractFragment::Scalar(scalar) => scalar.parts,
-                    AbstractFragment::Splice(splice) => {
-                        vec![StringPart::Splice(splice)]
-                    }
-                    AbstractFragment::Opaque(opaque) => {
-                        vec![StringPart::Taint(TaintPart::abstaining(opaque.taint))]
-                    }
-                    AbstractFragment::Mapping(_) | AbstractFragment::Sequence(_) => Vec::new(),
-                })
-                .collect();
-            EntryKey::Dynamic(AbstractString {
-                parts,
-                suppressed: false,
-            })
-        }
-    }
-
-    fn scalar(&self, scalar: &ScalarParts, suppressed: bool) -> Guarded<AbstractFragment> {
-        let holes = scalar
-            .parts
-            .iter()
-            .filter_map(|part| match part {
-                ScalarPart::Hole(span) => Some(*span),
-                ScalarPart::Text(_) => None,
-            })
-            .collect::<Vec<_>>();
-        if let [hole] = holes.as_slice()
-            && scalar.parts.iter().all(|part| match part {
-                ScalarPart::Text(span) => self.slice(*span).trim().is_empty(),
-                ScalarPart::Hole(_) => true,
-            })
-            && !suppressed
-        {
-            return self.hole(*hole, ValueKind::Scalar);
-        }
-        let mut arms = vec![(Predicate::True, Vec::new())];
-        for part in &scalar.parts {
-            let additions = match part {
-                ScalarPart::Text(span) => vec![(
-                    Predicate::True,
-                    vec![StringPart::Text(BTreeSet::from([self
-                        .slice(*span)
-                        .to_owned()]))],
-                )],
-                ScalarPart::Hole(span) => self.hole_parts(*span),
+    fn mapping(&self, index: usize) -> Guarded<AbstractFragment> {
+        let mut mapping = Mapping::default();
+        for pair in self.children.get(index).into_iter().flatten() {
+            let Some(pair_node) = self.document.ownership.nodes.get(*pair) else {
+                continue;
             };
-            if additions.is_empty() {
+            if !matches!(pair_node.kind, YamlNodeKind::Pair | YamlNodeKind::FlowPair) {
                 continue;
             }
-            let mut next = Vec::new();
-            for (condition, parts) in &arms {
-                for (other_condition, other_parts) in &additions {
-                    let condition = self.db.predicate_memo().normalize(Predicate::all(vec![
-                        condition.clone(),
-                        other_condition.clone(),
-                    ]));
-                    if condition == Predicate::False {
-                        continue;
-                    }
-                    let mut parts = parts.clone();
-                    parts.extend(other_parts.iter().cloned());
-                    next.push((condition, parts));
+            let children = self.children.get(*pair).into_iter().flatten();
+            let Some(key) = children
+                .clone()
+                .find(|child| {
+                    self.document
+                        .ownership
+                        .nodes
+                        .get(**child)
+                        .is_some_and(|node| node.key)
+                })
+                .copied()
+            else {
+                continue;
+            };
+            let mut value = Guarded::empty();
+            for child in children.filter(|child| **child != key) {
+                value.extend(self.node(*child));
+            }
+            for KeyArm { condition, key } in self.keys(key) {
+                let mut value = value.clone();
+                value.guard_all(&condition, self.db.predicate_memo());
+                if !value.is_empty() {
+                    mapping.entries.push(MappingEntry { key, value });
                 }
             }
-            arms = if next.len() > super::lower::MAX_SCALAR_ARM_FANOUT {
-                super::lower::over_cap_scalar_taint(next)
-            } else {
-                next
-            };
         }
-        let mut result = Guarded {
-            arms: arms
-                .into_iter()
-                .map(|(condition, parts)| {
-                    (
-                        condition,
-                        AbstractFragment::Scalar(AbstractString { parts, suppressed }),
-                    )
-                })
-                .collect(),
+        if mapping.entries.is_empty() {
+            Guarded::empty()
+        } else {
+            Guarded::unconditional(AbstractFragment::Mapping(mapping))
+        }
+    }
+
+    fn keys(&self, index: usize) -> Vec<KeyArm> {
+        let Some(node) = self.document.ownership.nodes.get(index) else {
+            return Vec::new();
         };
+        if self.document.terms(node.span).all(|term| !term.placeholder) {
+            return self
+                .document
+                .ownership
+                .skeleton
+                .text
+                .get(node.span.start..node.span.end)
+                .and_then(|text| helm_schema_syntax::parse_yaml_key(&format!("{text}:")))
+                .map(|key| {
+                    vec![KeyArm {
+                        condition: self.document.placement_guard(node.span),
+                        key: EntryKey::Literal(key),
+                    }]
+                })
+                .unwrap_or_default();
+        }
+        let mut keys = Vec::new();
+        for (condition, fragment) in self.scalar(node.span, ScalarStyle::Plain, false).arms {
+            let parts = match fragment {
+                AbstractFragment::Scalar(scalar) => scalar.parts,
+                AbstractFragment::Splice(splice) => vec![StringPart::Splice(splice)],
+                AbstractFragment::Opaque(opaque) => {
+                    vec![StringPart::Taint(TaintPart::abstaining(opaque.taint))]
+                }
+                AbstractFragment::Mapping(_) | AbstractFragment::Sequence(_) => Vec::new(),
+            };
+            keys.push(KeyArm {
+                condition,
+                key: EntryKey::Dynamic(AbstractString {
+                    parts,
+                    suppressed: false,
+                }),
+            });
+        }
+        keys
+    }
+
+    fn scalar(
+        &self,
+        span: Span,
+        style: ScalarStyle,
+        suppressed: bool,
+    ) -> Guarded<AbstractFragment> {
+        let terms = self.document.terms(span).collect::<Vec<_>>();
+        let symbolic = terms.iter().filter(|term| term.placeholder).count();
+        let mut result = Guarded::empty();
+        for term in &terms {
+            if !term.placeholder {
+                continue;
+            }
+            let context = term.context().collect::<BTreeSet<_>>();
+            let visible = if context.is_empty() {
+                term.occurrences()
+                    .any(|id| self.execution.is_root_observation(id))
+            } else {
+                context
+                    .iter()
+                    .any(|id| self.execution.is_root_observation(*id))
+            };
+            if !visible {
+                continue;
+            }
+            let whole = symbolic == 1
+                && term.range == span
+                && style == ScalarStyle::Plain
+                && !suppressed
+                && self.document.block_value(span);
+            let kind = if whole {
+                ValueKind::Scalar
+            } else {
+                ValueKind::PartialScalar
+            };
+            let mut found = false;
+            let mut occurrences = BTreeSet::new();
+            for id in term.occurrences().filter(|id| !context.contains(id)) {
+                if !occurrences.insert(id) {
+                    continue;
+                }
+                for observation in self.execution.observations(id) {
+                    let Observation::Value(site) = observation else {
+                        continue;
+                    };
+                    if !site.rendered() {
+                        continue;
+                    }
+                    found = true;
+                    let mut fragment =
+                        self.emission(site, kind, suppressed, &terms, span, term.range);
+                    self.stamp(&mut fragment, term, span);
+                    result.extend(fragment);
+                }
+            }
+            if !found {
+                let mut fragment =
+                    Guarded::unconditional(AbstractFragment::Scalar(AbstractString {
+                        parts: vec![StringPart::Taint(TaintPart::abstaining(term.inputs()))],
+                        suppressed,
+                    }));
+                self.stamp(&mut fragment, term, span);
+                result.extend(fragment);
+            }
+        }
+        if symbolic == 0
+            && let Some(text) = self
+                .document
+                .ownership
+                .skeleton
+                .text
+                .get(span.start..span.end)
+        {
+            result.arms.push((
+                Predicate::True,
+                AbstractFragment::Scalar(AbstractString {
+                    parts: vec![StringPart::Text(BTreeSet::from([text.to_owned()]))],
+                    suppressed,
+                }),
+            ));
+        }
         result.guard_all(
-            &self
-                .execution
-                .condition_for_span(scalar.span, self.source_path),
+            &self.document.placement_guard(span),
             self.db.predicate_memo(),
         );
-        stamp_fragment_sites(&mut result, self.site(scalar.span).as_ref());
         result
     }
 
-    fn span_scalar(&self, span: Span, suppressed: bool) -> Guarded<AbstractFragment> {
-        let mut parts = Vec::new();
-        for site in self
-            .execution
-            .sites()
-            .filter(|site| self.matches(site, span))
-        {
-            parts.extend(
-                self.site_parts(site)
-                    .into_iter()
-                    .flat_map(|(_, parts)| parts),
-            );
-        }
-        let mut result = Guarded {
-            arms: vec![(
-                self.execution.condition_for_span(span, self.source_path),
-                AbstractFragment::Scalar(AbstractString { parts, suppressed }),
-            )],
-        };
-        stamp_fragment_sites(&mut result, self.site(span).as_ref());
-        result
-    }
-
-    fn hole(&self, span: Span, kind: ValueKind) -> Guarded<AbstractFragment> {
-        let mut result = Guarded::empty();
-        for site in self
-            .execution
-            .sites()
-            .filter(|site| self.matches(site, span))
-        {
-            let mut fragment = site
-                .rendered_scalar()
+    fn emission(
+        &self,
+        site: &ExecutedSite,
+        kind: ValueKind,
+        suppressed: bool,
+        terms: &[PlacedTerm<'_>],
+        span: Span,
+        emission: Span,
+    ) -> Guarded<AbstractFragment> {
+        let mut fragment = if kind == ValueKind::Scalar {
+            site.rendered_scalar()
                 .as_ref()
                 .and_then(|scalar| {
                     Self::with_scope(|scope| lower_scalar_dispatch(scalar, kind, scope))
@@ -369,108 +365,142 @@ impl Projection<'_> {
                         parts: vec![StringPart::Taint(TaintPart::abstaining(
                             site.value().inputs(),
                         ))],
-                        suppressed: false,
+                        suppressed,
                     }))
-                });
-            if kind == ValueKind::Scalar {
-                for RenderedContainerUse {
-                    condition,
-                    path,
-                    kind,
-                } in site.formatted_containers()
-                {
-                    fragment.arms.push((
-                        condition,
-                        AbstractFragment::Splice(Splice {
-                            values_path: path,
-                            kind,
-                            meta: SpliceMeta::default(),
-                        }),
-                    ));
-                }
-            }
-            if kind == ValueKind::Scalar {
-                super::domain::stamp_plain_scalar_placement(
-                    &mut fragment,
-                    site.plain_scalar_placement(),
-                );
-            }
-            fragment.guard_all(site.condition(), self.db.predicate_memo());
-            stamp_fragment_sites(&mut fragment, self.site(span).as_ref());
-            result.extend(fragment);
-        }
-        result
-    }
-
-    fn hole_parts(&self, span: Span) -> Vec<(Predicate, Vec<StringPart>)> {
-        self.execution
-            .sites()
-            .filter(|site| self.matches(site, span))
-            .flat_map(|site| self.site_parts(site))
-            .collect()
-    }
-
-    fn site_parts(&self, site: &ExecutedSite) -> Vec<(Predicate, Vec<StringPart>)> {
-        let parts = site
-            .rendered_scalar()
-            .as_ref()
-            .and_then(|scalar| {
-                Self::with_scope(|scope| {
-                    lower_scalar_dispatch_arms(scalar, ValueKind::PartialScalar, scope)
                 })
-            })
-            .unwrap_or_else(|| {
-                vec![(
-                    Predicate::True,
-                    vec![StringPart::Taint(TaintPart::abstaining(
-                        site.value().inputs(),
-                    ))],
-                )]
+        } else {
+            let parts = site
+                .rendered_scalar()
+                .as_ref()
+                .and_then(|scalar| {
+                    Self::with_scope(|scope| {
+                        lower_scalar_dispatch_arms(scalar, ValueKind::PartialScalar, scope)
+                    })
+                })
+                .unwrap_or_else(|| {
+                    vec![(
+                        Predicate::True,
+                        vec![StringPart::Taint(TaintPart::abstaining(
+                            site.value().inputs(),
+                        ))],
+                    )]
+                });
+            Guarded {
+                arms: parts
+                    .into_iter()
+                    .map(|(condition, parts)| {
+                        let mut before = Vec::new();
+                        let mut after = Vec::new();
+                        for literal in terms.iter().filter(|term| !term.placeholder) {
+                            let start = literal.range.start.max(span.start);
+                            let end = literal.range.end.min(span.end);
+                            if let Some(text) =
+                                self.document.ownership.skeleton.text.get(start..end)
+                            {
+                                let literal = StringPart::Text(BTreeSet::from([text.to_owned()]));
+                                if end <= emission.start {
+                                    before.push(literal);
+                                } else {
+                                    after.push(literal);
+                                }
+                            }
+                        }
+                        before.extend(parts);
+                        before.extend(after);
+                        (
+                            condition,
+                            AbstractFragment::Scalar(AbstractString {
+                                parts: before,
+                                suppressed,
+                            }),
+                        )
+                    })
+                    .collect(),
+            }
+        };
+        if kind == ValueKind::Scalar {
+            for RenderedContainerUse {
+                condition,
+                path,
+                kind,
+            } in site.formatted_containers()
+            {
+                fragment.arms.push((
+                    condition,
+                    AbstractFragment::Splice(Splice {
+                        values_path: path,
+                        kind,
+                        meta: SpliceMeta::default(),
+                    }),
+                ));
+            }
+            super::domain::stamp_plain_scalar_placement(
+                &mut fragment,
+                site.plain_scalar_placement(),
+            );
+        }
+        fragment.guard_all(site.condition(), self.db.predicate_memo());
+        fragment
+    }
+
+    fn stamp(&self, fragment: &mut Guarded<AbstractFragment>, term: &PlacedTerm<'_>, span: Span) {
+        let provenance = term
+            .context()
+            .chain(term.occurrences())
+            .flat_map(|id| self.execution.observations(id))
+            .find_map(|observation| {
+                let (path, source) = match observation {
+                    Observation::Text(site) => (site.source_path(), site.span()),
+                    Observation::Value(site) => (site.source_path(), site.span()),
+                };
+                let path = path?;
+                let offset = if Some(path) == self.source_path {
+                    self.source_offset
+                } else {
+                    0
+                };
+                Some(ContractProvenance::new(
+                    path,
+                    SourceSpan::new(
+                        source.start.checked_add(offset)?,
+                        source.end.checked_add(offset)?,
+                    ),
+                    Vec::new(),
+                ))
             });
-        parts
-            .into_iter()
-            .map(|(condition, parts)| {
-                (
-                    self.db
-                        .predicate_memo()
-                        .normalize(Predicate::all(vec![site.condition().clone(), condition])),
-                    parts,
-                )
-            })
-            .collect()
-    }
-
-    fn matches(&self, site: &ExecutedSite, span: Span) -> bool {
-        site.rendered()
-            && site.source_path() == self.source_path
-            && span.start <= site.span().start
-            && site.span().end <= span.end
-    }
-
-    fn slice(&self, span: Span) -> &str {
-        self.source.get(span.start..span.end).unwrap_or_default()
-    }
-
-    fn site(&self, span: Span) -> Option<Rc<SiteFacts>> {
-        let resource = self
+        let resources = self
             .resources
             .iter()
-            .filter(|resource| resource.start <= span.start && span.start < resource.end)
-            .min_by_key(|resource| resource.end.saturating_sub(resource.start));
-        // Syntax and execution queries stay body-local; provenance names the original file.
-        let start = self.source_offset.checked_add(span.start)?;
-        let end = self.source_offset.checked_add(span.end)?;
-        let provenance = self
-            .source_path
-            .map(|path| ContractProvenance::new(path, SourceSpan::new(start, end), Vec::new()));
-        if resource.is_none() && provenance.is_none() {
-            return None;
+            .filter(|resource| resource.span.start <= span.start && span.end <= resource.span.end)
+            .collect::<Vec<_>>();
+        if resources.is_empty() {
+            let facts = Some(Rc::new(SiteFacts {
+                resource: None,
+                path_prefix: Vec::new(),
+                provenance,
+            }));
+            stamp_fragment_sites(fragment, facts.as_ref());
+            return;
         }
-        Some(Rc::new(SiteFacts {
-            resource: resource.map(|resource| resource.resource.clone()),
-            path_prefix: resource.map_or_else(Vec::new, |resource| resource.path_prefix.clone()),
-            provenance,
-        }))
+        let mut output = Guarded::empty();
+        let smallest = resources
+            .iter()
+            .map(|resource| resource.span.end.saturating_sub(resource.span.start))
+            .min();
+        for resource in resources.into_iter().filter(|resource| {
+            Some(resource.span.end.saturating_sub(resource.span.start)) == smallest
+        }) {
+            let mut contribution = fragment.clone();
+            contribution.guard_all(&resource.condition, self.db.predicate_memo());
+            let facts = Some(Rc::new(SiteFacts {
+                resource: Some(resource.resource.clone()),
+                path_prefix: resource.path_prefix.clone(),
+                provenance: provenance.clone(),
+            }));
+            stamp_fragment_sites(&mut contribution, facts.as_ref());
+            output.extend(contribution);
+        }
+        *fragment = output;
     }
 
     fn with_scope<T>(project: impl FnOnce(&LowerScope<'_>) -> T) -> T {

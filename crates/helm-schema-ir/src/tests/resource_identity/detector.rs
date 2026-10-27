@@ -46,6 +46,44 @@ fn unresolved_executed_kind_cannot_recover_a_dead_source_comparison() {
 }
 
 #[test]
+fn frozen_heap_kind_choices_keep_their_executed_guards() {
+    let source = indoc! {r#"
+        {{- if .Values.choose -}}
+        {{- $_ := set .Values "workloadKind" "Pod" -}}
+        {{- else -}}
+        {{- $_ := set .Values "workloadKind" "Endpoints" -}}
+        {{- end }}
+        apiVersion: v1
+        kind: {{ .Values.workloadKind }}
+        metadata:
+          name: witness
+        spec:
+          type: {{ .Values.mode }}
+        {{- if eq .Values.workloadKind "Service" }}
+          unused: true
+        {{- end }}
+    "#};
+    let analysis_db = IrAnalysisDb::new(&DefineIndex::new());
+    let execution = crate::value::execute_document(source, None, &analysis_db);
+    let memo = helm_schema_core::PredicateMemo::new();
+    let mut resources = execution
+        .placed_documents()
+        .flat_map(|document| crate::resource_identity::placed_resources(&document, &execution))
+        .map(|resource| (resource.resource.kind, memo.normalize(resource.condition)))
+        .collect::<Vec<_>>();
+    resources.sort();
+    resources.dedup();
+    let choose = helm_schema_core::Predicate::truthy_path("choose");
+    sim_assert_eq!(
+        have: resources,
+        want: vec![
+            ("Endpoints".to_owned(), memo.normalize(choose.negated())),
+            ("Pod".to_owned(), memo.normalize(choose)),
+        ]
+    );
+}
+
+#[test]
 fn detects_kind_before_api_version() {
     let resource = detect(
         indoc! {r"

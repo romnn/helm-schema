@@ -729,7 +729,8 @@ fn entries(state: &State, value: &Value) -> Option<Vec<RangeEntry>> {
         }
         ValueNode::Leaf(Leaf {
             datum:
-                Datum::Scalar {
+                Datum::Text(_)
+                | Datum::Scalar {
                     go_type: _,
                     content: _,
                 }

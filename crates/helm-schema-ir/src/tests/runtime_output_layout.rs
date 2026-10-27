@@ -4,8 +4,9 @@ use helm_schema_core::{PlainScalarPlacement, Predicate, PredicateMemo, ValuesPat
 use helm_schema_syntax::Span;
 use test_util::prelude::sim_assert_eq;
 
-use super::{ExecutedSite, State, TextBuffer, TextPart, certify_site};
+use super::OutputPlacement;
 use crate::value::{Coverage, Value};
+use crate::value::{ExecutedSite, ObservationId, OutputNode, State, TextBuffer, TextPart};
 
 struct Fixture {
     state: State,
@@ -17,7 +18,14 @@ fn fixture(prefix: &str, suffix: &str) -> Fixture {
     let mut state = State::new(Value::nil());
     let value = state.heap.freeze(&Value::input(ValuesPath::parse("value")));
     state.output.bytes(prefix);
-    state.output.emit(value.clone());
+    state.output.parts.push(OutputNode {
+        occurrences: vec![ObservationId {
+            program: state.program,
+            ordinal: 0,
+            span: Span::new(0, 1),
+        }],
+        part: TextPart::Frozen(value.clone()),
+    });
     state.output.bytes(suffix);
     let site = ExecutedSite {
         program: state.program,
@@ -40,7 +48,12 @@ fn fixture(prefix: &str, suffix: &str) -> Fixture {
 }
 
 fn placement(fixture: &Fixture) -> PlainScalarPlacement {
-    certify_site(&fixture.state.output, &fixture.site, &fixture.memo)
+    OutputPlacement::new(
+        Rc::new(fixture.state.output.clone()),
+        Predicate::True,
+        &fixture.memo,
+    )
+    .plain_placement(&fixture.site, &fixture.memo)
 }
 
 #[test]
@@ -76,6 +89,7 @@ fn a_single_unknown_block_mapping_or_sequence_value_is_certified() {
 fn flow_quoted_partial_key_and_root_positions_never_gain_a_block_certificate() {
     for (prefix, suffix) in [
         ("data: {value: ", "}\n"),
+        ("data: &anchor ", "\n"),
         (
             indoc::indoc! {r"
             data: {
@@ -185,11 +199,14 @@ fn selected_output_uses_the_target_condition_without_forking_state() {
     let mut other = TextBuffer::default();
     other.bytes("other: known\n");
     fixture.state.output = TextBuffer {
-        parts: vec![TextPart::Select {
-            decision,
-            yes: Rc::new(selected),
-            no: Rc::new(other),
-        }],
+        parts: vec![
+            TextPart::Select {
+                decision,
+                yes: Rc::new(selected),
+                no: Rc::new(other),
+            }
+            .into(),
+        ],
         ..TextBuffer::default()
     };
     fixture.site.condition = condition;
