@@ -21,6 +21,11 @@ struct RangeEntry {
     key: Value,
     value: Value,
 }
+enum RangeInput {
+    Exact(Vec<RangeEntry>),
+    Summary { nonempty: bool },
+    Invalid,
+}
 impl Executor<'_> {
     pub(super) fn body(&self, source: &str, path: Option<&str>, state: State) -> Vec<Exit> {
         let source = self.db.parsed_source(source, path, path.unwrap_or("gotpl"));
@@ -324,6 +329,7 @@ impl Executor<'_> {
         }
         reconverge(results)
     }
+    #[tracing::instrument(skip_all)]
     fn range(
         &self,
         program: &Program<'_>,
@@ -377,20 +383,24 @@ impl Executor<'_> {
                     bindings.assignment,
                 );
             }
-            let entries = entries(&exit.state, &value.value);
-            if entries.as_ref().is_some_and(|entries| entries.len() > 32) {
-                tracing::debug!(reason = ?super::BoundReason::LoopMembers, "widen range");
-            }
-            let Some(entries) = entries.filter(|entries| entries.len() <= 32) else {
-                results.extend(self.unknown_range(
-                    program,
-                    boundaries,
-                    opener,
-                    &exit.state,
-                    &value.value,
-                    &bindings,
-                ));
-                continue;
+            let entries = match range_domain(&exit.state, &value.value, bindings.key.is_some()) {
+                RangeInput::Exact(entries) => entries,
+                RangeInput::Summary { nonempty } => {
+                    results.extend(self.unknown_range(
+                        program,
+                        boundaries,
+                        &exit.state,
+                        &value.value,
+                        &bindings,
+                        nonempty,
+                    ));
+                    continue;
+                }
+                RangeInput::Invalid => {
+                    exit.flow = Flow::Abort(super::AbortReason::Type);
+                    results.push(exit);
+                    continue;
+                }
             };
             if entries.is_empty() {
                 results.extend(self.range_else(program, boundaries, exit.state));
@@ -408,6 +418,7 @@ impl Executor<'_> {
         }
         results
     }
+    #[tracing::instrument(skip_all, fields(members = entries.len()))]
     fn range_entries(
         &self,
         program: &Program<'_>,
@@ -478,22 +489,28 @@ impl Executor<'_> {
         pending.extend(breaks.finish());
         pending
     }
+    #[tracing::instrument(skip_all, fields(nonempty))]
     fn unknown_range(
         &self,
         program: &Program<'_>,
         boundaries: &[TemplateAction],
-        opener: TemplateAction,
         state: &State,
         value: &Value,
         bindings: &RangeBindings,
+        nonempty: bool,
     ) -> Vec<Exit> {
-        let test = state
-            .heap
-            .arena
-            .decision(Predicate::False, Predicate::False, Coverage::Partial);
-        let zero = state.fork(Rc::clone(&test), false);
-        let mut exits = self.range_else(program, boundaries, zero);
-        let mut state = state.fork(test, true);
+        let mut exits = Vec::new();
+        let mut state = if nonempty {
+            state.clone()
+        } else {
+            let test =
+                state
+                    .heap
+                    .arena
+                    .decision(Predicate::False, Predicate::False, Coverage::Partial);
+            exits.extend(self.range_else(program, boundaries, state.fork(Rc::clone(&test), false)));
+            state.fork(test, true)
+        };
         super::operations::invalidate(&mut state);
         state.enter_scope(Some(Value::influenced(value.inputs())));
         for name in [bindings.key.as_deref(), bindings.value.as_deref()]
@@ -507,7 +524,8 @@ impl Executor<'_> {
                 bindings.assignment,
             );
         }
-        if let Some(id) = state.loop_id(opener.span.start as u64) {
+        let id = state.loop_id(bindings.body.start as u64);
+        if let Some(id) = id {
             state.loops.push(id);
         }
         let mut body_exits = self.window(
@@ -519,8 +537,15 @@ impl Executor<'_> {
             normal(state, Value::nil()),
         );
         for exit in &mut body_exits {
-            exit.state.loops.pop();
+            if id.is_some() {
+                exit.state.loops.pop();
+            }
             exit.state.leave_scope();
+            match &exit.flow {
+                Flow::Break(target) | Flow::Continue(target) if Some(*target) == id => {}
+                Flow::Normal(_) => {}
+                Flow::Abort(_) | Flow::Break(_) | Flow::Continue(_) => continue,
+            }
             super::operations::invalidate(&mut exit.state);
             exit.flow = Flow::Normal(Normal {
                 value: Value::unknown(),
@@ -572,8 +597,68 @@ fn literal_span(program: &Program<'_>, next: usize, span: Span) -> Span {
     .unwrap_or_else(|| Span::new(span.start, span.start))
 }
 
-fn entries(state: &State, value: &Value) -> Option<Vec<RangeEntry>> {
+fn range_domain(state: &State, value: &Value, two_variables: bool) -> RangeInput {
+    use super::kinds::GoType;
+
     let value = state.consumed(value);
+    match state.heap.freeze(&value).go_type() {
+        GoType::Nil => return RangeInput::Exact(Vec::new()),
+        GoType::Bool | GoType::String | GoType::Float64 => return RangeInput::Invalid,
+        GoType::Int | GoType::Int64 | GoType::Uint64 => {
+            return integer_entries(&value, two_variables);
+        }
+        GoType::Map | GoType::Slice | GoType::Unknown => {}
+    }
+    match entries(state, &value) {
+        Some(entries) if entries.len() <= 32 => RangeInput::Exact(entries),
+        Some(_) => {
+            tracing::debug!(reason = ?super::BoundReason::LoopMembers, "widen range");
+            RangeInput::Summary { nonempty: true }
+        }
+        None => RangeInput::Summary { nonempty: false },
+    }
+}
+
+fn integer_entries(value: &Value, two_variables: bool) -> RangeInput {
+    if two_variables {
+        return RangeInput::Invalid;
+    }
+    let ValueNode::Leaf(Leaf {
+        datum: Datum::Scalar {
+            go_type,
+            content: _,
+        },
+        origin: _,
+    }) = value.node.as_ref()
+    else {
+        return RangeInput::Summary { nonempty: false };
+    };
+    let Some(GuardValue::Int(count)) = value.constant() else {
+        return RangeInput::Summary { nonempty: false };
+    };
+    if *count > 32 {
+        tracing::debug!(reason = ?super::BoundReason::LoopMembers, "widen range");
+        return RangeInput::Summary { nonempty: true };
+    }
+    RangeInput::Exact(
+        (0..*count)
+            .map(|index| {
+                let value = Value::scalar(
+                    *go_type,
+                    Some(super::scalar_value::ScalarContent::Literal(
+                        GuardValue::Int(index),
+                    )),
+                );
+                RangeEntry {
+                    key: value.clone(),
+                    value,
+                }
+            })
+            .collect(),
+    )
+}
+
+fn entries(state: &State, value: &Value) -> Option<Vec<RangeEntry>> {
     match value.node.as_ref() {
         ValueNode::Leaf(Leaf {
             datum: Datum::Strings(slice),

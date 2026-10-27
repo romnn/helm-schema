@@ -569,7 +569,11 @@ fn transfer_deserialize(input: TransferInput<'_>, state: &mut State) -> Value {
     if matches!(function, "fromJsonArray" | "fromYamlArray") && !parsed.is_sequence() {
         return unknown_decoded(function, influences.clone(), state);
     }
-    decode(&parsed, state)
+    decode(
+        &parsed,
+        state,
+        !matches!(function, "fromYaml" | "fromYamlArray"),
+    )
 }
 
 fn transfer_quote(input: TransferInput<'_>) -> Value {
@@ -891,7 +895,7 @@ fn yaml_json_compatible(value: &serde_yaml::Value) -> bool {
     }
 }
 
-fn decode(value: &serde_yaml::Value, state: &mut State) -> Value {
+fn decode(value: &serde_yaml::Value, state: &mut State, json_numbers: bool) -> Value {
     match value {
         serde_yaml::Value::Mapping(fields) => {
             let mut keyed = BTreeMap::new();
@@ -906,15 +910,19 @@ fn decode(value: &serde_yaml::Value, state: &mut State) -> Value {
             let value = state.heap.map(Remainder::Closed);
             if let Some(id) = state.map_target(&value) {
                 for (key, value) in keyed {
-                    let value = decode(value, state);
+                    let value = decode(value, state, json_numbers);
                     state.heap.write(&id, &key, Field::Present(value));
                 }
             }
             value
         }
         serde_yaml::Value::Sequence(items) => {
-            let mut value =
-                Value::sequence(items.iter().map(|value| decode(value, state)).collect());
+            let mut value = Value::sequence(
+                items
+                    .iter()
+                    .map(|value| decode(value, state, json_numbers))
+                    .collect(),
+            );
             if let ValueNode::Leaf(Leaf {
                 datum: Datum::Sequence(sequence),
                 origin: _,
@@ -927,6 +935,10 @@ fn decode(value: &serde_yaml::Value, state: &mut State) -> Value {
         serde_yaml::Value::Null => Value::nil(),
         serde_yaml::Value::Bool(value) => Value::literal(GuardValue::Bool(*value)),
         serde_yaml::Value::String(value) => Value::string(value),
+        // The Go type is exact; numeric content still lacks Go-compatible serialization.
+        serde_yaml::Value::Number(_) if json_numbers => {
+            Value::scalar(super::ScalarType::Float64, None)
+        }
         serde_yaml::Value::Number(_) | serde_yaml::Value::Tagged(_) => Value::unknown(),
     }
 }

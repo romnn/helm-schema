@@ -8,6 +8,8 @@ use helm_schema_ast::DefineIndex;
 use helm_schema_core::Predicate;
 use test_util::prelude::sim_assert_eq;
 
+#[path = "runtime_ranges.rs"]
+mod range_laws;
 #[path = "runtime_reconvergence.rs"]
 mod reconvergence_laws;
 
