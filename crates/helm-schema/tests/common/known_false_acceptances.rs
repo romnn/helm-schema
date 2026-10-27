@@ -247,6 +247,16 @@ pub(crate) enum Family {
     /// L2: merge attribution types `.securityContext.capabilities` as a whole
     /// `SecurityContext`. Not one of the 83 campaign families.
     L2,
+    /// Disabling a library dependency removes helpers still called by active templates.
+    LibraryDependencyDeactivation,
+    /// Activation emits a resource API version the pinned Kubernetes server no longer serves.
+    UnavailableResourceApiVersions,
+    /// A conditional collection body leaves its mandatory output key null.
+    ConditionalCollectionNull,
+    /// Disabling a dependency exposes unfilled external connection requirements.
+    DependencyDisableRequirements,
+    /// A guarded required call receives a computed constant nil operand.
+    ComputedNilRequired,
     /// No family filed yet: a hard-coded API version the pinned server no
     /// longer serves, an empty `{}` item rendered as a document, a nil
     /// dereference of a deleted table, a non-empty conjunct of a `kindIs`
@@ -349,6 +359,11 @@ impl FromStr for Family {
             "B6" => Self::B6,
             "L1" => Self::L1,
             "L2" => Self::L2,
+            "LibraryDependencyDeactivation" => Self::LibraryDependencyDeactivation,
+            "UnavailableResourceApiVersions" => Self::UnavailableResourceApiVersions,
+            "ConditionalCollectionNull" => Self::ConditionalCollectionNull,
+            "DependencyDisableRequirements" => Self::DependencyDisableRequirements,
+            "ComputedNilRequired" => Self::ComputedNilRequired,
             "Unfiled" => Self::Unfiled,
             _ => return Err(format!("unknown family label {label:?}")),
         };
@@ -1266,6 +1281,526 @@ pub(crate) const KNOWN_CONTEXT_FALSE_ACCEPTANCES: &[ContextFalseAcceptance] = &[
         rejection: Rejection::LintRejects,
         baseline: Baseline::RejectsItsDefaults,
         family: Family::Unfiled,
+    },
+    // Evidence for these lint rows is under the helm-schema evidence root in
+    // adjudication-57365-8259075788330434-32.
+    // Owner: generator: library dependency deactivation (bitnami-common=false).
+    // W4's compile blocker masked this failure until 34af6419.
+    // Evidence: probe-mlkzWY/LintRaw-Aznfbb.
+    ContextFalseAcceptance {
+        chart: "oncall",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"redis":{"enabled":true},"tags":{"bitnami-common":false}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        rejection: Rejection::LintRejects,
+        baseline: Baseline::RejectsItsDefaults,
+        family: Family::LibraryDependencyDeactivation,
+    },
+    // Owner: generator: library dependency deactivation (bitnami-common=false).
+    // W4's compile blocker masked this failure until 34af6419.
+    // Evidence: probe-mlkzWY/LintCoalescedTwice-Kw0abY.
+    ContextFalseAcceptance {
+        chart: "oncall",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"redis":{"enabled":true},"tags":{"bitnami-common":false}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        rejection: Rejection::LintRejects,
+        baseline: Baseline::RejectsItsDefaults,
+        family: Family::LibraryDependencyDeactivation,
+    },
+    // Owner: generator: unavailable resource API versions (PSP/HPA).
+    // W4's compile blocker masked this failure until 34af6419.
+    // Evidence: probe-0Ai1T8/LintRaw-4N9brF.
+    ContextFalseAcceptance {
+        chart: "oncall",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"cert-manager":{"enabled":true,"global":{"podSecurityPolicy":{"enabled":true}}}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        rejection: Rejection::KubernetesRejects,
+        baseline: Baseline::RejectsItsDefaults,
+        family: Family::UnavailableResourceApiVersions,
+    },
+    // Owner: generator: unavailable resource API versions (PSP/HPA).
+    // W4's compile blocker masked this failure until 34af6419.
+    // Evidence: probe-0Ai1T8/LintCoalescedTwice-HSupjf.
+    ContextFalseAcceptance {
+        chart: "oncall",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"cert-manager":{"enabled":true,"global":{"podSecurityPolicy":{"enabled":true}}}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        rejection: Rejection::KubernetesRejects,
+        baseline: Baseline::RejectsItsDefaults,
+        family: Family::UnavailableResourceApiVersions,
+    },
+    // Owner: generator: dependency disablement exposes external connection requirements.
+    // W4's compile blocker masked this failure until 34af6419.
+    // Evidence: probe-IS1OAW/LintCoalescedTwice-OtrekV.
+    ContextFalseAcceptance {
+        chart: "oncall",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"redis":null}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        rejection: Rejection::HelmAborts,
+        baseline: Baseline::RejectsItsDefaults,
+        family: Family::DependencyDisableRequirements,
+    },
+    // Owner: generator: library dependency deactivation (bitnami-common=false).
+    // W4's compile blocker masked this failure until 34af6419.
+    // Evidence: probe-FFR6qG/LintRaw-NENi6k.
+    ContextFalseAcceptance {
+        chart: "oncall",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"mariadb":{"enabled":true},"tags":{"bitnami-common":false}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        rejection: Rejection::LintRejects,
+        baseline: Baseline::RejectsItsDefaults,
+        family: Family::LibraryDependencyDeactivation,
+    },
+    // Owner: generator: library dependency deactivation (bitnami-common=false).
+    // W4's compile blocker masked this failure until 34af6419.
+    // Evidence: probe-FFR6qG/LintCoalescedTwice-WwZJdR.
+    ContextFalseAcceptance {
+        chart: "oncall",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"mariadb":{"enabled":true},"tags":{"bitnami-common":false}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        rejection: Rejection::LintRejects,
+        baseline: Baseline::RejectsItsDefaults,
+        family: Family::LibraryDependencyDeactivation,
+    },
+    // Owner: generator: dependency disablement exposes external connection requirements.
+    // W4's compile blocker masked this failure until 34af6419.
+    // Evidence: probe-zMCMJq/LintCoalescedTwice-Xkaaqb.
+    ContextFalseAcceptance {
+        chart: "oncall",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"grafana":null}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        rejection: Rejection::HelmAborts,
+        baseline: Baseline::RejectsItsDefaults,
+        family: Family::DependencyDisableRequirements,
+    },
+    // Owner: generator: Bitnami validation helpers.
+    // W4's compile blocker masked this failure until 34af6419.
+    // Evidence: probe-cEsdJw/LintRaw-hwhMNq.
+    // The baseline rejects the missing memory limit
+    // at /properties/rabbitmq/allOf/87/then.
+    ContextFalseAcceptance {
+        chart: "oncall",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"rabbitmq":{"enabled":true,"memoryHighWatermark":{"enabled":true}}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        rejection: Rejection::LintRejects,
+        baseline: Baseline::RejectsUnlikeItsDefaults,
+        family: Family::F6,
+    },
+    // Owner: generator: dependency disablement exposes external connection requirements.
+    // W4's compile blocker masked this failure until 34af6419.
+    // Evidence: probe-DH6FMT/LintCoalescedTwice-Pt5YCY.
+    ContextFalseAcceptance {
+        chart: "oncall",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"grafana":{"enabled":null}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        rejection: Rejection::HelmAborts,
+        baseline: Baseline::RejectsItsDefaults,
+        family: Family::DependencyDisableRequirements,
+    },
+    // Owner: generator: conditional KEDA collection leaves triggers null.
+    // W4's compile blocker masked this failure until 34af6419.
+    // Evidence: probe-rkrNqm/LintRaw-2V8LJD.
+    ContextFalseAcceptance {
+        chart: "oncall",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"ingress-nginx":{"controller":{"keda":{"enabled":true}},"enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        rejection: Rejection::KubernetesRejects,
+        baseline: Baseline::RejectsItsDefaults,
+        family: Family::ConditionalCollectionNull,
+    },
+    // Owner: generator: conditional KEDA collection leaves triggers null.
+    // W4's compile blocker masked this failure until 34af6419.
+    // Evidence: probe-rkrNqm/LintCoalescedTwice-FJR3ru.
+    ContextFalseAcceptance {
+        chart: "oncall",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"ingress-nginx":{"controller":{"keda":{"enabled":true}},"enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        rejection: Rejection::KubernetesRejects,
+        baseline: Baseline::RejectsItsDefaults,
+        family: Family::ConditionalCollectionNull,
+    },
+    // Owner: generator: dependency disablement exposes external connection requirements.
+    // W4's compile blocker masked this failure until 34af6419.
+    // Evidence: probe-j0V3dX/LintCoalescedTwice-f3stwV.
+    ContextFalseAcceptance {
+        chart: "oncall",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"rabbitmq":{"enabled":null}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        rejection: Rejection::HelmAborts,
+        baseline: Baseline::RejectsItsDefaults,
+        family: Family::DependencyDisableRequirements,
+    },
+    // Owner: generator: computed constant-nil required in the RBAC scope guard.
+    // W4's compile blocker masked this failure until 34af6419.
+    // Evidence: probe-a2OK33/LintRaw-SLM5q7.
+    // The baseline additionally rejects the scope mismatch
+    // at /properties/ingress-nginx/allOf/77/then.
+    ContextFalseAcceptance {
+        chart: "oncall",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"ingress-nginx":{"enabled":true,"rbac":{"scope":true}}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        rejection: Rejection::HelmAborts,
+        baseline: Baseline::RejectsUnlikeItsDefaults,
+        family: Family::ComputedNilRequired,
+    },
+    // Owner: generator: dependency disablement exposes external connection requirements.
+    // W4's compile blocker masked this failure until 34af6419.
+    // Evidence: probe-sekNVj/LintCoalescedTwice-zzgCa6.
+    ContextFalseAcceptance {
+        chart: "oncall",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"rabbitmq":null}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        rejection: Rejection::HelmAborts,
+        baseline: Baseline::RejectsItsDefaults,
+        family: Family::DependencyDisableRequirements,
+    },
+    // Owner: generator: library dependency deactivation (bitnami-common=false).
+    // W4's compile blocker masked this failure until 34af6419.
+    // Evidence: probe-fpPR7J/LintRaw-ZHZEEG.
+    ContextFalseAcceptance {
+        chart: "oncall",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"rabbitmq":{"enabled":true},"tags":{"bitnami-common":false}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        rejection: Rejection::LintRejects,
+        baseline: Baseline::RejectsItsDefaults,
+        family: Family::LibraryDependencyDeactivation,
+    },
+    // Owner: generator: library dependency deactivation (bitnami-common=false).
+    // W4's compile blocker masked this failure until 34af6419.
+    // Evidence: probe-fpPR7J/LintCoalescedTwice-Wv7EMU.
+    ContextFalseAcceptance {
+        chart: "oncall",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"rabbitmq":{"enabled":true},"tags":{"bitnami-common":false}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        rejection: Rejection::LintRejects,
+        baseline: Baseline::RejectsItsDefaults,
+        family: Family::LibraryDependencyDeactivation,
+    },
+    // Owner: generator: malformed Prometheus VPA YAML.
+    // W4's compile blocker masked this failure until 34af6419.
+    // Evidence: probe-zeQPSR/LintRaw-VXcn5H.
+    // The baseline additionally rejects this activation
+    // at /properties/prometheus/allOf/121/then.
+    ContextFalseAcceptance {
+        chart: "oncall",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"prometheus":{"enabled":true,"server":{"verticalAutoscaler":{"enabled":true}}}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        rejection: Rejection::HelmAborts,
+        baseline: Baseline::RejectsUnlikeItsDefaults,
+        family: Family::F13,
+    },
+    // Owner: generator: malformed Prometheus VPA YAML.
+    // W4's compile blocker masked this failure until 34af6419.
+    // Evidence: probe-zeQPSR/LintCoalescedTwice-SWB71a.
+    // The baseline additionally rejects this activation
+    // at /properties/prometheus/allOf/121/then.
+    ContextFalseAcceptance {
+        chart: "oncall",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"prometheus":{"enabled":true,"server":{"verticalAutoscaler":{"enabled":true}}}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        rejection: Rejection::HelmAborts,
+        baseline: Baseline::RejectsUnlikeItsDefaults,
+        family: Family::F13,
+    },
+    // Owner: generator: unavailable resource API versions (PSP/HPA).
+    // W4's compile blocker masked this failure until 34af6419.
+    // Evidence: probe-8EB2mo/LintRaw-5neXwA.
+    ContextFalseAcceptance {
+        chart: "oncall",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"ingress-nginx":{"enabled":true,"podSecurityPolicy":{"enabled":true}}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        rejection: Rejection::KubernetesRejects,
+        baseline: Baseline::RejectsItsDefaults,
+        family: Family::UnavailableResourceApiVersions,
+    },
+    // Owner: generator: unavailable resource API versions (PSP/HPA).
+    // W4's compile blocker masked this failure until 34af6419.
+    // Evidence: probe-8EB2mo/LintCoalescedTwice-MCxdbv.
+    ContextFalseAcceptance {
+        chart: "oncall",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"ingress-nginx":{"enabled":true,"podSecurityPolicy":{"enabled":true}}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        rejection: Rejection::KubernetesRejects,
+        baseline: Baseline::RejectsItsDefaults,
+        family: Family::UnavailableResourceApiVersions,
+    },
+    // Owner: generator: Bitnami validation helpers.
+    // W4's compile blocker masked this failure until 34af6419.
+    // Evidence: probe-UUhd1S/LintRaw-nTmoda.
+    ContextFalseAcceptance {
+        chart: "oncall",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"rabbitmq":{"enabled":true,"ldap":{"enabled":true}}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        rejection: Rejection::HelmAborts,
+        baseline: Baseline::RejectsItsDefaults,
+        family: Family::F6,
+    },
+    // Owner: generator: Bitnami validation helpers.
+    // W4's compile blocker masked this failure until 34af6419.
+    // Evidence: probe-UUhd1S/LintCoalescedTwice-Bvahgj.
+    ContextFalseAcceptance {
+        chart: "oncall",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"rabbitmq":{"enabled":true,"ldap":{"enabled":true}}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        rejection: Rejection::HelmAborts,
+        baseline: Baseline::RejectsItsDefaults,
+        family: Family::F6,
+    },
+    // Owner: generator: Bitnami validation helpers.
+    // W4's compile blocker masked this failure until 34af6419.
+    // Evidence: probe-5FG94K/LintRaw-ZmAPPr.
+    ContextFalseAcceptance {
+        chart: "oncall",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"redis":{"enabled":true,"podSecurityPolicy":{"create":true}}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        rejection: Rejection::HelmAborts,
+        baseline: Baseline::RejectsItsDefaults,
+        family: Family::F6,
+    },
+    // Owner: generator: Bitnami validation helpers.
+    // W4's compile blocker masked this failure until 34af6419.
+    // Evidence: probe-5FG94K/LintCoalescedTwice-qenAXi.
+    ContextFalseAcceptance {
+        chart: "oncall",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"redis":{"enabled":true,"podSecurityPolicy":{"create":true}}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        rejection: Rejection::HelmAborts,
+        baseline: Baseline::RejectsItsDefaults,
+        family: Family::F6,
+    },
+    // Owner: generator: dependency disablement exposes external connection requirements.
+    // W4's compile blocker masked this failure until 34af6419.
+    // Evidence: probe-FVCsHv/LintCoalescedTwice-ZJ1K2c.
+    ContextFalseAcceptance {
+        chart: "oncall",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"redis":{"enabled":null}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        rejection: Rejection::HelmAborts,
+        baseline: Baseline::RejectsItsDefaults,
+        family: Family::DependencyDisableRequirements,
+    },
+    // Owner: generator: dependency disablement exposes external connection requirements.
+    // W4's compile blocker masked this failure until 34af6419.
+    // Evidence: probe-oUALtB/LintCoalescedTwice-1PSrB8.
+    ContextFalseAcceptance {
+        chart: "oncall",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"mariadb":null}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        rejection: Rejection::HelmAborts,
+        baseline: Baseline::RejectsItsDefaults,
+        family: Family::DependencyDisableRequirements,
+    },
+    // Owner: generator: dependency disablement exposes external connection requirements.
+    // W4's compile blocker masked this failure until 34af6419.
+    // Evidence: probe-viybcB/LintCoalescedTwice-mAq5qa.
+    ContextFalseAcceptance {
+        chart: "oncall",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"mariadb":{"enabled":null}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        rejection: Rejection::HelmAborts,
+        baseline: Baseline::RejectsItsDefaults,
+        family: Family::DependencyDisableRequirements,
+    },
+    // Owner: generator: unavailable resource API versions (PSP/HPA).
+    // W4's compile blocker masked this failure until 34af6419.
+    // Evidence: probe-9fJlXc/LintRaw-HMTnWw.
+    ContextFalseAcceptance {
+        chart: "oncall",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"ingress-nginx":{"controller":{"autoscaling":{"enabled":true}},"enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        rejection: Rejection::KubernetesRejects,
+        baseline: Baseline::RejectsItsDefaults,
+        family: Family::UnavailableResourceApiVersions,
+    },
+    // Owner: generator: unavailable resource API versions (PSP/HPA).
+    // W4's compile blocker masked this failure until 34af6419.
+    // Evidence: probe-9fJlXc/LintCoalescedTwice-EaujVw.
+    ContextFalseAcceptance {
+        chart: "oncall",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"ingress-nginx":{"controller":{"autoscaling":{"enabled":true}},"enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        rejection: Rejection::KubernetesRejects,
+        baseline: Baseline::RejectsItsDefaults,
+        family: Family::UnavailableResourceApiVersions,
+    },
+    // Owner: generator: Bitnami validation helpers.
+    // W4's compile blocker masked this failure until 34af6419.
+    // Evidence: probe-bVTCuO/LintRaw-lgRjCq.
+    ContextFalseAcceptance {
+        chart: "oncall",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"postgresql":{"enabled":true,"psp":{"create":true}}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        rejection: Rejection::HelmAborts,
+        baseline: Baseline::RejectsItsDefaults,
+        family: Family::F6,
+    },
+    // Owner: generator: Bitnami validation helpers.
+    // W4's compile blocker masked this failure until 34af6419.
+    // Evidence: probe-bVTCuO/LintCoalescedTwice-kc0uQm.
+    ContextFalseAcceptance {
+        chart: "oncall",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"postgresql":{"enabled":true,"psp":{"create":true}}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        rejection: Rejection::HelmAborts,
+        baseline: Baseline::RejectsItsDefaults,
+        family: Family::F6,
+    },
+    // Owner: generator: library dependency deactivation (bitnami-common=false).
+    // W4's compile blocker masked this failure until 34af6419.
+    // Evidence: probe-0ONHNu/LintRaw-KrWMxZ.
+    ContextFalseAcceptance {
+        chart: "oncall",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"postgresql":{"enabled":true},"tags":{"bitnami-common":false}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        rejection: Rejection::LintRejects,
+        baseline: Baseline::RejectsItsDefaults,
+        family: Family::LibraryDependencyDeactivation,
+    },
+    // Owner: generator: library dependency deactivation (bitnami-common=false).
+    // W4's compile blocker masked this failure until 34af6419.
+    // Evidence: probe-0ONHNu/LintCoalescedTwice-Mq08nm.
+    ContextFalseAcceptance {
+        chart: "oncall",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"postgresql":{"enabled":true},"tags":{"bitnami-common":false}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        rejection: Rejection::LintRejects,
+        baseline: Baseline::RejectsItsDefaults,
+        family: Family::LibraryDependencyDeactivation,
     },
     ContextFalseAcceptance {
         chart: "openebs",
