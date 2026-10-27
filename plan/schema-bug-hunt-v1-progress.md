@@ -9529,4 +9529,16 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   26.6; 7 summary closures) and a perf lane opened on it (astra 20261027T183601-68c15784); C05 step 3 held for family/timing
   gates. Disk fell to 11 GiB at 19:10 (battery scratch plus build folders); cleared to 33 GiB, process fix queued (sweep
   battery scratch after the step). Orchestrator.
-Next: F20 rework hand-back → re-review → landing 20; C06a LOC-negative step; perf lane on a6712c04; C05 step 3 gates; integrate C06a 4ba6306e into r3b/construction at a quiet point.
+- 23:15 (Oct 27) — **R3b: executor protocol declared a local maximum after a third precision-driven perf cliff; orchestrator
+  adopts the structural fix in three slices.** C04b (initializer, all charts > 60 CPU-s), C05 step 2 (loop footprints, KPS
+  1.9×) and C07 step 1 (summary plans, NATS 13×: reconvergence 76,481 → 475,818 calls) each blew up in reconvergence or guard
+  preparation. Architecture review (astra 20261027T215146-11b30d4a): the executor undoes the value algebra's sharing; operand
+  alternatives become forked executions (invoke.rs:476/667), joins rediscover sharing with quadratic candidate scans and Θ(H²)
+  history unions (control.rs:1214/1312, output.rs:1222, history.rs:53), and runtime relations are rebuilt as absolute
+  predicates (output.rs:965/1135). Decision: option 1, compositional guarded results with structural joins, as slices
+  (1) operand lifting, (2) delta joins with continuation keys and shared-prefix history, (3) runtime proof consumption
+  (perf lane round8-r3b-perf3 owns 3); estimate 600–900 added / 450–700 deleted production LOC. It subsumes the C04
+  operand-demand and C05 domain-relative recommendations; C07 resumes on top. Status: C06a 136/173 at a3772433 (+261 LOC);
+  C05 steps 2–3 committed (a6712c04, bc86a8e9; 10 controls; KPS speed debt, perf lane at 8abec4d6 −20%); C07 step 1 held.
+  The C06a line merges into r3b/construction before slices 1–2 start. Orchestrator.
+Next: integrate C06a steps 3–5 into r3b/construction; brief slice 1 (operand lifting); F20 rework hand-back → landing 20; perf lane slice 3.
