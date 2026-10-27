@@ -216,7 +216,7 @@ impl LintSchemas {
         Self::compile_bytes(&serde_json::to_vec(baseline)?, candidate, candidate_path)
     }
 
-    /// Compiles the shipped `baseline` bytes and `candidate`, verifying the candidate's companion when it comes from a dump.
+    /// Normalizes and compiles `baseline` with `candidate`, verifying a dump candidate's companion.
     ///
     /// # Errors
     ///
@@ -226,23 +226,21 @@ impl LintSchemas {
         candidate: &Value,
         candidate_path: Option<&Path>,
     ) -> eyre::Result<Self> {
-        // The sweep ships committed bytes unchanged unless Helm's per-file limit
-        // requires shortening.
+        // Rust and Helm must read the same language-exact baseline respelling.
+        let mut baseline_schema = serde_json::from_slice(baseline)?;
+        helm_schema_core::normalize_schema_pattern_dialects(&mut baseline_schema);
         let baseline = if baseline.len() <= helm_schema::output::HELM_MAX_CHART_FILE_BYTES {
-            baseline.to_vec()
+            serde_json::to_vec(&baseline_schema)?
         } else {
-            helm_ready(&serde_json::from_slice(baseline)?)?
+            helm_ready(&baseline_schema)?
         };
         let candidate = if let Some(path) = candidate_path {
             verified_companion(path, candidate)?
         } else {
             helm_ready(candidate)?
         };
-        // Regex respelling is validator policy, never part of the shipped bytes or their identity.
-        let mut validation_baseline = serde_json::from_slice(&baseline)?;
-        helm_schema_core::normalize_schema_pattern_dialects(&mut validation_baseline);
         let profiles = ProfileSchemas::compile(
-            &validation_baseline,
+            &serde_json::from_slice(&baseline)?,
             &serde_json::from_slice(&candidate)?,
             json!({}),
         )?;

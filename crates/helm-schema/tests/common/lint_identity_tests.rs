@@ -2,7 +2,6 @@
 
 use std::collections::BTreeSet;
 use std::fs;
-use std::path::Path;
 
 use color_eyre::eyre;
 use helm_schema_test_support::source_digest::sha256_hex;
@@ -14,13 +13,13 @@ use test_util::scratch::ScratchDir;
 use super::lint_probes::{ImportedRoster, LintSchemas};
 
 #[test]
-fn baseline_preserves_committed_bytes_and_sweep_hash_below_helm_limit() -> eyre::Result<()> {
-    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../testdata/chart-corpus-schemas/oauth2-proxy.schema.json");
-    let committed = fs::read(path)?;
-    let schemas = LintSchemas::compile_bytes(&committed, &json!({}), None)?;
-    sim_assert_eq!(have: sha256_hex(&schemas.baseline), want: sha256_hex(&committed));
-    sim_assert_eq!(have: schemas.baseline, want: committed);
+fn baseline_binds_the_normalized_bytes_installed_for_helm() -> eyre::Result<()> {
+    let baseline =
+        br#" { "pattern": "^\\u0000\\u00FF$", "patternProperties": {"^\\u007F$": {}} } "#;
+    let expected = br#"{"pattern":"^\\x00\\xFF$","patternProperties":{"^\\x7F$":{}}}"#;
+    let schemas = LintSchemas::compile_bytes(baseline, &json!({}), None)?;
+    sim_assert_eq!(have: sha256_hex(&schemas.baseline), want: sha256_hex(expected));
+    sim_assert_eq!(have: schemas.baseline, want: expected.to_vec());
     Ok(())
 }
 
@@ -69,7 +68,7 @@ fn baseline_shortens_only_above_the_sweep_helm_file_limit() -> eyre::Result<()> 
     let mut exact_limit = vec![b' '; 5 * 1024 * 1024 - 2];
     exact_limit.extend_from_slice(b"{}");
     let exact = LintSchemas::compile_bytes(&exact_limit, &json!({}), None)?;
-    sim_assert_eq!(have: exact.baseline, want: exact_limit.clone());
+    sim_assert_eq!(have: exact.baseline, want: b"{}".to_vec());
     exact_limit.push(b'\n');
     let oversized = LintSchemas::compile_bytes(&exact_limit, &json!({}), None)?;
     sim_assert_eq!(have: oversized.baseline, want: b"{}\n".to_vec());

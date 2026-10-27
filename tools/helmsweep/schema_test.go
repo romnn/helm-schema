@@ -2,8 +2,10 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -150,5 +152,28 @@ func TestSweepRequiresLoadedSchemaAndExactIgnorePreparation(t *testing.T) {
 				t.Fatalf("plain ignore rules changed: %q", plain)
 			}
 		})
+	}
+}
+
+func TestEmittedPatternsCompile(t *testing.T) {
+	path := os.Getenv("HELM_SCHEMA_PATTERN_INPUT")
+	if path == "" {
+		t.Skip("emitted corpus patterns are supplied by schema_dialect_hygiene")
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var patterns []string
+	if err := json.Unmarshal(data, &patterns); err != nil {
+		t.Fatal(err)
+	}
+	if len(patterns) == 0 {
+		t.Fatal("no emitted patterns supplied")
+	}
+	for index, pattern := range patterns {
+		if _, err := regexp.Compile(pattern); err != nil {
+			t.Errorf("pattern %d %q: %v", index, pattern, err)
+		}
 	}
 }

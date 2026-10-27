@@ -14,7 +14,9 @@ use std::path::{Path, PathBuf};
 
 use color_eyre::eyre::{self, WrapErr as _};
 use helm_schema_json_schema_walk::{SchemaTraversalContext, schema_child_context_for_keyword};
+use helm_schema_test_support::registry::{self, ArtifactId};
 use serde_json::Value;
+use test_util::prelude::sim_assert_eq;
 
 const OWNED_FIXTURE_DIRS: &[&str] = &[
     "testdata/chart-corpus-schemas",
@@ -122,6 +124,49 @@ fn owned_schema_artifacts_validate_against_their_metaschema() -> eyre::Result<()
             panic!("{}: metaschema violation: {error}", path.display());
         }
     }
+    Ok(())
+}
+
+#[test]
+fn emitted_schema_patterns_compile_under_go() -> eyre::Result<()> {
+    let mut patterns = std::collections::BTreeSet::new();
+    for spec in registry::registry() {
+        match spec.id {
+            ArtifactId::Ir(_) => continue,
+            ArtifactId::Chart(_)
+            | ArtifactId::Template(_)
+            | ArtifactId::Lean(_)
+            | ArtifactId::FinalPolicy(_)
+            | ArtifactId::Authoring(_) => {}
+        }
+        let schema = helm_schema_test_support::consume(spec.id)?;
+        let mut located = Vec::new();
+        collect_schema_patterns(&schema, "", &mut located);
+        patterns.extend(located.into_iter().map(|(_, pattern)| pattern));
+    }
+    assert!(!patterns.is_empty());
+    let directory = test_util::scratch::ScratchDir::new("go-patterns")?;
+    let input = directory.path().join("patterns.json");
+    std::fs::write(&input, serde_json::to_vec(&patterns)?)?;
+    // Go test code preserves the oracle executable identity bound by CRD replay receipts.
+    let output = std::process::Command::new("go")
+        .args([
+            "test",
+            "-v",
+            "-run=^TestEmittedPatternsCompile$",
+            "-count=1",
+            ".",
+        ])
+        .current_dir(test_util::scratch::target_dir().join("helmsweep-build"))
+        .env("HELM_SCHEMA_PATTERN_INPUT", input)
+        .output()?;
+    sim_assert_eq!(
+        have: output.status.success()
+            && String::from_utf8_lossy(&output.stdout)
+                .contains("--- PASS: TestEmittedPatternsCompile"),
+        want: true,
+        "{}{}", String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr),
+    );
     Ok(())
 }
 
