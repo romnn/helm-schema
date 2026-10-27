@@ -380,18 +380,25 @@ def short_cpu(raw: str) -> str:
     name's trailing `<N>-Core Processor` or `Processor` (the host's core count, not the runner's),
     and repeated whitespace. The family word and every model token stay, so different models never
     share a name: "AMD EPYC 7763 64-Core Processor" is "EPYC 7763", "Intel(R) Xeon(R) Platinum
-    8370C CPU @ 2.80GHz" is "Xeon Platinum 8370C", "Apple M3 Pro" is "M3 Pro". A name that does
-    not start with a known vendor, or that would be left empty, stays as it is, whitespace
-    collapsed: nothing is guessed.
+    8370C CPU @ 2.80GHz" is "Xeon Platinum 8370C", "Apple M3 Pro" is "M3 Pro". Every match ignores
+    case, since some hosts shout the whole name. Shouting is not a different model, so the name gets
+    one spelling: a vendor word in capitals where the vendor does not spell it so marks a shouted
+    name, whose letter-only words are then capitalized: "INTEL(R) XEON(R) PLATINUM 8573C CPU @
+    2.80GHZ" is "Xeon Platinum 8573C". AMD spells itself in capitals, so "AMD EPYC 7763" keeps
+    "EPYC". A name that does not start with a known vendor, or that would be left empty, stays as
+    it is, whitespace collapsed: nothing is guessed.
     """
     collapsed = " ".join(raw.split())
     marks = re.compile(r"\((?:R|TM|C)\)", re.IGNORECASE)
     words = marks.sub("", collapsed).split()
-    if not words or words[0] not in CPU_VENDORS:
+    vendor = next((v for v in CPU_VENDORS if words and words[0].casefold() == v.casefold()), None)
+    if vendor is None:
         return collapsed
+    if words[0] != vendor and words[0].isupper():
+        words = [word.capitalize() if word.isalpha() else word for word in words]
     text = " ".join(words[1:])
-    text = re.sub(r" CPU @ [0-9.]+ ?[GM]Hz$", "", text)
-    text = re.sub(r" (?:[0-9]+-Core )?Processor$", "", text)
+    text = re.sub(r" CPU @ [0-9.]+ ?[GM]Hz$", "", text, flags=re.IGNORECASE)
+    text = re.sub(r" (?:[0-9]+-Core )?Processor$", "", text, flags=re.IGNORECASE)
     return text or collapsed
 
 

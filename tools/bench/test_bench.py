@@ -14,6 +14,11 @@ class ShortCpu(unittest.TestCase):
             "AMD EPYC 9V74 80-Core Processor": "EPYC 9V74",
             "AMD EPYC 9V45 96-Core Processor": "EPYC 9V45",
             "Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz": "Xeon Platinum 8370C",
+            "INTEL(R) XEON(R) PLATINUM 8573C": "Xeon Platinum 8573C",
+            "INTEL(R) XEON(R) PLATINUM 8370C CPU @ 2.80GHZ": "Xeon Platinum 8370C",
+            "AMD EPYC 7763 64-CORE PROCESSOR": "EPYC 7763",
+            "APPLE M3 PRO": "M3 Pro",
+            "AMD EPYC 7763": "EPYC 7763",
             "Apple M3 Pro": "M3 Pro",
             "  AMD   Ryzen 9  5950X 16-Core Processor ": "Ryzen 9 5950X",
         }
