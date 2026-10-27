@@ -1,8 +1,10 @@
 """Tests of bench.py's pure helpers: python3 -m unittest discover tools/bench"""
 
+import json
 import unittest
+from unittest.mock import patch
 
-from bench import short_cpu
+from bench import PHASES, entries, short_cpu
 
 
 class ShortCpu(unittest.TestCase):
@@ -44,6 +46,47 @@ class ShortCpu(unittest.TestCase):
         models = {short_cpu(raw) for raw in raws}
         # The first two name one model, with and without its core count; every other name stays apart.
         self.assertEqual(len(models), len(raws) - 1)
+
+
+class MetricEnvironment(unittest.TestCase):
+    @patch("bench.CPU", "EPYC 7763")
+    @patch("bench.RUSTC", "rustc test")
+    def test_only_times_record_cpu_and_all_metrics_keep_their_toolchain(self) -> None:
+        result = {
+            "chart": "redis",
+            "profile": "full",
+            "reps": 3,
+            "cpu_range": (1.0, 2.0),
+            "cpu": 1.5,
+            "wall": 2.0,
+            "peak_rss": 1024 * 1024,
+            "pretty": 2048,
+            "compact": 1024,
+            "defs": 3,
+            "phases": dict.fromkeys(PHASES, 0.1),
+            "instructions": 1000,
+        }
+        recorded = entries(result, "valgrind test")
+        environments = {
+            payload["metric"]["id"]: payload["environment"]
+            for item in recorded
+            for payload in [json.loads(item["extra"])["benchtrail"]]
+        }
+        time_environment = {"rustc": "rustc test", "cpu": "EPYC 7763"}
+        shared_environment = {"rustc": "rustc test"}
+        self.assertEqual(
+            environments,
+            {
+                "cpu": time_environment,
+                "wall": time_environment,
+                **{f"phase:{phase}": time_environment for phase in PHASES},
+                "peak-rss": shared_environment,
+                "schema-size": shared_environment,
+                "compact-size": shared_environment,
+                "defs": shared_environment,
+                "instructions": {**shared_environment, "valgrind": "valgrind test"},
+            },
+        )
 
 
 if __name__ == "__main__":
