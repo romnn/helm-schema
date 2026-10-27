@@ -9512,4 +9512,21 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   queue an operand-demand dict/list constructor prototype (50–100 LOC, controls first) as the precondition for reopening it; the R3b
   builder moves to C05 (loops) from 82ccabf8 with a 2× stop rule. Process: watch-codex.py now trusts agentmux settled.json (pid
   reuse had shown a run that failed on Oct 25 as running). Orchestrator.
-Next: C06a rework + general placement hand-back (FA vs 173); C05 first step; F20 re-review → landing; `\u` regex lane hand-back → review → landing; dict/list operand-demand prototype when a slot frees.
+- 20:40 (Oct 27) — **Landing 21 merged (fa4d7e28): portable hex regex escapes (main-track W4 `\u`); receipt
+  round8-landing21-run2 sha256 f34bd841…; 503 oncall inherited rows retired, 34 masked oncall false acceptances recorded.**
+  pattern_dialect respells parsed `\u00XX` as `\xHH` (language-exact in ECMA u-mode and Go RE2); Helm can now compile the
+  oncall and airflow schemas, whose defaults lint clean, so both leave ACCEPTED_DEFAULTS_FAILURES. Run 1 failed at battery
+  (context-roster baseline hashes taken after normalization; 087c265c binds identity before it); review P2 pinned the Go gate
+  (95cf3790); run 2's first battery surfaced 34 oncall false acceptances the compile blocker had masked (9 lint, 8 Kubernetes,
+  17 Helm aborts), recorded with families in 9a8d1659 and rerun from unit. Steps: dump 15:31, unit 15:51, lint 15:56, battery
+  16:08 (failed, roster), unit/lint/battery 17:51–19:14 (74 min), integration 19:14, sweep 19:44 (54 min), green 20:39.
+  Landing 20 (F20) was stopped in its battery when both re-reviews found new P1s (guard escape in block scalars, loop transfers
+  in scalars, branch-merged comment classification); F20 rework running. Bench dashboard (user request): CPU-independent
+  metrics (peak RSS, sizes, $defs, instructions) no longer record the CPU and form one series; benchtrail v0.5.1 released and
+  pinned (a2c8e186); gh-pages history rewritten (b6bb9ace, 1,542 entries kept); shouted CPU names normalized case-insensitively
+  (02000db1, gh-pages fe2ad442). R3b: C06a at 136/173 (4ba6306e on r3b/c06a-placement, +584 LOC of +800, 0 new FR,
+  0 prior-pass unit/integration regressions); C05 step 2 committed with speed debt (a6712c04: KPS debug 8.2 → 15.8 CPU-s, main
+  26.6; 7 summary closures) and a perf lane opened on it (astra 20261027T183601-68c15784); C05 step 3 held for family/timing
+  gates. Disk fell to 11 GiB at 19:10 (battery scratch plus build folders); cleared to 33 GiB, process fix queued (sweep
+  battery scratch after the step). Orchestrator.
+Next: F20 rework hand-back → re-review → landing 20; C06a LOC-negative step; perf lane on a6712c04; C05 step 3 gates; integrate C06a 4ba6306e into r3b/construction at a quiet point.
