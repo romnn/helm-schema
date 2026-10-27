@@ -57,8 +57,7 @@ use and output sizes as well as times and counts; it starts a new segment withou
 across that boundary.
 Instruction counts also retain `valgrind`, come first, and the page opens on the newest 50 runs.
 
-This behavior needs the benchtrail release after v0.5.0 that limits splitting to recorded metric
-keys; release it and update the action's commit pin in `pages.yaml` before deployment.
+This behavior needs benchtrail v0.5.1 or later, which limits splitting to recorded metric keys.
 Older CPU metadata must be removed once from the then-current `gh-pages` history, otherwise those
 metrics still record CPU somewhere and will split:
 

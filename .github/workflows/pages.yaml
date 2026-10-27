@@ -70,10 +70,9 @@ jobs:
       # with profile labels that leave CPU out (tools/bench/README.md, ADR 0068).
       # Compiler changes still start a new segment for every metric.
       # The page opens on the newest 50 runs; its range buttons widen it.
-      # Deploy with the benchtrail release that limits splitEnvironment to recorded metric keys;
-      # v0.5.0 lacks that behavior, so bump its commit pin after releasing benchtrail.
+      # splitEnvironment applies only to metrics that record the key, which needs benchtrail v0.5.1.
       - name: Install the benchmark dashboard
-        uses: romnn/benchtrail@2d439907e81ac1e5ad063cefafc4bfe0be5fa649 # v0.5.0
+        uses: romnn/benchtrail@2b1efb0ca04737b2b28db0e0215c71b23ec9e4d9 # v0.5.1
         with:
           path: docs/public/bench
           benchmark-data-dir-path: bench
