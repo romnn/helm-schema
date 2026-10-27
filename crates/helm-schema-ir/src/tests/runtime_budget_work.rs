@@ -7,6 +7,405 @@ use crate::analysis_db::IrAnalysisDb;
 use crate::value::execute_document;
 
 #[test]
+fn frozen_projection_unions_preserve_bounds_on_hits_and_after_eviction() {
+    use helm_schema_core::{ApproximationRole, Guard, Predicate, PredicateMemo, ValuesPath};
+
+    use super::{DecisionStore, MAX_PROJECTION_UNIONS, ProjectionPurpose, ProjectionUnionKey};
+
+    let memo = PredicateMemo::new();
+    let mut store = DecisionStore::default();
+    let mut fixtures = [0, 1, 254, 255, 256, 257]
+        .map(|count| {
+            (0..count)
+                .map(|index| {
+                    Predicate::from(Guard::Truthy {
+                        path: ValuesPath::parse(&format!("branch{index:03}")),
+                    })
+                })
+                .collect::<Vec<_>>()
+        })
+        .to_vec();
+    let atom = |name| {
+        Predicate::from(Guard::Truthy {
+            path: ValuesPath::parse(name),
+        })
+    };
+    let prefix = atom("prefix");
+    let left = atom("left");
+    let right = atom("right");
+    fixtures.push(vec![
+        Predicate::all(vec![prefix.clone(), left.clone()]),
+        Predicate::all(vec![prefix.clone(), right.clone()]),
+    ]);
+    let approximate = Predicate::Approximate(
+        "unknown arm".to_owned(),
+        std::collections::BTreeSet::from([ValuesPath::parse("opaque")]),
+        ApproximationRole::Control,
+        Some(Box::new(left)),
+    );
+    fixtures.push(vec![
+        Predicate::all(vec![prefix.clone(), approximate]),
+        Predicate::all(vec![prefix, right]),
+    ]);
+    for parts in &fixtures {
+        for purpose in [ProjectionPurpose::Budget, ProjectionPurpose::Control] {
+            let want = super::project_union(parts.clone(), purpose, &memo);
+            sim_assert_eq!(have: store.project_union(parts.clone(), purpose, &memo), want: want.clone());
+            let entries = store.projection_unions.len();
+            sim_assert_eq!(have: store.project_union(parts.clone(), purpose, &memo), want: want);
+            sim_assert_eq!(have: store.projection_unions.len(), want: entries);
+            if parts.len() >= 256 {
+                sim_assert_eq!(
+                    have: store.project_union(parts.clone(), purpose, &memo).is_none(),
+                    want: purpose == ProjectionPurpose::Budget
+                );
+            }
+        }
+    }
+    // Fill with disjoint formulas so the original entries must actually be evicted.
+    for index in 0..MAX_PROJECTION_UNIONS {
+        let result = store.project_union(
+            vec![Predicate::from(Guard::Truthy {
+                path: ValuesPath::parse(&format!("eviction{index}")),
+            })],
+            ProjectionPurpose::Budget,
+            &memo,
+        );
+        assert!(result.is_some());
+    }
+    for parts in &fixtures {
+        for purpose in [ProjectionPurpose::Control, ProjectionPurpose::Budget] {
+            assert!(!store.projection_unions.contains_key(&ProjectionUnionKey {
+                parts: parts.clone(),
+                purpose,
+            }));
+            sim_assert_eq!(
+                have: store.project_union(parts.clone(), purpose, &memo),
+                want: super::project_union(parts.clone(), purpose, &memo)
+            );
+        }
+    }
+    assert!(store.projection_unions.len() <= MAX_PROJECTION_UNIONS);
+}
+
+fn guard_cache_receipt(
+    store: &super::DecisionStore,
+) -> std::collections::BTreeMap<String, Option<u64>> {
+    let mut receipt =
+        std::collections::BTreeMap::from([("next_node".to_owned(), Some(store.next_node))]);
+    for (key, node) in &store.nodes {
+        receipt.insert(format!("node/{key:?}"), node.upgrade().map(|node| node.id));
+    }
+    for (key, guard) in &store.applications {
+        receipt.insert(
+            format!("application/{key:?}"),
+            guard.upgrade().map(|guard| guard.id()),
+        );
+    }
+    for (key, guard) in &store.negations {
+        receipt.insert(
+            format!("negation/{key}"),
+            guard.upgrade().map(|guard| guard.id()),
+        );
+    }
+    receipt
+}
+
+#[test]
+fn conjunction_memo_preserves_component_cache_work() {
+    use super::{Arena, Coverage, DecisionEdge};
+    use helm_schema_core::{Guard, Predicate, ValuesPath};
+    use std::rc::Rc;
+
+    let arena = Arena::default();
+    let predicate = Predicate::from(Guard::Truthy {
+        path: ValuesPath::parse("exact"),
+    });
+    let exact = arena.decision(predicate.clone(), predicate.negated(), Coverage::Exact);
+    let partial = arena.decision(Predicate::False, Predicate::False, Coverage::Partial);
+    let mut store = arena.guards.borrow_mut();
+    for second in [&partial, &exact] {
+        for taken in [true, false] {
+            let edges = [
+                DecisionEdge {
+                    test: Rc::clone(&exact),
+                    taken: true,
+                },
+                DecisionEdge {
+                    test: Rc::clone(second),
+                    taken,
+                },
+            ];
+            let cold = store.conjunction_uncached(&edges);
+            let before = guard_cache_receipt(&store);
+            let decisions = arena.next_decision.get();
+            sim_assert_eq!(have: store.conjunction(&edges), want: cold.clone());
+            sim_assert_eq!(have: store.conjunction(&edges), want: cold);
+            sim_assert_eq!(have: guard_cache_receipt(&store), want: before);
+            sim_assert_eq!(have: arena.next_decision.get(), want: decisions);
+        }
+    }
+}
+
+#[test]
+fn conjunction_memo_rebuilds_expired_collection_survivors() {
+    use super::{Arena, Coverage, DecisionEdge, GuardWorkBudget};
+    use helm_schema_core::{Guard, Predicate, ValuesPath};
+    use std::rc::Rc;
+
+    let arena = Arena::default();
+    let predicate = Predicate::from(Guard::Truthy {
+        path: ValuesPath::parse("survivor"),
+    });
+    let test = arena.decision(predicate.clone(), predicate.negated(), Coverage::Exact);
+    let edges = [
+        DecisionEdge {
+            test: Rc::clone(&test),
+            taken: true,
+        },
+        DecisionEdge { test, taken: false },
+    ];
+    let mut store = arena.guards.borrow_mut();
+    let [positive_edge, negative_edge] = &edges;
+    let positive = store.edge(positive_edge);
+    let negative = store.edge(negative_edge);
+    for index in 0..4_096 {
+        let predicate = Predicate::from(Guard::Truthy {
+            path: ValuesPath::parse(&format!("temporary{index}")),
+        });
+        store.edge(&DecisionEdge {
+            test: arena.decision(predicate.clone(), predicate.negated(), Coverage::Exact),
+            taken: true,
+        });
+    }
+    store.collect_unused();
+    sim_assert_eq!(have: store.working.as_slice(), want: &[] as &[_]);
+    let before = store.next_node;
+    assert!(store.conjunction(&edges).is_impossible());
+    sim_assert_eq!(have: store.next_node, want: before);
+    sim_assert_eq!(have: store.conjunctions.len(), want: 1);
+    // The cached constant owns no guards; surviving atoms can die after collection.
+    drop(positive);
+    drop(negative);
+    assert!(store.queries.conjunctions_dirty.get());
+    assert!(store.conjunction(&edges).is_impossible());
+    sim_assert_eq!(have: store.next_node, want: before + 2);
+    let positive = store.edge(positive_edge);
+    // Skipping reconstruction would leave this bounded query without its cold-run cache hit.
+    assert!(
+        store
+            .negate_with_work(&positive, &mut GuardWorkBudget::new(0))
+            .is_ok()
+    );
+}
+
+#[test]
+fn conjunction_memo_eviction_preserves_component_cache_work() {
+    use super::{Arena, Coverage, DecisionEdge, GuardWorkBudget, MAX_CONJUNCTIONS};
+    use helm_schema_core::{Guard, Predicate, ValuesPath};
+    use std::rc::Rc;
+
+    let arena = Arena::default();
+    let predicate = Predicate::from(Guard::Truthy {
+        path: ValuesPath::parse("retained"),
+    });
+    let test = arena.decision(predicate.clone(), predicate.negated(), Coverage::Exact);
+    let edges = [
+        DecisionEdge {
+            test: Rc::clone(&test),
+            taken: true,
+        },
+        DecisionEdge {
+            test: Rc::clone(&test),
+            taken: false,
+        },
+    ];
+    let mut store = arena.guards.borrow_mut();
+    assert!(store.conjunction(&edges).is_impossible());
+    for index in 0..MAX_CONJUNCTIONS {
+        let predicate = Predicate::from(Guard::Truthy {
+            path: ValuesPath::parse(&format!("other{index}")),
+        });
+        store.conjunction(&[
+            DecisionEdge {
+                test: Rc::clone(&test),
+                taken: true,
+            },
+            DecisionEdge {
+                test: arena.decision(predicate.clone(), predicate.negated(), Coverage::Exact),
+                taken: true,
+            },
+        ]);
+    }
+    sim_assert_eq!(have: store.conjunctions.len(), want: 1);
+    let before = guard_cache_receipt(&store);
+    assert!(store.conjunction(&edges).is_impossible());
+    sim_assert_eq!(have: guard_cache_receipt(&store), want: before);
+    let [positive_edge, _] = &edges;
+    let positive = store.edge(positive_edge);
+    assert!(
+        store
+            .negate_with_work(&positive, &mut GuardWorkBudget::new(0))
+            .is_ok()
+    );
+}
+
+fn assert_guard_query_laws(guards: &[super::RuntimeGuard]) {
+    for guard in guards {
+        for decision in 0..4 {
+            for taken in [true, false] {
+                for outcome in [true, false] {
+                    let want = guard.possible_atom_uncached(decision, taken, outcome);
+                    sim_assert_eq!(have: guard.possible_atom(decision, taken, outcome), want: want);
+                    sim_assert_eq!(have: guard.possible_atom(decision, taken, outcome), want: want);
+                }
+            }
+        }
+        for other in guards {
+            for outcome in [true, false] {
+                for other_outcome in [true, false] {
+                    let want = guard.compatible_uncached(outcome, other, other_outcome);
+                    sim_assert_eq!(have: guard.compatible(outcome, other, other_outcome), want: want);
+                    sim_assert_eq!(have: guard.compatible(outcome, other, other_outcome), want: want);
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn pure_guard_queries_preserve_results_budgets_and_lifetimes() -> eyre::Result<()> {
+    use super::{
+        Arena, AtomQuery, CompatibilityQuery, Coverage, DecisionEdge, GuardWorkBudget,
+        MAX_GUARD_QUERIES, RuntimeGuard,
+    };
+    use helm_schema_core::{Guard, Predicate, ValuesPath};
+    use std::rc::Rc;
+
+    let arena = Arena::default();
+    let predicate = Predicate::from(Guard::Truthy {
+        path: ValuesPath::parse("query"),
+    });
+    let exact = arena.runtime_path(&[DecisionEdge {
+        test: arena.decision(predicate.clone(), predicate.negated(), Coverage::Exact),
+        taken: true,
+    }]);
+    let partial = arena.runtime_path(&[DecisionEdge {
+        test: arena.decision(Predicate::False, Predicate::False, Coverage::Partial),
+        taken: true,
+    }]);
+    let independent = arena.runtime_path(&[DecisionEdge {
+        test: arena.decision(Predicate::False, Predicate::False, Coverage::Partial),
+        taken: true,
+    }]);
+    let joined = arena.intersect_runtime_guards(&exact, &partial);
+    let weak = match &exact {
+        RuntimeGuard::Branch(node) => Rc::downgrade(node),
+        RuntimeGuard::False | RuntimeGuard::True => eyre::bail!("query fixture collapsed"),
+    };
+    let queries = Rc::clone(&arena.guards.borrow().queries);
+    let atom_key = AtomQuery {
+        guard: exact.id(),
+        decision: 0,
+        taken: true,
+        outcome: true,
+    };
+    let compatibility_key = CompatibilityQuery {
+        left: exact.id(),
+        right: partial.id(),
+        left_outcome: true,
+        right_outcome: true,
+    };
+    let before = guard_cache_receipt(&arena.guards.borrow());
+    assert!(
+        arena
+            .guards
+            .borrow_mut()
+            .negate_with_work(&exact, &mut GuardWorkBudget::new(0))
+            .is_err()
+    );
+    let guards = [
+        RuntimeGuard::False,
+        RuntimeGuard::True,
+        exact.clone(),
+        partial,
+        independent,
+        joined,
+    ];
+    assert_guard_query_laws(&guards);
+    assert!(queries.atoms.borrow().contains_key(&atom_key));
+    assert!(
+        queries
+            .compatibilities
+            .borrow()
+            .contains_key(&compatibility_key)
+    );
+    sim_assert_eq!(have: guard_cache_receipt(&arena.guards.borrow()), want: before);
+    assert!(
+        arena
+            .guards
+            .borrow_mut()
+            .negate_with_work(&exact, &mut GuardWorkBudget::new(0))
+            .is_err()
+    );
+    // Disjoint keys force both bounded caches to evict the original queries.
+    for index in 0..MAX_GUARD_QUERIES {
+        assert!(exact.possible_atom(u64::try_from(index)? + 100_000, true, true));
+        let predicate = Predicate::from(Guard::Truthy {
+            path: ValuesPath::parse(&format!("query_eviction{index}")),
+        });
+        let other = arena.runtime_path(&[DecisionEdge {
+            test: arena.decision(predicate.clone(), predicate.negated(), Coverage::Exact),
+            taken: true,
+        }]);
+        assert!(exact.compatible(true, &other, true));
+    }
+    assert!(!queries.atoms.borrow().contains_key(&atom_key));
+    assert!(
+        !queries
+            .compatibilities
+            .borrow()
+            .contains_key(&compatibility_key)
+    );
+    let before = guard_cache_receipt(&arena.guards.borrow());
+    assert_guard_query_laws(&guards);
+    sim_assert_eq!(have: guard_cache_receipt(&arena.guards.borrow()), want: before);
+    assert!(queries.atoms.borrow().len() <= MAX_GUARD_QUERIES);
+    assert!(queries.compatibilities.borrow().len() <= MAX_GUARD_QUERIES);
+    drop(guards);
+    drop(exact);
+    arena.guards.borrow_mut().working.clear();
+    assert!(weak.upgrade().is_none());
+    Ok(())
+}
+
+#[test]
+fn guard_query_keys_do_not_cross_node_id_contexts() {
+    use super::{Arena, Coverage, DecisionEdge};
+    use helm_schema_core::{Guard, Predicate, ValuesPath};
+
+    let first_arena = Arena::default();
+    let second_arena = Arena::default();
+    second_arena.decision(Predicate::False, Predicate::False, Coverage::Partial);
+    let guard = |arena: &Arena| {
+        let predicate = Predicate::from(Guard::Truthy {
+            path: ValuesPath::parse("context"),
+        });
+        arena.runtime_path(&[DecisionEdge {
+            test: arena.decision(predicate.clone(), predicate.negated(), Coverage::Exact),
+            taken: true,
+        }])
+    };
+    let first = guard(&first_arena);
+    let second = guard(&second_arena);
+    sim_assert_eq!(have: first.id(), want: second.id());
+    assert!(!first.compatible(true, &first, false));
+    assert!(first.compatible_uncached(true, &second, false));
+    assert!(first.compatible(true, &second, false));
+    assert!(second.compatible(false, &first, true));
+}
+
+#[test]
 fn independent_output_choices_keep_budget_guards_shared() -> eyre::Result<()> {
     helm_schema_test_support::init_perfetto_from_env()?;
     for branches in [8, 16, 24, 32] {

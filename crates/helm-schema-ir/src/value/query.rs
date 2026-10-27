@@ -384,8 +384,8 @@ impl State {
         {
             return;
         }
-        let condition =
-            Predicate::all(vec![self.path_predicate(), live.clone()]).normalize_boolean();
+        let memo = &self.heap.arena.predicate_memo;
+        let condition = memo.normalize(Predicate::all(vec![self.path_predicate(), live.clone()]));
         if condition == Predicate::False || condition.contains_approximation() {
             return;
         }
@@ -1480,9 +1480,7 @@ fn selector_entry_domain(value: &Value, remaining: &mut usize) -> Predicate {
                 if path.segments().any(|segment| segment.literal().is_none()) {
                     return Predicate::False;
                 }
-                return super::kinds::input_nil_predicate(path)
-                    .negated()
-                    .normalize_boolean();
+                return super::kinds::input_nil_predicate(path).negated();
             }
             // Typed nil maps still perform map lookup; only an invalid entry skips the chain.
             if matches!(

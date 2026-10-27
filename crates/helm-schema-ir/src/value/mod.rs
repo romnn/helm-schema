@@ -29,6 +29,7 @@ use std::cell::{Cell, RefCell};
 use std::collections::{BTreeMap, BTreeSet};
 use std::rc::Rc;
 
+use ahash::AHashMap;
 use helm_schema_core::{Predicate, ValuesPath};
 
 use crate::value::scalar_value::ScalarContent;
@@ -196,7 +197,7 @@ struct InputBacking {
 struct Arena {
     guards: RefCell<guard::DecisionStore>,
     frontier: RefCell<control::FrontierIndex>,
-    exact_decisions: RefCell<BTreeMap<guard::ExactDecisionKey, std::rc::Weak<FrozenTest>>>,
+    exact_decisions: RefCell<AHashMap<guard::ExactDecisionKey, std::rc::Weak<FrozenTest>>>,
     empty_snapshot: std::cell::OnceCell<Rc<HeapVersion>>,
     next_object: Cell<u64>,
     next_snapshot: Cell<u64>,

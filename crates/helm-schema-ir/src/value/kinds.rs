@@ -124,6 +124,7 @@ impl ScalarValueDispatch {
 }
 
 pub(super) fn input_nil_predicate(path: &helm_schema_core::ValuesPath) -> Predicate {
+    // These distinct atoms are already ordered; this union and its complement are normal forms.
     Predicate::Or(vec![
         Predicate::from(helm_schema_core::Guard::Eq {
             path: path.clone(),
@@ -131,7 +132,6 @@ pub(super) fn input_nil_predicate(path: &helm_schema_core::ValuesPath) -> Predic
         }),
         Predicate::from(helm_schema_core::Guard::Absent { path: path.clone() }),
     ])
-    .normalize_boolean()
 }
 
 pub(super) struct InputTypeDomain {

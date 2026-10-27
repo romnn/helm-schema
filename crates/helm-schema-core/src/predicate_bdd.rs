@@ -1,5 +1,7 @@
 use std::cell::RefCell;
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet};
+
+use ahash::AHashMap;
 
 use crate::{Guard, GuardDnf, Predicate, PredicateKind};
 
@@ -12,8 +14,8 @@ const MAX_NORMAL_FORM_LITERALS: usize = 8_192;
 /// Per-analysis cache for bounded Boolean predicate operations.
 #[derive(Debug, Default)]
 pub struct PredicateMemo {
-    normalized: RefCell<HashMap<Predicate, Predicate>>,
-    implications: RefCell<HashMap<(Predicate, Predicate), bool>>,
+    normalized: RefCell<AHashMap<Predicate, Predicate>>,
+    implications: RefCell<AHashMap<(Predicate, Predicate), bool>>,
 }
 
 impl PredicateMemo {

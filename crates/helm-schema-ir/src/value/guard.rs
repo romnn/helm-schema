@@ -1,11 +1,13 @@
+use std::cell::{Cell, RefCell};
 use std::collections::BTreeMap;
 use std::rc::{Rc, Weak};
 
+use ahash::{AHashMap, AHashSet};
 use helm_schema_core::{Predicate, PredicateKind};
 
 use super::{Arena, Coverage, DecisionEdge, FrozenTest};
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub(super) struct ExactDecisionKey {
     pub(super) when_true: Predicate,
     pub(super) when_false: Predicate,
@@ -26,6 +28,13 @@ pub(super) struct DecisionNode {
     yes: RuntimeGuard,
     no: RuntimeGuard,
     input_exact: bool,
+    queries: Rc<GuardQueries>,
+}
+
+impl Drop for DecisionNode {
+    fn drop(&mut self) {
+        self.queries.conjunctions_dirty.set(true);
+    }
 }
 
 impl PartialEq for DecisionNode {
@@ -35,27 +44,27 @@ impl PartialEq for DecisionNode {
 }
 impl Eq for DecisionNode {}
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 enum Operation {
     And,
     Or,
 }
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 struct NodeKey {
     decision: u64,
     yes: u64,
     no: u64,
 }
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 struct ApplyKey {
     operation: Operation,
     left: u64,
     right: u64,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 struct ChoiceKey {
     condition: u64,
     yes: u64,
@@ -68,16 +77,66 @@ struct Projection {
     sufficient: Predicate,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 enum ProjectionPurpose {
     Control,
     Budget,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 struct ProjectionKey {
     guard: u64,
     purpose: ProjectionPurpose,
+}
+
+#[derive(Debug, PartialEq, Eq, Hash)]
+struct ProjectionUnionKey {
+    parts: Vec<Predicate>,
+    purpose: ProjectionPurpose,
+}
+
+const MAX_PROJECTION_UNIONS: usize = 4_096;
+
+#[derive(Debug, PartialEq, Eq, Hash)]
+struct DecisionEdgeKey {
+    decision: u64,
+    taken: bool,
+}
+
+const MAX_CONJUNCTIONS: usize = 16;
+
+#[derive(Debug, PartialEq, Eq, Hash)]
+struct AtomQuery {
+    guard: u64,
+    decision: u64,
+    taken: bool,
+    outcome: bool,
+}
+
+#[derive(Debug, PartialEq, Eq, Hash)]
+struct CompatibilityQuery {
+    left: u64,
+    right: u64,
+    left_outcome: bool,
+    right_outcome: bool,
+}
+
+const MAX_GUARD_QUERIES: usize = 4_096;
+
+// Node IDs never repeat within this context; Boolean results retain no execution handles.
+#[derive(Default)]
+struct GuardQueries {
+    atoms: RefCell<AHashMap<AtomQuery, bool>>,
+    compatibilities: RefCell<AHashMap<CompatibilityQuery, bool>>,
+    conjunctions_dirty: Cell<bool>,
+}
+
+impl std::fmt::Debug for GuardQueries {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("GuardQueries")
+            .finish_non_exhaustive()
+    }
 }
 
 struct GuardedUnion {
@@ -154,12 +213,15 @@ pub(super) struct DecisionStore {
     next_node: u64,
     collection_limit: usize,
     working: Vec<Rc<DecisionNode>>,
-    nodes: BTreeMap<NodeKey, Weak<DecisionNode>>,
-    applications: BTreeMap<ApplyKey, CachedGuard>,
-    choices: BTreeMap<ChoiceKey, CachedGuard>,
-    negations: BTreeMap<u64, CachedGuard>,
-    projections: BTreeMap<ProjectionKey, Projection>,
-    tests: BTreeMap<ProjectionKey, Weak<FrozenTest>>,
+    nodes: AHashMap<NodeKey, Weak<DecisionNode>>,
+    applications: AHashMap<ApplyKey, CachedGuard>,
+    choices: AHashMap<ChoiceKey, CachedGuard>,
+    negations: AHashMap<u64, CachedGuard>,
+    projections: AHashMap<ProjectionKey, Projection>,
+    projection_unions: AHashMap<ProjectionUnionKey, Option<Predicate>>,
+    tests: AHashMap<ProjectionKey, Weak<FrozenTest>>,
+    conjunctions: Vec<(Vec<DecisionEdgeKey>, CachedGuard)>,
+    queries: Rc<GuardQueries>,
 }
 
 impl RuntimeGuard {
@@ -217,8 +279,30 @@ impl RuntimeGuard {
     }
 
     fn possible_atom(&self, decision: u64, taken: bool, outcome: bool) -> bool {
+        let Self::Branch(node) = self else {
+            return matches!(self, Self::True) == outcome;
+        };
+        let key = AtomQuery {
+            guard: node.id,
+            decision,
+            taken,
+            outcome,
+        };
+        if let Some(result) = node.queries.atoms.borrow().get(&key) {
+            return *result;
+        }
+        let result = self.possible_atom_uncached(decision, taken, outcome);
+        let mut cache = node.queries.atoms.borrow_mut();
+        if cache.len() >= MAX_GUARD_QUERIES {
+            cache.clear();
+        }
+        cache.insert(key, result);
+        result
+    }
+
+    fn possible_atom_uncached(&self, decision: u64, taken: bool, outcome: bool) -> bool {
         let mut pending = vec![self];
-        let mut visited = std::collections::BTreeSet::new();
+        let mut visited = AHashSet::new();
         while let Some(guard) = pending.pop() {
             if !visited.insert(guard.id()) {
                 continue;
@@ -239,8 +323,41 @@ impl RuntimeGuard {
     }
 
     fn compatible(&self, outcome: bool, other: &Self, other_outcome: bool) -> bool {
+        let queries = match (self, other) {
+            (Self::Branch(left), Self::Branch(right)) => {
+                if !Rc::ptr_eq(&left.queries, &right.queries) {
+                    return self.compatible_uncached(outcome, other, other_outcome);
+                }
+                &left.queries
+            }
+            (Self::Branch(node), Self::False | Self::True)
+            | (Self::False | Self::True, Self::Branch(node)) => &node.queries,
+            (Self::False | Self::True, Self::False | Self::True) => {
+                return matches!(self, Self::True) == outcome
+                    && matches!(other, Self::True) == other_outcome;
+            }
+        };
+        let key = CompatibilityQuery {
+            left: self.id(),
+            right: other.id(),
+            left_outcome: outcome,
+            right_outcome: other_outcome,
+        };
+        if let Some(result) = queries.compatibilities.borrow().get(&key) {
+            return *result;
+        }
+        let result = self.compatible_uncached(outcome, other, other_outcome);
+        let mut cache = queries.compatibilities.borrow_mut();
+        if cache.len() >= MAX_GUARD_QUERIES {
+            cache.clear();
+        }
+        cache.insert(key, result);
+        result
+    }
+
+    fn compatible_uncached(&self, outcome: bool, other: &Self, other_outcome: bool) -> bool {
         let mut pending = vec![(self, other)];
-        let mut visited = std::collections::BTreeSet::new();
+        let mut visited = AHashSet::new();
         while let Some((left, right)) = pending.pop() {
             if !visited.insert((left.id(), right.id())) {
                 continue;
@@ -328,9 +445,10 @@ impl DecisionStore {
             return;
         }
         // Only execution handles keep guards alive across collection.
+        self.conjunctions.clear();
         self.working.clear();
         self.nodes.retain(|_, node| node.strong_count() != 0);
-        let live: std::collections::HashSet<_> = [0, 1]
+        let live: AHashSet<_> = [0, 1]
             .into_iter()
             .chain(
                 self.nodes
@@ -397,6 +515,7 @@ impl DecisionStore {
             yes,
             no,
             input_exact,
+            queries: Rc::clone(&self.queries),
         });
         // Keep intermediate results reusable until collection, including throughout recursive apply.
         self.working.push(Rc::clone(&node));
@@ -623,6 +742,46 @@ impl DecisionStore {
     }
 
     fn conjunction(&mut self, edges: &[DecisionEdge]) -> RuntimeGuard {
+        // A GC survivor can expire between collections. Any node drop invalidates skipped work.
+        if self.queries.conjunctions_dirty.replace(false) {
+            self.conjunctions.clear();
+        }
+        if edges.len() < 2 {
+            return self.conjunction_uncached(edges);
+        }
+        if let Some(result) =
+            self.conjunctions
+                .iter()
+                .rev()
+                .find(|(key, _)| {
+                    key.len() == edges.len()
+                        && key.iter().zip(edges).all(|(key, edge)| {
+                            key.decision == edge.test.id && key.taken == edge.taken
+                        })
+                })
+                .and_then(|(_, result)| result.upgrade())
+        {
+            return result;
+        }
+        let result = self.conjunction_uncached(edges);
+        // Capture only while every component cache hit remains valid; keep results weak.
+        if !self.queries.conjunctions_dirty.get() {
+            if self.conjunctions.len() >= MAX_CONJUNCTIONS {
+                self.conjunctions.clear();
+            }
+            let key = edges
+                .iter()
+                .map(|DecisionEdge { test, taken }| DecisionEdgeKey {
+                    decision: test.id,
+                    taken: *taken,
+                })
+                .collect();
+            self.conjunctions.push((key, CachedGuard::new(&result)));
+        }
+        result
+    }
+
+    fn conjunction_uncached(&mut self, edges: &[DecisionEdge]) -> RuntimeGuard {
         let mut result = RuntimeGuard::True;
         for edge in edges {
             let next = self.edge(edge);
@@ -669,7 +828,7 @@ impl DecisionStore {
                     Coverage::Exact => {
                         let exact =
                             yes.necessary == yes.sufficient && no.necessary == no.sufficient;
-                        let necessary = project_union(
+                        let necessary = self.project_union(
                             vec![
                                 Predicate::all(vec![node.test.when_true.clone(), yes.necessary]),
                                 Predicate::all(vec![node.test.when_false.clone(), no.necessary]),
@@ -682,7 +841,7 @@ impl DecisionStore {
                         let sufficient = if exact {
                             necessary.clone().unwrap_or(Predicate::False)
                         } else {
-                            project_union(
+                            self.project_union(
                                 vec![
                                     Predicate::all(vec![
                                         node.test.when_true.clone(),
@@ -704,7 +863,8 @@ impl DecisionStore {
                         }
                     }
                     Coverage::Partial => Projection {
-                        necessary: project_union(vec![yes.necessary, no.necessary], purpose, memo)
+                        necessary: self
+                            .project_union(vec![yes.necessary, no.necessary], purpose, memo)
                             .unwrap_or(Predicate::True),
                         sufficient: bounded_projection(
                             Predicate::all(vec![yes.sufficient, no.sufficient]),
@@ -717,6 +877,25 @@ impl DecisionStore {
             }
         };
         self.projections.insert(key, result.clone());
+        result
+    }
+
+    // Frozen formulas retain neither runtime guards nor heaps; eviction changes only work.
+    fn project_union(
+        &mut self,
+        parts: Vec<Predicate>,
+        purpose: ProjectionPurpose,
+        memo: &helm_schema_core::PredicateMemo,
+    ) -> Option<Predicate> {
+        let key = ProjectionUnionKey { parts, purpose };
+        if let Some(result) = self.projection_unions.get(&key) {
+            return result.clone();
+        }
+        let result = project_union(key.parts.clone(), purpose, memo);
+        if self.projection_unions.len() >= MAX_PROJECTION_UNIONS {
+            self.projection_unions.clear();
+        }
+        self.projection_unions.insert(key, result.clone());
         result
     }
 }

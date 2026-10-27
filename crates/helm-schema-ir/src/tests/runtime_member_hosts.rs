@@ -8,6 +8,24 @@ use super::{ReadCoverage, State, Value};
 use crate::analysis_db::IrAnalysisDb;
 use crate::observed_facts::CaptureKind;
 
+#[test]
+fn input_nil_predicate_and_complement_are_boolean_normal_forms() {
+    let paths = [
+        ValuesPath::default(),
+        ValuesPath::parse("parent.child"),
+        ValuesPath::parse("array.0.member"),
+        ValuesPath::parse("collection.*.member"),
+        ValuesPath::from_segments(["literal.dot", "*", "back\\slash"]),
+        ValuesPath::from_segments((0..256).map(|index| format!("level{index}"))),
+    ];
+    for path in paths {
+        let predicate = super::kinds::input_nil_predicate(&path);
+        for form in [predicate.clone(), predicate.negated()] {
+            sim_assert_eq!(have: form.clone(), want: form.normalize_boolean());
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct HostObservation {
     path: ValuesPath,

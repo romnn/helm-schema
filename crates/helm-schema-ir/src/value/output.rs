@@ -1289,13 +1289,13 @@ impl super::State {
             return Ok((ambient_slot(), false));
         }
         let admitted = self.heap.arena.budget_test(admitted);
+        let memo = &self.heap.arena.predicate_memo;
         Ok((
             vec![BudgetSlot {
-                condition: Predicate::all(vec![
+                condition: memo.normalize(Predicate::all(vec![
                     self.path_predicate(),
                     admitted.possible_predicate(true),
-                ])
-                .normalize_boolean(),
+                ])),
                 ordinal,
                 coverage_exact: admitted.coverage == super::Coverage::Exact,
             }],
