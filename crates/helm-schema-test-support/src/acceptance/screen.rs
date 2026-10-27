@@ -192,6 +192,8 @@ impl ImportedRoster {
 
 /// The exact root schemas installed for lint, derived without rerunning inference.
 pub struct LintSchemas {
+    /// SHA-256 of the baseline input before dialect normalization and after Helm size preparation.
+    pub baseline_sha256: String,
     /// The installed baseline schema bytes.
     pub baseline: Vec<u8>,
     /// The installed candidate schema bytes.
@@ -216,7 +218,7 @@ impl LintSchemas {
         Self::compile_bytes(&serde_json::to_vec(baseline)?, candidate, candidate_path)
     }
 
-    /// Compiles the shipped `baseline` bytes and `candidate`, verifying the candidate's companion when it comes from a dump.
+    /// Normalizes and compiles `baseline` with `candidate`, verifying a dump candidate's companion.
     ///
     /// # Errors
     ///
@@ -226,23 +228,28 @@ impl LintSchemas {
         candidate: &Value,
         candidate_path: Option<&Path>,
     ) -> eyre::Result<Self> {
-        // The sweep ships committed bytes unchanged unless Helm's per-file limit
-        // requires shortening.
-        let baseline = if baseline.len() <= helm_schema::output::HELM_MAX_CHART_FILE_BYTES {
-            baseline.to_vec()
+        let mut baseline_schema = serde_json::from_slice(baseline)?;
+        // The roster pins the runner's input, including its existing oversized-schema preparation.
+        let oversized = baseline.len() > helm_schema::output::HELM_MAX_CHART_FILE_BYTES;
+        let baseline_sha256 = if oversized {
+            sha256_hex(&helm_ready(&baseline_schema)?)
         } else {
-            helm_ready(&serde_json::from_slice(baseline)?)?
+            sha256_hex(baseline)
+        };
+        // Rust and Helm must read the same language-exact baseline respelling.
+        helm_schema_core::normalize_schema_pattern_dialects(&mut baseline_schema);
+        let baseline = if oversized {
+            helm_ready(&baseline_schema)?
+        } else {
+            serde_json::to_vec(&baseline_schema)?
         };
         let candidate = if let Some(path) = candidate_path {
             verified_companion(path, candidate)?
         } else {
             helm_ready(candidate)?
         };
-        // Regex respelling is validator policy, never part of the shipped bytes or their identity.
-        let mut validation_baseline = serde_json::from_slice(&baseline)?;
-        helm_schema_core::normalize_schema_pattern_dialects(&mut validation_baseline);
         let profiles = ProfileSchemas::compile(
-            &validation_baseline,
+            &serde_json::from_slice(&baseline)?,
             &serde_json::from_slice(&candidate)?,
             json!({}),
         )?;
@@ -257,6 +264,7 @@ impl LintSchemas {
             })
             .transpose()?;
         Ok(Self {
+            baseline_sha256,
             baseline,
             candidate,
             profiles,
@@ -368,7 +376,7 @@ pub struct LintCoverage {
     pub roster_sha256: Option<String>,
     /// SHA-256 of the chart tree.
     pub chart_sha256: String,
-    /// SHA-256 of the installed baseline schema.
+    /// SHA-256 of the baseline input before dialect normalization and after Helm size preparation.
     pub baseline_sha256: String,
     /// SHA-256 of the installed candidate schema.
     pub candidate_sha256: String,
@@ -573,7 +581,7 @@ pub fn screen_recording(
         imported_rows: request.imported.len(),
         roster_sha256: request.roster_sha256.clone(),
         chart_sha256: tree_sha256(request.chart)?,
-        baseline_sha256: sha256_hex(&request.schemas.baseline),
+        baseline_sha256: request.schemas.baseline_sha256.clone(),
         candidate_sha256: sha256_hex(&request.schemas.candidate),
         candidate_manifest_sha256: request.schemas.manifest_sha256.clone(),
         ..LintCoverage::default()
@@ -1090,7 +1098,8 @@ pub fn screen_chart_recording(
         let chart_sha256 = tree_sha256(chart_dir.path())?;
         for row in &mut imported {
             row.chart_sha256.clone_from(&chart_sha256);
-            row.baseline_sha256 = sha256_hex(&lint_schemas.baseline);
+            row.baseline_sha256
+                .clone_from(&lint_schemas.baseline_sha256);
             row.candidate_sha256 = sha256_hex(&lint_schemas.candidate);
         }
     }

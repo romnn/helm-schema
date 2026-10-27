@@ -12,9 +12,11 @@
 
 use std::path::{Path, PathBuf};
 
-use color_eyre::eyre::{self, WrapErr as _};
+use color_eyre::eyre::{self, OptionExt as _, WrapErr as _};
 use helm_schema_json_schema_walk::{SchemaTraversalContext, schema_child_context_for_keyword};
+use helm_schema_test_support::registry::{self, ArtifactId};
 use serde_json::Value;
+use test_util::prelude::sim_assert_eq;
 
 const OWNED_FIXTURE_DIRS: &[&str] = &[
     "testdata/chart-corpus-schemas",
@@ -122,6 +124,108 @@ fn owned_schema_artifacts_validate_against_their_metaschema() -> eyre::Result<()
             panic!("{}: metaschema violation: {error}", path.display());
         }
     }
+    Ok(())
+}
+
+#[test]
+fn emitted_schema_patterns_compile_under_go() -> eyre::Result<()> {
+    let root = test_util::workspace_root();
+    let taskfile: serde_yaml::Value =
+        serde_yaml::from_slice(&std::fs::read(root.join("taskfile.yaml"))?)?;
+    let version = taskfile["vars"]["HELMSWEEP_GO"]
+        .as_str()
+        .ok_or_eyre("taskfile.yaml must declare the HELMSWEEP_GO pin")?;
+    // `where` resolves an installed mise tool without installing a missing version.
+    let installed = std::process::Command::new("mise")
+        .args(["where", &format!("go@{version}")])
+        .current_dir(&root)
+        .env("MISE_OFFLINE", "true")
+        .output()
+        .wrap_err("mise is required to resolve the installed HELMSWEEP_GO toolchain")?;
+    eyre::ensure!(
+        installed.status.success(),
+        "install go@{version} with mise before running the pattern gate: {}",
+        String::from_utf8_lossy(&installed.stderr)
+    );
+    let go = PathBuf::from(std::str::from_utf8(&installed.stdout)?.trim())
+        .join("bin")
+        .join(format!("go{}", std::env::consts::EXE_SUFFIX));
+    let build = test_util::scratch::target_dir().join("helmsweep-build");
+    for required in ["go.mod", "schema_test.go", "third_party/helm-v4.2.3/go.mod"] {
+        eyre::ensure!(
+            build.join(required).is_file(),
+            "missing {}; run task build:helmsweep before the pattern gate",
+            build.join(required).display()
+        );
+    }
+    let directory = test_util::scratch::ScratchDir::new("go-patterns")?;
+    let go_command = || {
+        let mut command = std::process::Command::new(&go);
+        command
+            .current_dir(&build)
+            .env_remove("GOROOT")
+            .envs([
+                ("GOTOOLCHAIN", "local"),
+                ("GOPROXY", "off"),
+                ("GONOPROXY", "none"),
+                ("GOVCS", "*:off"),
+                ("GOSUMDB", "off"),
+                ("GOENV", "off"),
+                ("GOWORK", "off"),
+                ("GOFLAGS", "-mod=readonly"),
+            ])
+            .env("GOTMPDIR", directory.path());
+        command
+    };
+    let actual_version = go_command()
+        .args(["env", "GOVERSION"])
+        .output()
+        .wrap_err_with(|| format!("cannot run installed go@{version} at {}", go.display()))?;
+    eyre::ensure!(
+        actual_version.status.success()
+            && std::str::from_utf8(&actual_version.stdout)?.trim() == format!("go{version}"),
+        "pattern gate requires go{version}; installed tool reports {}{}",
+        String::from_utf8_lossy(&actual_version.stdout),
+        String::from_utf8_lossy(&actual_version.stderr)
+    );
+    let mut patterns = std::collections::BTreeSet::new();
+    for spec in registry::registry() {
+        match spec.id {
+            ArtifactId::Ir(_) => continue,
+            ArtifactId::Chart(_)
+            | ArtifactId::Template(_)
+            | ArtifactId::Lean(_)
+            | ArtifactId::FinalPolicy(_)
+            | ArtifactId::Authoring(_) => {}
+        }
+        let schema = helm_schema_test_support::consume(spec.id)?;
+        let mut located = Vec::new();
+        collect_schema_patterns(&schema, "", &mut located);
+        patterns.extend(located.into_iter().map(|(_, pattern)| pattern));
+    }
+    assert!(!patterns.is_empty());
+    let input = directory.path().join("patterns.json");
+    std::fs::write(&input, serde_json::to_vec(&patterns)?)?;
+    // Go test code preserves the oracle executable identity bound by CRD replay receipts.
+    let output = go_command()
+        .args([
+            "test",
+            "-v",
+            "-run=^TestEmittedPatternsCompile$",
+            "-count=1",
+            ".",
+        ])
+        .env("HELM_SCHEMA_PATTERN_INPUT", input)
+        .output()
+        .wrap_err("cannot start the offline Go pattern gate; run task build:helmsweep first")?;
+    sim_assert_eq!(
+        have: output.status.success()
+            && String::from_utf8_lossy(&output.stdout)
+                .contains("--- PASS: TestEmittedPatternsCompile"),
+        want: true,
+        "offline Go pattern gate failed; run task build:helmsweep to populate prerequisites: {}{}",
+        String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr),
+    );
     Ok(())
 }
 

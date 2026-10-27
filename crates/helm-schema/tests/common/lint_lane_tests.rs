@@ -753,7 +753,7 @@ fn context_row(chart: &Path, schemas: &LintSchemas, overlay: Value) -> eyre::Res
         transport: "values-file".into(),
         kubernetes_version: "1.29.0".into(),
         chart_sha256: tree_sha256(chart)?,
-        baseline_sha256: sha256_hex(&schemas.baseline),
+        baseline_sha256: schemas.baseline_sha256.clone(),
         candidate_sha256: sha256_hex(&schemas.candidate),
         canonical_overlay_sha256: sha256_hex(&serde_json::to_vec(&overlay)?),
         values_file_sha256: sha256_hex(values_file.as_bytes()),
@@ -762,6 +762,52 @@ fn context_row(chart: &Path, schemas: &LintSchemas, overlay: Value) -> eyre::Res
         context_overlay_sha256: sha256_hex(b"{}"),
         overlay,
     })
+}
+
+#[test]
+fn frozen_context_binds_raw_baseline_before_dialect_normalization() -> eyre::Result<()> {
+    let chart = null_chart()?;
+    let baseline = br#" { "pattern": "^\\u0000\\u00FF$" } "#;
+    let schemas = LintSchemas::compile_bytes(baseline, &json!({}), None)?;
+    let mut row = context_row(chart.path(), &schemas, json!({}))?;
+    row.baseline_sha256 = sha256_hex(baseline);
+    let request = ScreenRequest {
+        chart: chart.path(),
+        schemas: &schemas,
+        kubernetes_version: "1.29.0",
+        imported: std::slice::from_ref(&row),
+        roster_sha256: None,
+        available_probes: usize::MAX,
+    };
+    let result = screen(&request)?;
+    result.coverage.validate()?;
+    sim_assert_eq!(have: result.coverage.imported_rows, want: 1);
+    sim_assert_eq!(have: result.coverage.baseline_sha256, want: sha256_hex(baseline));
+    sim_assert_eq!(have: schemas.baseline, want: br#"{"pattern":"^\\x00\\xFF$"}"#.to_vec());
+
+    // Installed bytes cannot replace the frozen input's identity.
+    let mut normalized = row.clone();
+    normalized.baseline_sha256 = sha256_hex(&schemas.baseline);
+    let error = screen(&ScreenRequest {
+        imported: &[normalized],
+        roster_sha256: None,
+        ..request
+    })
+    .err()
+    .ok_or_eyre("normalized baseline hash accepted as raw identity")?;
+    assert!(error.to_string().contains("input hashes mismatch"));
+
+    // Equivalent JSON with different original bytes still changes the pinned input.
+    let changed =
+        LintSchemas::compile_bytes(&[baseline.as_slice(), b"\n"].concat(), &json!({}), None)?;
+    let error = screen(&ScreenRequest {
+        schemas: &changed,
+        ..request
+    })
+    .err()
+    .ok_or_eyre("changed raw baseline bytes accepted under the frozen hash")?;
+    assert!(error.to_string().contains("input hashes mismatch"));
+    Ok(())
 }
 
 #[test]

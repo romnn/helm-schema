@@ -73,7 +73,7 @@ fn external_pair_rejects_stale_chart_context_instead_of_certifying_zero_lint_doc
         transport: "values-file".into(),
         kubernetes_version: "1.29.0".into(),
         chart_sha256: "stale-chart-hash".into(),
-        baseline_sha256: helm_schema_test_support::source_digest::sha256_hex(&schemas.baseline),
+        baseline_sha256: schemas.baseline_sha256.clone(),
         candidate_sha256: helm_schema_test_support::source_digest::sha256_hex(&schemas.candidate),
         canonical_overlay_sha256: helm_schema_test_support::source_digest::sha256_hex(b"{}"),
         values_file: "{}".into(),
