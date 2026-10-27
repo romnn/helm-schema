@@ -19,9 +19,10 @@ output is deterministic by contract (ADR 0063).
 
 The results are written as a `github-action-benchmark` `customSmallerIsBetter` history entry list
 whose `extra` strings carry benchtrail's typed payload (chart and profile as dimensions, the metric
-with its unit and direction, the compiler and the CPU model as the environment), and as Markdown
-tables for the job summary. The dashboard splits the times by CPU model, while the instruction
-counts, which do not depend on it, stay one series (benchtrail's per-metric settings).
+with its unit and direction, and the compiler as environment), and as Markdown tables for the job
+summary.
+Only CPU, wall and phase times record the CPU model in their environment, so the dashboard splits
+those by CPU while memory, sizes and counts stay one series across runners.
 
 Only the Python standard library is used; the Perfetto trace is decoded by hand, since it holds
 nothing but the slice begin/end packets `tracing-perfetto` writes.
@@ -423,19 +424,23 @@ def entry(
 ):
     """One `customSmallerIsBetter` entry with benchtrail's typed payload in `extra`.
 
-    The compiler and the CPU model are the environment. A toolchain update starts a new segment
-    of the history, so no change is reported across it. The CPU model changes from run to run on a
-    pool of hosted runners, which would leave no segment long enough to judge, so the dashboard
-    splits each benchmark into one series per CPU model (benchtrail's `splitEnvironment`): a
-    change is a jump within one CPU's series, never a change of runner.
+    The compiler stays in every metric's environment because a toolchain update can change any
+    metric and starts a new segment of the history.
+    Only CPU, wall and phase times record the CPU model: the dashboard splits them by CPU so a
+    change of runner is not judged as a change in performance.
+    RSS measures memory use, despite allocator and kernel accounting noise; sizes and counts also
+    stay comparable across runner CPUs.
     """
     low, high = result["cpu_range"]
+    metric_environment = {"rustc": RUSTC, **(environment or {})}
+    if metric in {"cpu", "wall"} or metric.startswith("phase:"):
+        metric_environment["cpu"] = CPU
     payload = {
         "benchtrail": {
             "version": 1,
             "dimensions": {"chart": result["chart"], "profile": result["profile"]},
             "metric": {"id": metric, "label": label, "direction": direction},
-            "environment": {"rustc": RUSTC, "cpu": CPU, **(environment or {})},
+            "environment": metric_environment,
         },
         "text": text
         or f"cpu {low:.3f}-{high:.3f} s over {result['reps']} runs; {CPU_NAME}; {RUSTC}",

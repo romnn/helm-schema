@@ -14,7 +14,7 @@ read as a regression or an improvement.
 
 ## Decision
 
-- Every value records the runner's CPU model (`/proc/cpuinfo`) in its benchtrail
+- CPU, wall and phase times record the runner's CPU model (`/proc/cpuinfo`) in their benchtrail
   environment as `cpu`, beside `rustc`, without its noise (vendor word, trademark marks,
   `CPU @ <frequency>`, a trailing `<N>-Core Processor`): "EPYC 7763". The family word and
   every model token stay, so two models never share a name, and a name of an unknown shape
@@ -28,8 +28,20 @@ read as a regression or an improvement.
 - The executed instruction count of one run under valgrind's cachegrind
   (`--cache-sim=no`) is recorded for kubeview full and bitnami-redis full, metric
   "Instructions (cachegrind)", lower is better, in the same suite as the times. Its own
-  benchtrail metric settings neither split nor segment on the CPU, so it stays one series
-  across runners, and it is the first chart. Wall and CPU time stay as they were.
+  environment omits CPU, so it stays one series across runners, and it is the first chart.
+  Wall and CPU time keep their CPU series.
+- `bench.py` owns each metric's environment: peak RSS, pretty and compact schema sizes, `$defs`
+  counts and instruction counts omit CPU.
+  RSS measures memory use; allocator and kernel accounting differences can add noise, but CPU
+  model is not a useful comparison boundary within the hosted runner pool.
+  Every metric retains `rustc`, since a toolchain change can legitimately move memory use,
+  output sizes and counts, and starts a new segment.
+  Benchtrail applies `splitEnvironment` only to names a metric records somewhere in the loaded
+  history; a name absent throughout that metric is inapplicable, so filters and label templates
+  leave it out and a line reads `full` or `lean`.
+  Within metrics that do record CPU, earlier readings without it remain an "unknown" series.
+  This makes the recorded data authoritative without duplicating metric policy in dashboard
+  settings.
 - The suite keeps the newest 500 runs (github-action-benchmark's `max-items-in-chart`), and
   the dashboard opens on the newest 50.
 - valgrind is an exact Ubuntu 24.04 package (`1:3.22.0-0ubuntu3`, from the release pocket)
@@ -40,6 +52,10 @@ read as a regression or an improvement.
 - A regression is a jump within one CPU's series. Each series needs eight values before
   benchtrail judges it, so with three CPU models in the pool a time series is judged after
   about two dozen pushes; the instruction counts, one series, are judged after eight.
+- Recorded history needs a one-time removal of CPU environment from the five independent metrics
+  with benchtrail's idempotent `scripts/suites.mjs --remove-environment METRIC=cpu` operation.
+  Release benchtrail, update the dashboard action pin, then rewrite the then-current `gh-pages`
+  head while benchmark writers are idle; every main push records and pushes new history.
 - The count is deterministic up to under 0.1% (measured: kubeview 552.92-553.07 million over
   seven runs, bitnami-redis full 25.556-25.572 billion over six): std's per-process random
   hash seeds change hash-table probing; disabling address space randomization changes

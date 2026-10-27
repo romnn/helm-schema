@@ -89,8 +89,9 @@ jobs:
       # the small charts are too noisy for either. The job summary lists every value against the
       # previous run with their ratio (`summary-always`), and benchtrail's change detection, which
       # weighs each benchmark's own noise, marks regressions on the dashboard. One suite holds every
-      # metric, the instruction counts too (pages.yaml keeps them one series across runner CPUs),
-      # and keeps the newest 500 runs: each recording drops the older ones from `data.js`.
+      # metric and keeps the newest 500 runs: each recording drops older ones from `data.js`.
+      # bench.py records CPU environment only for CPU, wall and phase times; memory, sizes and
+      # counts stay one series across runners, with compiler changes still starting a segment.
       - name: Record the history
         uses: benchmark-action/github-action-benchmark@4322e5726e6334590d251fc4f92bec0efafc45dc # v1.22.2
         with:

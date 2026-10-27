@@ -2,10 +2,12 @@
 
 `bench.py` runs a release `helm-schema-dev` offline against the committed provider bundle on four
 corpus charts and records CPU and wall time, peak RSS, schema sizes, the `$defs` count and phase
-times from the unpublished dev binary's tracing spans, each with the compiler and the host's CPU model as its
-environment (shortened by `short_cpu`: "AMD EPYC 7763 64-Core Processor" is "EPYC 7763"). For the cheap configurations (`INSTRUCTION_CASES`) it also counts the executed
-instructions of one run under valgrind's cachegrind, a figure no runner CPU changes. Why each
-chart is there is written beside `CASES` in the script; the design is recorded in the
+times from the unpublished dev binary's tracing spans.
+Every metric records the compiler as environment; only CPU, wall and phase times also record the
+host's CPU model (shortened by `short_cpu`: "AMD EPYC 7763 64-Core Processor" is "EPYC 7763").
+For the cheap configurations (`INSTRUCTION_CASES`) it also counts the executed instructions of one
+run under valgrind's cachegrind, a figure no runner CPU changes.
+Why each chart is there is written beside `CASES` in the script; the design is recorded in the
 continuous-benchmarks ADRs under `docs/adr/` (0067, 0068).
 
 ## Run it locally
@@ -36,16 +38,42 @@ pages workflow, which installs the benchtrail dashboard at `/bench/` beside the 
 ## The dashboard
 
 The hosted `ubuntu-24.04` runners are a pool of different CPUs (EPYC 7763, 9V74 and 9V45 have been
-seen), whose times differ by up to a factor of two on the same commit. Every value records its CPU
-model in its environment, and the dashboard (settings in `pages.yaml`) splits each benchmark into
-one series per CPU model (`splitEnvironment`), so a regression is a jump within one CPU's series.
-Values recorded before the CPU model show as CPU "unknown"; every series needs eight values before
-benchtrail judges a change in it. Lines are colored by CPU and dashed by profile, read as
-`full (EPYC 7763)` inside a chart, and each chart of the corpus has a chart per metric.
+seen), whose times differ by up to a factor of two on the same commit.
+`bench.py` owns which environment applies to each metric: only CPU, wall and phase times record
+`cpu`, beside `rustc`.
+The dashboard's suite-wide `splitEnvironment: ["cpu"]` applies only to metrics that record it in
+at least one loaded run, so a regression is a jump within one CPU's time series.
+Earlier timing values without CPU show as "unknown"; every series needs eight values before
+benchtrail judges a change in it.
+Lines are colored by CPU and dashed by profile, read as `full (EPYC 7763)` inside a chart, and each
+chart of the corpus has a chart per metric.
 
-The instruction counts do not depend on the CPU: their metric's own settings neither split nor
-segment on it, so the counts stay one series across runners, and they are the first charts. The
-page opens on the newest 50 runs; its range buttons widen it.
+Peak RSS, pretty and compact schema sizes, `$defs` counts and instruction counts omit `cpu`, so
+each chart/profile keeps one series across runners, labelled `full` or `lean` without a CPU suffix.
+RSS measures memory use: allocator behavior and kernel accounting can add noise, but CPU model
+is not a useful comparison boundary for it in this runner pool.
+The compiler stays in every metric's environment because a Rust toolchain change can move memory
+use and output sizes as well as times and counts; it starts a new segment without a comparison
+across that boundary.
+Instruction counts also retain `valgrind`, come first, and the page opens on the newest 50 runs.
+
+This behavior needs the benchtrail release after v0.5.0 that limits splitting to recorded metric
+keys; release it and update the action's commit pin in `pages.yaml` before deployment.
+Older CPU metadata must be removed once from the then-current `gh-pages` history, otherwise those
+metrics still record CPU somewhere and will split:
+
+```sh
+node /path/to/benchtrail/scripts/suites.mjs bench/data.js \
+  --remove-environment peak-rss=cpu --remove-environment schema-size=cpu \
+  --remove-environment compact-size=cpu --remove-environment defs=cpu \
+  --remove-environment instructions=cpu
+```
+
+The rewrite is deterministic and idempotent, preserves values, compiler and valgrind metadata,
+and only removes the named environment keys.
+Apply it while benchmark writers are idle, on a fresh `gh-pages` head after the publishing change
+lands: the bench workflow pushes that branch on every main push.
+Do not replace current history with an older rewritten copy.
 
 ## One-time setup
 
