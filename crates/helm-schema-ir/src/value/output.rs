@@ -1529,12 +1529,15 @@ fn partition_span_text(
 }
 
 impl DocumentExecution {
-    pub(super) fn new(exits: Vec<Exit>) -> Self {
+    pub(super) fn new(exits: Vec<Exit>, output: super::FileOutput) -> Self {
+        let abort = super::yaml::abort_predicate(&exits, output);
+        let exits = super::session::finish_file(exits);
         let root_programs = exits.iter().map(|exit| exit.state.program).collect();
         let mut execution = Self {
             exits,
             root_programs,
             observed_facts: crate::observed_facts::ObservedFacts::default(),
+            abort,
         };
         for read in execution
             .exits
@@ -1779,18 +1782,7 @@ impl DocumentExecution {
         Predicate::Or(text.chain(actions).collect()).normalize_boolean()
     }
     pub(crate) fn abort_predicate(&self) -> Predicate {
-        let aborted = Predicate::Or(
-            self.exits
-                .iter()
-                .filter(|exit| !exit_may_continue(exit))
-                .map(|exit| exit.state.path_predicate())
-                .collect(),
-        );
-        Predicate::all(vec![
-            aborted,
-            possible_success_predicate(&self.exits).negated(),
-        ])
-        .normalize_boolean()
+        self.abort.clone()
     }
 }
 pub(super) fn exit_may_continue(exit: &Exit) -> bool {
@@ -1802,16 +1794,6 @@ pub(super) fn flow_may_continue(flow: &Flow, active: &[super::DecisionEdge]) -> 
         || active
             .iter()
             .any(|edge| edge.test.coverage == super::Coverage::Partial)
-}
-
-pub(super) fn possible_success_predicate(exits: &[Exit]) -> Predicate {
-    Predicate::Or(
-        exits
-            .iter()
-            .filter(|exit| exit_may_continue(exit))
-            .map(|exit| exit.state.path_predicate())
-            .collect(),
-    )
 }
 
 impl FrozenValue {

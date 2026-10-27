@@ -37,6 +37,7 @@ impl FileOccurrence {
 
 pub(super) struct FileExecution {
     pub(super) exits: Vec<Exit>,
+    pub(super) output: super::FileOutput,
     programs: BTreeMap<ParsedProgramId, ExecutedProgram>,
 }
 struct ExecutedProgram {
@@ -51,11 +52,11 @@ pub(crate) fn execute_document(
     source_path: Option<&str>,
     db: &IrAnalysisDb,
 ) -> DocumentExecution {
-    let mut document = DocumentExecution::new(Vec::new());
+    let mut document = DocumentExecution::new(Vec::new(), super::FileOutput::Manifest);
     execute_files(
         vec![db.parsed_source(source, source_path, source_path.unwrap_or("gotpl"))],
         db,
-        |_, execution| document = DocumentExecution::new(execution.exits),
+        |_, execution| document = DocumentExecution::new(execution.exits, execution.output),
     );
     document
 }
@@ -68,20 +69,18 @@ pub(crate) fn project_documents(
     execute_files(sources, db, |index, execution| {
         let FileExecution {
             exits,
-            mut programs,
+            output,
+            programs,
         } = execution;
-        let Some((_, last)) = programs.pop_last() else {
-            seal(index, None, &DocumentExecution::new(exits));
+        let mut document = DocumentExecution::new(exits, output);
+        if programs.is_empty() {
+            seal(index, None, &document);
             return;
-        };
+        }
         for program in programs.into_values() {
-            let mut document = DocumentExecution::new(exits.clone());
             document.root_programs = BTreeSet::from([program.occurrence.program]);
             seal(index, Some(&program.program), &document);
         }
-        let mut document = DocumentExecution::new(exits);
-        document.root_programs = BTreeSet::from([last.occurrence.program]);
-        seal(index, Some(&last.program), &document);
     });
 }
 
@@ -143,9 +142,15 @@ fn execute_file(
     db: &IrAnalysisDb,
 ) -> FileExecution {
     let mut programs = BTreeMap::new();
+    let output = if source.name.ends_with("NOTES.txt") {
+        super::FileOutput::Text
+    } else {
+        super::FileOutput::Manifest
+    };
     let Some(first) = states.first() else {
         return FileExecution {
             exits: Vec::new(),
+            output,
             programs,
         };
     };
@@ -158,7 +163,7 @@ fn execute_file(
             exits.extend(execute_lookup(lookup, &occurrence, &mut programs, db));
         }
     }
-    let exits = finish_file(exits.finish(), db.predicate_memo());
+    let exits = exits.finish();
     *states = exits
         .iter()
         .filter_map(|exit| match exit.flow {
@@ -170,7 +175,11 @@ fn execute_file(
             Flow::Abort(_) | Flow::Break(_) | Flow::Continue(_) => None,
         })
         .collect();
-    FileExecution { exits, programs }
+    FileExecution {
+        exits,
+        output,
+        programs,
+    }
 }
 
 fn execute_lookup(
@@ -211,16 +220,14 @@ fn execute_lookup(
     }
 }
 
-fn finish_file(
-    mut exits: Vec<super::Exit>,
-    memo: &helm_schema_core::PredicateMemo,
-) -> Vec<super::Exit> {
+pub(super) fn finish_file(mut exits: Vec<super::Exit>) -> Vec<super::Exit> {
     for exit in &mut exits {
         if !matches!(exit.flow, Flow::Normal(_)) {
             continue;
         }
         let state = &mut exit.state;
-        super::output_layout::certify_plain_scalar_placements(state, memo);
+        let memo = Rc::clone(&state.heap.arena.predicate_memo);
+        super::output_layout::certify_plain_scalar_placements(state, &memo);
         let original = state.output.exact_text();
         let stripped = state.output.stripped_value();
         // Helm removes the marker after concatenation, including across emission boundaries.

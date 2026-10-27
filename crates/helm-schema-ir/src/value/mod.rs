@@ -13,12 +13,14 @@ mod operations;
 mod output;
 mod output_layout;
 mod query;
+mod quoted;
 mod read_set;
 pub(crate) mod scalar_value;
 mod session;
 mod shape_summary;
 mod state;
 mod window_exits;
+mod yaml;
 #[cfg(test)]
 pub(crate) use session::execute_document;
 pub(crate) use session::project_documents;
@@ -481,6 +483,13 @@ pub(crate) struct DocumentExecution {
     exits: Vec<Exit>,
     root_programs: BTreeSet<u64>,
     observed_facts: crate::observed_facts::ObservedFacts,
+    abort: Predicate,
+}
+
+#[derive(Clone, Copy)]
+enum FileOutput {
+    Manifest,
+    Text,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]

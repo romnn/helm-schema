@@ -41,14 +41,14 @@ pub(crate) fn execute_documents(
 ) -> Vec<DocumentExecution> {
     let mut documents: Vec<_> = sources
         .iter()
-        .map(|_| DocumentExecution::new(Vec::new()))
+        .map(|_| DocumentExecution::new(Vec::new(), crate::value::FileOutput::Manifest))
         .collect();
     super::session::execute_files(
         super::session::prepared_sources(sources, db),
         db,
         |index, execution| {
             if let Some(document) = documents.get_mut(index) {
-                *document = DocumentExecution::new(execution.exits);
+                *document = DocumentExecution::new(execution.exits, execution.output);
             }
         },
     );
@@ -659,7 +659,7 @@ fn overflow_buffer_summarizes_the_entire_tail_without_losing_flow_classes() -> e
             .iter()
             .any(|exit| matches!(exit.flow, Flow::Continue(found) if found == target))
     );
-    sim_assert_eq!(have: super::DocumentExecution::new(exits).abort_predicate(), want: Predicate::False);
+    sim_assert_eq!(have: super::DocumentExecution::new(exits, crate::value::FileOutput::Manifest).abort_predicate(), want: Predicate::False);
     Ok(())
 }
 

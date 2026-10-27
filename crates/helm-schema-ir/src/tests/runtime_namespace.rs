@@ -74,7 +74,10 @@ fn execute(defines: &DefineIndex, source: &str) -> eyre::Result<DocumentExecutio
             .iter()
             .all(|exit| exit.state.namespace.id() == namespace)
     );
-    Ok(DocumentExecution::new(exits))
+    Ok(DocumentExecution::new(
+        exits,
+        crate::value::FileOutput::Manifest,
+    ))
 }
 
 fn text(execution: &DocumentExecution) -> Vec<Option<String>> {

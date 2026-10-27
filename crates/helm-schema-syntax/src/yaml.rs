@@ -233,12 +233,12 @@ fn layout(body: &RenderedBody<'_>, arm: &RenderedArm) -> Result<YamlOwnership, L
             _ => {}
         }
     }
-    let owned = ownership(skeleton)?;
+    let owned = skeleton_ownership(skeleton)?;
     if may_be_empty {
         // An empty output is a permitted substitution too. It must keep every
         // node and its place; only a placeholder-only mapping value or block
         // item may vanish, leaving its entry with a null value.
-        let empty = ownership(build_skeleton(body, arm, true)?)
+        let empty = skeleton_ownership(build_skeleton(body, arm, true)?)
             .map_err(|_| LayoutUncertainty::Substitution)?;
         if structure(&owned) != structure(&empty) {
             return Err(LayoutUncertainty::Substitution);
@@ -292,8 +292,14 @@ fn build_skeleton(
     Ok(Skeleton { text, segments })
 }
 
-/// Parse the skeleton and map its structural nodes to pieces.
-fn ownership(skeleton: Skeleton) -> Result<YamlOwnership, LayoutUncertainty> {
+/// Parses a skeleton and maps its structural nodes to pieces.
+///
+/// Ownership describes these bytes only; callers must prove that substitutions preserve it.
+///
+/// # Errors
+///
+/// Returns layout uncertainty for parse errors or unsupported YAML ownership.
+pub fn skeleton_ownership(skeleton: Skeleton) -> Result<YamlOwnership, LayoutUncertainty> {
     let tree = parse_yaml(&skeleton.text).ok_or(LayoutUncertainty::Parse)?;
     let root = tree.root_node();
     if root.has_error() {

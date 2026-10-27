@@ -294,12 +294,15 @@ fn restricting_a_join_keeps_the_under_budget_output_and_observations_exact() -> 
     low.emit_bytes(span, None, "?");
     sim_assert_eq!(have: low.output_widened, want: false);
     sim_assert_eq!(have: low.output.as_value().under(&decision, false).constant().cloned(), want: Some(GuardValue::String("R!?".to_owned())));
-    let execution = DocumentExecution::new(vec![Exit {
-        state: low,
-        flow: Flow::Normal(Normal {
-            value: Value::nil(),
-        }),
-    }]);
+    let execution = DocumentExecution::new(
+        vec![Exit {
+            state: low,
+            flow: Flow::Normal(Normal {
+                value: Value::nil(),
+            }),
+        }],
+        crate::value::FileOutput::Manifest,
+    );
     sim_assert_eq!(have: execution.text_for_span(span, None).collect::<Vec<_>>(), want: vec![(no.path_predicate(), Some("R!?".to_owned()))]);
     Ok(())
 }

@@ -143,7 +143,7 @@ fn summarized_execution_drops_host_proofs_instead_of_making_them_unconditional()
         condition: Predicate::truthy_path("enabled"),
     });
     let exits = super::control::summarize_exits(super::eval::normal(state, Value::nil()));
-    let execution = super::DocumentExecution::new(exits);
+    let execution = super::DocumentExecution::new(exits, crate::value::FileOutput::Manifest);
     sim_assert_eq!(have: hosts(&execution), want: BTreeSet::new());
     assert!(
         execution

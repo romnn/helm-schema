@@ -26,12 +26,15 @@ fn alternatives(
 }
 
 fn document(state: State) -> DocumentExecution {
-    DocumentExecution::new(vec![Exit {
-        state,
-        flow: Flow::Normal(Normal {
-            value: Value::nil(),
-        }),
-    }])
+    DocumentExecution::new(
+        vec![Exit {
+            state,
+            flow: Flow::Normal(Normal {
+                value: Value::nil(),
+            }),
+        }],
+        crate::value::FileOutput::Manifest,
+    )
 }
 
 #[test]
