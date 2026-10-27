@@ -951,7 +951,13 @@ impl HelmRunner {
         let mut staged = tempfile::NamedTempFile::new_in(&inputs)?;
         staged.write_all(bytes)?;
         staged.as_file().sync_all()?;
-        staged.persist(&path)?;
+        // Windows refuses to rename over a file another thread published meanwhile; at a content address
+        // identical bytes are the same publication.
+        if let Err(err) = staged.persist(&path)
+            && !fs::read(&path).is_ok_and(|stored| stored == bytes)
+        {
+            return Err(err.into());
+        }
         Ok((path, sha256))
     }
 
