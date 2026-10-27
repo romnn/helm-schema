@@ -325,6 +325,15 @@ impl Chain {
 }
 
 impl ResourceSchemaOracle for Chain {
+    #[tracing::instrument(skip_all)]
+    fn observe_resource(&self, resource: &ResourceRef) {
+        drop(if needs_inference(resource) {
+            self.schema_fragment_for_resource_needing_inference(resource, &YamlPath::default())
+        } else {
+            self.schema_fragment_for_planned_candidates(resource, &YamlPath::default())
+        });
+    }
+
     #[tracing::instrument(
         skip_all,
         fields(

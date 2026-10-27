@@ -158,6 +158,97 @@ fn quoted_escapes_match_helm_and_finalize_only_at_a_proven_boundary() -> eyre::R
 }
 
 #[test]
+fn quoted_block_values_reject_separated_suffixes() -> eyre::Result<()> {
+    let source = r#"value: "{{ .Values.t }}{{ .Values.x }}""#;
+    for text in ["a\", b", "a\" b", "\",", "\"]", "\"}", "\": z", "\" b"] {
+        sim_assert_eq!(have: rejection(source, &json!({"t": text, "x": "abc"}))?, want: true, "{text:?}");
+    }
+    sim_assert_eq!(have: rejection("value: '{{ .Values.t }}'", &json!({"t": "a' 'b"}))?, want: true);
+    Ok(())
+}
+
+#[test]
+fn escaped_line_breaks_preserve_quoted_context_across_splices() -> eyre::Result<()> {
+    let source = r#"value: "{{ .Values.t }}{{ .Values.x }}""#;
+    for line_break in ['\n', '\u{85}', '\u{2028}', '\u{2029}'] {
+        for (text, next, rejected) in [
+            (format!("a\\{line_break}  b"), "a\"b".to_owned(), true),
+            (format!("a\\{line_break}  b"), "safe".to_owned(), false),
+            (format!("a\\{line_break}"), "  b\"c".to_owned(), true),
+            ("a\\".to_owned(), format!("{line_break}  b\"c"), true),
+            (format!("a\\{line_break}"), "#stillquoted".to_owned(), false),
+        ] {
+            sim_assert_eq!(have: rejection(source, &json!({"t": text, "x": next}))?, want: rejected, "{text:?} + {next:?}");
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn flow_tokens_continue_beyond_the_old_scalar_span() -> eyre::Result<()> {
+    for tail in [r#""lit""#, r#""]""#, r#""{{ .Values.x }}""#] {
+        let source = format!(r#"value: [ "{{{{ .Values.t }}}}", {tail} ]"#);
+        sim_assert_eq!(have: rejection(&source, &json!({"t": "a\\", "x": "abc"}))?, want: true, "{tail}");
+    }
+    let source = r#"value: [ "{{ .Values.t }}", "{{ .Values.x }}" ]"#;
+    sim_assert_eq!(have: rejection(source, &json!({"t": "\"]", "x": "abc"}))?, want: true);
+    sim_assert_eq!(have: rejection(source, &json!({"t": "a\\", "x": "a\"b"}))?, want: true);
+    Ok(())
+}
+
+#[test]
+fn quoted_continuations_preserve_flow_keys_comments_and_unknown_boundaries() -> eyre::Result<()> {
+    for (source, text, next) in [
+        (
+            r#"value: "{{ .Values.t }}{{ .Values.x }}""#,
+            "a\" # ",
+            "a\"b",
+        ),
+        (r#"value: "{{ .Values.t }}{{ .Values.x }}""#, "a\"#", "a\"b"),
+        (
+            r#"value: [ "{{ .Values.t }}", "{{ .Values.x }}" ]"#,
+            "a\", \"b",
+            "safe",
+        ),
+        (
+            indoc::indoc! {r#"
+            value:
+              - "{{ .Values.t }}"
+        "#},
+            "a\": \"b",
+            "",
+        ),
+        (r#""{{ .Values.t }}": safe"#, "key", ""),
+        (r#"value: [[ "{{ .Values.t }}" ]]"#, "safe", ""),
+        (r#"value: [[ "{{ .Values.t }}" ]]"#, "a\"]] # ", ""),
+        (r#"value: { key: [ "{{ .Values.t }}" ] }"#, "safe", ""),
+        (r#"value: [ "{{ .Values.t }}" ] suffix " ]"#, "a\\", ""),
+        (
+            r#"value: "{{ .Values.t }}{{ .Values.x }}""#,
+            "a\\\n--",
+            "-suffix\n",
+        ),
+        (
+            r#"value: "{{ .Values.t }}{{ .Values.x }}""#,
+            "a\\\n..",
+            ".\n",
+        ),
+        (
+            r#"value: "{{ .Values.t }}{{ .Values.x }}""#,
+            indoc::indoc! {r#"
+            a"
+            ...
+            ignored: "
+        "#},
+            "a\"b",
+        ),
+    ] {
+        sim_assert_eq!(have: rejection(source, &json!({"t": text, "x": next}))?, want: false, "{source}: {text:?} + {next:?}");
+    }
+    Ok(())
+}
+
+#[test]
 fn captured_text_preserves_splice_composition_and_frozen_inputs() -> eyre::Result<()> {
     let direct = r#"value: "{{ .Values.t }}{{ .Values.x }}""#;
     let captured = indoc::indoc! {r#"
@@ -397,5 +488,40 @@ fn a_manifest_failure_survives_an_uncertain_later_manifest() -> eyre::Result<()>
     "#};
     sim_assert_eq!(have: rejection(source, &json!({"t": "a\"b"}))?, want: true);
     sim_assert_eq!(have: rejection(source, &json!({"t": "safe"}))?, want: false);
+    Ok(())
+}
+
+#[test]
+fn an_unknown_body_keeps_resource_diagnostics_without_inventing_placed_fields() {
+    let source = indoc::indoc! {r"
+        apiVersion: autoscaling/v2beta1
+        kind: HorizontalPodAutoscaler
+        metadata:
+          name: {{ .Values.name | trunc 63 }}
+        spec:
+          replicas: {{ .Values.replicas }}
+    "};
+    let defines = DefineIndex::new();
+    let contract = crate::SymbolicIrContext::new(&defines)
+        .generate_contract_ir(source)
+        .finalize();
+    sim_assert_eq!(have: contract.schema_signals().observed_resources(), want: &std::collections::BTreeSet::from([
+        helm_schema_core::ResourceRef::concrete("autoscaling/v2beta1".to_owned(), "HorizontalPodAutoscaler".to_owned())
+    ]));
+    assert!(contract.uses().iter().all(|use_| use_.resource.is_none()));
+    let dormant = format!("{{{{ if false }}}}{source}{{{{ end }}}}");
+    let contract = crate::SymbolicIrContext::new(&defines)
+        .generate_contract_ir(&dormant)
+        .finalize();
+    assert!(contract.schema_signals().observed_resources().is_empty());
+}
+
+#[test]
+fn root_flow_mapping_ignores_a_valid_token_after_its_end() -> eyre::Result<()> {
+    let source =
+        r#"{apiVersion: v1, kind: ConfigMap, metadata: {name: p}, data: "{{ .Values.x }}"}"#;
+    sim_assert_eq!(have: rejection(source, &json!({"x": "\"}tail"}))?, want: false);
+    let nested = format!("value: {source}");
+    sim_assert_eq!(have: rejection(&nested, &json!({"x": "\"}tail"}))?, want: true);
     Ok(())
 }

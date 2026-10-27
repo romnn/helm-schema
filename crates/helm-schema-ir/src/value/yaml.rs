@@ -348,23 +348,28 @@ fn block_value(document: &YamlOwnership, span: Span) -> bool {
     }) else {
         return false;
     };
-    let Some(parent) = node.parent.and_then(|parent| document.nodes.get(parent)) else {
-        return false;
-    };
-    if !matches!(parent.kind, YamlNodeKind::Pair | YamlNodeKind::Item) {
-        return false;
-    }
+    matches!(
+        block_parent(document, node),
+        Some(YamlNodeKind::Pair | YamlNodeKind::Item)
+    )
+}
+
+fn block_parent(
+    document: &YamlOwnership,
+    node: &helm_schema_syntax::YamlNode,
+) -> Option<YamlNodeKind> {
+    let parent = node.parent.and_then(|parent| document.nodes.get(parent))?;
     let mut ancestor = Some(parent);
     while let Some(node) = ancestor {
         if matches!(
             node.kind,
             YamlNodeKind::FlowMapping | YamlNodeKind::FlowPair | YamlNodeKind::FlowSequence
         ) {
-            return false;
+            return None;
         }
         ancestor = node.parent.and_then(|parent| document.nodes.get(parent));
     }
-    true
+    Some(parent.kind)
 }
 
 #[derive(Debug)]
@@ -400,12 +405,6 @@ impl FilePlacement {
             })
     }
 
-    pub(super) fn inputs(&self) -> BTreeSet<helm_schema_core::ValuesPath> {
-        self.outputs
-            .iter()
-            .flat_map(|output| output.graph.inputs())
-            .collect()
-    }
     #[tracing::instrument(skip_all)]
     pub(super) fn seal(exits: &[Exit], output: FileOutput) -> Self {
         let mut outputs = Vec::new();
@@ -997,7 +996,7 @@ fn rendered_parts(parts: &[ScalarRenderPart], mut states: States, memo: &Predica
                 lexical_escapes: _,
             } => states
                 .into_iter()
-                .filter(|(state, _)| *state == LexicalState::Invalid)
+                .filter(|(state, _)| state.is_absorbing())
                 .collect(),
         };
     }
@@ -1030,12 +1029,12 @@ impl LexicalTransfers {
         if let Some(result) = self.values.get(&key) {
             return result.clone();
         }
-        if self.remaining == 0 && state != LexicalState::Invalid {
+        if self.remaining == 0 && !state.is_absorbing() {
             return States::new();
         }
         self.remaining = self.remaining.saturating_sub(1);
         let initial = BTreeMap::from([(state, Predicate::True)]);
-        let result = if state == LexicalState::Invalid {
+        let result = if state.is_absorbing() {
             initial
         } else if let Some(path) = value.identity() {
             quoted::input(initial, path, memo)
@@ -1207,10 +1206,59 @@ impl LexicalTransfers {
             ScalarStyle::SingleQuoted => (LexicalState::Single, 1),
             ScalarStyle::Plain => (LexicalState::PlainStart, 0),
         };
-        let mut states = BTreeMap::from([(state, Predicate::True)]);
+        self.range(
+            owned,
+            Span::new(node.span.start + skip, node.span.end),
+            terms,
+            BTreeMap::from([(state, Predicate::True)]),
+            memo,
+        )
+    }
+
+    fn flow_tail(
+        &mut self,
+        owned: &YamlOwnership,
+        node: &helm_schema_syntax::YamlNode,
+        terms: &[NodeRef],
+        states: &States,
+        memo: &PredicateMemo,
+    ) -> Predicate {
+        let mut parent = node.parent;
+        while let Some(ancestor) = parent.and_then(|parent| owned.nodes.get(parent)) {
+            if matches!(
+                ancestor.kind,
+                YamlNodeKind::FlowSequence | YamlNodeKind::FlowMapping
+            ) {
+                // Only irreversible failure survives this provisional container boundary.
+                let mut states = self.range(
+                    owned,
+                    Span::new(node.span.end, ancestor.span.end),
+                    terms,
+                    states
+                        .iter()
+                        .filter(|(state, _)| state.is_unterminated())
+                        .map(|(state, guard)| (*state, guard.clone()))
+                        .collect(),
+                    memo,
+                );
+                return invalid_states(owned, node, &mut states);
+            }
+            parent = ancestor.parent;
+        }
+        Predicate::False
+    }
+
+    fn range(
+        &mut self,
+        owned: &YamlOwnership,
+        range: Span,
+        terms: &[NodeRef],
+        mut states: States,
+        memo: &PredicateMemo,
+    ) -> States {
         for segment in &owned.skeleton.segments {
-            let start = segment.range.start.max(node.span.start + skip);
-            let end = segment.range.end.min(node.span.end);
+            let start = segment.range.start.max(range.start);
+            let end = segment.range.end.min(range.end);
             if start >= end {
                 continue;
             }
@@ -1258,7 +1306,7 @@ impl LexicalTransfers {
         let mut states = BTreeMap::from([(state, Predicate::True)]);
         for node in &buffer.parts {
             if self.remaining == 0 {
-                states.retain(|state, _| *state == LexicalState::Invalid);
+                states.retain(|state, _| state.is_absorbing());
                 break;
             }
             self.remaining -= 1;
@@ -1280,7 +1328,7 @@ impl LexicalTransfers {
     }
 
     fn part(&mut self, part: &TextPart, state: LexicalState, memo: &PredicateMemo) -> States {
-        if state == LexicalState::Invalid {
+        if state.is_absorbing() {
             return BTreeMap::from([(state, Predicate::True)]);
         }
         match part {
@@ -1379,21 +1427,13 @@ fn quoted_tokens(
         let mut states = lexical.token(owned, node, terms, memo);
         failures.push(Predicate::all(vec![
             prefix.clone(),
-            states
-                .remove(&LexicalState::Invalid)
-                .unwrap_or(Predicate::False),
+            lexical.flow_tail(owned, node, terms, &states, memo),
         ]));
-        let document_end = owned
-            .nodes
-            .iter()
-            .find(|end| end.kind == YamlNodeKind::DocumentEnd && node.span.end <= end.span.start)
-            .map_or(owned.skeleton.text.len(), |end| end.span.start);
-        if owned
-            .skeleton
-            .text
-            .get(node.span.end..document_end)
-            .is_some_and(|tail| tail.trim().is_empty())
-        {
+        failures.push(Predicate::all(vec![
+            prefix.clone(),
+            invalid_states(owned, node, &mut states),
+        ]));
+        if ends_document(owned, node.span) {
             failures.push(Predicate::all(vec![
                 prefix.clone(),
                 Predicate::Or(
@@ -1422,6 +1462,54 @@ fn quoted_tokens(
         invalid: memo.normalize(Predicate::Or(failures)),
         boundaries,
     }
+}
+
+fn ends_document(owned: &YamlOwnership, span: Span) -> bool {
+    let document_end = owned
+        .nodes
+        .iter()
+        .find(|end| end.kind == YamlNodeKind::DocumentEnd && span.end <= end.span.start)
+        .map_or(owned.skeleton.text.len(), |end| end.span.start);
+    owned
+        .skeleton
+        .text
+        .get(span.end..document_end)
+        .is_some_and(|tail| tail.trim().is_empty())
+}
+
+fn invalid_states(
+    owned: &YamlOwnership,
+    node: &helm_schema_syntax::YamlNode,
+    states: &mut States,
+) -> Predicate {
+    let mut failures = vec![
+        states
+            .remove(&LexicalState::Invalid)
+            .unwrap_or(Predicate::False),
+    ];
+    if !node.key && block_parent(owned, node) == Some(YamlNodeKind::Pair) {
+        for state in [LexicalState::BlockInvalid, LexicalState::ClosedCollection] {
+            failures.push(states.remove(&state).unwrap_or(Predicate::False));
+        }
+    }
+    // Helm may stop decoding after a root flow collection, ignoring a later token.
+    // An enclosing block container still needs completion on this line.
+    let mut parent = node.parent;
+    while let Some(ancestor) = parent.and_then(|parent| owned.nodes.get(parent)) {
+        if matches!(
+            ancestor.kind,
+            YamlNodeKind::Mapping | YamlNodeKind::Sequence
+        ) {
+            failures.push(
+                states
+                    .remove(&LexicalState::CollectionInvalid)
+                    .unwrap_or(Predicate::False),
+            );
+            break;
+        }
+        parent = ancestor.parent;
+    }
+    Predicate::Or(failures)
 }
 
 #[cfg(test)]

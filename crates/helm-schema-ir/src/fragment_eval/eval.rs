@@ -87,8 +87,19 @@ pub(crate) fn project_execution_at_offset(
     execution: &DocumentExecution,
 ) -> EvaluatedDocument {
     let mut root = Guarded::empty();
+    let mut observed_facts = execution.observed_facts().clone();
     for document in execution.placed_documents() {
         let resources = crate::resource_identity::placed_resources(&document, execution);
+        observed_facts
+            .resources
+            .extend(
+                resources
+                    .iter()
+                    .map(|resource| crate::observed_facts::ObservedResource {
+                        condition: resource.condition.clone(),
+                        resource: resource.resource.clone(),
+                    }),
+            );
         let mut children = vec![Vec::new(); document.ownership.nodes.len()];
         let mut roots = Vec::new();
         for (index, node) in document.ownership.nodes.iter().enumerate() {
@@ -114,7 +125,7 @@ pub(crate) fn project_execution_at_offset(
     EvaluatedDocument {
         root,
         reads: execution.projection_reads(),
-        observed_facts: execution.observed_facts().clone(),
+        observed_facts,
         pre_rewrite_strict_paths: BTreeSet::new(),
     }
 }

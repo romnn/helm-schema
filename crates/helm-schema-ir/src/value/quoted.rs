@@ -13,7 +13,12 @@ pub(super) enum LexicalState {
     Single,
     SingleEnd,
     Closed,
+    Separated,
+    ClosedCollection,
+    CollectionInvalid,
+    BlockInvalid,
     Escape,
+    FoldedDouble,
     Hex1,
     Hex2,
     Hex3,
@@ -31,16 +36,19 @@ pub(super) enum LexicalState {
 impl LexicalState {
     fn step(self, character: char) -> Option<Self> {
         use LexicalState::{
-            Closed, Double, Escape, Hex1, Hex2, Hex3, Hex4, Invalid, Plain, PlainStart, Single,
+            BlockInvalid, Closed, ClosedCollection, CollectionInvalid, Double, Escape,
+            FoldedDouble, Hex1, Hex2, Hex3, Hex4, Invalid, Plain, PlainStart, Separated, Single,
             SingleEnd, Surrogate3, Unicode4, Unicode5, Unicode5Max, Unicode6, Unicode7, Unicode8,
         };
-        if self == Invalid {
-            return Some(Invalid);
+        if self.is_absorbing() {
+            return Some(self);
         }
         // Removing Helm's marker cannot change any transition in this alphabet.
-        // Newlines, Unicode and structure-changing delimiters retain unknown coverage.
-        if !(' '..='~').contains(&character) || character == '<' {
+        if character == '<' || !alphabet().any(|allowed| allowed == character) {
             return None;
+        }
+        if matches!(character, '\n' | '\u{85}' | '\u{2028}' | '\u{2029}') {
+            return matches!(self, Escape | FoldedDouble).then_some(FoldedDouble);
         }
         Some(match self {
             PlainStart if character.is_ascii_alphanumeric() || character == '_' => Plain,
@@ -51,83 +59,66 @@ impl LexicalState {
                 '\\' => Escape,
                 _ => Double,
             },
-            Single => {
-                if character == '\'' {
-                    SingleEnd
-                } else {
-                    Single
-                }
-            }
+            FoldedDouble => match character {
+                ' ' | '\t' => FoldedDouble,
+                // A line-start document marker may span several frozen terms.
+                '-' | '.' => return None,
+                _ => return Double.step(character),
+            },
+            Single if character == '\'' => SingleEnd,
+            Single => Single,
             SingleEnd if character == '\'' => Single,
-            Closed | SingleEnd => {
-                if " ,:[]{}#".contains(character) {
-                    return None;
-                }
-                Invalid
-            }
-            Escape => match character {
-                'x' => Hex2,
-                'u' => Unicode4,
-                'U' => Unicode8,
-                '0' | 'a' | 'b' | 't' | 'n' | 'v' | 'f' | 'r' | 'e' | ' ' | '"' | '\\' | '\''
-                | 'N' | '_' | 'L' | 'P' => Double,
+            Closed | SingleEnd | Separated => match character {
+                ' ' | '\t' => Separated,
+                ',' | ':' | '[' | '{' => BlockInvalid,
+                ']' | '}' => ClosedCollection,
+                '#' => return None,
                 _ => Invalid,
             },
+            ClosedCollection => match character {
+                ' ' | '\t' => ClosedCollection,
+                ']' | '}' | ',' | ':' | '#' => return None,
+                _ => CollectionInvalid,
+            },
+            Escape => escape(character),
             Hex1 => hexadecimal(character, Double),
             Hex2 => hexadecimal(character, Hex1),
             Hex3 => hexadecimal(character, Hex2),
-            Hex4 => hexadecimal(character, Hex3),
-            Unicode4 => match character {
-                'd' | 'D' => Surrogate3,
-                _ => hexadecimal(character, Hex3),
-            },
-            Unicode5 => match character {
-                '0' => Unicode4,
-                _ => hexadecimal(character, Hex4),
-            },
-            Unicode5Max => {
-                if character == '0' {
-                    Hex4
-                } else {
-                    Invalid
-                }
-            }
-            Unicode6 => match character {
-                '0' => Unicode5,
-                '1' => Unicode5Max,
-                _ => Invalid,
-            },
-            Unicode7 => {
-                if character == '0' {
-                    Unicode6
-                } else {
-                    Invalid
-                }
-            }
-            Unicode8 => {
-                if character == '0' {
-                    Unicode7
-                } else {
-                    Invalid
-                }
-            }
-            Surrogate3 => {
-                if matches!(character, '0'..='7') {
-                    Hex2
-                } else {
-                    Invalid
-                }
-            }
-            Invalid => Invalid,
+            Unicode4 if matches!(character, 'd' | 'D') => Surrogate3,
+            Hex4 | Unicode4 => hexadecimal(character, Hex3),
+            Unicode5 if character == '0' => Unicode4,
+            Unicode5 => hexadecimal(character, Hex4),
+            Unicode5Max if character == '0' => Hex4,
+            Unicode6 if character == '0' => Unicode5,
+            Unicode6 if character == '1' => Unicode5Max,
+            Unicode7 if character == '0' => Unicode6,
+            Unicode8 if character == '0' => Unicode7,
+            Surrogate3 if matches!(character, '0'..='7') => Hex2,
+            Unicode5Max | Unicode6 | Unicode7 | Unicode8 | Surrogate3 => Invalid,
+            BlockInvalid | CollectionInvalid | Invalid => self,
         })
+    }
+
+    pub(super) fn is_absorbing(self) -> bool {
+        matches!(
+            self,
+            Self::Invalid | Self::BlockInvalid | Self::CollectionInvalid
+        )
     }
 
     pub(super) fn is_unterminated(self) -> bool {
         match self {
-            Self::PlainStart | Self::Plain | Self::Closed | Self::SingleEnd | Self::Invalid => {
-                false
-            }
+            Self::PlainStart
+            | Self::Plain
+            | Self::Closed
+            | Self::SingleEnd
+            | Self::Separated
+            | Self::ClosedCollection
+            | Self::CollectionInvalid
+            | Self::BlockInvalid
+            | Self::Invalid => false,
             Self::Double
+            | Self::FoldedDouble
             | Self::Single
             | Self::Escape
             | Self::Hex1
@@ -143,6 +134,24 @@ impl LexicalState {
             | Self::Surrogate3 => true,
         }
     }
+}
+
+fn escape(character: char) -> LexicalState {
+    match character {
+        'x' => LexicalState::Hex2,
+        'u' => LexicalState::Unicode4,
+        'U' => LexicalState::Unicode8,
+        '0' | 'a' | 'b' | 't' | '\t' | 'n' | 'v' | 'f' | 'r' | 'e' | ' ' | '"' | '\\' | '\''
+        | 'N' | '_' | 'L' | 'P' => LexicalState::Double,
+        _ => LexicalState::Invalid,
+    }
+}
+
+fn alphabet() -> impl Iterator<Item = char> {
+    ['\t', '\n']
+        .into_iter()
+        .chain(' '..='~')
+        .chain(['\u{85}', '\u{2028}', '\u{2029}'])
 }
 
 fn hexadecimal(character: char, next: LexicalState) -> LexicalState {
@@ -162,8 +171,8 @@ static STATES: std::sync::LazyLock<Vec<LexicalState>> = std::sync::LazyLock::new
     ];
     let mut index = 0;
     while let Some(state) = states.get(index).copied() {
-        for byte in b' '..=b'~' {
-            if let Some(next) = state.step(char::from(byte))
+        for character in alphabet() {
+            if let Some(next) = state.step(character)
                 && !states.contains(&next)
             {
                 states.push(next);
@@ -201,7 +210,7 @@ pub(super) fn input(
 ) -> BTreeMap<LexicalState, Predicate> {
     let mut result = BTreeMap::new();
     for (state, condition) in states {
-        if state == LexicalState::Invalid {
+        if state.is_absorbing() {
             merge(&mut result, state, condition, memo);
             continue;
         }
@@ -216,10 +225,6 @@ pub(super) fn input(
             for (end, pattern) in languages {
                 let selected = Predicate::all(vec![
                     condition.clone(),
-                    Predicate::from(Guard::NotMatchesPattern {
-                        path: path.clone(),
-                        pattern: "[\\r\\n\u{2028}\u{2029}]".to_owned(),
-                    }),
                     Predicate::from(Guard::MatchesPattern {
                         path: path.clone(),
                         pattern: pattern.clone(),
@@ -256,25 +261,25 @@ fn language(start: LexicalState, end: LexicalState) -> Option<String> {
     let mut edges = BTreeMap::<(usize, usize), String>::new();
     for (from, state) in STATES.iter().enumerate() {
         for (to, next) in STATES.iter().enumerate() {
-            let characters: Vec<_> = (b' '..=b'~')
-                .filter(|byte| state.step(char::from(*byte)) == Some(*next))
+            let characters: Vec<_> = alphabet()
+                .filter(|character| state.step(*character) == Some(*next))
+                .map(u32::from)
                 .collect();
             if !characters.is_empty() {
                 let mut class = String::from("[");
                 let mut characters = characters.into_iter().peekable();
                 while let Some(first) = characters.next() {
-                    use std::fmt::Write as _;
                     let mut last = first;
                     while characters.peek() == Some(&(last + 1)) {
                         last += 1;
                         characters.next();
                     }
-                    write!(class, "\\x{first:02x}").ok()?;
+                    class.push_str(&class_character(first)?);
                     if last > first {
                         if last > first + 1 {
                             class.push('-');
                         }
-                        write!(class, "\\x{last:02x}").ok()?;
+                        class.push_str(&class_character(last)?);
                     }
                 }
                 class.push(']');
@@ -327,4 +332,12 @@ fn language(start: LexicalState, end: LexicalState) -> Option<String> {
     edges
         .remove(&(entry, exit))
         .map(|text| format!("^(?:{text})$"))
+}
+
+fn class_character(character: u32) -> Option<String> {
+    Some(if character <= 0xff {
+        format!("\\x{character:02x}")
+    } else {
+        char::from_u32(character)?.to_string()
+    })
 }

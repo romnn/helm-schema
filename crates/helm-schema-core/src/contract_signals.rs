@@ -1019,6 +1019,7 @@ impl ContractPathSchemaEvidence {
 /// re-reading raw contract claims.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct ContractSchemaSignals {
+    observed_resources: BTreeSet<crate::ResourceRef>,
     schema_evidence_by_value_path: BTreeMap<crate::ValuesPath, ContractPathSchemaEvidence>,
     referenced_value_paths: BTreeSet<crate::ValuesPath>,
     pruned_parent_value_paths: BTreeSet<crate::ValuesPath>,
@@ -1101,6 +1102,7 @@ impl ContractSchemaSignals {
             .collect();
         Self {
             schema_evidence_by_value_path,
+            observed_resources: BTreeSet::new(),
             referenced_value_paths,
             pruned_parent_value_paths,
             unconditionally_omitted_value_paths,
@@ -1111,6 +1113,22 @@ impl ContractSchemaSignals {
             values_program_wrapper_exclusions: BTreeSet::new(),
             terminal_clauses,
         }
+    }
+
+    /// Attaches potentially emitted resources for diagnostics, independently of value-slot evidence.
+    #[must_use]
+    pub fn with_observed_resources(
+        mut self,
+        resources: impl IntoIterator<Item = crate::ResourceRef>,
+    ) -> Self {
+        self.observed_resources.extend(resources);
+        self
+    }
+
+    /// Resource observations that imply no constraint on an input value.
+    #[must_use]
+    pub fn observed_resources(&self) -> &BTreeSet<crate::ResourceRef> {
+        &self.observed_resources
     }
 
     /// Attaches chart subtrees that supply runtime defaults to effective values paths.

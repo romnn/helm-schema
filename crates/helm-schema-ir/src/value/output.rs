@@ -1476,10 +1476,6 @@ impl DocumentExecution {
         self.placement.documents(&self.root_programs)
     }
 
-    pub(crate) fn placement_inputs(&self) -> BTreeSet<helm_schema_core::ValuesPath> {
-        self.placement.inputs()
-    }
-
     pub(crate) fn text_sites(&self) -> impl Iterator<Item = &super::ExecutedText> {
         self.exits
             .iter()

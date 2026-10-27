@@ -16,9 +16,16 @@ use crate::provider_resolution::ProviderSchemaResolutions;
 #[derive(Debug, Default)]
 struct CountingProvider {
     calls: Mutex<Vec<ProviderSchemaUse>>,
+    observations: Mutex<Vec<ResourceRef>>,
 }
 
 impl ResourceSchemaOracle for CountingProvider {
+    fn observe_resource(&self, resource: &ResourceRef) {
+        if let Ok(mut observations) = self.observations.lock() {
+            observations.push(resource.clone());
+        }
+    }
+
     fn schema_fragment_for_use(&self, use_: &ProviderSchemaUse) -> Option<ProviderSchemaFragment> {
         let Ok(mut calls) = self.calls.lock() else {
             return None;
@@ -61,6 +68,7 @@ fn provider_resolution_phase_resolves_each_exact_and_concrete_use_once() -> eyre
         false,
         ConditionalOverlayFlavor::Ordinary,
     );
+    let observed_resource = use_.resource.clone();
     let signals = ContractSchemaSignals::new(
         BTreeMap::from([(
             value_path,
@@ -73,9 +81,11 @@ fn provider_resolution_phase_resolves_each_exact_and_concrete_use_once() -> eyre
         )]),
         Vec::new(),
     );
+    let signals = signals.with_observed_resources([observed_resource]);
     let provider = CountingProvider::default();
 
     let resolutions = ProviderSchemaResolutions::resolve(&signals, &provider);
+    sim_assert_eq!(have: provider.observations.lock().map_err(|err| eyre::eyre!("{err}"))?.len(), want: 0);
     let calls = provider
         .calls
         .into_inner()
@@ -99,5 +109,23 @@ fn provider_resolution_phase_resolves_each_exact_and_concrete_use_once() -> eyre
     for use_ in &calls {
         assert!(resolutions.fragment_for_use(use_).is_some());
     }
+    Ok(())
+}
+
+#[test]
+fn resource_observations_do_not_add_value_constraints() -> eyre::Result<()> {
+    let resource = ResourceRef::concrete(
+        "autoscaling/v2beta1".to_owned(),
+        "HorizontalPodAutoscaler".to_owned(),
+    );
+    let baseline = ContractSchemaSignals::default();
+    let observed = baseline
+        .clone()
+        .with_observed_resources([resource.clone(), resource.clone()]);
+    let provider = CountingProvider::default();
+    let schema = crate::generate_values_schema(crate::ValuesSchemaInput::new(&observed, &provider));
+    sim_assert_eq!(have: schema, want: crate::generate_values_schema(crate::ValuesSchemaInput::new(&baseline, &CountingProvider::default())));
+    sim_assert_eq!(have: provider.calls.into_inner().map_err(|err| eyre::eyre!("{err}"))?, want: Vec::<ProviderSchemaUse>::new());
+    sim_assert_eq!(have: provider.observations.into_inner().map_err(|err| eyre::eyre!("{err}"))?, want: vec![resource]);
     Ok(())
 }

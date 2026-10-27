@@ -9,6 +9,37 @@ pub(crate) use captures::{CaptureKind, FailCapture, StringRequirementRoute};
 pub(crate) type TypeHints = BTreeMap<ValuesPath, BTreeSet<String>>;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub(crate) struct ObservedResource {
+    pub(crate) condition: helm_schema_core::Predicate,
+    pub(crate) resource: helm_schema_core::ResourceRef,
+}
+
+impl ObservedResource {
+    fn map_value_paths(&mut self, map: &mut impl FnMut(ValuesPath) -> ValuesPath) {
+        let Self {
+            condition,
+            resource,
+        } = self;
+        *condition = condition.clone().map_value_paths(map);
+        let helm_schema_core::ResourceRef {
+            api_version: _,
+            kind: _,
+            kind_candidates: _,
+            api_version_candidates: _,
+            api_version_branches: _,
+            kind_branches,
+            kind_selector,
+        } = resource;
+        for helm_schema_core::KindBranch { predicate, kind: _ } in kind_branches {
+            *predicate = predicate.clone().map_value_paths(map);
+        }
+        if let Some(path) = kind_selector {
+            *path = map(path.clone());
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct ActivatedValuesDefaultSource {
     pub(crate) guards: Vec<crate::Guard>,
     pub(crate) source: crate::ValuesDefaultSource,
@@ -60,6 +91,7 @@ impl HintGrade {
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) struct ObservedFacts {
+    pub(crate) resources: BTreeSet<ObservedResource>,
     pub(crate) type_hints: BTreeMap<HintGrade, TypeHints>,
     pub(crate) shape_erased_paths: BTreeSet<ValuesPath>,
     pub(crate) range_modes: crate::range_modes::RangeModes,
@@ -124,6 +156,7 @@ impl ObservedFacts {
     {
         let Self {
             type_hints,
+            resources,
             shape_erased_paths,
             range_modes,
             values_default_sources,
@@ -133,6 +166,13 @@ impl ObservedFacts {
             values_root_helper_includes: _,
             captures,
         } = self;
+        *resources = std::mem::take(resources)
+            .into_iter()
+            .map(|mut resource| {
+                resource.map_value_paths(map);
+                resource
+            })
+            .collect();
         for paths in type_hints.values_mut() {
             let mut mapped = TypeHints::new();
             for (path, hints) in std::mem::take(paths) {
@@ -203,6 +243,7 @@ impl ObservedFacts {
     pub(crate) fn absorb(&mut self, other: &Self) {
         let Self {
             type_hints,
+            resources,
             shape_erased_paths,
             range_modes,
             values_default_sources,
@@ -212,6 +253,7 @@ impl ObservedFacts {
             values_root_helper_includes,
             captures,
         } = other;
+        self.resources.extend(resources.iter().cloned());
         for (grade, paths) in type_hints {
             for (path, hints) in paths {
                 self.extend_type_hints(*grade, path, hints);

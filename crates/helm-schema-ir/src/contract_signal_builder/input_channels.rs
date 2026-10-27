@@ -97,7 +97,16 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
             }
         }
     }
-    finish_schema_signals(paths, terminal_clauses, predicate_memo)
+    finish_schema_signals(paths, terminal_clauses, predicate_memo).with_observed_resources(
+        observed_facts
+            .resources
+            .iter()
+            .filter(|observation| {
+                predicate_memo.normalize(observation.condition.clone())
+                    != helm_schema_core::Predicate::False
+            })
+            .map(|observation| observation.resource.clone()),
+    )
 }
 
 fn yaml_serialized_paths(uses: &[ContractUse]) -> BTreeSet<&helm_schema_core::ValuesPath> {

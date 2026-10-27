@@ -124,6 +124,22 @@ impl ContractIr {
     /// an already-scoped batch of claims, such as dependency `condition:` /
     /// `tags:` liveness from `Chart.yaml`.
     pub fn append_guards_to_all_uses(&mut self, guards: &[Guard]) {
+        self.observed_facts.resources = std::mem::take(&mut self.observed_facts.resources)
+            .into_iter()
+            .map(|mut observation| {
+                observation.condition = helm_schema_core::Predicate::all(
+                    std::iter::once(observation.condition)
+                        .chain(
+                            guards
+                                .iter()
+                                .cloned()
+                                .map(helm_schema_core::Predicate::from),
+                        )
+                        .collect(),
+                );
+                observation
+            })
+            .collect();
         for contract_use in self.uses.iter_mut().chain(&mut self.dependency_uses) {
             contract_use.condition = contract_use
                 .condition

@@ -1,6 +1,6 @@
 use std::{
     cell::OnceCell,
-    collections::{BTreeMap, HashMap},
+    collections::{BTreeMap, BTreeSet, HashMap},
     sync::Arc,
 };
 
@@ -92,6 +92,15 @@ impl ProviderSchemaResolutions {
                 for use_ in &overlay.evidence.provider_schema_uses {
                     insert_candidate(&mut by_use, &mut overlay_candidates, use_);
                 }
+            }
+        }
+        let queried = by_use
+            .keys()
+            .map(|use_| &use_.resource)
+            .collect::<BTreeSet<_>>();
+        for resource in contract_schema_signals.observed_resources() {
+            if !queried.contains(resource) {
+                provider.observe_resource(resource);
             }
         }
         Self { by_use }
