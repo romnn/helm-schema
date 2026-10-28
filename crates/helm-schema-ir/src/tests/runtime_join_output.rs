@@ -5,7 +5,8 @@ use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
 use crate::analysis_db::IrAnalysisDb;
-use crate::value::{Flow, execute_document};
+use crate::value::Flow;
+use crate::value::tests::execute_document;
 
 #[test]
 fn output_budget_neighbors_keep_exact_text_and_all_widened_dependencies() {

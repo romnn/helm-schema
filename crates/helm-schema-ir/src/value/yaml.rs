@@ -1,9 +1,13 @@
 //! YAML ownership and lexical coverage sealed from the executed output graph.
 
+use std::borrow::Cow;
 use std::collections::{BTreeMap, BTreeSet};
 use std::rc::Rc;
 
-use helm_schema_core::{PlainScalarPlacement, Predicate, PredicateMemo};
+use helm_schema_core::{
+    CollectionDomain, CollectionQuantifier, Guard, PlainScalarPlacement, Predicate, PredicateMemo,
+    ValuesPath,
+};
 use helm_schema_syntax::{
     ScalarStyle, Skeleton, SkeletonSegment, Span, YamlNodeKind, YamlOwnership,
 };
@@ -20,13 +24,6 @@ static SPLITTER: std::sync::LazyLock<Result<regex::Regex, regex::Error>> =
     std::sync::LazyLock::new(|| regex::Regex::new(r"(?:^|[ \t\r\n\x0c]*\n)---[ \t\r\n\x0c]*"));
 
 type States = BTreeMap<LexicalState, Predicate>;
-
-#[derive(Clone, Copy)]
-enum Validity {
-    Valid,
-    Invalid,
-    Unknown,
-}
 
 #[derive(Clone, Debug)]
 struct NodeRef {
@@ -111,19 +108,18 @@ pub(super) struct Layout {
     placeholders: usize,
     invalid: Predicate,
     source_mapped: bool,
-    empty: bool,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct DocumentLayout {
-    ownership: YamlOwnership,
+    ownership: Rc<YamlOwnership>,
     offset: usize,
     scope: Span,
     condition: Predicate,
     boundaries: Vec<PrefixBoundary>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct PrefixBoundary {
     span: Span,
     preserved: Predicate,
@@ -306,7 +302,6 @@ impl PlacedDocument<'_> {
 
 #[derive(Debug)]
 pub(super) struct OutputPlacement {
-    graph: Rc<TextBuffer>,
     layouts: Vec<Layout>,
     unknown: Predicate,
     markers: MarkerProvenance,
@@ -320,23 +315,26 @@ struct MarkerProvenance {
 
 impl OutputPlacement {
     fn new(
-        graph: Rc<TextBuffer>,
+        graph: &Rc<TextBuffer>,
         condition: &Predicate,
         memo: &PredicateMemo,
         output: FileOutput,
+        syntax: &mut SyntaxContexts,
+        input_paths: &BTreeMap<super::ObjectId, ValuesPath>,
     ) -> Self {
         let mut build = LayoutBuilder {
             layouts: Vec::new(),
             unknown: Vec::new(),
             remaining: 1024,
-            lexical: LexicalTransfers::default(),
+            lexical: LexicalTransfers::new(input_paths),
             root_condition: condition.clone(),
             output,
             markers: MarkerProvenance::default(),
             memo,
+            syntax,
         };
         let LayoutContexts { known, unknown } =
-            build.walk(&graph, 0, &Rc::new(Vec::new()), condition);
+            build.walk(graph, 0, &Rc::new(Vec::new()), condition);
         // Graph-local unknown coverage gains the file's path condition only at sealing.
         let unknown = memo.normalize(Predicate::all(vec![condition.clone(), unknown]));
         if unknown != Predicate::False {
@@ -351,7 +349,6 @@ impl OutputPlacement {
         }
         build.markers.incomplete |= !build.unknown.is_empty();
         Self {
-            graph,
             layouts: build.layouts,
             unknown: memo.normalize(Predicate::Or(build.unknown)),
             markers: build.markers,
@@ -367,25 +364,11 @@ impl OutputPlacement {
             terms: _,
             placeholders: _,
             source_mapped: _,
-            empty,
             invalid,
         } in &self.layouts
         {
-            let remainder = if *empty {
-                Validity::Valid
-            } else {
-                Validity::Unknown
-            };
-            for (guard, validity) in [
-                (invalid.clone(), Validity::Invalid),
-                (invalid.negated(), remainder),
-            ] {
-                let guard = Predicate::all(vec![condition.clone(), guard]);
-                match validity {
-                    Validity::Invalid => failures.push(guard),
-                    Validity::Valid | Validity::Unknown => survivors.push(guard),
-                }
-            }
+            failures.push(Predicate::all(vec![condition.clone(), invalid.clone()]));
+            survivors.push(Predicate::all(vec![condition.clone(), invalid.negated()]));
         }
         memo.normalize(Predicate::all(vec![
             Predicate::Or(failures),
@@ -512,34 +495,31 @@ impl FilePlacement {
 
     #[tracing::instrument(skip_all)]
     pub(super) fn seal(exits: &[Exit], output: FileOutput) -> Self {
+        let mut syntax = SyntaxContexts::default();
         let mut outputs = Vec::new();
         let mut failures = Vec::new();
         let mut survivors = Vec::new();
         for exit in exits {
             let condition = exit.state.path_predicate();
             let memo = &exit.state.heap.arena.predicate_memo;
-            let graph = Rc::new(exit.state.output.clone());
             let placement = if matches!(exit.flow, Flow::Normal(_)) {
-                OutputPlacement::new(graph, &condition, memo, output)
+                OutputPlacement::new(
+                    &Rc::new(exit.state.output.clone()),
+                    &condition,
+                    memo,
+                    output,
+                    &mut syntax,
+                    &exit.state.heap.arena.input_paths.borrow(),
+                )
             } else {
                 OutputPlacement {
-                    graph,
                     layouts: Vec::new(),
                     unknown: Predicate::True,
                     markers: MarkerProvenance::default(),
                 }
             };
             if super::output::exit_may_continue(exit) {
-                let invalid = if exit
-                    .state
-                    .active
-                    .iter()
-                    .any(|edge| edge.test.coverage == Coverage::Partial)
-                {
-                    Predicate::False
-                } else {
-                    placement.invalid(memo)
-                };
+                let invalid = placement.invalid(memo);
                 failures.push(Predicate::all(vec![condition.clone(), invalid.clone()]));
                 survivors.push(Predicate::all(vec![condition, invalid.negated()]));
             } else {
@@ -610,11 +590,12 @@ struct LayoutBuilder<'a> {
     layouts: Vec<Layout>,
     unknown: Vec<Predicate>,
     remaining: usize,
-    lexical: LexicalTransfers,
+    lexical: LexicalTransfers<'a>,
     root_condition: Predicate,
     output: FileOutput,
     markers: MarkerProvenance,
     memo: &'a PredicateMemo,
+    syntax: &'a mut SyntaxContexts,
 }
 
 #[derive(Clone)]
@@ -631,6 +612,7 @@ struct LayoutContexts {
 }
 
 impl LayoutBuilder<'_> {
+    #[tracing::instrument(skip_all, name = "walk_layouts")]
     fn walk(
         &mut self,
         graph: &Rc<TextBuffer>,
@@ -893,6 +875,7 @@ impl LayoutBuilder<'_> {
         });
     }
 
+    #[tracing::instrument(skip_all)]
     fn zip(
         &self,
         decision: &Rc<FrozenTest>,
@@ -950,6 +933,7 @@ impl LayoutBuilder<'_> {
         })
     }
 
+    #[tracing::instrument(skip_all, fields(prefixes = prefix.known.len(), suffixes = suffix.known.len()))]
     fn then(
         &self,
         prefix: LayoutContexts,
@@ -971,67 +955,116 @@ impl LayoutBuilder<'_> {
                 .collect(),
         );
         let suffix_unknown = Predicate::all(vec![prefix_condition, suffix_unknown]);
+        let mut unknown = vec![prefix_unknown, suffix_unknown];
         let mut result = LayoutContexts {
             known: Vec::new(),
-            unknown: self
-                .memo
-                .normalize(Predicate::Or(vec![prefix_unknown, suffix_unknown])),
+            unknown: Predicate::False,
         };
-        let append =
-            |mut prefix: LayoutContext, suffix: &LayoutContext, result: &mut LayoutContexts| {
-                let condition = self.memo.normalize(Predicate::all(vec![
-                    prefix.condition.clone(),
-                    suffix.condition.clone(),
-                ]));
-                if !self.feasible(ambient, &condition) {
-                    return;
-                }
-                if result.known.len() >= 32 || !prefix.extend(suffix) {
-                    result.unknown = self
-                        .memo
-                        .normalize(Predicate::Or(vec![result.unknown.clone(), condition]));
-                    return;
-                }
-                prefix.condition = condition;
-                result.known.push(prefix);
-            };
-        // A single suffix appends in place; distinct layouts duplicate the accumulated prefix.
-        match suffixes.as_slice() {
-            [suffix] => {
-                for prefix in prefixes {
-                    append(prefix, suffix, &mut result);
+        let mut append = |prefix: Cow<'_, LayoutContext>,
+                          suffix: Cow<'_, LayoutContext>,
+                          result: &mut LayoutContexts| {
+            let condition = self.memo.normalize(Predicate::all(vec![
+                prefix.condition.clone(),
+                suffix.condition.clone(),
+            ]));
+            if !self.feasible(ambient, &condition) {
+                return;
+            }
+            if result.known.len() >= 32 {
+                unknown.push(condition);
+                return;
+            }
+            let mut prefix = prefix.into_owned();
+            if !prefix.extend(suffix.into_owned()) {
+                unknown.push(condition);
+                return;
+            }
+            prefix.condition = condition;
+            result.known.push(prefix);
+        };
+        // Copy only feasible combinations admitted below the structural-context bound.
+        match suffixes.len() {
+            1 => {
+                if let Some(suffix) = suffixes.into_iter().next() {
+                    let mut prefixes = prefixes.into_iter();
+                    if let Some(last) = prefixes.next_back() {
+                        for prefix in prefixes {
+                            append(Cow::Owned(prefix), Cow::Borrowed(&suffix), &mut result);
+                        }
+                        append(Cow::Owned(last), Cow::Owned(suffix), &mut result);
+                    }
                 }
             }
-            suffixes => {
+            _ => {
                 for prefix in prefixes {
-                    for suffix in suffixes {
-                        append(prefix.clone(), suffix, &mut result);
+                    let mut suffixes = suffixes.iter();
+                    if let Some(last) = suffixes.next_back() {
+                        for suffix in suffixes {
+                            append(Cow::Borrowed(&prefix), Cow::Borrowed(suffix), &mut result);
+                        }
+                        append(Cow::Owned(prefix), Cow::Borrowed(last), &mut result);
                     }
                 }
             }
         }
+        result.unknown = self.memo.normalize(Predicate::Or(unknown));
         result
     }
 
+    #[tracing::instrument(skip_all)]
     fn finish_layout(&mut self, context: LayoutContext) {
         let LayoutContext {
-            skeleton,
+            mut skeleton,
             terms,
             selections,
             condition,
         } = context;
-        let removed = marker_ranges(&skeleton.text);
+        let empty = skeleton.text.trim().is_empty();
+        let mut removed = marker_ranges(&skeleton.text);
         self.markers.record(&skeleton, &terms, &removed);
-        let owned_documents = match self.output {
+        let mut owned_documents = match self.output {
             FileOutput::Text => Vec::new(),
             FileOutput::Manifest => {
-                let Some(documents) = documents(&skeleton, &removed) else {
+                let Some(documents) = self.syntax.documents(&skeleton, &removed) else {
                     self.unknown.push(condition);
                     return;
                 };
                 documents
             }
         };
+        let recovered = owned_documents.is_empty();
+        // Recover multiline frozen text for unindented quoted continuations Helm accepts.
+        // Its hole retains the complete lexical transfer, including every structural byte.
+        if matches!(self.output, FileOutput::Manifest) && !empty && owned_documents.is_empty() {
+            let mut text = String::new();
+            let mut start = 0;
+            for segment in &mut skeleton.segments {
+                if !segment.placeholder
+                    && skeleton.text[segment.range.start..segment.range.end].contains('\n')
+                    && terms
+                        .get(segment.piece)
+                        .and_then(NodeRef::node)
+                        .is_some_and(|node| matches!(node.content(), TextPart::Frozen(_)))
+                {
+                    segment.placeholder = true;
+                    text.push_str(&skeleton.text[start..segment.range.start]);
+                    text.extend(std::iter::repeat_n(
+                        '0',
+                        segment.range.end - segment.range.start,
+                    ));
+                    start = segment.range.end;
+                }
+            }
+            if start != 0 {
+                text.push_str(&skeleton.text[start..]);
+                skeleton.text = text;
+                removed = marker_ranges(&skeleton.text);
+                owned_documents = self
+                    .syntax
+                    .documents(&skeleton, &removed)
+                    .unwrap_or_default();
+            }
+        }
         let mut failures = Vec::new();
         let mut documents = Vec::new();
         for mut document in owned_documents {
@@ -1052,7 +1085,10 @@ impl LayoutBuilder<'_> {
             let result = quoted_tokens(&document.ownership, &terms, &mut self.lexical, self.memo);
             failures.push(result.invalid);
             document.boundaries = result.boundaries;
-            documents.push(document);
+            // Recovery proves only irreversible lexical failure, not resource placement.
+            if !recovered {
+                documents.push(document);
+            }
         }
         self.layouts.push(Layout {
             condition,
@@ -1064,7 +1100,6 @@ impl LayoutBuilder<'_> {
                 .count(),
             invalid: self.memo.normalize(Predicate::Or(failures)),
             source_mapped: removed.is_empty(),
-            empty: skeleton.text.trim().is_empty(),
             terms,
         });
     }
@@ -1083,11 +1118,11 @@ impl LayoutContext {
         }
     }
 
-    fn extend(&mut self, suffix: &Self) -> bool {
+    fn extend(&mut self, suffix: Self) -> bool {
         let Self {
-            skeleton,
-            terms: suffix_terms,
-            selections,
+            mut skeleton,
+            terms: mut suffix_terms,
+            mut selections,
             condition: _,
         } = suffix;
         let bytes = self.skeleton.text.len();
@@ -1096,40 +1131,35 @@ impl LayoutContext {
         }
         let terms = self.terms.len();
         self.skeleton.text.push_str(&skeleton.text);
-        for segment in &skeleton.segments {
-            let SkeletonSegment {
-                range,
-                piece,
-                placeholder,
-            } = *segment;
-            self.skeleton.segments.push(SkeletonSegment {
-                range: Span::new(bytes + range.start, bytes + range.end),
-                piece: terms + piece,
-                placeholder,
-            });
-        }
-        for NodeRef {
-            buffer,
-            index,
-            start,
-            indentation,
-            context,
-        } in suffix_terms
+        for SkeletonSegment {
+            range,
+            piece,
+            placeholder: _,
+        } in &mut skeleton.segments
         {
-            self.terms.push(NodeRef {
-                buffer: Rc::clone(buffer),
-                index: *index,
-                start: bytes + start,
-                indentation: *indentation,
-                context: Rc::clone(context),
-            });
+            *range = Span::new(bytes + range.start, bytes + range.end);
+            *piece += terms;
         }
-        for SelectedSpan { range, condition } in selections {
-            self.selections.push(SelectedSpan {
-                range: Span::new(bytes + range.start, bytes + range.end),
-                condition: condition.clone(),
-            });
+        self.skeleton.segments.append(&mut skeleton.segments);
+        for NodeRef {
+            start,
+            buffer: _,
+            index: _,
+            indentation: _,
+            context: _,
+        } in &mut suffix_terms
+        {
+            *start += bytes;
         }
+        self.terms.append(&mut suffix_terms);
+        for SelectedSpan {
+            range,
+            condition: _,
+        } in &mut selections
+        {
+            *range = Span::new(bytes + range.start, bytes + range.end);
+        }
+        self.selections.append(&mut selections);
         true
     }
 
@@ -1146,11 +1176,9 @@ impl LayoutContext {
             return false;
         }
         let text = if node.indentation == 0 {
-            std::borrow::Cow::Borrowed(bytes)
+            Cow::Borrowed(bytes)
         } else {
-            std::borrow::Cow::Owned(
-                bytes.replace('\n', &format!("\n{}", " ".repeat(node.indentation))),
-            )
+            Cow::Owned(bytes.replace('\n', &format!("\n{}", " ".repeat(node.indentation))))
         };
         self.skeleton.text.push_str(&text);
         self.skeleton.segments.push(SkeletonSegment {
@@ -1235,8 +1263,45 @@ fn captured_layout(value: &FrozenValue, remaining: &mut usize) -> Option<Capture
     }
 }
 
-fn documents(skeleton: &Skeleton, removed: &[Span]) -> Option<Vec<DocumentLayout>> {
-    let skeleton = stripped_skeleton(skeleton, removed);
+#[derive(Default)]
+struct SyntaxContexts {
+    entries: Vec<SyntaxContext>,
+}
+
+struct SyntaxContext {
+    skeleton: Skeleton,
+    documents: Option<Vec<DocumentLayout>>,
+}
+
+impl SyntaxContexts {
+    #[tracing::instrument(skip_all, name = "syntax_context", fields(cache_hit = tracing::field::Empty))]
+    fn documents(&mut self, skeleton: &Skeleton, removed: &[Span]) -> Option<Vec<DocumentLayout>> {
+        let skeleton = stripped_skeleton(skeleton, removed);
+        for entry in &self.entries {
+            let SyntaxContext {
+                skeleton: existing,
+                documents,
+            } = entry;
+            if *existing == skeleton {
+                tracing::Span::current().record("cache_hit", true);
+                return documents.clone();
+            }
+        }
+        tracing::Span::current().record("cache_hit", false);
+        let documents = documents(&skeleton);
+        // Cache only syntax; execution guards and lexical boundaries remain with each layout.
+        if self.entries.len() < 32 {
+            self.entries.push(SyntaxContext {
+                skeleton,
+                documents: documents.clone(),
+            });
+        }
+        documents
+    }
+}
+
+#[tracing::instrument(skip_all)]
+fn documents(skeleton: &Skeleton) -> Option<Vec<DocumentLayout>> {
     let Ok(splitter) = &*SPLITTER else {
         return None;
     };
@@ -1284,7 +1349,7 @@ fn documents(skeleton: &Skeleton, removed: &[Span]) -> Option<Vec<DocumentLayout
             continue;
         };
         documents.push(DocumentLayout {
-            ownership,
+            ownership: Rc::new(ownership),
             offset: start,
             scope,
             condition: Predicate::True,
@@ -1410,9 +1475,15 @@ fn rendered_parts(parts: &[ScalarRenderPart], mut states: States, memo: &Predica
             ScalarRenderPart::Text(text) => quoted::literal(states, text, memo),
             ScalarRenderPart::Identity {
                 path,
-                stringified: _,
+                stringified,
                 lexical_escapes,
-            } if lexical_escapes.is_empty() => quoted::input(states, path, memo),
+            } if lexical_escapes.is_empty() => {
+                if *stringified {
+                    quoted::formatted_input(states, path, memo)
+                } else {
+                    quoted::input(states, path, memo)
+                }
+            }
             ScalarRenderPart::Identity {
                 path: _,
                 stringified: _,
@@ -1426,23 +1497,25 @@ fn rendered_parts(parts: &[ScalarRenderPart], mut states: States, memo: &Predica
     states
 }
 
-struct LexicalTransfers {
+struct LexicalTransfers<'a> {
     values: BTreeMap<(*const super::HeapVersion, *const ValueNode, LexicalState), States>,
     buffers: BTreeMap<(*const TextBuffer, LexicalState), States>,
     remaining: usize,
+    input_paths: &'a BTreeMap<super::ObjectId, ValuesPath>,
+    map_depth: usize,
 }
 
-impl Default for LexicalTransfers {
-    fn default() -> Self {
+impl<'a> LexicalTransfers<'a> {
+    fn new(input_paths: &'a BTreeMap<super::ObjectId, ValuesPath>) -> Self {
         Self {
             values: BTreeMap::new(),
             buffers: BTreeMap::new(),
             remaining: 4096,
+            input_paths,
+            map_depth: 0,
         }
     }
-}
 
-impl LexicalTransfers {
     fn value(&mut self, value: &FrozenValue, state: LexicalState, memo: &PredicateMemo) -> States {
         let FrozenValue {
             heap,
@@ -1460,7 +1533,7 @@ impl LexicalTransfers {
         let result = if state.is_absorbing() {
             initial
         } else if let Some(path) = value.identity() {
-            quoted::input(initial, path, memo)
+            quoted::formatted_input(initial, path, memo)
         } else if let Some(text) = value.exact_text() {
             quoted::literal(initial, &text, memo)
         } else {
@@ -1470,37 +1543,17 @@ impl LexicalTransfers {
                     origin: _,
                 }) => self.text(text, state, memo),
                 ValueNode::Select { decision, yes, no } => {
-                    let FrozenTest {
-                        id: _,
-                        when_true,
-                        when_false,
-                        coverage,
-                        runtime: _,
-                    } = decision.as_ref();
-                    let mut result = States::new();
-                    if *coverage == Coverage::Exact
-                        && !when_true.contains_approximation()
-                        && !when_false.contains_approximation()
-                    {
-                        for (branch, guard) in [(yes, when_true), (no, when_false)] {
-                            for (end, condition) in self.value(
-                                &FrozenValue {
-                                    heap: Rc::clone(&value.heap),
-                                    value: branch.clone(),
-                                },
-                                state,
-                                memo,
-                            ) {
-                                quoted::merge(
-                                    &mut result,
-                                    end,
-                                    Predicate::all(vec![guard.clone(), condition]),
-                                    memo,
-                                );
-                            }
-                        }
-                    }
-                    result
+                    let branches = [yes, no].map(|branch| {
+                        self.value(
+                            &FrozenValue {
+                                heap: Rc::clone(&value.heap),
+                                value: branch.clone(),
+                            },
+                            state,
+                            memo,
+                        )
+                    });
+                    Self::choice(decision, branches, memo)
                 }
                 ValueNode::Leaf(Leaf {
                     datum:
@@ -1512,11 +1565,26 @@ impl LexicalTransfers {
                 }) => rendered_parts(parts, initial, memo),
                 ValueNode::Leaf(Leaf {
                     datum:
+                        Datum::Map {
+                            view: _,
+                            target: Some(target),
+                        },
+                    origin: _,
+                }) => self.map(value, target, state, memo),
+                ValueNode::Leaf(Leaf {
+                    datum:
+                        Datum::Map {
+                            view: _,
+                            target: None,
+                        },
+                    origin: _,
+                }) => quoted::literal(initial, "map[]", memo),
+                ValueNode::Leaf(Leaf {
+                    datum:
                         Datum::Scalar {
                             go_type: _,
                             content: _,
                         }
-                        | Datum::Map { view: _, target: _ }
                         | Datum::Sequence(_)
                         | Datum::Strings(_)
                         | Datum::Slot {
@@ -1530,6 +1598,119 @@ impl LexicalTransfers {
         };
         self.values.insert(key, result.clone());
         result
+    }
+
+    fn map(
+        &mut self,
+        value: &FrozenValue,
+        target: &super::ObjectId,
+        state: LexicalState,
+        memo: &PredicateMemo,
+    ) -> States {
+        if self.map_depth == 32 {
+            return States::new();
+        }
+        let Some(super::ObjectVersion {
+            revision: _,
+            multiplicity,
+            data,
+        }) = value.heap.object(target)
+        else {
+            return States::new();
+        };
+        match multiplicity {
+            super::Multiplicity::Singleton => {}
+            super::Multiplicity::Summary => return States::new(),
+        }
+        let (fields, remainder) = match data {
+            super::ObjectData::Map { fields, remainder } => (fields, remainder),
+            super::ObjectData::Strings(_)
+            | super::ObjectData::Opaque { reachable: _ }
+            | super::ObjectData::Widened { inputs: _ } => return States::new(),
+        };
+        let Some(guard) = self.map_guard(target, fields, *remainder) else {
+            return States::new();
+        };
+        self.map_depth += 1;
+        let mut states = quoted::literal(BTreeMap::from([(state, guard)]), "map[", memo);
+        let mut emitted = false;
+        for (key, field) in fields {
+            let child = match field {
+                super::Field::Present(child) => child,
+                super::Field::Absent => continue,
+                super::Field::Select {
+                    decision: _,
+                    yes: _,
+                    no: _,
+                }
+                | super::Field::Unknown => {
+                    states.clear();
+                    break;
+                }
+            };
+            states = quoted::literal(
+                states,
+                &format!("{}{key}:", if emitted { " " } else { "" }),
+                memo,
+            );
+            let child = FrozenValue {
+                heap: Rc::clone(&value.heap),
+                value: child.clone(),
+            };
+            let mut next = States::new();
+            for (state, prefix) in states {
+                for (end, condition) in self.value(&child, state, memo) {
+                    quoted::merge(
+                        &mut next,
+                        end,
+                        Predicate::all(vec![prefix.clone(), condition]),
+                        memo,
+                    );
+                }
+            }
+            states = next;
+            emitted = true;
+        }
+        let result = quoted::literal(states, "]", memo);
+        self.map_depth -= 1;
+        result
+    }
+
+    fn map_guard(
+        &self,
+        target: &super::ObjectId,
+        fields: &BTreeMap<String, super::Field>,
+        remainder: super::Remainder,
+    ) -> Option<Predicate> {
+        match remainder {
+            super::Remainder::Closed => Some(Predicate::True),
+            super::Remainder::Open => None,
+            super::Remainder::Input => {
+                let path = self.input_paths.get(target)?;
+                let keys = fields
+                    .keys()
+                    .map(|key| helm_schema_core::escape_regex_literal(key))
+                    .collect::<Vec<_>>()
+                    .join("|");
+                // Only overwritten or removed input members may remain in this projection.
+                Some(Predicate::all(vec![
+                    Predicate::from(Guard::TypeIs {
+                        path: path.clone(),
+                        schema_type: "object".to_owned(),
+                    }),
+                    Predicate::from(Guard::CollectionPattern {
+                        path: path.clone(),
+                        domain: CollectionDomain::ObjectKeys,
+                        quantifier: CollectionQuantifier::All,
+                        pattern: if fields.is_empty() {
+                            r"\b\B".to_owned()
+                        } else {
+                            format!("^(?:{keys})$")
+                        },
+                    }),
+                ]))
+            }
+        }
     }
 
     fn text(
@@ -1559,15 +1740,20 @@ impl LexicalTransfers {
                 }
             },
             super::text::TextTerm::Quote { value } => {
-                let nil = super::kinds::nilness(&value.value)
-                    .map(|nil| {
-                        if nil {
-                            Predicate::True
-                        } else {
-                            Predicate::False
-                        }
-                    })
-                    .or_else(|| value.identity().map(super::kinds::input_nil_predicate));
+                use super::kinds::GoType;
+                // Sprig skips nil interfaces; typed nil maps and slices still print.
+                let nil = match value.go_type() {
+                    GoType::Nil => Some(Predicate::True),
+                    GoType::Unknown => value.identity().map(super::kinds::input_nil_predicate),
+                    GoType::Bool
+                    | GoType::String
+                    | GoType::Int
+                    | GoType::Int64
+                    | GoType::Uint64
+                    | GoType::Float64
+                    | GoType::Map
+                    | GoType::Slice => Some(Predicate::False),
+                };
                 let mut result = States::new();
                 if let Some(nil) = nil {
                     quoted::merge(&mut result, state, nil.clone(), memo);
@@ -1601,6 +1787,48 @@ impl LexicalTransfers {
                 pretty: _,
             } => States::new(),
         }
+    }
+
+    fn choice(decision: &FrozenTest, branches: [States; 2], memo: &PredicateMemo) -> States {
+        let FrozenTest {
+            id: _,
+            when_true,
+            when_false,
+            coverage,
+            runtime: _,
+        } = decision;
+        let [yes, no] = branches;
+        let mut result = States::new();
+        match coverage {
+            Coverage::Exact
+                if !when_true.contains_approximation() && !when_false.contains_approximation() =>
+            {
+                for (branch, guard) in [(yes, when_true), (no, when_false)] {
+                    for (end, condition) in branch {
+                        quoted::merge(
+                            &mut result,
+                            end,
+                            Predicate::all(vec![guard.clone(), condition]),
+                            memo,
+                        );
+                    }
+                }
+            }
+            Coverage::Exact | Coverage::Partial => {
+                // A shared transition is proved independently of the unknown branch outcome.
+                for (end, condition) in yes {
+                    if let Some(other) = no.get(&end) {
+                        quoted::merge(
+                            &mut result,
+                            end,
+                            Predicate::all(vec![condition, other.clone()]),
+                            memo,
+                        );
+                    }
+                }
+            }
+        }
+        result
     }
 
     fn token(
@@ -1761,30 +1989,8 @@ impl LexicalTransfers {
             }
             TextPart::Unknown(_) => States::new(),
             TextPart::Select { decision, yes, no } => {
-                let FrozenTest {
-                    id: _,
-                    when_true,
-                    when_false,
-                    coverage,
-                    runtime: _,
-                } = decision.as_ref();
-                let mut result = States::new();
-                if *coverage == Coverage::Exact
-                    && !when_true.contains_approximation()
-                    && !when_false.contains_approximation()
-                {
-                    for (branch, guard) in [(yes, when_true), (no, when_false)] {
-                        for (end, condition) in self.buffer(branch, state, memo) {
-                            quoted::merge(
-                                &mut result,
-                                end,
-                                Predicate::all(vec![guard.clone(), condition]),
-                                memo,
-                            );
-                        }
-                    }
-                }
-                result
+                let branches = [yes, no].map(|branch| self.buffer(branch, state, memo));
+                Self::choice(decision, branches, memo)
             }
         }
     }
@@ -1795,6 +2001,7 @@ struct QuotedPrefix {
     boundaries: Vec<PrefixBoundary>,
 }
 
+#[tracing::instrument(skip_all)]
 fn quoted_tokens(
     owned: &YamlOwnership,
     terms: &[NodeRef],

@@ -5,7 +5,8 @@ use test_util::prelude::sim_assert_eq;
 
 use super::TextTerm;
 use crate::analysis_db::IrAnalysisDb;
-use crate::value::{Datum, FrozenValue, Leaf, ValueNode, execute_document};
+use crate::value::tests::execute_document;
+use crate::value::{Datum, FrozenValue, Leaf, ValueNode};
 
 #[test]
 fn frozen_indentation_rejects_expansion_before_allocating_output() {

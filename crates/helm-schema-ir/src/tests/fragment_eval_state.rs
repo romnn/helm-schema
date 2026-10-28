@@ -21,7 +21,7 @@ fn nested_template_preserves_static_root_fields() -> eyre::Result<()> {
             ..SymbolicPolicy::default()
         },
     );
-    let execution = crate::value::execute_document(source, Some("nested.tpl"), &db);
+    let execution = crate::value::tests::execute_document(source, Some("nested.tpl"), &db);
     let site = execution
         .sites()
         .filter(|site| site.rendered())
@@ -36,7 +36,7 @@ fn holes_and_assignments_retain_type_only_scalar_transport() {
     let source = "{{ $count := len (randAlphaNum (int .Values.n)) }}{{ len (randAlphaNum (int .Values.n)) }}{{ $count }}";
     let defines = DefineIndex::new();
     let db = IrAnalysisDb::new(&defines);
-    let execution = crate::value::execute_document(source, Some("typed.tpl"), &db);
+    let execution = crate::value::tests::execute_document(source, Some("typed.tpl"), &db);
     let sites = execution
         .sites()
         .filter(|site| site.rendered())
@@ -53,7 +53,7 @@ fn semver_selector_holes_keep_the_unsigned_go_type() -> eyre::Result<()> {
     let source = r#"{{ (semver "1.2.3").Major }}"#;
     let defines = DefineIndex::new();
     let db = IrAnalysisDb::new(&defines);
-    let execution = crate::value::execute_document(source, Some("semver.tpl"), &db);
+    let execution = crate::value::tests::execute_document(source, Some("semver.tpl"), &db);
     let site = execution
         .sites()
         .filter(|site| site.rendered())

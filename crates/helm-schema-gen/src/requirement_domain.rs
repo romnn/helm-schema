@@ -90,7 +90,6 @@ fn requirement_admits_kind(
         | FailValueRequirement::FieldHelmFalsy { .. }
         | FailValueRequirement::FieldNotEquals { .. }
         | FailValueRequirement::NotEquals(_)
-        | FailValueRequirement::QuotedSerializationSafe { .. }
         | FailValueRequirement::PlainScalarSafe { .. } => true,
         FailValueRequirement::HelmTruthy => kind != JsonValueKind::Null,
         FailValueRequirement::PrintfStringOperand => {
@@ -176,7 +175,6 @@ fn requirement_integer_range_constraint(
         )
         | FailValueRequirement::FieldHelmFalsy { .. }
         | FailValueRequirement::FieldNotEquals { .. }
-        | FailValueRequirement::QuotedSerializationSafe { .. }
         | FailValueRequirement::PlainScalarSafe { .. } => Some(IntegerRangeConstraint::Any),
         FailValueRequirement::NotSchemaType(rejected) => Some(
             if json_value_kinds_for_schema_type(rejected).contains(&JsonValueKind::Integer) {

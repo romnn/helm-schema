@@ -4,7 +4,7 @@ use std::fmt::Write as _;
 use test_util::prelude::sim_assert_eq;
 
 use crate::analysis_db::IrAnalysisDb;
-use crate::value::execute_document;
+use crate::value::tests::execute_document;
 
 #[test]
 fn frozen_projection_unions_preserve_bounds_on_hits_and_after_eviction() {

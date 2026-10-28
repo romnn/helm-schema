@@ -109,6 +109,16 @@ fn kind_selector_path(
             | ConditionalGuard::Absent { .. }
             | ConditionalGuard::TypeIs { .. }
             | ConditionalGuard::MatchesPattern { .. }
+            | ConditionalGuard::MatchesValue {
+                path: _,
+                pattern: _,
+            }
+            | ConditionalGuard::CollectionPattern {
+                path: _,
+                domain: _,
+                quantifier: _,
+                pattern: _,
+            }
             | ConditionalGuard::IntGt { .. }
             | ConditionalGuard::IntLt { .. }
             | ConditionalGuard::HasKey { .. }

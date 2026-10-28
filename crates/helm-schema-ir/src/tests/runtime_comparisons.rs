@@ -7,7 +7,8 @@ use helm_schema_core::{Guard, GuardValue, Predicate, ValuesPath};
 use test_util::prelude::sim_assert_eq;
 
 use crate::analysis_db::IrAnalysisDb;
-use crate::value::{AbortReason, DocumentExecution, Flow, execute_document};
+use crate::value::tests::execute_document;
+use crate::value::{AbortReason, DocumentExecution, Flow};
 
 fn execution(source: &str) -> DocumentExecution {
     execute_document(

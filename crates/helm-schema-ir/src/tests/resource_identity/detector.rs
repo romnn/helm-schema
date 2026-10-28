@@ -11,7 +11,7 @@ fn collect_spans(src: &str, analysis_db: &IrAnalysisDb) -> Vec<helm_schema_ast::
         return Vec::new();
     };
     let document = helm_schema_syntax::TemplatedDocument::parse_with_root(src, tree.root_node());
-    let execution = crate::value::execute_document(src, None, analysis_db);
+    let execution = crate::value::tests::execute_document(src, None, analysis_db);
     crate::resource_identity::test_support::collect_resource_spans(
         &document,
         tree.root_node(),
@@ -69,7 +69,7 @@ fn frozen_heap_kind_choices_keep_their_executed_guards() {
         {{- end }}
     "#};
     let analysis_db = IrAnalysisDb::new(&DefineIndex::new());
-    let execution = crate::value::execute_document(source, None, &analysis_db);
+    let execution = crate::value::tests::execute_document(source, None, &analysis_db);
     let memo = helm_schema_core::PredicateMemo::new();
     let mut resources = execution
         .placed_documents()

@@ -784,6 +784,16 @@ fn positive_self_type(guard: &ConditionalGuard, target: &ValuesPath) -> bool {
             path: _,
             pattern: _,
         }
+        | ConditionalGuard::CollectionPattern {
+            path: _,
+            domain: _,
+            quantifier: _,
+            pattern: _,
+        }
+        | ConditionalGuard::MatchesValue {
+            path: _,
+            pattern: _,
+        }
         | ConditionalGuard::IntGt { path: _, bound: _ }
         | ConditionalGuard::IntLt { path: _, bound: _ }
         | ConditionalGuard::HasKey { path: _, key: _ }
@@ -822,6 +832,16 @@ fn type_guard_implies_schema(
         | ConditionalGuard::NotEq { path: _, value: _ }
         | ConditionalGuard::Absent { path: _ }
         | ConditionalGuard::MatchesPattern {
+            path: _,
+            pattern: _,
+        }
+        | ConditionalGuard::CollectionPattern {
+            path: _,
+            domain: _,
+            quantifier: _,
+            pattern: _,
+        }
+        | ConditionalGuard::MatchesValue {
             path: _,
             pattern: _,
         }

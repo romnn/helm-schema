@@ -501,223 +501,13 @@ pub(super) fn terminal_clause_guard(predicate: &Predicate) -> Option<Conditional
     predicate_to_guard(predicate, None)
 }
 
-#[expect(
-    clippy::too_many_lines,
-    reason = "keeping this semantic operation together makes its state transitions easier to audit"
-)]
 pub(super) fn guard_to_conditional_guard(
     guard: &Guard,
     target_value_path: Option<&str>,
 ) -> Option<ConditionalGuard> {
-    let path = |path: &helm_schema_core::ValuesPath| match target_value_path {
-        Some(target_value_path) => lowerable_guard_path(path, target_value_path),
-        None => Some(path.clone()),
-    };
-
-    match guard {
-        Guard::Truthy { path: value_path } => Some(ConditionalGuard::Truthy {
-            path: path(value_path)?,
-        }),
-        Guard::With { path: value_path } if target_value_path.is_none() => {
-            Some(ConditionalGuard::With {
-                path: path(value_path)?,
-            })
-        }
-        Guard::Eq {
-            path: value_path,
-            value,
-        } => Some(ConditionalGuard::Eq {
-            path: path(value_path)?,
-            value: value.clone(),
-        }),
-        Guard::NotEq {
-            path: value_path,
-            value,
-        } => Some(ConditionalGuard::NotEq {
-            path: path(value_path)?,
-            value: value.clone(),
-        }),
-        Guard::Absent { path: value_path } => Some(ConditionalGuard::Absent {
-            path: path(value_path)?,
-        }),
-        Guard::HasKey {
-            path: value_path,
-            key,
-        } => Some(ConditionalGuard::HasKey {
-            path: path(value_path)?,
-            key: key.clone(),
-        }),
-        Guard::NotHasKey {
-            path: value_path,
-            key,
-        } => Some(ConditionalGuard::Not(Box::new(ConditionalGuard::HasKey {
-            path: path(value_path)?,
-            key: key.clone(),
-        }))),
-        Guard::ContainsMemberEquals {
-            path: value_path,
-            member,
-            value,
-        } => Some(ConditionalGuard::ContainsMemberEquals {
-            path: path(value_path)?,
-            member: member.clone(),
-            value: value.clone(),
-        }),
-        Guard::ContainsTruthyMember {
-            path: value_path,
-            member,
-        } => Some(ConditionalGuard::ContainsTruthyMember {
-            path: path(value_path)?,
-            member: member.clone(),
-        }),
-        Guard::ContainsEquals {
-            path: value_path,
-            value,
-        } => Some(ConditionalGuard::ContainsEquals {
-            path: path(value_path)?,
-            value: value.clone(),
-        }),
-        Guard::MatchesPattern {
-            path: value_path,
-            pattern,
-            templated: false,
-        } => Some(ConditionalGuard::MatchesPattern {
-            path: path(value_path)?,
-            pattern: pattern.clone(),
-        }),
-        Guard::NotMatchesPattern {
-            path: value_path,
-            pattern,
-        } => {
-            let value_path = path(value_path)?;
-            Some(ConditionalGuard::AllOf(vec![
-                ConditionalGuard::TypeIs {
-                    path: value_path.clone(),
-                    schema_type: "string".to_string(),
-                },
-                ConditionalGuard::Not(Box::new(ConditionalGuard::MatchesPattern {
-                    path: value_path,
-                    pattern: pattern.clone(),
-                })),
-            ]))
-        }
-        Guard::MatchesPattern { .. }
-        | Guard::RangeKeyPrefix { .. }
-        | Guard::RangeKeyMatches { .. }
-        | Guard::Range { .. }
-        | Guard::With { .. }
-        | Guard::Default { .. } => None,
-        Guard::AtMostOneMember { path: value_path } => Some(ConditionalGuard::AtMostOneMember {
-            path: path(value_path)?,
-        }),
-        Guard::MinMembers {
-            path: value_path,
-            bound,
-        } => {
-            // A member-count gate on the TARGET itself is load-bearing:
-            // the render fires only for maps that large, so the arm must
-            // keep the bound (external-secrets' `gt (keys . | len) 1`).
-            let path = if target_value_path
-                .is_some_and(|target| value_path == &helm_schema_core::ValuesPath::parse(target))
-            {
-                (!values_path_contains_wildcard(value_path)).then(|| value_path.clone())?
-            } else {
-                path(value_path)?
-            };
-            Some(ConditionalGuard::MinMembers {
-                path,
-                bound: *bound,
-            })
-        }
-        Guard::TypeIs {
-            path: value_path,
-            schema_type,
-        } => {
-            // A type test on the TARGET itself is load-bearing dispatch
-            // structure (the `else` of `if typeIs "string" x` scopes an
-            // object overlay to non-strings); only truthiness self-guards
-            // are the row's own firing condition and stay stripped.
-            let path = if target_value_path
-                .is_some_and(|target| value_path == &helm_schema_core::ValuesPath::parse(target))
-            {
-                (!values_path_contains_wildcard(value_path)).then(|| value_path.clone())?
-            } else {
-                path(value_path)?
-            };
-            Some(ConditionalGuard::TypeIs {
-                path,
-                schema_type: schema_type.clone(),
-            })
-        }
-        Guard::NotTypeIs {
-            path: value_path,
-            schema_type,
-        } => {
-            // The dispatch complement is load-bearing on the target for the
-            // same reason as the positive test above.
-            let path = if target_value_path
-                .is_some_and(|target| value_path == &helm_schema_core::ValuesPath::parse(target))
-            {
-                (!values_path_contains_wildcard(value_path)).then(|| value_path.clone())?
-            } else {
-                path(value_path)?
-            };
-            Some(ConditionalGuard::Not(Box::new(ConditionalGuard::TypeIs {
-                path,
-                schema_type: schema_type.clone(),
-            })))
-        }
-        Guard::IntGt {
-            path: value_path,
-            bound,
-        } => Some(ConditionalGuard::IntGt {
-            path: path(value_path)?,
-            bound: *bound,
-        }),
-        Guard::IntLt {
-            path: value_path,
-            bound,
-        } => Some(ConditionalGuard::IntLt {
-            path: path(value_path)?,
-            bound: *bound,
-        }),
-        // The POSITIVE key-equality selects exactly one member, so at the
-        // document level it holds iff the collection HAS that key (// prometheus's `eq $key "prometheus.yml"` serverFiles arm). The
-        // negated form runs for every OTHER member and must not lower —
-        // `predicate_to_guard`'s Not arm rejects it.
-        Guard::RangeKeyEquals {
-            path: value_path,
-            key,
-        } => {
-            if key.is_empty() {
-                return None;
-            }
-            Some(ConditionalGuard::HasKey {
-                path: path(value_path)?,
-                key: key.clone(),
-            })
-        }
-        // The De Morgan flatten emits falsiness and disjunction guards
-        // (`¬(a ∨ b)` → two `Not`s; `¬(a ∧ b)` → an `AnyOf`); each has a
-        // direct conditional-guard encoding, so a mode-dispatch condition
-        // (vault's `ne .mode "external"`) keys arms instead of dropping
-        // the whole access or row.
-        Guard::Not { path: value_path } => {
-            Some(ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
-                path: path(value_path)?,
-            })))
-        }
-        Guard::Or { paths } => Some(ConditionalGuard::AnyOf(
-            paths
-                .iter()
-                .map(|value_path| {
-                    Some(ConditionalGuard::Truthy {
-                        path: path(value_path)?,
-                    })
-                })
-                .collect::<Option<Vec<_>>>()?,
-        )),
-        Guard::AnyOf { alternatives } => Some(ConditionalGuard::AnyOf(
+    // Recurse before validating paths so each leaf keeps its own attribution policy.
+    if let Guard::AnyOf { alternatives } = guard {
+        return Some(ConditionalGuard::AnyOf(
             alternatives
                 .iter()
                 .map(|alternative| {
@@ -733,8 +523,58 @@ pub(super) fn guard_to_conditional_guard(
                     }
                 })
                 .collect::<Option<Vec<_>>>()?,
-        )),
+        ));
     }
+    if matches!(guard, Guard::With { .. }) && target_value_path.is_some() {
+        return None;
+    }
+    if let Some(target_value_path) = target_value_path {
+        let target = ValuesPath::parse(target_value_path);
+        for path in guard.value_paths() {
+            // Self type dispatch, including its complement, partitions the target's
+            // domain; self member-count gates retain the render's minimum map size
+            // (external-secrets' `gt (keys . | len) 1`).
+            // Truthiness self-guards instead describe the row's own firing condition.
+            if path == target
+                && matches!(
+                    guard,
+                    Guard::TypeIs { .. } | Guard::NotTypeIs { .. } | Guard::MinMembers { .. }
+                )
+            {
+                if values_path_contains_wildcard(&path) {
+                    return None;
+                }
+            } else {
+                lowerable_guard_path(&path, target_value_path)?;
+            }
+        }
+    }
+    // Positive key equality selects exactly one member, so at document level it
+    // means the collection has that key (prometheus's serverFiles dispatch).
+    // Its negation runs for every other member and is rejected by predicate_to_guard.
+    if let Guard::RangeKeyEquals { path, key } = guard {
+        return (!key.is_empty()).then(|| ConditionalGuard::HasKey {
+            path: path.clone(),
+            key: key.clone(),
+        });
+    }
+    if let Guard::NotMatchesPattern { path, pattern } = guard {
+        // Pattern negation still requires a string; non-strings never match the
+        // positive regex consumer's input domain.
+        return Some(ConditionalGuard::AllOf(vec![
+            ConditionalGuard::TypeIs {
+                path: path.clone(),
+                schema_type: "string".to_string(),
+            },
+            ConditionalGuard::Not(Box::new(ConditionalGuard::MatchesPattern {
+                path: path.clone(),
+                pattern: pattern.clone(),
+            })),
+        ]));
+    }
+    // Falsiness and disjunction from De Morgan flattening retain their direct
+    // encodings, including mode dispatch such as vault's `ne .mode "external"`.
+    ConditionalGuard::try_from(guard).ok()
 }
 
 /// A nested range over each member of `parent` (`p.*` ranged): members

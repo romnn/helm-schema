@@ -20,7 +20,7 @@ fn execute(source: &str) -> crate::value::DocumentExecution {
     "#},
     );
     let db = IrAnalysisDb::new(&defines);
-    crate::value::execute_document(source, None, &db)
+    crate::value::tests::execute_document(source, None, &db)
 }
 
 fn records_unresolved_width(value: &crate::value::FrozenValue) -> bool {

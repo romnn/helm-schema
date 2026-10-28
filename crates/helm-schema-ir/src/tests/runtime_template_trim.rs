@@ -1,5 +1,5 @@
 use crate::analysis_db::IrAnalysisDb;
-use crate::value::execute_document;
+use crate::value::tests::execute_document;
 use helm_schema_ast::DefineIndex;
 use helm_schema_core::Predicate;
 use indoc::indoc;

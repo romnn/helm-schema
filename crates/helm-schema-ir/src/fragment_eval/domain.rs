@@ -113,7 +113,16 @@ pub(crate) fn and_conditions_with_memo(
                     }
                 }
             }
-            _ => {
+            helm_schema_core::PredicateKind::False
+            | helm_schema_core::PredicateKind::Guard(_)
+            | helm_schema_core::PredicateKind::Not(_)
+            | helm_schema_core::PredicateKind::Or(_)
+            | helm_schema_core::PredicateKind::Approximate {
+                marker: _,
+                paths: _,
+                role: _,
+                sound_subset: _,
+            } => {
                 if !parts.contains(&condition) {
                     parts.push(condition);
                 }
@@ -125,10 +134,6 @@ pub(crate) fn and_conditions_with_memo(
 
 /// One node of the abstract rendered document.
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[expect(
-    clippy::large_enum_variant,
-    reason = "boxing rendered fragments would add allocation and pointer chasing in the interpreter hot path"
-)]
 pub(crate) enum AbstractFragment {
     /// A YAML mapping.
     Mapping(Mapping),
@@ -139,9 +144,6 @@ pub(crate) enum AbstractFragment {
     Scalar(AbstractString),
     /// A `.Values` path rendered whole at this position.
     Splice(Splice),
-    /// A position whose rendered content is unknown; `taint` conservatively
-    /// names the `.Values` paths that flowed into it.
-    Opaque(Opaque),
 }
 
 /// A YAML mapping: entries in document order, one entry per key (repeated
@@ -197,23 +199,8 @@ pub(crate) struct AbstractString {
     pub suppressed: bool,
 }
 
-impl AbstractString {
-    /// A scalar consisting of one literal text run.
-    #[must_use]
-    pub fn literal(text: impl Into<String>) -> Self {
-        Self {
-            parts: vec![StringPart::Text([text.into()].into_iter().collect())],
-            suppressed: false,
-        }
-    }
-}
-
 /// One part of an [`AbstractString`].
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[expect(
-    clippy::large_enum_variant,
-    reason = "string parts are traversed in hot projection loops and benefit from inline storage"
-)]
 pub(crate) enum StringPart {
     /// Literal text alternatives. A singleton set is plain source text;
     /// larger sets arise when a hole statically evaluates to a finite string
@@ -253,82 +240,28 @@ pub(crate) struct Splice {
     pub meta: SpliceMeta,
 }
 
-/// Splice metadata: defaultedness, encoding, and source provenance.
+/// Splice identity, lexical transforms, and executed placement facts.
 ///
-/// Deliberately *no* predicates here — helper-internal branch conditions
-/// lower into [`Guarded`] arms so the guard structure stays in the tree.
+/// Helper-internal branch conditions lower into [`Guarded`] arms so the guard
+/// structure stays in the tree.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) struct SpliceMeta {
     /// The splice carries the raw values-path value rather than merely an
-    /// influence on derived output. Positive execution subsets may project a
+    /// influence on derived output.
+    /// Positive execution subsets may project a
     /// provider contract through this row without constraining an operand of
     /// a selector or formatter.
     pub input_identity: bool,
-    /// The render site substitutes a fallback when the path is empty/nil
-    /// (`default`, chart-level `set … default` mutations).
-    pub defaulted: bool,
-    /// The rendered text is an encoded transform of the value (`b64enc`),
-    /// so the sink schema does not constrain the value's shape.
-    pub encoded: bool,
-    /// The rendered text is a total stringification of the value (`quote`,
-    /// `toString`, `join`): any input type renders, so the sink neither
-    /// constrains nor reveals the input shape.
-    pub shape_erased: bool,
     /// The rendered text is specifically Go's `%v` spelling of this path,
     /// so scalar equality and pattern tests can project through its exact
     /// stringification preimage.
     pub stringified: bool,
     /// Executed-output layout certificate for this whole scalar occurrence.
     pub plain_scalar_placement: helm_schema_core::PlainScalarPlacement,
-    /// The stringification is Sprig `quote`/`squote`, which SKIP nil
-    /// operands: a missing or null source renders an explicit YAML null
-    /// into the sink, so provider-required slots still reject absence.
-    pub nil_omitted: bool,
-    /// The rendered fragment is the result of `toYaml`: every input kind can
-    /// be serialized, but its placement can still require sequence shape.
-    pub yaml_serialized: bool,
-    /// The serialized YAML was evaluated by `tpl`: its structure remains,
-    /// but template-bearing string leaves no longer carry raw sink
-    /// constraints.
-    pub templated_yaml: bool,
-    /// The splice supplies the token-opening `%s` of a complete literal
-    /// `printf` result.
-    pub plain_slot_string_format: bool,
-    /// The splice renders JSON text whose decoded value preserves this input identity.
-    pub json_serialized: bool,
-    /// The splice's runtime identity was recovered through JSON decoding.
-    pub json_decoded: bool,
     /// Lexical divergences between the raw string and the rendered value
     /// (`replace`/split-prefix chains, trim affixes); lexical captures
     /// project their language through them.
     pub lexical_escapes: BTreeSet<crate::helper_meta::LexicalEscape>,
-    /// The rendered text is one separator-delimited segment of the source
-    /// string (`regexSplit ":" . -1 | last`): sinks constrain that segment,
-    /// and raw-identity consumers (quoted-token claims, parser preimages)
-    /// must not read the splice as the raw value.
-    pub split_segment: Option<helm_schema_core::SplitSegmentUse>,
-    /// Set when the splice renders one layer of an ordered `merge`.
-    pub merge_layers: Option<helm_schema_core::MergeLayersUse>,
-    /// The splice renders the collection's RANGE KEY, not its value: sinks
-    /// constrain the key domain (a string-only slot excludes the integer
-    /// keys of a non-empty list lane), and raw-identity consumers must not
-    /// read it as the collection's value.
-    pub range_key: bool,
-    /// Literal member keys a guard-scoped `omit` may remove from the
-    /// rendered map, with the sound RETAIN guards under which each key
-    /// certainly survives.
-    pub omitted_members: std::collections::BTreeMap<String, Vec<helm_schema_core::Guard>>,
-    /// The slot renders fresh text DERIVED from the value
-    /// (`include … | sha256sum`): the sink observes neither the value nor
-    /// its serialization, so the row abstains from slot typing and from
-    /// path-wide serialization claims while keeping branch tolerance.
-    pub digest: bool,
-    /// The spliced value flowed through a Sprig `merge` call as a DIRECT
-    /// operand: the operand's strict map contract rides its own fail
-    /// implication, so the row never rejects a Helm-falsy input at the base.
-    pub merge_operand: bool,
-    /// Helper-body source sites this splice was derived through.
-    pub provenance: Vec<ContractProvenance>,
     /// The render site the splice materializes at.
     pub site: Option<Rc<SiteFacts>>,
 }
@@ -337,69 +270,12 @@ impl SpliceMeta {
     pub(crate) fn is_input_identity(&self) -> bool {
         let Self {
             input_identity,
-            defaulted: _,
-            encoded,
-            shape_erased,
             stringified,
             plain_scalar_placement: _,
-            nil_omitted,
-            yaml_serialized,
-            templated_yaml,
-            plain_slot_string_format,
-            json_serialized,
-            json_decoded: _,
             lexical_escapes,
-            split_segment,
-            merge_layers,
-            range_key,
-            omitted_members,
-            digest,
-            merge_operand,
-            provenance: _,
             site: _,
         } = self;
-        *input_identity
-            && !encoded
-            && !shape_erased
-            && !stringified
-            && !nil_omitted
-            && !yaml_serialized
-            && !templated_yaml
-            && !plain_slot_string_format
-            && !json_serialized
-            && lexical_escapes.is_empty()
-            && split_segment.is_none()
-            && merge_layers.is_none()
-            && !range_key
-            && omitted_members.is_empty()
-            && !digest
-            && !merge_operand
-    }
-}
-
-/// An opaque fragment position: content unknown, influence preserved.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct Opaque {
-    /// The `.Values` paths that flowed into the unknown content.
-    pub taint: BTreeSet<ValuesPath>,
-    /// The hole kind the opaque content renders as (scalar holes taint as
-    /// scalars, fragment holes as fragments).
-    pub kind: ValueKind,
-    /// The render site the opaque content was observed at.
-    pub site: Option<Rc<SiteFacts>>,
-    /// Helper-body source sites the content was derived through (spliced
-    /// summary content keeps its body sites here).
-    pub provenance: Vec<ContractProvenance>,
-}
-
-impl Default for Opaque {
-    fn default() -> Self {
-        Self {
-            taint: BTreeSet::new(),
-            kind: ValueKind::Scalar,
-            site: None,
-            provenance: Vec::new(),
-        }
+        *input_identity && !stringified && lexical_escapes.is_empty()
     }
 }
 
@@ -434,11 +310,6 @@ fn stamp_node_sites(node: &mut AbstractFragment, site: Option<&Rc<SiteFacts>>) {
         AbstractFragment::Splice(splice) => {
             if splice.meta.site.is_none() {
                 splice.meta.site = site.cloned();
-            }
-        }
-        AbstractFragment::Opaque(opaque) => {
-            if opaque.site.is_none() {
-                opaque.site = site.cloned();
             }
         }
     }
@@ -495,8 +366,7 @@ pub(crate) fn stamp_plain_scalar_placement(
             }
             AbstractFragment::Mapping(_)
             | AbstractFragment::Sequence(_)
-            | AbstractFragment::Splice(_)
-            | AbstractFragment::Opaque(_) => {}
+            | AbstractFragment::Splice(_) => {}
         }
     }
 }

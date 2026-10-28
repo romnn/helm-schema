@@ -542,6 +542,16 @@ fn guard_rank(guard: &Guard) -> u8 {
         Guard::ContainsEquals { .. } => 23,
         Guard::ContainsMemberEquals { .. } => 24,
         Guard::ContainsTruthyMember { .. } => 25,
+        Guard::MatchesValue {
+            path: _,
+            pattern: _,
+        } => 27,
+        Guard::CollectionPattern {
+            path: _,
+            domain: _,
+            quantifier: _,
+            pattern: _,
+        } => 26,
     }
 }
 

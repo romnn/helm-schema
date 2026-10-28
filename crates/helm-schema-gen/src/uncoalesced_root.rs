@@ -401,6 +401,7 @@ impl<'a> UncoalescedRootGate<'a> {
         }
         tracing::Span::current().record("reachable_definitions", definitions.len());
         let document = serde_json::json!({
+            "$schema": "http://json-schema.org/draft-07/schema#",
             "$defs": definitions,
             "allOf": [constraint],
         });

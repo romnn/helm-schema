@@ -3,7 +3,7 @@ use std::fmt;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Number;
 
-use crate::ValuesPath;
+use crate::{ValuePattern, ValuesPath};
 
 /// Scalar literal used by values-decidable guard comparisons.
 ///
@@ -100,6 +100,26 @@ impl fmt::Display for GuardValue {
     }
 }
 
+/// Members tested by an exact collection predicate.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum CollectionDomain {
+    /// Property values of an object.
+    ObjectValues,
+    /// Property names of an object.
+    ObjectKeys,
+}
+
+/// Quantification over every member of one collection.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum CollectionQuantifier {
+    /// Every member matches; empty collections satisfy the predicate.
+    All,
+    /// At least one member matches; empty collections do not satisfy it.
+    Any,
+}
+
 /// A guard condition from an `if`, `with`, or `range` block.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
@@ -147,6 +167,25 @@ pub enum Guard {
         pattern: String,
         /// Whether matching occurs after rendering the value through `tpl`.
         templated: bool,
+    },
+    /// A present value belongs to a typed structural pattern.
+    MatchesValue {
+        /// Values path tested for membership.
+        path: ValuesPath,
+        /// Structural pattern required at the path.
+        pattern: ValuePattern,
+    },
+    /// An exact string-pattern quantifier over a present collection of the selected kind.
+    /// Non-string members do not match the pattern.
+    CollectionPattern {
+        /// Values path containing the object.
+        path: ValuesPath,
+        /// Which collection members the pattern tests.
+        domain: CollectionDomain,
+        /// Whether every member or at least one must match.
+        quantifier: CollectionQuantifier,
+        /// Regular expression tested against each string member.
+        pattern: String,
     },
     /// The path is a string that does not match a literal regular expression.
     ///
@@ -380,6 +419,16 @@ impl Guard {
             | Self::NotEq { .. }
             | Self::Absent { .. }
             | Self::MatchesPattern { .. }
+            | Self::CollectionPattern {
+                path: _,
+                domain: _,
+                quantifier: _,
+                pattern: _,
+            }
+            | Self::MatchesValue {
+                path: _,
+                pattern: _,
+            }
             | Self::NotMatchesPattern { .. }
             | Self::RangeKeyPrefix { .. }
             | Self::RangeKeyEquals { .. }
@@ -411,6 +460,13 @@ impl Guard {
             | Guard::NotEq { path, .. }
             | Guard::Absent { path }
             | Guard::MatchesPattern { path, .. }
+            | Guard::CollectionPattern {
+                path,
+                domain: _,
+                quantifier: _,
+                pattern: _,
+            }
+            | Guard::MatchesValue { path, pattern: _ }
             | Guard::NotMatchesPattern { path, .. }
             | Guard::RangeKeyPrefix { path, .. }
             | Guard::RangeKeyEquals { path, .. }
@@ -475,6 +531,21 @@ impl Guard {
                 path: map_values_path(&path, map),
                 pattern,
                 templated,
+            },
+            Guard::CollectionPattern {
+                path,
+                domain,
+                quantifier,
+                pattern,
+            } => Guard::CollectionPattern {
+                path: map_values_path(&path, map),
+                domain,
+                quantifier,
+                pattern,
+            },
+            Guard::MatchesValue { path, pattern } => Guard::MatchesValue {
+                path: map_values_path(&path, map),
+                pattern,
             },
             Guard::NotMatchesPattern { path, pattern } => Guard::NotMatchesPattern {
                 path: map_values_path(&path, map),

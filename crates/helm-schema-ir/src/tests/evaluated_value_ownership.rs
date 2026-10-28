@@ -15,7 +15,7 @@ fn default_retains_an_explicit_unknown_primary() -> eyre::Result<()> {
     let source = r#"{{ printf "%s" .Values.alpha | default "fallback" }}"#;
     let defines = DefineIndex::new();
     let db = IrAnalysisDb::new(&defines);
-    let execution = crate::value::execute_document(source, None, &db);
+    let execution = crate::value::tests::execute_document(source, None, &db);
     let site = execution
         .sites()
         .filter(|site| site.rendered())
@@ -39,7 +39,7 @@ fn default_type_truth_handles_null_and_truthy_nonstring_primaries() -> eyre::Res
         let defines = DefineIndex::new();
         let db = IrAnalysisDb::new(&defines);
         let source = format!("{{{{ {source} }}}}");
-        let execution = crate::value::execute_document(&source, None, &db);
+        let execution = crate::value::tests::execute_document(&source, None, &db);
         let (_, output) = execution.text().next().ok_or_eyre("missing type output")?;
         sim_assert_eq!(have: output.exact_text(), want: Some(expected.to_string()), "source={source}");
     }
@@ -53,7 +53,7 @@ fn default_type_truth_tracks_the_selected_dynamic_value() {
         r#"{{ if typeIs "string" (default "fallback" .Values.primary) }}selected{{ end }}"#;
     let defines = DefineIndex::new();
     let db = IrAnalysisDb::new(&defines);
-    let execution = crate::value::execute_document(source, None, &db);
+    let execution = crate::value::tests::execute_document(source, None, &db);
     let predicate = PredicateMemo::new().normalize(Predicate::Or(vec![
         Predicate::truthy_path("primary").negated(),
         Predicate::from(Guard::TypeIs {

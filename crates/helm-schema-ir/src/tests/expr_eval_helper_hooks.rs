@@ -23,7 +23,7 @@ fn execute(action: &str) -> crate::value::DocumentExecution {
     "#},
     );
     let db = IrAnalysisDb::new(&defines);
-    crate::value::execute_document(&format!("{{{{ {action} }}}}"), None, &db)
+    crate::value::tests::execute_document(&format!("{{{{ {action} }}}}"), None, &db)
 }
 
 #[test]
@@ -147,7 +147,7 @@ fn semver_selector_misses_evaluate_the_version_once() {
         defines.add_file_source("version.tpl", &helper);
         let db = IrAnalysisDb::new(&defines);
         let source = format!("{{{{ (semver (include \"version\" .)).{field} }}}}");
-        let execution = crate::value::execute_document(&source, None, &db);
+        let execution = crate::value::tests::execute_document(&source, None, &db);
         let invocations = execution
             .all_sites()
             .filter(|site| site.source_path() == Some("version.tpl") && !site.rendered())

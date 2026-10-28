@@ -719,7 +719,17 @@ impl Predicate {
                 | Guard::NotHasKey { .. }
                 | Guard::ContainsEquals { .. }
                 | Guard::ContainsMemberEquals { .. }
-                | Guard::ContainsTruthyMember { .. },
+                | Guard::ContainsTruthyMember { .. }
+                | Guard::MatchesValue {
+                    path: _,
+                    pattern: _,
+                }
+                | Guard::CollectionPattern {
+                    path: _,
+                    domain: _,
+                    quantifier: _,
+                    pattern: _,
+                },
             ) => vec![self.clone()],
             PredicateKind::And(predicates) => predicates
                 .iter()
@@ -755,39 +765,16 @@ impl Predicate {
                 }
                 _ => vec![self.clone()],
             },
-            PredicateKind::Guard(Guard::Eq { path, value }) => vec![
-                Self::from(Guard::With { path: path.clone() }),
-                Self::from(Guard::Eq {
-                    path: path.clone(),
-                    value: value.clone(),
-                }),
-            ],
-            PredicateKind::Guard(Guard::MatchesPattern {
-                path,
-                pattern,
-                templated,
-            }) => vec![
-                Self::from(Guard::With { path: path.clone() }),
-                Self::from(Guard::MatchesPattern {
-                    path: path.clone(),
-                    pattern: pattern.clone(),
-                    templated: *templated,
-                }),
-            ],
-            PredicateKind::Guard(Guard::NotMatchesPattern { path, pattern }) => vec![
-                Self::from(Guard::With { path: path.clone() }),
-                Self::from(Guard::NotMatchesPattern {
-                    path: path.clone(),
-                    pattern: pattern.clone(),
-                }),
-            ],
-            PredicateKind::Guard(Guard::NotEq { path, value }) => vec![
-                Self::from(Guard::With { path: path.clone() }),
-                Self::from(Guard::NotEq {
-                    path: path.clone(),
-                    value: value.clone(),
-                }),
-            ],
+            PredicateKind::Guard(
+                Guard::Eq { path, value: _ }
+                | Guard::NotEq { path, value: _ }
+                | Guard::MatchesPattern {
+                    path,
+                    pattern: _,
+                    templated: _,
+                }
+                | Guard::NotMatchesPattern { path, pattern: _ },
+            ) => vec![Self::from(Guard::With { path: path.clone() }), self.clone()],
         }
     }
 
@@ -852,6 +839,10 @@ impl Predicate {
                 Guard::Truthy { .. }
                 | Guard::Eq { .. }
                 | Guard::MatchesPattern { .. }
+                | Guard::MatchesValue {
+                    path: _,
+                    pattern: _,
+                }
                 | Guard::NotMatchesPattern { .. }
                 | Guard::RangeKeyPrefix { .. }
                 | Guard::RangeKeyEquals { .. }
@@ -872,7 +863,13 @@ impl Predicate {
                 | Guard::NotHasKey { .. }
                 | Guard::ContainsEquals { .. }
                 | Guard::ContainsMemberEquals { .. }
-                | Guard::ContainsTruthyMember { .. },
+                | Guard::ContainsTruthyMember { .. }
+                | Guard::CollectionPattern {
+                    path: _,
+                    domain: _,
+                    quantifier: _,
+                    pattern: _,
+                },
             ) => {}
         }
     }
@@ -998,6 +995,10 @@ fn negated_guard(guard: &Guard) -> Option<Guard> {
         }),
         Guard::Absent { .. }
         | Guard::MatchesPattern { .. }
+        | Guard::MatchesValue {
+            path: _,
+            pattern: _,
+        }
         | Guard::NotMatchesPattern { .. }
         | Guard::RangeKeyPrefix { .. }
         | Guard::RangeKeyEquals { .. }
@@ -1012,7 +1013,13 @@ fn negated_guard(guard: &Guard) -> Option<Guard> {
         | Guard::MinMembers { .. }
         | Guard::ContainsEquals { .. }
         | Guard::ContainsMemberEquals { .. }
-        | Guard::ContainsTruthyMember { .. } => None,
+        | Guard::ContainsTruthyMember { .. }
+        | Guard::CollectionPattern {
+            path: _,
+            domain: _,
+            quantifier: _,
+            pattern: _,
+        } => None,
     }
 }
 

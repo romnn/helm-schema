@@ -19,6 +19,7 @@ mod provider_schema_use;
 mod schema_provider;
 mod types;
 mod value_path;
+mod value_pattern;
 
 pub use capability::{ApiPresenceQuery, CapabilityGuard, HelperBranch, HelperBranchBody};
 pub use capability_liveness::{CapabilityOracle, live_literals};
@@ -27,12 +28,12 @@ pub use contract_signals::{
     ConditionalPathOverlay, ContractPathSchemaEvidence, ContractRequirednessEvidence,
     ContractRequirementImplication, ContractRequirementTarget, ContractSchemaSignals,
     ContractValuePathFacts, FailValueRequirement, GuardedValuesDefaultSource, MetadataFieldKind,
-    QuotedScalarStyle, RangeDomain, ValuesDefaultSource, ValuesProgramWrapper,
+    RangeDomain, ValuesDefaultSource, ValuesProgramWrapper,
 };
 pub use contract_use::{
     ContractUse, MergeLayer, MergeLayerTransform, MergeLayersUse, SplitSegmentUse,
 };
-pub use guard::{Guard, GuardValue};
+pub use guard::{CollectionDomain, CollectionQuantifier, Guard, GuardValue};
 pub use guard_dnf::GuardDnf;
 pub use output_path::{
     DYNAMIC_MAPPING_VALUE_SEGMENT, append_relative_path, dynamic_mapping_value_path,
@@ -55,3 +56,4 @@ pub use value_path::{
     Segment, ValuesPath, append_each_member_value_path, append_value_path, join_encoded_value_path,
     join_value_path, split_value_path,
 };
+pub use value_pattern::ValuePattern;

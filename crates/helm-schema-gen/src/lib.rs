@@ -19,7 +19,6 @@ mod provider_definitions;
 mod provider_requirement_synthesis;
 mod provider_resolution;
 mod provider_schema;
-mod quoted_serialization;
 pub mod required_inference;
 mod requirement_domain;
 mod resolve_policy;

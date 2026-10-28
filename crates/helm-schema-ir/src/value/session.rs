@@ -45,22 +45,6 @@ struct ExecutedProgram {
     occurrence: FileOccurrence,
 }
 
-#[cfg(test)]
-#[tracing::instrument(skip_all)]
-pub(crate) fn execute_document(
-    source: &str,
-    source_path: Option<&str>,
-    db: &IrAnalysisDb,
-) -> DocumentExecution {
-    let mut document = DocumentExecution::new(Vec::new(), super::FileOutput::Manifest);
-    execute_files(
-        vec![db.parsed_source(source, source_path, source_path.unwrap_or("gotpl"))],
-        db,
-        |_, execution| document = DocumentExecution::new(execution.exits, execution.output),
-    );
-    document
-}
-
 pub(crate) fn project_documents(
     sources: Vec<Rc<ParsedTemplateSource>>,
     db: &IrAnalysisDb,
@@ -82,17 +66,6 @@ pub(crate) fn project_documents(
             seal(index, Some(&program.program), &document);
         }
     });
-}
-
-#[cfg(test)]
-pub(super) fn prepared_sources(
-    sources: &[crate::symbolic::SymbolicTemplate<'_>],
-    db: &IrAnalysisDb,
-) -> Vec<Rc<ParsedTemplateSource>> {
-    sources
-        .iter()
-        .map(|source| db.parsed_source(source.source, Some(source.source_path), source.source_path))
-        .collect()
 }
 
 pub(super) fn execute_files(

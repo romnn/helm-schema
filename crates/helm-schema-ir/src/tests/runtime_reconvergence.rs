@@ -60,7 +60,7 @@ fn growing_branch_chains_keep_one_normal_continuation() -> eyre::Result<()> {
             )?;
         }
         source.push_str("{{ end }}{{ $value }}");
-        let execution = crate::value::execute_document(&source, None, &db);
+        let execution = crate::value::tests::execute_document(&source, None, &db);
         sim_assert_eq!(have: execution.exits.iter().filter(|exit| matches!(exit.flow, Flow::Normal(_))).count(), want: 1);
     }
     Ok(())

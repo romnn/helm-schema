@@ -18,7 +18,7 @@ fn helper_db(source: &str) -> IrAnalysisDb {
 
 fn helper_outputs(source: &str, invocation: &str) -> Vec<Option<String>> {
     let db = helper_db(source);
-    let execution = crate::value::execute_document(invocation, None, &db);
+    let execution = crate::value::tests::execute_document(invocation, None, &db);
     sim_assert_eq!(have: execution.abort_predicate(), want: Predicate::False);
     execution
         .text()
@@ -93,7 +93,7 @@ fn relevant_cycle_cuts_do_not_reuse_a_result_from_another_call_chain() {
     "#};
     for invocation in [r#"{{ include "target" . }}"#, r#"{{ include "a" . }}"#] {
         let db = helper_db(source);
-        let execution = crate::value::execute_document(invocation, None, &db);
+        let execution = crate::value::tests::execute_document(invocation, None, &db);
         assert!(
             execution
                 .reads()
@@ -118,7 +118,8 @@ fn dynamic_helper_names_preserve_unknown_output() {
         {{- end -}}
     "#};
     let db = helper_db(source);
-    let execution = crate::value::execute_document(r#"{{ include "dynamic" . }}"#, None, &db);
+    let execution =
+        crate::value::tests::execute_document(r#"{{ include "dynamic" . }}"#, None, &db);
     let string_name = Predicate::from(helm_schema_core::Guard::TypeIs {
         path: ValuesPath::parse("helper"),
         schema_type: "string".to_owned(),
@@ -355,7 +356,7 @@ fn array_decoder_near_miss_executes_the_authored_program() {
         r#"{{ include "merge" (dict "values" (list "[]") "context" .) }}"#,
         r#"{{ include "merge" (dict "values" (list (dict "a" "b")) "context" .) }}"#,
     ] {
-        let execution = crate::value::execute_document(invocation, None, &db);
+        let execution = crate::value::tests::execute_document(invocation, None, &db);
         sim_assert_eq!(have: execution.abort_predicate(), want: Predicate::True);
         sim_assert_eq!(have: execution.text().count(), want: 0);
     }
@@ -377,7 +378,7 @@ fn parsed_defines_share_parses_and_preserve_file_roles() {
         .map(|definition| (definition.name.as_str(), definition.program.source()))
         .collect();
     sim_assert_eq!(have: declarations, want: vec![("leaf", "value")]);
-    let execution = crate::value::execute_document(r#"{{ include "leaf" . }}"#, None, &db);
+    let execution = crate::value::tests::execute_document(r#"{{ include "leaf" . }}"#, None, &db);
     sim_assert_eq!(have: execution.abort_predicate(), want: Predicate::False);
     sim_assert_eq!(have: execution.text().map(|(_, text)| text.exact_text()).collect::<Vec<_>>(), want: vec![Some("value".to_string())]);
     assert!(db.file_source("templates/_helpers.tpl").is_some());

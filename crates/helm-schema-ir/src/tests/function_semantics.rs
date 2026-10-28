@@ -128,7 +128,7 @@ fn dispatcher_special_forms_share_the_value_executor() {
         ("{{ coalesce \"\" \"kept\" }}", "kept"),
         ("{{ required \"message\" \"kept\" }}", "kept"),
     ] {
-        let execution = crate::value::execute_document(source, None, &db);
+        let execution = crate::value::tests::execute_document(source, None, &db);
         sim_assert_eq!(have: execution.text().map(|(_, text)| text.exact_text()).collect::<Vec<_>>(), want: vec![Some(expected.to_owned())]);
     }
 }
@@ -151,7 +151,7 @@ fn argument_evaluation_mode_preserves_grouping() {
                 "{{{{ with dict \"subject\" (dict \"child\" \"kept\") }}}}{{{{ $ := . }}}}{{{{ $member := .subject }}}}{{{{ {expression} }}}}{{{{ end }}}}"
             )
         };
-        let execution = crate::value::execute_document(&source, None, &db);
+        let execution = crate::value::tests::execute_document(&source, None, &db);
         sim_assert_eq!(have: execution.text().map(|(_, text)| text.exact_text()).collect::<Vec<_>>(), want: vec![Some("kept".to_owned())]);
     }
 }

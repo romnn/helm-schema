@@ -145,21 +145,11 @@ impl SymbolicIrContext {
                     execution,
                 );
                 if let Some(contract) = contracts.get_mut(index) {
-                    contract.append(self.contract_from_document(&document));
+                    contract.append(Self::contract_from_document(&document));
                 }
             },
         );
         contracts
-    }
-
-    /// Executes a fresh single-template session and projects its fragment.
-    #[must_use]
-    #[cfg(test)]
-    pub(crate) fn eval_document_fragment(
-        &self,
-        src: &str,
-    ) -> crate::fragment_eval::EvaluatedDocument {
-        crate::fragment_eval::eval_document(src, None, &self.analysis_db)
     }
 
     fn generate_contract_ir_with_provenance(
@@ -189,23 +179,21 @@ impl SymbolicIrContext {
                     &self.analysis_db,
                     execution,
                 );
-                contract.append(self.contract_from_document(&document));
+                contract.append(Self::contract_from_document(&document));
             },
         );
         contract
     }
 
-    fn contract_from_document(
-        &self,
-        document: &crate::fragment_eval::EvaluatedDocument,
-    ) -> ContractIr {
-        let mut contract = crate::fragment_eval::contract_ir_from_document(
-            document,
-            self.analysis_db.predicate_memo().as_ref(),
-        );
+    fn contract_from_document(document: &crate::fragment_eval::EvaluatedDocument) -> ContractIr {
+        let mut contract = crate::fragment_eval::contract_ir_from_document(document);
         contract.extend_values_program_wrapper_exclusions(
             document.pre_rewrite_strict_paths.iter().cloned(),
         );
         contract
     }
 }
+
+#[cfg(test)]
+#[path = "../tests/symbolic_context.rs"]
+mod tests;

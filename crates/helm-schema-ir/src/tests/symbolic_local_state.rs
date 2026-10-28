@@ -11,7 +11,7 @@ use crate::analysis_db::IrAnalysisDb;
 fn execute(source: &str) -> crate::value::DocumentExecution {
     let defines = DefineIndex::new();
     let db = IrAnalysisDb::new(&defines);
-    crate::value::execute_document(source, None, &db)
+    crate::value::tests::execute_document(source, None, &db)
 }
 
 fn identities(source: &str) -> BTreeSet<ValuesPath> {

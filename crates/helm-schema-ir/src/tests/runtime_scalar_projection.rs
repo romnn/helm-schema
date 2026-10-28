@@ -15,11 +15,11 @@ impl crate::value::DocumentExecution {
     pub(crate) fn executed_outputs(&self) -> Vec<ExecutedOutput> {
         let memo = helm_schema_core::PredicateMemo::new();
         let mut outputs = Vec::new();
-        for (exit, graph) in self.exits.iter().zip(self.placement.output_graphs()) {
+        for exit in &self.exits {
             if !matches!(exit.flow, crate::value::Flow::Normal(_)) {
                 continue;
             }
-            let value = crate::value::text::capture(graph, false)
+            let value = crate::value::text::capture(&exit.state.output, false)
                 .under_runtime(&crate::value::guard::RuntimeGuard::True);
             for alternative in exit.state.heap.freeze(&value).alternatives() {
                 let condition = memo.normalize(Predicate::all(vec![
@@ -219,7 +219,7 @@ fn marker_overlap_language_includes_both_emission_boundaries() -> eyre::Result<(
 #[test]
 fn rendered_input_tolerance_keeps_the_original_execution_guard() {
     let db = crate::analysis_db::IrAnalysisDb::new(&helm_schema_ast::DefineIndex::new());
-    let execution = crate::value::execute_document(
+    let execution = crate::value::tests::execute_document(
         "{{ if .Values.emit }}port: {{ .Values.port }}{{ end }}",
         None,
         &db,

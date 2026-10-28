@@ -2,7 +2,10 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use serde::Serialize;
 
-use crate::{Guard, GuardValue, Predicate, ProviderSchemaUse, ValuesPath};
+use crate::{
+    CollectionDomain, CollectionQuantifier, Guard, GuardValue, Predicate, ProviderSchemaUse,
+    ValuePattern, ValuesPath,
+};
 
 /// Values-decidable guard expression that can be lowered into JSON Schema
 /// conditionals.
@@ -50,6 +53,24 @@ pub enum ConditionalGuard {
         /// Values path subjected to the pattern test.
         path: ValuesPath,
         /// ECMA-compatible regular expression required by the branch.
+        pattern: String,
+    },
+    /// A present value belongs to a typed structural pattern.
+    MatchesValue {
+        /// Values path tested for membership.
+        path: ValuesPath,
+        /// Structural pattern required at the path.
+        pattern: ValuePattern,
+    },
+    /// An exact string-pattern quantifier over a present collection of the selected kind.
+    CollectionPattern {
+        /// Values path containing the object.
+        path: ValuesPath,
+        /// Which collection members the pattern tests.
+        domain: CollectionDomain,
+        /// Whether every member or at least one must match.
+        quantifier: CollectionQuantifier,
+        /// ECMA-compatible regular expression tested against string members.
         pattern: String,
     },
     /// The path's RAW value is a JSON integer strictly greater than `bound`
@@ -137,6 +158,14 @@ pub enum ConditionalGuard {
 }
 
 impl ConditionalGuard {
+    fn conjunction(guards: &[Guard]) -> Result<Self, ()> {
+        guards
+            .iter()
+            .map(Self::try_from)
+            .collect::<Result<Vec<_>, _>>()
+            .map(Self::AllOf)
+    }
+
     /// Canonicalizes a guard conjunction and every nested Boolean guard set.
     pub fn canonicalize_conjunction(guards: &mut Vec<Self>) {
         for guard in guards.iter_mut() {
@@ -159,6 +188,16 @@ impl ConditionalGuard {
             | Self::Absent { .. }
             | Self::TypeIs { .. }
             | Self::MatchesPattern { .. }
+            | Self::MatchesValue {
+                path: _,
+                pattern: _,
+            }
+            | Self::CollectionPattern {
+                path: _,
+                domain: _,
+                quantifier: _,
+                pattern: _,
+            }
             | Self::IntGt { .. }
             | Self::IntLt { .. }
             | Self::HasKey { .. }
@@ -221,6 +260,21 @@ impl ConditionalGuard {
                 pattern: pattern.clone(),
                 templated: false,
             }),
+            Self::MatchesValue { path, pattern } => Predicate::from(Guard::MatchesValue {
+                path: path.clone(),
+                pattern: pattern.clone(),
+            }),
+            Self::CollectionPattern {
+                path,
+                domain,
+                quantifier,
+                pattern,
+            } => Predicate::from(Guard::CollectionPattern {
+                path: path.clone(),
+                domain: *domain,
+                quantifier: *quantifier,
+                pattern: pattern.clone(),
+            }),
             Self::IntGt { path, bound } => Predicate::from(Guard::IntGt {
                 path: path.clone(),
                 bound: *bound,
@@ -269,6 +323,10 @@ impl ConditionalGuard {
 impl TryFrom<&Guard> for ConditionalGuard {
     type Error = ();
 
+    #[expect(
+        clippy::too_many_lines,
+        reason = "keep the exhaustive Guard-to-ConditionalGuard mapping together"
+    )]
     fn try_from(guard: &Guard) -> Result<Self, Self::Error> {
         Ok(match guard {
             Guard::Truthy { path } => Self::Truthy { path: path.clone() },
@@ -290,6 +348,21 @@ impl TryFrom<&Guard> for ConditionalGuard {
                 path: path.clone(),
                 pattern: pattern.clone(),
             },
+            Guard::MatchesValue { path, pattern } => Self::MatchesValue {
+                path: path.clone(),
+                pattern: pattern.clone(),
+            },
+            Guard::CollectionPattern {
+                path,
+                domain,
+                quantifier,
+                pattern,
+            } => Self::CollectionPattern {
+                path: path.clone(),
+                domain: *domain,
+                quantifier: *quantifier,
+                pattern: pattern.clone(),
+            },
             Guard::Or { paths } => Self::AnyOf(
                 paths
                     .iter()
@@ -299,13 +372,7 @@ impl TryFrom<&Guard> for ConditionalGuard {
             Guard::AnyOf { alternatives } => Self::AnyOf(
                 alternatives
                     .iter()
-                    .map(|guards| {
-                        guards
-                            .iter()
-                            .map(Self::try_from)
-                            .collect::<Result<Vec<_>, _>>()
-                            .map(Self::AllOf)
-                    })
+                    .map(|guards| Self::conjunction(guards))
                     .collect::<Result<Vec<_>, _>>()?,
             ),
             Guard::With { path } => Self::With { path: path.clone() },
@@ -404,6 +471,21 @@ impl ConditionalGuard {
                 path: map(path),
                 pattern,
             },
+            Self::MatchesValue { path, pattern } => Self::MatchesValue {
+                path: map(path),
+                pattern,
+            },
+            Self::CollectionPattern {
+                path,
+                domain,
+                quantifier,
+                pattern,
+            } => Self::CollectionPattern {
+                path: map(path),
+                domain,
+                quantifier,
+                pattern,
+            },
             Self::IntGt { path, bound } => Self::IntGt {
                 path: map(path),
                 bound,
@@ -463,6 +545,13 @@ impl ConditionalGuard {
             | Self::Absent { path }
             | Self::TypeIs { path, .. }
             | Self::MatchesPattern { path, .. }
+            | Self::MatchesValue { path, pattern: _ }
+            | Self::CollectionPattern {
+                path,
+                domain: _,
+                quantifier: _,
+                pattern: _,
+            }
             | Self::IntGt { path, .. }
             | Self::IntLt { path, .. }
             | Self::HasKey { path, .. }
@@ -787,29 +876,6 @@ pub enum ContractRequirementTarget {
     Keys,
 }
 
-/// The quoting style of a manually quoted YAML scalar hosting a raw splice.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum QuotedScalarStyle {
-    /// `"…"` — every `\` must begin a YAML escape and every `"` be escaped.
-    Double,
-    /// `'…'` — `''` is the only escape, so every apostrophe must be doubled.
-    Single,
-}
-
-impl QuotedScalarStyle {
-    /// Valid CONTENT of a scalar quoted in this style; raw text outside the
-    /// grammar corrupts the manually quoted token.
-    #[must_use]
-    pub fn safe_content_pattern(self) -> &'static str {
-        match self {
-            Self::Double => {
-                r#"^([^"\\]|\\["\\/0abtnvfre N_LP]|\\x[0-9A-Fa-f]{2}|\\u[0-9A-Fa-f]{4}|\\U[0-9A-Fa-f]{8})*$"#
-            }
-            Self::Single => r"^([^']|'')*$",
-        }
-    }
-}
-
 /// One requirement a `fail` branch imposes on an affected value.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum FailValueRequirement {
@@ -962,19 +1028,6 @@ pub enum FailValueRequirement {
         segments: usize,
         /// Whether a preceding total conversion admits non-string inputs.
         allow_non_string: bool,
-    },
-    /// The value renders inside a manually quoted YAML scalar: every string
-    /// it contributes to the token — the value itself, or any nested string
-    /// or mapping key when Go's fmt serializes a collection
-    /// (`map[k:v]` / `[a b]`) with its strings embedded raw — must be valid
-    /// content for the quoting style. Non-string scalars format as plain
-    /// digits/words and are always safe.
-    QuotedSerializationSafe {
-        /// YAML quoting grammar that serialized content must satisfy.
-        style: QuotedScalarStyle,
-        /// The rendered text is a `tpl` result, so template-action-free
-        /// input is the identity while an actual program has unknown output.
-        templated: bool,
     },
     /// A value substituted by fmt's `%s` may be a string or a mapping whose
     /// recursive textual form remains structurally safe. Other JSON kinds

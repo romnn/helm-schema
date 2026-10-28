@@ -563,24 +563,6 @@ impl LoweredEmissionPlan {
                 helm_truthy_definition_schema(),
             );
         }
-        for style in [
-            helm_schema_core::QuotedScalarStyle::Double,
-            helm_schema_core::QuotedScalarStyle::Single,
-        ] {
-            if crate::quoted_serialization::value_references(&materialized.schema, style)
-                || materialized
-                    .provider_definitions
-                    .values()
-                    .any(|definition| {
-                        crate::quoted_serialization::value_references(definition, style)
-                    })
-            {
-                materialized.provider_definitions.insert(
-                    crate::quoted_serialization::definition_name(style).to_string(),
-                    crate::quoted_serialization::definition_schema(style),
-                );
-            }
-        }
         drop(truthy_span);
         insert_definitions_into_root(
             &mut materialized.schema,

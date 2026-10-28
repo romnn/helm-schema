@@ -210,10 +210,9 @@ fn helper_result_from_expr_with_fragment_locals(
     if rebound {
         source.push_str("{{ end }}");
     }
-    let execution = crate::value::execute_document(&source, None, db);
-    let document = crate::fragment_eval::project_execution(&source, None, db, &execution);
-    let contract =
-        crate::fragment_eval::contract_ir_from_document(&document, db.predicate_memo()).finalize();
+    let execution = crate::value::tests::execute_document(&source, None, db);
+    let document = crate::tests::support::project_execution(&source, None, db, &execution);
+    let contract = crate::fragment_eval::contract_ir_from_document(&document).finalize();
     let rendered = contract
         .uses()
         .iter()
@@ -1292,8 +1291,11 @@ fn helper_fail_header_uses_nested_include_rendered_truthiness() {
         want: Some(Predicate::False),
         "the complete nested helper dispatch must decide the enclosing header: {header_result:#?}"
     );
-    let validation =
-        crate::value::execute_document(r#"{{ include "validate-runtime" . }}"#, None, &analysis_db);
+    let validation = crate::value::tests::execute_document(
+        r#"{{ include "validate-runtime" . }}"#,
+        None,
+        &analysis_db,
+    );
     assert!(
         !validation
             .observed_facts()
@@ -2291,7 +2293,7 @@ fn helper_value_fragment_local_selector_uses_shared_expression_eval() -> eyre::R
         .ok_or_eyre("decoded assignment missing")?
         .span;
     let db = IrAnalysisDb::new(&DefineIndex::new());
-    let execution = crate::value::execute_document(source, None, &db);
+    let execution = crate::value::tests::execute_document(source, None, &db);
     let sites = execution
         .all_sites()
         .filter(|site| site.span() == assignment)
@@ -2312,7 +2314,7 @@ fn helper_value_fragment_local_selector_uses_shared_expression_eval() -> eyre::R
             r#"data: "true""#,
         ),
     ] {
-        let execution = crate::value::execute_document(source, None, &db);
+        let execution = crate::value::tests::execute_document(source, None, &db);
         sim_assert_eq!(have: execution.text().map(|(_, text)| text.exact_text()).collect::<Vec<_>>(), want: vec![Some(expected.to_owned())]);
     }
     Ok(())

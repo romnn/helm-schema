@@ -1,5 +1,6 @@
 use crate::analysis_db::IrAnalysisDb;
-use crate::value::{AbortReason, Flow, State, Value, eval::Executor, execute_document};
+use crate::value::tests::execute_document;
+use crate::value::{AbortReason, Flow, State, Value, eval::Executor};
 use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_ast::DefineIndex;
 use helm_schema_core::Predicate;

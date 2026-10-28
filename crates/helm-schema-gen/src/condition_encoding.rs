@@ -1,6 +1,8 @@
 use std::collections::BTreeSet;
 
-use helm_schema_core::{ConditionalGuard, GuardValue, ValuesPath};
+use helm_schema_core::{
+    CollectionDomain, CollectionQuantifier, ConditionalGuard, GuardValue, ValuePattern, ValuesPath,
+};
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
 
@@ -317,6 +319,61 @@ fn build_single_condition_fragment(
                     "type": "string",
                 })),
                 absent_matches,
+            )
+        }
+        ConditionalGuard::MatchesValue { path, pattern } => {
+            if path
+                .segments()
+                .any(helm_schema_core::Segment::is_each_member)
+            {
+                return None;
+            }
+            build_default_aware_leaf_condition_fragment(
+                path,
+                ancestor_segments,
+                SchemaNode::foreign(value_pattern_schema(pattern)?),
+                value_pattern_on_yaml(pattern, yaml_value_at_path(runtime_defaults_doc, path))?,
+            )
+        }
+        ConditionalGuard::CollectionPattern {
+            path,
+            domain,
+            quantifier,
+            pattern,
+        } => {
+            if path
+                .segments()
+                .any(helm_schema_core::Segment::is_each_member)
+            {
+                return None;
+            }
+            let regular = regex::Regex::new(pattern).ok()?;
+            let pattern = crate::path_resolver::ecma_compatible_pattern(pattern)?;
+            let member = serde_json::json!({ "type": "string", "pattern": pattern });
+            let leaf = match (domain, quantifier) {
+                (CollectionDomain::ObjectValues, CollectionQuantifier::All) => {
+                    serde_json::json!({ "type": "object", "additionalProperties": member })
+                }
+                (CollectionDomain::ObjectValues, CollectionQuantifier::Any) => {
+                    serde_json::json!({ "type": "object", "not": { "additionalProperties": { "not": member } } })
+                }
+                (CollectionDomain::ObjectKeys, CollectionQuantifier::All) => {
+                    serde_json::json!({ "type": "object", "propertyNames": member })
+                }
+                (CollectionDomain::ObjectKeys, CollectionQuantifier::Any) => {
+                    serde_json::json!({ "type": "object", "not": { "propertyNames": { "not": member } } })
+                }
+            };
+            build_default_aware_leaf_condition_fragment(
+                path,
+                ancestor_segments,
+                SchemaNode::foreign(leaf),
+                collection_pattern_matches(
+                    yaml_value_at_path(runtime_defaults_doc, path),
+                    *domain,
+                    *quantifier,
+                    &regular,
+                )?,
             )
         }
         // The existential over iterated items: `contains` covers the array
@@ -1009,6 +1066,82 @@ pub(crate) fn evaluate_guard_set_on_values(
         .map(|results| results.into_iter().all(|result| result))
 }
 
+fn value_pattern_schema(pattern: &ValuePattern) -> Option<Value> {
+    Some(match pattern {
+        ValuePattern::Any => Value::Bool(true),
+        ValuePattern::String { pattern } => {
+            serde_json::json!({"type": "string", "pattern": crate::path_resolver::ecma_compatible_pattern(pattern)?})
+        }
+        ValuePattern::Array { prefix, items } => {
+            let prefix = prefix
+                .iter()
+                .map(value_pattern_schema)
+                .collect::<Option<Vec<_>>>()?;
+            let items = match items.as_deref() {
+                Some(items) => Some(value_pattern_schema(items)?),
+                None => None,
+            };
+            if prefix.is_empty() {
+                match items {
+                    Some(items) => serde_json::json!({"type": "array", "items": items}),
+                    None => serde_json::json!({"type": "array", "maxItems": 0}),
+                }
+            } else {
+                serde_json::json!({"type": "array", "minItems": prefix.len(), "items": prefix, "additionalItems": items.unwrap_or(Value::Bool(false))})
+            }
+        }
+        ValuePattern::AllOf(patterns) if patterns.is_empty() => Value::Bool(true),
+        ValuePattern::AllOf(patterns) => {
+            serde_json::json!({"allOf": patterns.iter().map(value_pattern_schema).collect::<Option<Vec<_>>>()?})
+        }
+        ValuePattern::Contains(pattern) => {
+            serde_json::json!({"type": "array", "contains": value_pattern_schema(pattern)?})
+        }
+        ValuePattern::AnyOf(patterns) if patterns.is_empty() => Value::Bool(false),
+        ValuePattern::AnyOf(patterns) => {
+            serde_json::json!({"anyOf": patterns.iter().map(value_pattern_schema).collect::<Option<Vec<_>>>()?})
+        }
+    })
+}
+
+fn value_pattern_on_yaml(pattern: &ValuePattern, value: Option<&YamlValue>) -> Option<bool> {
+    match value {
+        Some(value) => pattern.matches(&serde_json::to_value(value).ok()?),
+        None => Some(false),
+    }
+}
+
+fn collection_pattern_matches(
+    value: Option<&YamlValue>,
+    domain: CollectionDomain,
+    quantifier: CollectionQuantifier,
+    pattern: &regex::Regex,
+) -> Option<bool> {
+    let matches = |member: &YamlValue| member.as_str().is_some_and(|text| pattern.is_match(text));
+    Some(match (domain, value) {
+        (CollectionDomain::ObjectValues, Some(YamlValue::Mapping(mapping))) => {
+            quantify_members(quantifier, mapping.values().map(matches))
+        }
+        (CollectionDomain::ObjectKeys, Some(YamlValue::Mapping(mapping))) => {
+            if mapping.keys().any(|key| !key.is_string()) {
+                return None;
+            }
+            quantify_members(quantifier, mapping.keys().map(matches))
+        }
+        (CollectionDomain::ObjectValues | CollectionDomain::ObjectKeys, _) => false,
+    })
+}
+
+fn quantify_members(
+    quantifier: CollectionQuantifier,
+    mut matches: impl Iterator<Item = bool>,
+) -> bool {
+    match quantifier {
+        CollectionQuantifier::All => matches.all(std::convert::identity),
+        CollectionQuantifier::Any => matches.any(std::convert::identity),
+    }
+}
+
 fn evaluate_guard_on_values(guard: &ConditionalGuard, values_yaml_doc: &YamlValue) -> Option<bool> {
     match guard {
         ConditionalGuard::Truthy { path } | ConditionalGuard::With { path } => {
@@ -1048,6 +1181,20 @@ fn evaluate_guard_on_values(guard: &ConditionalGuard, values_yaml_doc: &YamlValu
                 .ok()
                 .map(|regex| regex.is_match(value))
         }
+        ConditionalGuard::MatchesValue { path, pattern } => {
+            value_pattern_on_yaml(pattern, yaml_value_at_path(values_yaml_doc, path))
+        }
+        ConditionalGuard::CollectionPattern {
+            path,
+            domain,
+            quantifier,
+            pattern,
+        } => collection_pattern_matches(
+            yaml_value_at_path(values_yaml_doc, path),
+            *domain,
+            *quantifier,
+            &regex::Regex::new(pattern).ok()?,
+        ),
         ConditionalGuard::ContainsMemberEquals {
             path,
             member,

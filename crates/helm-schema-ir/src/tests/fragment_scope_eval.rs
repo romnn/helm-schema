@@ -39,7 +39,7 @@ fn local_set_mutation_uses_shared_expression_eval_for_computed_key() -> eyre::Re
     "#};
     let defines = DefineIndex::new();
     let db = IrAnalysisDb::new(&defines);
-    let execution = crate::value::execute_document(source, None, &db);
+    let execution = crate::value::tests::execute_document(source, None, &db);
     let result = execution
         .sites()
         .filter(|site| site.rendered())
@@ -65,7 +65,7 @@ fn local_set_mutation_resolves_computed_key_from_literal_local() -> eyre::Result
     "#};
     let defines = DefineIndex::new();
     let db = IrAnalysisDb::new(&defines);
-    let execution = crate::value::execute_document(source, None, &db);
+    let execution = crate::value::tests::execute_document(source, None, &db);
     let result = execution
         .sites()
         .filter(|site| site.rendered())

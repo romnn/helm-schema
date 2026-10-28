@@ -37,6 +37,7 @@ mod scalar_content_view;
 mod scalar_kinds;
 mod selection_reachability;
 mod state;
+pub(crate) mod support;
 mod symbolic_local_state;
 mod url_parse_pattern;
 mod value_runtime;

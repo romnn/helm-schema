@@ -338,6 +338,16 @@ impl ResolvePolicy {
             | ConditionalGuard::ContainsEquals { .. }
             | ConditionalGuard::TypeIs { .. }
             | ConditionalGuard::MatchesPattern { .. }
+            | ConditionalGuard::MatchesValue {
+                path: _,
+                pattern: _,
+            }
+            | ConditionalGuard::CollectionPattern {
+                path: _,
+                domain: _,
+                quantifier: _,
+                pattern: _,
+            }
             | ConditionalGuard::IntGt { .. }
             | ConditionalGuard::IntLt { .. }
             | ConditionalGuard::HasKey { .. }
@@ -1260,6 +1270,16 @@ fn collect_positive_self_types(
         | helm_schema_core::ConditionalGuard::Absent { .. }
         | helm_schema_core::ConditionalGuard::TypeIs { .. }
         | helm_schema_core::ConditionalGuard::MatchesPattern { .. }
+        | helm_schema_core::ConditionalGuard::MatchesValue {
+            path: _,
+            pattern: _,
+        }
+        | helm_schema_core::ConditionalGuard::CollectionPattern {
+            path: _,
+            domain: _,
+            quantifier: _,
+            pattern: _,
+        }
         | helm_schema_core::ConditionalGuard::AtMostOneMember { .. }
         | helm_schema_core::ConditionalGuard::MinMembers { .. } => {}
     }

@@ -228,10 +228,9 @@ fn observe_with_db(prefix: &str, expression: &str, db: &IrAnalysisDb) -> Observa
     source.push_str("other");
     let false_span = Span::new(start, source.len());
     source.push_str("{{ end }}");
-    let execution = crate::value::execute_document(&source, None, db);
-    let projected = crate::fragment_eval::project_execution(&source, None, db, &execution);
-    let contract =
-        crate::fragment_eval::contract_ir_from_document(&projected, db.predicate_memo()).finalize();
+    let execution = crate::value::tests::execute_document(&source, None, db);
+    let projected = crate::tests::support::project_execution(&source, None, db, &execution);
+    let contract = crate::fragment_eval::contract_ir_from_document(&projected).finalize();
     let rows = contract
         .uses()
         .iter()

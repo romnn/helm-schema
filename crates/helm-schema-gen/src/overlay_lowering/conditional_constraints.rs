@@ -152,6 +152,16 @@ pub(super) fn implication_guards_supported(
             | ConditionalGuard::Absent { .. }
             | ConditionalGuard::TypeIs { .. }
             | ConditionalGuard::MatchesPattern { .. }
+            | ConditionalGuard::MatchesValue {
+                path: _,
+                pattern: _,
+            }
+            | ConditionalGuard::CollectionPattern {
+                path: _,
+                domain: _,
+                quantifier: _,
+                pattern: _,
+            }
             | ConditionalGuard::IntGt { .. }
             | ConditionalGuard::IntLt { .. }
             | ConditionalGuard::HasKey { .. }
@@ -194,6 +204,16 @@ fn guards_supported_with_self_path(
             | ConditionalGuard::Absent { .. }
             | ConditionalGuard::TypeIs { .. }
             | ConditionalGuard::MatchesPattern { .. }
+            | ConditionalGuard::MatchesValue {
+                path: _,
+                pattern: _,
+            }
+            | ConditionalGuard::CollectionPattern {
+                path: _,
+                domain: _,
+                quantifier: _,
+                pattern: _,
+            }
             | ConditionalGuard::IntGt { .. }
             | ConditionalGuard::IntLt { .. }
             | ConditionalGuard::HasKey { .. }
@@ -551,6 +571,16 @@ fn guard_holds_vacuously(guard: &ConditionalGuard) -> bool {
         | ConditionalGuard::With { .. }
         | ConditionalGuard::TypeIs { .. }
         | ConditionalGuard::MatchesPattern { .. }
+        | ConditionalGuard::MatchesValue {
+            path: _,
+            pattern: _,
+        }
+        | ConditionalGuard::CollectionPattern {
+            path: _,
+            domain: _,
+            quantifier: _,
+            pattern: _,
+        }
         | ConditionalGuard::IntGt { .. }
         | ConditionalGuard::IntLt { .. }
         | ConditionalGuard::HasKey { .. }

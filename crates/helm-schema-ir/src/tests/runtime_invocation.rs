@@ -1,5 +1,6 @@
 use crate::analysis_db::IrAnalysisDb;
-use crate::value::{DocumentExecution, execute_document};
+use crate::value::DocumentExecution;
+use crate::value::tests::execute_document;
 use helm_schema_ast::DefineIndex;
 use helm_schema_core::{Guard, GuardValue, Predicate, ValuesPath};
 use test_util::prelude::sim_assert_eq;

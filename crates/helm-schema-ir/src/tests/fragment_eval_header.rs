@@ -22,7 +22,7 @@ fn assignment_header_results_cross_a_mutation_boundary() -> eyre::Result<()> {
         {{- $value := include "r3a.read" (dict "context" $copy "mutation" (set $copy.Values "left" .Values.right)) -}}
         {{- include "r3a.read" (dict "context" $copy "mutation" (set $copy.Values "left" .Values.right)) -}}
     "#};
-    let execution = crate::value::execute_document(source, Some("header.tpl"), &db);
+    let execution = crate::value::tests::execute_document(source, Some("header.tpl"), &db);
     let output = execution
         .text()
         .next()

@@ -22,8 +22,6 @@ mod state;
 mod text;
 mod window_exits;
 pub(crate) mod yaml;
-#[cfg(test)]
-pub(crate) use session::execute_document;
 pub(crate) use session::project_documents;
 pub(crate) use site_index::Observation;
 #[cfg(test)]
@@ -652,7 +650,7 @@ pub(crate) const MAX_SCALAR_DISPATCH_STATES: usize = 128;
 
 #[cfg(test)]
 #[path = "../tests/runtime_execution.rs"]
-mod tests;
+pub(crate) mod tests;
 
 #[derive(Clone, Debug)]
 pub(crate) struct ValueAlternative {

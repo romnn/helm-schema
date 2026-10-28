@@ -34,7 +34,7 @@ struct HostObservation {
 
 fn execute(source: &str) -> super::DocumentExecution {
     let db = IrAnalysisDb::new(&DefineIndex::new());
-    super::execute_document(source, None, &db)
+    crate::value::tests::execute_document(source, None, &db)
 }
 
 fn hosts(execution: &super::DocumentExecution) -> BTreeSet<HostObservation> {

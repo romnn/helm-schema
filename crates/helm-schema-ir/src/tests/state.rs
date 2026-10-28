@@ -11,7 +11,7 @@ use crate::analysis_db::IrAnalysisDb;
 fn outputs(source: &str) -> eyre::Result<BTreeSet<(Predicate, String)>> {
     let defines = DefineIndex::new();
     let db = IrAnalysisDb::new(&defines);
-    crate::value::execute_document(source, None, &db)
+    crate::value::tests::execute_document(source, None, &db)
         .text()
         .map(|(condition, text)| Ok((condition, text.exact_text().ok_or_eyre("unknown output")?)))
         .collect()

@@ -160,7 +160,7 @@ impl ConditionContext {
         source.push_str("# selected{{ end }}");
         let db = IrAnalysisDb::new(&self.defines);
         (
-            crate::value::execute_document(&source, None, &db),
+            crate::value::tests::execute_document(&source, None, &db),
             helm_schema_syntax::Span::new(start + 2, start + 2 + "selected".len()),
         )
     }

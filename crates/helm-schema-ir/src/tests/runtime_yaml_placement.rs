@@ -3,12 +3,14 @@ use std::fmt::Write as _;
 
 use color_eyre::eyre;
 use helm_schema_ast::DefineIndex;
-use helm_schema_core::{Guard, Predicate, PredicateKind, ValuesPath};
+use helm_schema_core::{
+    CollectionDomain, CollectionQuantifier, Guard, Predicate, PredicateKind, ValuesPath,
+};
 use serde_json::{Value, json};
 use test_util::prelude::sim_assert_eq;
 
 use crate::analysis_db::IrAnalysisDb;
-use crate::value::execute_document;
+use crate::value::tests::execute_document;
 
 fn at<'a>(values: &'a Value, path: &ValuesPath) -> Option<&'a Value> {
     path.segments()
@@ -45,6 +47,22 @@ fn matches(predicate: &Predicate, values: &Value) -> eyre::Result<bool> {
             at(values, path)
                 .and_then(Value::as_str)
                 .is_some_and(|text| pattern.find(text).is_some())
+        }
+        PredicateKind::Guard(Guard::MatchesValue { path, pattern }) => {
+            at(values, path).is_some_and(|value| pattern.matches(value) == Some(true))
+        }
+        PredicateKind::Guard(Guard::CollectionPattern {
+            path,
+            domain,
+            quantifier,
+            pattern,
+        }) => collection_matches(at(values, path), *domain, *quantifier, pattern)?,
+        PredicateKind::Guard(Guard::AtMostOneMember { path }) => {
+            at(values, path).is_some_and(|value| match value {
+                Value::Array(items) => items.len() <= 1,
+                Value::Object(items) => items.len() <= 1,
+                Value::Null | Value::Bool(_) | Value::Number(_) | Value::String(_) => false,
+            })
         }
         PredicateKind::Guard(Guard::NotMatchesPattern { path, pattern }) => {
             let pattern = regress::Regex::new(pattern)?;
@@ -91,6 +109,163 @@ fn rejection(source: &str, values: &Value) -> eyre::Result<bool> {
     let db = IrAnalysisDb::new(&defines);
     let execution = execute_document(source, Some("templates/probe.yaml"), &db);
     matches(&execution.abort_predicate(), values)
+}
+
+#[test]
+fn quote_typed_nil_map_keeps_its_printed_quotes() -> eyre::Result<()> {
+    let source = r#"value: "\{{ quote (fromJson "null") }}#""#;
+    sim_assert_eq!(have: rejection(source, &json!({}))?, want: false);
+    Ok(())
+}
+
+#[test]
+fn quote_typed_nil_slice_keeps_its_printed_quotes() -> eyre::Result<()> {
+    let source = r#"value: "\{{ quote (fromJsonArray "null") }}#""#;
+    sim_assert_eq!(have: rejection(source, &json!({}))?, want: false);
+    Ok(())
+}
+
+#[test]
+fn quote_nil_interface_emits_no_bytes() -> eyre::Result<()> {
+    let source = r#"value: "\{{ quote .Values.absent }}#""#;
+    sim_assert_eq!(have: rejection(source, &json!({}))?, want: true);
+    Ok(())
+}
+
+#[test]
+fn helper_trailing_line_breaks_preserve_the_quoted_continuation() -> eyre::Result<()> {
+    for source in [
+        indoc::indoc! {r#"
+            {{ define "h" }}{{ "\\" }}
+            {{ end }}
+            value: "{{ include "h" . }}{{ .Values.x }}"
+        "#},
+        indoc::indoc! {r#"
+            {{ define "h" }}safe
+            {{ end }}
+            value: "{{ include "h" . }}{{ .Values.x }}"
+        "#},
+    ] {
+        sim_assert_eq!(have: rejection(source, &json!({"x": "a\"b"}))?, want: true, "{source}");
+        for value in ["abc", "\" # repaired"] {
+            sim_assert_eq!(have: rejection(source, &json!({"x": value}))?, want: false, "{source}: {value}");
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn recovered_continuations_keep_helm_document_boundaries() -> eyre::Result<()> {
+    for (boundary, later_rejected) in [("...", false), ("---", true)] {
+        let source = indoc::formatdoc! {r#"
+            {{{{ define "h" }}}}{{{{ "\\" }}}}
+            {{{{ end }}}}
+            value: "{{{{ include "h" . }}}}{{{{ .Values.x }}}}"
+            {boundary}
+            value: "{{{{ .Values.t }}}}"
+        "#};
+        sim_assert_eq!(have: rejection(&source, &json!({"x": "abc", "t": "a\"b"}))?, want: later_rejected, "{boundary}");
+        sim_assert_eq!(have: rejection(&source, &json!({"x": "abc", "t": "safe"}))?, want: false, "{boundary}");
+    }
+    Ok(())
+}
+
+#[test]
+fn collection_formatting_composes_member_separators_with_quoted_state() -> eyre::Result<()> {
+    let source = r#"value: "{{ .Values.t }}{{ .Values.x }}""#;
+    for value in [
+        json!(["a\"b"]),
+        json!(["ok", "a\"b"]),
+        json!(["a\\x4", "b"]),
+        json!({"k": "a\"b"}),
+        json!({"a\\": "b"}),
+    ] {
+        sim_assert_eq!(have: rejection(source, &json!({"t": value, "x": "safe"}))?, want: true, "{value}");
+    }
+    let single = "value: '{{ .Values.t }}{{ .Values.x }}'";
+    sim_assert_eq!(have: rejection(single, &json!({"t": ["a'b"], "x": "safe"}))?, want: true);
+    Ok(())
+}
+
+#[test]
+fn collection_formatting_retains_comment_and_separator_repairs() -> eyre::Result<()> {
+    let source = r#"value: "{{ .Values.t }}{{ .Values.x }}""#;
+    for values in [
+        json!({"t": ["\" # ", "a\"b"]}),
+        json!({"t": {"\" # ": "a\"b"}}),
+        json!({"t": [["\" # ", "a\"b"]]}),
+        json!({"t": {"k": ["\" # ", "a\"b"]}}),
+        json!({"t": ["\" # ", "ok"], "x": "a\"b"}),
+        json!({"t": ["a\\", "b"]}),
+        json!({"t": {"a": "b\\", "c": "d"}}),
+        json!({"t": [["a\\", "b"], "c"]}),
+        json!({"t": []}),
+        json!({"t": {}}),
+        json!({"t": [false, 1, null]}),
+    ] {
+        sim_assert_eq!(have: rejection(source, &values)?, want: false, "{values}");
+    }
+    let single = "value: '{{ .Values.t }}{{ .Values.x }}'";
+    sim_assert_eq!(have: rejection(single, &json!({"t": ["' # ", "a'b"]}))?, want: false);
+    sim_assert_eq!(have: rejection(single, &json!({"t": ["a\\", "b"]}))?, want: false);
+    Ok(())
+}
+
+#[test]
+fn singleton_collection_closing_separator_finishes_pending_escapes() -> eyre::Result<()> {
+    let source = r#"value: "{{ .Values.t }}""#;
+    for value in [json!(["a\\"]), json!({"a": "b\\"})] {
+        sim_assert_eq!(have: rejection(source, &json!({"t": value}))?, want: true, "{value}");
+    }
+    for value in [json!(["a\\", "b"]), json!({"a": "b\\", "c": "d"})] {
+        sim_assert_eq!(have: rejection(source, &json!({"t": value}))?, want: false, "{value}");
+    }
+    Ok(())
+}
+
+#[test]
+fn ordered_collection_members_compose_their_actual_separators() -> eyre::Result<()> {
+    let source = r#"value: "{{ .Values.t }}{{ .Values.x }}""#;
+    for values in [
+        json!({"t": ["a", "b\\"]}),
+        json!({"t": [["a\\"], "b"]}),
+        json!({"t": ["a\\", "b\"c"]}),
+        json!({"t": ["a\\", "b"], "x": "a\"b"}),
+    ] {
+        sim_assert_eq!(have: rejection(source, &values)?, want: true, "{values}");
+    }
+    for values in [
+        json!({"t": ["a\\", "b"]}),
+        json!({"t": [["a\\", "b"], "c"]}),
+        json!({"t": ["\" # ", "b\"c"]}),
+        json!({"t": ["a\\", "\" # "], "x": "a\"b"}),
+    ] {
+        sim_assert_eq!(have: rejection(source, &values)?, want: false, "{values}");
+    }
+    Ok(())
+}
+
+#[test]
+fn empty_flow_collection_retains_its_following_plain_text() -> eyre::Result<()> {
+    sim_assert_eq!(have: rejection("value: {{ .Values.t }}tail", &json!({"t": []}))?, want: true);
+    sim_assert_eq!(have: rejection("value: {{ .Values.t }}tail", &json!({"t": "a"}))?, want: false);
+    sim_assert_eq!(have: rejection("value: {{ .Values.t }}", &json!({"t": []}))?, want: false);
+    sim_assert_eq!(have: rejection("{{ .Values.t }}tail", &json!({"t": []}))?, want: false);
+    sim_assert_eq!(have: rejection("value: {{ .Values.t }} # tail", &json!({"t": []}))?, want: false);
+    Ok(())
+}
+
+#[test]
+fn captured_map_overrides_preserve_the_unmodified_input_remainder() -> eyre::Result<()> {
+    let source = indoc::indoc! {r#"
+        {{ $v := .Values.obj }}{{ $_ := set .Values.obj "t" "ok" }}
+        value: "{{ $v }}{{ .Values.x }}"
+    "#};
+    sim_assert_eq!(have: rejection(source, &json!({"obj": {"t": "a\"b"}, "x": "a\"b"}))?, want: true);
+    sim_assert_eq!(have: rejection(source, &json!({"obj": {"t": "a\"b"}, "x": "safe"}))?, want: false);
+    sim_assert_eq!(have: rejection(source, &json!({"obj": {"t": "safe", "a": "\" # "}, "x": "a\"b"}))?, want: false);
+    sim_assert_eq!(have: rejection(source, &json!({"obj": {"t\n": "\" # "}, "x": "a\"b"}))?, want: false);
+    Ok(())
 }
 
 #[test]
@@ -446,7 +621,7 @@ fn notes_are_text_and_yaml_failures_do_not_stop_the_file_schedule() {
             source_path: "templates/a.yaml",
         },
     ];
-    let documents = crate::value::execute_documents(&sources, &db);
+    let documents = crate::value::tests::execute_documents(&sources, &db);
     // YAML decoding follows the shared-heap schedule, so the later template still aborts.
     sim_assert_eq!(have: documents[1].abort_predicate(), want: Predicate::True);
 }
@@ -603,9 +778,8 @@ fn shared_scalar_slots_retain_each_emission_source_span() {
             })
         })
         .collect::<BTreeSet<_>>();
-    let projected = crate::fragment_eval::project_execution(source, path, &db, &execution);
-    let contract =
-        crate::fragment_eval::contract_ir_from_document(&projected, db.predicate_memo()).finalize();
+    let projected = crate::tests::support::project_execution(source, path, &db, &execution);
+    let contract = crate::fragment_eval::contract_ir_from_document(&projected).finalize();
     let actual = contract
         .uses()
         .iter()
@@ -639,4 +813,34 @@ fn shared_scalar_choices_do_not_guard_unrelated_documents() {
         .map(|resource| resource.condition)
         .collect::<BTreeSet<_>>();
     sim_assert_eq!(have: guards, want: BTreeSet::from([Predicate::True]));
+}
+
+fn collection_matches(
+    value: Option<&Value>,
+    domain: CollectionDomain,
+    quantifier: CollectionQuantifier,
+    pattern: &str,
+) -> eyre::Result<bool> {
+    let pattern = regress::Regex::new(pattern)?;
+    let selected = match domain {
+        CollectionDomain::ObjectValues => value.and_then(Value::as_object).map(|items| {
+            items
+                .values()
+                .map(|item| {
+                    item.as_str()
+                        .is_some_and(|text| pattern.find(text).is_some())
+                })
+                .collect::<Vec<_>>()
+        }),
+        CollectionDomain::ObjectKeys => value.and_then(Value::as_object).map(|items| {
+            items
+                .keys()
+                .map(|text| pattern.find(text).is_some())
+                .collect::<Vec<_>>()
+        }),
+    };
+    Ok(selected.is_some_and(|items| match quantifier {
+        CollectionQuantifier::All => items.into_iter().all(|matched| matched),
+        CollectionQuantifier::Any => items.into_iter().any(|matched| matched),
+    }))
 }

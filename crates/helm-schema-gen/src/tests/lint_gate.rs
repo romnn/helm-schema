@@ -6,7 +6,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use color_eyre::eyre::{self, OptionExt as _};
-use helm_schema_core::{ConditionalGuard, GuardValue, ValuesPath};
+use helm_schema_core::{ConditionalGuard, GuardValue, ValuePattern, ValuesPath};
 use serde_json::{Value, json};
 use test_util::prelude::sim_assert_eq;
 use tracing_subscriber::prelude::*;
@@ -537,5 +537,67 @@ fn a_projection_the_coalesced_defaults_fail_is_kept() -> eyre::Result<()> {
     let document = document.ok_or_eyre("a constraint failing the defaults was withdrawn")?;
     sim_assert_eq!(have: document.pointer("/allOf/0/then"), want: Some(&then_schema));
     sim_assert_eq!(have: relaxed, want: vec![]);
+    Ok(())
+}
+
+#[test]
+fn tuple_guard_lint_projection_uses_the_emitted_draft07_dialect() -> eyre::Result<()> {
+    let pattern = ValuePattern::Array {
+        prefix: vec![
+            ValuePattern::String {
+                pattern: "^safe$".to_owned(),
+            },
+            ValuePattern::String {
+                pattern: "^bad$".to_owned(),
+            },
+        ],
+        items: None,
+    };
+    let guard = ConditionalGuard::Not(Box::new(ConditionalGuard::MatchesValue {
+        path: ValuesPath::parse("subject"),
+        pattern,
+    }));
+    // The lint document lacks a collection that dependency defaults supply.
+    // Only supplied collections should be checked by the terminating tuple condition.
+    let (document, relaxed) = judge(
+        &json!({}),
+        &json!({"subject": ["safe", "bad"]}),
+        &[],
+        &[guard],
+        json!(false),
+        ConditionPolarity::Narrow,
+        &NO_DEPENDENCIES,
+    )?;
+    let document = document.ok_or_eyre("tuple condition was withdrawn")?;
+    sim_assert_eq!(have: &document, want: &json!({
+        "$defs": { HELM_TRUTHY_DEFINITION_NAME: helm_truthy_definition_schema() },
+        "allOf": [{
+            "if": {"not": {
+                "type": "object", "required": ["subject"],
+                "properties": {"subject": {
+                    "type": "array", "minItems": 2, "additionalItems": false,
+                    "items": [
+                        {"type": "string", "pattern": "^safe$"},
+                        {"type": "string", "pattern": "^bad$"},
+                    ],
+                }},
+            }},
+            "then": {
+                "if": {"type": "object", "required": ["subject"], "properties": {"subject": {"not": {"enum": [null]}}}},
+                "then": false,
+            },
+        }],
+    }));
+    sim_assert_eq!(have: relaxed, want: vec![LintWithdrawal {
+        anchor: ValuesPath::parse(""), document: LintDocument::Root,
+        deciding_paths: vec![ValuesPath::parse("subject")], outcome: LintOutcome::Conditioned,
+    }]);
+    let validator = jsonschema::options()
+        .with_draft(jsonschema::Draft::Draft7)
+        .build(&document)?;
+    sim_assert_eq!(have: validator.is_valid(&json!({})), want: true);
+    sim_assert_eq!(have: validator.is_valid(&json!({"subject": ["safe", "bad"]})), want: true);
+    sim_assert_eq!(have: validator.is_valid(&json!({"subject": ["bad", "safe"]})), want: false);
+    sim_assert_eq!(have: validator.is_valid(&json!({"subject": ["safe", "bad", "extra"]})), want: false);
     Ok(())
 }

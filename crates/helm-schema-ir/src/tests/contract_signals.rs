@@ -2327,3 +2327,68 @@ fn dependency_read_dispatch_permission_needs_positive_exact_self_type() {
         sim_assert_eq!(have: overlays.len(), want: 0);
     }
 }
+
+#[test]
+fn conditional_guard_conversion_preserves_negative_pattern_string_domain() {
+    let signals = signals_for(vec![ContractUse::new(
+        conditional_path("target"),
+        YamlPath(vec!["spec".to_string(), "value".to_string()]),
+        ValueKind::Scalar,
+        vec![Guard::NotMatchesPattern {
+            path: conditional_path("mode"),
+            pattern: "^external$".to_string(),
+        }],
+        None,
+    )]);
+    // The complement still excludes non-string inputs to the regex consumer.
+    let mut expected = vec![
+        ConditionalGuard::TypeIs {
+            path: conditional_path("mode"),
+            schema_type: "string".to_string(),
+        },
+        ConditionalGuard::Not(Box::new(ConditionalGuard::MatchesPattern {
+            path: conditional_path("mode"),
+            pattern: "^external$".to_string(),
+        })),
+    ];
+    ConditionalGuard::canonicalize_conjunction(&mut expected);
+    sim_assert_eq!(
+        have: conditional_overlays_for(&signals).into_iter().map(|overlay| overlay.guards).collect::<Vec<_>>(),
+        want: vec![vec![ConditionalGuard::AllOf(expected)]],
+    );
+}
+
+#[test]
+fn conditional_guard_conversion_preserves_self_dispatch_and_member_bound() -> eyre::Result<()> {
+    // Each self condition partitions the target's input domain instead of
+    // describing the row's ordinary truthiness firing condition.
+    for guard in [
+        Guard::TypeIs {
+            path: conditional_path("target"),
+            schema_type: "string".to_string(),
+        },
+        Guard::NotTypeIs {
+            path: conditional_path("target"),
+            schema_type: "string".to_string(),
+        },
+        Guard::MinMembers {
+            path: conditional_path("target"),
+            bound: 2,
+        },
+    ] {
+        let expected = ConditionalGuard::try_from(&guard)
+            .map_err(|()| eyre::eyre!("self dispatch guard must support conditional conversion"))?;
+        let signals = signals_for(vec![ContractUse::new(
+            conditional_path("target"),
+            YamlPath(vec!["spec".to_string(), "value".to_string()]),
+            ValueKind::Scalar,
+            vec![guard],
+            None,
+        )]);
+        sim_assert_eq!(
+            have: conditional_overlays_for(&signals).into_iter().map(|overlay| overlay.guards).collect::<Vec<_>>(),
+            want: vec![vec![expected]],
+        );
+    }
+    Ok(())
+}

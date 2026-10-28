@@ -57,27 +57,6 @@ pub(crate) struct ValueRead {
     pub dependency: bool,
 }
 
-#[cfg(test)]
-#[tracing::instrument(skip_all)]
-pub(crate) fn eval_document(
-    source: &str,
-    source_path: Option<&str>,
-    db: &IrAnalysisDb,
-) -> EvaluatedDocument {
-    let execution = crate::value::execute_document(source, source_path, db);
-    project_execution(source, source_path, db, &execution)
-}
-
-#[cfg(test)]
-pub(crate) fn project_execution(
-    source: &str,
-    source_path: Option<&str>,
-    db: &IrAnalysisDb,
-    execution: &DocumentExecution,
-) -> EvaluatedDocument {
-    project_execution_at_offset(source, source_path, 0, db, execution)
-}
-
 #[tracing::instrument(skip_all, level = "debug", fields(source_path))]
 pub(crate) fn project_execution_at_offset(
     _source: &str,
@@ -255,9 +234,6 @@ impl Projection<'_> {
             let parts = match fragment {
                 AbstractFragment::Scalar(scalar) => scalar.parts,
                 AbstractFragment::Splice(splice) => vec![StringPart::Splice(splice)],
-                AbstractFragment::Opaque(opaque) => {
-                    vec![StringPart::Taint(TaintPart::abstaining(opaque.taint))]
-                }
                 AbstractFragment::Mapping(_) | AbstractFragment::Sequence(_) => Vec::new(),
             };
             keys.push(KeyArm {

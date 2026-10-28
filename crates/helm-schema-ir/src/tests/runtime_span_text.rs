@@ -8,7 +8,8 @@ use helm_schema_syntax::Span;
 use test_util::prelude::sim_assert_eq;
 
 use crate::analysis_db::IrAnalysisDb;
-use crate::value::{DocumentExecution, Exit, Flow, Normal, State, Value, execute_document};
+use crate::value::tests::execute_document;
+use crate::value::{DocumentExecution, Exit, Flow, Normal, State, Value};
 
 fn execute(source: &str) -> DocumentExecution {
     let db = IrAnalysisDb::new(&DefineIndex::new());

@@ -10,12 +10,6 @@ use super::OutputPlacement;
 use crate::value::{Coverage, Value};
 use crate::value::{ExecutedSite, ObservationId, OutputNode, State, TextBuffer, TextPart};
 
-impl super::FilePlacement {
-    pub(in crate::value) fn output_graphs(&self) -> impl Iterator<Item = &TextBuffer> {
-        self.outputs.iter().map(|output| output.graph.as_ref())
-    }
-}
-
 struct Fixture {
     state: State,
     site: ExecutedSite,
@@ -57,10 +51,12 @@ fn fixture(prefix: &str, suffix: &str) -> Fixture {
 
 fn placement(fixture: &Fixture) -> PlainScalarPlacement {
     OutputPlacement::new(
-        Rc::new(fixture.state.output.clone()),
+        &Rc::new(fixture.state.output.clone()),
         &Predicate::True,
         &fixture.memo,
         crate::value::FileOutput::Manifest,
+        &mut super::SyntaxContexts::default(),
+        &fixture.state.heap.arena.input_paths.borrow(),
     )
     .plain_placement(&fixture.site, &fixture.memo)
 }
@@ -227,6 +223,84 @@ fn selected_output_uses_the_target_condition_without_forking_state() {
 }
 
 #[test]
+fn partial_choices_only_preserve_states_proved_by_both_arms() {
+    use super::quoted::LexicalState;
+
+    let fixture = fixture("value: ", "\n");
+    let decision =
+        fixture
+            .state
+            .heap
+            .arena
+            .decision(Predicate::False, Predicate::False, Coverage::Partial);
+    for (other, preserves) in [
+        (TextPart::Bytes("other".to_owned()), true),
+        (TextPart::Bytes("\" # repaired".to_owned()), false),
+        (TextPart::Unknown(BTreeSet::new()), false),
+    ] {
+        let selected = TextPart::Select {
+            decision: Rc::clone(&decision),
+            yes: Rc::new(TextBuffer {
+                parts: vec![TextPart::Bytes("safe".to_owned()).into()],
+                ..TextBuffer::default()
+            }),
+            no: Rc::new(TextBuffer {
+                parts: vec![other.into()],
+                ..TextBuffer::default()
+            }),
+        };
+        let input_paths = fixture.state.heap.arena.input_paths.borrow();
+        let mut transfers = super::LexicalTransfers::new(&input_paths);
+        let states = transfers.part(&selected, LexicalState::Double, &fixture.memo);
+        sim_assert_eq!(have: states.get(&LexicalState::Double).cloned().map(|condition| fixture.memo.normalize(condition)), want: preserves.then_some(Predicate::True));
+        sim_assert_eq!(have: states.len(), want: usize::from(preserves));
+    }
+}
+
+#[test]
+fn partial_control_does_not_hide_output_failure_or_a_possible_survivor() {
+    use crate::value::{AbortReason, DecisionEdge, Exit, FileOutput, Flow, Normal};
+
+    let mut fixture = fixture("value: \"", "\"");
+    let expected = OutputPlacement::new(
+        &Rc::new(fixture.state.output.clone()),
+        &Predicate::True,
+        &fixture.memo,
+        FileOutput::Manifest,
+        &mut super::SyntaxContexts::default(),
+        &fixture.state.heap.arena.input_paths.borrow(),
+    )
+    .invalid(&fixture.memo);
+    assert_ne!(expected, Predicate::False);
+    let decision =
+        fixture
+            .state
+            .heap
+            .arena
+            .decision(Predicate::False, Predicate::False, Coverage::Partial);
+    fixture.state.active.push(DecisionEdge {
+        test: decision,
+        taken: true,
+    });
+    let normal = Exit {
+        state: fixture.state.clone(),
+        flow: Flow::Normal(Normal {
+            value: Value::nil(),
+        }),
+    };
+    let alone = super::FilePlacement::seal(std::slice::from_ref(&normal), FileOutput::Manifest);
+    sim_assert_eq!(have: alone.abort, want: expected);
+
+    // A partial abort may represent continuing execution and must remain a survivor.
+    let uncertain = Exit {
+        state: fixture.state,
+        flow: Flow::Abort(AbortReason::Fail),
+    };
+    let joined = super::FilePlacement::seal(&[normal, uncertain], FileOutput::Manifest);
+    sim_assert_eq!(have: joined.abort, want: Predicate::False);
+}
+
+#[test]
 fn marker_provenance_uses_graph_boundaries_for_manifests_and_notes() {
     let db = crate::analysis_db::IrAnalysisDb::new(&helm_schema_ast::DefineIndex::new());
     for path in ["templates/probe.yaml", "templates/NOTES.txt"] {
@@ -234,7 +308,7 @@ fn marker_provenance_uses_graph_boundaries_for_manifests_and_notes() {
             (">safe{{ .Values.tail }}", true),
             ("<no {{ .Values.tail }}", false),
         ] {
-            let execution = crate::value::execute_document(source, Some(path), &db);
+            let execution = crate::value::tests::execute_document(source, Some(path), &db);
             sim_assert_eq!(
                 have: execution.text_sites().map(|site| site.rendered_unchanged).collect::<Vec<_>>(),
                 want: vec![literal_unchanged],
@@ -253,7 +327,7 @@ fn marker_provenance_uses_graph_boundaries_for_manifests_and_notes() {
 fn complete_marker_provenance_demotes_split_emissions_but_keeps_safe_neighbours() {
     let db = crate::analysis_db::IrAnalysisDb::new(&helm_schema_ast::DefineIndex::new());
     for path in ["templates/probe.yaml", "templates/NOTES.txt"] {
-        let execution = crate::value::execute_document(
+        let execution = crate::value::tests::execute_document(
             r#"A<no {{ "value" }}>B{{ "untouched" }}"#,
             Some(path),
             &db,
@@ -276,7 +350,7 @@ fn nested_capture_contexts_share_the_marker_provenance() {
     );
     let db = crate::analysis_db::IrAnalysisDb::new(&defines);
     for path in ["templates/probe.yaml", "templates/NOTES.txt"] {
-        let execution = crate::value::execute_document(
+        let execution = crate::value::tests::execute_document(
             r#"A{{ include "outer" . }}B{{ "safe" }}"#,
             Some(path),
             &db,
@@ -324,10 +398,12 @@ fn independent_scalar_choices_share_one_ownership_context() {
         fixture.state.output.bytes("\"\n");
     }
     let placement = OutputPlacement::new(
-        Rc::new(fixture.state.output),
+        &Rc::new(fixture.state.output),
         &Predicate::True,
         &fixture.memo,
         crate::value::FileOutput::Manifest,
+        &mut super::SyntaxContexts::default(),
+        &fixture.state.heap.arena.input_paths.borrow(),
     );
     sim_assert_eq!(have: placement.layouts.len(), want: 1);
     sim_assert_eq!(have: placement.unknown, want: Predicate::False);
@@ -362,7 +438,8 @@ fn independent_scalar_choices_share_one_ownership_context() {
 fn shared_layouts_keep_concatenated_emissions_separate() {
     let source = "value: {{ if .Values.enabled }}{{ .Values.a }}{{ .Values.b }}{{ else }}{{ .Values.c }}{{ .Values.d }}{{ end }}";
     let db = crate::analysis_db::IrAnalysisDb::new(&helm_schema_ast::DefineIndex::new());
-    let execution = crate::value::execute_document(source, Some("templates/probe.yaml"), &db);
+    let execution =
+        crate::value::tests::execute_document(source, Some("templates/probe.yaml"), &db);
     let slots = execution
         .placed_documents()
         .map(|document| {
@@ -418,10 +495,12 @@ fn infeasible_structural_choices_do_not_consume_the_layout_budget() {
         ..TextBuffer::default()
     };
     let placement = OutputPlacement::new(
-        Rc::new(graph),
+        &Rc::new(graph),
         &active,
         &fixture.memo,
         crate::value::FileOutput::Manifest,
+        &mut super::SyntaxContexts::default(),
+        &fixture.state.heap.arena.input_paths.borrow(),
     );
     sim_assert_eq!(have: placement.layouts.len(), want: 1);
     sim_assert_eq!(have: placement.unknown, want: Predicate::False);
@@ -475,4 +554,64 @@ fn exhausted_shared_occurrence_queries_remain_unknown() {
     };
     sim_assert_eq!(have: term.occurrence_guard(id), want: None);
     sim_assert_eq!(have: term.inputs(), want: BTreeSet::from([ValuesPath::parse("value")]));
+}
+
+#[test]
+fn recovered_frozen_continuations_do_not_certify_resource_placement() {
+    let mut fixture = fixture("value: \"", "\"\n");
+    let continuation = fixture.state.heap.freeze(&Value::string("\\\n"));
+    fixture
+        .state
+        .output
+        .parts
+        .insert(1, TextPart::Frozen(continuation).into());
+    let placed = OutputPlacement::new(
+        &Rc::new(fixture.state.output),
+        &Predicate::True,
+        &fixture.memo,
+        crate::value::FileOutput::Manifest,
+        &mut super::SyntaxContexts::default(),
+        &fixture.state.heap.arena.input_paths.borrow(),
+    );
+    assert_ne!(placed.invalid(&fixture.memo), Predicate::False);
+    sim_assert_eq!(have: placed.layouts.iter().map(|layout| layout.documents.len()).sum::<usize>(), want: 0);
+}
+
+#[test]
+fn shared_syntax_keeps_frozen_inputs_and_guards_separate() {
+    let first = fixture("value: \"", "\"\n");
+    let mut second = fixture("value: \"", "\"\n");
+    second.state.output.parts[1].part = TextPart::Frozen(
+        second
+            .state
+            .heap
+            .freeze(&Value::input(ValuesPath::parse("other"))),
+    );
+    let mut syntax = super::SyntaxContexts::default();
+    let first = OutputPlacement::new(
+        &Rc::new(first.state.output),
+        &Predicate::True,
+        &first.memo,
+        crate::value::FileOutput::Manifest,
+        &mut syntax,
+        &first.state.heap.arena.input_paths.borrow(),
+    );
+    let guard = Predicate::truthy_path("flag");
+    let second = OutputPlacement::new(
+        &Rc::new(second.state.output),
+        &guard,
+        &second.memo,
+        crate::value::FileOutput::Manifest,
+        &mut syntax,
+        &second.state.heap.arena.input_paths.borrow(),
+    );
+    assert!(Rc::ptr_eq(
+        &first.layouts[0].documents[0].ownership,
+        &second.layouts[0].documents[0].ownership,
+    ));
+    sim_assert_eq!(have: &first.layouts[0].documents[0].condition, want: &Predicate::True);
+    sim_assert_eq!(have: &second.layouts[0].documents[0].condition, want: &guard);
+    let memo = PredicateMemo::new();
+    sim_assert_eq!(have: first.invalid(&memo).value_paths(), want: BTreeSet::from([ValuesPath::parse("value")]));
+    sim_assert_eq!(have: second.invalid(&memo).value_paths(), want: BTreeSet::from([ValuesPath::parse("other"), ValuesPath::parse("flag")]));
 }

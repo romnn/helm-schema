@@ -465,11 +465,6 @@ fn fail_value_requirement_schema(
                     parts.push(string);
                 }
             }
-            FailValueRequirement::QuotedSerializationSafe { style, templated } => {
-                parts.push(crate::quoted_serialization::reference_schema(
-                    *style, *templated,
-                ));
-            }
             FailValueRequirement::PrintfStringOperand => {
                 parts.push(serde_json::json!({
                     "anyOf": [

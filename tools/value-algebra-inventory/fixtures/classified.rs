@@ -5,3 +5,9 @@ struct BorrowedWrapper<'a> {
 enum BorrowedValue<'a> {
     Known(BorrowedWrapper<'a>),
 }
+enum OutputBehavior {
+    Transform,
+}
+struct FunctionPolicy {
+    behavior: OutputBehavior,
+}

@@ -210,7 +210,7 @@ fn guard_metadata_preserves_raw_identity_through_member_selection() {
 
     sim_assert_eq!(have: selected.as_ref(), want: Some(&expected));
     let db = crate::analysis_db::IrAnalysisDb::new(&helm_schema_ast::DefineIndex::new());
-    let execution = crate::value::execute_document(
+    let execution = crate::value::tests::execute_document(
         r#"{{ if hasKey (index .Values.workers.celery.sets "*" "securityContexts" "pod") "runAsUser" }}{{ "selected" }}{{ end }}"#,
         None,
         &db,

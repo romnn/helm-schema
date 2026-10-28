@@ -1,7 +1,7 @@
 use std::fmt::Write as _;
 
 use crate::analysis_db::IrAnalysisDb;
-use crate::value::execute_document;
+use crate::value::tests::execute_document;
 use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_ast::DefineIndex;
 use test_util::prelude::sim_assert_eq;

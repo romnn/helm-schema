@@ -39,7 +39,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 HERE = ROOT / "plan/value-algebra-r0-inventory"
 SRC = "crates/helm-schema-ir/src"
 BASE = {"Predicate", "TruthCondition", "ScalarValueDispatch", "ScalarValue", "AbstractValue", "ValuesPath",
-        "HelperOutputMeta", "GoType", "IrAnalysisDb", "Namespace"}
+        "HelperOutputMeta", "GoType", "IrAnalysisDb", "Namespace", "OutputBehavior"}
 ALL_VARIANTS = {"AbstractValue", "ScalarValue", "ScalarContent", "GoType"}
 # Semantic landings use the admission ratchet rather than consolidation-only producer counts.
 SEMANTIC_STAGES = {"R3b"}
@@ -280,7 +280,7 @@ def self_test(found, rows, baseline):
     fixture = "tools/value-algebra-inventory/fixtures/classified.rs"
     parsed = candidates(fixture)
     expected = {f"alias:{fixture}:SemanticAlias", f"field:{fixture}:BorrowedWrapper.value",
-                f"variant:{fixture}:BorrowedValue::Known"}
+                f"variant:{fixture}:BorrowedValue::Known", f"field:{fixture}:FunctionPolicy.behavior"}
     assert set(parsed) == expected, f"semantic closure fixture differs: {sorted(parsed)}"
     classified = [dict.fromkeys(COLUMNS, "") | {"key": key, "class": "D"} for key in expected]
     assert not check(parsed, classified, classified, set(), []), "classified fixture failed"

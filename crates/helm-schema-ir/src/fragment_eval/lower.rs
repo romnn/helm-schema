@@ -31,17 +31,13 @@ pub(crate) fn lower_scalar_dispatch(
     dispatch: &ScalarValueDispatch,
     kind: ValueKind,
 ) -> Option<Guarded<AbstractFragment>> {
-    let dispatch = dispatch.content()?;
+    let arms = lower_scalar_dispatch_arms(dispatch, kind)?;
     let mut out = Guarded::empty();
-    for (condition, value) in dispatch.arms() {
-        if *condition == Predicate::False {
-            continue;
-        }
-        let rendered = value.rendered_parts()?;
+    for (condition, parts) in arms {
         out.arms.push((
-            condition.clone(),
+            condition,
             AbstractFragment::Scalar(AbstractString {
-                parts: lower_rendered_parts(&rendered, kind),
+                parts,
                 suppressed: false,
             }),
         ));

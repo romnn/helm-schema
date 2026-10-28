@@ -333,22 +333,6 @@ pub(super) fn record_fail_conjunction(
             );
             return;
         }
-        crate::observed_facts::CaptureKind::QuotedSerialization {
-            path,
-            style,
-            templated,
-        } => {
-            record_value_requirement_capture(
-                paths,
-                capture,
-                &path.encode(),
-                FailValueRequirement::QuotedSerializationSafe {
-                    style: *style,
-                    templated: *templated,
-                },
-            );
-            return;
-        }
         crate::observed_facts::CaptureKind::PrintfStringOperand { path } => {
             record_value_requirement_capture(
                 paths,

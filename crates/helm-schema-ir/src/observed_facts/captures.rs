@@ -174,14 +174,6 @@ pub(crate) enum CaptureKind {
         pattern: String,
         templated: bool,
     },
-    /// A raw splice inside a manually quoted scalar: whenever the capture's
-    /// execution predicates hold, every string the path's value contributes
-    /// to the rendered token must be valid content for the quoting style.
-    QuotedSerialization {
-        path: ValuesPath,
-        style: helm_schema_core::QuotedScalarStyle,
-        templated: bool,
-    },
     /// A `%s` substitution opens a plain token, so the raw operand must
     /// format as either string text or a structurally safe mapping.
     PrintfStringOperand { path: ValuesPath },
@@ -267,7 +259,6 @@ impl CaptureKind {
             | Self::AbsenceAborts { path }
             | Self::ComparableKind { path, .. }
             | Self::ValuePattern { path, .. }
-            | Self::QuotedSerialization { path, .. }
             | Self::PrintfStringOperand { path }
             | Self::PlainSlotText { path, .. } => Some(path),
         }
@@ -296,7 +287,6 @@ impl CaptureKind {
             | Self::AbsenceAborts { path }
             | Self::ComparableKind { path, .. }
             | Self::ValuePattern { path, .. }
-            | Self::QuotedSerialization { path, .. }
             | Self::PrintfStringOperand { path }
             | Self::PlainSlotText { path, .. } => {
                 *path = map(path.clone());

@@ -1,8 +1,9 @@
 use std::collections::BTreeSet;
 use std::fmt::Write as _;
+use std::rc::Rc;
 
-use crate::analysis_db::IrAnalysisDb;
-use crate::value::{DocumentExecution, execute_document};
+use crate::analysis_db::{IrAnalysisDb, ParsedTemplateSource};
+use crate::value::DocumentExecution;
 use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_ast::DefineIndex;
 use helm_schema_core::Predicate;
@@ -37,6 +38,31 @@ fn texts(source: &str) -> Vec<Option<String>> {
         .collect()
 }
 
+#[tracing::instrument(skip_all)]
+pub(crate) fn execute_document(
+    source: &str,
+    source_path: Option<&str>,
+    db: &IrAnalysisDb,
+) -> DocumentExecution {
+    let mut document = DocumentExecution::new(Vec::new(), super::FileOutput::Manifest);
+    super::session::execute_files(
+        vec![db.parsed_source(source, source_path, source_path.unwrap_or("gotpl"))],
+        db,
+        |_, execution| document = DocumentExecution::new(execution.exits, execution.output),
+    );
+    document
+}
+
+fn prepared_sources(
+    sources: &[crate::symbolic::SymbolicTemplate<'_>],
+    db: &IrAnalysisDb,
+) -> Vec<Rc<ParsedTemplateSource>> {
+    sources
+        .iter()
+        .map(|source| db.parsed_source(source.source, Some(source.source_path), source.source_path))
+        .collect()
+}
+
 pub(crate) fn execute_documents(
     sources: &[crate::symbolic::SymbolicTemplate<'_>],
     db: &IrAnalysisDb,
@@ -45,15 +71,11 @@ pub(crate) fn execute_documents(
         .iter()
         .map(|_| DocumentExecution::new(Vec::new(), crate::value::FileOutput::Manifest))
         .collect();
-    super::session::execute_files(
-        super::session::prepared_sources(sources, db),
-        db,
-        |index, execution| {
-            if let Some(document) = documents.get_mut(index) {
-                *document = DocumentExecution::new(execution.exits, execution.output);
-            }
-        },
-    );
+    super::session::execute_files(prepared_sources(sources, db), db, |index, execution| {
+        if let Some(document) = documents.get_mut(index) {
+            *document = DocumentExecution::new(execution.exits, execution.output);
+        }
+    });
     documents
 }
 
@@ -732,7 +754,7 @@ mod joined_query_cases {
     fn execute(source: &str) -> crate::value::DocumentExecution {
         let defines = DefineIndex::new();
         let db = crate::analysis_db::IrAnalysisDb::new(&defines);
-        crate::value::execute_document(source, None, &db)
+        crate::value::tests::execute_document(source, None, &db)
     }
 
     #[test]
@@ -1371,7 +1393,8 @@ mod header_reconvergence_laws {
     use test_util::prelude::sim_assert_eq;
 
     use crate::analysis_db::IrAnalysisDb;
-    use crate::value::{DocumentExecution, execute_document};
+    use crate::value::DocumentExecution;
+    use crate::value::tests::execute_document;
 
     fn run(source: &str) -> DocumentExecution {
         let mut defines = DefineIndex::new();
@@ -1628,7 +1651,7 @@ mod render_session {
 
 mod render_stripping {
     use crate::analysis_db::IrAnalysisDb;
-    use crate::value::execute_document;
+    use crate::value::tests::execute_document;
     use helm_schema_ast::DefineIndex;
     use helm_schema_core::Predicate;
     use test_util::prelude::sim_assert_eq;
@@ -1700,7 +1723,8 @@ mod render_stripping {
 
 mod observation_certainty {
     use crate::analysis_db::IrAnalysisDb;
-    use crate::value::{ScalarValueDispatch, execute_document};
+    use crate::value::ScalarValueDispatch;
+    use crate::value::tests::execute_document;
     use color_eyre::eyre::{self, OptionExt as _};
     use helm_schema_ast::DefineIndex;
     use helm_schema_core::{GuardValue, ValuesPath};
@@ -2390,9 +2414,10 @@ mod conditional_input_backing_laws {
 
     use crate::analysis_db::IrAnalysisDb;
     use crate::symbolic::SymbolicTemplate;
+    use crate::value::tests::execute_document;
     use crate::value::{
         Coverage, Datum, Field, Flow, Leaf, MapType, ObjectData, ObjectVersion, State,
-        TypeCoverage, UnknownValue, Value, ValueNode, execute_document, execute_documents,
+        TypeCoverage, UnknownValue, Value, ValueNode, execute_documents,
     };
 
     fn typed_map(input: &Value) -> Value {

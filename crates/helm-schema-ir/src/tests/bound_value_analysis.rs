@@ -14,7 +14,7 @@ struct GetBinding {
 fn execute(source: &str) -> crate::value::DocumentExecution {
     let defines = DefineIndex::new();
     let db = IrAnalysisDb::new(&defines);
-    crate::value::execute_document(source, None, &db)
+    crate::value::tests::execute_document(source, None, &db)
 }
 
 fn extract_bound_values(

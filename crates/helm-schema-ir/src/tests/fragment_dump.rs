@@ -74,18 +74,6 @@ fn dump_node(node: &AbstractFragment, depth: usize, out: &mut String) {
         AbstractFragment::Splice(splice) => {
             let _ = writeln!(out, "{pad}{}", fmt_splice(splice));
         }
-        AbstractFragment::Opaque(opaque) => {
-            if opaque.taint.is_empty() {
-                let _ = writeln!(out, "{pad}opaque");
-            } else {
-                let taint: Vec<String> = opaque
-                    .taint
-                    .iter()
-                    .map(helm_schema_core::ValuesPath::encode)
-                    .collect();
-                let _ = writeln!(out, "{pad}opaque taint={{{}}}", taint.join(", "));
-            }
-        }
     }
 }
 
@@ -128,17 +116,7 @@ fn fmt_splice(splice: &Splice) -> String {
         ValueKind::GoFormattedMap => "go-formatted-map",
         ValueKind::GoFormattedSequence => "go-formatted-sequence",
     };
-    let mut rendered = format!("splice {} {kind}", splice.values_path.encode());
-    if splice.meta.defaulted {
-        rendered.push_str(" defaulted");
-    }
-    if splice.meta.encoded {
-        rendered.push_str(" encoded");
-    }
-    if splice.meta.range_key {
-        rendered.push_str(" range-key");
-    }
-    rendered
+    format!("splice {} {kind}", splice.values_path.encode())
 }
 
 fn fmt_condition(condition: &Predicate) -> String {
@@ -182,6 +160,20 @@ fn fmt_guard(guard: &Guard) -> String {
         } => {
             let suffix = if *templated { " templated" } else { "" };
             format!("matches({} ~ {pattern}{suffix})", path.encode())
+        }
+        Guard::MatchesValue { path, pattern } => {
+            format!("matchesValue({}: {pattern:?})", path.encode())
+        }
+        Guard::CollectionPattern {
+            path,
+            domain,
+            quantifier,
+            pattern,
+        } => {
+            format!(
+                "collectionPattern({}: {domain:?} {quantifier:?} ~ {pattern})",
+                path.encode()
+            )
         }
         Guard::NotMatchesPattern { path, pattern } => {
             format!("notMatches({} ~ {pattern})", path.encode())

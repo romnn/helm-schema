@@ -5,7 +5,8 @@ use indoc::formatdoc;
 use test_util::prelude::sim_assert_eq;
 
 use crate::analysis_db::IrAnalysisDb;
-use crate::value::{Coverage, Field, Remainder, State, Value, execute_document};
+use crate::value::tests::execute_document;
+use crate::value::{Coverage, Field, Remainder, State, Value};
 
 fn survivor_map_rejects_a(consumer: &str) {
     let source = formatdoc! {r#"
