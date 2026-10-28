@@ -143,6 +143,27 @@ impl FrozenValue {
 }
 
 impl DocumentExecution {
+    pub(crate) fn observed_site_truth(&self, site: &ExecutedSite) -> Option<Predicate> {
+        if !site.coverage_exact() {
+            return None;
+        }
+        let exit = self.exits.iter().find(|exit| {
+            exit.state
+                .sites
+                .iter()
+                .any(|observed| std::ptr::eq(observed, site))
+        })?;
+        // Query the observed heap before later control decisions restrict the value.
+        let mut state = exit.state.clone();
+        state.heap.version = Rc::clone(&site.value.heap);
+        state.active.clear();
+        let test = state.test(&site.value.value);
+        (test.coverage == super::Coverage::Exact
+            && !test.when_true.contains_approximation()
+            && !test.when_false.contains_approximation())
+        .then(|| test.when_true.clone())
+    }
+
     pub(crate) fn text_sites(&self) -> impl Iterator<Item = &super::ExecutedText> {
         self.exits
             .iter()

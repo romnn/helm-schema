@@ -582,67 +582,35 @@ struct TypedYamlMatchProof {
     proof: ShapeProof,
 }
 
-/// Known scalar alternatives for one evaluated value.
-///
-/// The arm conditions are mutually exclusive. [`Self::complete`] records
-/// whether they also cover the whole input domain; helper output can retain
-/// exact arms even when another branch remains unknown. Root-context fields
-/// assigned across a complete `if`/`else` chain and evaluated helper output
-/// both use this representation, so equality and truthiness consume the same
-/// semantic fact.
+/// Guarded scalar content projected by the executed-output bridge.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct ScalarValueDispatch {
-    arms: Vec<(helm_schema_core::Predicate, ScalarValue)>,
-    complete: bool,
+    arms: Vec<(Predicate, ScalarContent)>,
 }
 
-/// One sealed leaf carries independent runtime type and optional legacy content.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub(crate) struct ScalarValue {
-    go_type: kinds::GoType,
-    content: Option<ScalarContent>,
-}
-
-/// Borrowed legacy content; type-only alternatives never become a transport projection.
+/// Borrowed contents of an executed scalar projection.
 #[derive(Clone, Copy)]
 pub(crate) struct ContentView<'a> {
     dispatch: &'a ScalarValueDispatch,
-    pub(crate) complete: bool,
 }
 
 impl<'a> ContentView<'a> {
     pub(crate) fn arms(self) -> impl Iterator<Item = (&'a Predicate, &'a ScalarContent)> {
-        self.dispatch.arms.iter().filter_map(|(condition, value)| {
-            value.content.as_ref().map(|content| (condition, content))
-        })
-    }
-
-    pub(crate) fn single(self) -> Option<(&'a Predicate, &'a ScalarContent)> {
-        let mut arms = self.arms();
-        let first = arms.next()?;
-        arms.next().is_none().then_some(first)
+        let Self { dispatch } = self;
+        let ScalarValueDispatch { arms } = dispatch;
+        arms.iter().map(|(condition, content)| (condition, content))
     }
 }
 
 impl ScalarValueDispatch {
     pub(crate) fn content(&self) -> Option<ContentView<'_>> {
-        if !self.arms.is_empty() && self.arms.iter().all(|(_, value)| value.content.is_none()) {
-            return None;
-        }
-        Some(ContentView {
-            dispatch: self,
-            complete: self.complete && self.arms.iter().all(|(_, value)| value.content.is_some()),
-        })
+        let Self { arms } = self;
+        (!arms.is_empty()).then_some(ContentView { dispatch: self })
     }
 
-    pub(crate) fn bind_content(arms: Vec<(Predicate, ScalarContent)>, complete: bool) -> Self {
-        Self {
-            arms: arms
-                .into_iter()
-                .map(|(condition, content)| (condition, ScalarValue::untyped(content)))
-                .collect(),
-            complete,
-        }
+    pub(crate) fn bind_content(arms: Vec<(Predicate, ScalarContent)>, _complete: bool) -> Self {
+        // Frozen-value coverage owns completeness; this projection carries known content.
+        Self { arms }
     }
 }
 

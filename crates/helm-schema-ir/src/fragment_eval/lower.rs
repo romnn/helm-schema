@@ -3,35 +3,26 @@
 use std::collections::BTreeSet;
 
 use crate::ValueKind;
-use crate::scalar_value::{ScalarRenderPart, ScalarValueDispatch};
-use helm_schema_core::Predicate;
+use crate::scalar_value::{ExecutedScalarView, ScalarRenderPart};
 
 use super::domain::{
     AbstractFragment, AbstractString, Guarded, PathCondition, Splice, SpliceMeta, StringPart,
 };
 
-pub(crate) fn lower_scalar_dispatch_arms(
-    dispatch: &ScalarValueDispatch,
+pub(crate) fn lower_executed_scalar_arms(
+    scalar: &ExecutedScalarView,
     kind: ValueKind,
 ) -> Option<Vec<(PathCondition, Vec<StringPart>)>> {
-    let dispatch = dispatch.content()?;
-    let mut arms = Vec::with_capacity(dispatch.arms().count());
-    for (condition, value) in dispatch.arms() {
-        if *condition == Predicate::False {
-            continue;
-        }
-        let rendered = value.rendered_parts()?;
-        let parts = lower_rendered_parts(&rendered, kind);
-        arms.push((condition.clone(), parts));
-    }
-    Some(arms)
+    scalar.map_rendered_arms(|condition, rendered| {
+        (condition.clone(), lower_rendered_parts(rendered, kind))
+    })
 }
 
-pub(crate) fn lower_scalar_dispatch(
-    dispatch: &ScalarValueDispatch,
+pub(crate) fn lower_executed_scalar(
+    scalar: &ExecutedScalarView,
     kind: ValueKind,
 ) -> Option<Guarded<AbstractFragment>> {
-    let arms = lower_scalar_dispatch_arms(dispatch, kind)?;
+    let arms = lower_executed_scalar_arms(scalar, kind)?;
     let mut out = Guarded::empty();
     for (condition, parts) in arms {
         out.arms.push((

@@ -1742,7 +1742,7 @@ mod observation_certainty {
         assert!(earlier.coverage_exact());
         sim_assert_eq!(
             have: earlier.projected_scalar(),
-            want: Some(ScalarValueDispatch::constant(GuardValue::string("earlier")))
+            want: Some(ScalarValueDispatch::bind_content(vec![(helm_schema_core::Predicate::True, super::super::ScalarContent::Literal(GuardValue::string("earlier")))], true))
         );
         sim_assert_eq!(have: earlier.rendered_scalar(), want: earlier.projected_scalar());
         sim_assert_eq!(have: execution.text().map(|(_, text)| text.exact_text()).collect::<Vec<_>>(), want: vec![None]);
@@ -1779,7 +1779,7 @@ mod observation_certainty {
         sim_assert_eq!(have: output.value().identity(), want: Some(&ValuesPath::parse("number")));
         sim_assert_eq!(
             have: output.projected_scalar(),
-            want: Some(ScalarValueDispatch::identity(ValuesPath::parse("number")))
+            want: Some(ScalarValueDispatch::bind_content(vec![(helm_schema_core::Predicate::True, super::super::ScalarContent::Identity(ValuesPath::parse("number")))], true))
         );
         // Marker-bearing strings retain no placement claim, while safe scalar inputs do.
         let rendered = output
@@ -1788,7 +1788,7 @@ mod observation_certainty {
         let content = rendered
             .content()
             .ok_or_eyre("missing safe scalar content")?;
-        assert!(!content.complete);
+        sim_assert_eq!(have: content.arms().count(), want: 1);
         assert!(
             content
                 .arms()
@@ -1810,7 +1810,7 @@ mod observation_certainty {
         assert!(output.coverage_exact());
         sim_assert_eq!(
             have: output.projected_scalar(),
-            want: Some(ScalarValueDispatch::constant(GuardValue::string("1<no value>")))
+            want: Some(ScalarValueDispatch::bind_content(vec![(helm_schema_core::Predicate::True, super::super::ScalarContent::Literal(GuardValue::string("1<no value>")))], true))
         );
         sim_assert_eq!(have: output.rendered_scalar(), want: None);
         sim_assert_eq!(have: execution.text().map(|(_, text)| text.exact_text()).collect::<Vec<_>>(), want: vec![Some("number: 1".to_owned())]);

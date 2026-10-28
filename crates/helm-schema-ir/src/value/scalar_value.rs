@@ -4,14 +4,11 @@
 //! truthiness, equality, pattern matching, and semantic-version comparison
 //! all consume one typed representation.
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeSet;
 
-use helm_schema_core::{GuardValue, Predicate, PredicateMemo};
+use helm_schema_core::{Predicate, PredicateMemo};
 
-use super::kinds::GoType;
-use super::{MAX_SCALAR_DISPATCH_STATES, ScalarValue};
-
-/// One exact scalar value carried by a dispatch arm.
+/// Exact scalar content carried by a canonical value leaf.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum ScalarContent {
     /// A concrete Go-template scalar.
@@ -50,236 +47,8 @@ pub(crate) enum ScalarRenderPart {
     },
 }
 
-pub(crate) use super::ScalarValueDispatch;
-
-impl ScalarValueDispatch {
-    pub(crate) fn constant(value: helm_schema_core::GuardValue) -> Self {
-        Self {
-            arms: vec![(
-                helm_schema_core::Predicate::True,
-                ScalarValue::untyped(ScalarContent::Literal(value)),
-            )],
-            complete: true,
-        }
-    }
-
-    pub(crate) fn identity(path: helm_schema_core::ValuesPath) -> Self {
-        Self {
-            arms: vec![(
-                helm_schema_core::Predicate::True,
-                ScalarValue::untyped(ScalarContent::Identity(path)),
-            )],
-            complete: true,
-        }
-    }
-
-    /// Render every known arm through Sprig's total `toString` conversion.
-    ///
-    /// The conversion changes runtime value semantics without changing
-    /// provenance: equality now compares rendered text, while effects still
-    /// attribute the operand to its source path.
-    pub(crate) fn stringified(&self) -> Self {
-        self.map_content(ScalarContent::stringified)
-    }
-
-    fn map_content(
-        &self,
-        mut transform: impl FnMut(&ScalarContent) -> Option<ScalarContent>,
-    ) -> Self {
-        let mut complete = self.complete;
-        let mut arms = Vec::new();
-        for (condition, value) in &self.arms {
-            let value = match &value.content {
-                Some(content) => {
-                    let Some(content) = transform(content) else {
-                        complete = false;
-                        continue;
-                    };
-                    ScalarValue::untyped(content)
-                }
-                None => ScalarValue::type_only(GoType::Unknown),
-            };
-            arms.push((condition.clone(), value));
-        }
-        let mut result = Self { arms, complete };
-        if self.content().is_some() && result.content_len() == 0 {
-            result.arms.clear();
-        }
-        result
-    }
-
-    /// Render one scalar argument through a literal `printf "%s"` format.
-    ///
-    /// Other formats abstain because their mismatch and padding languages
-    /// need a separate typed preimage before they can drive control flow.
-    pub(crate) fn printf_string(&self, format: &str) -> Option<Self> {
-        if format != "%s" {
-            return None;
-        }
-        let result = self.map_content(|value| match value {
-            ScalarContent::Literal(value) => {
-                helm_schema_ast::render_printf_scalar_values(format, std::slice::from_ref(value))
-                    .map(|value| {
-                        ScalarContent::Literal(helm_schema_core::GuardValue::string(value))
-                    })
-            }
-            ScalarContent::Identity(path) => {
-                Some(ScalarContent::PrintfStringIdentity(path.clone()))
-            }
-            ScalarContent::Rendered(parts) => rendered_constant(parts).and_then(|value| {
-                helm_schema_ast::render_printf_scalar_values(
-                    format,
-                    &[helm_schema_core::GuardValue::string(value)],
-                )
-                .map(|value| ScalarContent::Literal(helm_schema_core::GuardValue::string(value)))
-            }),
-            ScalarContent::PrintfStringIdentity(_)
-            | ScalarContent::SplitLength { .. }
-            | ScalarContent::Length(_) => None,
-        });
-        (result.content_len() != 0).then_some(result)
-    }
-
-    /// Apply one exact `trimPrefix`/`trimSuffix` transform to every scalar
-    /// arm whose successful result is known. Arms rejected by the transform's
-    /// strict string contract are omitted and make the dispatch incomplete.
-    pub(crate) fn trimmed(&self, token: &str, prefix: bool) -> Self {
-        self.map_content(|content| content.trimmed(token, prefix))
-    }
-
-    pub(crate) fn length(&self) -> Self {
-        self.map_content(|content| Some(ScalarContent::Length(Box::new(content.clone()))))
-    }
-
-    pub(crate) fn constant_value(&self) -> Option<helm_schema_core::GuardValue> {
-        let content = self.content()?;
-        if !content.complete {
-            return None;
-        }
-        let (predicate, value) = content.single()?;
-        (predicate == &Predicate::True)
-            .then(|| value.constant_value())
-            .flatten()
-    }
-
-    pub(crate) fn truth_condition_with_memo(&self, memo: &PredicateMemo) -> TruthCondition {
-        let Some(content) = self.content() else {
-            return TruthCondition::Unknown;
-        };
-        let mut truthy = Vec::new();
-        let mut falsy = Vec::new();
-        let mut fully_classified = true;
-        for (arm_condition, value) in content.arms() {
-            let Some(value_condition) = value.truth_condition() else {
-                fully_classified = false;
-                continue;
-            };
-            if let Some(condition) =
-                conjoin_predicates_with_memo(arm_condition.clone(), value_condition.clone(), memo)
-            {
-                truthy.push(condition);
-            }
-            if let Some(condition) =
-                conjoin_predicates_with_memo(arm_condition.clone(), value_condition.negated(), memo)
-            {
-                falsy.push(condition);
-            }
-        }
-        TruthCondition::from_subsets_with_memo(
-            any_predicates_with_memo(truthy, memo),
-            any_predicates_with_memo(falsy, memo),
-            content.complete && fully_classified,
-            memo,
-        )
-    }
-}
-
 impl ScalarContent {
-    fn stringified(&self) -> Option<Self> {
-        let parts = match self {
-            Self::Literal(value) => {
-                let text = match value {
-                    helm_schema_core::GuardValue::String(text)
-                    | helm_schema_core::GuardValue::Float(text) => text.clone(),
-                    helm_schema_core::GuardValue::Bool(value) => value.to_string(),
-                    helm_schema_core::GuardValue::Int(value) => value.to_string(),
-                    helm_schema_core::GuardValue::Null => "<nil>".to_string(),
-                };
-                vec![ScalarRenderPart::Text(text)]
-            }
-            Self::Identity(path) => vec![ScalarRenderPart::Identity {
-                path: path.clone(),
-                stringified: true,
-                lexical_escapes: BTreeSet::new(),
-            }],
-            Self::Rendered(parts) => parts.clone(),
-            Self::PrintfStringIdentity(path) => {
-                return Some(Self::PrintfStringIdentity(path.clone()));
-            }
-            Self::SplitLength { .. } | Self::Length(_) => return None,
-        };
-        Some(Self::Rendered(parts))
-    }
-
-    fn trimmed(&self, token: &str, prefix: bool) -> Option<Self> {
-        let trim = |text: &str| {
-            if prefix {
-                text.strip_prefix(token).unwrap_or(text)
-            } else {
-                text.strip_suffix(token).unwrap_or(text)
-            }
-            .to_string()
-        };
-        match self {
-            Self::Literal(helm_schema_core::GuardValue::String(text)) => Some(Self::Literal(
-                helm_schema_core::GuardValue::string(trim(text)),
-            )),
-            Self::Literal(_)
-            | Self::PrintfStringIdentity(_)
-            | Self::SplitLength { .. }
-            | Self::Length(_) => None,
-            Self::Identity(path) => {
-                let escape = if prefix {
-                    crate::helper_meta::LexicalEscape::TrimPrefix(token.to_string())
-                } else {
-                    crate::helper_meta::LexicalEscape::TrimSuffix(token.to_string())
-                };
-                Some(Self::Rendered(vec![ScalarRenderPart::Identity {
-                    path: path.clone(),
-                    stringified: false,
-                    lexical_escapes: BTreeSet::from([escape]),
-                }]))
-            }
-            Self::Rendered(parts) => {
-                if let Some(text) = rendered_constant(parts) {
-                    return Some(Self::Rendered(vec![ScalarRenderPart::Text(trim(&text))]));
-                }
-                let [
-                    ScalarRenderPart::Identity {
-                        path,
-                        stringified,
-                        lexical_escapes,
-                    },
-                ] = parts.as_slice()
-                else {
-                    return None;
-                };
-                let mut lexical_escapes = lexical_escapes.clone();
-                lexical_escapes.insert(if prefix {
-                    crate::helper_meta::LexicalEscape::TrimPrefix(token.to_string())
-                } else {
-                    crate::helper_meta::LexicalEscape::TrimSuffix(token.to_string())
-                });
-                Some(Self::Rendered(vec![ScalarRenderPart::Identity {
-                    path: path.clone(),
-                    stringified: *stringified,
-                    lexical_escapes,
-                }]))
-            }
-        }
-    }
-
-    pub(crate) fn rendered_parts(&self) -> Option<Vec<ScalarRenderPart>> {
+    fn rendered_parts(&self) -> Option<Vec<ScalarRenderPart>> {
         let parts = match self {
             Self::Literal(value) => {
                 let text = match value {
@@ -303,56 +72,6 @@ impl ScalarContent {
         };
         Some(parts)
     }
-
-    fn constant_value(&self) -> Option<helm_schema_core::GuardValue> {
-        match self {
-            Self::Literal(value) => Some(value.clone()),
-            Self::Identity(_)
-            | Self::PrintfStringIdentity(_)
-            | Self::SplitLength { .. }
-            | Self::Length(_) => None,
-            Self::Rendered(parts) => {
-                rendered_constant(parts).map(helm_schema_core::GuardValue::string)
-            }
-        }
-    }
-
-    fn truth_condition(&self) -> Option<helm_schema_core::Predicate> {
-        match self {
-            Self::Literal(value) => Some(bool_predicate(guard_value_is_truthy(value))),
-            Self::Identity(path) => Some(helm_schema_core::Predicate::from(
-                helm_schema_core::Guard::Truthy { path: path.clone() },
-            )),
-            Self::Rendered(parts) => rendered_constant(parts).map(|value| {
-                if value.is_empty() {
-                    helm_schema_core::Predicate::False
-                } else {
-                    helm_schema_core::Predicate::True
-                }
-            }),
-            Self::PrintfStringIdentity(path) => Some(
-                helm_schema_core::Predicate::from(helm_schema_core::Guard::MatchesPattern {
-                    path: path.clone(),
-                    pattern: "^$".to_string(),
-                    templated: false,
-                })
-                .negated(),
-            ),
-            Self::SplitLength { .. } => Some(helm_schema_core::Predicate::True),
-            Self::Length(_) => None,
-        }
-    }
-}
-
-fn rendered_constant(parts: &[ScalarRenderPart]) -> Option<String> {
-    let mut rendered = String::new();
-    for part in parts {
-        match part {
-            ScalarRenderPart::Text(text) => rendered.push_str(text),
-            ScalarRenderPart::Identity { .. } => return None,
-        }
-    }
-    Some(rendered)
 }
 
 pub(crate) fn any_predicates_with_memo(
@@ -383,14 +102,6 @@ fn factored_negated(
     memo: &PredicateMemo,
 ) -> helm_schema_core::Predicate {
     memo.normalize(helm_schema_core::Predicate::Not(Box::new(predicate)))
-}
-
-pub(crate) const fn bool_predicate(value: bool) -> helm_schema_core::Predicate {
-    if value {
-        helm_schema_core::Predicate::True
-    } else {
-        helm_schema_core::Predicate::False
-    }
 }
 
 /// Sound knowledge about the states in which a value is Helm-truthy or
@@ -633,106 +344,34 @@ fn conjoin_many(
     condition
 }
 
-impl ScalarValueDispatch {
-    pub(crate) fn merge_helper_content(
-        structural: Option<ScalarValueDispatch>,
-        projected: Option<ScalarValueDispatch>,
-        predicate_memo: &PredicateMemo,
-    ) -> Option<ScalarValueDispatch> {
-        // These are helper text projections; invocation completion owns the runtime return type.
-        let content_projection = |dispatch: Option<Self>| {
-            let mut dispatch = dispatch?;
-            dispatch.complete = dispatch.content()?.complete;
-            dispatch.arms.retain(|(_, value)| value.content.is_some());
-            dispatch.widen_types();
-            Some(dispatch)
-        };
-        let (structural, projected) = match (
-            content_projection(structural),
-            content_projection(projected),
-        ) {
-            (Some(structural), Some(projected)) => (structural, projected),
-            (Some(dispatch), None) | (None, Some(dispatch)) => return Some(dispatch),
-            (None, None) => return None,
-        };
-        if structural.complete {
-            return Some(structural);
-        }
-        if projected.complete {
-            return Some(projected);
-        }
+/// Rendered scalar content read from one executed emission.
+pub(crate) struct ExecutedScalarView {
+    projection: super::ScalarValueDispatch,
+}
 
-        let fallback = structural.clone();
-        let mut conditions_by_value: BTreeMap<ScalarContent, Vec<Predicate>> = BTreeMap::new();
-        for (condition, value) in structural.arms.into_iter().chain(projected.arms) {
-            let ScalarValue {
-                go_type: _,
-                content,
-            } = value;
-            let Some(value) = content else {
+impl super::ExecutedSite {
+    pub(crate) fn scalar_view(&self) -> Option<ExecutedScalarView> {
+        self.rendered_scalar()
+            .map(|projection| ExecutedScalarView { projection })
+    }
+}
+
+impl ExecutedScalarView {
+    /// Maps known renderable arms without asserting exhaustive coverage.
+    /// Returns `None` when a retained content term cannot be rendered.
+    pub(crate) fn map_rendered_arms<T>(
+        &self,
+        mut map: impl FnMut(&Predicate, &[ScalarRenderPart]) -> T,
+    ) -> Option<Vec<T>> {
+        let Self { projection } = self;
+        let content = projection.content()?;
+        let mut arms = Vec::with_capacity(content.arms().count());
+        for (condition, value) in content.arms() {
+            if *condition == Predicate::False {
                 continue;
-            };
-            let condition =
-                TruthCondition::from_predicate_with_memo(condition, predicate_memo).when_true();
-            if condition != Predicate::False {
-                conditions_by_value
-                    .entry(value)
-                    .or_default()
-                    .push(condition);
             }
+            arms.push(map(condition, &value.rendered_parts()?));
         }
-        if conditions_by_value.len() > MAX_SCALAR_DISPATCH_STATES {
-            return Some(fallback);
-        }
-        let arms = conditions_by_value
-            .into_iter()
-            .map(|(value, conditions)| {
-                (any_predicates_with_memo(conditions, predicate_memo), value)
-            })
-            .collect::<Vec<_>>();
-        for (index, (left, _)) in arms.iter().enumerate() {
-            if arms.iter().skip(index + 1).any(|(right, _)| {
-                conjoin_predicates_with_memo(left.clone(), right.clone(), predicate_memo).is_some()
-            }) {
-                return Some(fallback);
-            }
-        }
-        let complete = TruthCondition::any_with_memo(
-            arms.iter().map(|(condition, _)| {
-                TruthCondition::exact_with_memo(condition.clone(), predicate_memo)
-            }),
-            predicate_memo,
-        )
-        .predicate()
-            == Some(&Predicate::True);
-        Some(ScalarValueDispatch::bind_content(arms, complete))
-    }
-}
-
-pub(crate) fn stringified_equality_preimage(text: &str) -> Vec<GuardValue> {
-    let mut values = vec![GuardValue::string(text)];
-    match text {
-        "true" => values.push(GuardValue::Bool(true)),
-        "false" => values.push(GuardValue::Bool(false)),
-        "<nil>" => values.push(GuardValue::Null),
-        _ => {
-            if let Ok(value) = text.parse::<i64>()
-                && value.to_string() == text
-                && (-1_000_000..1_000_000).contains(&value)
-            {
-                values.push(GuardValue::Int(value));
-            }
-        }
-    }
-    values
-}
-
-pub(crate) fn guard_value_is_truthy(value: &GuardValue) -> bool {
-    match value {
-        GuardValue::String(text) => !text.is_empty(),
-        GuardValue::Bool(value) => *value,
-        GuardValue::Int(value) => *value != 0,
-        GuardValue::Float(text) => text.parse::<f64>().is_ok_and(|value| value != 0.0),
-        GuardValue::Null => false,
+        Some(arms)
     }
 }

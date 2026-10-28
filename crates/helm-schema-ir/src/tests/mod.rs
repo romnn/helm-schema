@@ -38,7 +38,6 @@ mod runtime_heap_transfers;
 mod runtime_invocation;
 mod runtime_template_trim;
 mod runtime_yaml_placement;
-mod scalar_content_view;
 mod scalar_kinds;
 mod selection_reachability;
 mod state;

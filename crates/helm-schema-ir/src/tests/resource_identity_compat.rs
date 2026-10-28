@@ -235,11 +235,7 @@ fn branch_sources(
         .collect::<Vec<_>>();
     headers.sort_by_key(|site| std::cmp::Reverse(site.span().start));
     for site in headers {
-        let Some(scalar) = site.projected_scalar() else {
-            continue;
-        };
-        let truth = scalar.truth_condition_with_memo(&memo);
-        let Some(when_true) = truth.predicate() else {
+        let Some(when_true) = execution.observed_site_truth(site) else {
             continue;
         };
         if !memo.exactly_implies(site.condition(), &covered) {
@@ -251,7 +247,7 @@ fn branch_sources(
         let mut sources = Vec::new();
         let mut complete = true;
         for case in cases {
-            let condition = if memo.exactly_implies(&case.condition, when_true) {
+            let condition = if memo.exactly_implies(&case.condition, &when_true) {
                 Some(provenance.clone())
             } else if memo.exactly_implies(&case.condition, &when_true.negated()) {
                 None

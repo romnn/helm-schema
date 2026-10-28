@@ -2880,3 +2880,22 @@ fn captured_boolean_truth_requires_the_whole_normal_execution_region() {
     sim_assert_eq!(have: result.captured_boolean_truth(), want: None);
     sim_assert_eq!(have: result.exact_truth(), want: None);
 }
+
+#[test]
+fn trim_prefix_capture_preimage_strips_at_most_one_token() -> eyre::Result<()> {
+    let pattern = crate::helper_meta::pattern_with_lexical_escapes(
+        r"^1\.2\.3$",
+        &BTreeSet::from([crate::helper_meta::LexicalEscape::TrimPrefix(
+            "v".to_owned(),
+        )]),
+    );
+    let matcher = regex::Regex::new(&pattern)?;
+    for text in ["1.2.3", "v1.2.3"] {
+        assert!(matcher.is_match(text), "capture must admit {text:?}");
+    }
+    // A second leading token survives trimPrefix and must fail the capture.
+    for text in ["vv1.2.3", "v1.2.4", "x1.2.3", "v1.2.3suffix"] {
+        assert!(!matcher.is_match(text), "capture must reject {text:?}");
+    }
+    Ok(())
+}

@@ -18,7 +18,7 @@ use super::domain::{
     AbstractFragment, AbstractString, EntryKey, Guarded, Mapping, MappingEntry, Sequence,
     SiteFacts, Splice, SpliceMeta, StringPart, TaintPart, stamp_fragment_sites,
 };
-use super::lower::{lower_scalar_dispatch, lower_scalar_dispatch_arms};
+use super::lower::{lower_executed_scalar, lower_executed_scalar_arms};
 /// The result of evaluating one template source: the abstract rendered
 /// document plus the pathless value reads observed along the way.
 #[derive(Debug, Default)]
@@ -350,9 +350,9 @@ impl Projection<'_> {
         emission: Span,
     ) -> Guarded<AbstractFragment> {
         let mut fragment = if kind == ValueKind::Scalar {
-            site.rendered_scalar()
+            site.scalar_view()
                 .as_ref()
-                .and_then(|scalar| lower_scalar_dispatch(scalar, kind))
+                .and_then(|scalar| lower_executed_scalar(scalar, kind))
                 .unwrap_or_else(|| {
                     Guarded::unconditional(AbstractFragment::Scalar(AbstractString {
                         parts: vec![StringPart::Taint(TaintPart::abstaining(
@@ -363,9 +363,9 @@ impl Projection<'_> {
                 })
         } else {
             let parts = site
-                .rendered_scalar()
+                .scalar_view()
                 .as_ref()
-                .and_then(|scalar| lower_scalar_dispatch_arms(scalar, ValueKind::PartialScalar))
+                .and_then(|scalar| lower_executed_scalar_arms(scalar, ValueKind::PartialScalar))
                 .unwrap_or_else(|| {
                     vec![(
                         Predicate::True,
