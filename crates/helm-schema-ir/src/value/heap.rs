@@ -508,6 +508,14 @@ impl Heap {
                 .flat_map(|page| page.keys().cloned())
                 .collect::<std::collections::BTreeSet<_>>();
             for id in ids {
+                if yes
+                    .version
+                    .object(&id)
+                    .zip(no.version.object(&id))
+                    .is_some_and(|(yes, no)| std::ptr::eq(yes, no))
+                {
+                    continue;
+                }
                 let Some(object) = self.join_object(decision, &id, yes, no, &mut input_unions)?
                 else {
                     continue;

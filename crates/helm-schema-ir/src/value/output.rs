@@ -1219,26 +1219,11 @@ impl super::State {
             &no.invocation_count,
             &self.heap.arena,
         );
-        self.sites = yes.sites.clone();
-        self.text_sites = yes.text_sites.clone();
-        for site in &no.sites {
-            if !self.sites.iter().any(|existing| existing.same_site(site)) {
-                self.sites.push(site.clone());
-            }
-        }
-        for site in &no.text_sites {
-            if !self.text_sites.contains(site) {
-                self.text_sites.push(site.clone());
-            }
-        }
-        self.invocations = yes.invocations.clone();
+        self.sites = yes.sites.union_by(&no.sites, ExecutedSite::same_site);
+        self.text_sites = yes.text_sites.union_by(&no.text_sites, PartialEq::eq);
+        self.invocations = yes.invocations.union_by(&no.invocations, PartialEq::eq);
         self.invocation_records_complete =
             yes.invocation_records_complete && no.invocation_records_complete;
-        for invocation in &no.invocations {
-            if !self.invocations.contains(invocation) {
-                self.invocations.push(invocation.clone());
-            }
-        }
     }
 
     #[tracing::instrument(

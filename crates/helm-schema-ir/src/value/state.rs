@@ -9,9 +9,35 @@ pub(super) struct ContinuationJoin {
     pub(super) taken: bool,
 }
 
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub(super) struct FrameLayout {
+    parent: Option<u64>,
+    boundary: FrameBoundary,
+    names: Vec<String>,
+    has_dot: bool,
+}
+
+impl super::Arena {
+    fn frame_layout(&self, layout: FrameLayout) -> u64 {
+        let mut layouts = self.frames.borrow_mut();
+        let next = layouts.len() as u64;
+        *layouts.entry(layout).or_insert(next)
+    }
+}
+
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+pub(super) struct ContinuationKey {
+    arena: *const super::Arena,
+    program: u64,
+    frame: Option<u64>,
+    calls: Vec<super::CallKey>,
+    namespace: super::namespace::NamespaceId,
+    loops: Vec<LoopId>,
+}
+
 impl State {
     pub(super) fn with_heap(argument: Value, heap: Heap) -> Self {
-        let frame = Frame::call(argument, heap.arena.call());
+        let frame = Frame::call(argument, heap.arena.call(), None, &heap.arena);
         let namespace = super::namespace::Namespace::unknown(&heap.arena);
         Self {
             heap,
@@ -55,15 +81,42 @@ impl State {
         value
     }
 
+    pub(super) fn continuation_key(&self) -> ContinuationKey {
+        ContinuationKey {
+            arena: Rc::as_ptr(&self.heap.arena),
+            program: self.program,
+            frame: self.frames.last().map(|frame| frame.continuation),
+            calls: self.calls.clone(),
+            namespace: self.namespace.id(),
+            loops: self.loops.clone(),
+        }
+    }
+
     pub(super) fn bind(&mut self, name: String, value: Value) {
+        let parent = self
+            .frames
+            .iter()
+            .rev()
+            .nth(1)
+            .map(|frame| frame.continuation);
         if let Some(frame) = self.frames.last_mut() {
-            frame.bindings.insert(name, value);
+            let frame = Rc::make_mut(frame);
+            if frame.bindings.insert(name, value).is_none() {
+                frame.continuation = self.heap.arena.frame_layout(FrameLayout {
+                    parent,
+                    boundary: frame.boundary,
+                    names: frame.bindings.keys().cloned().collect(),
+                    has_dot: frame.dot.is_some(),
+                });
+            }
         }
     }
 
     pub(super) fn assign(&mut self, name: &str, value: Value) -> bool {
         for frame in self.frames.iter_mut().rev() {
-            if let Some(binding) = frame.bindings.get_mut(name) {
+            if frame.bindings.contains_key(name)
+                && let Some(binding) = Rc::make_mut(frame).bindings.get_mut(name)
+            {
                 *binding = value;
                 return true;
             }
@@ -103,11 +156,18 @@ impl State {
     }
 
     pub(super) fn enter_scope(&mut self, dot: Option<Value>) {
-        self.frames.push(Frame {
+        let continuation = self.heap.arena.frame_layout(FrameLayout {
+            parent: self.frames.last().map(|frame| frame.continuation),
+            boundary: FrameBoundary::Lexical,
+            names: Vec::new(),
+            has_dot: dot.is_some(),
+        });
+        self.frames.push(Rc::new(Frame {
+            continuation,
             bindings: BTreeMap::new(),
             dot,
             boundary: FrameBoundary::Lexical,
-        });
+        }));
     }
 
     pub(super) fn leave_scope(&mut self) -> bool {
@@ -124,8 +184,12 @@ impl State {
     }
 
     pub(super) fn enter_call(&mut self, argument: Value) {
-        self.frames
-            .push(Frame::call(argument, self.heap.arena.call()));
+        self.frames.push(Frame::call(
+            argument,
+            self.heap.arena.call(),
+            self.frames.last().map(|frame| frame.continuation),
+            &self.heap.arena,
+        ));
     }
 
     pub(super) fn enter_file_call(
@@ -133,7 +197,12 @@ impl State {
         argument: Value,
         occurrence: &super::session::FileOccurrence,
     ) {
-        self.frames.push(Frame::call(argument, occurrence.call));
+        self.frames.push(Frame::call(
+            argument,
+            occurrence.call,
+            self.frames.last().map(|frame| frame.continuation),
+            &self.heap.arena,
+        ));
     }
 
     pub(super) fn leave_call(&mut self) -> bool {
@@ -198,12 +267,25 @@ impl State {
 }
 
 impl Frame {
-    pub(super) fn call(argument: Value, call: u64) -> Self {
-        Self {
+    pub(super) fn call(
+        argument: Value,
+        call: u64,
+        parent: Option<u64>,
+        arena: &super::Arena,
+    ) -> Rc<Self> {
+        let boundary = FrameBoundary::Call(call);
+        let continuation = arena.frame_layout(FrameLayout {
+            parent,
+            boundary,
+            names: vec!["$".to_owned()],
+            has_dot: true,
+        });
+        Rc::new(Self {
+            continuation,
             bindings: BTreeMap::from([("$".to_owned(), argument.clone())]),
             dot: Some(argument),
-            boundary: FrameBoundary::Call(call),
-        }
+            boundary,
+        })
     }
 }
 
@@ -288,7 +370,9 @@ impl State {
             return None;
         }
 
-        if !compatible_frames(yes_frames, no_frames) {
+        if yes_frames.last().map(|frame| frame.continuation)
+            != no_frames.last().map(|frame| frame.continuation)
+        {
             return None;
         }
         let mut heap = yes_heap.clone();
@@ -432,26 +516,31 @@ pub(super) fn join_frame_value(
 
 fn join_frames(
     decision: &Rc<FrozenTest>,
-    yes_frames: &[Frame],
-    no_frames: &[Frame],
+    yes_frames: &[Rc<Frame>],
+    no_frames: &[Rc<Frame>],
     yes_heap: &super::Heap,
     no_heap: &super::Heap,
     widened_inputs: &mut std::collections::BTreeSet<helm_schema_core::ValuesPath>,
-) -> Option<Vec<Frame>> {
+) -> Option<Vec<Rc<Frame>>> {
     yes_frames
         .iter()
         .zip(no_frames)
         .map(|(yes, no)| {
+            if Rc::ptr_eq(yes, no) {
+                return Some(Rc::clone(yes));
+            }
             let Frame {
+                continuation,
                 bindings: yes_bindings,
                 dot: yes_dot,
                 boundary,
-            } = yes;
+            } = yes.as_ref();
             let Frame {
+                continuation: _,
                 bindings: no_bindings,
                 dot: no_dot,
                 boundary: _,
-            } = no;
+            } = no.as_ref();
             let bindings = yes_bindings
                 .iter()
                 .filter_map(|(name, yes)| {
@@ -482,33 +571,12 @@ fn join_frames(
                 (None, None) => None,
                 (Some(_), None) | (None, Some(_)) => return None,
             };
-            Some(Frame {
+            Some(Rc::new(Frame {
+                continuation: *continuation,
                 bindings,
                 dot,
                 boundary: *boundary,
-            })
+            }))
         })
         .collect::<Option<Vec<_>>>()
-}
-
-fn compatible_frames(yes_frames: &[Frame], no_frames: &[Frame]) -> bool {
-    for (yes, no) in yes_frames.iter().zip(no_frames) {
-        let Frame {
-            bindings: yes_bindings,
-            dot: yes_dot,
-            boundary: yes_boundary,
-        } = yes;
-        let Frame {
-            bindings: no_bindings,
-            dot: no_dot,
-            boundary: no_boundary,
-        } = no;
-        if yes_boundary != no_boundary
-            || !yes_bindings.keys().eq(no_bindings.keys())
-            || yes_dot.is_some() != no_dot.is_some()
-        {
-            return false;
-        }
-    }
-    true
 }

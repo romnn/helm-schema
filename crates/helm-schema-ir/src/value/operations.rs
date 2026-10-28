@@ -862,6 +862,7 @@ pub(super) fn invalidate(state: &mut State) {
         );
     }
     for frame in &mut state.frames {
+        let frame = Rc::make_mut(frame);
         for value in frame.bindings.values_mut() {
             if !matches!(
                 value.node.as_ref(),

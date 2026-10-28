@@ -359,6 +359,7 @@ fn initial_state(db: &IrAnalysisDb) -> State {
         }
     }
     if let Some(frame) = state.frames.first_mut() {
+        let frame = Rc::make_mut(frame);
         frame.bindings.insert("$".to_owned(), root.clone());
         frame.dot = Some(root);
     }

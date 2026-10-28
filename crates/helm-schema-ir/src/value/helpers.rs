@@ -90,9 +90,7 @@ impl Executor<'_> {
         });
         self.complete(CompletionInput::Executed {
             invocation,
-            execution: Execution {
-                exits: exits.finish(),
-            },
+            execution: Execution { exits: exits.exits },
             helper_return: Some(HelperReturn {
                 program: caller_program,
                 namespace: caller_namespace,

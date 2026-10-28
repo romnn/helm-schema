@@ -201,7 +201,7 @@ struct InputBacking {
 #[derive(Debug, Default)]
 struct Arena {
     guards: RefCell<guard::DecisionStore>,
-    frontier: RefCell<control::FrontierIndex>,
+    frames: RefCell<BTreeMap<state::FrameLayout, u64>>,
     exact_decisions: RefCell<AHashMap<guard::ExactDecisionKey, std::rc::Weak<FrozenTest>>>,
     empty_snapshot: std::cell::OnceCell<Rc<HeapVersion>>,
     next_object: Cell<u64>,
@@ -292,7 +292,7 @@ mod frozen_test_helpers;
 #[derive(Clone, Debug)]
 pub(crate) struct State {
     heap: Heap,
-    frames: Vec<Frame>,
+    frames: Vec<Rc<Frame>>,
     active: Vec<DecisionEdge>,
     output: TextBuffer,
     output_widened: bool,
@@ -317,18 +317,19 @@ struct CallKey {
 
 #[derive(Clone, Debug)]
 struct Frame {
+    continuation: u64,
     bindings: BTreeMap<String, Value>,
     dot: Option<Value>,
     boundary: FrameBoundary,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 enum FrameBoundary {
     Call(u64),
     Lexical,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct LoopId {
     call: u64,
     ordinal: u64,
@@ -418,7 +419,7 @@ struct Operand {
     form: ArgumentForm,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 enum ArgumentForm {
     DirectLiteral,
     DirectLookup,
@@ -765,3 +766,7 @@ const MAX_EXECUTION_ALTERNATIVES: usize = 4096;
 #[cfg(test)]
 #[path = "../tests/runtime_hosts.rs"]
 mod host_tests;
+
+#[cfg(test)]
+#[path = "../tests/runtime_delta_joins.rs"]
+mod delta_join_tests;

@@ -273,7 +273,7 @@ impl Executor<'_> {
                     Some(expression) => self.expression(expression, state, header.span.start),
                     None => normal(state, Value::literal(GuardValue::Bool(true))),
                 };
-                for mut exit in reconverge(evaluated) {
+                for mut exit in evaluated {
                     let Flow::Normal(value) = exit.flow else {
                         results.push(exit);
                         continue;
@@ -328,7 +328,7 @@ impl Executor<'_> {
         for state in pending {
             results.extend(normal(state, Value::nil()));
         }
-        let mut results = results.finish();
+        let mut results = results.exits;
         for exit in &mut results {
             exit.state.leave_scope();
         }
@@ -1073,6 +1073,7 @@ pub(super) fn summarize_exits(exits: Vec<Exit>) -> Vec<Exit> {
                 })
                 .collect();
             for frame in &mut representative.state.frames {
+                let frame = Rc::make_mut(frame);
                 for value in frame.bindings.values_mut() {
                     *value = Value::influenced(inputs.clone());
                 }
@@ -1153,116 +1154,10 @@ impl super::StateBuffer {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-struct FrozenEdgeKey {
-    parent: u64,
-    decision: u64,
-    taken: bool,
-}
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-struct ContinuationKey {
-    arena: *const super::Arena,
-    context: u64,
-}
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-struct PathKey {
-    continuation: ContinuationKey,
-    prefix: u64,
-    snapshot: u64,
-}
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-struct ContinuationContext {
-    program: u64,
-    frames: Vec<FrameShape>,
-    calls: Vec<super::CallKey>,
-    namespace: super::namespace::NamespaceId,
-    loops: Vec<LoopShape>,
-}
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-struct FrameShape {
-    call: Option<u64>,
-    names: Vec<String>,
-    has_dot: bool,
-}
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-struct LoopShape {
-    call: u64,
-    ordinal: u64,
-}
-#[derive(Debug, Default)]
-pub(super) struct FrontierIndex {
-    prefixes: std::collections::BTreeMap<FrozenEdgeKey, u64>,
-    contexts: std::collections::BTreeMap<ContinuationContext, u64>,
-    declined: std::collections::BTreeSet<DeclinedJoin>,
-}
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
-struct DeclinedJoin {
-    left: PathKey,
-    right: PathKey,
-}
-impl FrontierIndex {
-    fn prefix(&mut self, parent: u64, edge: &super::DecisionEdge) -> u64 {
-        let key = FrozenEdgeKey {
-            parent,
-            decision: edge.test.id,
-            taken: edge.taken,
-        };
-        let next = self.prefixes.len() as u64 + 1;
-        *self.prefixes.entry(key).or_insert(next)
-    }
-
-    fn path(&mut self, state: &State, active: &[super::DecisionEdge]) -> PathKey {
-        let shape = ContinuationContext {
-            program: state.program,
-            frames: state
-                .frames
-                .iter()
-                .map(|frame| {
-                    let super::Frame {
-                        bindings,
-                        dot,
-                        boundary,
-                    } = frame;
-                    FrameShape {
-                        call: match boundary {
-                            super::FrameBoundary::Call(call) => Some(*call),
-                            super::FrameBoundary::Lexical => None,
-                        },
-                        names: bindings.keys().cloned().collect(),
-                        has_dot: dot.is_some(),
-                    }
-                })
-                .collect(),
-            calls: state.calls.clone(),
-            namespace: state.namespace.id(),
-            loops: state
-                .loops
-                .iter()
-                .map(|super::LoopId { call, ordinal }| LoopShape {
-                    call: *call,
-                    ordinal: *ordinal,
-                })
-                .collect(),
-        };
-        let next = self.contexts.len() as u64;
-        let context = *self.contexts.entry(shape).or_insert(next);
-        let mut prefix = 0;
-        for edge in active {
-            prefix = self.prefix(prefix, edge);
-        }
-        PathKey {
-            continuation: ContinuationKey {
-                arena: Rc::as_ptr(&state.heap.arena),
-                context,
-            },
-            prefix,
-            snapshot: state.heap.version.id.ordinal,
-        }
-    }
-}
 pub(super) trait Reconvergent: Sized {
     type Context;
     type Joined;
+    type Key: Ord;
     fn state<'a>(&'a self, context: &'a Self::Context) -> &'a State;
     fn active<'a>(&'a self, context: &'a Self::Context) -> &'a [super::DecisionEdge] {
         &self.state(context).active
@@ -1273,8 +1168,7 @@ pub(super) trait Reconvergent: Sized {
         plan: &super::state::ContinuationJoin,
         context: &Self::Context,
     ) -> Option<Self::Joined>;
-    fn is_normal(&self) -> bool;
-    fn compatible(&self, other: &Self) -> bool;
+    fn key(&self, context: &Self::Context) -> Option<Self::Key>;
     fn joined(
         self,
         other: Self,
@@ -1290,17 +1184,6 @@ pub(super) struct IndexedContinuation<T> {
     pub(super) continuation: T,
 }
 
-struct FrontierSlot<T> {
-    continuation: T,
-    path: Option<PathKey>,
-}
-
-struct PreparedContinuation<T> {
-    index: usize,
-    plan: super::state::ContinuationJoin,
-    state: T,
-}
-
 pub(super) fn reconverge(exits: Vec<Exit>) -> Vec<Exit> {
     reconverge_continuations(exits, &())
         .into_iter()
@@ -1308,7 +1191,7 @@ pub(super) fn reconverge(exits: Vec<Exit>) -> Vec<Exit> {
         .collect()
 }
 
-#[tracing::instrument(skip_all)]
+#[tracing::instrument(skip_all, fields(inputs = exits.len(), kind = std::any::type_name::<T>(), scans = tracing::field::Empty))]
 pub(super) fn reconverge_continuations<T: Reconvergent>(
     exits: Vec<T>,
     context: &T::Context,
@@ -1323,83 +1206,49 @@ pub(super) fn reconverge_continuations<T: Reconvergent>(
             })
             .collect();
     }
-    let mut slots: Vec<Option<FrontierSlot<T>>> = Vec::new();
-    let mut pending = std::collections::BTreeMap::<ContinuationKey, Vec<usize>>::new();
+    let mut scans = 0_u64;
+    let mut slots: Vec<Option<T>> = Vec::new();
+    let mut pending = std::collections::BTreeMap::<T::Key, Vec<usize>>::new();
     for mut exit in exits {
-        loop {
-            let arena = &exit.state(context).heap.arena;
-            let path = exit.is_normal().then(|| {
-                arena
-                    .frontier
-                    .borrow_mut()
-                    .path(exit.state(context), exit.active(context))
-            });
-            let mut counterpart = None;
-            if let Some(path) = path
-                && let Some(candidates) = pending.get_mut(&path.continuation)
-            {
-                candidates.retain(|index| slots.get(*index).is_some_and(Option::is_some));
-                for &index in candidates.iter().rev() {
-                    let Some(FrontierSlot {
-                        continuation: other,
-                        path: Some(other_path),
-                    }) = slots.get(index).and_then(Option::as_ref)
-                    else {
-                        continue;
-                    };
-                    if !exit.compatible(other) {
-                        continue;
-                    }
-                    let declined = DeclinedJoin {
-                        left: path,
-                        right: *other_path,
-                    };
-                    if arena.frontier.borrow().declined.contains(&declined) {
-                        continue;
-                    }
-                    let plan = arena.join_paths(exit.active(context), other.active(context));
-                    if let Some(state) = exit.prepare_join(other, &plan, context) {
-                        counterpart = Some(PreparedContinuation { index, plan, state });
-                        break;
-                    }
-                    arena.frontier.borrow_mut().declined.insert(declined);
+        if let Some(key) = exit.key(context) {
+            let candidates = pending.entry(key).or_default();
+            let mut cursor = candidates.len();
+            while let Some(position) = cursor.checked_sub(1) {
+                cursor = position;
+                let Some(index) = candidates.get(position).copied() else {
+                    continue;
+                };
+                let Some(other) = slots.get(index).and_then(Option::as_ref) else {
+                    continue;
+                };
+                scans += 1;
+                let plan = exit
+                    .state(context)
+                    .heap
+                    .arena
+                    .join_paths(exit.active(context), other.active(context));
+                if let Some(state) = exit.prepare_join(other, &plan, context)
+                    && let Some(other) = slots.get_mut(index).and_then(Option::take)
+                {
+                    exit = exit.joined(other, state, plan.decision, plan.taken, context);
+                    candidates.remove(position);
+                    // A successful join may reconcile a previously declined storage shape.
+                    cursor = candidates.len();
                 }
             }
-            if let Some(PreparedContinuation { index, plan, state }) = counterpart
-                && let Some(FrontierSlot {
-                    continuation: other,
-                    path: _,
-                }) = slots.get_mut(index).and_then(Option::take)
-            {
-                exit = exit.joined(other, state, plan.decision, plan.taken, context);
-            } else {
-                let index = slots.len();
-                if let Some(path) = path {
-                    pending.entry(path.continuation).or_default().push(index);
-                }
-                slots.push(Some(FrontierSlot {
-                    continuation: exit,
-                    path,
-                }));
-                break;
-            }
+            candidates.push(slots.len());
         }
+        slots.push(Some(exit));
     }
+    tracing::Span::current().record("scans", scans);
     slots
         .into_iter()
         .enumerate()
         .filter_map(|(index, slot)| {
-            slot.map(
-                |FrontierSlot {
-                     continuation,
-                     path: _,
-                 }| {
-                    IndexedContinuation {
-                        index,
-                        continuation,
-                    }
-                },
-            )
+            slot.map(|continuation| IndexedContinuation {
+                index,
+                continuation,
+            })
         })
         .collect()
 }
@@ -1407,6 +1256,7 @@ pub(super) fn reconverge_continuations<T: Reconvergent>(
 impl Reconvergent for Exit {
     type Context = ();
     type Joined = State;
+    type Key = super::state::ContinuationKey;
     fn state<'a>(&'a self, _context: &'a ()) -> &'a State {
         &self.state
     }
@@ -1418,11 +1268,8 @@ impl Reconvergent for Exit {
     ) -> Option<State> {
         State::join_branches(plan, &self.state, &other.state)
     }
-    fn is_normal(&self) -> bool {
-        matches!(self.flow, Flow::Normal(_))
-    }
-    fn compatible(&self, other: &Self) -> bool {
-        self.is_normal() && other.is_normal()
+    fn key(&self, _context: &()) -> Option<Self::Key> {
+        matches!(self.flow, Flow::Normal(_)).then(|| self.state.continuation_key())
     }
     fn joined(
         self,

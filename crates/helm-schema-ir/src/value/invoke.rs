@@ -115,7 +115,7 @@ impl Executor<'_> {
                 }),
             }
         }
-        super::control::reconverge(exits.finish())
+        exits.finish()
     }
 
     pub(super) fn invoke_callee(
@@ -218,7 +218,7 @@ impl Executor<'_> {
                 }
             }
         }
-        super::control::reconverge(exits.finish())
+        exits.finish()
     }
     fn assemble_argument(
         &self,
@@ -340,7 +340,7 @@ impl Executor<'_> {
     }
     #[tracing::instrument(skip_all)]
     pub(super) fn complete(&self, input: CompletionInput) -> CallOutcome {
-        let mut completed = match input {
+        let completed = match input {
             CompletionInput::Invocation { invocation, state } => {
                 let mut remaining = super::MAX_SCALAR_DISPATCH_STATES;
                 if matches!(
@@ -397,50 +397,7 @@ impl Executor<'_> {
                 return self.helper(invocation, state, false);
             }
         };
-        let Some(first) = completed.execution.exits.first() else {
-            return CallOutcome {
-                execution: completed.execution,
-            };
-        };
-        let invocation = first.state.heap.arena.next_invocation.get();
-        first.state.heap.arena.next_invocation.set(invocation + 1);
-        let function = completed.invocation.callee.name();
-        for exit in &mut completed.execution.exits {
-            let mut wrapper = None;
-            if let Some(helper) = &completed.helper_return {
-                exit.state.program = helper.program;
-                exit.state.namespace = Rc::clone(&helper.namespace);
-                exit.state.leave_call();
-                exit.state.calls.pop();
-                exit.state.loops = helper.loops.clone();
-                let returned = if function == "tpl" {
-                    exit.state.output.stripped_value()
-                } else {
-                    super::text::capture(&exit.state.output, false)
-                };
-                exit.state.output = helper.output.clone();
-                if let Flow::Normal(normal) = &mut exit.flow {
-                    normal.value = returned;
-                }
-                wrapper = helper.wrapper.clone();
-            }
-            for slot in exit.state.reserve_invocation() {
-                exit.state
-                    .invocations
-                    .push(super::ExecutedInvocationRecord {
-                        condition: slot.condition,
-                        ordinal: slot.ordinal,
-                        invocation,
-                        program: exit.state.program,
-                        site: completed.invocation.site,
-                        function: function.to_owned(),
-                        wrapper: wrapper.clone(),
-                    });
-            }
-        }
-        CallOutcome {
-            execution: completed.execution,
-        }
+        completed.finish()
     }
 
     fn helper_alternatives(
@@ -471,7 +428,7 @@ impl Executor<'_> {
                             ));
                         }
                     }
-                    return super::control::reconverge(exits.finish());
+                    return exits.finish();
                 }
             }
         }
@@ -1183,6 +1140,7 @@ fn comparison_reconverge(state: &State, exits: Vec<ComparisonExit>) -> Vec<Compa
 impl super::control::Reconvergent for ComparisonExit {
     type Context = State;
     type Joined = Vec<super::DecisionEdge>;
+    type Key = ();
 
     fn state<'a>(&'a self, context: &'a State) -> &'a State {
         context
@@ -1190,11 +1148,8 @@ impl super::control::Reconvergent for ComparisonExit {
     fn active<'a>(&'a self, _context: &'a State) -> &'a [super::DecisionEdge] {
         &self.active
     }
-    fn is_normal(&self) -> bool {
-        matches!(self.flow, Flow::Normal(_))
-    }
-    fn compatible(&self, other: &Self) -> bool {
-        self.is_normal() && other.is_normal()
+    fn key(&self, _context: &State) -> Option<Self::Key> {
+        matches!(self.flow, Flow::Normal(_)).then_some(())
     }
     fn prepare_join(
         &self,
@@ -1884,9 +1839,23 @@ impl AssembledBuffer {
     }
 }
 
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+struct AssemblyKey {
+    continuation: super::state::ContinuationKey,
+    pipe: bool,
+    operands: Vec<OperandKey>,
+}
+
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+struct OperandKey {
+    site: u64,
+    form: ArgumentForm,
+}
+
 impl super::control::Reconvergent for Assembled {
     type Context = ();
     type Joined = State;
+    type Key = AssemblyKey;
     fn state<'a>(&'a self, _context: &'a ()) -> &'a State {
         &self.state
     }
@@ -1899,18 +1868,25 @@ impl super::control::Reconvergent for Assembled {
     ) -> Option<State> {
         State::join_branches(plan, &self.state, &other.state)
     }
-    fn is_normal(&self) -> bool {
-        true
-    }
-
-    fn compatible(&self, other: &Self) -> bool {
-        self.pipe.is_some() == other.pipe.is_some()
-            && self.values.len() == other.values.len()
-            && self
+    fn key(&self, _context: &()) -> Option<Self::Key> {
+        Some(AssemblyKey {
+            continuation: self.state.continuation_key(),
+            pipe: self.pipe.is_some(),
+            operands: self
                 .values
                 .iter()
-                .zip(&other.values)
-                .all(|(left, right)| left.site == right.site && left.form == right.form)
+                .map(
+                    |Operand {
+                         value: _,
+                         site,
+                         form,
+                     }| OperandKey {
+                        site: *site,
+                        form: *form,
+                    },
+                )
+                .collect(),
+        })
     }
 
     fn joined(
@@ -1973,3 +1949,55 @@ impl super::control::Reconvergent for Assembled {
 #[cfg(test)]
 #[path = "../tests/runtime_comparison_work.rs"]
 mod comparison_work_tests;
+
+impl CompletedExecution {
+    fn finish(mut self) -> CallOutcome {
+        let Some(first) = self.execution.exits.first() else {
+            return CallOutcome {
+                execution: self.execution,
+            };
+        };
+        let invocation = first.state.heap.arena.next_invocation.get();
+        first.state.heap.arena.next_invocation.set(invocation + 1);
+        let function = self.invocation.callee.name();
+        for exit in &mut self.execution.exits {
+            let mut wrapper = None;
+            if let Some(helper) = &self.helper_return {
+                exit.state.program = helper.program;
+                exit.state.namespace = Rc::clone(&helper.namespace);
+                exit.state.leave_call();
+                exit.state.calls.pop();
+                exit.state.loops = helper.loops.clone();
+                let returned = if function == "tpl" {
+                    exit.state.output.stripped_value()
+                } else {
+                    super::text::capture(&exit.state.output, false)
+                };
+                exit.state.output = helper.output.clone();
+                if let Flow::Normal(normal) = &mut exit.flow {
+                    normal.value = returned;
+                }
+                wrapper = helper.wrapper.clone();
+            }
+            for slot in exit.state.reserve_invocation() {
+                exit.state
+                    .invocations
+                    .push(super::ExecutedInvocationRecord {
+                        condition: slot.condition,
+                        ordinal: slot.ordinal,
+                        invocation,
+                        program: exit.state.program,
+                        site: self.invocation.site,
+                        function: function.to_owned(),
+                        wrapper: wrapper.clone(),
+                    });
+            }
+        }
+        if self.helper_return.is_some() {
+            self.execution.exits = super::control::reconverge(self.execution.exits);
+        }
+        CallOutcome {
+            execution: self.execution,
+        }
+    }
+}
