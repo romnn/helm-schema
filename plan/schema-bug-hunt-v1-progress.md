@@ -9541,7 +9541,7 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   operand-demand and C05 domain-relative recommendations; C07 resumes on top. Status: C06a 136/173 at a3772433 (+261 LOC);
   C05 steps 2–3 committed (a6712c04, bc86a8e9; 10 controls; KPS speed debt, perf lane at 8abec4d6 −20%); C07 step 1 held.
   The C06a line merges into r3b/construction before slices 1–2 start. Orchestrator.
-- 06:40 (Oct 28) — **R3b: slices 1–2 committed; C05 step 2 withdrawn pending slice 3; C06a at 145/173 and net −105 LOC.**
+- 10:50 (Oct 28) — **R3b: slices 1–2 committed; C05 step 2 withdrawn pending slice 3; C06a at 145/173 and net −105 LOC.**
   r3b/construction: C06a steps 3–5 merged (66366139), slice 1 operand lifting (23b2313e, +76; constructor forks 126 → 0),
   slice 2 delta joins (cdd565a8, net 0; history comparisons NATS 192.7M → 322K, KPS 160.6M → 730K; kyverno/datadog −8%).
   KPS stayed at ~20–22 CPU-s and milvus exceeded a 12 GB cap; the ablation pinned both on C05 step 2 a6712c04 (without it
