@@ -1,11 +1,9 @@
-use std::collections::{BTreeMap, BTreeSet};
-
 use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_ast::{DefineIndex, TemplateExpr, parse_action_expressions};
+use helm_schema_core::{GuardValue, ValuesPath};
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
-use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
 
 #[test]
@@ -45,13 +43,18 @@ fn local_set_mutation_uses_shared_expression_eval_for_computed_key() -> eyre::Re
         .filter(|site| site.rendered())
         .last()
         .ok_or_eyre("missing config output")?;
-    sim_assert_eq!(
-        have: result.projected_value(),
-        want: AbstractValue::Dict(BTreeMap::from([
-            ("name".to_string(), AbstractValue::StringSet(BTreeSet::from(["generated".to_string()]))),
-            ("annotations".to_string(), values_path!("serviceAccount.annotations")),
-        ]))
-    );
+    let name = result
+        .value()
+        .read_field("name")
+        .present()
+        .ok_or_eyre("missing name field")?;
+    let annotations = result
+        .value()
+        .read_field("annotations")
+        .present()
+        .ok_or_eyre("missing annotations field")?;
+    sim_assert_eq!(have: name.literal(), want: Some(&GuardValue::string("generated")));
+    sim_assert_eq!(have: annotations.identity(), want: Some(&ValuesPath::parse("serviceAccount.annotations")));
     Ok(())
 }
 

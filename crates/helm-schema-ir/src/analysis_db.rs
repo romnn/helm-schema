@@ -729,6 +729,3 @@ fn children_with_field<'node>(
 #[cfg(test)]
 #[path = "tests/analysis_db.rs"]
 mod tests;
-
-#[cfg(test)]
-pub(crate) use tests::{BOUND_HELPER_STRUCTURAL_WIDTH_LIMIT, widen_large_bound_value_ref};

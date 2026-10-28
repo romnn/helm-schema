@@ -1,10 +1,8 @@
 use std::collections::BTreeMap;
 
 use color_eyre::eyre::{self, OptionExt as _};
-use std::collections::BTreeSet;
 
 use super::{IrAnalysisDb, ParsedDefines, extract_define_blocks};
-use crate::abstract_value::AbstractValue;
 use helm_schema_ast::DefineIndex;
 use helm_schema_core::{Predicate, ValuesPath};
 use indoc::indoc;
@@ -389,29 +387,6 @@ fn parsed_defines_share_parses_and_preserve_file_roles() {
 ///
 /// Corpus measurement placed the nearest precise value at width 31 and the first widened value at
 /// width 58.
-/// A synthetic 256-leaf value reproduced the preflight blowup this bound prevents.
-pub(crate) const BOUND_HELPER_STRUCTURAL_WIDTH_LIMIT: usize = 32;
-
-pub(crate) fn widen_large_bound_value_ref(
-    binding: &AbstractValue,
-    helper_name: &str,
-    widened_paths: &mut BTreeSet<String>,
-) -> Option<AbstractValue> {
-    let width = binding.structural_width();
-    if width <= BOUND_HELPER_STRUCTURAL_WIDTH_LIMIT {
-        return None;
-    }
-
-    tracing::debug!(
-        helper = helper_name,
-        structural_width = width,
-        structural_width_limit = BOUND_HELPER_STRUCTURAL_WIDTH_LIMIT,
-        "widening bound helper value"
-    );
-    widened_paths.extend(binding.paths().iter().map(ValuesPath::encode));
-    Some(AbstractValue::Top)
-}
-
 #[test]
 fn static_file_define_text_is_not_a_namespace_declaration() {
     let mut defines = DefineIndex::new();

@@ -6,7 +6,6 @@ use helm_schema_syntax::Span;
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
-use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
 use crate::observed_facts::{CaptureKind, FailCapture, HintGrade, StringRequirementRoute};
 
@@ -19,16 +18,14 @@ struct Observation {
 }
 
 impl Observation {
-    fn values(&self) -> Vec<AbstractValue> {
+    fn sequences(&self) -> Vec<Vec<Option<GuardValue>>> {
         self.execution
             .sites()
             .filter(|site| site.rendered() && site.span() == self.value_span)
-            .map(|site| site.value().projected_value())
+            .flat_map(|site| site.value().alternatives())
+            .filter_map(|alternative| alternative.value().sequence_items())
+            .map(|items| items.iter().map(|item| item.literal().cloned()).collect())
             .collect()
-    }
-
-    fn value(&self) -> Option<AbstractValue> {
-        AbstractValue::merge_all(self.values())
     }
 
     fn literals(&self) -> BTreeSet<GuardValue> {
@@ -269,9 +266,6 @@ fn object_kinds(name: &str, null_aborts: bool, absence_aborts: bool) -> BTreeSet
         result.insert(CaptureKind::AbsenceAborts { path });
     }
     result
-}
-fn string_value(text: &str) -> AbstractValue {
-    AbstractValue::StringSet(BTreeSet::from([text.to_owned()]))
 }
 fn assert_no_raw_type(observation: &Observation, names: &[&str]) {
     for name in names {
@@ -835,7 +829,7 @@ fn uniq_pipeline_preserves_local_list_items() {
 
 #[test]
 fn split_list_preserves_exact_segment_sequence() {
-    sim_assert_eq!(have: observe("", r#"splitList "." "auth.password""#).value(), want: Some(AbstractValue::List(vec![string_value("auth"), string_value("password")])));
+    sim_assert_eq!(have: observe("", r#"splitList "." "auth.password""#).sequences(), want: vec![vec![Some(GuardValue::string("auth")), Some(GuardValue::string("password"))]]);
 }
 
 #[test]
@@ -845,14 +839,19 @@ fn split_list_preserves_mixed_length_path_alternatives() {
         r#"splitList "." (coalesce "auth.password" "global.auth.password")"#,
     );
     // A nonempty first literal prevents the later candidate from being selected.
-    sim_assert_eq!(have: result.value(), want: Some(AbstractValue::List(vec![string_value("auth"), string_value("password")])));
+    sim_assert_eq!(have: result.sequences(), want: vec![vec![Some(GuardValue::string("auth")), Some(GuardValue::string("password"))]]);
 }
 
 #[test]
 fn append_projects_the_source_collection_to_its_member_domain() {
     let result = observe("", r#"append (default (list) .Values.items) "synthetic""#);
     sim_assert_eq!(have: result.paths(), want: paths(&["items.*"]));
-    assert!(result.values().iter().any(|value| matches!(value, AbstractValue::List(items) if items.last() == Some(&string_value("synthetic")))));
+    assert!(
+        result
+            .sequences()
+            .iter()
+            .any(|items| items.last() == Some(&Some(GuardValue::string("synthetic"))))
+    );
 }
 
 #[test]
@@ -861,7 +860,7 @@ fn first_and_reverse_preserve_list_structure() {
         sim_assert_eq!(have: observe("", expression).literals(), want: BTreeSet::from([GuardValue::string("a")]));
     }
     for expression in [r#"reverse (list "a" "b")"#, r#"(list "a" "b") | reverse"#] {
-        sim_assert_eq!(have: observe("", expression).value(), want: Some(AbstractValue::List(vec![string_value("b"), string_value("a")])));
+        sim_assert_eq!(have: observe("", expression).sequences(), want: vec![vec![Some(GuardValue::string("b")), Some(GuardValue::string("a"))]]);
     }
 }
 

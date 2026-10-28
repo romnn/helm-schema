@@ -170,7 +170,7 @@ def check(found, rows, baseline, landed, producers, relocations=(), retirements=
         seen_receipts.add(key)
         if key not in by_key:
             problems.append("unknown declaration")
-        if receipt["checkpoint"] not in {"C02", "C03", "C04", "C06"}:
+        if receipt["checkpoint"] not in {"C02", "C03", "C04", "C06", "C09"}:
             problems.append("invalid checkpoint")
         if not receipt.get("reviewer", "").strip():
             problems.append("missing reviewer")
@@ -319,6 +319,7 @@ def self_test(found, rows, baseline):
     assert not receipt_check([receipt]), "reviewed retirement failed"
     assert not receipt_check([dict(receipt, checkpoint="C04")]), "C04 retirement failed"
     assert not receipt_check([dict(receipt, checkpoint="C06")]), "C06 retirement failed"
+    assert not receipt_check([dict(receipt, checkpoint="C09")]), "C09 retirement failed"
     assert any("not a surviving producer" in error for error in receipt_check([
         dict(receipt, checkpoint="C06", replacement="absent")
     ])), "C06 receipt bypassed surviving-producer checks"

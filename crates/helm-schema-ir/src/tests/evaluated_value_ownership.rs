@@ -4,7 +4,7 @@ use std::collections::BTreeSet;
 
 use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_ast::DefineIndex;
-use helm_schema_core::{Guard, Predicate, PredicateMemo, ValuesPath};
+use helm_schema_core::{Guard, GuardValue, Predicate, PredicateMemo, ValuesPath};
 use test_util::prelude::sim_assert_eq;
 
 use crate::analysis_db::IrAnalysisDb;
@@ -22,7 +22,13 @@ fn default_retains_an_explicit_unknown_primary() -> eyre::Result<()> {
         .last()
         .ok_or_eyre("missing default output")?;
     sim_assert_eq!(have: site.value().inputs(), want: BTreeSet::from([ValuesPath::parse("alpha")]));
-    sim_assert_eq!(have: site.projected_value().strings(), want: BTreeSet::from(["fallback".to_string()]));
+    let literals: BTreeSet<_> = site
+        .value()
+        .alternatives()
+        .into_iter()
+        .filter_map(|alternative| alternative.value().literal().cloned())
+        .collect();
+    sim_assert_eq!(have: literals, want: BTreeSet::from([GuardValue::string("fallback")]));
     sim_assert_eq!(have: site.value().literal(), want: None);
     sim_assert_eq!(have: site.projected_scalar(), want: None);
     Ok(())

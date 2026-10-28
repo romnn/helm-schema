@@ -1,8 +1,13 @@
 macro_rules! values_path {
     ($path:expr $(,)?) => {
-        crate::abstract_value::AbstractValue::ValuesPath(helm_schema_core::ValuesPath::parse(
-            &$path,
-        ))
+        format!(
+            ".Values{}",
+            if $path.is_empty() {
+                String::new()
+            } else {
+                format!(".{}", $path)
+            }
+        )
     };
 }
 
@@ -44,43 +49,9 @@ mod value_runtime;
 
 use crate::{Guard, SymbolicIrContext, ValueKind, YamlPath};
 use color_eyre::eyre::{self, OptionExt as _};
-use helm_schema_core::{DYNAMIC_MAPPING_VALUE_SEGMENT, GuardDnf, Predicate};
+use helm_schema_core::{DYNAMIC_MAPPING_VALUE_SEGMENT, Predicate};
 use indoc::indoc;
 
-/// The raw per-branch guard stacks of one helper meta (branch predicates in
-/// canonical guard order plus the defaulted marker), the same lowering the
-/// fragment projection's pathless reads use. Test-side replacement for the
-/// retired emission-side `contract_guard_sets` (which additionally applied
-/// the deleted sibling/suppression prune algebra).
-pub(crate) fn raw_guard_sets(
-    meta: &crate::helper_meta::HelperOutputMeta,
-    source_expr: &str,
-) -> Vec<Vec<Guard>> {
-    let branches: Vec<Vec<Predicate>> = if meta.predicates.is_empty() {
-        vec![Vec::new()]
-    } else {
-        meta.predicates
-            .iter()
-            .map(|branch| branch.iter().cloned().collect())
-            .collect()
-    };
-    let mut guard_sets = branches
-        .into_iter()
-        .flat_map(|branch| {
-            let guards = Predicate::contract_guard_stack(&branch);
-            let mut condition = GuardDnf::from_guards(guards);
-            if meta.defaulted {
-                condition = condition.conjoined_with_guards([Guard::Default {
-                    path: helm_schema_core::ValuesPath::parse(source_expr),
-                }]);
-            }
-            condition.guard_conjunctions()
-        })
-        .collect::<Vec<_>>();
-    guard_sets.sort();
-    guard_sets.dedup();
-    guard_sets
-}
 use helm_schema_ast::DefineIndex;
 use test_util::prelude::sim_assert_eq;
 

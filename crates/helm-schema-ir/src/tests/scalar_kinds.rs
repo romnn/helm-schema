@@ -182,7 +182,8 @@ fn a_type_only_helper_shadow_preserves_legacy_binding_and_scope_updates() {
             .sites()
             .filter(|site| site.rendered())
             .last()
-            .map(super::super::value::ExecutedSite::projected_value)
+            .and_then(|site| site.value().read_field("a").present())
+            .map(|value| value.inputs())
     };
     sim_assert_eq!(have: output(&actual), want: output(&baseline));
     assert!(output(&actual).is_some());

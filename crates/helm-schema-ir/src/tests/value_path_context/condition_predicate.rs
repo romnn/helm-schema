@@ -1,12 +1,10 @@
-use std::collections::{BTreeMap, HashMap};
+use std::collections::HashMap;
 
 use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_ast::{DefineIndex, parse_action_expressions};
 use test_util::prelude::sim_assert_eq;
 
-use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
-use crate::helper_meta::HelperOutputMeta;
 use crate::{Guard, GuardValue};
 
 use helm_schema_ast::{Literal, TemplateExpr};
@@ -14,7 +12,14 @@ use helm_schema_core::Predicate;
 
 macro_rules! values_path {
     ($path:expr $(,)?) => {
-        AbstractValue::ValuesPath(helm_schema_core::ValuesPath::parse(&$path))
+        format!(
+            ".Values{}",
+            if $path.is_empty() {
+                String::new()
+            } else {
+                format!(".{}", $path)
+            }
+        )
     };
 }
 
@@ -31,9 +36,9 @@ fn parse_condition(text: &str) -> Vec<Guard> {
 
 fn parse_condition_with_template_bindings(
     text: &str,
-    template_bindings: HashMap<String, AbstractValue>,
+    template_bindings: HashMap<String, String>,
 ) -> Vec<Guard> {
-    parse_condition_with_template_facts(text, template_bindings, &HashMap::new())
+    parse_condition_with_template_facts(text, template_bindings)
 }
 
 #[test]
@@ -126,17 +131,13 @@ fn selected_binding_type_test_keeps_its_decision_condition() {
 
 fn parse_condition_with_template_facts(
     text: &str,
-    template_bindings: HashMap<String, AbstractValue>,
-    template_output_meta: &HashMap<
-        String,
-        BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>,
-    >,
+    template_bindings: HashMap<String, String>,
 ) -> Vec<Guard> {
     let wrapped = format!("{{{{ {text} }}}}");
     let Some(top) = parse_action_expressions(&wrapped).into_iter().next() else {
         return Vec::new();
     };
-    condition_context_with_output_meta(template_bindings, template_output_meta)
+    condition_context(template_bindings)
         .condition_predicate_expr(&top)
         .contract_guards()
         .unwrap_or_default()
@@ -228,175 +229,16 @@ fn expression_source(expression: &TemplateExpr) -> String {
     }
 }
 
-fn fixture_source(value: &AbstractValue) -> String {
-    match value {
-        AbstractValue::ValuesPath(path) | AbstractValue::OutputPath(path, _) => format!(
-            ".Values{}",
-            if path.encode().is_empty() {
-                String::new()
-            } else {
-                format!(".{}", path.encode())
-            }
-        ),
-        AbstractValue::JsonDecodedPath(path) => format!("(fromJson .Values.{})", path.encode()),
-        AbstractValue::RootContext => ".".to_string(),
-        AbstractValue::StringSet(strings) => strings
-            .first()
-            .map_or_else(|| r#""""#.to_string(), |text| format!("{text:?}")),
-        AbstractValue::Dict(entries)
-        | AbstractValue::Overlay {
-            entries,
-            fallback: _,
-        } => {
-            let fields = entries
-                .iter()
-                .map(|(key, value)| format!("{key:?} {}", fixture_source(value)))
-                .collect::<Vec<_>>()
-                .join(" ");
-            format!("(dict {fields})")
-        }
-        AbstractValue::List(items) => format!(
-            "(list {})",
-            items
-                .iter()
-                .map(fixture_source)
-                .collect::<Vec<_>>()
-                .join(" ")
-        ),
-        AbstractValue::MergedLayers(items) => format!(
-            "(merge {})",
-            items
-                .iter()
-                .map(fixture_source)
-                .collect::<Vec<_>>()
-                .join(" ")
-        ),
-        AbstractValue::FirstTruthy(items) => format!(
-            "(coalesce {})",
-            items
-                .iter()
-                .map(fixture_source)
-                .collect::<Vec<_>>()
-                .join(" ")
-        ),
-        AbstractValue::Choice(items) => format!(
-            "(coalesce {})",
-            items
-                .iter()
-                .map(fixture_source)
-                .collect::<Vec<_>>()
-                .join(" ")
-        ),
-        AbstractValue::Top
-        | AbstractValue::Unknown
-        | AbstractValue::RangeKey(_)
-        | AbstractValue::KeysList(_)
-        | AbstractValue::DerivedBoolean(_)
-        | AbstractValue::SplitList { .. }
-        | AbstractValue::SplitSegment { .. }
-        | AbstractValue::Widened(_) => ".Values.__unknown_fixture".to_string(),
-    }
-}
-
-fn fixture_condition(predicate: &Predicate) -> Option<String> {
-    use helm_schema_core::PredicateKind;
-    match predicate.kind() {
-        PredicateKind::True => Some("true".to_string()),
-        PredicateKind::False => Some("false".to_string()),
-        PredicateKind::Guard(Guard::Truthy { path }) => Some(format!(".Values.{}", path.encode())),
-        PredicateKind::Not(inner) => Some(format!("(not {})", fixture_condition(inner)?)),
-        PredicateKind::And(parts) | PredicateKind::Or(parts) => {
-            let function = if matches!(predicate.kind(), PredicateKind::And(_)) {
-                "and"
-            } else {
-                "or"
-            };
-            Some(format!(
-                "({function} {})",
-                parts
-                    .iter()
-                    .map(fixture_condition)
-                    .collect::<Option<Vec<_>>>()?
-                    .join(" ")
-            ))
-        }
-        PredicateKind::Guard(_) | PredicateKind::Approximate { .. } => None,
-    }
-}
-
-fn condition_context(template_bindings: HashMap<String, AbstractValue>) -> ConditionContext {
-    condition_context_with_output_meta(template_bindings, &HashMap::new())
-}
-
-fn condition_context_with_output_meta(
-    template_bindings: HashMap<String, AbstractValue>,
-    template_output_meta: &HashMap<
-        String,
-        BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>,
-    >,
-) -> ConditionContext {
-    condition_context_with_defines(template_bindings, template_output_meta, DefineIndex::new())
+fn condition_context(template_bindings: HashMap<String, String>) -> ConditionContext {
+    condition_context_with_defines(template_bindings, DefineIndex::new())
 }
 
 fn condition_context_with_defines(
-    template_bindings: HashMap<String, AbstractValue>,
-    template_output_meta: &HashMap<
-        String,
-        BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>,
-    >,
+    template_bindings: HashMap<String, String>,
     defines: DefineIndex,
 ) -> ConditionContext {
     let mut source = String::new();
     for (name, value) in template_bindings {
-        let mut value = fixture_source(&value);
-        if let Some(metadata) = template_output_meta.get(&name) {
-            if let Some(fallback) = metadata
-                .values()
-                .find_map(|meta| meta.default_fallback.as_ref())
-            {
-                let fallback = match fallback {
-                    GuardValue::String(text) => format!("{text:?}"),
-                    value => value.to_string(),
-                };
-                value = format!("(default {fallback} {value})");
-            } else if !metadata.is_empty() {
-                let paths = metadata
-                    .keys()
-                    .map(|path| format!(".Values.{}", path.encode()))
-                    .collect::<Vec<_>>();
-                value = if paths.len() == 1 {
-                    paths[0].clone()
-                } else {
-                    format!("(coalesce {})", paths.join(" "))
-                };
-                let branches = metadata
-                    .values()
-                    .flat_map(|meta| &meta.predicates)
-                    .map(|branch| {
-                        Some(format!(
-                            "(and {})",
-                            branch
-                                .iter()
-                                .map(fixture_condition)
-                                .collect::<Option<Vec<_>>>()?
-                                .join(" ")
-                        ))
-                    })
-                    .collect::<Option<Vec<_>>>();
-                if let Some(branches) = branches.filter(|branches| !branches.is_empty()) {
-                    source.push_str("{{ $");
-                    source.push_str(&name);
-                    source.push_str(" := .Values.__unknown_fixture }}{{ if or ");
-                    source.push_str(&branches.join(" "));
-                    source.push_str(" }}{{ $");
-                    source.push_str(&name);
-                    source.push_str(" = ");
-                    source.push_str(&value);
-                    source.push_str(" }}{{ end }}");
-                    continue;
-                }
-            }
-        }
         source.push_str("{{ $");
         source.push_str(&name);
         source.push_str(" := ");
@@ -427,7 +269,7 @@ fn negated_include_uses_rendered_text_truthiness() {
         .expect("condition expression");
 
     sim_assert_eq!(
-        have: condition_context_with_defines(HashMap::new(), &HashMap::new(), defines)
+        have: condition_context_with_defines(HashMap::new(), defines)
             .condition_predicate_expr(&expr),
         want: Predicate::False,
     );
@@ -466,14 +308,12 @@ fn absent_custom_root_field_is_false_until_set() {
 
 #[test]
 fn composite_truthiness_is_faithful_only_when_its_exact_decoder_succeeds() {
-    let undecodable_merge =
-        AbstractValue::MergedLayers(vec![values_path!("base"), AbstractValue::Unknown]);
-    let undecodable_selection =
-        AbstractValue::FirstTruthy(vec![values_path!("primary"), AbstractValue::Unknown]);
+    let undecodable_merge = "(merge .Values.base .Values.__unknown_fixture)".to_owned();
+    let undecodable_selection = "(coalesce .Values.primary .Values.__unknown_fixture)".to_owned();
     let bindings = HashMap::from([
         (
             "context".to_string(),
-            AbstractValue::Dict(BTreeMap::from([("merged".to_string(), undecodable_merge)])),
+            format!("(dict \"merged\" {undecodable_merge})"),
         ),
         ("selected".to_string(), undecodable_selection),
     ]);
@@ -498,11 +338,11 @@ fn decodable_composite_truthiness_remains_faithful() {
     let bindings = HashMap::from([
         (
             "merged".to_string(),
-            AbstractValue::MergedLayers(vec![values_path!("base"), values_path!("override")]),
+            "(merge .Values.base .Values.override)".to_owned(),
         ),
         (
             "selected".to_string(),
-            AbstractValue::FirstTruthy(vec![values_path!("primary"), values_path!("fallback")]),
+            "(coalesce .Values.primary .Values.fallback)".to_owned(),
         ),
     ]);
     let context = condition_context(bindings);
@@ -833,10 +673,7 @@ fn condition_without_values_reference_returns_empty() {
 fn has_key_on_known_dict_is_structural_not_value_truthy() {
     let template_bindings = HashMap::from([(
         "arg".to_string(),
-        AbstractValue::Dict(BTreeMap::from([
-            ("customLabels".to_string(), values_path!("commonLabels")),
-            ("context".to_string(), AbstractValue::RootContext),
-        ])),
+        r#"(dict "customLabels" .Values.commonLabels "context" .)"#.to_owned(),
     )]);
 
     sim_assert_eq!(
@@ -885,26 +722,15 @@ fn alias_comparison_preserves_typed_predicates() {
 
 #[test]
 fn output_meta_comparison_preserves_typed_predicates() {
-    let template_bindings = HashMap::from([("customUser".to_string(), AbstractValue::Unknown)]);
-    let template_output_meta = HashMap::from([(
+    let template_bindings = HashMap::from([(
         "customUser".to_string(),
-        BTreeMap::from([
-            (
-                helm_schema_core::ValuesPath::parse("auth.username"),
-                HelperOutputMeta::default(),
-            ),
-            (
-                helm_schema_core::ValuesPath::parse("global.postgresql.auth.username"),
-                HelperOutputMeta::default(),
-            ),
-        ]),
+        "(coalesce .Values.auth.username .Values.global.postgresql.auth.username)".to_owned(),
     )]);
 
     sim_assert_eq!(
         have: parse_condition_with_template_facts(
             r#"ne $customUser "postgres""#,
             template_bindings,
-            &template_output_meta,
         ),
         want: vec![
             Guard::NotEq {
@@ -929,19 +755,10 @@ fn output_meta_comparison_preserves_typed_predicates() {
 fn defaulted_binding_comparison_carries_the_fallback_arm() {
     let path = "serviceMonitor.renderMode";
     let context = || {
-        let mut meta = HelperOutputMeta::default();
-        meta.predicates
-            .insert(std::collections::BTreeSet::from([Predicate::truthy_path(
-                path.to_string(),
-            )]));
-        meta.default_fallback = Some(GuardValue::string("skipIfMissing"));
-        condition_context_with_output_meta(
-            HashMap::from([("mode".to_string(), values_path!(path))]),
-            &HashMap::from([(
-                "mode".to_string(),
-                BTreeMap::from([(helm_schema_core::ValuesPath::parse(path), meta)]),
-            )]),
-        )
+        condition_context(HashMap::from([(
+            "mode".to_string(),
+            format!(r#"(default "skipIfMissing" .Values.{path})"#),
+        )]))
     };
     let parse = |text: &str| {
         let wrapped = format!("{{{{ {text} }}}}");
@@ -1007,11 +824,7 @@ fn defaulted_binding_comparison_carries_the_fallback_arm() {
 fn alias_or_predicate_projects_to_path_disjunction() {
     let aliases = HashMap::from([(
         "annotations".to_string(),
-        AbstractValue::choice(vec![
-            values_path!("service.annotations"),
-            values_path!("global.annotations"),
-        ])
-        .expect("choice has paths"),
+        "(coalesce .Values.global.annotations .Values.service.annotations)".to_owned(),
     )]);
 
     sim_assert_eq!(
@@ -1091,7 +904,7 @@ fn files_get_printf_condition_decodes_to_finite_name_disjunction() {
     defines.add_file_source("files/profile-demo.yaml", "a: 1\n");
     defines.add_file_source("files/profile-ambient.yaml", "b: 2\n");
     defines.add_file_source("templates/other.yaml", "kind: ConfigMap\n");
-    let context = condition_context_with_defines(HashMap::new(), &HashMap::new(), defines);
+    let context = condition_context_with_defines(HashMap::new(), defines);
 
     let wrapped = r#"{{ .Files.Get (printf "files/profile-%s.yaml" .Values.profile) }}"#;
     let top = parse_action_expressions(wrapped)

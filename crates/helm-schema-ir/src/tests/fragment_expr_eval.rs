@@ -7,43 +7,9 @@ use helm_schema_core::{
     ApproximationRole, ConditionalGuard, Guard, GuardDnf, GuardValue, Predicate, ValuesPath,
 };
 
-use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
-use crate::helper_meta::HelperOutputMeta;
 use crate::observed_facts::CaptureKind;
 use test_util::prelude::sim_assert_eq;
-
-fn policy_root_bindings(db: &IrAnalysisDb) -> HashMap<String, AbstractValue> {
-    let strings = db.static_root_strings().clone();
-    let mut fields = BTreeMap::new();
-    for (path, value) in strings {
-        insert_policy_string(&mut fields, &path, value);
-    }
-    fields.into_iter().collect()
-}
-
-fn insert_policy_string(
-    fields: &mut BTreeMap<String, AbstractValue>,
-    path: &[String],
-    value: String,
-) {
-    let Some((head, tail)) = path.split_first() else {
-        return;
-    };
-    if tail.is_empty() {
-        fields.insert(
-            head.clone(),
-            AbstractValue::StringSet(BTreeSet::from([value])),
-        );
-        return;
-    }
-    let entry = fields
-        .entry(head.clone())
-        .or_insert_with(|| AbstractValue::Dict(BTreeMap::new()));
-    if let AbstractValue::Dict(nested) = entry {
-        insert_policy_string(nested, tail, value);
-    }
-}
 
 #[derive(Debug)]
 struct ExecutedObservation {
@@ -60,12 +26,8 @@ impl ExecutedObservation {
         })
     }
 
-    fn value(&self) -> Option<AbstractValue> {
-        AbstractValue::merge_all(
-            self.subject_sites()
-                .map(super::super::value::ExecutedSite::projected_value)
-                .collect(),
-        )
+    fn value(&self) -> Option<crate::value::FrozenValue> {
+        self.subject_sites().last().map(|site| site.value().clone())
     }
 
     fn captured_boolean_truth(&self) -> Option<Predicate> {
@@ -142,9 +104,7 @@ fn conditional_path(value: &str) -> ValuesPath {
     ValuesPath::parse(value)
 }
 
-fn direct_local_bindings(
-    values: &HashMap<String, AbstractValue>,
-) -> HashMap<String, AbstractValue> {
+fn direct_local_bindings(values: &HashMap<String, String>) -> HashMap<String, String> {
     values.clone()
 }
 
@@ -154,12 +114,12 @@ fn fresh_memo() -> std::rc::Rc<helm_schema_core::PredicateMemo> {
 
 fn context_value_from_outer_expr(
     expr: &TemplateExpr,
-    locals: Option<&HashMap<String, AbstractValue>>,
-    _other_locals: Option<&HashMap<String, AbstractValue>>,
-    outer: Option<&HashMap<String, AbstractValue>>,
-    current_dot: Option<&AbstractValue>,
+    locals: Option<&HashMap<String, String>>,
+    _other_locals: Option<&HashMap<String, String>>,
+    outer: Option<&HashMap<String, String>>,
+    current_dot: Option<&String>,
     _memo: &helm_schema_core::PredicateMemo,
-) -> Option<AbstractValue> {
+) -> Option<crate::value::FrozenValue> {
     let defines = DefineIndex::new();
     let db = IrAnalysisDb::new(&defines);
     helper_result_from_expr_with_fragment_locals(
@@ -175,9 +135,9 @@ fn context_value_from_outer_expr(
 
 fn helper_result_from_expr_with_fragment_locals(
     expr: &TemplateExpr,
-    fragment_locals: &HashMap<String, AbstractValue>,
-    _outer: Option<&HashMap<String, AbstractValue>>,
-    current_dot: Option<&AbstractValue>,
+    fragment_locals: &HashMap<String, String>,
+    _outer: Option<&HashMap<String, String>>,
+    current_dot: Option<&String>,
     db: &IrAnalysisDb,
     _seen: &mut HashSet<String>,
 ) -> ExecutedObservation {
@@ -186,13 +146,13 @@ fn helper_result_from_expr_with_fragment_locals(
         source.push_str("{{ $");
         source.push_str(name);
         source.push_str(" := ");
-        source.push_str(&fixture_source(value));
+        source.push_str(value);
         source.push_str(" }}");
     }
-    let rebound = current_dot.is_some_and(|value| !matches!(value, AbstractValue::RootContext));
+    let rebound = current_dot.is_some_and(|value| value != ".");
     if let Some(value) = current_dot.filter(|_| rebound) {
         source.push_str("{{ with ");
-        source.push_str(&fixture_source(value));
+        source.push_str(value);
         source.push_str(" }}");
     }
     source.push_str("{{ $__result := ");
@@ -268,76 +228,6 @@ fn expression_source(expression: &TemplateExpr) -> String {
         TemplateExpr::Assignment { name, value } => {
             format!("{name} = {}", expression_source(value))
         }
-    }
-}
-
-fn fixture_source(value: &AbstractValue) -> String {
-    match value {
-        AbstractValue::ValuesPath(path) | AbstractValue::OutputPath(path, _) => format!(
-            ".Values{}",
-            if path.encode().is_empty() {
-                String::new()
-            } else {
-                format!(".{}", path.encode())
-            }
-        ),
-        AbstractValue::JsonDecodedPath(path) => format!("(fromJson .Values.{})", path.encode()),
-        AbstractValue::RootContext => ".".to_string(),
-        AbstractValue::StringSet(strings) => strings
-            .first()
-            .map_or_else(|| r#""""#.to_string(), |text| format!("{text:?}")),
-        AbstractValue::Dict(entries)
-        | AbstractValue::Overlay {
-            entries,
-            fallback: _,
-        } => {
-            let fields = entries
-                .iter()
-                .map(|(key, value)| format!("{key:?} {}", fixture_source(value)))
-                .collect::<Vec<_>>()
-                .join(" ");
-            format!("(dict {fields})")
-        }
-        AbstractValue::List(items) => format!(
-            "(list {})",
-            items
-                .iter()
-                .map(fixture_source)
-                .collect::<Vec<_>>()
-                .join(" ")
-        ),
-        AbstractValue::MergedLayers(items) => format!(
-            "(merge {})",
-            items
-                .iter()
-                .map(fixture_source)
-                .collect::<Vec<_>>()
-                .join(" ")
-        ),
-        AbstractValue::FirstTruthy(items) => format!(
-            "(coalesce {})",
-            items
-                .iter()
-                .map(fixture_source)
-                .collect::<Vec<_>>()
-                .join(" ")
-        ),
-        AbstractValue::Choice(items) => format!(
-            "(coalesce {})",
-            items
-                .iter()
-                .map(fixture_source)
-                .collect::<Vec<_>>()
-                .join(" ")
-        ),
-        AbstractValue::Top
-        | AbstractValue::Unknown
-        | AbstractValue::RangeKey(_)
-        | AbstractValue::KeysList(_)
-        | AbstractValue::DerivedBoolean(_)
-        | AbstractValue::SplitList { .. }
-        | AbstractValue::SplitSegment { .. }
-        | AbstractValue::Widened(_) => ".Values.__unknown_fixture".to_string(),
     }
 }
 
@@ -1014,8 +904,8 @@ fn empty_context(analysis_db: &IrAnalysisDb) -> &IrAnalysisDb {
 
 fn helper_value_from_fragment_locals(
     action: &str,
-    fragment_locals: &HashMap<String, AbstractValue>,
-) -> Option<AbstractValue> {
+    fragment_locals: &HashMap<String, String>,
+) -> Option<crate::value::FrozenValue> {
     let expr = single_expr(action);
     let defines = DefineIndex::new();
     let analysis_db = IrAnalysisDb::new(&defines);
@@ -1032,26 +922,20 @@ fn helper_value_from_fragment_locals(
     .value()
 }
 
-fn context_local() -> HashMap<String, AbstractValue> {
+fn context_local() -> HashMap<String, String> {
     HashMap::from([(
         "ctx".to_string(),
-        AbstractValue::Dict(BTreeMap::from([(
-            "config".to_string(),
-            values_path!("serviceAccount"),
-        )])),
+        r#"(dict "config" .Values.serviceAccount)"#.to_owned(),
     )])
 }
 
 #[test]
 fn printf_resolves_literal_fragment_local() {
-    let strings = ["path".to_string()].into_iter().collect();
-    let locals = HashMap::from([("opPathKey".to_string(), AbstractValue::StringSet(strings))]);
+    let locals = HashMap::from([("opPathKey".to_string(), r#""path""#.to_owned())]);
 
     sim_assert_eq!(
-        have: helper_value_from_fragment_locals(r#"printf "%sKey" $opPathKey"#, &locals),
-        want: Some(AbstractValue::StringSet(
-            ["pathKey".to_string()].into_iter().collect()
-        ))
+        have: helper_value_from_fragment_locals(r#"printf "%sKey" $opPathKey"#, &locals).and_then(|value| value.literal().cloned()),
+        want: Some(GuardValue::string("pathKey"))
     );
 }
 
@@ -1065,8 +949,8 @@ fn outer_expr_bare_dot_preserves_root_context_identity() {
     let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
 
     sim_assert_eq!(
-        have: context_value_from_outer_expr(&expr, None, None, Some(&root_bindings), None, &fresh_memo()).and_then(|value| value.apply_to_path(&["Values".to_string()])),
-        want: Some(values_path!(""))
+        have: context_value_from_outer_expr(&expr, None, None, Some(&root_bindings), None, &fresh_memo()).and_then(|value| value.read_field("Values").present().and_then(|field| field.identity().cloned())),
+        want: Some(ValuesPath::default())
     );
 }
 
@@ -1075,8 +959,8 @@ fn outer_expr_bare_dot_keeps_the_implicit_values_root() {
     let expr = single_expr(".");
 
     sim_assert_eq!(
-        have: context_value_from_outer_expr(&expr, None, None, Some(&HashMap::new()), None, &fresh_memo()).and_then(|value| value.apply_to_path(&["Values".to_string()])),
-        want: Some(values_path!(""))
+        have: context_value_from_outer_expr(&expr, None, None, Some(&HashMap::new()), None, &fresh_memo()).and_then(|value| value.read_field("Values").present().and_then(|field| field.identity().cloned())),
+        want: Some(ValuesPath::default())
     );
 }
 
@@ -1122,6 +1006,13 @@ fn literal_helper_dispatch_uses_the_values_root_as_its_actual_dot() {
 
 #[test]
 fn partial_helper_output_queries_do_not_reexecute() {
+    #[derive(Debug, PartialEq, Eq)]
+    struct ObservedValue {
+        inputs: BTreeSet<ValuesPath>,
+        literal: Option<GuardValue>,
+        go_type: crate::value::kinds::GoType,
+    }
+
     let mut defines = DefineIndex::new();
     defines.add_file_source(
         "<inline:0>",
@@ -1144,8 +1035,18 @@ fn partial_helper_output_queries_do_not_reexecute() {
         &mut HashSet::new(),
     );
     let count = result.execution.all_sites().count();
-    let first = result.value();
-    let second = result.value();
+    let observe = || {
+        result
+            .subject_sites()
+            .map(|site| ObservedValue {
+                inputs: site.value().inputs(),
+                literal: site.value().literal().cloned(),
+                go_type: site.value().go_type(),
+            })
+            .collect::<Vec<_>>()
+    };
+    let first = observe();
+    let second = observe();
     sim_assert_eq!(have: first, want: second);
     sim_assert_eq!(have: result.execution.all_sites().count(), want: count);
     assert!(
@@ -1282,7 +1183,7 @@ fn helper_fail_header_uses_nested_include_rendered_truthiness() {
         &header,
         &HashMap::new(),
         Some(&root_bindings),
-        Some(&AbstractValue::RootContext),
+        Some(&".".to_owned()),
         fragment_context,
         &mut seen,
     );
@@ -1465,7 +1366,7 @@ fn semver_selected_print_helper_keeps_policy_default_dispatch() {
         },
     );
     let context = helper_context(&analysis_db);
-    let mut root_bindings = policy_root_bindings(&analysis_db);
+    let mut root_bindings = HashMap::new();
     root_bindings.insert("Values".to_string(), values_path!(""));
     let expr =
         single_expr(r#"eq (include "capabilities.ingress.apiVersion" .) "networking.k8s.io/v1""#);
@@ -1530,7 +1431,7 @@ fn root_context_forwarding_keeps_static_capability_scalars() {
         },
     );
     let context = helper_context(&analysis_db);
-    let mut root_bindings = policy_root_bindings(&analysis_db);
+    let mut root_bindings = HashMap::new();
     root_bindings.insert("Values".to_string(), values_path!(""));
     let expr = single_expr(r#"eq (include "capabilities.forward" (dict "context" .)) "modern""#);
     let mut seen = HashSet::new();
@@ -1794,7 +1695,7 @@ fn chart_annotation_policy_decides_helper_output() {
         },
     );
     let context = helper_context(&analysis_db);
-    let mut root_bindings = policy_root_bindings(&analysis_db);
+    let mut root_bindings = HashMap::new();
     root_bindings.insert("Values".to_string(), values_path!(""));
     let expr = single_expr(r#"include "common.fips.enabled" ."#);
     let mut seen = HashSet::new();
@@ -2010,13 +1911,15 @@ fn helper_output_retains_a_token_initial_printf_argument() {
         context,
         &mut seen,
     );
-    let meta = result.value().as_ref().map(AbstractValue::output_meta);
-
     assert!(
-        meta.as_ref().is_some_and(|meta| {
-            meta.values()
-                .any(|meta| meta.plain_slot_string_format && !meta.partial_text)
-        }),
+        result
+            .subject_sites()
+            .any(|site| site.projected_scalar().is_some_and(|scalar| scalar
+                .content()
+                .is_some_and(|view| view.arms().any(|(_, content)| matches!(
+                    content,
+                    crate::scalar_value::ScalarContent::PrintfStringIdentity(_)
+                ))))),
         "the helper's complete printf output must retain its token-opening argument: {result:#?}"
     );
 }
@@ -2249,8 +2152,8 @@ fn outer_expr_root_variable_preserves_root_context_identity() {
     let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
 
     sim_assert_eq!(
-        have: context_value_from_outer_expr(&expr, None, None, Some(&root_bindings), None, &fresh_memo()).and_then(|value| value.apply_to_path(&["Values".to_string()])),
-        want: Some(values_path!(""))
+        have: context_value_from_outer_expr(&expr, None, None, Some(&root_bindings), None, &fresh_memo()).and_then(|value| value.read_field("Values").present().and_then(|field| field.identity().cloned())),
+        want: Some(ValuesPath::default())
     );
 }
 
@@ -2261,11 +2164,8 @@ fn outer_expr_fragment_local_selector_uses_shared_expression_eval() {
     let bindings = direct_local_bindings(&fragment_locals);
 
     sim_assert_eq!(
-        have: context_value_from_outer_expr(&expr, Some(&bindings), None, None, None, &fresh_memo()),
-        want: Some(AbstractValue::Dict(BTreeMap::from([(
-            "name".to_string(),
-            values_path!("serviceAccount.name"),
-        )])))
+        have: context_value_from_outer_expr(&expr, Some(&bindings), None, None, None, &fresh_memo()).and_then(|value| value.read_field("name").present()).and_then(|value| value.identity().cloned()),
+        want: Some(ValuesPath::parse("serviceAccount.name"))
     );
 }
 
@@ -2326,11 +2226,8 @@ fn helper_value_fragment_local_dict_uses_shared_expression_eval() {
         helper_value_from_fragment_locals(r#"dict "name" $ctx.config.name"#, &context_local());
 
     sim_assert_eq!(
-        have: binding,
-        want: Some(AbstractValue::Dict(BTreeMap::from([(
-            "name".to_string(),
-            values_path!("serviceAccount.name"),
-        )])))
+        have: binding.and_then(|value| value.read_field("name").present()).and_then(|value| value.identity().cloned()),
+        want: Some(ValuesPath::parse("serviceAccount.name"))
     );
 }
 
@@ -2340,8 +2237,8 @@ fn helper_value_fragment_local_index_uses_shared_expression_eval() {
         helper_value_from_fragment_locals(r#"index $ctx.config "name""#, &context_local());
 
     sim_assert_eq!(
-        have: binding,
-        want: Some(values_path!("serviceAccount.name"))
+        have: binding.and_then(|value| value.identity().cloned()),
+        want: Some(ValuesPath::parse("serviceAccount.name"))
     );
 }
 
@@ -2763,7 +2660,7 @@ fn bound_helper_call_uses_single_value_resolver_for_fragment_projection() {
 }
 
 #[test]
-fn json_serialized_helper_preserves_structured_root_value_for_decoding() {
+fn json_serialized_helper_preserves_structured_root_value_for_decoding() -> eyre::Result<()> {
     let mut defines = DefineIndex::new();
     defines.add_file_source(
         "<inline:0>",
@@ -2778,43 +2675,32 @@ fn json_serialized_helper_preserves_structured_root_value_for_decoding() {
     let context = helper_context(&analysis_db);
     let expr = single_expr(r#"include "json.roundtrip" (dict "doc" $values) | fromJson"#);
     let mut seen = HashSet::new();
-    let locals = HashMap::from([("values".to_string(), AbstractValue::values_root())]);
+    let locals = HashMap::from([("values".to_string(), ".Values".to_owned())]);
     let bindings = direct_local_bindings(&locals);
-    sim_assert_eq!(
-        have: context_value_from_outer_expr(
-            &single_expr(r#"dict "doc" $values"#),
-            Some(&bindings),
-            None,
-            None,
-            None,
-            &fresh_memo(),
-        ),
-        want: Some(AbstractValue::Dict(BTreeMap::from([(
-            "doc".to_string(),
-            AbstractValue::values_root(),
-        )]))),
-    );
+    let input = context_value_from_outer_expr(
+        &single_expr(r#"dict "doc" $values"#),
+        Some(&bindings),
+        None,
+        None,
+        None,
+        &fresh_memo(),
+    )
+    .ok_or_eyre("input mapping")?;
+    sim_assert_eq!(have: input.read_field("doc").present().and_then(|value| value.identity().cloned()), want: Some(ValuesPath::default()));
     let result = helper_result_from_expr_with_fragment_locals(
         &expr, &locals, None, None, context, &mut seen,
     );
-    let value = result.value().expect("helper output value");
+    let value = result.value().ok_or_eyre("helper output value")?;
     let doc = value
-        .apply_to_path(&["doc".to_string()])
-        .unwrap_or_else(|| {
-            panic!("decoded helper output should retain its doc member: {value:#?}")
-        });
-
-    let (path, json_decoded) = match doc {
-        AbstractValue::JsonDecodedPath(path) => (path, true),
-        AbstractValue::OutputPath(path, meta) => (path, meta.json_decoded),
-        other => panic!("decoded helper output lost its path identity: {other:#?}"),
-    };
-    sim_assert_eq!(have: path, want: helm_schema_core::ValuesPath::default());
-    assert!(json_decoded, "helper output path must remain JSON-decoded");
+        .read_field("doc")
+        .present()
+        .ok_or_eyre("decoded doc member")?;
+    sim_assert_eq!(have: doc.identity(), want: Some(&ValuesPath::default()));
+    Ok(())
 }
 
 #[test]
-fn yaml_helper_output_preserves_structured_value_for_decoding() {
+fn yaml_helper_output_preserves_structured_value_for_decoding() -> eyre::Result<()> {
     let mut defines = DefineIndex::new();
     defines.add_file_source(
         "<inline:0>",
@@ -2840,23 +2726,25 @@ fn yaml_helper_output_preserves_structured_value_for_decoding() {
         context,
         &mut seen,
     );
-    let value = result.value().expect("decoded helper mapping");
-    sim_assert_eq!(
-        have: value.apply_to_path(&["spec".to_string(), "hostUsers".to_string()]),
-        want: Some(AbstractValue::OutputPath(
-            helm_schema_core::ValuesPath::parse("hostUsers"),
-            HelperOutputMeta {
-                input_identity: true,
-                stringified: true,
-                provenance: vec![crate::ContractProvenance::new(
-                    "<inline:0>".to_string(),
-                    crate::SourceSpan::new(83, 106),
-                    vec!["pod.template".to_string()],
-                )],
-                ..HelperOutputMeta::default()
-            },
-        )),
-    );
+    let value = result.value().ok_or_eyre("decoded helper mapping")?;
+    let host_users = value
+        .read_field("spec")
+        .present()
+        .and_then(|value| value.read_field("hostUsers").present())
+        .ok_or_eyre("decoded hostUsers field")?;
+    sim_assert_eq!(have: host_users.inputs(), want: BTreeSet::from([ValuesPath::parse("hostUsers")]));
+    let rows = result
+        .rendered_rows()
+        .iter()
+        .filter(|row| row.source_expr == ValuesPath::parse("hostUsers"))
+        .collect::<Vec<_>>();
+    assert!(rows.iter().any(|row| row.provenance
+        == vec![crate::ContractProvenance::new(
+            "<inline:0>".to_owned(),
+            crate::SourceSpan::new(83, 106),
+            vec!["pod.template".to_owned()],
+        )]));
+    Ok(())
 }
 
 #[test]

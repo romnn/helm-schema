@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeSet;
 
 use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_ast::DefineIndex;
@@ -6,7 +6,6 @@ use helm_schema_core::{GuardValue, ValuesPath};
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
-use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
 
 fn execute(action: &str) -> crate::value::DocumentExecution {
@@ -34,9 +33,12 @@ fn dict_value_can_be_nested_helper_call() -> eyre::Result<()> {
         .filter(|site| site.rendered())
         .last()
         .ok_or_eyre("missing dict output")?;
-    sim_assert_eq!(have: site.projected_value(), want: AbstractValue::Dict(BTreeMap::from([
-        ("name".to_string(), AbstractValue::Widened(BTreeSet::from([ValuesPath::parse("nameOverride")]))),
-    ])));
+    let name = site
+        .value()
+        .read_field("name")
+        .present()
+        .ok_or_eyre("missing name field")?;
+    sim_assert_eq!(have: name.inputs(), want: BTreeSet::from([ValuesPath::parse("nameOverride")]));
     Ok(())
 }
 
@@ -72,10 +74,18 @@ fn integer_index_on_values_path_uses_array_item_wildcard_with_helper_context() -
         .filter(|site| site.rendered())
         .last()
         .ok_or_eyre("missing indexed output")?;
-    sim_assert_eq!(have: site.projected_value(), want: AbstractValue::Dict(BTreeMap::from([
-        ("name".to_string(), AbstractValue::Widened(BTreeSet::from([ValuesPath::parse("nameOverride")]))),
-        ("value".to_string(), values_path!("items.*")),
-    ])));
+    let name = site
+        .value()
+        .read_field("name")
+        .present()
+        .ok_or_eyre("missing name field")?;
+    let value = site
+        .value()
+        .read_field("value")
+        .present()
+        .ok_or_eyre("missing value field")?;
+    sim_assert_eq!(have: name.inputs(), want: BTreeSet::from([ValuesPath::parse("nameOverride")]));
+    sim_assert_eq!(have: value.identity(), want: Some(&ValuesPath::parse("items.*")));
     Ok(())
 }
 
