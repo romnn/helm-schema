@@ -9552,4 +9552,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   cumulative −105 production LOC; KPS +6.3% accepted as debt; remaining 28 = 6 C06a, 12 executor follow-ons, 7 loop, 3
   preclosed. Host: a memory guard that SIGSTOPs running jobs deadlocked all builders (stopped jobs keep their memory);
   rule now: gate only step starts. Orchestrator.
-Next: C06a final step → merge into r3b/construction; slice 3 + C05 step 2 re-apply; C07 re-measure on 63ed5d62; F20 rework → landing 20.
+- 12:35 (Oct 28) — **R3b: C07 step 1 deferred until after C09; C06a close-out reviewed; C09 started; landing preview running.**
+  C07 step 1 re-applied on 63ed5d62 still slows NATS 11.1× (tplYamlItr 38 → 1,588 executions) for 9 controls and no W1 or
+  NATS schema change; certification is blocked because nested `tpl` programs run against the caller's state (proof note
+  .codex-evidence/C07-certification/proof-blocker.md). Design review (astra 20261028T111151-62e2905a): an exact summary needs an
+  ordered, state-threaded callback transfer (650–1,100 production LOC); whole-state memoization lacks a sound key; the 3 helper
+  W1 cells (.221/.521/.49) are ordinary helper-return/output obligations, now owned by the C06a builder. Orchestrator decision:
+  keep the old abstention as baseline, revisit C07 after C09. C06a close-out reviews: semantics REWORK, one P1 false
+  rejection (`quote` of typed nil maps/lists, yaml.rs:1770; sol 20261028T095207-30ddda3a, 15/15 sampled closures hold);
+  architecture KEEP with 140–210 LOC cleanup (sol 20261028T095212-0443f3d0). Both folded into the C06a rebase onto 63ed5d62
+  (branch r3b/merged-c06a). The R3b builder moves to C09 (legacy adapter deletion). A landing-preview lane (sol
+  20261028T101112-dee355fd) dumps the corpus and runs the live battery on 63ed5d62 to surface landing flips early. Orchestrator.
+Next: C06a rebase + P1 + cleanup → merge; C09 slices; slice 3 + C05 step 2; landing preview report; F20 → landing 20.
