@@ -932,13 +932,10 @@ fn bounded_projection(predicate: Predicate, purpose: ProjectionPurpose) -> Optio
 }
 
 fn project_union(
-    parts: Vec<Predicate>,
+    mut parts: Vec<Predicate>,
     purpose: ProjectionPurpose,
     memo: &helm_schema_core::PredicateMemo,
 ) -> Option<Predicate> {
-    // A reachability mask creates dead arms.
-    // Remove them before charging syntax or normalizing the surviving prefix.
-    let mut parts: Vec<_> = parts.into_iter().map(fold_conjunction_constants).collect();
     parts.retain(|part| part != &Predicate::False);
     let terms: Vec<std::collections::BTreeSet<_>> = parts
         .iter()
