@@ -348,10 +348,17 @@ fn array_decoder_near_miss_executes_the_authored_program() {
     let source = PARSED_MAP_MERGE_DEFINES.replace("fromYaml", "fromYamlArray");
     let invocation = r#"{{ include "merge" (dict "values" .Values.layers "context" .) }}"#;
     let outputs = helper_outputs(&source, invocation);
-    assert!(
-        outputs.iter().any(Option::is_none),
-        "unknown body execution must retain unknown output: {outputs:?}"
-    );
+    // Helm's array decoder cannot supply merge's map parameter, so only zero iterations return.
+    sim_assert_eq!(have: outputs, want: vec![Some("{}".to_owned())]);
+    let db = helper_db(&source);
+    for invocation in [
+        r#"{{ include "merge" (dict "values" (list "[]") "context" .) }}"#,
+        r#"{{ include "merge" (dict "values" (list (dict "a" "b")) "context" .) }}"#,
+    ] {
+        let execution = crate::value::execute_document(invocation, None, &db);
+        sim_assert_eq!(have: execution.abort_predicate(), want: Predicate::True);
+        sim_assert_eq!(have: execution.text().count(), want: 0);
+    }
 }
 
 #[test]

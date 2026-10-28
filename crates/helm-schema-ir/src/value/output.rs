@@ -1554,29 +1554,8 @@ impl FrozenValue {
     pub(crate) fn projected_value(&self) -> AbstractValue {
         project(&self.value, &self.heap, &mut BTreeSet::new(), 0)
     }
-    pub(super) fn json(&self) -> Option<serde_json::Value> {
-        json(
-            &self.value,
-            &self.heap,
-            &mut BTreeSet::new(),
-            0,
-            false,
-            &mut None,
-        )
-    }
-    pub(super) fn json_for_yaml(
-        &self,
-        pretty: bool,
-        remaining: &mut usize,
-    ) -> Option<serde_json::Value> {
-        json(
-            &self.value,
-            &self.heap,
-            &mut BTreeSet::new(),
-            0,
-            pretty,
-            &mut Some(remaining),
-        )
+    pub(super) fn json_with(&self, query: &mut JsonQuery<'_>) -> Option<serde_json::Value> {
+        json(&self.value, &self.heap, &mut BTreeSet::new(), 0, query)
     }
 }
 fn project_sequence(
@@ -1721,13 +1700,31 @@ fn project(
         }) => AbstractValue::Widened(value.inputs()),
     }
 }
+pub(super) struct JsonQuery<'a> {
+    pub(super) preserve_nil_collections: bool,
+    pub(super) remaining: Option<&'a mut usize>,
+    pub(super) outcome: &'a dyn Fn(&super::FrozenTest) -> Option<bool>,
+    pub(super) choice: Option<std::rc::Rc<super::FrozenTest>>,
+}
+
+impl JsonQuery<'_> {
+    fn taken(&mut self, decision: &std::rc::Rc<super::FrozenTest>) -> Option<bool> {
+        let taken = decision
+            .constant_outcome()
+            .or_else(|| (self.outcome)(decision));
+        if taken.is_none() {
+            self.choice = Some(std::rc::Rc::clone(decision));
+        }
+        taken
+    }
+}
+
 fn json_string_slice(
     slice: &super::StringSlice,
     heap: &super::HeapVersion,
     seen: &BTreeSet<super::ObjectId>,
     depth: usize,
-    preserve_nil_collections: bool,
-    remaining: &mut Option<&mut usize>,
+    query: &mut JsonQuery<'_>,
 ) -> Option<serde_json::Value> {
     let super::ObjectVersion {
         data: ObjectData::Strings(slots),
@@ -1741,16 +1738,7 @@ fn json_string_slice(
     Some(serde_json::Value::Array(
         slots
             .iter()
-            .map(|value| {
-                json(
-                    value,
-                    heap,
-                    &mut seen.clone(),
-                    depth + 1,
-                    preserve_nil_collections,
-                    remaining,
-                )
-            })
+            .map(|value| json(value, heap, &mut seen.clone(), depth + 1, query))
             .collect::<Option<Vec<_>>>()?,
     ))
 }
@@ -1760,8 +1748,7 @@ fn json_map(
     heap: &super::HeapVersion,
     seen: &BTreeSet<super::ObjectId>,
     depth: usize,
-    preserve_nil_collections: bool,
-    remaining: &mut Option<&mut usize>,
+    query: &mut JsonQuery<'_>,
 ) -> Option<serde_json::Value> {
     let super::ObjectVersion {
         data:
@@ -1777,24 +1764,29 @@ fn json_map(
     };
     let mut result = serde_json::Map::new();
     for (key, field) in fields {
-        if let Some(remaining) = remaining.as_mut()
+        if let Some(remaining) = query.remaining.as_mut()
             && key.len() > 64 * 1024
         {
             **remaining = 0;
             return None;
         }
+        let mut field = field;
+        let mut field_depth = depth;
+        while let super::Field::Select { decision, yes, no } = field {
+            field_depth += 1;
+            if field_depth > 32 {
+                return None;
+            }
+            if let Some(remaining) = &mut query.remaining {
+                **remaining = remaining.checked_sub(1)?;
+            }
+            field = if query.taken(decision)? { yes } else { no };
+        }
         match field {
             super::Field::Present(value) => {
                 result.insert(
                     key.clone(),
-                    json(
-                        value,
-                        heap,
-                        &mut seen.clone(),
-                        depth + 1,
-                        preserve_nil_collections,
-                        remaining,
-                    )?,
+                    json(value, heap, &mut seen.clone(), depth + 1, query)?,
                 );
             }
             super::Field::Absent => {}
@@ -1814,11 +1806,10 @@ fn json_sequence(
     heap: &super::HeapVersion,
     seen: &BTreeSet<super::ObjectId>,
     depth: usize,
-    preserve_nil_collections: bool,
-    remaining: &mut Option<&mut usize>,
+    query: &mut JsonQuery<'_>,
 ) -> Option<serde_json::Value> {
     if sequence.storage.is_none() {
-        return Some(if preserve_nil_collections {
+        return Some(if query.preserve_nil_collections {
             serde_json::Value::Array(Vec::new())
         } else {
             serde_json::Value::Null
@@ -1828,16 +1819,7 @@ fn json_sequence(
         sequence
             .items()?
             .iter()
-            .map(|value| {
-                json(
-                    value,
-                    heap,
-                    &mut seen.clone(),
-                    depth + 1,
-                    preserve_nil_collections,
-                    remaining,
-                )
-            })
+            .map(|value| json(value, heap, &mut seen.clone(), depth + 1, query))
             .collect::<Option<Vec<_>>>()?,
     ))
 }
@@ -1847,17 +1829,24 @@ fn json(
     heap: &super::HeapVersion,
     seen: &mut BTreeSet<super::ObjectId>,
     depth: usize,
-    preserve_nil_collections: bool,
-    remaining: &mut Option<&mut usize>,
+    query: &mut JsonQuery<'_>,
 ) -> Option<serde_json::Value> {
-    if let Some(remaining) = remaining {
-        **remaining = remaining.checked_sub(1)?;
-    }
-    if depth > 32 {
-        return None;
+    let mut value = value;
+    loop {
+        if let Some(remaining) = &mut query.remaining {
+            **remaining = remaining.checked_sub(1)?;
+        }
+        if depth > 32 {
+            return None;
+        }
+        let ValueNode::Select { decision, yes, no } = value.node.as_ref() else {
+            break;
+        };
+        // Selecting a member does not add a JSON container level.
+        value = if query.taken(decision)? { yes } else { no };
     }
     if let Some(literal) = value.constant() {
-        if let (Some(remaining), GuardValue::String(text)) = (remaining.as_mut(), literal)
+        if let (Some(remaining), GuardValue::String(text)) = (query.remaining.as_mut(), literal)
             && text.len() > 64 * 1024
         {
             **remaining = 0;
@@ -1872,14 +1861,7 @@ fn json(
         ValueNode::Leaf(Leaf {
             datum: Datum::Strings(slice),
             origin: _,
-        }) => json_string_slice(
-            slice,
-            heap,
-            seen,
-            depth,
-            preserve_nil_collections,
-            remaining,
-        ),
+        }) => json_string_slice(slice, heap, seen, depth, query),
         ValueNode::Leaf(Leaf {
             datum:
                 Datum::Map {
@@ -1887,27 +1869,18 @@ fn json(
                     view: _,
                 },
             origin: _,
-        }) if seen.insert(id.clone()) => {
-            json_map(id, heap, seen, depth, preserve_nil_collections, remaining)
-        }
+        }) if seen.insert(id.clone()) => json_map(id, heap, seen, depth, query),
         ValueNode::Leaf(Leaf {
             datum: Datum::Sequence(sequence),
             origin: _,
-        }) => json_sequence(
-            sequence,
-            heap,
-            seen,
-            depth,
-            preserve_nil_collections,
-            remaining,
-        ),
+        }) => json_sequence(sequence, heap, seen, depth, query),
         ValueNode::Leaf(Leaf {
             datum: Datum::Map {
                 target: None,
                 view: _,
             },
             origin: _,
-        }) => Some(if preserve_nil_collections {
+        }) => Some(if query.preserve_nil_collections {
             serde_json::Value::Object(serde_json::Map::new())
         } else {
             serde_json::Value::Null

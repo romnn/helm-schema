@@ -6,10 +6,18 @@ use helm_schema_core::GuardValue;
 use std::collections::{BTreeMap, BTreeSet};
 use std::rc::Rc;
 
+#[derive(Debug, thiserror::Error)]
+pub(super) enum TransferDemand {
+    #[error("transfer aborted: {0:?}")]
+    Abort(AbortReason),
+    #[error("transfer requires a member choice")]
+    Choice(Rc<super::FrozenTest>),
+}
+
 pub(super) fn transfer(
     invocation: &super::Invocation,
     state: &mut State,
-) -> Result<Value, AbortReason> {
+) -> Result<Value, TransferDemand> {
     let Some(function) = invocation.callee.function_name() else {
         return Ok(Value::unknown());
     };
@@ -58,7 +66,7 @@ pub(super) fn transfer(
             };
             Ok(state.get_field(&input.first, key))
         }
-        "toStrings" | "sortAlpha" => Ok(string_slice(input.function, &input.first, state)),
+        "toStrings" | "sortAlpha" => return string_slice(input.function, &input.first, state),
         "index" => transfer_index(input, state),
         "first" | "last" => transfer_sequence_edge(input, state),
         "append" | "mustAppend" | "push" | "prepend" | "mustPrepend" | "reverse"
@@ -67,14 +75,12 @@ pub(super) fn transfer(
         }
         "split" | "splitn" => Ok(split_map(input.function, input.arguments, state)),
         "splitList" => Ok(transfer_split_list(input, state)),
-        "join" => Ok(transfer_join(input, state)),
+        "join" => return transfer_join(input, state),
         "pick" | "omit" => Ok(select_map(input.function, input.arguments, state)),
         "pluck" => Ok(pluck(input.arguments, state)),
-        "merge" | "mustMerge" | "mergeOverwrite" | "mustMergeOverwrite" => Ok(merge(
-            input.arguments,
-            state,
-            input.function.contains("Overwrite"),
-        )),
+        "merge" | "mustMerge" | "mergeOverwrite" | "mustMergeOverwrite" => {
+            return merge(input.arguments, state, input.function.contains("Overwrite"));
+        }
         "slice" | "mustSlice" => slice(input.arguments, state),
         "keys" => {
             let mut length = Value::literal(GuardValue::Int(0));
@@ -88,7 +94,7 @@ pub(super) fn transfer(
         }
         "len" => Ok(transfer_length(input, state)),
         "toJson" | "mustToJson" | "toPrettyJson" | "toRawJson" | "mustToRawJson" | "toYaml"
-        | "toYamlPretty" => Ok(transfer_serialize(input, state)),
+        | "toYamlPretty" => return transfer_serialize(input, state),
         "fromJson" | "mustFromJson" | "fromYaml" | "fromYamlArray" | "fromJsonArray" => {
             Ok(transfer_deserialize(input, state))
         }
@@ -109,6 +115,7 @@ pub(super) fn transfer(
             Ok(Value::influenced(input.influences.clone()))
         }
     }
+    .map_err(TransferDemand::Abort)
 }
 struct TransferInput<'a> {
     function: &'a str,
@@ -457,7 +464,7 @@ fn transfer_split_list(input: TransferInput<'_>, state: &mut State) -> Value {
     Value::strings(backing, length)
 }
 
-fn transfer_join(input: TransferInput<'_>, state: &mut State) -> Value {
+fn transfer_join(input: TransferInput<'_>, state: &mut State) -> Result<Value, TransferDemand> {
     let TransferInput {
         function: _,
         arguments: _,
@@ -467,15 +474,15 @@ fn transfer_join(input: TransferInput<'_>, state: &mut State) -> Value {
     } = input;
 
     let Some(GuardValue::String(separator)) = first.constant() else {
-        return Value::influenced(influences.clone());
+        return Ok(Value::influenced(influences.clone()));
     };
     let Some(items) = sequence_items(&last, state) else {
-        return Value::influenced(influences.clone());
+        return Ok(Value::influenced(influences.clone()));
     };
-    let Some(strings) = string_members(&items) else {
-        return Value::influenced(influences.clone());
+    let Some(strings) = string_members(&items, state)? else {
+        return Ok(Value::influenced(influences.clone()));
     };
-    Value::string(&strings.join(separator))
+    Ok(Value::string(&strings.join(separator)))
 }
 
 fn transfer_length(input: TransferInput<'_>, state: &mut State) -> Value {
@@ -515,7 +522,10 @@ fn transfer_length(input: TransferInput<'_>, state: &mut State) -> Value {
         )
 }
 
-fn transfer_serialize(input: TransferInput<'_>, state: &mut State) -> Value {
+fn transfer_serialize(
+    input: TransferInput<'_>,
+    state: &mut State,
+) -> Result<Value, TransferDemand> {
     let TransferInput {
         function,
         arguments: _,
@@ -525,17 +535,27 @@ fn transfer_serialize(input: TransferInput<'_>, state: &mut State) -> Value {
     } = input;
 
     if matches!(function, "toYaml" | "toYamlPretty") {
-        return Value::frozen_text(
+        return Ok(Value::frozen_text(
             super::text::TextTerm::Yaml {
                 value: state.heap.freeze(&first),
                 pretty: function == "toYamlPretty",
             },
             influences.clone(),
-        );
+        ));
     }
     let frozen = state.heap.freeze(&first);
-    let Some(json) = frozen.json() else {
-        return Value::influenced(first.inputs());
+    let guard = state.heap.arena.runtime_path(&state.active);
+    let mut query = super::output::JsonQuery {
+        preserve_nil_collections: false,
+        remaining: None,
+        outcome: &|test| guard.implies_test(test),
+        choice: None,
+    };
+    let Some(json) = frozen.json_with(&mut query) else {
+        return match query.choice {
+            Some(decision) => Err(TransferDemand::Choice(decision)),
+            None => Ok(Value::influenced(first.inputs())),
+        };
     };
     let text = if function == "toPrettyJson" {
         serde_json::to_string_pretty(&json).ok()
@@ -554,10 +574,10 @@ fn transfer_serialize(input: TransferInput<'_>, state: &mut State) -> Value {
             text
         }
     });
-    text.map_or_else(
+    Ok(text.map_or_else(
         || Value::influenced(influences.clone()),
         |text| Value::string(&text),
-    )
+    ))
 }
 
 fn transfer_deserialize(input: TransferInput<'_>, state: &mut State) -> Value {
@@ -1132,7 +1152,7 @@ fn copy_field(
     }
 }
 
-fn string_slice(function: &str, first: &Value, state: &mut State) -> Value {
+fn string_slice(function: &str, first: &Value, state: &mut State) -> Result<Value, TransferDemand> {
     let influences = state.heap.freeze(first).inputs();
     let value = if matches!(
         first.node.as_ref(),
@@ -1156,16 +1176,19 @@ fn string_slice(function: &str, first: &Value, state: &mut State) -> Value {
                 },
                 super::Multiplicity::Singleton,
             );
-            return Value::with_influences(Value::strings(backing, 1), influences);
+            return Ok(Value::with_influences(
+                Value::strings(backing, 1),
+                influences,
+            ));
         } else {
             if function == "sortAlpha" {
                 invalidate(state);
             }
-            return Value::influenced(influences);
+            return Ok(Value::influenced(influences));
         };
         let capacity = values.len();
-        let Some(strings) = string_members(&values) else {
-            return Value::influenced(influences);
+        let Some(strings) = string_members(&values, state)? else {
+            return Ok(Value::influenced(influences));
         };
         let mut strings: Vec<_> = strings.iter().map(|text| Value::string(text)).collect();
         let length = strings.len();
@@ -1195,16 +1218,13 @@ fn string_slice(function: &str, first: &Value, state: &mut State) -> Value {
             multiplicity: _,
         }) = state.heap.version.object(&slice.backing)
         else {
-            return value;
+            return Ok(value);
         };
         let sorted = slots
             .get(slice.start..slice.start.saturating_add(slice.length))
-            .and_then(|slots| {
-                slots
-                    .iter()
-                    .map(|value| state.heap.freeze(value).exact_text())
-                    .collect::<Option<Vec<_>>>()
-            });
+            .map(|slots| string_members(slots, state))
+            .transpose()?
+            .flatten();
         let Some(mut sorted) = sorted else {
             let multiplicity = state
                 .heap
@@ -1221,7 +1241,7 @@ fn string_slice(function: &str, first: &Value, state: &mut State) -> Value {
                     },
                 },
             );
-            return value;
+            return Ok(value);
         };
         sorted.sort();
         for (index, text) in sorted.iter().enumerate() {
@@ -1230,15 +1250,44 @@ fn string_slice(function: &str, first: &Value, state: &mut State) -> Value {
                 .write_slot(&slice.backing, slice.start + index, Value::string(text));
         }
     }
-    value
+    Ok(value)
 }
 
-fn string_members(values: &[Value]) -> Option<Vec<String>> {
-    values
-        .iter()
-        .filter(|value| value.constant() != Some(&GuardValue::Null))
-        .map(scalar_text)
-        .collect()
+fn selected_member(value: &Value, state: &State) -> Value {
+    match value.node.as_ref() {
+        ValueNode::Select {
+            decision: _,
+            yes: _,
+            no: _,
+        } => state.consumed(value),
+        ValueNode::Leaf(Leaf {
+            datum: _,
+            origin: _,
+        }) => value.clone(),
+    }
+}
+
+fn string_members(values: &[Value], state: &State) -> Result<Option<Vec<String>>, TransferDemand> {
+    let mut strings = Vec::new();
+    for value in values {
+        let value = selected_member(value, state);
+        if let ValueNode::Select {
+            decision,
+            yes: _,
+            no: _,
+        } = value.node.as_ref()
+        {
+            return Err(TransferDemand::Choice(Rc::clone(decision)));
+        }
+        if value.constant() == Some(&GuardValue::Null) {
+            continue;
+        }
+        let Some(text) = scalar_text(&value) else {
+            return Ok(None);
+        };
+        strings.push(text);
+    }
+    Ok(Some(strings))
 }
 
 fn scalar_text(value: &Value) -> Option<String> {
@@ -1540,10 +1589,10 @@ fn slice(arguments: &[Value], state: &mut State) -> Result<Value, AbortReason> {
     })
 }
 
-fn merge(arguments: &[Value], state: &mut State, overwrite: bool) -> Value {
+fn merge(arguments: &[Value], state: &mut State, overwrite: bool) -> Result<Value, TransferDemand> {
     let influences = inputs(arguments, state);
     let Some(first) = arguments.first() else {
-        return Value::influenced(influences);
+        return Ok(Value::influenced(influences));
     };
     let nil_destination = matches!(
         first.node.as_ref(),
@@ -1557,7 +1606,7 @@ fn merge(arguments: &[Value], state: &mut State, overwrite: bool) -> Value {
     );
     let mut destination = first.clone();
     if arguments.len() == 1 {
-        return interface_map_view(first, state);
+        return Ok(interface_map_view(first, state));
     }
     if arguments
         .iter()
@@ -1565,10 +1614,10 @@ fn merge(arguments: &[Value], state: &mut State, overwrite: bool) -> Value {
         .any(|value| map_fields(value, state).is_none())
     {
         invalidate(state);
-        return Value::influenced(influences);
+        return Ok(Value::influenced(influences));
     }
-    if nil_destination {
-        if arguments.iter().skip(1).all(|value| {
+    if nil_destination
+        && arguments.iter().skip(1).all(|value| {
             matches!(
                 value.node.as_ref(),
                 ValueNode::Leaf(Leaf {
@@ -1579,49 +1628,49 @@ fn merge(arguments: &[Value], state: &mut State, overwrite: bool) -> Value {
                     origin: _,
                 })
             )
-        }) {
-            return Value::with_influences(
-                Value::leaf(Datum::Map {
-                    view: MapType::Interface,
-                    target: None,
-                }),
-                influences.clone(),
-            );
-        }
+        })
+    {
+        return Ok(Value::with_influences(
+            Value::leaf(Datum::Map {
+                view: MapType::Interface,
+                target: None,
+            }),
+            influences.clone(),
+        ));
+    }
+    let scalar_overwrite = state.map_target(&destination).is_some_and(|target| {
+        can_overwrite_scalar_sources(&destination, &target, arguments, state, overwrite)
+    });
+    let mut graph = BTreeSet::new();
+    let disjoint = scalar_overwrite
+        || std::iter::once(&destination)
+            .chain(arguments.iter().skip(1))
+            .try_fold(true, |disjoint, value| {
+                if disjoint {
+                    disjoint_closed_graph(value, state, &mut graph, 0)
+                } else {
+                    Ok(false)
+                }
+            })?;
+    if nil_destination {
         destination = state.heap.map(Remainder::Closed);
     }
     let Some(target) = state.map_target(&destination) else {
         invalidate(state);
-        return Value::influenced(influences);
+        return Ok(Value::influenced(influences));
     };
-    if can_overwrite_scalar_sources(&destination, &target, arguments, state, overwrite) {
+    if scalar_overwrite {
         if !overwrite_scalar_sources(&target, arguments, state) {
-            return Value::influenced(influences);
+            return Ok(Value::influenced(influences));
         }
-        return Value::with_influences(
-            Value::leaf(Datum::Map {
-                view: MapType::Interface,
-                target: Some(target),
-            }),
-            state.heap.freeze(&destination).inputs(),
-        );
+        return Ok(interface_map_view(&destination, state));
     }
-    let mut graph = BTreeSet::new();
-    let disjoint = std::iter::once(&destination)
-        .chain(arguments.iter().skip(1))
-        .all(|value| disjoint_closed_graph(value, state, &mut graph, 0));
     if !disjoint {
         // Mergo walks map keys in unspecified order; aliased paths can interfere through the heap.
         let mut affected = arguments.to_vec();
         affected.push(destination.clone());
         widen_operands(&affected, state);
-        return Value::with_influences(
-            Value::leaf(Datum::Map {
-                view: MapType::Interface,
-                target: Some(target),
-            }),
-            state.heap.freeze(&destination).inputs(),
-        );
+        return Ok(interface_map_view(&destination, state));
     }
     for source in arguments.iter().skip(1) {
         if !merge_maps(&target, source, state, overwrite, 0) {
@@ -1631,13 +1680,7 @@ fn merge(arguments: &[Value], state: &mut State, overwrite: bool) -> Value {
             break;
         }
     }
-    Value::with_influences(
-        Value::leaf(Datum::Map {
-            view: MapType::Interface,
-            target: Some(target),
-        }),
-        state.heap.freeze(&destination).inputs(),
-    )
+    Ok(interface_map_view(&destination, state))
 }
 
 fn disjoint_closed_graph(
@@ -1645,11 +1688,12 @@ fn disjoint_closed_graph(
     state: &State,
     objects: &mut BTreeSet<super::ObjectId>,
     depth: usize,
-) -> bool {
+) -> Result<bool, TransferDemand> {
     if depth > 32 {
-        return false;
+        return Ok(false);
     }
-    match value.node.as_ref() {
+    let value = selected_member(value, state);
+    Ok(match value.node.as_ref() {
         ValueNode::Leaf(Leaf { datum, origin: _ }) => match datum {
             Datum::Text(_)
             | Datum::Scalar {
@@ -1665,7 +1709,7 @@ fn disjoint_closed_graph(
                 target: Some(id),
             } => {
                 if !objects.insert(id.clone()) {
-                    return false;
+                    return Ok(false);
                 }
                 let Some(ObjectVersion {
                     data:
@@ -1677,26 +1721,48 @@ fn disjoint_closed_graph(
                     multiplicity: super::Multiplicity::Singleton,
                 }) = state.heap.version.object(id)
                 else {
-                    return false;
+                    return Ok(false);
                 };
-                fields.values().all(|field| match field {
-                    Field::Absent => true,
-                    Field::Present(value) => {
-                        disjoint_closed_graph(value, state, objects, depth + 1)
+                fields.values().try_fold(true, |disjoint, field| {
+                    if !disjoint {
+                        return Ok(false);
                     }
-                    Field::Select {
-                        decision: _,
-                        yes: _,
-                        no: _,
+                    match if matches!(
+                        field,
+                        Field::Select {
+                            decision: _,
+                            yes: _,
+                            no: _
+                        }
+                    ) {
+                        state.consumed_field(field)
+                    } else {
+                        field.clone()
+                    } {
+                        Field::Absent => Ok(true),
+                        Field::Present(value) => {
+                            disjoint_closed_graph(&value, state, objects, depth + 1)
+                        }
+                        Field::Select {
+                            decision,
+                            yes: _,
+                            no: _,
+                        } => Err(TransferDemand::Choice(decision)),
+                        Field::Unknown => Ok(false),
                     }
-                    | Field::Unknown => false,
-                })
+                })?
             }
             Datum::Sequence(sequence) => sequence
                 .storage
                 .iter()
                 .flat_map(|items| items.iter())
-                .all(|value| disjoint_closed_graph(value, state, objects, depth + 1)),
+                .try_fold(true, |disjoint, value| {
+                    if disjoint {
+                        disjoint_closed_graph(value, state, objects, depth + 1)
+                    } else {
+                        Ok(false)
+                    }
+                })?,
             Datum::Strings(slice) => objects.insert(slice.backing.clone()),
             Datum::Slot {
                 backing: _,
@@ -1705,11 +1771,11 @@ fn disjoint_closed_graph(
             | Datum::Unknown(_) => false,
         },
         ValueNode::Select {
-            decision: _,
+            decision,
             yes: _,
             no: _,
-        } => false,
-    }
+        } => return Err(TransferDemand::Choice(Rc::clone(decision))),
+    })
 }
 
 fn merge_maps(
@@ -1763,7 +1829,7 @@ fn merge_maps(
             continue;
         }
         let destination = match fields.get(&key) {
-            Some(Field::Present(value)) => Some(value.clone()),
+            Some(Field::Present(value)) => Some(selected_member(value, state)),
             Some(Field::Absent) | None => None,
             Some(
                 Field::Select {

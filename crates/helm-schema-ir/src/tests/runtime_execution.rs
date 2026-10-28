@@ -8,6 +8,8 @@ use helm_schema_ast::DefineIndex;
 use helm_schema_core::Predicate;
 use test_util::prelude::sim_assert_eq;
 
+#[path = "runtime_constructors.rs"]
+mod constructor_laws;
 #[path = "runtime_ranges.rs"]
 mod range_laws;
 #[path = "runtime_reconvergence.rs"]
@@ -3451,4 +3453,15 @@ fn sealed_projection_releases_observation_snapshots_before_the_next_file() -> ey
     projected.sort_unstable();
     sim_assert_eq!(have: projected, want: vec![0, 1]);
     Ok(())
+}
+
+impl super::FrozenValue {
+    pub(super) fn json(&self) -> Option<serde_json::Value> {
+        self.json_with(&mut super::output::JsonQuery {
+            preserve_nil_collections: false,
+            remaining: None,
+            outcome: &|_| None,
+            choice: None,
+        })
+    }
 }

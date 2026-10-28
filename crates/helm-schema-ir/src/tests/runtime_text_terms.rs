@@ -48,7 +48,7 @@ fn frozen_yaml_shared_collection_expansion_charges_the_query_budget() -> eyre::R
         .last()
         .ok_or_eyre("missing collection")?;
     let mut remaining = 64;
-    sim_assert_eq!(have: site.value().json_for_yaml(false, &mut remaining).is_none(), want: true);
+    sim_assert_eq!(have: site.value().json_with(&mut crate::value::output::JsonQuery { preserve_nil_collections: false, remaining: Some(&mut remaining), outcome: &|_| None, choice: None }).is_none(), want: true);
     sim_assert_eq!(have: remaining, want: 0);
     let value = Value::frozen_text(
         TextTerm::Yaml {

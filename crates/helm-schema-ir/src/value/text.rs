@@ -268,12 +268,18 @@ fn yaml_text(
                 | Datum::Unknown(_),
             origin: _,
         }) => {
-            let json = value.json_for_yaml(pretty, remaining).ok_or_else(|| {
-                if *remaining == 0 {
-                    Unresolved::Exhausted
-                } else {
-                    Unresolved::Unknown
-                }
+            let mut query = super::output::JsonQuery {
+                preserve_nil_collections: pretty,
+                remaining: Some(remaining),
+                outcome,
+                choice: None,
+            };
+            let json = value.json_with(&mut query);
+            let choice = query.choice;
+            let json = json.ok_or_else(|| match choice {
+                Some(decision) => Unresolved::Choice(decision),
+                None if *remaining == 0 => Unresolved::Exhausted,
+                None => Unresolved::Unknown,
             })?;
             yaml_bytes(&json, pretty, remaining)
         }

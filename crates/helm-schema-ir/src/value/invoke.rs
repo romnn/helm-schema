@@ -1,5 +1,6 @@
 use super::eval::{Executor, normal};
 use super::kinds::GoType;
+use super::operations::TransferDemand;
 use super::{
     AbortReason, ArgumentForm, Callee, Coverage, Datum, Exit, Flow, Invocation, Leaf, Normal,
     Operand, State, Value, ValueNode,
@@ -360,8 +361,11 @@ impl Executor<'_> {
                     let plan =
                         transfer_values(&invocation, &mut state, &mut remaining, &mut queries);
                     finish_value_plan(plan, state)
-                } else if matches!(invocation.callee.function_name(), Some("eq" | "ne")) {
-                    Self::transfer_invocation(&invocation, state)
+                } else if matches!(
+                    invocation.callee.function_name(),
+                    Some("eq" | "ne" | "list" | "tuple")
+                ) {
+                    Self::transfer_invocation(&invocation, state, &mut remaining)
                 } else {
                     Self::transfer_alternatives(&invocation, state, &mut remaining)
                 };
@@ -492,7 +496,12 @@ impl Executor<'_> {
             return normal(state, Value::influenced(influences));
         }
         *remaining -= 1;
-        for operand in &invocation.operands {
+        let stride = if invocation.callee.function_name() == Some("dict") {
+            2
+        } else {
+            1
+        };
+        for operand in invocation.operands.iter().step_by(stride) {
             let value = state.consumed(&operand.value);
             if let ValueNode::Select {
                 decision,
@@ -514,10 +523,14 @@ impl Executor<'_> {
                 return result.finish();
             }
         }
-        Self::transfer_invocation(invocation, state)
+        Self::transfer_invocation(invocation, state, remaining)
     }
     #[tracing::instrument(skip_all)]
-    fn transfer_invocation(invocation: &Invocation, mut state: State) -> Vec<Exit> {
+    fn transfer_invocation(
+        invocation: &Invocation,
+        mut state: State,
+        remaining: &mut usize,
+    ) -> Vec<Exit> {
         state.record_invocation_reads(invocation);
         let function = match &invocation.callee {
             Callee::Function(function) => function,
@@ -559,10 +572,21 @@ impl Executor<'_> {
                     };
                     normal(state, value)
                 }
-                Err(reason) => vec![Exit {
+                Err(TransferDemand::Abort(reason)) => vec![Exit {
                     state,
                     flow: Flow::Abort(reason),
                 }],
+                Err(TransferDemand::Choice(decision)) => {
+                    let mut exits = super::ExitBuffer::default();
+                    for taken in [true, false] {
+                        let branch = state.fork(Rc::clone(&decision), taken);
+                        if !branch.path_is_infeasible() {
+                            exits
+                                .extend(Self::transfer_alternatives(invocation, branch, remaining));
+                        }
+                    }
+                    exits.finish()
+                }
             },
         }
     }
@@ -571,7 +595,7 @@ fn value_leaf(
     invocation: &Invocation,
     state: &mut State,
     queries: &mut std::collections::BTreeMap<usize, Option<Rc<super::FrozenTest>>>,
-) -> Result<Value, AbortReason> {
+) -> Result<Value, TransferDemand> {
     state.record_invocation_reads(invocation);
     let Callee::Function(function) = &invocation.callee else {
         return Ok(Value::unknown());
@@ -586,7 +610,7 @@ fn value_leaf(
         "kindIs" | "typeIs" | "typeIsLike" | "kindOf" | "typeOf" => {
             super::kinds::descriptor(state, function, &arguments)
         }
-        "fail" => return Err(AbortReason::Fail),
+        "fail" => return Err(TransferDemand::Abort(AbortReason::Fail)),
         "not" | "empty" => Value::select(
             state.test_with_unknown(&first, queries.entry(0).or_default()),
             Value::literal(GuardValue::Bool(false)),
@@ -709,30 +733,7 @@ fn transfer_values(
             no: _,
         } = value.node.as_ref()
         {
-            let depth = state.active.len();
-            let [yes, no] = [true, false].map(|taken| {
-                state.active.push(super::DecisionEdge {
-                    test: Rc::clone(decision),
-                    taken,
-                });
-                let plan = if state.path_is_infeasible() {
-                    ValuePlan {
-                        value: Value::unknown(),
-                        normal: constant_value_test(state, false),
-                        failures: std::collections::BTreeMap::default(),
-                    }
-                } else {
-                    let mut invocation = invocation.clone();
-                    invocation.callee = consumed_callee(&invocation.callee, state);
-                    for operand in &mut invocation.operands {
-                        operand.value = state.consumed(&operand.value);
-                    }
-                    transfer_values(&invocation, state, remaining, queries)
-                };
-                state.active.truncate(depth);
-                plan
-            });
-            return join_value_plans(state, decision, yes, no);
+            return lift_value_choice(invocation, state, remaining, queries, decision);
         }
     }
     if matches!(
@@ -751,7 +752,10 @@ fn transfer_values(
             normal: constant_value_test(state, true),
             failures: std::collections::BTreeMap::default(),
         },
-        Err(reason) => ValuePlan {
+        Err(TransferDemand::Choice(decision)) => {
+            lift_value_choice(invocation, state, remaining, queries, &decision)
+        }
+        Err(TransferDemand::Abort(reason)) => ValuePlan {
             value: Value::unknown(),
             normal: constant_value_test(state, false),
             failures: std::collections::BTreeMap::from([(
@@ -760,6 +764,39 @@ fn transfer_values(
             )]),
         },
     }
+}
+
+fn lift_value_choice(
+    invocation: &Invocation,
+    state: &mut State,
+    remaining: &mut usize,
+    queries: &mut std::collections::BTreeMap<usize, Option<Rc<super::FrozenTest>>>,
+    decision: &Rc<super::FrozenTest>,
+) -> ValuePlan {
+    let depth = state.active.len();
+    let [yes, no] = [true, false].map(|taken| {
+        state.active.push(super::DecisionEdge {
+            test: Rc::clone(decision),
+            taken,
+        });
+        let plan = if state.path_is_infeasible() {
+            ValuePlan {
+                value: Value::unknown(),
+                normal: constant_value_test(state, false),
+                failures: std::collections::BTreeMap::default(),
+            }
+        } else {
+            let mut invocation = invocation.clone();
+            invocation.callee = consumed_callee(&invocation.callee, state);
+            for operand in &mut invocation.operands {
+                operand.value = state.consumed(&operand.value);
+            }
+            transfer_values(&invocation, state, remaining, queries)
+        };
+        state.active.truncate(depth);
+        plan
+    });
+    join_value_plans(state, decision, yes, no)
 }
 
 fn join_value_plans(
