@@ -9541,4 +9541,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   operand-demand and C05 domain-relative recommendations; C07 resumes on top. Status: C06a 136/173 at a3772433 (+261 LOC);
   C05 steps 2–3 committed (a6712c04, bc86a8e9; 10 controls; KPS speed debt, perf lane at 8abec4d6 −20%); C07 step 1 held.
   The C06a line merges into r3b/construction before slices 1–2 start. Orchestrator.
-Next: integrate C06a steps 3–5 into r3b/construction; brief slice 1 (operand lifting); F20 rework hand-back → landing 20; perf lane slice 3.
+- 06:40 (Oct 28) — **R3b: slices 1–2 committed; C05 step 2 withdrawn pending slice 3; C06a at 145/173 and net −105 LOC.**
+  r3b/construction: C06a steps 3–5 merged (66366139), slice 1 operand lifting (23b2313e, +76; constructor forks 126 → 0),
+  slice 2 delta joins (cdd565a8, net 0; history comparisons NATS 192.7M → 322K, KPS 160.6M → 730K; kyverno/datadog −8%).
+  KPS stayed at ~20–22 CPU-s and milvus exceeded a 12 GB cap; the ablation pinned both on C05 step 2 a6712c04 (without it
+  KPS 8.86 s, milvus 0.232 GB; W1 unchanged; only the 7 c05.summary controls reopen). The perf lane traced the cause to
+  repeated predicate storage (allocated predicates 74,632 → 34,078,024 on milvus), the slice-3 defect class. Orchestrator
+  decision: revert a6712c04 on the line (63ed5d62) and re-apply it on top of slice 3 (runtime proof consumption, perf lane,
+  budget +400). C06a (r3b/c06a-placement 5cc2b096): 145/173 closed, 0 new FR, 0 prior-pass unit/integration regressions,
+  cumulative −105 production LOC; KPS +6.3% accepted as debt; remaining 28 = 6 C06a, 12 executor follow-ons, 7 loop, 3
+  preclosed. Host: a memory guard that SIGSTOPs running jobs deadlocked all builders (stopped jobs keep their memory);
+  rule now: gate only step starts. Orchestrator.
+Next: C06a final step → merge into r3b/construction; slice 3 + C05 step 2 re-apply; C07 re-measure on 63ed5d62; F20 rework → landing 20.
