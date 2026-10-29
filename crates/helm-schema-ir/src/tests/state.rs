@@ -44,9 +44,7 @@ fn local_join_and_scope_exit_preserve_root_writes() -> eyre::Result<()> {
         {{- end -}}
         {{- print $local "/" .field -}}
     "#};
-    let outputs = outputs(source)?;
-    sim_assert_eq!(have: outputs.iter().map(|(_, text)| text.as_str()).collect::<BTreeSet<_>>(), want: BTreeSet::from(["before/after"]));
-    sim_assert_eq!(have: outputs.len(), want: 2);
+    sim_assert_eq!(have: outputs(source)?, want: BTreeSet::from([(Predicate::True, "before/after".to_string())]));
     Ok(())
 }
 
