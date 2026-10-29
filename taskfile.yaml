@@ -289,6 +289,7 @@ tasks:
       # Each suite runs exactly once and every exit code is reported, so a
       # final gate needs only this task instead of re-running the suites.
       - |
+        set +e
         "{{.TASK_EXE}}" test:unit -- {{.CLI_ARGS}}; unit=$?
         "{{.TASK_EXE}}" test:integration -- {{.CLI_ARGS}}; integration=$?
         "{{.TASK_EXE}}" test:network -- {{.CLI_ARGS}}; network=$?

@@ -587,11 +587,50 @@ fn the_real_cli_generates_from_relative_paths_and_reproduces() -> eyre::Result<(
     Ok(())
 }
 
+/// Captures the real identity without a deadline and replays deterministic command responses.
+fn timeout_program(
+    program: &Path,
+    version_arguments: &[&str],
+    responses: &str,
+) -> eyre::Result<String> {
+    // Only the selected stage may time out; real programs run solely during this setup.
+    let output = Command::new(program)
+        .env_clear()
+        .args(version_arguments)
+        .output()?;
+    eyre::ensure!(
+        output.status.success(),
+        "{} {version_arguments:?}: {}",
+        program.display(),
+        stderr(&output)
+    );
+    let version = String::from_utf8(output.stdout)?.replace('\'', "'\\''");
+    Ok(formatdoc! {r#"
+        #!/bin/sh
+        case "$1" in
+          version) printf '%s' '{version}' ;;
+          {responses}
+          *) echo "unexpected command: $*" >&2; exit 1 ;;
+        esac
+    "#})
+}
+
 /// A hung generation and a hung Helm render are harness failures (exit 3), never verdicts.
 #[test]
 fn slow_generations_and_slow_helm_renders_time_out() -> eyre::Result<()> {
-    let helm = find_helm()?;
-    let helmsweep = find_helmsweep()?;
+    // Both template calls can return this valid values dump: these cases test timeouts.
+    let helm = timeout_program(
+        &find_helm()?,
+        &["version", "--template", "{{.Version}}"],
+        indoc! {r#"
+            template) printf '%s\n' '{apiVersion: v1, kind: ConfigMap, metadata: {name: app}, data: {values: "{}"}}' ;;
+        "#},
+    )?;
+    let helmsweep = timeout_program(
+        &find_helmsweep()?,
+        &["version"],
+        "classify) printf '%s\\n' pass ;;",
+    )?;
     // Each fake records a background descendant before blocking or exiting.
     // Pipe holders emit fixed successful output and exit independently of external latency.
     let hang = "sleep 60 & echo $! > '@DESCENDANT_FILE@'; exec sleep 60";
@@ -601,13 +640,12 @@ fn slow_generations_and_slow_helm_renders_time_out() -> eyre::Result<()> {
             "sleep 60 & echo $! > '@DESCENDANT_FILE@'; printf '%s' '{output}'; echo exited > '@PARENT_EXIT_FILE@'; exit 0"
         )
     };
-    let wrapper = |on: &str, body: &str, real: &Path| {
+    let wrapper = |on: &str, body: &str, fallback: &str| {
         formatdoc! {r#"
             #!/bin/sh
             if [ "$1" = {on} ]; then {body}; fi
-            exec '{real}' "$@"
+            {fallback}
             "#,
-            real = real.display(),
         }
     };
     let generation_held = "sleep 60 & echo $! > '@DESCENDANT_FILE@'; printf '%s' '{}' > \"$out\"; echo exited > '@PARENT_EXIT_FILE@'; exit 0";
@@ -674,22 +712,23 @@ fn slow_generations_and_slow_helm_renders_time_out() -> eyre::Result<()> {
         expect_timeout(
             case,
             generation.as_deref(),
-            fake_helm.as_deref(),
-            fake_helmsweep.as_deref(),
+            fake_helm.as_deref().unwrap_or(&helm),
+            fake_helmsweep.as_deref().unwrap_or(&helmsweep),
             &named,
         )?;
     }
     Ok(())
 }
 
-/// Runs one matrix whose `generation` (a fake binary's shell), Helm or helmsweep (fake scripts, else
-/// the pinned programs) outlives `--timeout 5`: exit 3 naming `named`, no outputs, and the fake's whole
-/// process group killed.
+/// Runs one matrix whose selected fake stage outlives `--timeout 5`.
+///
+/// All other program calls return deterministic responses: exit 3 names `named`, no outputs
+/// are written, and the fake's whole process group is killed.
 fn expect_timeout(
     case: &str,
     generation: Option<&str>,
-    fake_helm: Option<&str>,
-    fake_helmsweep: Option<&str>,
+    fake_helm: &str,
+    fake_helmsweep: &str,
     named: &[&str],
 ) -> eyre::Result<()> {
     let mut run = Run::new()?;
@@ -704,21 +743,15 @@ fn expect_timeout(
             .replace("@PARENT_EXIT_FILE@", &parent_exit_file.to_string_lossy())
     };
     let generation = generation.map(paths);
-    let fake_helm = fake_helm.map(paths);
-    let fake_helmsweep = fake_helmsweep.map(paths);
+    let fake_helm = paths(fake_helm);
+    let fake_helmsweep = paths(fake_helmsweep);
     match generation.as_deref() {
         Some(body) => run.script_bin("A", body)?,
         None => run.bin("A", Some(ACCEPT_ALL))?,
     }
     run.cells(&["c1\tapp\t{}\t1.29.0\t-", "c2\tapp\t{}\t1.29.0\t-"])?;
-    let helm = match fake_helm.as_deref() {
-        Some(script) => executable(&run.path().join("fake-helm"), script)?,
-        None => find_helm()?,
-    };
-    let helmsweep = match fake_helmsweep.as_deref() {
-        Some(script) => executable(&run.path().join("fake-helmsweep"), script)?,
-        None => find_helmsweep()?,
-    };
+    let helm = executable(&run.path().join("fake-helm"), &fake_helm)?;
+    let helmsweep = executable(&run.path().join("fake-helmsweep"), &fake_helmsweep)?;
     let started = std::time::Instant::now();
     let output = run.run_with(&helm, &helmsweep, &["--timeout", "5"], &[])?;
     let elapsed = started.elapsed();

@@ -229,6 +229,34 @@ fn unicode_mode_rejected_escapes_are_dropped_in_every_position() {
 }
 
 #[test]
+fn unicode_byte_escapes_respell_control_ranges() {
+    sim_assert_eq!(
+        have: unicode_mode_escaped_pattern(r"^[^\u0000-\u001F\u007F]*$"),
+        want: Some(r"^[^\x00-\x1F\x7F]*$".to_string()),
+    );
+}
+
+#[test]
+fn unicode_byte_escapes_preserve_literal_backslashes() {
+    sim_assert_eq!(
+        have: unicode_mode_escaped_pattern(r"^\\u0000\u001F\\\u007F$"),
+        want: Some(r"^\\u0000\x1F\\\x7F$".to_string()),
+    );
+    sim_assert_eq!(have: unicode_mode_escaped_pattern(r"^\\u0000$"), want: None);
+}
+
+#[test]
+fn unicode_byte_escapes_respect_boundaries() {
+    sim_assert_eq!(
+        have: unicode_mode_escaped_pattern(r"^\u0000\u00ff[\u00FE-\u0100]\u0100\uFFFF$"),
+        want: Some(r"^\x00\xFF[\xFE-\u0100]\u0100\uFFFF$".to_string()),
+    );
+    for pattern in [r"^\u0100\uFFFF$", r"^\x00\xFF$", r"^\u{FF}$", r"^\uD800$"] {
+        sim_assert_eq!(have: unicode_mode_escaped_pattern(pattern), want: None, "{pattern:?}");
+    }
+}
+
+#[test]
 fn unicode_mode_escapes_are_kept() {
     for pattern in [
         // Syntax characters, `/`, and a class-member `-`
@@ -260,9 +288,10 @@ fn escapes_abstain_where_rust_and_re2_disagree() {
 
 /// Each dialect reads the respelled pattern exactly as it read the original.
 ///
-/// The `regex` crate stands in for RE2 on both sides, and `regress` compares
-/// ECMA-262's legacy reading of the original with its `u`-mode reading of the
-/// rewrite.
+/// The `regex` crate compares the Rust/RE2-family character language, including
+/// original `\u` escapes that Go refuses to parse.
+/// `regress` compares ECMA-262's legacy reading of the original with its
+/// `u`-mode reading of the rewrite.
 /// The comparison stays within each dialect because the rewrite only claims
 /// to preserve each dialect's own reading; RE2 and ECMA-262 already differ on
 /// constructs such as `\s`.
@@ -284,6 +313,14 @@ fn respelled_escapes_accept_exactly_the_original_language() -> eyre::Result<()> 
         (r"^[\ \%\!-\~]+$", &["% !~", "a", "\t", ""]),
         (r"^[a\&\&b\~\~]$", &["a", "&", "b", "~", "c", ""]),
         (r"^\ \s$", &["  ", " \t", " \u{a0}", "x"]),
+        (
+            r"^[^\u0000-\u001F\u007F]*$",
+            &[
+                "", "text", "\0", "\u{1f}", "\u{20}", "\u{7f}", "\u{80}", "😀",
+            ],
+        ),
+        (r"^[\u0000-\u00FF]$", &["\0", "\u{ff}", "\u{100}", "😀"]),
+        (r"^\\u0000\u00FF$", &["\\u0000\u{ff}", "\0\u{ff}"]),
     ];
     for (pattern, inputs) in cases {
         let rewritten = unicode_mode_escaped_pattern(pattern)

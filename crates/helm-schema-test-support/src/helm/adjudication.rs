@@ -34,6 +34,14 @@ use crate::helm::invocation::{
 };
 use crate::helm::kubernetes_version::chart_kubernetes_version;
 
+/// A defaults or context Kubernetes control the oracle cannot use: its
+/// render holds resources no pinned schema decides, or new assertions
+/// versus the defaults. The pinned oracle cannot decide such a document;
+/// nothing failed to execute.
+#[derive(Debug, thiserror::Error)]
+#[error("{0}")]
+pub struct UnusableControl(pub String);
+
 /// Values obtained from template-free Helm execution, before chart mutation.
 #[derive(Clone)]
 pub struct CoalescedValues(Value);
@@ -127,7 +135,15 @@ struct DefaultsControlKey {
 }
 
 /// Defaults evidence shared only under the same Kubernetes version and validator inputs.
-type DefaultsEvaluation = Result<Arc<ResourceEvidence>, String>;
+type DefaultsEvaluation = Result<Arc<ResourceEvidence>, DefaultsFailure>;
+
+/// A memoized defaults-control failure: its message, and whether the
+/// control was unusable rather than failed.
+#[derive(Clone, Debug)]
+struct DefaultsFailure {
+    message: String,
+    unusable: bool,
+}
 
 /// Private copies share chart inputs and differ only in their template bodies.
 pub struct PinnedHelmChart {
@@ -1115,7 +1131,7 @@ pub const KUBERNETES_RELEASE: &str = "v1.29.0-standalone-strict";
 
 /// How resource schemas are compiled and judged. Changing the compilation
 /// options or the identity proof must change this.
-const VALIDATOR_POLICY: &str = "helm-schema/offline-kubernetes-validator/v6";
+const VALIDATOR_POLICY: &str = "helm-schema/offline-kubernetes-validator/v10";
 
 /// Base for anonymous schemas; resource API/kind separately qualify every assertion.
 const ANONYMOUS_SCHEMA_URI: &str = "https://helm-schema.invalid/resource";
@@ -1223,6 +1239,7 @@ static COMPILED_SCHEMAS: OnceLock<Mutex<BTreeMap<String, Arc<CompiledSchemas>>>>
 /// Validates rendered resources against pinned, offline Kubernetes (and CRD)
 /// schema bundles.
 pub struct OfflineKubernetesValidator {
+    native_crds: super::chart_crds::Checker,
     provider: KubernetesJsonSchemaProvider,
     /// The pinned CRD catalog that decides non-built-in kinds, if any.
     crds: Option<CrdsCatalogSchemaProvider>,
@@ -1259,7 +1276,13 @@ impl OfflineKubernetesValidator {
         if let Some(crds) = crds {
             bundles.push((crds.to_path_buf(), tree_sha256(crds)?));
         }
-        let mut identity = format!("{VALIDATOR_POLICY}\n{release}\n");
+        let native_crds = super::chart_crds::Checker::from_environment(
+            &PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../.."),
+        );
+        let mut identity = format!(
+            "{VALIDATOR_POLICY}\n{release}\n{}\n",
+            native_crds.identity()
+        );
         for (_, sha256) in &bundles {
             identity.push_str(sha256);
             identity.push('\n');
@@ -1275,6 +1298,7 @@ impl OfflineKubernetesValidator {
             .or_default()
             .clone();
         Ok(Self {
+            native_crds,
             provider: KubernetesJsonSchemaProvider::new(release)
                 .with_cache_dir(cache)
                 .with_allow_download(false),
@@ -1387,12 +1411,22 @@ impl OfflineKubernetesValidator {
                 .or_insert_with(|| {
                     self.evaluate_defaults(chart, kubernetes_version)
                         .map(Arc::new)
-                        .map_err(|err| format!("{err:#}"))
+                        .map_err(|err| DefaultsFailure {
+                            message: format!("{err:#}"),
+                            unusable: err.downcast_ref::<UnusableControl>().is_some(),
+                        })
                 });
-            evaluated
-                .as_ref()
-                .map(Arc::clone)
-                .map_err(|err| eyre::eyre!("defaults render could not be adjudicated: {err}"))?
+            evaluated.as_ref().map(Arc::clone).map_err(|failure| {
+                let message = format!(
+                    "defaults render could not be adjudicated: {}",
+                    failure.message
+                );
+                if failure.unusable {
+                    eyre::Report::new(UnusableControl(message))
+                } else {
+                    eyre::eyre!(message)
+                }
+            })?
         };
         Ok(self.probe_evidence(chart, probe)?.compare(&defaults))
     }
@@ -1427,16 +1461,18 @@ impl OfflineKubernetesValidator {
                 self.control_evidence(chart, context, "context")?
             };
             let comparison = evidence.compare(&defaults_evidence);
-            eyre::ensure!(
-                comparison.new_violations.is_empty(),
-                "unusable context Kubernetes control: new assertions versus defaults: {}",
-                comparison
-                    .new_violations
-                    .iter()
-                    .map(ToString::to_string)
-                    .collect::<Vec<_>>()
-                    .join("; ")
-            );
+            if !comparison.new_violations.is_empty() {
+                return Err(UnusableControl(format!(
+                    "unusable context Kubernetes control: new assertions versus defaults: {}",
+                    comparison
+                        .new_violations
+                        .iter()
+                        .map(ToString::to_string)
+                        .collect::<Vec<_>>()
+                        .join("; ")
+                ))
+                .into());
+            }
             applicable.push(evidence);
         }
         if applicable.is_empty() {
@@ -1458,11 +1494,13 @@ impl OfflineKubernetesValidator {
             "unusable {label} render control"
         );
         let evidence = self.probe_evidence(chart, control)?;
-        eyre::ensure!(
-            evidence.uncertain.is_empty(),
-            "unusable {label} Kubernetes control: uncertainty: {}",
-            evidence.uncertain.join("; ")
-        );
+        if !evidence.uncertain.is_empty() {
+            return Err(UnusableControl(format!(
+                "unusable {label} Kubernetes control: uncertainty: {}",
+                evidence.uncertain.join("; ")
+            ))
+            .into());
+        }
         Ok(evidence)
     }
 
@@ -1493,7 +1531,67 @@ impl OfflineKubernetesValidator {
         chart: &PinnedHelmChart,
         probe: &HelmProbe,
     ) -> eyre::Result<ResourceEvidence> {
-        self.document_evidence(&Self::decode_probe(chart, probe)?)
+        let sidecar = probe
+            .evidence_dir
+            .join(format!("{}.crds.json", probe.rendered.record.stage));
+        let installation = fs::read(sidecar)
+            .ok()
+            .and_then(|raw| serde_json::from_slice::<super::chart_crds::Installation>(&raw).ok());
+        let documents = Self::decode_probe(chart, probe)?;
+        let mut evidence = ResourceEvidence::default();
+        for (index, document) in documents.iter().enumerate() {
+            if document.is_null() {
+                continue;
+            }
+            let location = format!("document {index}");
+            let previous_uncertain = evidence.uncertain.len();
+            let previous_invalid = evidence.invalid.len();
+            self.validate_document(document, &location, &mut evidence)?;
+            let api = document
+                .get("apiVersion")
+                .and_then(Value::as_str)
+                .unwrap_or_default();
+            let kind = document
+                .get("kind")
+                .and_then(Value::as_str)
+                .unwrap_or_default();
+            let group = api.split_once('/').map_or("", |(group, _)| group);
+            if !is_k8s_builtin_group(group)
+                && evidence.invalid.len() == previous_invalid
+                && evidence.uncertain.len() > previous_uncertain
+                && self.compiled_validator(api, kind).is_err()
+            {
+                let decision = installation.as_ref().map_or_else(
+                    || {
+                        super::chart_crds::Decision::Uncertain(
+                            "missing Helm installation sidecar".to_string(),
+                        )
+                    },
+                    |installed| {
+                        let Some(resource) = installed.resource_for(document) else {
+                            return super::chart_crds::Decision::Uncertain(
+                                "resource lacks unique Helm submission proof".to_string(),
+                            );
+                        };
+                        installed.decide(
+                            &self.native_crds,
+                            resource,
+                            self.crds.as_ref().map(|crds| crds.cache_dir.as_path()),
+                            &format!(
+                                "{}\n{}",
+                                self.schema_identity, probe.rendered.record.content_key
+                            ),
+                            &[],
+                        )
+                    },
+                );
+                // Chart proof may resolve uncertainty; abstention preserves the legacy reason.
+                if decision == super::chart_crds::Decision::Accepted {
+                    evidence.uncertain.truncate(previous_uncertain);
+                }
+            }
+        }
+        Ok(evidence)
     }
 
     fn document_evidence(&self, documents: &[Value]) -> eyre::Result<ResourceEvidence> {
@@ -1729,9 +1827,9 @@ pub fn decode(runner: &HelmRunner, rendered: &[u8], case: &Path) -> eyre::Result
         decoder_documents(&output.stdout, &case, empty)
     } else {
         Err(format!(
-            "Helm YAML decoding failed; evidence={}: {}",
-            crate::helm::invocation::preserve_failure(&case).display(),
-            String::from_utf8_lossy(&output.stderr)
+            "Helm YAML decoding failed: {}; evidence={}",
+            String::from_utf8_lossy(&output.stderr),
+            crate::helm::invocation::preserve_failure(&case).display()
         ))
     };
     Ok(Decoded {

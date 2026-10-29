@@ -163,15 +163,14 @@ func TestConcurrentValidationMatchesFreshCompiles(t *testing.T) {
 
 // The staged module (stage/main.go; the tests run in its build directory) is the
 // tagged v4.2.3 module (h1:JEejtPE0… in go.sum), every file byte-identical
-// except the one file helm-memo.patch changes (PATCH.md: upstream 7dabf3ef…,
-// patched 80104edd…).
+// except the two files helm-memo.patch changes (PATCH.md).
 func TestVendoredHelmIsUpstreamPlusOnePatch(t *testing.T) {
 	const (
 		root      = "third_party/helm-v4.2.3"
 		patched   = "pkg/chart/common/util/jsonschema.go"
-		upstream  = "2b885ee5328b25b29859a02a044f2fd3774349659a5852c424e1db286fd0d5a4" // 1983 unpatched files
+		upstream  = "273e9869fc19585e7d008927724102a3ae1e40b0c22f8dae449a77d11e423735" // 1982 unpatched files
 		patchedTo = "80104edd35b11dbf0b04d5f45aac50450f71f6fd5902d1256ed0c42632cb9f07"
-		patchFile = "1f6767beb8128846c3b231f342089c885c53ecfeba9e8d3f2237e558f843bae4"
+		patchFile = "5749c37a135125fa9c057f56168d4712647d7b4a08df1981deaa4be1222e6d77"
 	)
 	if sum, err := fileSHA256("helm-memo.patch"); err != nil || sum != patchFile {
 		t.Fatalf("helm-memo.patch has sha256 %s (%v), want %s", sum, err, patchFile)
@@ -189,6 +188,12 @@ func TestVendoredHelmIsUpstreamPlusOnePatch(t *testing.T) {
 		if err != nil {
 			return err
 		}
+		if rel == "pkg/action/validate.go" {
+			if sum != "fe1c92a2c4c37559ff7c9127a01191a4e07cf343e2e68864879f0fa4e665f5a2" {
+				t.Errorf("metadata visitor bridge changed: %s", sum)
+			}
+			return nil
+		}
 		if rel == patched {
 			if sum != patchedTo {
 				t.Errorf("%s has sha256 %s, want %s", rel, sum, patchedTo)
@@ -202,8 +207,8 @@ func TestVendoredHelmIsUpstreamPlusOnePatch(t *testing.T) {
 		t.Fatal(err)
 	}
 	sort.Slice(lines, func(i, j int) bool { return lines[i][66:] < lines[j][66:] })
-	if got := fmt.Sprintf("%x", sha256.Sum256([]byte(strings.Join(lines, "")))); len(lines) != 1983 || got != upstream {
-		t.Fatalf("%d unpatched files hash to %s, want 1983 hashing to %s", len(lines), got, upstream)
+	if got := fmt.Sprintf("%x", sha256.Sum256([]byte(strings.Join(lines, "")))); len(lines) != 1982 || got != upstream {
+		t.Fatalf("%d unpatched files hash to %s, want 1982 hashing to %s", len(lines), got, upstream)
 	}
 }
 

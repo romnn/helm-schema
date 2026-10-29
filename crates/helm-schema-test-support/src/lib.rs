@@ -10,6 +10,7 @@
 
 use color_eyre::eyre::{self, WrapErr as _};
 
+pub mod acceptance;
 pub mod admission;
 pub mod cell_matrix;
 pub mod consume;
@@ -19,6 +20,7 @@ pub mod machine;
 pub mod manifest;
 pub mod registry;
 pub mod source_digest;
+pub mod value_algebra_diff;
 
 pub use consume::consume;
 pub use registry::{ArtifactId, ChartId, IrId, LeanId, PolicyId, TemplateId};

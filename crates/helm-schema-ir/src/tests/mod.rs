@@ -44,6 +44,7 @@ mod state;
 pub(crate) mod support;
 mod symbolic_local_state;
 mod url_parse_pattern;
+mod value_algebra_controls;
 mod value_runtime;
 
 use crate::{Guard, SymbolicIrContext, ValueKind, YamlPath};

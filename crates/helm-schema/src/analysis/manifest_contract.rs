@@ -49,7 +49,7 @@ pub(crate) fn collect_manifest_contract_for_chart(
                 source,
                 file.path,
                 contains_template_action(source)?,
-            )?
+            )
         };
         manifest_contract.map_value_paths(|path| {
             helm_schema_core::ValuesPath::parse(&chart::scope_values_path(

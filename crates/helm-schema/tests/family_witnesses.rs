@@ -7,6 +7,8 @@
 //! `testdata/chart-corpus-schemas/{chart}.schema.json` alone, composing the
 //! witness values over the chart defaults the way Helm coalesces them. It
 //! runs no Helm; the Helm verdicts are the frozen oracle each row pins.
+//! Default CLI size obligations generate current output in a separate integration test,
+//! which combines those results with the frozen rows for the complete family report.
 //!
 //! A known-open row passes only while its defect persists: reaching the
 //! verdict its oracle calls for fails it as an unexpected fix, so the row
@@ -154,21 +156,42 @@ enum Fixture {
     Unusable(String),
 }
 
-#[test]
-fn fixture_verdicts() -> eyre::Result<()> {
-    eyre::ensure!(
-        KNOWN_FALSE_ACCEPTANCES
-            .iter()
-            .all(|group| group.rejection != Rejection::LintRejects),
-        "legacy path/class roster rows cannot identify lint documents; use exact context selectors"
-    );
-    let layout = Layout::corpus();
-    let run = run_gate(FAMILY_WITNESSES, &layout)?;
-    println!("{}", family_report(FAMILY_WITNESSES, &run)?);
-    let failures = report_failures(&run);
+mod frozen {
+    use color_eyre::eyre;
+
+    use super::{FAMILY_WITNESSES, Layout, assert_gate, run_fixture_gate};
+
+    #[test]
+    fn fixture_verdicts() -> eyre::Result<()> {
+        helm_schema_test_support::init_perfetto_from_env()?;
+        let layout = Layout::corpus();
+        let run = run_fixture_gate(FAMILY_WITNESSES, &layout)?;
+        assert_gate(&run)
+    }
+}
+
+/// Whole-chart generation belongs to the integration profile throughout this module.
+mod live {
+    use color_eyre::eyre;
+
+    use super::{FAMILY_WITNESSES, Layout, assert_gate, family_report, run_gate};
+
+    /// Live output generation and the complete family report run in the integration profile.
+    #[test]
+    fn generated_output_sizes_and_family_report() -> eyre::Result<()> {
+        helm_schema_test_support::init_perfetto_from_env()?;
+        let layout = Layout::corpus();
+        let run = run_gate(FAMILY_WITNESSES, &layout)?;
+        println!("{}", family_report(FAMILY_WITNESSES, &run)?);
+        assert_gate(&run)
+    }
+}
+
+fn assert_gate(run: &GateRun) -> eyre::Result<()> {
+    let failures = report_failures(run);
     eyre::ensure!(
         failures == 0,
-        "{failures} frozen witness rows failed; each diff above shows the observed outcome \
+        "{failures} witness rows failed; each diff above shows the observed outcome \
          (have) against the catalog row (want)"
     );
     Ok(())
@@ -259,13 +282,27 @@ fn same_document_conflicts(
     conflicts
 }
 
+#[tracing::instrument(target = "helm_schema", skip_all)]
 fn run_gate(catalog: &[FamilyWitnesses], layout: &Layout) -> eyre::Result<GateRun> {
-    let problems = registration_problems(catalog, layout)?;
-    eyre::ensure!(
-        problems.is_empty(),
-        "the witness catalog is malformed:\n{}",
-        problems.join("\n")
-    );
+    let mut run = run_fixture_gate(catalog, layout)?;
+    for entry in catalog {
+        for obligation in entry.size_obligations {
+            match obligation.output {
+                ShippedOutput::DefaultCli => {
+                    run.rows
+                        .push(evaluate_size(entry.family, obligation, layout)?);
+                }
+                ShippedOutput::HelmReady => {}
+            }
+        }
+    }
+    Ok(run)
+}
+
+/// Evaluates adopted fixtures without regenerating chart schemas.
+#[tracing::instrument(target = "helm_schema", skip_all)]
+fn run_fixture_gate(catalog: &[FamilyWitnesses], layout: &Layout) -> eyre::Result<GateRun> {
+    check_registration(catalog, layout)?;
 
     let mut by_chart: BTreeMap<&'static str, Vec<(Family, &Witness)>> = BTreeMap::new();
     for entry in catalog {
@@ -280,6 +317,8 @@ fn run_gate(catalog: &[FamilyWitnesses], layout: &Layout) -> eyre::Result<GateRu
     let mut rows = Vec::new();
     let mut conflicts = Vec::new();
     for (chart, witnesses) in by_chart {
+        let _chart_span =
+            tracing::info_span!(target: "helm_schema", "witness_chart", chart).entered();
         let fixture = load_fixture(&layout.fixture(chart))?;
         let mut option_fixtures: BTreeMap<PolicyOption, Fixture> = BTreeMap::new();
         let chart_tree = chart_tree_digest(&layout.chart_dir(chart))?;
@@ -287,6 +326,8 @@ fn run_gate(catalog: &[FamilyWitnesses], layout: &Layout) -> eyre::Result<GateRu
         // default policy.
         let mut documents: BTreeMap<(Option<PolicyOption>, String), SameDocument> = BTreeMap::new();
         for (family, witness) in witnesses {
+            let _witness_span =
+                tracing::info_span!(target: "helm_schema", "witness", id = witness.id).entered();
             let overlay = witness.overrides.overlay(&layout.values_files)?;
             let document =
                 test_util::helm_values::coalesce_chart_values(&layout.chart_dir(chart), overlay)
@@ -353,7 +394,12 @@ fn run_gate(catalog: &[FamilyWitnesses], layout: &Layout) -> eyre::Result<GateRu
 
     for entry in catalog {
         for obligation in entry.size_obligations {
-            rows.push(evaluate_size(entry.family, obligation, layout)?);
+            match obligation.output {
+                ShippedOutput::HelmReady => {
+                    rows.push(evaluate_size(entry.family, obligation, layout)?);
+                }
+                ShippedOutput::DefaultCli => {}
+            }
         }
     }
     Ok(GateRun { rows, conflicts })
@@ -409,6 +455,7 @@ fn shipped_bytes(schema: &Value) -> eyre::Result<usize> {
     Ok(serde_json::to_vec(&shorten_definition_names(schema).schema)?.len())
 }
 
+#[tracing::instrument(target = "helm_schema", skip_all, fields(path = %path.display()))]
 fn load_fixture(path: &Path) -> eyre::Result<Fixture> {
     let schema = read_fixture(path)?;
     let size = shipped_bytes(&schema)?;
@@ -428,6 +475,7 @@ fn load_fixture(path: &Path) -> eyre::Result<Fixture> {
 
 /// The fixture's verdict on `document`, with its sorted errors as context;
 /// no verdict when Helm would refuse the fixture itself.
+#[tracing::instrument(target = "helm_schema", skip_all)]
 fn judge(fixture: &Fixture, document: &Value) -> (Option<SchemaVerdict>, Vec<String>) {
     match fixture {
         Fixture::Unusable(reason) => (None, vec![format!("fixture unusable: {reason}")]),
@@ -458,6 +506,7 @@ fn judge(fixture: &Fixture, document: &Value) -> (Option<SchemaVerdict>, Vec<Str
     }
 }
 
+#[tracing::instrument(target = "helm_schema", skip_all, fields(chart = obligation.chart, id = obligation.id))]
 fn evaluate_size(
     family: Family,
     obligation: &SizeObligation,
@@ -506,12 +555,32 @@ fn evaluate_size(
     })
 }
 
+fn check_registration(catalog: &[FamilyWitnesses], layout: &Layout) -> eyre::Result<()> {
+    let problems = registration_problems(catalog, layout)?;
+    eyre::ensure!(
+        problems.is_empty(),
+        "the witness catalog is malformed:\n{}",
+        problems.join("\n")
+    );
+    Ok(())
+}
+
 /// Everything wrong with the catalog's shape, before any row is evaluated.
+#[tracing::instrument(target = "helm_schema", skip_all)]
 fn registration_problems(
     catalog: &[FamilyWitnesses],
     layout: &Layout,
 ) -> eyre::Result<Vec<String>> {
     let mut problems = Vec::new();
+    if KNOWN_FALSE_ACCEPTANCES
+        .iter()
+        .any(|group| group.rejection == Rejection::LintRejects)
+    {
+        problems.push(
+            "legacy path/class roster rows cannot identify lint documents; use exact context selectors"
+                .to_string(),
+        );
+    }
     let mut ids = BTreeSet::new();
     let mut inputs: BTreeMap<String, &str> = BTreeMap::new();
     let mut charts_checked = BTreeSet::new();
@@ -639,7 +708,7 @@ fn chart_problems(chart: &str, layout: &Layout) -> eyre::Result<Vec<String>> {
         if in_charts && relative.extension().is_some_and(|ext| ext == "tgz") {
             problems.push(format!(
                 "chart {chart}: packaged dependency {} is not modelled",
-                relative.display()
+                portable_relative_path(&relative)
             ));
         }
         // A dependency manifest sits at the chart root or at the root of a
@@ -673,7 +742,7 @@ fn chart_problems(chart: &str, layout: &Layout) -> eyre::Result<Vec<String>> {
             if imports {
                 problems.push(format!(
                     "chart {chart}: import-values in {} is not modelled",
-                    relative.display()
+                    portable_relative_path(&relative)
                 ));
             }
         }
@@ -724,7 +793,7 @@ fn override_problems(family: Family, witness: &Witness, layout: &Layout) -> Vec<
             if !named {
                 problems.push(format!(
                     "{id}: a values file is {family:?}/{id}.yaml, not {}",
-                    relative.display()
+                    portable_relative_path(relative)
                 ));
             }
             if let Err(error) = witness.overrides.overlay(&layout.values_files) {
@@ -839,18 +908,27 @@ fn overrides_text(overrides: &Overrides, layout: &Layout) -> eyre::Result<String
     Ok(text)
 }
 
-/// Digest of every file under a chart directory, by relative path.
+/// Digest of every file under a chart directory, by slash-separated relative path.
+#[tracing::instrument(target = "helm_schema", skip_all, fields(path = %dir.display()))]
 fn chart_tree_digest(dir: &Path) -> eyre::Result<String> {
     let mut hasher = Sha256::new();
     for relative in chart_files(dir)? {
         let path = dir.join(&relative);
         let bytes = std::fs::read(&path).wrap_err_with(|| format!("read {}", path.display()))?;
-        hasher.update(relative.to_string_lossy().as_bytes());
+        hasher.update(portable_relative_path(&relative).as_bytes());
         hasher.update([0]);
         hasher.update(u64::try_from(bytes.len())?.to_le_bytes());
         hasher.update(&bytes);
     }
     Ok(hex(&hasher.finalize()))
+}
+
+// Frozen adjudications and catalog diagnostics use the same paths on every host.
+fn portable_relative_path(path: &Path) -> String {
+    path.iter()
+        .map(|component| component.to_string_lossy())
+        .collect::<Vec<_>>()
+        .join("/")
 }
 
 /// Every file under `dir`, relative to it, sorted.
@@ -1678,6 +1756,25 @@ fn default_output_obligation_counts_final_annotations() -> eyre::Result<()> {
         let row = evaluate_size(Family::F74, &obligation, &layout)?;
         sim_assert_eq!(have: row.have, want: row.want);
     }
+    Ok(())
+}
+
+#[test]
+fn chart_tree_digest_pins_portable_relative_paths_and_file_bytes() -> eyre::Result<()> {
+    let root = test_util::scratch::ScratchDir::new("family-witness-digest")?;
+    std::fs::create_dir(root.path().join("templates"))?;
+    std::fs::write(root.path().join("Chart.yaml"), "name: probe\n")?;
+    std::fs::write(
+        root.path().join("templates").join("probe.yaml"),
+        "kind: ConfigMap\n",
+    )?;
+
+    // Pin the canonical path spelling and byte framing without deriving the expectation
+    // through the host's path formatter.
+    sim_assert_eq!(
+        have: chart_tree_digest(root.path())?,
+        want: "f8fba76bee89b4420ea6c9ab68c3b2be69483d39634ed138abfb65bab1a0d848"
+    );
     Ok(())
 }
 

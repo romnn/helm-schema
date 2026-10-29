@@ -74,8 +74,7 @@ fn portable_provider_pattern(pattern: &str) -> Option<String> {
     unicode_mode_escaped_pattern(base).or(folded)
 }
 
-/// Respells every escaped ASCII character that ECMA-262 rejects under the
-/// `u` flag, such as `\ `, `\%`, `\<`, or `\-` outside a class.
+/// Respells parsed escapes for Go and ECMA-262 `u`-mode compatibility.
 ///
 /// RE2 reads an escaped ASCII character other than a letter or digit as that
 /// literal character, and so does ECMA-262 without the `u` flag.
@@ -86,6 +85,9 @@ fn portable_provider_pattern(pattern: &str) -> Option<String> {
 /// the same strings in RE2 and both ECMA-262 modes.
 /// Inside a class, `&` and `~` become `\x26` and `\x7E` instead, because a
 /// doubled bare `&&` or `~~` is a class set operator in Rust-based validators.
+/// Fixed `\uXXXX` escapes through U+00FF become `\xHH`, which denotes the
+/// same code point in both ECMA-262 and Go, whose parser rejects `\u`.
+/// Larger Unicode escapes stay unchanged.
 ///
 /// Returns `None` when the pattern needs no rewrite or when [`regex_syntax`],
 /// the `regex` crate's RE2-family parser, cannot locate the escapes exactly:
@@ -97,7 +99,7 @@ fn portable_provider_pattern(pattern: &str) -> Option<String> {
 #[must_use]
 pub fn unicode_mode_escaped_pattern(pattern: &str) -> Option<String> {
     let parsed = ast::parse::Parser::new().parse(pattern).ok()?;
-    let mut respellings = ast::visit(&parsed, SuperfluousEscapes::default()).ok()?;
+    let mut respellings = ast::visit(&parsed, PortableEscapes::default()).ok()?;
     if respellings.is_empty() {
         return None;
     }
@@ -116,7 +118,7 @@ pub fn unicode_mode_escaped_pattern(pattern: &str) -> Option<String> {
 /// The escapes that [`unicode_mode_escaped_pattern`] respells, collected
 /// by a visit that fails to abstain from the whole pattern.
 #[derive(Default)]
-struct SuperfluousEscapes {
+struct PortableEscapes {
     respellings: Vec<Respelling>,
 }
 
@@ -126,27 +128,35 @@ struct Respelling {
     text: String,
 }
 
-impl SuperfluousEscapes {
+impl PortableEscapes {
     fn record(&mut self, literal: &ast::Literal, in_class: bool) {
         let escaped = matches!(literal.kind, LiteralKind::Superfluous | LiteralKind::Meta);
         // ECMA-262's `u` flag admits only these identity escapes, plus `-` in a class.
         let unicode_mode_escapable =
             r"^$\.*+?()[]{}|/".contains(literal.c) || (in_class && literal.c == '-');
-        if escaped && !unicode_mode_escapable {
-            let text = if in_class && matches!(literal.c, '&' | '~') {
+        let text = if matches!(
+            literal.kind,
+            LiteralKind::HexFixed(ast::HexLiteralKind::UnicodeShort)
+        ) && literal.c <= '\u{FF}'
+        {
+            format!("\\x{:02X}", u32::from(literal.c))
+        } else if escaped && !unicode_mode_escapable {
+            if in_class && matches!(literal.c, '&' | '~') {
                 format!("\\x{:02X}", u32::from(literal.c))
             } else {
                 literal.c.to_string()
-            };
-            self.respellings.push(Respelling {
-                span: literal.span,
-                text,
-            });
-        }
+            }
+        } else {
+            return;
+        };
+        self.respellings.push(Respelling {
+            span: literal.span,
+            text,
+        });
     }
 }
 
-impl ast::Visitor for SuperfluousEscapes {
+impl ast::Visitor for PortableEscapes {
     type Output = Vec<Respelling>;
     type Err = ();
 

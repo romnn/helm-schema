@@ -214,3 +214,14 @@
  func (l urnLoader) Load(urlStr string) (any, error) {
  	if doc, err := URNResolver(urlStr); err == nil && doc != nil {
  		return doc, nil
+--- a/pkg/action/validate.go
++++ b/pkg/action/validate.go
+@@ -232,3 +232,8 @@
+ 
+ 	return false, nil
+ }
++
++// ReleaseMetadataVisitor exposes Helm's install decoration to the test driver.
++func ReleaseMetadataVisitor(releaseName, releaseNamespace string) resource.VisitorFunc {
++	return setMetadataVisitor(releaseName, releaseNamespace, true)
++}

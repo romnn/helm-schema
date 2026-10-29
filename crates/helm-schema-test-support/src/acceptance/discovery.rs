@@ -14,9 +14,10 @@ use test_util::helm_values::ValuesError;
 use test_util::scratch::ScratchDir;
 use vfs::VfsPath;
 
-use crate::helm_adjudication::ValuesViolationKey;
+use crate::helm::adjudication::ValuesViolationKey;
 
-pub(crate) const MAX_PROBES_PER_CHART: usize = 50_000;
+/// The most documents and probes one chart may screen.
+pub const MAX_PROBES_PER_CHART: usize = 50_000;
 const MAX_THIRD_LEVEL_DELETIONS_PER_CHART: usize = 2_048;
 const MAX_GUARD_STATE_PAIRS_PER_CHART: usize = 8;
 const MAX_GUARD_ARMS_ATTEMPTED_PER_CHART: usize = 24;
@@ -24,87 +25,133 @@ const MAX_GUARD_WITNESS_CANDIDATES_PER_CHART: usize = 128;
 const MAX_COMPOSITE_STATE_PAIRS_PER_CHART: usize = 8;
 
 #[derive(Clone, Copy, Debug, Default, Deserialize, PartialEq, Eq, Serialize)]
-pub(crate) enum GuardSamplingStrategy {
+/// How guards are sampled under the guard cap.
+pub enum GuardSamplingStrategy {
     /// Samples the first guards in deterministic serialized schema order.
     #[default]
     SchemaOrderPrefix,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Eq, Serialize)]
-pub(crate) struct ProbeCoverage {
-    pub(crate) label: String,
+/// What one chart's probe battery generated, emitted and dropped.
+pub struct ProbeCoverage {
+    /// The chart's label.
+    pub label: String,
     #[serde(default)]
-    pub(crate) lint: Option<crate::lint_probes::LintCoverage>,
-    pub(crate) base_candidates: usize,
-    pub(crate) base_emitted: usize,
-    pub(crate) base_dropped: usize,
-    pub(crate) third_level_candidates: usize,
-    pub(crate) third_level_emitted: usize,
-    pub(crate) third_level_dropped: usize,
-    pub(crate) guards_discovered: usize,
-    pub(crate) guard_sampling_strategy: GuardSamplingStrategy,
-    pub(crate) guards_attempted: usize,
-    pub(crate) guard_pairs_emitted: usize,
-    pub(crate) guards_skipped_by_cap: usize,
-    pub(crate) guards_without_witness_pair: usize,
-    pub(crate) guard_witness_candidates: usize,
-    pub(crate) guard_witness_candidates_dropped: usize,
-    pub(crate) composite_targets: usize,
-    pub(crate) composite_pairs_emitted: usize,
-    pub(crate) composite_targets_without_payload: usize,
-    pub(crate) composite_pairs_dropped_by_cap: usize,
-    pub(crate) total_emitted: usize,
-    pub(crate) total_dropped: usize,
+    /// Its lint lane's accounting.
+    pub lint: Option<super::screen::LintCoverage>,
+    /// Base probe candidates.
+    pub base_candidates: usize,
+    /// Base probes emitted.
+    pub base_emitted: usize,
+    /// Base probes dropped by the cap.
+    pub base_dropped: usize,
+    /// Third-level deletion candidates.
+    pub third_level_candidates: usize,
+    /// Third-level deletions emitted.
+    pub third_level_emitted: usize,
+    /// Third-level deletions dropped by the cap.
+    pub third_level_dropped: usize,
+    /// Guards discovered in both schemas.
+    pub guards_discovered: usize,
+    /// How guards were sampled.
+    pub guard_sampling_strategy: GuardSamplingStrategy,
+    /// Guards attempted.
+    pub guards_attempted: usize,
+    /// Guard state pairs emitted.
+    pub guard_pairs_emitted: usize,
+    /// Guards skipped by the cap.
+    pub guards_skipped_by_cap: usize,
+    /// Guards with no witness pair.
+    pub guards_without_witness_pair: usize,
+    /// Guard witness candidates.
+    pub guard_witness_candidates: usize,
+    /// Guard witness candidates dropped by the cap.
+    pub guard_witness_candidates_dropped: usize,
+    /// Composite guard targets.
+    pub composite_targets: usize,
+    /// Composite state pairs emitted.
+    pub composite_pairs_emitted: usize,
+    /// Composite targets with no payload.
+    pub composite_targets_without_payload: usize,
+    /// Composite pairs dropped by the cap.
+    pub composite_pairs_dropped_by_cap: usize,
+    /// Probes emitted.
+    pub total_emitted: usize,
+    /// Probes dropped.
+    pub total_dropped: usize,
     /// Probes given as a composed document (`ProbeInstance::Coalesced`).
-    pub(crate) composed_probes: usize,
+    pub composed_probes: usize,
     /// Composed probes no values file reaches; they are excluded from
     /// screening and adjudication.
-    pub(crate) unreachable_probes: Vec<UnreachableProbe>,
+    pub unreachable_probes: Vec<UnreachableProbe>,
 }
 
 /// A composed probe no values file reaches.
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq, Serialize)]
-pub(crate) struct UnreachableProbe {
-    pub(crate) probe: String,
-    pub(crate) reason: String,
+pub struct UnreachableProbe {
+    /// The probe's name.
+    pub probe: String,
+    /// Why no values file reaches it.
+    pub reason: String,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum ContractVerdict {
+/// What the contract says about a semantic control.
+pub enum ContractVerdict {
+    /// The contract accepts it.
     Accept,
+    /// The contract rejects it, for the reason given.
     Reject(&'static str),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum Transport {
+/// How a semantic control reaches Helm.
+pub enum Transport {
+    /// As a JSON values file.
     ValuesFileJson,
+    /// As `--set` assignments.
     Set,
+    /// As `--set-string` assignments.
     SetString,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum ControlCategory {
+/// What a semantic control witnesses.
+pub enum ControlCategory {
+    /// A rejection the lean profile keeps.
     RetainedTooth,
+    /// A rejection the lean profile removes.
     RemovedTooth,
+    /// An acceptance both profiles keep.
     PositiveControl,
 }
 
 #[derive(Clone, Debug)]
-pub(crate) enum ProbeInstance {
+/// One probe's values.
+pub enum ProbeInstance {
+    /// The chart's defaults alone.
     Defaults,
+    /// A sparse override of the defaults.
     SparseOverride(Value),
+    /// A complete coalesced document.
     Coalesced(Value),
 }
 
 /// Whether a values file makes Helm compose a probe's document.
 #[derive(Clone, Debug, PartialEq)]
-pub(crate) enum ProbeValuesFile {
+pub enum ProbeValuesFile {
     /// This values file does.
     Reachable(Value),
     /// This values file reaches `document`: the probe plus the null
     /// defaults Helm keeps once an override reaches a subchart, which is
     /// the document Helm validates for it.
-    ReachableAs { values: Value, document: Value },
+    ReachableAs {
+        /// The values file.
+        values: Value,
+        /// The document Helm validates.
+        document: Value,
+    },
     /// None does; the probe is not a document Helm validates.
     Unreachable(String),
 }
@@ -122,7 +169,7 @@ impl ProbeInstance {
     /// # Errors
     ///
     /// Fails when the chart cannot be composed at all.
-    pub(crate) fn helm_values_file(
+    pub fn helm_values_file(
         &self,
         chart_dir: &Path,
         defaults: &Value,
@@ -170,7 +217,10 @@ fn adds_only_kept_nulls(reached: &Value, composed: &Value) -> bool {
         .all(|(key, value)| composed.contains_key(key) || value.is_null())
 }
 
-pub(super) fn sparse_override_for_composed(defaults: &Value, composed: &Value) -> Option<Value> {
+/// The sparse override that composes over `defaults` to `composed`, `None`
+/// when they are equal.
+#[must_use]
+pub fn sparse_override_for_composed(defaults: &Value, composed: &Value) -> Option<Value> {
     match (defaults, composed) {
         (Value::Object(defaults), Value::Object(composed)) => {
             let mut patch = Map::new();
@@ -199,17 +249,26 @@ pub(super) fn sparse_override_for_composed(defaults: &Value, composed: &Value) -
 }
 
 #[derive(Clone, Debug)]
-pub(crate) struct SemanticControl {
-    pub(crate) name: &'static str,
-    pub(crate) category: ControlCategory,
-    pub(crate) instance: ProbeInstance,
-    pub(crate) transport: Transport,
-    pub(crate) contract: ContractVerdict,
-    pub(crate) lean_accepts: bool,
-    pub(crate) rationale: &'static str,
+/// A named semantic control and its expected verdicts.
+pub struct SemanticControl {
+    /// The control's name.
+    pub name: &'static str,
+    /// What it witnesses.
+    pub category: ControlCategory,
+    /// Its values.
+    pub instance: ProbeInstance,
+    /// How it reaches Helm.
+    pub transport: Transport,
+    /// What the contract says.
+    pub contract: ContractVerdict,
+    /// Whether the lean profile accepts it.
+    pub lean_accepts: bool,
+    /// Why.
+    pub rationale: &'static str,
 }
 
-pub(crate) struct ProfileSchemas {
+/// A baseline and a candidate schema compiled for screening, with the chart's defaults.
+pub struct ProfileSchemas {
     full: Validator,
     lean: Validator,
     lean_schema: Value,
@@ -218,7 +277,12 @@ pub(crate) struct ProfileSchemas {
 
 impl ProfileSchemas {
     #[tracing::instrument(target = "helm_schema::acceptance", skip_all)]
-    pub(crate) fn compile(
+    /// Compiles both schemas over `defaults`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when a schema does not compile.
+    pub fn compile(
         full_schema: &Value,
         lean_schema: &Value,
         defaults: Value,
@@ -236,16 +300,20 @@ impl ProfileSchemas {
     }
 
     /// The candidate schema as compiled.
-    pub(crate) fn candidate_schema(&self) -> &Value {
+    #[must_use]
+    pub fn candidate_schema(&self) -> &Value {
         &self.lean_schema
     }
 
     /// Whether the baseline and the candidate accept `instance` as given.
-    pub(crate) fn document_verdicts(&self, instance: &Value) -> (bool, bool) {
+    #[must_use]
+    pub fn document_verdicts(&self, instance: &Value) -> (bool, bool) {
         (self.full.is_valid(instance), self.lean.is_valid(instance))
     }
 
-    pub(crate) fn verdicts(&self, probe: &ProbeInstance) -> (bool, bool) {
+    /// How the baseline and the candidate judge `probe` composed over the defaults.
+    #[must_use]
+    pub fn verdicts(&self, probe: &ProbeInstance) -> (bool, bool) {
         let instance = self.compose(probe);
         (self.full.is_valid(&instance), self.lean.is_valid(&instance))
     }
@@ -254,13 +322,15 @@ impl ProfileSchemas {
     /// disagree on it, or the candidate rejects it for an assertion the
     /// baseline does not violate, which would hide a new false rejection
     /// behind an old one.
-    pub(crate) fn screens_a_flip(&self, probe: &ProbeInstance) -> bool {
+    #[must_use]
+    pub fn screens_a_flip(&self, probe: &ProbeInstance) -> bool {
         let instance = self.compose(probe);
         self.screen_document(&instance)
     }
 
     /// Screens an already composed document without applying template defaults.
-    pub(crate) fn screen_document(&self, instance: &Value) -> bool {
+    #[must_use]
+    pub fn screen_document(&self, instance: &Value) -> bool {
         let before = self.full.is_valid(instance);
         let after = self.lean.is_valid(instance);
         if before != after {
@@ -273,15 +343,28 @@ impl ProfileSchemas {
             )
     }
 
-    pub(crate) fn coalesced_errors(
+    /// The candidate's violations of `instance`, sorted, when it is a
+    /// transition the candidate rejects; empty otherwise.
+    #[must_use]
+    pub fn candidate_violations(&self, instance: &Value, transition: bool) -> Vec<String> {
+        if !transition || self.lean.is_valid(instance) {
+            return Vec::new();
+        }
+        violation_identities(&self.lean, instance)
+    }
+
+    /// Both schemas' violations of Helm's coalesced `values`.
+    #[must_use]
+    pub fn coalesced_errors(
         &self,
-        values: &crate::helm_adjudication::CoalescedValues,
+        values: &crate::helm::adjudication::CoalescedValues,
     ) -> (Vec<ValuesViolationKey>, Vec<ValuesViolationKey>) {
         self.errors(values.as_json())
     }
 
     /// Judges the screened composition of `overlay` when Helm produced no coalesced document.
-    pub(crate) fn override_errors(
+    #[must_use]
+    pub fn override_errors(
         &self,
         overlay: &Value,
     ) -> (Vec<ValuesViolationKey>, Vec<ValuesViolationKey>) {
@@ -293,9 +376,10 @@ impl ProfileSchemas {
     /// rejection constrains nothing the probe changed, so it is no evidence
     /// about the probe. The judged document is Helm's coalesced values, or
     /// the screened composition of `overlay` without them.
-    pub(crate) fn baseline_rejects_it_as_its_defaults(
+    #[must_use]
+    pub fn baseline_rejects_it_as_its_defaults(
         &self,
-        values: Option<&crate::helm_adjudication::CoalescedValues>,
+        values: Option<&crate::helm::adjudication::CoalescedValues>,
         overlay: &Value,
     ) -> bool {
         let defaults = violations(&self.full, &self.defaults);
@@ -312,17 +396,21 @@ impl ProfileSchemas {
         judged.into_iter().collect::<BTreeSet<_>>() == defaults.into_iter().collect()
     }
 
-    pub(crate) fn errors(
-        &self,
-        instance: &Value,
-    ) -> (Vec<ValuesViolationKey>, Vec<ValuesViolationKey>) {
+    /// Both schemas' violations of `instance`.
+    #[must_use]
+    pub fn errors(&self, instance: &Value) -> (Vec<ValuesViolationKey>, Vec<ValuesViolationKey>) {
         (
             violations(&self.full, instance),
             violations(&self.lean, instance),
         )
     }
 
-    pub(crate) fn assert_monotone<'a>(
+    /// Checks that the candidate accepts every probe the baseline accepts.
+    ///
+    /// # Errors
+    ///
+    /// Returns the probes the candidate rejects but the baseline accepts.
+    pub fn assert_monotone<'a>(
         &self,
         probes: impl IntoIterator<Item = (&'a str, &'a ProbeInstance)>,
     ) -> eyre::Result<()> {
@@ -341,7 +429,12 @@ impl ProfileSchemas {
         Ok(())
     }
 
-    pub(crate) fn assert_controls(&self, controls: &[SemanticControl]) -> eyre::Result<()> {
+    /// Checks every control's expected verdicts.
+    ///
+    /// # Errors
+    ///
+    /// Returns the controls judged unexpectedly.
+    pub fn assert_controls(&self, controls: &[SemanticControl]) -> eyre::Result<()> {
         let mut failures = Vec::new();
         for control in controls {
             let instance = self.compose(&control.instance);
@@ -381,6 +474,13 @@ impl ProfileSchemas {
         Ok(())
     }
 
+    /// The document both schemas judge for `probe`: the defaults, the
+    /// defaults coalesced with a sparse override, or a coalesced document.
+    #[must_use]
+    pub fn composed(&self, probe: &ProbeInstance) -> Value {
+        self.compose(probe)
+    }
+
     fn compose(&self, probe: &ProbeInstance) -> Value {
         match probe {
             ProbeInstance::Defaults => self.defaults.clone(),
@@ -396,12 +496,22 @@ impl ProfileSchemas {
     }
 }
 
-pub(crate) fn generate_profile_schemas(chart_relative_path: &str) -> eyre::Result<(Value, Value)> {
+/// Generates the full and lean schemas of a corpus chart.
+///
+/// # Errors
+///
+/// Returns an error when generation fails.
+pub fn generate_profile_schemas(chart_relative_path: &str) -> eyre::Result<(Value, Value)> {
     let (full, lean) = generate_profile_outputs(chart_relative_path)?;
     Ok((full.schema, lean.schema))
 }
 
-pub(crate) fn generate_profile_outputs(
+/// Generates the full and lean outputs of a corpus chart.
+///
+/// # Errors
+///
+/// Returns an error when generation fails.
+pub fn generate_profile_outputs(
     chart_relative_path: &str,
 ) -> eyre::Result<(GeneratedSchema, GeneratedSchema)> {
     let full = generate_schema(chart_relative_path, SchemaProfile::Full)?;
@@ -409,7 +519,9 @@ pub(crate) fn generate_profile_outputs(
     Ok((full, lean))
 }
 
-pub(crate) fn profile_session(
+/// The analysis session of a corpus chart under `profile`.
+#[must_use]
+pub fn profile_session(
     chart_relative_path: &str,
     profile: SchemaProfile,
     infer_required: bool,
@@ -424,7 +536,11 @@ pub(crate) fn profile_session(
 /// The chart's coalesced default values: what Helm hands the templates when
 /// the user supplies nothing. Schemas validate this document, so probes
 /// compose over it rather than over the root `values.yaml` alone.
-pub(crate) fn read_coalesced_defaults(chart_relative_path: &str) -> eyre::Result<Value> {
+///
+/// # Errors
+///
+/// Returns an error when the chart's values cannot be coalesced.
+pub fn read_coalesced_defaults(chart_relative_path: &str) -> eyre::Result<Value> {
     let chart = HelmChartDir::stage(chart_relative_path)?;
     Ok(test_util::helm_values::coalesce_chart_values(
         chart.path(),
@@ -436,13 +552,18 @@ pub(crate) fn read_coalesced_defaults(chart_relative_path: &str) -> eyre::Result
 /// whose manifest is only `Chart.template.yaml` (cert-manager); like the
 /// Helm adjudicator's private copy, the staged copy names it `Chart.yaml`.
 /// Every other chart is used in place.
-pub(crate) struct HelmChartDir {
+pub struct HelmChartDir {
     path: std::path::PathBuf,
     _staged: Option<ScratchDir>,
 }
 
 impl HelmChartDir {
-    pub(crate) fn stage(chart_relative_path: &str) -> eyre::Result<Self> {
+    /// Copies the chart to a scratch directory Helm may write into.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the chart cannot be copied.
+    pub fn stage(chart_relative_path: &str) -> eyre::Result<Self> {
         let source = chart_path(chart_relative_path);
         if source.join("Chart.yaml").is_file() || !source.join("Chart.template.yaml").is_file() {
             return Ok(Self {
@@ -460,7 +581,9 @@ impl HelmChartDir {
         })
     }
 
-    pub(crate) fn path(&self) -> &Path {
+    /// The staged chart directory.
+    #[must_use]
+    pub fn path(&self) -> &Path {
         &self.path
     }
 }
@@ -479,7 +602,12 @@ fn copy_dir(from: &Path, to: &Path) -> eyre::Result<()> {
     Ok(())
 }
 
-pub(crate) fn read_chart_schema_fixture(chart: &str) -> eyre::Result<Value> {
+/// Reads a chart's committed schema fixture.
+///
+/// # Errors
+///
+/// Returns an error when the fixture cannot be read or parsed.
+pub fn read_chart_schema_fixture(chart: &str) -> eyre::Result<Value> {
     let path = test_util::workspace_testdata()
         .join("chart-corpus-schemas")
         .join(format!("{chart}.schema.json"));
@@ -488,7 +616,12 @@ pub(crate) fn read_chart_schema_fixture(chart: &str) -> eyre::Result<Value> {
     serde_json::from_str(&source).wrap_err_with(|| format!("parse {}", path.display()))
 }
 
-pub(crate) fn structural_probe_battery(
+/// The chart's structural probe battery over `schemas`.
+///
+/// # Errors
+///
+/// Returns an error when the chart cannot be read.
+pub fn structural_probe_battery(
     chart_relative_path: &str,
     defaults: &Value,
     schemas: &[&Value],
@@ -502,7 +635,12 @@ pub(crate) fn structural_probe_battery(
     skip_all,
     fields(chart = chart_relative_path)
 )]
-pub(crate) fn structural_probe_battery_with_coverage(
+/// The chart's structural probe battery over `schemas`, with its coverage.
+///
+/// # Errors
+///
+/// Returns an error when the chart cannot be read.
+pub fn structural_probe_battery_with_coverage(
     chart_relative_path: &str,
     defaults: &Value,
     schemas: &[&Value],
@@ -629,7 +767,10 @@ fn base_probes(
     round_robin_base_probes(base_probes, base_probe_buckets)
 }
 
-pub(super) fn round_robin_base_probes(
+/// Interleaves base probes across their buckets so a cap visits every
+/// bucket before repeating one.
+#[must_use]
+pub fn round_robin_base_probes(
     mut probes: Vec<(String, ProbeInstance)>,
     buckets: BTreeMap<(String, usize), Vec<(String, ProbeInstance)>>,
 ) -> Vec<(String, ProbeInstance)> {
@@ -650,7 +791,12 @@ pub(super) fn round_robin_base_probes(
     }
 }
 
-pub(crate) fn guard_state_probes(
+/// Guard state probes over `schemas`, with their coverage counts.
+///
+/// # Errors
+///
+/// Returns an error when a guard cannot be compiled.
+pub fn guard_state_probes(
     defaults: &Value,
     schemas: &[&Value],
     coverage: &mut ProbeCoverage,
@@ -834,6 +980,19 @@ fn synthesized_guard_witness_candidates(
     (candidates, omitted)
 }
 
+/// The canonical identities of the violations `validator` reports on
+/// `instance`, sorted and unique: what a rejection's answer is.
+#[must_use]
+pub fn violation_identities(validator: &Validator, instance: &Value) -> Vec<String> {
+    let mut violations = violations(validator, instance)
+        .iter()
+        .map(ToString::to_string)
+        .collect::<Vec<_>>();
+    violations.sort();
+    violations.dedup();
+    violations
+}
+
 /// The violations `validator` reports on a values document.
 fn violations(validator: &Validator, instance: &Value) -> Vec<ValuesViolationKey> {
     validator
@@ -846,7 +1005,8 @@ fn violations(validator: &Validator, instance: &Value) -> Vec<ValuesViolationKey
 /// does not violate at the same value. Two schemas place one assertion at
 /// different keyword locations, so the violated keyword and its detail
 /// identify it.
-pub(crate) fn rejects_for_a_new_reason(
+#[must_use]
+pub fn rejects_for_a_new_reason(
     baseline: &[ValuesViolationKey],
     candidate: &[ValuesViolationKey],
 ) -> bool {
@@ -1114,7 +1274,9 @@ fn chart_name_from_archive(path: &Path) -> eyre::Result<Option<String>> {
     chart_name_from_manifest_bytes(&bytes, &format!("{}:{manifest_path}", path.display()))
 }
 
-pub(crate) fn archive_entry_depth(path: &Path) -> usize {
+/// The depth of `path` inside an archive, ignoring leading `.` components.
+#[must_use]
+pub fn archive_entry_depth(path: &Path) -> usize {
     path.components()
         .filter(|component| !matches!(component, Component::CurDir))
         .count()
@@ -1147,7 +1309,9 @@ fn is_chart_archive(path: &Path) -> bool {
     is_tgz || is_tar_gz
 }
 
-pub(crate) fn sparse_override(path: &[&str], value: Value) -> ProbeInstance {
+/// A sparse override setting `path` to `value`.
+#[must_use]
+pub fn sparse_override(path: &[&str], value: Value) -> ProbeInstance {
     let mut override_doc = Value::Object(Map::new());
     let path = path
         .iter()
@@ -1298,4 +1462,66 @@ fn value_shape(value: &Value) -> &'static str {
         Value::Object(value) if value.is_empty() => "empty object",
         Value::Object(_) => "unknown object member",
     }
+}
+
+/// Checks a chart's probe battery for truncation, accounting gaps and the
+/// reachable-probe floor.
+///
+/// # Errors
+///
+/// Returns the first violated rule.
+pub fn validate_probe_coverage(chart: &ProbeCoverage) -> eyre::Result<()> {
+    eyre::ensure!(
+        chart.base_emitted > 0,
+        "targeted probes consumed the base-probe budget: {chart:?}"
+    );
+    eyre::ensure!(
+        chart.base_dropped == 0,
+        "base probes were truncated: {chart:?}"
+    );
+    eyre::ensure!(
+        chart.third_level_dropped == 0,
+        "depth-three probes were truncated: {chart:?}"
+    );
+    eyre::ensure!(
+        chart.base_candidates == chart.base_emitted,
+        "base probe accounting mismatch: {chart:?}"
+    );
+    eyre::ensure!(
+        chart.third_level_candidates == chart.third_level_emitted,
+        "depth-three probe accounting mismatch: {chart:?}"
+    );
+    eyre::ensure!(
+        chart.guards_discovered == chart.guards_attempted + chart.guards_skipped_by_cap,
+        "guard accounting mismatch: {chart:?}"
+    );
+    eyre::ensure!(
+        chart.guards_attempted == chart.guard_pairs_emitted + chart.guards_without_witness_pair,
+        "guard witness accounting mismatch: {chart:?}"
+    );
+    eyre::ensure!(
+        chart.composite_targets
+            == chart.composite_pairs_emitted
+                + chart.composite_targets_without_payload
+                + chart.composite_pairs_dropped_by_cap,
+        "composite probe accounting mismatch: {chart:?}"
+    );
+    eyre::ensure!(
+        chart.guard_sampling_strategy == GuardSamplingStrategy::SchemaOrderPrefix,
+        "undisclosed guard sampling strategy: {chart:?}"
+    );
+    eyre::ensure!(chart.total_emitted > 0, "empty probe battery: {chart:?}");
+    // Reachable coverage floor: at least half of a chart's composed probes
+    // (rounded down) must be documents Helm composes. The known
+    // unreachable case is the single "all declared keys deleted" probe of a
+    // chart whose parent `global` reaches its dependencies.
+    let reachable = chart
+        .composed_probes
+        .saturating_sub(chart.unreachable_probes.len());
+    eyre::ensure!(
+        chart.unreachable_probes.len() <= chart.composed_probes
+            && reachable >= chart.composed_probes / 2,
+        "too few composed probes are reachable through a values file: {chart:?}"
+    );
+    Ok(())
 }

@@ -27,6 +27,7 @@ type serveRequest struct {
 	SkipSchemaValidation bool     `json:"skip_schema_validation"`
 	StdoutPath           string   `json:"stdout_path"`
 	StderrPath           string   `json:"stderr_path"`
+	CRDsPath             string   `json:"crds_path"`
 }
 
 // serveResponse carries the CLI's exit code (0 or 1), or an error that is a
@@ -82,7 +83,20 @@ func cmdServe(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 			if decodeErr := json.Unmarshal(line, &req); decodeErr != nil || req.ID == nil {
 				response = serveResponse{ID: req.ID, Error: fmt.Sprintf("protocol: malformed request: %v", decodeErr)}
 			} else {
-				response = serve(sink, req, templateRun)
+				evidence := &installation{}
+				response = serve(sink, req, func(release, chart, kube string, values []string, skip bool) (int, []byte, []byte) {
+					return templateWithEvidence(release, chart, kube, values, skip, evidence)
+				})
+				if req.CRDsPath != "" && response.Error == "" {
+					data, err := json.Marshal(evidence)
+					if err == nil {
+						err = os.WriteFile(req.CRDsPath, data, 0644)
+					}
+					if err != nil {
+						response.Error = err.Error()
+						response.ExitCode = nil
+					}
+				}
 			}
 			if encodeErr := encoder.Encode(response); encodeErr != nil {
 				fmt.Fprintln(stderr, "helmsweep serve:", encodeErr)
@@ -190,7 +204,11 @@ func supportedRequest(req serveRequest) error {
 	default:
 		return fmt.Errorf("unsupported request %q", req.Op)
 	}
-	for _, path := range append([]string{req.Chart, req.StdoutPath, req.StderrPath}, req.Values...) {
+	paths := append([]string{req.Chart, req.StdoutPath, req.StderrPath}, req.Values...)
+	if req.CRDsPath != "" {
+		paths = append(paths, req.CRDsPath)
+	}
+	for _, path := range paths {
 		if !filepath.IsAbs(path) {
 			return fmt.Errorf("%q is not an absolute local path", path)
 		}

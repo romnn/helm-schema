@@ -40,6 +40,8 @@ fn screen_external(
                 candidate_bytes: b"{}".to_vec(),
                 defaults: json!({"enabled":false}),
             },
+            annotation: None,
+            replay: helm_schema_test_support::acceptance::Replay::default(),
         },
         false,
         roster,
@@ -71,7 +73,7 @@ fn external_pair_rejects_stale_chart_context_instead_of_certifying_zero_lint_doc
         transport: "values-file".into(),
         kubernetes_version: "1.29.0".into(),
         chart_sha256: "stale-chart-hash".into(),
-        baseline_sha256: helm_schema_test_support::source_digest::sha256_hex(&schemas.baseline),
+        baseline_sha256: schemas.baseline_sha256.clone(),
         candidate_sha256: helm_schema_test_support::source_digest::sha256_hex(&schemas.candidate),
         canonical_overlay_sha256: helm_schema_test_support::source_digest::sha256_hex(b"{}"),
         values_file: "{}".into(),
@@ -82,6 +84,7 @@ fn external_pair_rejects_stale_chart_context_instead_of_certifying_zero_lint_doc
     let roster = super::lint_probes::ImportedRoster {
         sha256: "roster-control".into(),
         rows: BTreeMap::from([("external".into(), vec![row])]),
+        rebind: false,
     };
     let comparison = external_comparison(screen_external(&chart, Some(&roster))?)?;
     assert!(

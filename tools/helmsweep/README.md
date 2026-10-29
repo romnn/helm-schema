@@ -223,3 +223,7 @@ task test:helmsweep
 runs `task lint:go` (`golangci-lint fmt --diff` and `run` on the staging program's
 source and staged driver), then `go test -race` in the staged build copy
 (the source tree alone does not compile: it needs the patched Helm).
+
+The Rust `schema_dialect_hygiene` corpus gate supplies emitted patterns to
+`TestEmittedPatternsCompile` in the staged Go module. Keeping this check in test
+code preserves the Helm executable identity bound by CRD replay receipts.

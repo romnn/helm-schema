@@ -69,7 +69,12 @@ fn pinned_bundle_assertion_provenance_audit() -> eyre::Result<()> {
             crds += 1;
         }
         let bytes = fs::read(file)?;
-        digest.update(relative.to_string_lossy().as_bytes());
+        let relative_name = relative
+            .iter()
+            .map(|component| component.to_string_lossy())
+            .collect::<Vec<_>>()
+            .join("/");
+        digest.update(relative_name.as_bytes());
         digest.update([0]);
         digest.update(&bytes);
         let schema: Value = serde_json::from_slice(&bytes)?;
@@ -81,7 +86,7 @@ fn pinned_bundle_assertion_provenance_audit() -> eyre::Result<()> {
             Ok(compiled) => compiled,
             Err(error) => {
                 compilation_failures.insert(
-                    relative.to_string_lossy().to_string(),
+                    relative_name,
                     pattern_compilation_diagnostics(survey.patterns, &error),
                 );
                 continue;

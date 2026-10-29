@@ -380,10 +380,7 @@ fn inherited_frozen_roster_binds_every_context_diagnostic_and_original_encoding(
             }
         }
     }
-    sim_assert_eq!(have: postgresql_inputs, want: std::collections::BTreeMap::from([
-        ("0e17ad3087e6ccb8fabde25fade9373058646399a5cc600251408d1c66660ecd".to_owned(), 2),
-        ("1f81105527cccb13e752dba9ad9b2ee2040e6ce3020a3edd6b77c5f0bd2f820b".to_owned(), 2),
-    ]));
+    sim_assert_eq!(have: postgresql_inputs, want: std::collections::BTreeMap::<String, i32>::new());
 }
 
 #[test]

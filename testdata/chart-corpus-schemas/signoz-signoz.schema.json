@@ -16,36 +16,33 @@
             "type": "integer"
           },
           "secure": {
-            "<<": {
-              "description": "Allow stop all ClickHouse clusters described in current chi.\nStop mechanism works as follows:\n - When `stop` is `1` then setup `Replicas: 0` in each related to current `chi` StatefulSet resource, all `Pods` and `Service` resources will desctroy, but PVCs still live\n - When `stop` is `0` then `Pods` will created again and will attach retained PVCs and `Service` also will created again\n",
-              "enum": [
-                "",
-                "0",
-                "1",
-                "False",
-                "false",
-                "True",
-                "true",
-                "No",
-                "no",
-                "Yes",
-                "yes",
-                "Off",
-                "off",
-                "On",
-                "on",
-                "Disable",
-                "disable",
-                "Enable",
-                "enable",
-                "Disabled",
-                "disabled",
-                "Enabled",
-                "enabled"
-              ],
-              "type": "string"
-            },
-            "description": "if a secure connection to Zookeeper is required"
+            "description": "if a secure connection to Zookeeper is required",
+            "enum": [
+              "",
+              "0",
+              "1",
+              "False",
+              "false",
+              "True",
+              "true",
+              "No",
+              "no",
+              "Yes",
+              "yes",
+              "Off",
+              "off",
+              "On",
+              "on",
+              "Disable",
+              "disable",
+              "Enable",
+              "enable",
+              "Disabled",
+              "disabled",
+              "Enabled",
+              "enabled"
+            ],
+            "type": "string"
           }
         },
         "type": "object"
@@ -24560,7 +24557,7 @@
     "constrains/signoz-otel-gateway.global:t+1more": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1signoz-otel-gateway.postgresql.primary.persistence.storageClass:t"
+          "$ref": "#/$defs/constrains~1signoz-otel-gateway.postgresql.readReplicas.persistence.storageClass:t"
         },
         {
           "$ref": "#/$defs/constrains~1signoz-otel-gateway.global:t@2"
@@ -24570,7 +24567,7 @@
     "constrains/signoz-otel-gateway.global:t+1more@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1signoz-otel-gateway.postgresql.readReplicas.persistence.storageClass:t"
+          "$ref": "#/$defs/constrains~1signoz-otel-gateway.postgresql.primary.persistence.storageClass:t"
         },
         {
           "$ref": "#/$defs/constrains~1signoz-otel-gateway.global:t@2"
@@ -32157,70 +32154,6 @@
       "format": "int32",
       "type": "integer"
     },
-    "values/clickhouse/keywords/'(3c)(3c)'+description": {
-      "<<": {
-        "description": "Allow stop all ClickHouse clusters described in current chi.\nStop mechanism works as follows:\n - When `stop` is `1` then setup `Replicas: 0` in each related to current `chi` StatefulSet resource, all `Pods` and `Service` resources will desctroy, but PVCs still live\n - When `stop` is `0` then `Pods` will created again and will attach retained PVCs and `Service` also will created again\n",
-        "enum": [
-          "",
-          "0",
-          "1",
-          "False",
-          "false",
-          "True",
-          "true",
-          "No",
-          "no",
-          "Yes",
-          "yes",
-          "Off",
-          "off",
-          "On",
-          "on",
-          "Disable",
-          "disable",
-          "Enable",
-          "enable",
-          "Disabled",
-          "disabled",
-          "Enabled",
-          "enabled"
-        ],
-        "type": "string"
-      },
-      "description": "optional, open insecure ports for cluster, defaults to \"yes\"\n"
-    },
-    "values/clickhouse/keywords/'(3c)(3c)'+description@2": {
-      "<<": {
-        "description": "Allow stop all ClickHouse clusters described in current chi.\nStop mechanism works as follows:\n - When `stop` is `1` then setup `Replicas: 0` in each related to current `chi` StatefulSet resource, all `Pods` and `Service` resources will desctroy, but PVCs still live\n - When `stop` is `0` then `Pods` will created again and will attach retained PVCs and `Service` also will created again\n",
-        "enum": [
-          "",
-          "0",
-          "1",
-          "False",
-          "false",
-          "True",
-          "true",
-          "No",
-          "no",
-          "Yes",
-          "yes",
-          "Off",
-          "off",
-          "On",
-          "on",
-          "Disable",
-          "disable",
-          "Enable",
-          "enable",
-          "Disabled",
-          "disabled",
-          "Enabled",
-          "enabled"
-        ],
-        "type": "string"
-      },
-      "description": "optional, open secure ports\n"
-    },
     "values/clickhouse/null:int32;replicas-is-the-desired": {
       "description": "replicas is the desired number of replicas of the given Template. These are replicas in the sense that they are instantiations of the same Template, but individual replicas also have a consistent identity. If unspecified, defaults to 1.",
       "format": "int32",
@@ -32284,6 +32217,10 @@
         }
       ],
       "description": "clusterIP is the IP address of the service and is usually assigned randomly. If an address is specified manually, is in-range (as per system configuration), and is not in use, it will be allocated to the service; otherwise creation of the service will fail. This field may not be changed through updates unless the type field is also being changed to ExternalName (which requires this field to be blank) or the type field is being changed from ExternalName (in which case this field may optionally be specified, as describe above).  Valid values are \"None\", empty string (\"\"), or a valid IP address. Setting this to \"None\" makes a \"headless service\" (no virtual IP), which is useful when direct endpoint connections are preferred and proxying is not required.  Only applies to types ClusterIP, NodePort, and LoadBalancer. If this field is specified when creating a Service of type ExternalName, creation will fail. This field will be wiped when updating a Service to type ExternalName. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
+      "type": "string"
+    },
+    "values/clickhouse/string;deprecated-volumeclaimtemplate-is-deprecated": {
+      "description": "DEPRECATED! VolumeClaimTemplate is deprecated in favor of DataVolumeClaimTemplate and LogVolumeClaimTemplate",
       "type": "string"
     },
     "values/clickhouse/string;if-specified-indicates-the": {
@@ -32412,6 +32349,38 @@
       "pattern": "^[a-zA-Z0-9-]{0,15}$",
       "type": "string"
     },
+    "values/clickhouse/string;optional-template-name-from": {
+      "description": "optional, template name from chi.spec.templates.hostTemplates, which will apply to configure every `clickhouse-server` instance during render ConfigMap resources which will mount into `Pod`",
+      "type": "string"
+    },
+    "values/clickhouse/string;optional-template-name-from@2": {
+      "description": "optional, template name from chi.spec.templates.podTemplates, allows customization each `Pod` resource during render and reconcile each StatefulSet.spec resource described in `chi.spec.configuration.clusters`",
+      "type": "string"
+    },
+    "values/clickhouse/string;optional-template-name-from@3": {
+      "description": "optional, template name from chi.spec.templates.serviceTemplates, allows customization for each `Service` resource which will created by `clickhouse-operator` which cover each clickhouse cluster described in `chi.spec.configuration.clusters`",
+      "type": "string"
+    },
+    "values/clickhouse/string;optional-template-name-from@4": {
+      "description": "optional, template name from chi.spec.templates.serviceTemplates, allows customization for each `Service` resource which will created by `clickhouse-operator` which cover each replica inside each shard inside each clickhouse cluster described in `chi.spec.configuration.clusters`",
+      "type": "string"
+    },
+    "values/clickhouse/string;optional-template-name-from@5": {
+      "description": "optional, template name from chi.spec.templates.serviceTemplates, allows customization for each `Service` resource which will created by `clickhouse-operator` which cover each shard inside clickhouse cluster described in `chi.spec.configuration.clusters`",
+      "type": "string"
+    },
+    "values/clickhouse/string;optional-template-name-from@6": {
+      "description": "optional, template name from chi.spec.templates.serviceTemplates, allows customization for one `Service` resource which will created by `clickhouse-operator` which cover all clusters in whole `chi` resource",
+      "type": "string"
+    },
+    "values/clickhouse/string;optional-template-name-from@7": {
+      "description": "optional, template name from chi.spec.templates.volumeClaimTemplates, allows customization each `PVC` which will mount for clickhouse data directory in each `Pod` during render and reconcile every StatefulSet.spec resource described in `chi.spec.configuration.clusters`",
+      "type": "string"
+    },
+    "values/clickhouse/string;optional-template-name-from@8": {
+      "description": "optional, template name from chi.spec.templates.volumeClaimTemplates, allows customization each `PVC` which will mount for clickhouse log directory in each `Pod` during render and reconcile every StatefulSet.spec resource described in `chi.spec.configuration.clusters`",
+      "type": "string"
+    },
     "values/clickhouse/string;path-within-the-container": {
       "allOf": [
         {
@@ -32518,6 +32487,64 @@
         }
       ],
       "description": "The label key that the selector applies to.",
+      "type": "string"
+    },
+    "values/clickhouse/string='',0,1,+20more;optional-open-insecure-ports": {
+      "description": "optional, open insecure ports for cluster, defaults to \"yes\"\n",
+      "enum": [
+        "",
+        "0",
+        "1",
+        "False",
+        "false",
+        "True",
+        "true",
+        "No",
+        "no",
+        "Yes",
+        "yes",
+        "Off",
+        "off",
+        "On",
+        "on",
+        "Disable",
+        "disable",
+        "Enable",
+        "enable",
+        "Disabled",
+        "disabled",
+        "Enabled",
+        "enabled"
+      ],
+      "type": "string"
+    },
+    "values/clickhouse/string='',0,1,+20more;optional-open-secure-ports": {
+      "description": "optional, open secure ports\n",
+      "enum": [
+        "",
+        "0",
+        "1",
+        "False",
+        "false",
+        "True",
+        "true",
+        "No",
+        "no",
+        "Yes",
+        "yes",
+        "Off",
+        "off",
+        "On",
+        "on",
+        "Disable",
+        "disable",
+        "Enable",
+        "enable",
+        "Disabled",
+        "disabled",
+        "Enabled",
+        "enabled"
+      ],
       "type": "string"
     },
     "values/global.compatibility": {
@@ -76216,7 +76243,7 @@
                 "$ref": "#/$defs/constrains~1signoz-otel-gateway.postgresql.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1signoz-otel-gateway.global:t+1more@2"
+                "$ref": "#/$defs/constrains~1signoz-otel-gateway.global:t+1more"
               },
               {
                 "$ref": "#/$defs/constrains~1signoz-otel-gateway.postgresql.architecture=replication"
@@ -76287,7 +76314,7 @@
                 "$ref": "#/$defs/constrains~1signoz-otel-gateway.global.storageClass:t+signoz-otel-gateway.global:t+1more"
               },
               {
-                "$ref": "#/$defs/constrains~1signoz-otel-gateway.global:t+1more"
+                "$ref": "#/$defs/constrains~1signoz-otel-gateway.global:t+1more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1signoz-otel-gateway.enabled:t"
@@ -76429,7 +76456,7 @@
                 "$ref": "#/$defs/constrains~1signoz-otel-gateway.postgresql.readReplicas.persistence.enabled:t+1more"
               },
               {
-                "$ref": "#/$defs/constrains~1signoz-otel-gateway.global:t+1more@2"
+                "$ref": "#/$defs/constrains~1signoz-otel-gateway.global:t+1more"
               },
               {
                 "$ref": "#/$defs/constrains~1signoz-otel-gateway.postgresql.architecture=replication"
@@ -76466,7 +76493,7 @@
                 "$ref": "#/$defs/constrains~1signoz-otel-gateway.postgresql.readReplicas.persistence.enabled:t+1more"
               },
               {
-                "$ref": "#/$defs/constrains~1signoz-otel-gateway.global:t+1more@2"
+                "$ref": "#/$defs/constrains~1signoz-otel-gateway.global:t+1more"
               },
               {
                 "$ref": "#/$defs/constrains~1signoz-otel-gateway.enabled:t"
@@ -76509,7 +76536,7 @@
                 "$ref": "#/$defs/constrains~1signoz-otel-gateway.postgresql.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1signoz-otel-gateway.global:t+1more"
+                "$ref": "#/$defs/constrains~1signoz-otel-gateway.global:t+1more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1signoz-otel-gateway.global:t@2"
@@ -76546,7 +76573,7 @@
                 "$ref": "#/$defs/constrains~1signoz-otel-gateway.global.storageClass:t+signoz-otel-gateway.global:t+1more"
               },
               {
-                "$ref": "#/$defs/constrains~1signoz-otel-gateway.global:t+1more"
+                "$ref": "#/$defs/constrains~1signoz-otel-gateway.global:t+1more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1signoz-otel-gateway.global:t@2"
@@ -76580,7 +76607,7 @@
                 "$ref": "#/$defs/constrains~1signoz-otel-gateway.postgresql.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1signoz-otel-gateway.global:t+1more@2"
+                "$ref": "#/$defs/constrains~1signoz-otel-gateway.global:t+1more"
               },
               {
                 "$ref": "#/$defs/constrains~1signoz-otel-gateway.enabled:t"
@@ -76620,7 +76647,7 @@
                 "$ref": "#/$defs/constrains~1signoz-otel-gateway.postgresql.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1signoz-otel-gateway.global:t+1more"
+                "$ref": "#/$defs/constrains~1signoz-otel-gateway.global:t+1more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1signoz-otel-gateway.enabled:t"
@@ -92503,6 +92530,1194 @@
         },
         {
           "if": {
+            "$ref": "#/$defs/constrains~1enabled+enabled:t+enabled=null"
+          },
+          "then": {
+            "allOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "clickhouseOperator": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "configs": {
+                        "additionalProperties": {},
+                        "description": "ClickHouse Operator configuration files",
+                        "properties": {
+                          "confdFiles": {
+                            "additionalProperties": {
+                              "anyOf": [
+                                {
+                                  "$ref": "#/$defs/constrains~1zookeeper.commonAnnotations~1string;pattern-"
+                                },
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "type": "string"
+                                }
+                              ]
+                            },
+                            "description": "ClickHouse Operator confd files",
+                            "type": [
+                              "object",
+                              "null"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "clickhouseOperator": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "metricsExporter": {
+                        "additionalProperties": {},
+                        "description": "Metrics Exporter config.",
+                        "properties": {
+                          "image": {
+                            "additionalProperties": {},
+                            "description": "Metrics Exporter image",
+                            "properties": {
+                              "pullPolicy": {
+                                "anyOf": [
+                                  {
+                                    "$ref": "#/$defs/constrains~1className:t~1string@2"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/constrains~1pullPolicy~1null;image-pull-policy-one"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/constrains~1className:t~1object"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/constrains~1pullPolicy~1string;image-pull-policy-one"
+                                  }
+                                ],
+                                "description": "Metrics Exporter image pull policy."
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "labels": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1annotations:t~1object"
+                      }
+                    ],
+                    "description": "- \"clickhouse-pull-secret\"\nClickHouse instance labels"
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "clickhouseOperator": {
+                    "$ref": "#/$defs/constrains~1resources.claims@items.name+resources.limits+resources.requests"
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "clickhouseOperator": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "metricsExporter": {
+                        "additionalProperties": {},
+                        "description": "Metrics Exporter config.",
+                        "properties": {
+                          "env": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/$defs/constrains~1@items.name+@items.value+@items.valueFrom.configMapKeyRef.key+10more"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Additional environment variables for Metrics Exporter container.\n- name: SAMPLE_ENV\nvalue: \"sample-value\""
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "clickhouseOperator": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "podAnnotations": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1annotations:t~1allOf~1object+object,null;annotations-is-an-unstructured"
+                          }
+                        ],
+                        "description": "Clickhouse Operator pod(s) annotation."
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "clickhouseOperator": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "podLabels": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1podLabels:t~1allOf~1object+object,null;map-of-string-keys"
+                          }
+                        ],
+                        "description": "ClickHouse operator pod labels"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "image": {
+                    "additionalProperties": {},
+                    "description": "Clickhouse image",
+                    "properties": {
+                      "pullPolicy": {
+                        "description": "Clickhouse image pull policy.",
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "clickhouseOperator": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "topologySpreadConstraints": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/constrains~1@items.labelSelector.matchExpressions@items.key+10more@2"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "TopologySpreadConstraints describes how Clickhouse Operator pods ought to spread"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "podLabels": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1annotations:t~1object"
+                      }
+                    ],
+                    "description": "ClickHouse pod labels"
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "allowedNetworkIps": {
+                    "$ref": "#/$defs/values~1array,integer,null,object;an-allowlist-of-ip"
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "clickhouseOperator": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "podSecurityContext": {
+                        "additionalProperties": false,
+                        "description": "Clickhouse Operator pod-level security attributes and common container settings.\nfsGroup: 2000",
+                        "properties": {
+                          "fsGroup": {
+                            "$ref": "#/$defs/values~1otelCollector.podSecurityContext.fsGroup"
+                          },
+                          "fsGroupChangePolicy": {
+                            "$ref": "#/$defs/values~1otelCollector.podSecurityContext.fsGroupChangePolicy"
+                          },
+                          "runAsGroup": {
+                            "$ref": "#/$defs/values~1otelCollector.podSecurityContext.runAsGroup"
+                          },
+                          "runAsNonRoot": {
+                            "$ref": "#/$defs/values~1otelCollector.podSecurityContext.runAsNonRoot"
+                          },
+                          "runAsUser": {
+                            "$ref": "#/$defs/values~1otelCollector.podSecurityContext.runAsUser"
+                          },
+                          "seLinuxOptions": {
+                            "$ref": "#/$defs/values~1otelCollector.podSecurityContext.seLinuxOptions"
+                          },
+                          "seccompProfile": {
+                            "$ref": "#/$defs/values~1otelCollector.podSecurityContext.seccompProfile"
+                          },
+                          "supplementalGroups": {
+                            "$ref": "#/$defs/values~1otelCollector.podSecurityContext.supplementalGroups"
+                          },
+                          "sysctls": {
+                            "$ref": "#/$defs/values~1otelCollector.podSecurityContext.sysctls"
+                          },
+                          "windowsOptions": {
+                            "$ref": "#/$defs/values~1otelCollector.podSecurityContext.windowsOptions"
+                          }
+                        },
+                        "type": [
+                          "object",
+                          "null"
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "clickhouseOperator": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "metricsExporter": {
+                        "additionalProperties": {},
+                        "description": "Metrics Exporter config.",
+                        "properties": {
+                          "service": {
+                            "additionalProperties": {},
+                            "description": "Metrics Exporter service",
+                            "properties": {
+                              "port": {
+                                "anyOf": [
+                                  {
+                                    "$ref": "#/$defs/constrains~1containerPort+hostIP+hostPort+name+protocol~1integer:int32;number-of-port-to"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/constrains~1postgresql~1string;pattern-0-1-9"
+                                  }
+                                ],
+                                "description": "Metrics Exporter port"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "namespace": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/$defs/values~1clickhouse~1anyOf~1object+string"
+                          },
+                          {
+                            "anyOf": [
+                              {
+                                "$ref": "#/$defs/values~1clickhouse~1null;namespace-defines-the-space"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1className:t~1string@2"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1className:t~1object"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                              },
+                              {
+                                "$ref": "#/$defs/values~1clickhouse~1string;namespace-defines-the-space"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ]
+                      }
+                    ],
+                    "description": "Which namespace to install clickhouse and `clickhouse-operator` to (defaults to namespace chart is installed to)"
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "clickhouseOperator": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "nodeSelector": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                          },
+                          {
+                            "$ref": "#/$defs/values~1alertmanager~1object;nodeselector-is-a-selector"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Clickhouse Operator node selector"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "podDistribution": {
+                    "anyOf": [
+                      {
+                        "description": "define ClickHouse Pod distribution policy between Kubernetes Nodes inside Shard, Replica, Namespace, CHI, another ClickHouse cluster",
+                        "items": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "number": {
+                              "description": "define, how much ClickHouse Pods could be inside selected scope with selected distribution type",
+                              "maximum": 65535,
+                              "minimum": 0,
+                              "type": "integer"
+                            },
+                            "scope": {
+                              "description": "scope for apply each podDistribution",
+                              "enum": [
+                                "",
+                                "Unspecified",
+                                "Shard",
+                                "Replica",
+                                "Cluster",
+                                "ClickHouseInstallation",
+                                "Namespace"
+                              ],
+                              "type": "string"
+                            },
+                            "topologyKey": {
+                              "description": "use for inter-pod affinity look to `pod.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution.podAffinityTerm.topologyKey`, More info: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity",
+                              "type": "string"
+                            },
+                            "type": {
+                              "description": "you can define multiple affinity policy types",
+                              "enum": [
+                                "",
+                                "Unspecified",
+                                "ClickHouseAntiAffinity",
+                                "ShardAntiAffinity",
+                                "ReplicaAntiAffinity",
+                                "AnotherNamespaceAntiAffinity",
+                                "AnotherClickHouseInstallationAntiAffinity",
+                                "AnotherClusterAntiAffinity",
+                                "MaxNumberPerNode",
+                                "NamespaceAffinity",
+                                "ClickHouseInstallationAffinity",
+                                "ClusterAffinity",
+                                "ShardAffinity",
+                                "ReplicaAffinity",
+                                "PreviousTailAffinity",
+                                "CircularReplication"
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                      }
+                    ],
+                    "description": "Topologies on how to distribute the ClickHouse pod.\nPossible values can be found here:\n- https://github.com/Altinity/clickhouse-operator/blob/1414503921da3ae475eb6f9a296d3475a6993768/docs/chi-examples/99-clickhouseinstallation-max.yaml#L428-L481\n- type: ShardAntiAffinity\ntopologyKey: kubernetes.io/hostname\n- type: ReplicaAntiAffinity\ntopologyKey: kubernetes.io/hostname\n- type: MaxNumberPerNode\nnumber: 2\ntopologyKey: kubernetes.io/hostname"
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "files": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "array"
+                      }
+                    ],
+                    "description": "Clickhouse configuration files.\nRefs:\n- https://clickhouse.com/docs/en/operations/configuration-files/\n- https://github.com/Altinity/clickhouse-operator/blob/master/docs/chi-examples/05-settings-05-files-nested.yaml\nconfig.d/log_rotation.xml: |\n<clickhouse>\n<logger>\n<level>trace</level>\n<console>true</console>\n<errorlog>/var/log/clickhouse-server/clickhouse-server.err.log</errorlog>\n<log>/var/log/clickhouse-server/clickhouse-server.log</log>\n<size>100M</size>\n<count>10</count>\n</logger>\n</clickhouse>\ntest.xml: |\n<clickhouse>\n<some-setting>some-value</some-setting>\n</clickhouse>"
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "layout": {
+                    "additionalProperties": false,
+                    "description": "Clickhouse cluster layout. (Experimental, use at own risk)\nFor a full list of options, see https://github.com/Altinity/clickhouse-operator/blob/master/docs/custom_resource_explained.md\nsection on clusters and layouts.",
+                    "properties": {
+                      "replicas": {
+                        "description": "optional, allows override top-level `chi.spec.configuration` and cluster-level `chi.spec.configuration.clusters` configuration for each replica and each shard relates to selected replica, use it only if you fully understand what you do",
+                        "items": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "files": {
+                              "description": "optional, allows define content of any setting file inside each `Pod` only in one replica during generate `ConfigMap` which will mount in `/etc/clickhouse-server/config.d/` or `/etc/clickhouse-server/conf.d/` or `/etc/clickhouse-server/users.d/`\noverride top-level `chi.spec.configuration.files` and cluster-level `chi.spec.configuration.clusters.files`, will ignore if `chi.spec.configuration.clusters.layout.shards` presents\n",
+                              "type": "object",
+                              "x-kubernetes-preserve-unknown-fields": true
+                            },
+                            "name": {
+                              "$ref": "#/$defs/values~1clickhouse~1string;optional-by-default-replica"
+                            },
+                            "settings": {
+                              "description": "optional, allows configure `clickhouse-server` settings inside <yandex>...</yandex> tag in `Pod` only in one replica during generate `ConfigMap` which will mount in `/etc/clickhouse-server/conf.d/`\noverride top-level `chi.spec.configuration.settings`, cluster-level `chi.spec.configuration.clusters.settings` and will ignore if shard-level `chi.spec.configuration.clusters.layout.shards` present\nMore details: https://clickhouse.tech/docs/en/operations/settings/settings/\n",
+                              "type": "object",
+                              "x-kubernetes-preserve-unknown-fields": true
+                            },
+                            "shards": {
+                              "description": "optional, list of shards related to current replica, will ignore if `chi.spec.configuration.clusters.layout.shards` presents",
+                              "items": {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "files": {
+                                    "description": "optional, allows define content of any setting file inside each `Pod` only in one shard related to current replica during generate `ConfigMap` which will mount in `/etc/clickhouse-server/config.d/` or `/etc/clickhouse-server/conf.d/` or `/etc/clickhouse-server/users.d/`\noverride top-level `chi.spec.configuration.files` and cluster-level `chi.spec.configuration.clusters.files`, will ignore if `chi.spec.configuration.clusters.layout.shards` presents\n",
+                                    "type": "object",
+                                    "x-kubernetes-preserve-unknown-fields": true
+                                  },
+                                  "httpPort": {
+                                    "description": "optional, setup `Pod.spec.containers.ports` with name `http` for selected shard, override `chi.spec.templates.hostTemplates.spec.httpPort`\nallows connect to `clickhouse-server` via HTTP protocol via kubernetes `Service`\n",
+                                    "maximum": 65535,
+                                    "minimum": 1,
+                                    "type": "integer"
+                                  },
+                                  "httpsPort": {
+                                    "$ref": "#/$defs/values~1clickhouse~1integer"
+                                  },
+                                  "insecure": {
+                                    "$ref": "#/$defs/values~1clickhouse~1string='',0,1,+20more;optional-open-insecure-ports"
+                                  },
+                                  "interserverHTTPPort": {
+                                    "description": "optional, setup `Pod.spec.containers.ports` with name `interserver` for selected shard, override `chi.spec.templates.hostTemplates.spec.interserverHTTPPort`\nallows connect between replicas inside same shard during fetch replicated data parts HTTP protocol\n",
+                                    "maximum": 65535,
+                                    "minimum": 1,
+                                    "type": "integer"
+                                  },
+                                  "name": {
+                                    "$ref": "#/$defs/values~1clickhouse~1string;optional-by-default-shard"
+                                  },
+                                  "secure": {
+                                    "$ref": "#/$defs/values~1clickhouse~1string='',0,1,+20more;optional-open-secure-ports"
+                                  },
+                                  "settings": {
+                                    "description": "optional, allows configure `clickhouse-server` settings inside <yandex>...</yandex> tag in `Pod` only in one shard related to current replica during generate `ConfigMap` which will mount in `/etc/clickhouse-server/conf.d/`\noverride top-level `chi.spec.configuration.settings`, cluster-level `chi.spec.configuration.clusters.settings` and replica-level `chi.spec.configuration.clusters.layout.replicas.settings`\nMore details: https://clickhouse.tech/docs/en/operations/settings/settings/\n",
+                                    "type": "object",
+                                    "x-kubernetes-preserve-unknown-fields": true
+                                  },
+                                  "tcpPort": {
+                                    "description": "optional, setup `Pod.spec.containers.ports` with name `tcp` for selected shard, override `chi.spec.templates.hostTemplates.spec.tcpPort`\nallows connect to `clickhouse-server` via TCP Native protocol via kubernetes `Service`\n",
+                                    "maximum": 65535,
+                                    "minimum": 1,
+                                    "type": "integer"
+                                  },
+                                  "templates": {
+                                    "additionalProperties": false,
+                                    "description": "optional, configuration of the templates names which will use for generate Kubernetes resources according to selected replica\noverride top-level `chi.spec.configuration.templates`, cluster-level `chi.spec.configuration.clusters.templates`, replica-level `chi.spec.configuration.clusters.layout.replicas.templates`\n",
+                                    "properties": {
+                                      "clusterServiceTemplate": {
+                                        "$ref": "#/$defs/values~1clickhouse~1string;optional-template-name-from@3"
+                                      },
+                                      "dataVolumeClaimTemplate": {
+                                        "$ref": "#/$defs/values~1clickhouse~1string;optional-template-name-from@7"
+                                      },
+                                      "hostTemplate": {
+                                        "$ref": "#/$defs/values~1clickhouse~1string;optional-template-name-from"
+                                      },
+                                      "logVolumeClaimTemplate": {
+                                        "$ref": "#/$defs/values~1clickhouse~1string;optional-template-name-from@8"
+                                      },
+                                      "podTemplate": {
+                                        "$ref": "#/$defs/values~1clickhouse~1string;optional-template-name-from@2"
+                                      },
+                                      "replicaServiceTemplate": {
+                                        "$ref": "#/$defs/values~1clickhouse~1string;optional-template-name-from@4"
+                                      },
+                                      "serviceTemplate": {
+                                        "$ref": "#/$defs/values~1clickhouse~1string;optional-template-name-from@6"
+                                      },
+                                      "shardServiceTemplate": {
+                                        "$ref": "#/$defs/values~1clickhouse~1string;optional-template-name-from@5"
+                                      },
+                                      "volumeClaimTemplate": {
+                                        "$ref": "#/$defs/values~1clickhouse~1string;deprecated-volumeclaimtemplate-is-deprecated"
+                                      }
+                                    },
+                                    "type": "object"
+                                  },
+                                  "tlsPort": {
+                                    "$ref": "#/$defs/values~1clickhouse~1integer"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "type": "array"
+                            },
+                            "shardsCount": {
+                              "description": "optional, count of shards related to current replica, you can override each shard behavior on low-level `chi.spec.configuration.clusters.layout.replicas.shards`",
+                              "minimum": 1,
+                              "type": "integer"
+                            },
+                            "templates": {
+                              "additionalProperties": false,
+                              "description": "optional, configuration of the templates names which will use for generate Kubernetes resources according to selected replica\noverride top-level `chi.spec.configuration.templates`, cluster-level `chi.spec.configuration.clusters.templates`\n",
+                              "properties": {
+                                "clusterServiceTemplate": {
+                                  "$ref": "#/$defs/values~1clickhouse~1string;optional-template-name-from@3"
+                                },
+                                "dataVolumeClaimTemplate": {
+                                  "$ref": "#/$defs/values~1clickhouse~1string;optional-template-name-from@7"
+                                },
+                                "hostTemplate": {
+                                  "$ref": "#/$defs/values~1clickhouse~1string;optional-template-name-from"
+                                },
+                                "logVolumeClaimTemplate": {
+                                  "$ref": "#/$defs/values~1clickhouse~1string;optional-template-name-from@8"
+                                },
+                                "podTemplate": {
+                                  "$ref": "#/$defs/values~1clickhouse~1string;optional-template-name-from@2"
+                                },
+                                "replicaServiceTemplate": {
+                                  "$ref": "#/$defs/values~1clickhouse~1string;optional-template-name-from@4"
+                                },
+                                "serviceTemplate": {
+                                  "$ref": "#/$defs/values~1clickhouse~1string;optional-template-name-from@6"
+                                },
+                                "shardServiceTemplate": {
+                                  "$ref": "#/$defs/values~1clickhouse~1string;optional-template-name-from@5"
+                                },
+                                "volumeClaimTemplate": {
+                                  "$ref": "#/$defs/values~1clickhouse~1string;deprecated-volumeclaimtemplate-is-deprecated"
+                                }
+                              },
+                              "type": "object"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      "replicasCount": {
+                        "description": "how much replicas in each shards for current ClickHouse cluster will run in Kubernetes, each replica is a separate `StatefulSet` which contains only one `Pod` with `clickhouse-server` instance, every shard contains 1 replica by default",
+                        "type": "integer"
+                      },
+                      "shards": {
+                        "description": "optional, allows override top-level `chi.spec.configuration`, cluster-level `chi.spec.configuration.clusters` settings for each shard separately, use it only if you fully understand what you do",
+                        "items": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "definitionType": {
+                              "description": "DEPRECATED - to be removed soon",
+                              "type": "string"
+                            },
+                            "files": {
+                              "description": "optional, allows define content of any setting file inside each `Pod` only in one shard during generate `ConfigMap` which will mount in `/etc/clickhouse-server/config.d/` or `/etc/clickhouse-server/conf.d/` or `/etc/clickhouse-server/users.d/`\noverride top-level `chi.spec.configuration.files` and cluster-level `chi.spec.configuration.clusters.files`\n",
+                              "type": "object",
+                              "x-kubernetes-preserve-unknown-fields": true
+                            },
+                            "internalReplication": {
+                              "description": "optional, `true` by default when `chi.spec.configuration.clusters[].layout.ReplicaCount` > 1 and 0 otherwise\nallows setup <internal_replication> setting which will use during insert into tables with `Distributed` engine for insert only in one live replica and other replicas will download inserted data during replication,\nwill apply in <remote_servers> inside ConfigMap which will mount in /etc/clickhouse-server/config.d/chop-generated-remote_servers.xml\nMore details: https://clickhouse.tech/docs/en/engines/table-engines/special/distributed/\n",
+                              "enum": [
+                                "",
+                                "0",
+                                "1",
+                                "False",
+                                "false",
+                                "True",
+                                "true",
+                                "No",
+                                "no",
+                                "Yes",
+                                "yes",
+                                "Off",
+                                "off",
+                                "On",
+                                "on",
+                                "Disable",
+                                "disable",
+                                "Enable",
+                                "enable",
+                                "Disabled",
+                                "disabled",
+                                "Enabled",
+                                "enabled"
+                              ],
+                              "type": "string"
+                            },
+                            "name": {
+                              "$ref": "#/$defs/values~1clickhouse~1string;optional-by-default-shard"
+                            },
+                            "replicas": {
+                              "description": "optional, allows override behavior for selected replicas from cluster-level `chi.spec.configuration.clusters` and shard-level `chi.spec.configuration.clusters.layout.shards`\n",
+                              "items": {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "files": {
+                                    "description": "optional, allows define content of any setting file inside `Pod` only in one replica during generate `ConfigMap` which will mount in `/etc/clickhouse-server/config.d/` or `/etc/clickhouse-server/conf.d/` or `/etc/clickhouse-server/users.d/`\noverride top-level `chi.spec.configuration.files`, cluster-level `chi.spec.configuration.clusters.files` and shard-level `chi.spec.configuration.clusters.layout.shards.files`\n",
+                                    "type": "object",
+                                    "x-kubernetes-preserve-unknown-fields": true
+                                  },
+                                  "httpPort": {
+                                    "description": "optional, setup `Pod.spec.containers.ports` with name `http` for selected replica, override `chi.spec.templates.hostTemplates.spec.httpPort`\nallows connect to `clickhouse-server` via HTTP protocol via kubernetes `Service`\n",
+                                    "maximum": 65535,
+                                    "minimum": 1,
+                                    "type": "integer"
+                                  },
+                                  "httpsPort": {
+                                    "$ref": "#/$defs/values~1clickhouse~1integer"
+                                  },
+                                  "insecure": {
+                                    "$ref": "#/$defs/values~1clickhouse~1string='',0,1,+20more;optional-open-insecure-ports"
+                                  },
+                                  "interserverHTTPPort": {
+                                    "description": "optional, setup `Pod.spec.containers.ports` with name `interserver` for selected replica, override `chi.spec.templates.hostTemplates.spec.interserverHTTPPort`\nallows connect between replicas inside same shard during fetch replicated data parts HTTP protocol\n",
+                                    "maximum": 65535,
+                                    "minimum": 1,
+                                    "type": "integer"
+                                  },
+                                  "name": {
+                                    "$ref": "#/$defs/values~1clickhouse~1string;optional-by-default-replica"
+                                  },
+                                  "secure": {
+                                    "$ref": "#/$defs/values~1clickhouse~1string='',0,1,+20more;optional-open-secure-ports"
+                                  },
+                                  "settings": {
+                                    "description": "optional, allows configure `clickhouse-server` settings inside <yandex>...</yandex> tag in `Pod` only in one replica during generate `ConfigMap` which will mount in `/etc/clickhouse-server/conf.d/`\noverride top-level `chi.spec.configuration.settings`, cluster-level `chi.spec.configuration.clusters.settings` and shard-level `chi.spec.configuration.clusters.layout.shards.settings`\nMore details: https://clickhouse.tech/docs/en/operations/settings/settings/\n",
+                                    "type": "object",
+                                    "x-kubernetes-preserve-unknown-fields": true
+                                  },
+                                  "tcpPort": {
+                                    "description": "optional, setup `Pod.spec.containers.ports` with name `tcp` for selected replica, override `chi.spec.templates.hostTemplates.spec.tcpPort`\nallows connect to `clickhouse-server` via TCP Native protocol via kubernetes `Service`\n",
+                                    "maximum": 65535,
+                                    "minimum": 1,
+                                    "type": "integer"
+                                  },
+                                  "templates": {
+                                    "additionalProperties": false,
+                                    "description": "optional, configuration of the templates names which will use for generate Kubernetes resources according to selected replica\noverride top-level `chi.spec.configuration.templates`, cluster-level `chi.spec.configuration.clusters.templates` and shard-level `chi.spec.configuration.clusters.layout.shards.templates`\n",
+                                    "properties": {
+                                      "clusterServiceTemplate": {
+                                        "$ref": "#/$defs/values~1clickhouse~1string;optional-template-name-from@3"
+                                      },
+                                      "dataVolumeClaimTemplate": {
+                                        "$ref": "#/$defs/values~1clickhouse~1string;optional-template-name-from@7"
+                                      },
+                                      "hostTemplate": {
+                                        "$ref": "#/$defs/values~1clickhouse~1string;optional-template-name-from"
+                                      },
+                                      "logVolumeClaimTemplate": {
+                                        "$ref": "#/$defs/values~1clickhouse~1string;optional-template-name-from@8"
+                                      },
+                                      "podTemplate": {
+                                        "$ref": "#/$defs/values~1clickhouse~1string;optional-template-name-from@2"
+                                      },
+                                      "replicaServiceTemplate": {
+                                        "$ref": "#/$defs/values~1clickhouse~1string;optional-template-name-from@4"
+                                      },
+                                      "serviceTemplate": {
+                                        "$ref": "#/$defs/values~1clickhouse~1string;optional-template-name-from@6"
+                                      },
+                                      "shardServiceTemplate": {
+                                        "$ref": "#/$defs/values~1clickhouse~1string;optional-template-name-from@5"
+                                      },
+                                      "volumeClaimTemplate": {
+                                        "$ref": "#/$defs/values~1clickhouse~1string;deprecated-volumeclaimtemplate-is-deprecated"
+                                      }
+                                    },
+                                    "type": "object"
+                                  },
+                                  "tlsPort": {
+                                    "$ref": "#/$defs/values~1clickhouse~1integer"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "type": "array"
+                            },
+                            "replicasCount": {
+                              "description": "optional, how much replicas in selected shard for selected ClickHouse cluster will run in Kubernetes, each replica is a separate `StatefulSet` which contains only one `Pod` with `clickhouse-server` instance,\nshard contains 1 replica by default\noverride cluster-level `chi.spec.configuration.clusters.layout.replicasCount`\n",
+                              "minimum": 1,
+                              "type": "integer"
+                            },
+                            "settings": {
+                              "description": "optional, allows configure `clickhouse-server` settings inside <yandex>...</yandex> tag in each `Pod` only in one shard during generate `ConfigMap` which will mount in `/etc/clickhouse-server/config.d/`\noverride top-level `chi.spec.configuration.settings` and cluster-level `chi.spec.configuration.clusters.settings`\nMore details: https://clickhouse.tech/docs/en/operations/settings/settings/\n",
+                              "type": "object",
+                              "x-kubernetes-preserve-unknown-fields": true
+                            },
+                            "templates": {
+                              "additionalProperties": false,
+                              "description": "optional, configuration of the templates names which will use for generate Kubernetes resources according to selected shard\noverride top-level `chi.spec.configuration.templates` and cluster-level `chi.spec.configuration.clusters.templates`\n",
+                              "properties": {
+                                "clusterServiceTemplate": {
+                                  "$ref": "#/$defs/values~1clickhouse~1string;optional-template-name-from@3"
+                                },
+                                "dataVolumeClaimTemplate": {
+                                  "$ref": "#/$defs/values~1clickhouse~1string;optional-template-name-from@7"
+                                },
+                                "hostTemplate": {
+                                  "$ref": "#/$defs/values~1clickhouse~1string;optional-template-name-from"
+                                },
+                                "logVolumeClaimTemplate": {
+                                  "$ref": "#/$defs/values~1clickhouse~1string;optional-template-name-from@8"
+                                },
+                                "podTemplate": {
+                                  "$ref": "#/$defs/values~1clickhouse~1string;optional-template-name-from@2"
+                                },
+                                "replicaServiceTemplate": {
+                                  "$ref": "#/$defs/values~1clickhouse~1string;optional-template-name-from@4"
+                                },
+                                "serviceTemplate": {
+                                  "$ref": "#/$defs/values~1clickhouse~1string;optional-template-name-from@6"
+                                },
+                                "shardServiceTemplate": {
+                                  "$ref": "#/$defs/values~1clickhouse~1string;optional-template-name-from@5"
+                                },
+                                "volumeClaimTemplate": {
+                                  "$ref": "#/$defs/values~1clickhouse~1string;deprecated-volumeclaimtemplate-is-deprecated"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "weight": {
+                              "description": "optional, 1 by default, allows setup shard <weight> setting which will use during insert into tables with `Distributed` engine,\nwill apply in <remote_servers> inside ConfigMap which will mount in /etc/clickhouse-server/config.d/chop-generated-remote_servers.xml\nMore details: https://clickhouse.tech/docs/en/engines/table-engines/special/distributed/\n",
+                              "type": "integer"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      "shardsCount": {
+                        "description": "how much shards for current ClickHouse cluster will run in Kubernetes, each shard contains shared-nothing part of data and contains set of replicas, cluster contains 1 shard by default",
+                        "type": "integer"
+                      },
+                      "type": {
+                        "description": "DEPRECATED - to be removed soon",
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "clickhouseOperator": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "serviceAccount": {
+                        "additionalProperties": {},
+                        "description": "ClickHouse Operator Service Account",
+                        "properties": {
+                          "name": {
+                            "$ref": "#/$defs/values~1alertmanager~1anyOf~1not~1:t+null;serviceaccountname-is-the-name+object+string+4more"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "name": {
+                    "anyOf": [
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/$defs/values~1clickhouse~1anyOf~1object+string"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1name~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more@2"
+                          }
+                        ]
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                      }
+                    ],
+                    "description": "Name of the clickhouse component"
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "clickhouseOperator": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "tolerations": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/constrains~1@items.effect+@items.key+@items.operator+@items.tolerationSeconds+@items.value"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Toleration labels for Clickhouse Operator pod assignment"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "clickhouseOperator": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "metricsExporter": {
+                        "additionalProperties": {},
+                        "description": "Metrics Exporter config.",
+                        "properties": {
+                          "resources": {
+                            "$ref": "#/$defs/k8s~1deployment-apps-v1~1spec.template.spec.containers@items.resources"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "podAnnotations": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1annotations:t~1object"
+                      }
+                    ],
+                    "description": "ClickHouse pod(s) annotation."
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "nameOverride": {
+                    "anyOf": [
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/$defs/values~1clickhouse~1anyOf~1object+string"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1name~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more@2"
+                          }
+                        ]
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                      }
+                    ],
+                    "description": "Name override for clickhouse"
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "clickhouseOperator": {
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.key+25more@2"
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "clickhouseOperator": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "env": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/constrains~1@items.name+@items.value+@items.valueFrom.configMapKeyRef.key+10more"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Additional environment variables for Clickhouse Operator container.\n- name: SAMPLE_ENV\nvalue: \"sample-value\""
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "clickhouseOperator": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "version": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/constrains~1className:t~1string@2"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1className:t~1object"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                          },
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1name~1string"
+                          }
+                        ],
+                        "description": "Version of the operator"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "clickhouseOperator": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "image": {
+                        "additionalProperties": {},
+                        "description": "Clickhouse Operator image",
+                        "properties": {
+                          "pullPolicy": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/$defs/constrains~1className:t~1string@2"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1pullPolicy~1null;image-pull-policy-one"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1className:t~1object"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1pullPolicy~1string;image-pull-policy-one"
+                              }
+                            ],
+                            "description": "Clickhouse Operator image pull policy."
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "clickhouseOperator": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "annotations": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1annotations:t~1allOf~1object+object,null;annotations-is-an-unstructured"
+                          }
+                        ],
+                        "description": "Clickhouse Operator deployment annotations"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "clickhouseOperator": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "name": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/constrains~1className:t~1string@2"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1className:t~1object"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                          },
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1name~1string"
+                          }
+                        ],
+                        "description": "name of the component"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "annotations": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1annotations:t~1object"
+                      }
+                    ],
+                    "description": "ClickHouse instance annotations."
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "clickhouseOperator": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "labels": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1podLabels:t~1allOf~1object+object,null;map-of-string-keys"
+                          }
+                        ],
+                        "description": "ClickHouse operator deployment labels"
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
             "allOf": [
               {
                 "$ref": "#/$defs/constrains~1enabled+enabled:t+enabled=null"
@@ -98176,1265 +99391,6 @@
                 "description": "Name override for clickhouse"
               }
             }
-          }
-        },
-        {
-          "if": {
-            "$ref": "#/$defs/constrains~1enabled+enabled:t+enabled=null"
-          },
-          "then": {
-            "allOf": [
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "clickhouseOperator": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "configs": {
-                        "additionalProperties": {},
-                        "description": "ClickHouse Operator configuration files",
-                        "properties": {
-                          "confdFiles": {
-                            "additionalProperties": {
-                              "anyOf": [
-                                {
-                                  "$ref": "#/$defs/constrains~1zookeeper.commonAnnotations~1string;pattern-"
-                                },
-                                {
-                                  "type": "null"
-                                },
-                                {
-                                  "type": "string"
-                                }
-                              ]
-                            },
-                            "description": "ClickHouse Operator confd files",
-                            "type": [
-                              "object",
-                              "null"
-                            ]
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "clickhouseOperator": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "metricsExporter": {
-                        "additionalProperties": {},
-                        "description": "Metrics Exporter config.",
-                        "properties": {
-                          "image": {
-                            "additionalProperties": {},
-                            "description": "Metrics Exporter image",
-                            "properties": {
-                              "pullPolicy": {
-                                "anyOf": [
-                                  {
-                                    "$ref": "#/$defs/constrains~1className:t~1string@2"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/constrains~1pullPolicy~1null;image-pull-policy-one"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/constrains~1className:t~1object"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/constrains~1pullPolicy~1string;image-pull-policy-one"
-                                  }
-                                ],
-                                "description": "Metrics Exporter image pull policy."
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "labels": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1annotations:t~1object"
-                      }
-                    ],
-                    "description": "- \"clickhouse-pull-secret\"\nClickHouse instance labels"
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "clickhouseOperator": {
-                    "$ref": "#/$defs/constrains~1resources.claims@items.name+resources.limits+resources.requests"
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "clickhouseOperator": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "metricsExporter": {
-                        "additionalProperties": {},
-                        "description": "Metrics Exporter config.",
-                        "properties": {
-                          "env": {
-                            "anyOf": [
-                              {
-                                "$ref": "#/$defs/constrains~1@items.name+@items.value+@items.valueFrom.configMapKeyRef.key+10more"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ],
-                            "description": "Additional environment variables for Metrics Exporter container.\n- name: SAMPLE_ENV\nvalue: \"sample-value\""
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "clickhouseOperator": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "podAnnotations": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1annotations:t~1allOf~1object+object,null;annotations-is-an-unstructured"
-                          }
-                        ],
-                        "description": "Clickhouse Operator pod(s) annotation."
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "clickhouseOperator": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "podLabels": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1podLabels:t~1allOf~1object+object,null;map-of-string-keys"
-                          }
-                        ],
-                        "description": "ClickHouse operator pod labels"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "image": {
-                    "additionalProperties": {},
-                    "description": "Clickhouse image",
-                    "properties": {
-                      "pullPolicy": {
-                        "description": "Clickhouse image pull policy.",
-                        "type": "string"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "clickhouseOperator": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "topologySpreadConstraints": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/constrains~1@items.labelSelector.matchExpressions@items.key+10more@2"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ],
-                        "description": "TopologySpreadConstraints describes how Clickhouse Operator pods ought to spread"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "podLabels": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1annotations:t~1object"
-                      }
-                    ],
-                    "description": "ClickHouse pod labels"
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "allowedNetworkIps": {
-                    "$ref": "#/$defs/values~1array,integer,null,object;an-allowlist-of-ip"
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "clickhouseOperator": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "podSecurityContext": {
-                        "additionalProperties": false,
-                        "description": "Clickhouse Operator pod-level security attributes and common container settings.\nfsGroup: 2000",
-                        "properties": {
-                          "fsGroup": {
-                            "$ref": "#/$defs/values~1otelCollector.podSecurityContext.fsGroup"
-                          },
-                          "fsGroupChangePolicy": {
-                            "$ref": "#/$defs/values~1otelCollector.podSecurityContext.fsGroupChangePolicy"
-                          },
-                          "runAsGroup": {
-                            "$ref": "#/$defs/values~1otelCollector.podSecurityContext.runAsGroup"
-                          },
-                          "runAsNonRoot": {
-                            "$ref": "#/$defs/values~1otelCollector.podSecurityContext.runAsNonRoot"
-                          },
-                          "runAsUser": {
-                            "$ref": "#/$defs/values~1otelCollector.podSecurityContext.runAsUser"
-                          },
-                          "seLinuxOptions": {
-                            "$ref": "#/$defs/values~1otelCollector.podSecurityContext.seLinuxOptions"
-                          },
-                          "seccompProfile": {
-                            "$ref": "#/$defs/values~1otelCollector.podSecurityContext.seccompProfile"
-                          },
-                          "supplementalGroups": {
-                            "$ref": "#/$defs/values~1otelCollector.podSecurityContext.supplementalGroups"
-                          },
-                          "sysctls": {
-                            "$ref": "#/$defs/values~1otelCollector.podSecurityContext.sysctls"
-                          },
-                          "windowsOptions": {
-                            "$ref": "#/$defs/values~1otelCollector.podSecurityContext.windowsOptions"
-                          }
-                        },
-                        "type": [
-                          "object",
-                          "null"
-                        ]
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "clickhouseOperator": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "metricsExporter": {
-                        "additionalProperties": {},
-                        "description": "Metrics Exporter config.",
-                        "properties": {
-                          "service": {
-                            "additionalProperties": {},
-                            "description": "Metrics Exporter service",
-                            "properties": {
-                              "port": {
-                                "anyOf": [
-                                  {
-                                    "$ref": "#/$defs/constrains~1containerPort+hostIP+hostPort+name+protocol~1integer:int32;number-of-port-to"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/constrains~1postgresql~1string;pattern-0-1-9"
-                                  }
-                                ],
-                                "description": "Metrics Exporter port"
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "namespace": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/$defs/values~1clickhouse~1anyOf~1object+string"
-                          },
-                          {
-                            "anyOf": [
-                              {
-                                "$ref": "#/$defs/values~1clickhouse~1null;namespace-defines-the-space"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1className:t~1string@2"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1className:t~1object"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
-                              },
-                              {
-                                "$ref": "#/$defs/values~1clickhouse~1string;namespace-defines-the-space"
-                              }
-                            ]
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
-                      }
-                    ],
-                    "description": "Which namespace to install clickhouse and `clickhouse-operator` to (defaults to namespace chart is installed to)"
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "clickhouseOperator": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "nodeSelector": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
-                          },
-                          {
-                            "$ref": "#/$defs/values~1alertmanager~1object;nodeselector-is-a-selector"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ],
-                        "description": "Clickhouse Operator node selector"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "podDistribution": {
-                    "anyOf": [
-                      {
-                        "description": "define ClickHouse Pod distribution policy between Kubernetes Nodes inside Shard, Replica, Namespace, CHI, another ClickHouse cluster",
-                        "items": {
-                          "additionalProperties": false,
-                          "properties": {
-                            "number": {
-                              "description": "define, how much ClickHouse Pods could be inside selected scope with selected distribution type",
-                              "maximum": 65535,
-                              "minimum": 0,
-                              "type": "integer"
-                            },
-                            "scope": {
-                              "description": "scope for apply each podDistribution",
-                              "enum": [
-                                "",
-                                "Unspecified",
-                                "Shard",
-                                "Replica",
-                                "Cluster",
-                                "ClickHouseInstallation",
-                                "Namespace"
-                              ],
-                              "type": "string"
-                            },
-                            "topologyKey": {
-                              "description": "use for inter-pod affinity look to `pod.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution.podAffinityTerm.topologyKey`, More info: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity",
-                              "type": "string"
-                            },
-                            "type": {
-                              "description": "you can define multiple affinity policy types",
-                              "enum": [
-                                "",
-                                "Unspecified",
-                                "ClickHouseAntiAffinity",
-                                "ShardAntiAffinity",
-                                "ReplicaAntiAffinity",
-                                "AnotherNamespaceAntiAffinity",
-                                "AnotherClickHouseInstallationAntiAffinity",
-                                "AnotherClusterAntiAffinity",
-                                "MaxNumberPerNode",
-                                "NamespaceAffinity",
-                                "ClickHouseInstallationAffinity",
-                                "ClusterAffinity",
-                                "ShardAffinity",
-                                "ReplicaAffinity",
-                                "PreviousTailAffinity",
-                                "CircularReplication"
-                              ],
-                              "type": "string"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        "type": "array"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
-                      }
-                    ],
-                    "description": "Topologies on how to distribute the ClickHouse pod.\nPossible values can be found here:\n- https://github.com/Altinity/clickhouse-operator/blob/1414503921da3ae475eb6f9a296d3475a6993768/docs/chi-examples/99-clickhouseinstallation-max.yaml#L428-L481\n- type: ShardAntiAffinity\ntopologyKey: kubernetes.io/hostname\n- type: ReplicaAntiAffinity\ntopologyKey: kubernetes.io/hostname\n- type: MaxNumberPerNode\nnumber: 2\ntopologyKey: kubernetes.io/hostname"
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "files": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "array"
-                      }
-                    ],
-                    "description": "Clickhouse configuration files.\nRefs:\n- https://clickhouse.com/docs/en/operations/configuration-files/\n- https://github.com/Altinity/clickhouse-operator/blob/master/docs/chi-examples/05-settings-05-files-nested.yaml\nconfig.d/log_rotation.xml: |\n<clickhouse>\n<logger>\n<level>trace</level>\n<console>true</console>\n<errorlog>/var/log/clickhouse-server/clickhouse-server.err.log</errorlog>\n<log>/var/log/clickhouse-server/clickhouse-server.log</log>\n<size>100M</size>\n<count>10</count>\n</logger>\n</clickhouse>\ntest.xml: |\n<clickhouse>\n<some-setting>some-value</some-setting>\n</clickhouse>"
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "clickhouseOperator": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "serviceAccount": {
-                        "additionalProperties": {},
-                        "description": "ClickHouse Operator Service Account",
-                        "properties": {
-                          "name": {
-                            "$ref": "#/$defs/values~1alertmanager~1anyOf~1not~1:t+null;serviceaccountname-is-the-name+object+string+4more"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "name": {
-                    "anyOf": [
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/$defs/values~1clickhouse~1anyOf~1object+string"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1name~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more@2"
-                          }
-                        ]
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
-                      }
-                    ],
-                    "description": "Name of the clickhouse component"
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "clickhouseOperator": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "tolerations": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/constrains~1@items.effect+@items.key+@items.operator+@items.tolerationSeconds+@items.value"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ],
-                        "description": "Toleration labels for Clickhouse Operator pod assignment"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "layout": {
-                    "additionalProperties": false,
-                    "description": "Clickhouse cluster layout. (Experimental, use at own risk)\nFor a full list of options, see https://github.com/Altinity/clickhouse-operator/blob/master/docs/custom_resource_explained.md\nsection on clusters and layouts.",
-                    "properties": {
-                      "replicas": {
-                        "description": "optional, allows override top-level `chi.spec.configuration` and cluster-level `chi.spec.configuration.clusters` configuration for each replica and each shard relates to selected replica, use it only if you fully understand what you do",
-                        "items": {
-                          "additionalProperties": false,
-                          "properties": {
-                            "files": {
-                              "<<": {
-                                "description": "allows define content of any setting file inside each `Pod` during generate `ConfigMap` which will mount in `/etc/clickhouse-server/config.d/` or `/etc/clickhouse-server/conf.d/` or `/etc/clickhouse-server/users.d/`\nevery key in this object is the file name\nevery value in this object is the file content\nyou can use `!!binary |` and base64 for binary files, see details here https://yaml.org/type/binary.html\neach key could contains prefix like USERS, COMMON, HOST or config.d, users.d, cond.d, wrong prefixes will ignored, subfolders also will ignored\nMore details: https://github.com/Altinity/clickhouse-operator/blob/master/docs/chi-examples/05-settings-05-files-nested.yaml\n",
-                                "type": "object",
-                                "x-kubernetes-preserve-unknown-fields": true
-                              },
-                              "description": "optional, allows define content of any setting file inside each `Pod` only in one replica during generate `ConfigMap` which will mount in `/etc/clickhouse-server/config.d/` or `/etc/clickhouse-server/conf.d/` or `/etc/clickhouse-server/users.d/`\noverride top-level `chi.spec.configuration.files` and cluster-level `chi.spec.configuration.clusters.files`, will ignore if `chi.spec.configuration.clusters.layout.shards` presents\n"
-                            },
-                            "name": {
-                              "$ref": "#/$defs/values~1clickhouse~1string;optional-by-default-replica"
-                            },
-                            "settings": {
-                              "<<": {
-                                "description": "allows configure `clickhouse-server` settings inside <yandex>...</yandex> tag in each `Pod` during generate `ConfigMap` which will mount in `/etc/clickhouse-server/config.d/`\nMore details: https://clickhouse.tech/docs/en/operations/settings/settings/\nYour yaml code will convert to XML, see examples https://github.com/Altinity/clickhouse-operator/blob/master/docs/custom_resource_explained.md#specconfigurationsettings\n",
-                                "type": "object",
-                                "x-kubernetes-preserve-unknown-fields": true
-                              },
-                              "description": "optional, allows configure `clickhouse-server` settings inside <yandex>...</yandex> tag in `Pod` only in one replica during generate `ConfigMap` which will mount in `/etc/clickhouse-server/conf.d/`\noverride top-level `chi.spec.configuration.settings`, cluster-level `chi.spec.configuration.clusters.settings` and will ignore if shard-level `chi.spec.configuration.clusters.layout.shards` present\nMore details: https://clickhouse.tech/docs/en/operations/settings/settings/\n"
-                            },
-                            "shards": {
-                              "description": "optional, list of shards related to current replica, will ignore if `chi.spec.configuration.clusters.layout.shards` presents",
-                              "items": {
-                                "additionalProperties": false,
-                                "properties": {
-                                  "files": {
-                                    "<<": {
-                                      "description": "allows define content of any setting file inside each `Pod` during generate `ConfigMap` which will mount in `/etc/clickhouse-server/config.d/` or `/etc/clickhouse-server/conf.d/` or `/etc/clickhouse-server/users.d/`\nevery key in this object is the file name\nevery value in this object is the file content\nyou can use `!!binary |` and base64 for binary files, see details here https://yaml.org/type/binary.html\neach key could contains prefix like USERS, COMMON, HOST or config.d, users.d, cond.d, wrong prefixes will ignored, subfolders also will ignored\nMore details: https://github.com/Altinity/clickhouse-operator/blob/master/docs/chi-examples/05-settings-05-files-nested.yaml\n",
-                                      "type": "object",
-                                      "x-kubernetes-preserve-unknown-fields": true
-                                    },
-                                    "description": "optional, allows define content of any setting file inside each `Pod` only in one shard related to current replica during generate `ConfigMap` which will mount in `/etc/clickhouse-server/config.d/` or `/etc/clickhouse-server/conf.d/` or `/etc/clickhouse-server/users.d/`\noverride top-level `chi.spec.configuration.files` and cluster-level `chi.spec.configuration.clusters.files`, will ignore if `chi.spec.configuration.clusters.layout.shards` presents\n"
-                                  },
-                                  "httpPort": {
-                                    "description": "optional, setup `Pod.spec.containers.ports` with name `http` for selected shard, override `chi.spec.templates.hostTemplates.spec.httpPort`\nallows connect to `clickhouse-server` via HTTP protocol via kubernetes `Service`\n",
-                                    "maximum": 65535,
-                                    "minimum": 1,
-                                    "type": "integer"
-                                  },
-                                  "httpsPort": {
-                                    "$ref": "#/$defs/values~1clickhouse~1integer"
-                                  },
-                                  "insecure": {
-                                    "$ref": "#/$defs/values~1clickhouse~1keywords~1'(3c)(3c)'+description"
-                                  },
-                                  "interserverHTTPPort": {
-                                    "description": "optional, setup `Pod.spec.containers.ports` with name `interserver` for selected shard, override `chi.spec.templates.hostTemplates.spec.interserverHTTPPort`\nallows connect between replicas inside same shard during fetch replicated data parts HTTP protocol\n",
-                                    "maximum": 65535,
-                                    "minimum": 1,
-                                    "type": "integer"
-                                  },
-                                  "name": {
-                                    "$ref": "#/$defs/values~1clickhouse~1string;optional-by-default-shard"
-                                  },
-                                  "secure": {
-                                    "$ref": "#/$defs/values~1clickhouse~1keywords~1'(3c)(3c)'+description@2"
-                                  },
-                                  "settings": {
-                                    "<<": {
-                                      "description": "allows configure `clickhouse-server` settings inside <yandex>...</yandex> tag in each `Pod` during generate `ConfigMap` which will mount in `/etc/clickhouse-server/config.d/`\nMore details: https://clickhouse.tech/docs/en/operations/settings/settings/\nYour yaml code will convert to XML, see examples https://github.com/Altinity/clickhouse-operator/blob/master/docs/custom_resource_explained.md#specconfigurationsettings\n",
-                                      "type": "object",
-                                      "x-kubernetes-preserve-unknown-fields": true
-                                    },
-                                    "description": "optional, allows configure `clickhouse-server` settings inside <yandex>...</yandex> tag in `Pod` only in one shard related to current replica during generate `ConfigMap` which will mount in `/etc/clickhouse-server/conf.d/`\noverride top-level `chi.spec.configuration.settings`, cluster-level `chi.spec.configuration.clusters.settings` and replica-level `chi.spec.configuration.clusters.layout.replicas.settings`\nMore details: https://clickhouse.tech/docs/en/operations/settings/settings/\n"
-                                  },
-                                  "tcpPort": {
-                                    "description": "optional, setup `Pod.spec.containers.ports` with name `tcp` for selected shard, override `chi.spec.templates.hostTemplates.spec.tcpPort`\nallows connect to `clickhouse-server` via TCP Native protocol via kubernetes `Service`\n",
-                                    "maximum": 65535,
-                                    "minimum": 1,
-                                    "type": "integer"
-                                  },
-                                  "templates": {
-                                    "<<": {
-                                      "description": "optional, configuration of the templates names which will use for generate Kubernetes resources according to one or more ClickHouse clusters described in current ClickHouseInstallation (chi) resource",
-                                      "properties": {
-                                        "clusterServiceTemplate": {
-                                          "description": "optional, template name from chi.spec.templates.serviceTemplates, allows customization for each `Service` resource which will created by `clickhouse-operator` which cover each clickhouse cluster described in `chi.spec.configuration.clusters`",
-                                          "type": "string"
-                                        },
-                                        "dataVolumeClaimTemplate": {
-                                          "description": "optional, template name from chi.spec.templates.volumeClaimTemplates, allows customization each `PVC` which will mount for clickhouse data directory in each `Pod` during render and reconcile every StatefulSet.spec resource described in `chi.spec.configuration.clusters`",
-                                          "type": "string"
-                                        },
-                                        "hostTemplate": {
-                                          "description": "optional, template name from chi.spec.templates.hostTemplates, which will apply to configure every `clickhouse-server` instance during render ConfigMap resources which will mount into `Pod`",
-                                          "type": "string"
-                                        },
-                                        "logVolumeClaimTemplate": {
-                                          "description": "optional, template name from chi.spec.templates.volumeClaimTemplates, allows customization each `PVC` which will mount for clickhouse log directory in each `Pod` during render and reconcile every StatefulSet.spec resource described in `chi.spec.configuration.clusters`",
-                                          "type": "string"
-                                        },
-                                        "podTemplate": {
-                                          "description": "optional, template name from chi.spec.templates.podTemplates, allows customization each `Pod` resource during render and reconcile each StatefulSet.spec resource described in `chi.spec.configuration.clusters`",
-                                          "type": "string"
-                                        },
-                                        "replicaServiceTemplate": {
-                                          "description": "optional, template name from chi.spec.templates.serviceTemplates, allows customization for each `Service` resource which will created by `clickhouse-operator` which cover each replica inside each shard inside each clickhouse cluster described in `chi.spec.configuration.clusters`",
-                                          "type": "string"
-                                        },
-                                        "serviceTemplate": {
-                                          "description": "optional, template name from chi.spec.templates.serviceTemplates, allows customization for one `Service` resource which will created by `clickhouse-operator` which cover all clusters in whole `chi` resource",
-                                          "type": "string"
-                                        },
-                                        "shardServiceTemplate": {
-                                          "description": "optional, template name from chi.spec.templates.serviceTemplates, allows customization for each `Service` resource which will created by `clickhouse-operator` which cover each shard inside clickhouse cluster described in `chi.spec.configuration.clusters`",
-                                          "type": "string"
-                                        },
-                                        "volumeClaimTemplate": {
-                                          "description": "DEPRECATED! VolumeClaimTemplate is deprecated in favor of DataVolumeClaimTemplate and LogVolumeClaimTemplate",
-                                          "type": "string"
-                                        }
-                                      },
-                                      "type": "object"
-                                    },
-                                    "description": "optional, configuration of the templates names which will use for generate Kubernetes resources according to selected replica\noverride top-level `chi.spec.configuration.templates`, cluster-level `chi.spec.configuration.clusters.templates`, replica-level `chi.spec.configuration.clusters.layout.replicas.templates`\n"
-                                  },
-                                  "tlsPort": {
-                                    "$ref": "#/$defs/values~1clickhouse~1integer"
-                                  }
-                                },
-                                "type": "object"
-                              },
-                              "type": "array"
-                            },
-                            "shardsCount": {
-                              "description": "optional, count of shards related to current replica, you can override each shard behavior on low-level `chi.spec.configuration.clusters.layout.replicas.shards`",
-                              "minimum": 1,
-                              "type": "integer"
-                            },
-                            "templates": {
-                              "<<": {
-                                "description": "optional, configuration of the templates names which will use for generate Kubernetes resources according to one or more ClickHouse clusters described in current ClickHouseInstallation (chi) resource",
-                                "properties": {
-                                  "clusterServiceTemplate": {
-                                    "description": "optional, template name from chi.spec.templates.serviceTemplates, allows customization for each `Service` resource which will created by `clickhouse-operator` which cover each clickhouse cluster described in `chi.spec.configuration.clusters`",
-                                    "type": "string"
-                                  },
-                                  "dataVolumeClaimTemplate": {
-                                    "description": "optional, template name from chi.spec.templates.volumeClaimTemplates, allows customization each `PVC` which will mount for clickhouse data directory in each `Pod` during render and reconcile every StatefulSet.spec resource described in `chi.spec.configuration.clusters`",
-                                    "type": "string"
-                                  },
-                                  "hostTemplate": {
-                                    "description": "optional, template name from chi.spec.templates.hostTemplates, which will apply to configure every `clickhouse-server` instance during render ConfigMap resources which will mount into `Pod`",
-                                    "type": "string"
-                                  },
-                                  "logVolumeClaimTemplate": {
-                                    "description": "optional, template name from chi.spec.templates.volumeClaimTemplates, allows customization each `PVC` which will mount for clickhouse log directory in each `Pod` during render and reconcile every StatefulSet.spec resource described in `chi.spec.configuration.clusters`",
-                                    "type": "string"
-                                  },
-                                  "podTemplate": {
-                                    "description": "optional, template name from chi.spec.templates.podTemplates, allows customization each `Pod` resource during render and reconcile each StatefulSet.spec resource described in `chi.spec.configuration.clusters`",
-                                    "type": "string"
-                                  },
-                                  "replicaServiceTemplate": {
-                                    "description": "optional, template name from chi.spec.templates.serviceTemplates, allows customization for each `Service` resource which will created by `clickhouse-operator` which cover each replica inside each shard inside each clickhouse cluster described in `chi.spec.configuration.clusters`",
-                                    "type": "string"
-                                  },
-                                  "serviceTemplate": {
-                                    "description": "optional, template name from chi.spec.templates.serviceTemplates, allows customization for one `Service` resource which will created by `clickhouse-operator` which cover all clusters in whole `chi` resource",
-                                    "type": "string"
-                                  },
-                                  "shardServiceTemplate": {
-                                    "description": "optional, template name from chi.spec.templates.serviceTemplates, allows customization for each `Service` resource which will created by `clickhouse-operator` which cover each shard inside clickhouse cluster described in `chi.spec.configuration.clusters`",
-                                    "type": "string"
-                                  },
-                                  "volumeClaimTemplate": {
-                                    "description": "DEPRECATED! VolumeClaimTemplate is deprecated in favor of DataVolumeClaimTemplate and LogVolumeClaimTemplate",
-                                    "type": "string"
-                                  }
-                                },
-                                "type": "object"
-                              },
-                              "description": "optional, configuration of the templates names which will use for generate Kubernetes resources according to selected replica\noverride top-level `chi.spec.configuration.templates`, cluster-level `chi.spec.configuration.clusters.templates`\n"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        "type": "array"
-                      },
-                      "replicasCount": {
-                        "description": "how much replicas in each shards for current ClickHouse cluster will run in Kubernetes, each replica is a separate `StatefulSet` which contains only one `Pod` with `clickhouse-server` instance, every shard contains 1 replica by default",
-                        "type": "integer"
-                      },
-                      "shards": {
-                        "description": "optional, allows override top-level `chi.spec.configuration`, cluster-level `chi.spec.configuration.clusters` settings for each shard separately, use it only if you fully understand what you do",
-                        "items": {
-                          "additionalProperties": false,
-                          "properties": {
-                            "definitionType": {
-                              "description": "DEPRECATED - to be removed soon",
-                              "type": "string"
-                            },
-                            "files": {
-                              "<<": {
-                                "description": "allows define content of any setting file inside each `Pod` during generate `ConfigMap` which will mount in `/etc/clickhouse-server/config.d/` or `/etc/clickhouse-server/conf.d/` or `/etc/clickhouse-server/users.d/`\nevery key in this object is the file name\nevery value in this object is the file content\nyou can use `!!binary |` and base64 for binary files, see details here https://yaml.org/type/binary.html\neach key could contains prefix like USERS, COMMON, HOST or config.d, users.d, cond.d, wrong prefixes will ignored, subfolders also will ignored\nMore details: https://github.com/Altinity/clickhouse-operator/blob/master/docs/chi-examples/05-settings-05-files-nested.yaml\n",
-                                "type": "object",
-                                "x-kubernetes-preserve-unknown-fields": true
-                              },
-                              "description": "optional, allows define content of any setting file inside each `Pod` only in one shard during generate `ConfigMap` which will mount in `/etc/clickhouse-server/config.d/` or `/etc/clickhouse-server/conf.d/` or `/etc/clickhouse-server/users.d/`\noverride top-level `chi.spec.configuration.files` and cluster-level `chi.spec.configuration.clusters.files`\n"
-                            },
-                            "internalReplication": {
-                              "<<": {
-                                "description": "Allow stop all ClickHouse clusters described in current chi.\nStop mechanism works as follows:\n - When `stop` is `1` then setup `Replicas: 0` in each related to current `chi` StatefulSet resource, all `Pods` and `Service` resources will desctroy, but PVCs still live\n - When `stop` is `0` then `Pods` will created again and will attach retained PVCs and `Service` also will created again\n",
-                                "enum": [
-                                  "",
-                                  "0",
-                                  "1",
-                                  "False",
-                                  "false",
-                                  "True",
-                                  "true",
-                                  "No",
-                                  "no",
-                                  "Yes",
-                                  "yes",
-                                  "Off",
-                                  "off",
-                                  "On",
-                                  "on",
-                                  "Disable",
-                                  "disable",
-                                  "Enable",
-                                  "enable",
-                                  "Disabled",
-                                  "disabled",
-                                  "Enabled",
-                                  "enabled"
-                                ],
-                                "type": "string"
-                              },
-                              "description": "optional, `true` by default when `chi.spec.configuration.clusters[].layout.ReplicaCount` > 1 and 0 otherwise\nallows setup <internal_replication> setting which will use during insert into tables with `Distributed` engine for insert only in one live replica and other replicas will download inserted data during replication,\nwill apply in <remote_servers> inside ConfigMap which will mount in /etc/clickhouse-server/config.d/chop-generated-remote_servers.xml\nMore details: https://clickhouse.tech/docs/en/engines/table-engines/special/distributed/\n"
-                            },
-                            "name": {
-                              "$ref": "#/$defs/values~1clickhouse~1string;optional-by-default-shard"
-                            },
-                            "replicas": {
-                              "description": "optional, allows override behavior for selected replicas from cluster-level `chi.spec.configuration.clusters` and shard-level `chi.spec.configuration.clusters.layout.shards`\n",
-                              "items": {
-                                "additionalProperties": false,
-                                "properties": {
-                                  "files": {
-                                    "<<": {
-                                      "description": "allows define content of any setting file inside each `Pod` during generate `ConfigMap` which will mount in `/etc/clickhouse-server/config.d/` or `/etc/clickhouse-server/conf.d/` or `/etc/clickhouse-server/users.d/`\nevery key in this object is the file name\nevery value in this object is the file content\nyou can use `!!binary |` and base64 for binary files, see details here https://yaml.org/type/binary.html\neach key could contains prefix like USERS, COMMON, HOST or config.d, users.d, cond.d, wrong prefixes will ignored, subfolders also will ignored\nMore details: https://github.com/Altinity/clickhouse-operator/blob/master/docs/chi-examples/05-settings-05-files-nested.yaml\n",
-                                      "type": "object",
-                                      "x-kubernetes-preserve-unknown-fields": true
-                                    },
-                                    "description": "optional, allows define content of any setting file inside `Pod` only in one replica during generate `ConfigMap` which will mount in `/etc/clickhouse-server/config.d/` or `/etc/clickhouse-server/conf.d/` or `/etc/clickhouse-server/users.d/`\noverride top-level `chi.spec.configuration.files`, cluster-level `chi.spec.configuration.clusters.files` and shard-level `chi.spec.configuration.clusters.layout.shards.files`\n"
-                                  },
-                                  "httpPort": {
-                                    "description": "optional, setup `Pod.spec.containers.ports` with name `http` for selected replica, override `chi.spec.templates.hostTemplates.spec.httpPort`\nallows connect to `clickhouse-server` via HTTP protocol via kubernetes `Service`\n",
-                                    "maximum": 65535,
-                                    "minimum": 1,
-                                    "type": "integer"
-                                  },
-                                  "httpsPort": {
-                                    "$ref": "#/$defs/values~1clickhouse~1integer"
-                                  },
-                                  "insecure": {
-                                    "$ref": "#/$defs/values~1clickhouse~1keywords~1'(3c)(3c)'+description"
-                                  },
-                                  "interserverHTTPPort": {
-                                    "description": "optional, setup `Pod.spec.containers.ports` with name `interserver` for selected replica, override `chi.spec.templates.hostTemplates.spec.interserverHTTPPort`\nallows connect between replicas inside same shard during fetch replicated data parts HTTP protocol\n",
-                                    "maximum": 65535,
-                                    "minimum": 1,
-                                    "type": "integer"
-                                  },
-                                  "name": {
-                                    "$ref": "#/$defs/values~1clickhouse~1string;optional-by-default-replica"
-                                  },
-                                  "secure": {
-                                    "$ref": "#/$defs/values~1clickhouse~1keywords~1'(3c)(3c)'+description@2"
-                                  },
-                                  "settings": {
-                                    "<<": {
-                                      "description": "allows configure `clickhouse-server` settings inside <yandex>...</yandex> tag in each `Pod` during generate `ConfigMap` which will mount in `/etc/clickhouse-server/config.d/`\nMore details: https://clickhouse.tech/docs/en/operations/settings/settings/\nYour yaml code will convert to XML, see examples https://github.com/Altinity/clickhouse-operator/blob/master/docs/custom_resource_explained.md#specconfigurationsettings\n",
-                                      "type": "object",
-                                      "x-kubernetes-preserve-unknown-fields": true
-                                    },
-                                    "description": "optional, allows configure `clickhouse-server` settings inside <yandex>...</yandex> tag in `Pod` only in one replica during generate `ConfigMap` which will mount in `/etc/clickhouse-server/conf.d/`\noverride top-level `chi.spec.configuration.settings`, cluster-level `chi.spec.configuration.clusters.settings` and shard-level `chi.spec.configuration.clusters.layout.shards.settings`\nMore details: https://clickhouse.tech/docs/en/operations/settings/settings/\n"
-                                  },
-                                  "tcpPort": {
-                                    "description": "optional, setup `Pod.spec.containers.ports` with name `tcp` for selected replica, override `chi.spec.templates.hostTemplates.spec.tcpPort`\nallows connect to `clickhouse-server` via TCP Native protocol via kubernetes `Service`\n",
-                                    "maximum": 65535,
-                                    "minimum": 1,
-                                    "type": "integer"
-                                  },
-                                  "templates": {
-                                    "<<": {
-                                      "description": "optional, configuration of the templates names which will use for generate Kubernetes resources according to one or more ClickHouse clusters described in current ClickHouseInstallation (chi) resource",
-                                      "properties": {
-                                        "clusterServiceTemplate": {
-                                          "description": "optional, template name from chi.spec.templates.serviceTemplates, allows customization for each `Service` resource which will created by `clickhouse-operator` which cover each clickhouse cluster described in `chi.spec.configuration.clusters`",
-                                          "type": "string"
-                                        },
-                                        "dataVolumeClaimTemplate": {
-                                          "description": "optional, template name from chi.spec.templates.volumeClaimTemplates, allows customization each `PVC` which will mount for clickhouse data directory in each `Pod` during render and reconcile every StatefulSet.spec resource described in `chi.spec.configuration.clusters`",
-                                          "type": "string"
-                                        },
-                                        "hostTemplate": {
-                                          "description": "optional, template name from chi.spec.templates.hostTemplates, which will apply to configure every `clickhouse-server` instance during render ConfigMap resources which will mount into `Pod`",
-                                          "type": "string"
-                                        },
-                                        "logVolumeClaimTemplate": {
-                                          "description": "optional, template name from chi.spec.templates.volumeClaimTemplates, allows customization each `PVC` which will mount for clickhouse log directory in each `Pod` during render and reconcile every StatefulSet.spec resource described in `chi.spec.configuration.clusters`",
-                                          "type": "string"
-                                        },
-                                        "podTemplate": {
-                                          "description": "optional, template name from chi.spec.templates.podTemplates, allows customization each `Pod` resource during render and reconcile each StatefulSet.spec resource described in `chi.spec.configuration.clusters`",
-                                          "type": "string"
-                                        },
-                                        "replicaServiceTemplate": {
-                                          "description": "optional, template name from chi.spec.templates.serviceTemplates, allows customization for each `Service` resource which will created by `clickhouse-operator` which cover each replica inside each shard inside each clickhouse cluster described in `chi.spec.configuration.clusters`",
-                                          "type": "string"
-                                        },
-                                        "serviceTemplate": {
-                                          "description": "optional, template name from chi.spec.templates.serviceTemplates, allows customization for one `Service` resource which will created by `clickhouse-operator` which cover all clusters in whole `chi` resource",
-                                          "type": "string"
-                                        },
-                                        "shardServiceTemplate": {
-                                          "description": "optional, template name from chi.spec.templates.serviceTemplates, allows customization for each `Service` resource which will created by `clickhouse-operator` which cover each shard inside clickhouse cluster described in `chi.spec.configuration.clusters`",
-                                          "type": "string"
-                                        },
-                                        "volumeClaimTemplate": {
-                                          "description": "DEPRECATED! VolumeClaimTemplate is deprecated in favor of DataVolumeClaimTemplate and LogVolumeClaimTemplate",
-                                          "type": "string"
-                                        }
-                                      },
-                                      "type": "object"
-                                    },
-                                    "description": "optional, configuration of the templates names which will use for generate Kubernetes resources according to selected replica\noverride top-level `chi.spec.configuration.templates`, cluster-level `chi.spec.configuration.clusters.templates` and shard-level `chi.spec.configuration.clusters.layout.shards.templates`\n"
-                                  },
-                                  "tlsPort": {
-                                    "$ref": "#/$defs/values~1clickhouse~1integer"
-                                  }
-                                },
-                                "type": "object"
-                              },
-                              "type": "array"
-                            },
-                            "replicasCount": {
-                              "description": "optional, how much replicas in selected shard for selected ClickHouse cluster will run in Kubernetes, each replica is a separate `StatefulSet` which contains only one `Pod` with `clickhouse-server` instance,\nshard contains 1 replica by default\noverride cluster-level `chi.spec.configuration.clusters.layout.replicasCount`\n",
-                              "minimum": 1,
-                              "type": "integer"
-                            },
-                            "settings": {
-                              "<<": {
-                                "description": "allows configure `clickhouse-server` settings inside <yandex>...</yandex> tag in each `Pod` during generate `ConfigMap` which will mount in `/etc/clickhouse-server/config.d/`\nMore details: https://clickhouse.tech/docs/en/operations/settings/settings/\nYour yaml code will convert to XML, see examples https://github.com/Altinity/clickhouse-operator/blob/master/docs/custom_resource_explained.md#specconfigurationsettings\n",
-                                "type": "object",
-                                "x-kubernetes-preserve-unknown-fields": true
-                              },
-                              "description": "optional, allows configure `clickhouse-server` settings inside <yandex>...</yandex> tag in each `Pod` only in one shard during generate `ConfigMap` which will mount in `/etc/clickhouse-server/config.d/`\noverride top-level `chi.spec.configuration.settings` and cluster-level `chi.spec.configuration.clusters.settings`\nMore details: https://clickhouse.tech/docs/en/operations/settings/settings/\n"
-                            },
-                            "templates": {
-                              "<<": {
-                                "description": "optional, configuration of the templates names which will use for generate Kubernetes resources according to one or more ClickHouse clusters described in current ClickHouseInstallation (chi) resource",
-                                "properties": {
-                                  "clusterServiceTemplate": {
-                                    "description": "optional, template name from chi.spec.templates.serviceTemplates, allows customization for each `Service` resource which will created by `clickhouse-operator` which cover each clickhouse cluster described in `chi.spec.configuration.clusters`",
-                                    "type": "string"
-                                  },
-                                  "dataVolumeClaimTemplate": {
-                                    "description": "optional, template name from chi.spec.templates.volumeClaimTemplates, allows customization each `PVC` which will mount for clickhouse data directory in each `Pod` during render and reconcile every StatefulSet.spec resource described in `chi.spec.configuration.clusters`",
-                                    "type": "string"
-                                  },
-                                  "hostTemplate": {
-                                    "description": "optional, template name from chi.spec.templates.hostTemplates, which will apply to configure every `clickhouse-server` instance during render ConfigMap resources which will mount into `Pod`",
-                                    "type": "string"
-                                  },
-                                  "logVolumeClaimTemplate": {
-                                    "description": "optional, template name from chi.spec.templates.volumeClaimTemplates, allows customization each `PVC` which will mount for clickhouse log directory in each `Pod` during render and reconcile every StatefulSet.spec resource described in `chi.spec.configuration.clusters`",
-                                    "type": "string"
-                                  },
-                                  "podTemplate": {
-                                    "description": "optional, template name from chi.spec.templates.podTemplates, allows customization each `Pod` resource during render and reconcile each StatefulSet.spec resource described in `chi.spec.configuration.clusters`",
-                                    "type": "string"
-                                  },
-                                  "replicaServiceTemplate": {
-                                    "description": "optional, template name from chi.spec.templates.serviceTemplates, allows customization for each `Service` resource which will created by `clickhouse-operator` which cover each replica inside each shard inside each clickhouse cluster described in `chi.spec.configuration.clusters`",
-                                    "type": "string"
-                                  },
-                                  "serviceTemplate": {
-                                    "description": "optional, template name from chi.spec.templates.serviceTemplates, allows customization for one `Service` resource which will created by `clickhouse-operator` which cover all clusters in whole `chi` resource",
-                                    "type": "string"
-                                  },
-                                  "shardServiceTemplate": {
-                                    "description": "optional, template name from chi.spec.templates.serviceTemplates, allows customization for each `Service` resource which will created by `clickhouse-operator` which cover each shard inside clickhouse cluster described in `chi.spec.configuration.clusters`",
-                                    "type": "string"
-                                  },
-                                  "volumeClaimTemplate": {
-                                    "description": "DEPRECATED! VolumeClaimTemplate is deprecated in favor of DataVolumeClaimTemplate and LogVolumeClaimTemplate",
-                                    "type": "string"
-                                  }
-                                },
-                                "type": "object"
-                              },
-                              "description": "optional, configuration of the templates names which will use for generate Kubernetes resources according to selected shard\noverride top-level `chi.spec.configuration.templates` and cluster-level `chi.spec.configuration.clusters.templates`\n"
-                            },
-                            "weight": {
-                              "description": "optional, 1 by default, allows setup shard <weight> setting which will use during insert into tables with `Distributed` engine,\nwill apply in <remote_servers> inside ConfigMap which will mount in /etc/clickhouse-server/config.d/chop-generated-remote_servers.xml\nMore details: https://clickhouse.tech/docs/en/engines/table-engines/special/distributed/\n",
-                              "type": "integer"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        "type": "array"
-                      },
-                      "shardsCount": {
-                        "description": "how much shards for current ClickHouse cluster will run in Kubernetes, each shard contains shared-nothing part of data and contains set of replicas, cluster contains 1 shard by default",
-                        "type": "integer"
-                      },
-                      "type": {
-                        "description": "DEPRECATED - to be removed soon",
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "clickhouseOperator": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "metricsExporter": {
-                        "additionalProperties": {},
-                        "description": "Metrics Exporter config.",
-                        "properties": {
-                          "resources": {
-                            "$ref": "#/$defs/k8s~1deployment-apps-v1~1spec.template.spec.containers@items.resources"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "podAnnotations": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1annotations:t~1object"
-                      }
-                    ],
-                    "description": "ClickHouse pod(s) annotation."
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "nameOverride": {
-                    "anyOf": [
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/$defs/values~1clickhouse~1anyOf~1object+string"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1name~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more@2"
-                          }
-                        ]
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
-                      }
-                    ],
-                    "description": "Name override for clickhouse"
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "clickhouseOperator": {
-                    "allOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.key+25more@2"
-                      }
-                    ]
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "clickhouseOperator": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "env": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/constrains~1@items.name+@items.value+@items.valueFrom.configMapKeyRef.key+10more"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ],
-                        "description": "Additional environment variables for Clickhouse Operator container.\n- name: SAMPLE_ENV\nvalue: \"sample-value\""
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "clickhouseOperator": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "version": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/constrains~1className:t~1string@2"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1className:t~1object"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
-                          },
-                          {
-                            "type": "null"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1name~1string"
-                          }
-                        ],
-                        "description": "Version of the operator"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "clickhouseOperator": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "image": {
-                        "additionalProperties": {},
-                        "description": "Clickhouse Operator image",
-                        "properties": {
-                          "pullPolicy": {
-                            "anyOf": [
-                              {
-                                "$ref": "#/$defs/constrains~1className:t~1string@2"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1pullPolicy~1null;image-pull-policy-one"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1className:t~1object"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1pullPolicy~1string;image-pull-policy-one"
-                              }
-                            ],
-                            "description": "Clickhouse Operator image pull policy."
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "clickhouseOperator": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "annotations": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1annotations:t~1allOf~1object+object,null;annotations-is-an-unstructured"
-                          }
-                        ],
-                        "description": "Clickhouse Operator deployment annotations"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "clickhouseOperator": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "name": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/constrains~1className:t~1string@2"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1className:t~1object"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
-                          },
-                          {
-                            "type": "null"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1name~1string"
-                          }
-                        ],
-                        "description": "name of the component"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "annotations": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1annotations:t~1object"
-                      }
-                    ],
-                    "description": "ClickHouse instance annotations."
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "clickhouseOperator": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "labels": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1podLabels:t~1allOf~1object+object,null;map-of-string-keys"
-                          }
-                        ],
-                        "description": "ClickHouse operator deployment labels"
-                      }
-                    }
-                  }
-                }
-              }
-            ]
           }
         },
         {

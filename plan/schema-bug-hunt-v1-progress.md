@@ -9364,4 +9364,244 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   byte-identity rule. Provider negative-cache audit (Codex 20261024T165549-6af5151f): all 97 vendored not-found markers are genuine
   upstream 404s; fixed stale negatives surviving an HTTP 200 refresh (05a16b16, +14 LOC, 0 fixtures), in review. Differential tool
   for R3b (Opus, clone round8-difftool) in progress. Orchestrator.
-Next: landing 13 = battery accounting fix + provider negative-cache fix once both reviews say LAND; R2 T/C then family-scope decision (R2-11 closures + certificate report); R3a State facade; difftool T0; then R3b construction on R2+R3a.
+- 03:1x CET (Oct 25) — **LANDED: landing 13 merged as 187cea8f (battery schema-only accounting, chain green); landing 14 running
+  (provider negative-cache fix). SCOPE DECISION: R2 stops at S+T+C; the next interpreter landing is the R3b cut-over; R3b
+  construction started.** Landing 13 = c8554013: schema-only runs defer forced PartialOverride LintRaw audits only when the chart's
+  baseline and candidate schema bytes are identical (sol 20261024T162253-00da4305 REWORK ×3 → LAND; the assertion comparator was
+  replaced by the byte-identity rule, net −273 test lines); 0 adopted; receipt /Volumes/T7/dev/round8-landing13-run1/receipt.json
+  sha256 c9782cf2…; steps dump 01:11 CEST … green 02:23 CET (the clock went back 1 h mid-chain). Landing 14 = ee522059
+  (bundle/not-found-audit): all 97 vendored not-found markers are genuine upstream 404s; an HTTP 200 refresh now clears both negative
+  stores and records a shared supersession so a contradicted marker is never trusted (sol 20261024T193823-54110e5d REWORK → LAND;
+  task test:all 0); chain started 04:04 CET (E=round8-landing14-run1). R2 decision (orchestrator, user delegated scope calls to
+  "more correct and/or simpler"; design-r2.md §8): W's measurement-first report certifies 10/165 corpus charts and 0/44 luup2
+  charts (873/1,382 synthetic admission charts); under R2-11 (new rejections only at unconditional sites, because builder
+  witnesses showed legacy guard errors the certificate cannot exclude — helper shadow snapshots, `fromJson "[]"` folded falsy) the
+  kind families would close synthetic cells only, for ~+1,000 temporary LOC. So W is parked unlanded and the families, F2, D4,
+  nilness and determinism move to R3b. R2 final (r2/kind-leaf 90759086): S seal, T Go-type leaf, C catalog owner + legacy
+  compatibility views, lint fixes, prune (−105), re-tags; every gate 0 incl. task lint and lint:fc 54 PASS; 542 files and 1,418
+  admission hashes identical to main; +545 production LOC. R3a (r3a/single-execution c20172bb, rebased onto R2 final by the
+  orchestrator; 3 test-code compile errors being fixed by its builder): 8 rows retired, 12 deferred to R3b, State facade, −22 LOC,
+  byte-identical. Deviation from D3's L3/L4 sequence: neither R2 (no closures) nor R2+R3a (net +523 LOC, fails clause 2b(iv))
+  can land alone; they are the base of the R3b construction branch. R3b construction: astra builder 20261025T030721-dcd1829e,
+  clone round8-r3b, branch r3b/construction 3a473b9c, brief /Volumes/T7/dev/round8/brief-r3b-construction.md. Differential tool T0
+  (Opus, r3b/differential-tool e9f2a2fc; main-vs-main PASS 271,528 identical, main-vs-perturbed FAIL as intended) in sol review
+  20261025T030526-1760fdd7. Disk: removed ~165 GiB of idle targets (r1b, w1-opus, lint10c, devbin, guards); killed a session-6
+  orphan wait loop (PID 38797). Orchestrator.
+- 07:3x CET (Oct 25) — **LANDED: landing 14 merged as 3521189d (provider negative-cache refresh fix, chain green run 1).** ee522059
+  (05a16b16 + ee522059): a successful refresh clears both negative stores and supersedes contradicted markers; 0 adopted. Steps:
+  dump 04:04, unit 04:07, lint 04:16, battery 04:19 (63 min), integration 05:22, sweep 05:37 (114 min: builder load ~30, final CLI
+  differential phase long), finalize 07:31, green 07:32 (3.5 h total). Receipt /Volumes/T7/dev/round8-landing14-run1/receipt.json
+  sha256 d3cd7c17…. In flight: R3b construction (astra; C01 committed 1cd00990 — private value runtime, all 1,857 admission cells
+  and 542 files identical), T0 differential tool rework after sol REWORK (13 P1s, Opus), CRD-oracle extraction from Track G (Codex
+  sol 20261025T040919-78091260; triage 20261025T030829-d84b3e5a picked it as the best interpreter-independent track). R3a fix-ups
+  committed (r3a e0ae224c / r3b b64028f0): all gates 0 incl. task lint and lint:fc 54 PASS. Orchestrator.
+- 18:34 (Oct 25) — **Landing 15 (chart-CRD oracle, crd-oracle/extract 79bc569a, merge 9cc6e336) FAILED at battery after
+  1 h 53 min; R3b performance reviews in; R3b is the user's top priority.** Chain run1 (E=/Volumes/T7/dev/round8-landing15-run1):
+  dump/unit/lint OK, battery exit 100 after 6,776 s, slowed by host contention (load up to 59). The cause is
+  known_inherited_failures.rs:410: two kube-starrocks LintRaw rows that 79bc569a re-recorded at 2087e952 with a
+  generator-attribution reason (overlays operator.global.rbac.create=true and starrocks.configMaps=[]) are stale. The chain
+  instead observes "unusable defaults Kubernetes control: uncertainty: StarRocksCluster pinned CRD schema not found".
+  Hypothesis, unverified: the builder observed the rows with a live crdcheck binary, while ordinary gates only replay
+  testdata/crdcheck (3 files). The Opus fixer is on clone round8-l15fix, branch fix/l15-starrocks-replay. A testdata/crdcheck
+  change is a non-test path for the runner, so the rerun needs a fresh dump. The rerun will therefore combine landing 15, the
+  starrocks fix and the test:all fresh-clone fix (b534d184 + 8e731d9a, LAND), which was planned as landing 16, in one chain.
+  User 17:0x: land R3b as soon as possible and keep landing throughput with parallel lanes. R3b performance: four reviews ran
+  on snapshot 5abc47ca (c2d44404 + C03 WIP; clone round8-r3b-perf): astra architecture, sol algorithmic
+  (20261025T162323-90259d41), sol representation (20261025T162327-5a7840d2) and the Opus profile (still running). They are
+  consolidated as P1–P12 in /Volumes/T7/dev/round8/r3b-perf-consolidated.md. Root cause: whole-State forks that fail to
+  reconverge; kube-prometheus-stack dashboard files entered with 18→2,304 states. The R3b astra builder owns P1–P3 and P9.
+  An Opus perf builder owns P4–P8 (byte-identical representation changes; clone round8-r3b-perfbuild, branch
+  r3b/perf-representation). The C08a certified helper memo is brought forward to right after C03: design and eligibility in
+  round8-r3b-perf/review/c08a-*, with 97% / 82% / 57% of include sites statically eligible in kube-prometheus-stack / datadog /
+  kyverno. agentmux issues #16–#18 filed. Orchestrator.
+- 21:10 (Oct 25) — **R3b C03 committed (002bd823 on r3b/construction, non-landable checkpoint): the state explosion is gone;
+  kyverno 3.58 CPU-s, kube-prometheus-stack 4.37, datadog 44.32 (main 5.6–8.3 s wall), peak RSS 132–305 MB.** One
+  continuation frontier replaces sibling-only reconvergence (P1), per-file `.Template` identity is shared, and redundant guard
+  terms are removed. W1 admission: 1,857 cells, 176 false acceptances / 0 false rejections versus main (C02: 227/1); all 519
+  control verdicts match. Production −14,190 LOC versus baseline. Orchestrator applied transfer-C03.patch (sha c0c06c2b…) with
+  `git apply --cached`. Builder gates: fmt/check 0; `task lint` 201 (stale inventory references to deleted eval_env.rs);
+  workspace units 1,333 passed / 641 failed / 2 unreported after a watchdog stop, being re-measured by a sol review. Two sol
+  reviews are running: join exactness (20261025T200659-8a1d398f) and test health + datadog sampling (20261025T200706-6c4dcc59).
+  The R3b builder moves to the lint fix, then C04. Perf builder and C08a (Fable) rebase onto 002bd823, re-measure and keep only
+  real wins. Also today: G1 LAND after a comment rewrap by the orchestrator (4750c948). G2 REWORK (13 Go divergences from
+  yaml-rust syntax) → orchestrator decision: libyaml-safer, scanner errors → unsupported (widen); Codex builder
+  20261025T182031-3784523f. F20 REWORK (trim semantics in the layout transparency rule + a cluster-autoscaler selector false
+  rejection); the Opus builder is reworking. T0 rework done (bbf20a0f; 43 GB → ≤ 2.5 GB RSS; real chain init/C01/C02 PASS,
+  perturbed C03 FAIL as intended); sol re-review running. Landing 15 run 2 (oracle + starrocks replay 704cb7d7 + test:all +
+  G1; E=round8-landing15-run2; runner caea639 also unsets HELM_SCHEMA_CRDCHECK*) started 20:39. User: max 6 Claude agents. Orchestrator.
+- 11:58 (Oct 26) — **Landing 15 merged (f31688c2): chart-CRD oracle + starrocks replay + test:all fix + CRD G1 + CI green +
+  cell_matrix timeout isolation; receipt round8-landing15-run3/receipt.json sha256 28cdf4d8…; 0 fixtures adopted.** Three runs:
+  run1 battery FAILED (starrocks rows recorded with a live crdcheck; the fix makes replay the default and the identity
+  root-independent). Run2 was interrupted mid-battery by a host reboot at ~00:40; the stale heavy lock was removed by the user;
+  the resume was refused because python3 resolved to mise 3.14.6 instead of the recorded 3.14.7 (cwd-dependent; queued as a
+  runner fix in round8/process-queue.md). Run3 (fresh E): dump/unit/lint/battery OK; integration FAILED on the inherited flaky
+  cell_matrix timeout test (real `helmsweep version` > 5 s under load) → 8e30543f replays non-target calls (20/20 under load) →
+  unit/lint/battery/integration/sweep/finalize green (battery 77 min vs landing 11's 68). Also since 21:10 yesterday:
+  - R3b C03 follow-up committed 4f4de0a1 (map-truthiness P1 and output-budget P2 fixed; 17 C02-pass→C03-fail tests
+    recovered, 0 prior-pass regressions; admission 175 FA / 0 FR; −11,295 LOC vs pre-cutover). It regressed kube-prometheus-stack
+    4.4 → 18.6 CPU-s; the builder is investigating (Perfetto: repeated runtime-guard projection).
+  - Perf lane on C03: only P7 kept (5a428513, PredicateMemo routing: datadog 30.5 → 17.1 s; byte-identical; +13 LOC); the rest
+    dropped as noise. C08a helper memo: 11 hits / 656 misses on kube-prometheus-stack, +1,824 LOC, no CPU change →
+    orchestrator decision: shelved unlanded (branch r3b/c08a-helper-memo, evidence round8-c08a-evidence).
+  - F20 rework c819cc64: full battery PASS; structure re-review LAND; probes re-review found 2 new P1s (block-scalar ownership,
+    loop control across newlines) → rework running.
+  - T0 rework 2 done (b1d3bce7, 72237089; all 11 findings; real capture→init→C01→verify 0); re-review running.
+  - User: switch most work to Codex (Claude quota); CI green before R3b lands. Codex sandboxes can no longer write .git, so
+    the orchestrator commits transfer patches. agentmux issues #22 (labels) and #23 (continue in a fresh session) filed.
+  - Disk: ~120 GB of idle targets removed; landing TARGET evidence grew to 150 GB (queued process fix). Orchestrator.
+- 16:20 (Oct 26) — **Landing 16 merged (c7cb0843): T0 value-algebra differential gate; receipt round8-landing16-run1
+  sha256 aea1e040…; 0 fixtures adopted. Landing 17 (CRD G2) started. R3b C04 put on SIMPLIFY after the user challenged its
+  size.** T0: rework 2 (single-writer atomic history, stable witness identities, required roster, grounded controls) and
+  ba627bef (Normal guards against case-folded headers and non-finite numbers); sol review LAND after two reworks. R3b:
+  three C03 transfers committed 0c4f66a8 (budget-guard reuse: kube-prometheus-stack 20.1 → 8.8, kyverno 4.8 → 3.7,
+  datadog 22.6 → 21.1 debug CPU-s, byte-identical), 655e21b8 (P7) and 87e66562 (inventory; task lint green); production
+  66,424 LOC (−11,152 vs pre-cutover). C04 WIP: +4,622 production LOC; false acceptances 175 → 173; 5 new Helm-matched
+  closures; 0 new false rejections; kyverno stopped at 100 CPU-s. User: "is C04 worth +4,400 lines?" → sol simplicity
+  review 20261026T145551-9c15e236 SIMPLIFY (duplicate runner, repeated traversal, superseded projection/repair APIs kept,
+  extra host precision; a gain-focused C04 of about +1.0–1.4k is plausible). Orchestrator decision: delete superseded models
+  now, one runner, consolidate traversal, seal directly, keep host features only where a measured closure or control needs
+  them. Target ≤ +3,000 vs 87e66562; kyverno at C03 speed; 5 closures kept; 0 new FR. G2: Opus rework (libyaml-safer,
+  apimachinery framing, three libyaml-safer panics avoided without catch_unwind, linear comma-tag check), both reviews LAND
+  at 64782416. Orchestrator.
+- 18:40 (Oct 26) — **Landing 17 merged (be2b7d20): CRD G2; receipt round8-landing17-run2 sha256 18689b3b…; signoz-signoz
+  fixture moved, as committed on the branch.** Run 1 aborted at dump ("clone changed during the dump"): the git auto-merge of
+  Cargo.lock left two base64 versions unreconciled; fixed by 76e7b2c9; process fix queued. R3b C04: the ordered
+  simplification removed 830 lines but stalled at +3,792 (ceiling +3,000). kyverno still did not finish (stopped at 20.9
+  CPU-s) and 15 prior-pass tests failed; the 5 closures held with 0 new FR. Orchestrator decision: split C04 into C04a now
+  (single-chart root init, method dispatch, namespace association/empty definitions, tpl overlay, plus the independent
+  deletions; ≤ +1,500; C03 speed; 0 prior-pass regressions) and C04b later (whole-tree initializer and scheduling,
+  design-first with a cost model and reuse of main's chart preparation). The blocked snapshot stays as a reference
+  (transfer-C04-blocked.patch, sha 130b02ff…). Orchestrator.
+- 21:45 (Oct 26) — **Landing 18 merged (ca889e9c): hermetic value-algebra unit controls; receipt round8-landing18-run1
+  sha256 844203f9…. R3b C04a committed (0f92f524) as a non-landable checkpoint with recorded speed debt; C04b and a
+  parallel perf lane started.** CI on the pushed c7cb0843: bench, lint, build, integration and network green (the mise.lock fix
+  works); the unit `test` job failed on all three platforms because two T0 unit tests shelled out to `mise exec helm@4.2.3`.
+  4e004300 moved the live parity checks to an integration test (unit tests pass with Helm off PATH: 1,762). Process fix queued:
+  the chain's unit step should run without Helm, as CI does. C04a: +1,233 LOC, 5 closures, 0 new FR, 1,527 prior-pass tests
+  green. Median debug CPU-s C03 → C04a: kube-prometheus-stack 8.74 → 14.37, kyverno 3.97 → 8.20, datadog 14.93 → 7.87.
+  Causes: correct namespace availability executes more helpers (kyverno +3.9 s, two closures), and immediate sealing loses
+  cross-file guard reuse (kube-prometheus-stack +4.9 s). Orchestrator decision: commit as a checkpoint; the speed debt goes to
+  the perf lane (astra 20261026T210802-5ff8deba, branch r3b/perf-c04a, which also produces one consistent main/C03/C04a
+  benchmark); the R3b builder starts C04b per astra's design review 20261026T185132-38095010 (one ordered guarded
+  initializer, reuse main's chart/values.rs, +700 to +1,250 LOC). Orchestrator.
+- 03:37 (Oct 27) — **Landing 19 merged (4656872e): Windows replay-store publication race; receipt round8-landing19-run1
+  sha256 0fcf4c58…; 0 fixtures adopted.** CI on the pushed e04ff166 was green except the Windows integration job, which failed
+  when a replay-store rename raced a concurrent identical publication; 8b79ffd8 accepts the race when the stored bytes equal the
+  staged bytes (content address). Chain steps: dump 01:30, unit 01:34, lint 01:39, battery 01:42 (55 min), integration 02:37,
+  sweep 02:54 (40 min), finalize 03:34, green 03:36. Family re-tally (sol 20261027T011538-1df60314, counted from code at ca889e9c):
+  10/83 strict closures (F34 added by landing 10d), 32 PARTIAL, 39 OPEN, 2 by policy; of the 71 open, an inferred 48 are owned by
+  R3b alone, 12 by R3b plus main, 11 by main only. Roster attribution (sol 20261027T012655-21b1bf3d) of 790 unattributed rows:
+  35 map to existing families, 755 NEW, of which 503 share one main-only cause (emitted `\u` URI patterns refused by Go's
+  validator) and 24 are an oracle error (apiextensions.k8s.io/v1 CRDs classified "not served"); both queued main-track.
+  C06 design review (astra 20261027T011249-21c60d51) completed; C06a correctness lane started (astra 20261027T012507-feefdfc2,
+  clone round8-r3b-c06, branch r3b/c06a-placement from 0f92f524) on the 166 loop-free R3b false acceptances. Orchestrator.
+- 06:31 (Oct 27) — **R3b: perf lane committed (82ccabf8, +160 LOC, W1 unchanged), now faster than main on all three charts;
+  C06a first checkpoint closes 63/173 main-relative FAs (b40715c4, +573 LOC, 0 new FR); C04b shelved after a second
+  blow-up and deferred by design review.** Release CPU-s main → 82ccabf8: kube-prometheus-stack 22.4 → 7.0, kyverno 9.7 → 4.2,
+  datadog 10.4 → 4.6 (paired medians of 3, astra 20261026T210802-5ff8deba; the C03 target is still missed on KPS 6.8 and kyverno 3.4).
+  C06a (astra 20261027T012507-feefdfc2) proves quoted-scalar YAML aborts from frozen file output: 88 W1 closures (63 of the 173),
+  all rechecked as rejected by Helm 4.2.3; committed as b40715c4 with the perf commit picked on top (1aaa0cbd) on r3b/c06a-placement.
+  Reviews: semantics REWORK (sol 20261027T033214-890ac7b6: P1 documents after `...` are inspected although go-yaml v2 decodes only
+  the first; P2 escape alphabet and Unicode bounds); architecture REDIRECT (sol 20261027T033214-266b4a14: a second placement
+  authority; seal one indexed file-output artifact and delete the source-driven placement, about 800 LOC). Both were steered into
+  the running C06a turn. C04b part 2 (consumer memoization, +863 over 82ccabf8) hit the 60 CPU-s watchdog on all three charts with
+  FA unchanged at 173; blocked transfer kept (sha e777b64d…, round8-r3b-c04b-backup). Design review (astra 20261027T045215-aeda9723):
+  root cause is eager elimination of conditional values at invocation boundaries (dict/list take the state-forking
+  transfer_alternatives route; 6,724 completions, 45,822 reconvergences); no W1 row needs the dependency tree; C09 can proceed on
+  C04a's bootstrap, C10 cannot complete without the cross-chart obligations (d40, d41/d64, d61). Orchestrator decision: defer C04b;
+  queue an operand-demand dict/list constructor prototype (50–100 LOC, controls first) as the precondition for reopening it; the R3b
+  builder moves to C05 (loops) from 82ccabf8 with a 2× stop rule. Process: watch-codex.py now trusts agentmux settled.json (pid
+  reuse had shown a run that failed on Oct 25 as running). Orchestrator.
+- 20:40 (Oct 27) — **Landing 21 merged (fa4d7e28): portable hex regex escapes (main-track W4 `\u`); receipt
+  round8-landing21-run2 sha256 f34bd841…; 503 oncall inherited rows retired, 34 masked oncall false acceptances recorded.**
+  pattern_dialect respells parsed `\u00XX` as `\xHH` (language-exact in ECMA u-mode and Go RE2); Helm can now compile the
+  oncall and airflow schemas, whose defaults lint clean, so both leave ACCEPTED_DEFAULTS_FAILURES. Run 1 failed at battery
+  (context-roster baseline hashes taken after normalization; 087c265c binds identity before it); review P2 pinned the Go gate
+  (95cf3790); run 2's first battery surfaced 34 oncall false acceptances the compile blocker had masked (9 lint, 8 Kubernetes,
+  17 Helm aborts), recorded with families in 9a8d1659 and rerun from unit. Steps: dump 15:31, unit 15:51, lint 15:56, battery
+  16:08 (failed, roster), unit/lint/battery 17:51–19:14 (74 min), integration 19:14, sweep 19:44 (54 min), green 20:39.
+  Landing 20 (F20) was stopped in its battery when both re-reviews found new P1s (guard escape in block scalars, loop transfers
+  in scalars, branch-merged comment classification); F20 rework running. Bench dashboard (user request): CPU-independent
+  metrics (peak RSS, sizes, $defs, instructions) no longer record the CPU and form one series; benchtrail v0.5.1 released and
+  pinned (a2c8e186); gh-pages history rewritten (b6bb9ace, 1,542 entries kept); shouted CPU names normalized case-insensitively
+  (02000db1, gh-pages fe2ad442). R3b: C06a at 136/173 (4ba6306e on r3b/c06a-placement, +584 LOC of +800, 0 new FR,
+  0 prior-pass unit/integration regressions); C05 step 2 committed with speed debt (a6712c04: KPS debug 8.2 → 15.8 CPU-s, main
+  26.6; 7 summary closures) and a perf lane opened on it (astra 20261027T183601-68c15784); C05 step 3 held for family/timing
+  gates. Disk fell to 11 GiB at 19:10 (battery scratch plus build folders); cleared to 33 GiB, process fix queued (sweep
+  battery scratch after the step). Orchestrator.
+- 23:15 (Oct 27) — **R3b: executor protocol declared a local maximum after a third precision-driven perf cliff; orchestrator
+  adopts the structural fix in three slices.** C04b (initializer, all charts > 60 CPU-s), C05 step 2 (loop footprints, KPS
+  1.9×) and C07 step 1 (summary plans, NATS 13×: reconvergence 76,481 → 475,818 calls) each blew up in reconvergence or guard
+  preparation. Architecture review (astra 20261027T215146-11b30d4a): the executor undoes the value algebra's sharing; operand
+  alternatives become forked executions (invoke.rs:476/667), joins rediscover sharing with quadratic candidate scans and Θ(H²)
+  history unions (control.rs:1214/1312, output.rs:1222, history.rs:53), and runtime relations are rebuilt as absolute
+  predicates (output.rs:965/1135). Decision: option 1, compositional guarded results with structural joins, as slices
+  (1) operand lifting, (2) delta joins with continuation keys and shared-prefix history, (3) runtime proof consumption
+  (perf lane round8-r3b-perf3 owns 3); estimate 600–900 added / 450–700 deleted production LOC. It subsumes the C04
+  operand-demand and C05 domain-relative recommendations; C07 resumes on top. Status: C06a 136/173 at a3772433 (+261 LOC);
+  C05 steps 2–3 committed (a6712c04, bc86a8e9; 10 controls; KPS speed debt, perf lane at 8abec4d6 −20%); C07 step 1 held.
+  The C06a line merges into r3b/construction before slices 1–2 start. Orchestrator.
+- 10:50 (Oct 28) — **R3b: slices 1–2 committed; C05 step 2 withdrawn pending slice 3; C06a at 145/173 and net −105 LOC.**
+  r3b/construction: C06a steps 3–5 merged (66366139), slice 1 operand lifting (23b2313e, +76; constructor forks 126 → 0),
+  slice 2 delta joins (cdd565a8, net 0; history comparisons NATS 192.7M → 322K, KPS 160.6M → 730K; kyverno/datadog −8%).
+  KPS stayed at ~20–22 CPU-s and milvus exceeded a 12 GB cap; the ablation pinned both on C05 step 2 a6712c04 (without it
+  KPS 8.86 s, milvus 0.232 GB; W1 unchanged; only the 7 c05.summary controls reopen). The perf lane traced the cause to
+  repeated predicate storage (allocated predicates 74,632 → 34,078,024 on milvus), the slice-3 defect class. Orchestrator
+  decision: revert a6712c04 on the line (63ed5d62) and re-apply it on top of slice 3 (runtime proof consumption, perf lane,
+  budget +400). C06a (r3b/c06a-placement 5cc2b096): 145/173 closed, 0 new FR, 0 prior-pass unit/integration regressions,
+  cumulative −105 production LOC; KPS +6.3% accepted as debt; remaining 28 = 6 C06a, 12 executor follow-ons, 7 loop, 3
+  preclosed. Host: a memory guard that SIGSTOPs running jobs deadlocked all builders (stopped jobs keep their memory);
+  rule now: gate only step starts. Orchestrator.
+- 12:35 (Oct 28) — **R3b: C07 step 1 deferred until after C09; C06a close-out reviewed; C09 started; landing preview running.**
+  C07 step 1 re-applied on 63ed5d62 still slows NATS 11.1× (tplYamlItr 38 → 1,588 executions) for 9 controls and no W1 or
+  NATS schema change; certification is blocked because nested `tpl` programs run against the caller's state (proof note
+  .codex-evidence/C07-certification/proof-blocker.md). Design review (astra 20261028T111151-62e2905a): an exact summary needs an
+  ordered, state-threaded callback transfer (650–1,100 production LOC); whole-state memoization lacks a sound key; the 3 helper
+  W1 cells (.221/.521/.49) are ordinary helper-return/output obligations, now owned by the C06a builder. Orchestrator decision:
+  keep the old abstention as baseline, revisit C07 after C09. C06a close-out reviews: semantics REWORK, one P1 false
+  rejection (`quote` of typed nil maps/lists, yaml.rs:1770; sol 20261028T095207-30ddda3a, 15/15 sampled closures hold);
+  architecture KEEP with 140–210 LOC cleanup (sol 20261028T095212-0443f3d0). Both folded into the C06a rebase onto 63ed5d62
+  (branch r3b/merged-c06a). The R3b builder moves to C09 (legacy adapter deletion). A landing-preview lane (sol
+  20261028T101112-dee355fd) dumps the corpus and runs the live battery on 63ed5d62 to surface landing flips early. Orchestrator.
+- 08:02 (Oct 29) — **R3b line advanced to 8900ce9a; the landing preview shows R3b is far from parity with main, so it re-plans to weeks.**
+  Commits on r3b/construction, in order:
+  - 61dedbce and ad33fed8: C09 slices 2–3. Legacy adapters deleted, −1,627 production LOC. W1 verdicts and their 1,418 hashes are unchanged.
+  - fb40958c: slice 3, deferring runtime proofs through observation histories. KPS 7.39 → 5.33 CPU-s over 7 pairs; milvus 232 → 141 MB; +383 LOC.
+    Correction: slice 3 does not preserve bytes against its base. Shared condition definitions re-lay 159 chart schemas. The per-chart Helm pair screen showed 0 flips; the 7 flagged witnesses are inherited raw-lint audits that base/base A/A runs reproduce.
+  - 8900ce9a: root closure. ADR 0042 policy is restored, and a root unknown-read region no longer forces RootPolicy::Open, an override C02 had added.
+    - 157/157 corpus charts are closed, against 154 on main.
+    - Also fixes an inherited `stop` footprint defect.
+    - +50 LOC. Helm pair screens show 0 flips on 14 charts.
+    - The combined tree has 568 unit failures, all inherited, 0 new.
+  Landing preview 1, at 63ed5d62 against ROSTER_BASELINE (live, 157 charts plus 4 lean):
+  - 90,586 new false-acceptance cells and 7,543 false-rejection cells.
+  - Schema bytes: 191 MB on main against 12.6 MB for R3b.
+  - Preview 2 at ad33fed8 reproduces the counts exactly so far, so C06a and C09 did not move parity.
+  Analysis (sol-high 20261028T233147-00d6ed57), checked against the Helm evidence: the losses are regressions, not ADR 0013 widening.
+  - Provider-backed constraints, 28.8k cells (C06b): since C02, frozen toYaml and helper output project as taint, so the surviving provider path is never fed.
+  - YAML placement/type, 21k cells (C06b).
+  - Heap/member nilness, 30k cells (C03b).
+  - Root closure, now fixed.
+  Orchestrator decision: R3b lands only at parity with main, per plan :601. Estimate about 2 weeks (Nov 10–12, range Nov 7–19).
+  Critical path:
+  - The heap-history redesign, a HeapVersion DAG with lazy bounded queries (sol-high builder 20261029T004316-2b7d7f1d).
+  - Then C06b (design 20261028T235830-e8771f61) and C03b.
+  The open-cells tpl step was blocked by mixed precise/Widened heap joins (KPS over a 6 GB cap); it is folded into the heap redesign.
+  Designs: round8/designs/{heap-history,C06b-serialized-placement,parity-analysis}.md. Plan: round8/r3b-remaining-plan.md. Orchestrator.
+- 13:36 (Oct 29) — **User decisions: R3b lands at parity on the big classes, with the residual rostered; F20 is parked and its fixes move to R3b.**
+  - Residual triage (sol-high 20261029T101055-013245f3) found six more independent packages beyond C06b/C03b, about 23–40 engineer-days:
+    A operand provenance, B iterable domains, C validation transfers, D widening-only projection (most of the 6.3k false rejections),
+    E helper precision, F dependency graph. Another 3k hard failures are oracle-bundle gaps.
+  - User decision: R3b lands after heap-history, C06b, C03b and root closure. A–F are rostered as known regressions and closed in follow-ups.
+  - Designs and red tests are ready for the critical path. C06b has 5 public reds. C03b has 8 public reds and 2 private reds;
+    9 more C03b controls are already green, as a validator-based equivalence check showed.
+  - F20 was rebased onto main (round8-f20b, fix/f20-on-main @ de2a3fb5): unit 1,799/0, lint:fc 54 PASS, +2,691 LOC.
+  - Landing 20b run 1 failed at unit: frozen family witnesses moved.
+    - 12 rows improve: 9 known FR fixed, 2 known FA fixed, among them the D5 defaults of kube-starrocks and openldap-stack-ha.
+    - 2 F80 declared-type policy rows regress.
+  - Pre-landing reviews both returned REWORK.
+    - Semantics P1: resolve_policy.rs:417 drops the ADR 0043 assertions for redis-ha haproxy.checkFall and checkInterval.
+    - Simplicity: 4 P2s, including scalar ownership rebuilt in the interpreter and duplicate skeleton builders.
+  - 1,597 of F20's 3,977 added production lines sit in legacy files R3b deletes.
+  - User decision: park F20 and port its 12 witness fixes, plus the F80 guard, to R3b (round8/designs/f20-witness-transitions.patch). Landing 20 is not merged.
+Next: heap-history hand-back → C06b and C03b implementation; port the F20 witnesses to R3b; R3b landing roster plan.

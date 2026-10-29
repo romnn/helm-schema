@@ -41,6 +41,7 @@
 mod actions;
 mod cst;
 mod dump;
+mod helm_yaml;
 mod lines;
 mod literal;
 mod parse;
@@ -54,6 +55,9 @@ pub use cst::{
     BlockScalar, CommentLine, ControlBranch, ControlKind, ControlRegion, MappingEntry, Node,
     OpaqueKind, OpaqueNode, OutputAction, ScalarLine, ScalarPart, ScalarParts, SequenceItem, Span,
     TemplatedDocument,
+};
+pub use helm_yaml::{
+    HelmYamlDocument, HelmYamlError, HelmYamlKey, helm_yaml_documents, helm_yaml_key,
 };
 pub use rendered::{
     BodyLayout, BranchChoice, HoleShape, HoleShapes, LayoutUncertainty, MAX_LAYOUT_STATES,

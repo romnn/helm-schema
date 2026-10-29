@@ -116,6 +116,14 @@ fn reads_as_number(spelling: &str) -> bool {
             return !digits.is_empty() && digits.chars().all(|c| c.is_digit(radix));
         }
     }
+    yaml_style_float(unsigned)
+}
+
+/// go-yaml v2's `yamlStyleFloat`,
+/// `^[-+]?(\.[0-9]+|[0-9]+(\.[0-9]*)?)([eE][-+]?[0-9]+)?$`, which also
+/// matches decimal integers.
+pub(crate) fn yaml_style_float(spelling: &str) -> bool {
+    let unsigned = spelling.strip_prefix(['-', '+']).unwrap_or(spelling);
     let digits = |text: &str| !text.is_empty() && text.bytes().all(|byte| byte.is_ascii_digit());
     let (mantissa, exponent) = match unsigned.split_once(['e', 'E']) {
         Some((mantissa, exponent)) => (mantissa, Some(exponent)),
