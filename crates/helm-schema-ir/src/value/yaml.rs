@@ -381,7 +381,8 @@ impl OutputPlacement {
         site: &super::ExecutedSite,
         memo: &PredicateMemo,
     ) -> PlainScalarPlacement {
-        if !memo.exactly_implies(&site.condition, &self.unknown.negated()) {
+        let condition = site.condition();
+        if !memo.exactly_implies(&condition, &self.unknown.negated()) {
             return PlainScalarPlacement::Unknown;
         }
         let id = ObservationId {
@@ -391,7 +392,7 @@ impl OutputPlacement {
         };
         let mut found = false;
         for layout in &self.layouts {
-            if memo.exactly_implies(&site.condition, &layout.condition.negated()) {
+            if memo.exactly_implies(&condition, &layout.condition.negated()) {
                 continue;
             }
             if layout.placeholders != 1 || !layout.block_value(id) {
@@ -574,8 +575,8 @@ impl FilePlacement {
                 site.plain_scalar_placement = if !state.output_widened
                     && site.program == state.program
                     && site.rendered
-                    && site.coverage_exact
-                    && !site.condition.contains_approximation()
+                    && site.coverage_exact()
+                    && !site.condition().contains_approximation()
                 {
                     placement.plain_placement(site, &state.heap.arena.predicate_memo)
                 } else {

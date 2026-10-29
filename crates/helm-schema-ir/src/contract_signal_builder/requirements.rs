@@ -1087,9 +1087,9 @@ pub(super) fn fail_outer_guard(predicate: &Predicate) -> Option<ConditionalGuard
             let inner = match decodable.as_slice() {
                 [] => return None,
                 [guard] => guard.clone(),
-                _ => ConditionalGuard::AllOf(decodable),
+                _ => ConditionalGuard::AllOf(decodable.into()),
             };
-            Some(ConditionalGuard::Not(Box::new(inner)))
+            Some(ConditionalGuard::Not(std::sync::Arc::new(inner)))
         }
         // A disjunction lowers arm-by-arm: each strengthened arm implies
         // its real arm, so their disjunction implies the real disjunction
@@ -1108,7 +1108,7 @@ pub(super) fn fail_outer_guard(predicate: &Predicate) -> Option<ConditionalGuard
             match guards.as_slice() {
                 [] => None,
                 [guard] => Some(guard.clone()),
-                _ => Some(ConditionalGuard::AnyOf(guards)),
+                _ => Some(ConditionalGuard::AnyOf(guards.into())),
             }
         }
         // A conjunction lowers all-or-nothing: each conjunct's
@@ -1125,7 +1125,7 @@ pub(super) fn fail_outer_guard(predicate: &Predicate) -> Option<ConditionalGuard
             match guards.as_slice() {
                 [] => None,
                 [guard] => Some(guard.clone()),
-                _ => Some(ConditionalGuard::AllOf(guards)),
+                _ => Some(ConditionalGuard::AllOf(guards.into())),
             }
         }
         _ => None,
@@ -2349,17 +2349,19 @@ pub(super) fn fold_member_access_arms(
             if set.len() == 1 {
                 set.remove(0)
             } else {
-                ConditionalGuard::AllOf(set)
+                ConditionalGuard::AllOf(set.into())
             }
         })
         .collect();
     if arms.len() == 1 {
         match arms.remove(0) {
-            ConditionalGuard::AllOf(set) => outer_guards.extend(set),
+            ConditionalGuard::AllOf(set) => {
+                outer_guards.extend(std::sync::Arc::unwrap_or_clone(set));
+            }
             guard => outer_guards.push(guard),
         }
     } else {
-        outer_guards.push(ConditionalGuard::AnyOf(arms));
+        outer_guards.push(ConditionalGuard::AnyOf(arms.into()));
     }
     ConditionalGuard::canonicalize_conjunction(&mut outer_guards);
     outer_guards
@@ -2421,7 +2423,7 @@ pub(super) fn fold_activation_pair(
         ) => (truthy_path == absent_path).then(|| {
             let mut alternatives = vec![a.clone(), b.clone()];
             alternatives.sort();
-            ConditionalGuard::AnyOf(alternatives)
+            ConditionalGuard::AnyOf(alternatives.into())
         }),
         _ => None,
     };

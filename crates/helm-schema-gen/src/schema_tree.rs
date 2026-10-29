@@ -112,13 +112,22 @@ impl SchemaDocument {
     }
 
     #[tracing::instrument(skip_all, fields(anchor_depth = ancestor_segments.len()))]
-    pub(crate) fn append_conditional(
+    pub(crate) fn append_conditional_with_definitions(
         &mut self,
         ancestor_segments: &[String],
         condition: SchemaNode,
         then_schema: SchemaNode,
+        definitions: &BTreeMap<String, Value>,
     ) {
-        append_conditional_at_parts(&mut self.root, ancestor_segments, condition, then_schema);
+        let type_partition =
+            condition_is_value_type_partition(&condition.clone().into_value(), definitions);
+        append_conditional_at_parts(
+            &mut self.root,
+            ancestor_segments,
+            condition,
+            then_schema,
+            type_partition,
+        );
     }
 
     /// Drops the structural `type: object` from a host whose members are
@@ -731,18 +740,30 @@ fn conditional_entry(condition: Value, then_schema: SchemaNode) -> SchemaNode {
 /// handles, so the conditional's carrier must not assert `type: object`
 /// itself; a condition that tests members instead presupposes an object
 /// host.
-fn condition_is_value_type_partition(condition: &Value) -> bool {
+fn condition_is_value_type_partition(
+    condition: &Value,
+    definitions: &BTreeMap<String, Value>,
+) -> bool {
     let Value::Object(object) = condition else {
         return false;
     };
     if object.len() != 1 {
         return false;
     }
+    if let Some(reference) = object.get("$ref").and_then(Value::as_str)
+        && let Some(reference) = helm_schema_json_schema_walk::parse_definition_reference(reference)
+    {
+        return definitions
+            .get(&reference.name)
+            .is_some_and(|body| condition_is_value_type_partition(body, definitions));
+    }
     if let Some(inner) = object.get("not") {
-        return condition_is_value_type_partition(inner);
+        return condition_is_value_type_partition(inner, definitions);
     }
     if let Some(Value::Array(items)) = object.get("anyOf").or_else(|| object.get("allOf")) {
-        return items.iter().all(condition_is_value_type_partition);
+        return items
+            .iter()
+            .all(|item| condition_is_value_type_partition(item, definitions));
     }
     object.contains_key("type")
 }
@@ -752,9 +773,10 @@ fn append_conditional_at_parts(
     path_segments: &[String],
     condition: SchemaNode,
     then_schema: SchemaNode,
+    type_partition: bool,
 ) {
     let Some((head, tail)) = path_segments.split_first() else {
-        push_conditional_entry(node, condition, then_schema, false);
+        push_conditional_entry(node, condition, then_schema, false, type_partition);
         return;
     };
 
@@ -775,9 +797,15 @@ fn append_conditional_at_parts(
             let member = additional_properties.get_or_insert_with(|| Box::new(SchemaNode::empty()));
             if !member.is_false_schema() {
                 if tail.is_empty() {
-                    push_conditional_entry(member, condition, then_schema, true);
+                    push_conditional_entry(member, condition, then_schema, true, type_partition);
                 } else {
-                    append_conditional_at_parts(member, tail, condition, then_schema);
+                    append_conditional_at_parts(
+                        member,
+                        tail,
+                        condition,
+                        then_schema,
+                        type_partition,
+                    );
                 }
                 return;
             }
@@ -788,9 +816,15 @@ fn append_conditional_at_parts(
                 .get_or_insert_with(|| Box::new(SchemaNode::empty()));
             if !member.is_false_schema() {
                 if tail.is_empty() {
-                    push_conditional_entry(member, condition, then_schema, true);
+                    push_conditional_entry(member, condition, then_schema, true, type_partition);
                 } else {
-                    append_conditional_at_parts(member, tail, condition, then_schema);
+                    append_conditional_at_parts(
+                        member,
+                        tail,
+                        condition,
+                        then_schema,
+                        type_partition,
+                    );
                 }
                 return;
             }
@@ -799,7 +833,13 @@ fn append_conditional_at_parts(
 
     if matches!(node, SchemaNode::Typed(_) | SchemaNode::Foreign(_)) && !node.is_empty_slot() {
         let mut fragment = SchemaNode::empty();
-        append_conditional_at_parts(&mut fragment, path_segments, condition, then_schema);
+        append_conditional_at_parts(
+            &mut fragment,
+            path_segments,
+            condition,
+            then_schema,
+            type_partition,
+        );
         merge_conditional_fragment_into_foreign_slot(node, fragment);
         return;
     }
@@ -819,9 +859,9 @@ fn append_conditional_at_parts(
         }
     });
     if tail.is_empty() {
-        push_conditional_entry(child, condition, then_schema, true);
+        push_conditional_entry(child, condition, then_schema, true, type_partition);
     } else {
-        append_conditional_at_parts(child, tail, condition, then_schema);
+        append_conditional_at_parts(child, tail, condition, then_schema, type_partition);
     }
 }
 
@@ -839,13 +879,13 @@ fn push_conditional_entry(
     condition: SchemaNode,
     then_schema: SchemaNode,
     open_host: bool,
+    type_partition: bool,
 ) {
     if open_host {
         reconcile_node_host_with_branch_schema(node, &then_schema);
     }
     open_host_descendants_extended_by_schema(node, &then_schema);
     let condition = condition.into_value();
-    let type_partition = condition_is_value_type_partition(&condition);
     // A trivially-true condition (an unconditional requirement, e.g. an
     // unguarded member-access contract) needs no `if`/`then` wrapper.
     let conditional = if crate::schema_model::is_empty_schema(&condition) {

@@ -173,7 +173,7 @@ pub(super) fn collapse_layered_truthy_gates<'a>(
         );
         arms.sort();
         arms.dedup();
-        replacements.push(ConditionalGuard::AnyOf(arms));
+        replacements.push(ConditionalGuard::AnyOf(arms.into()));
     }
     if dropped.is_empty() {
         return guards;
@@ -316,11 +316,33 @@ pub(super) fn provider_schema_use(
     })
 }
 
+#[derive(PartialEq, Eq, Hash)]
+struct GuardProjectionKey {
+    predicate: Predicate,
+    has_target: bool,
+}
+
 pub(super) fn predicate_to_guard(
     predicate: &Predicate,
     target_value_path: Option<&str>,
 ) -> Option<ConditionalGuard> {
-    match predicate.kind() {
+    project_predicate_guard(predicate, target_value_path, &mut ahash::AHashMap::new())
+}
+
+fn project_predicate_guard(
+    predicate: &Predicate,
+    target_value_path: Option<&str>,
+    projected: &mut ahash::AHashMap<GuardProjectionKey, Option<ConditionalGuard>>,
+) -> Option<ConditionalGuard> {
+    // Each conversion has one target path; nested negations and disjunctions remove it.
+    let key = GuardProjectionKey {
+        predicate: predicate.clone(),
+        has_target: target_value_path.is_some(),
+    };
+    if let Some(guard) = projected.get(&key) {
+        return guard.clone();
+    }
+    let guard = match predicate.kind() {
         helm_schema_core::PredicateKind::True
         | helm_schema_core::PredicateKind::False
         | helm_schema_core::PredicateKind::Approximate { .. } => None,
@@ -341,20 +363,20 @@ pub(super) fn predicate_to_guard(
             ) {
                 return None;
             }
-            Some(ConditionalGuard::Not(Box::new(predicate_to_guard(
-                inner, None,
-            )?)))
+            Some(ConditionalGuard::Not(std::sync::Arc::new(
+                project_predicate_guard(inner, None, projected)?,
+            )))
         }
         helm_schema_core::PredicateKind::And(predicates) => {
             let mut guards = predicates
                 .iter()
-                .map(|predicate| predicate_to_guard(predicate, target_value_path))
+                .map(|predicate| project_predicate_guard(predicate, target_value_path, projected))
                 .collect::<Option<Vec<_>>>()?;
             ConditionalGuard::canonicalize_conjunction(&mut guards);
             match guards.as_slice() {
                 [] => None,
                 [guard] => Some(guard.clone()),
-                _ => Some(ConditionalGuard::AllOf(guards)),
+                _ => Some(ConditionalGuard::AllOf(guards.into())),
             }
         }
         helm_schema_core::PredicateKind::Or(predicates) => {
@@ -364,7 +386,7 @@ pub(super) fn predicate_to_guard(
             // condition), so arms encode their paths literally.
             let mut guards = predicates
                 .iter()
-                .map(|predicate| predicate_to_guard(predicate, None))
+                .map(|predicate| project_predicate_guard(predicate, None, projected))
                 .collect::<Option<Vec<_>>>()?;
             if guards
                 .iter()
@@ -375,9 +397,11 @@ pub(super) fn predicate_to_guard(
             }
             ConditionalGuard::canonicalize_conjunction(&mut guards);
             (target_value_path.is_some() || !guards.is_empty())
-                .then_some(ConditionalGuard::AnyOf(guards))
+                .then_some(ConditionalGuard::AnyOf(guards.into()))
         }
-    }
+    };
+    projected.insert(key, guard.clone());
+    guard
 }
 
 pub(super) fn extend_lowerable_predicate(
@@ -477,7 +501,7 @@ pub(super) fn terminal_clause_guard(predicate: &Predicate) -> Option<Conditional
         return match guards.as_slice() {
             [] => None,
             [guard] => Some(guard.clone()),
-            _ => Some(ConditionalGuard::AnyOf(guards)),
+            _ => Some(ConditionalGuard::AnyOf(guards.into())),
         };
     }
     // A conjunction strengthens all-or-nothing: each conjunct's sound
@@ -495,7 +519,7 @@ pub(super) fn terminal_clause_guard(predicate: &Predicate) -> Option<Conditional
         return match guards.as_slice() {
             [] => None,
             [guard] => Some(guard.clone()),
-            _ => Some(ConditionalGuard::AllOf(guards)),
+            _ => Some(ConditionalGuard::AllOf(guards.into())),
         };
     }
     predicate_to_guard(predicate, None)
@@ -519,10 +543,11 @@ pub(super) fn guard_to_conditional_guard(
                     match guards.as_slice() {
                         [] => None,
                         [guard] => Some(guard.clone()),
-                        _ => Some(ConditionalGuard::AllOf(guards)),
+                        _ => Some(ConditionalGuard::AllOf(guards.into())),
                     }
                 })
-                .collect::<Option<Vec<_>>>()?,
+                .collect::<Option<Vec<_>>>()?
+                .into(),
         ));
     }
     if matches!(guard, Guard::With { .. }) && target_value_path.is_some() {
@@ -561,16 +586,19 @@ pub(super) fn guard_to_conditional_guard(
     if let Guard::NotMatchesPattern { path, pattern } = guard {
         // Pattern negation still requires a string; non-strings never match the
         // positive regex consumer's input domain.
-        return Some(ConditionalGuard::AllOf(vec![
-            ConditionalGuard::TypeIs {
-                path: path.clone(),
-                schema_type: "string".to_string(),
-            },
-            ConditionalGuard::Not(Box::new(ConditionalGuard::MatchesPattern {
-                path: path.clone(),
-                pattern: pattern.clone(),
-            })),
-        ]));
+        return Some(ConditionalGuard::AllOf(
+            vec![
+                ConditionalGuard::TypeIs {
+                    path: path.clone(),
+                    schema_type: "string".to_string(),
+                },
+                ConditionalGuard::Not(std::sync::Arc::new(ConditionalGuard::MatchesPattern {
+                    path: path.clone(),
+                    pattern: pattern.clone(),
+                })),
+            ]
+            .into(),
+        ));
     }
     // Falsiness and disjunction from De Morgan flattening retain their direct
     // encodings, including mode dispatch such as vault's `ne .mode "external"`.

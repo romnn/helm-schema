@@ -89,45 +89,50 @@ fn expected_schema(case: &Case) -> Value {
         .finalize()
         .into_schema_signals();
     let path = ValuesPath::parse("choose");
-    let mut failing = vec![ConditionalGuard::Not(Box::new(ConditionalGuard::TypeIs {
-        path: path.clone(),
-        schema_type: "boolean".to_owned(),
-    }))];
+    let mut failing = vec![ConditionalGuard::Not(std::sync::Arc::new(
+        ConditionalGuard::TypeIs {
+            path: path.clone(),
+            schema_type: "boolean".to_owned(),
+        },
+    ))];
     match case.domain {
         BooleanDomain::True => {
-            failing.push(ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
-                path,
-            })));
+            failing.push(ConditionalGuard::Not(std::sync::Arc::new(
+                ConditionalGuard::Truthy { path },
+            )));
         }
         BooleanDomain::False => failing.push(ConditionalGuard::Truthy { path }),
         BooleanDomain::Either => {}
     }
     if case.outer_gate {
         if let Some(kind_failure) = failing.first_mut() {
-            *kind_failure = ConditionalGuard::AllOf(vec![
-                ConditionalGuard::Truthy {
-                    path: ValuesPath::parse("choose"),
-                },
-                kind_failure.clone(),
-            ]);
+            *kind_failure = ConditionalGuard::AllOf(
+                vec![
+                    ConditionalGuard::Truthy {
+                        path: ValuesPath::parse("choose"),
+                    },
+                    kind_failure.clone(),
+                ]
+                .into(),
+            );
         }
         failing = failing
             .into_iter()
             .map(|failure| {
                 let mut terms = match failure {
-                    ConditionalGuard::AllOf(terms) => terms,
+                    ConditionalGuard::AllOf(terms) => std::sync::Arc::unwrap_or_clone(terms),
                     term => vec![term],
                 };
                 terms.push(ConditionalGuard::Truthy {
                     path: ValuesPath::parse("outer"),
                 });
-                ConditionalGuard::AllOf(terms)
+                ConditionalGuard::AllOf(terms.into())
             })
             .collect();
     }
     let mut clause = vec![match failing.as_slice() {
         [guard] => guard.clone(),
-        _ => ConditionalGuard::AnyOf(failing),
+        _ => ConditionalGuard::AnyOf(failing.into()),
     }];
     ConditionalGuard::canonicalize_conjunction(&mut clause);
     // The expectation supplies the complete positive failure formula directly,

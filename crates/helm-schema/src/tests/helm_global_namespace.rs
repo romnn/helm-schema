@@ -3,7 +3,7 @@
 //! its alias), against the Helm v4.2.3 matrix in
 //! `round8-f1-evidence/matrix`.
 
-use color_eyre::eyre;
+use color_eyre::eyre::{self, OptionExt as _};
 use indoc::indoc;
 use serde_json::json;
 use vfs::VfsPath;
@@ -91,6 +91,29 @@ fn generated_schema(chart_dir: VfsPath) -> eyre::Result<serde_json::Value> {
         },
     });
     Ok(session.generated_schema()?.schema)
+}
+
+fn share_expected_conditions(
+    mut schema: serde_json::Value,
+    locations: &[&str],
+) -> eyre::Result<serde_json::Value> {
+    let mut definitions = schema.get("$defs").cloned().unwrap_or_else(|| json!({}));
+    for (ordinal, location) in locations.iter().enumerate() {
+        let name = format!("helm-condition-{ordinal}");
+        let condition = schema
+            .pointer_mut(location)
+            .ok_or_eyre("expected condition is missing")?;
+        let body = std::mem::replace(condition, json!({ "$ref": format!("#/$defs/{name}") }));
+        definitions
+            .as_object_mut()
+            .ok_or_eyre("expected definitions are not an object")?
+            .insert(name, body);
+    }
+    schema
+        .as_object_mut()
+        .ok_or_eyre("expected schema is not an object")?
+        .insert("$defs".to_string(), definitions);
+    Ok(schema)
 }
 
 /// Every discovered chart instance (the root, both aliases, and the nested
@@ -1473,7 +1496,7 @@ fn disabled_ancestor_preserves_declared_dependency_null() -> eyre::Result<()> {
         .map(|(label, _, renders)| (*label, *renders))
         .collect::<Vec<_>>();
     sim_assert_eq!(have: have, want: want);
-    sim_assert_eq!(have: schema, want: json!({
+    sim_assert_eq!(have: schema, want: share_expected_conditions(json!({
         "$defs": {
             "t": {
                 "anyOf": [
@@ -1786,7 +1809,7 @@ fn disabled_ancestor_preserves_declared_dependency_null() -> eyre::Result<()> {
             }
         },
         "type": "object"
-    }));
+    }), &["/allOf/1/if/anyOf/2"])?);
     Ok(())
 }
 
@@ -1873,7 +1896,7 @@ fn a_declared_non_table_dependency_default_aborts_while_the_dependency_is_active
         },
         "type": "object"
     }));
-    sim_assert_eq!(have: conditional, want: json!({
+    sim_assert_eq!(have: conditional, want: share_expected_conditions(json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
         "allOf": [
@@ -2093,7 +2116,7 @@ fn a_declared_non_table_dependency_default_aborts_while_the_dependency_is_active
             }
         },
         "type": "object"
-    }));
+    }), &["/allOf/2/if/anyOf/1", "/allOf/2/if"])?);
     Ok(())
 }
 
@@ -2681,7 +2704,7 @@ fn dependency_enablement_follows_helm_boolean_conditions_and_tags() -> eyre::Res
         ),
         want: (vec![true, false, true], vec![true, false, false])
     );
-    sim_assert_eq!(have: conditions, want: json!({
+    sim_assert_eq!(have: conditions, want: share_expected_conditions(json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
         "allOf": [
@@ -3185,8 +3208,8 @@ fn dependency_enablement_follows_helm_boolean_conditions_and_tags() -> eyre::Res
             }
         },
         "type": "object"
-    }));
-    sim_assert_eq!(have: tags, want: json!({
+    }), &["/allOf/2/if/anyOf/1", "/allOf/2/if/anyOf/2", "/allOf/2/if"])?);
+    sim_assert_eq!(have: tags, want: share_expected_conditions(json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
         "allOf": [
@@ -3476,6 +3499,6 @@ fn dependency_enablement_follows_helm_boolean_conditions_and_tags() -> eyre::Res
             }
         },
         "type": "object"
-    }));
+    }), &["/properties/tags/allOf/0/if", "/allOf/2/if/allOf/0"])?);
     Ok(())
 }

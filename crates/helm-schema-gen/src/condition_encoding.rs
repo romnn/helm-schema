@@ -1,4 +1,4 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use helm_schema_core::{
     CollectionDomain, CollectionQuantifier, ConditionalGuard, GuardValue, ValuePattern, ValuesPath,
@@ -18,7 +18,7 @@ use crate::values_yaml::yaml_value_at_values_path as yaml_value_at_path;
 /// (`if C then false`) asserts that rendering aborts, so C must be
 /// SUFFICIENT: a widened leaf would terminate documents that render.
 /// `not` swaps the direction for everything below it.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum ConditionPolarity {
     Widen,
     Narrow,
@@ -33,58 +33,122 @@ impl ConditionPolarity {
     }
 }
 
-pub(crate) fn build_condition_clauses(
-    guards: &[ConditionalGuard],
-    ancestor_segments: &[String],
-    values_yaml_doc: &YamlValue,
-    absence: AbsenceDefaults<'_>,
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+struct ConditionFragmentKey {
+    values_document: usize,
+    runtime_defaults: usize,
+    dependency_refill: usize,
+    dependency_roots: usize,
+    ancestor: Vec<String>,
+    guard: ConditionalGuard,
     polarity: ConditionPolarity,
-) -> Vec<SchemaNode> {
-    guards
-        .iter()
-        .filter_map(|guard| {
-            build_single_condition_fragment(
-                guard,
-                ancestor_segments,
-                values_yaml_doc,
-                absence,
-                polarity,
-            )
-        })
-        .collect()
 }
 
-/// Pass-level memo for guard-condition fragments: big charts repeat the same
-/// activation and branch guards across hundreds of arms, and rebuilding each
-/// structural encoding dominates arm emission.
-pub(crate) type ConditionFragmentCache =
-    std::collections::BTreeMap<(Option<usize>, Vec<String>, ConditionalGuard), Option<SchemaNode>>;
+/// One projection's condition encodings and private Boolean definitions.
+#[derive(Default)]
+pub(crate) struct ConditionFragmentCache {
+    fragments: BTreeMap<ConditionFragmentKey, Option<SchemaNode>>,
+    pub(crate) definitions: BTreeMap<String, Value>,
+    reserved: BTreeSet<String>,
+    shared: bool,
+}
 
-pub(crate) fn build_condition_clauses_cached(
-    guards: &[ConditionalGuard],
-    ancestor_segments: &[String],
-    values_document: Option<usize>,
-    values_yaml_doc: &YamlValue,
-    absence: AbsenceDefaults<'_>,
-    cache: &mut ConditionFragmentCache,
-) -> Vec<SchemaNode> {
-    guards
-        .iter()
-        .filter_map(|guard| {
-            cache
-                .entry((values_document, ancestor_segments.to_vec(), guard.clone()))
-                .or_insert_with(|| {
-                    build_single_condition_fragment(
-                        guard,
-                        ancestor_segments,
-                        values_yaml_doc,
-                        absence,
-                        ConditionPolarity::Widen,
-                    )
-                })
-                .clone()
-        })
-        .collect()
+impl ConditionFragmentCache {
+    pub(crate) fn new() -> Self {
+        Self {
+            shared: true,
+            ..Self::default()
+        }
+    }
+
+    pub(crate) fn reserve(&mut self, value: &Value) {
+        if let Some(object) = value.as_object() {
+            // Fragment references cannot cross a nested resource's identifier scope.
+            if object.contains_key("$id") || object.contains_key("id") {
+                self.shared = false;
+            }
+            if let Some(definitions) = object.get("$defs").and_then(Value::as_object) {
+                self.reserved.extend(definitions.keys().cloned());
+            }
+            for keyword in ["$ref", "$dynamicRef", "$recursiveRef"] {
+                if let Some(reference) = object.get(keyword).and_then(Value::as_str) {
+                    if let Some(reference) =
+                        helm_schema_json_schema_walk::parse_definition_reference(reference)
+                    {
+                        self.reserved.insert(reference.name);
+                    } else if reference.starts_with('#') {
+                        self.shared = false;
+                    }
+                }
+            }
+        }
+        helm_schema_json_schema_walk::visit_subschemas(
+            value,
+            helm_schema_json_schema_walk::ReferenceSiblings::Visit,
+            &mut |child| self.reserve(child),
+        );
+    }
+
+    pub(crate) fn clauses(
+        &mut self,
+        guards: &[ConditionalGuard],
+        ancestor: &[String],
+        values: &YamlValue,
+        absence: AbsenceDefaults<'_>,
+        polarity: ConditionPolarity,
+    ) -> Vec<SchemaNode> {
+        guards
+            .iter()
+            .filter_map(|guard| self.fragment(guard, ancestor, values, absence, polarity))
+            .collect()
+    }
+
+    fn fragment(
+        &mut self,
+        guard: &ConditionalGuard,
+        ancestor: &[String],
+        values: &YamlValue,
+        absence: AbsenceDefaults<'_>,
+        polarity: ConditionPolarity,
+    ) -> Option<SchemaNode> {
+        // Contexts are immutable and live for the whole projection; floor projections reuse them.
+        let key = ConditionFragmentKey {
+            values_document: std::ptr::from_ref(values).addr(),
+            runtime_defaults: std::ptr::from_ref(absence.runtime_defaults).addr(),
+            dependency_refill: std::ptr::from_ref(absence.dependency_refill).addr(),
+            dependency_roots: std::ptr::from_ref(absence.dependency_roots).addr(),
+            ancestor: ancestor.to_vec(),
+            guard: guard.clone(),
+            polarity,
+        };
+        if let Some(fragment) = self.fragments.get(&key) {
+            return fragment.clone();
+        }
+        let mut fragment =
+            build_single_condition_fragment(guard, ancestor, values, absence, polarity, self);
+        if self.shared
+            && matches!(
+                guard,
+                ConditionalGuard::Not(_) | ConditionalGuard::AllOf(_) | ConditionalGuard::AnyOf(_)
+            )
+            && let Some(body) = fragment.take()
+        {
+            let mut ordinal = self.definitions.len();
+            let name = loop {
+                let name = format!("helm-condition-{ordinal}");
+                if self.reserved.insert(name.clone()) {
+                    break name;
+                }
+                ordinal += 1;
+            };
+            self.definitions.insert(name.clone(), body.into_value());
+            fragment = Some(SchemaNode::foreign(
+                serde_json::json!({ "$ref": helm_schema_json_schema_walk::definition_reference(&name) }),
+            ));
+        }
+        self.fragments.insert(key, fragment.clone());
+        fragment
+    }
 }
 
 /// What a values document reads where it supplies nothing itself.
@@ -118,6 +182,7 @@ fn build_single_condition_fragment(
     values_yaml_doc: &YamlValue,
     absence: AbsenceDefaults<'_>,
     polarity: ConditionPolarity,
+    cache: &mut ConditionFragmentCache,
 ) -> Option<SchemaNode> {
     let runtime_defaults_doc = absence.runtime_defaults;
     let dependency_roots = absence.dependency_roots;
@@ -478,7 +543,7 @@ fn build_single_condition_fragment(
             )
         }
         ConditionalGuard::Not(inner) => {
-            let negated = SchemaNode::not(build_single_condition_fragment(
+            let negated = SchemaNode::not(cache.fragment(
                 inner,
                 ancestor_segments,
                 values_yaml_doc,
@@ -503,7 +568,7 @@ fn build_single_condition_fragment(
             Some(negated)
         }
         ConditionalGuard::AllOf(guards) => {
-            let clauses = build_condition_clauses(
+            let clauses = cache.clauses(
                 guards,
                 ancestor_segments,
                 values_yaml_doc,
@@ -513,7 +578,7 @@ fn build_single_condition_fragment(
             (!clauses.is_empty()).then(|| SchemaNode::all_of(clauses))
         }
         ConditionalGuard::AnyOf(guards) => {
-            let clauses = build_condition_clauses(
+            let clauses = cache.clauses(
                 guards,
                 ancestor_segments,
                 values_yaml_doc,
@@ -526,7 +591,7 @@ fn build_single_condition_fragment(
 }
 
 /// Whether a guard (and every nested guard) produces a condition fragment.
-/// `build_condition_clauses` silently FILTERS unencodable guards, which is
+/// Condition encoding filters unencodable guards, which is
 /// safe for `if/then` arms (a narrower `if` applies the arm less often) but
 /// unsound for terminal `then: false` clauses, where a dropped conjunct
 /// widens the rejected set. Mirrors `build_single_condition_fragment`.
@@ -552,6 +617,7 @@ pub(crate) fn guard_encodes_fully(
             values_yaml_doc,
             absence,
             ConditionPolarity::Widen,
+            &mut ConditionFragmentCache::default(),
         )
         .is_some(),
     }

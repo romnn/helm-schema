@@ -1857,6 +1857,26 @@ fn conditional_local_specialized_string_consumers_use_proven_leaves() -> eyre::R
 }
 
 fn normalize_selected_string_rejection(schema: &mut Value) -> eyre::Result<()> {
+    let mut condition_definitions = BTreeMap::new();
+    if let Some(definitions) = schema.get("$defs").and_then(Value::as_object) {
+        for (name, definition) in definitions {
+            if name.starts_with("helm-condition-") {
+                condition_definitions.insert(name.clone(), definition.clone());
+            }
+        }
+    }
+    *schema = super::condition_encoding::expand_conditions(schema.clone(), &condition_definitions);
+    let mut empty_definitions = false;
+    if let Some(definitions) = schema.get_mut("$defs").and_then(Value::as_object_mut) {
+        definitions.retain(|name, _| !condition_definitions.contains_key(name));
+        empty_definitions = definitions.is_empty();
+    }
+    if empty_definitions {
+        schema
+            .as_object_mut()
+            .ok_or_eyre("schema is not an object")?
+            .remove("$defs");
+    }
     let atoms = [
         helm_truthy_guard("useB"),
         serde_json::json!({

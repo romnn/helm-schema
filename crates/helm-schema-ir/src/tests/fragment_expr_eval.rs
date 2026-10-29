@@ -481,7 +481,7 @@ fn direct_provider_scalar_keeps_positive_subset_of_int_cast_guard() {
                                 path: conditional_path("master.count"),
                                 bound: 0,
                             },
-                            ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
+                            ConditionalGuard::Not(std::sync::Arc::new(ConditionalGuard::Truthy {
                                 path: conditional_path("sentinel.enabled"),
                             })),
                         ]

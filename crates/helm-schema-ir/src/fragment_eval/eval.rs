@@ -428,7 +428,7 @@ impl Projection<'_> {
                 site.plain_scalar_placement(),
             );
         }
-        fragment.guard_all(site.condition(), self.db.predicate_memo());
+        fragment.guard_all(&site.condition(), self.db.predicate_memo());
         fragment
     }
 

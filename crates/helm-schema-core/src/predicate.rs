@@ -67,6 +67,7 @@ enum PredicateStorage {
 struct PredicateNode {
     kind: PredicateNodeKind,
     structural_hash: u64,
+    syntax_size: usize,
     contains_approximation: bool,
 }
 
@@ -96,9 +97,27 @@ impl PredicateNode {
                 predicates.iter().any(Predicate::contains_approximation)
             }
         };
+        let syntax_size = match &kind {
+            PredicateNodeKind::Approximate {
+                marker: _,
+                paths: _,
+                role: _,
+                sound_subset,
+            } => sound_subset
+                .as_ref()
+                .map_or(1, |subset| subset.syntax_size().saturating_add(1)),
+            PredicateNodeKind::Guard(_) => 1,
+            PredicateNodeKind::Not(predicate) => predicate.syntax_size().saturating_add(1),
+            PredicateNodeKind::And(predicates) | PredicateNodeKind::Or(predicates) => {
+                predicates.iter().fold(1_usize, |size, predicate| {
+                    size.saturating_add(predicate.syntax_size())
+                })
+            }
+        };
         Self {
             kind,
             structural_hash: hasher.finish(),
+            syntax_size,
             contains_approximation,
         }
     }
@@ -684,11 +703,23 @@ impl Predicate {
         }
     }
 
+    /// Counts syntax nodes, including repeated children and approximation subsets.
+    ///
+    /// The count saturates at [`usize::MAX`].
+    /// Shared children contribute once per occurrence without unfolding their syntax.
+    #[must_use]
+    pub fn syntax_size(&self) -> usize {
+        match &self.0 {
+            PredicateStorage::True | PredicateStorage::False => 1,
+            PredicateStorage::Shared(node) => node.syntax_size,
+        }
+    }
+
     /// Returns every values path referenced by the formula.
     #[must_use]
     pub fn value_paths(&self) -> BTreeSet<ValuesPath> {
         let mut paths = BTreeSet::new();
-        self.collect_value_paths(&mut paths);
+        self.collect_value_paths(&mut paths, &mut ahash::AHashSet::new());
         paths
     }
 
@@ -793,7 +824,16 @@ impl Predicate {
         flatten_contract_guards(self, false)
     }
 
-    fn collect_value_paths(&self, out: &mut BTreeSet<ValuesPath>) {
+    fn collect_value_paths(
+        &self,
+        out: &mut BTreeSet<ValuesPath>,
+        visited: &mut ahash::AHashSet<*const PredicateNode>,
+    ) {
+        if let PredicateStorage::Shared(node) = &self.0
+            && !visited.insert(Arc::as_ptr(node))
+        {
+            return;
+        }
         match self.kind() {
             PredicateKind::True | PredicateKind::False => {}
             PredicateKind::Approximate { paths, .. } => out.extend(paths.iter().cloned()),
@@ -802,10 +842,10 @@ impl Predicate {
                     out.insert(path);
                 }
             }
-            PredicateKind::Not(inner) => inner.collect_value_paths(out),
+            PredicateKind::Not(inner) => inner.collect_value_paths(out, visited),
             PredicateKind::And(predicates) | PredicateKind::Or(predicates) => {
                 for predicate in predicates {
-                    predicate.collect_value_paths(out);
+                    predicate.collect_value_paths(out, visited);
                 }
             }
         }
@@ -896,7 +936,7 @@ impl Predicate {
     where
         F: FnMut(ValuesPath) -> ValuesPath,
     {
-        match self.kind() {
+        let mapped = match self.kind() {
             PredicateKind::True => Self::True,
             PredicateKind::False => Self::False,
             PredicateKind::Approximate {
@@ -926,7 +966,8 @@ impl Predicate {
                     .map(|predicate| predicate.map_value_paths(map))
                     .collect(),
             ),
-        }
+        };
+        if mapped == self { self } else { mapped }
     }
 
     fn truthy_values_path(path: ValuesPath) -> Self {

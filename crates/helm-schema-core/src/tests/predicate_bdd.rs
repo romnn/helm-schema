@@ -4,9 +4,9 @@ use test_util::prelude::sim_assert_eq;
 
 use super::{
     FALSE, PredicateBdd, PredicateMemo, TRUE, exact_implies_uncached, memo_sizes,
-    normalize_uncached,
+    normalize_uncached, simplify_structure,
 };
-use crate::{ApproximationRole, Guard, Predicate, ValuesPath};
+use crate::{ApproximationRole, Guard, Predicate, PredicateKind, ValuesPath};
 
 fn guard(index: usize) -> Predicate {
     Predicate::from(Guard::Truthy {
@@ -116,4 +116,39 @@ fn borrowed_atoms_canonicalize_negative_guards_without_cloning_keys() {
     sim_assert_eq!(have: bdd.build(&positive), want: Some(2));
     sim_assert_eq!(have: bdd.build(&negative), want: Some(3));
     sim_assert_eq!(have: bdd.build(&predicate), want: Some(FALSE));
+}
+
+fn same_compound_storage(left: &Predicate, right: &Predicate) -> bool {
+    match (left.kind(), right.kind()) {
+        (PredicateKind::And(left), PredicateKind::And(right))
+        | (PredicateKind::Or(left), PredicateKind::Or(right)) => {
+            std::ptr::eq(left.as_ptr(), right.as_ptr())
+        }
+        (PredicateKind::Not(left), PredicateKind::Not(right)) => std::ptr::eq(left, right),
+        _ => false,
+    }
+}
+
+#[test]
+fn structural_simplification_retains_unchanged_boolean_dag_storage() {
+    let shared = simplify_structure(Predicate::Or(vec![guard(1), guard(0).negated()]), None);
+    let negated = Predicate::Not(Box::new(shared.clone()));
+    let root = simplify_structure(Predicate::And(vec![shared.clone(), negated.clone()]), None);
+    for predicate in [shared, negated, root] {
+        let simplified = simplify_structure(predicate.clone(), None);
+        sim_assert_eq!(have: simplified.clone(), want: predicate.clone());
+        sim_assert_eq!(have: same_compound_storage(&predicate, &simplified), want: true);
+    }
+}
+
+#[test]
+fn structural_simplification_changes_only_the_required_branch() {
+    let shared = simplify_structure(Predicate::Or(vec![guard(0), guard(1)]), None);
+    let changed = Predicate::And(vec![
+        Predicate::True,
+        Predicate::Not(Box::new(Predicate::Not(Box::new(shared.clone())))),
+    ]);
+    let simplified = simplify_structure(changed, None);
+    sim_assert_eq!(have: simplified.clone(), want: shared.clone());
+    sim_assert_eq!(have: same_compound_storage(&shared, &simplified), want: true);
 }

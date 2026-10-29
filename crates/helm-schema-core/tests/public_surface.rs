@@ -47,7 +47,7 @@ fn conditional_guards_own_self_scope_classification() {
     let with = ConditionalGuard::With {
         path: target.clone(),
     };
-    let not_absent = ConditionalGuard::Not(Box::new(ConditionalGuard::Absent {
+    let not_absent = ConditionalGuard::Not(std::sync::Arc::new(ConditionalGuard::Absent {
         path: target.clone(),
     }));
     let opaque_member_presence = ["literal.key", r"literal\key", "*"]
@@ -80,7 +80,8 @@ fn conditional_signal_constructors_canonicalize_guard_conjunctions() {
     let absent = ConditionalGuard::Absent {
         path: ValuesPath::parse("fallback"),
     };
-    let nested = ConditionalGuard::AnyOf(vec![absent.clone(), truthy.clone(), absent.clone()]);
+    let nested =
+        ConditionalGuard::AnyOf(vec![absent.clone(), truthy.clone(), absent.clone()].into());
     let overlay = ConditionalPathOverlay::new(
         vec![nested.clone(), truthy.clone(), nested],
         ConditionalOverlayEvidence::default(),
@@ -102,7 +103,7 @@ fn conditional_signal_constructors_canonicalize_guard_conjunctions() {
             truthy.clone(),
             ConditionalGuard::AnyOf(vec![truthy.clone(), ConditionalGuard::Absent {
                 path: ValuesPath::parse("fallback"),
-            }]),
+            }].into()),
         ],
     );
     sim_assert_eq!(

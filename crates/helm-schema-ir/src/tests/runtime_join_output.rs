@@ -212,7 +212,7 @@ fn observation_union_keeps_full_branch_order_and_reserves_suffix_per_branch() ->
             .text_sites
             .iter()
             .filter(|site| {
-                helm_schema_core::Predicate::all(vec![condition.clone(), site.condition.clone()])
+                helm_schema_core::Predicate::all(vec![condition.clone(), site.condition()])
                     .normalize_boolean()
                     != helm_schema_core::Predicate::False
             })
@@ -285,7 +285,7 @@ fn invocation_union_admits_a_suffix_only_on_branches_with_capacity() -> eyre::Re
         .filter(|record| record.invocation == 192)
         .map(|record| (record.ordinal, record.condition.clone()))
         .collect::<Vec<_>>();
-    sim_assert_eq!(have: suffix, want: vec![(192, no.path_predicate())]);
+    sim_assert_eq!(have: suffix, want: vec![(192, no.path_predicate().into())]);
     sim_assert_eq!(have: joined.fork(Rc::clone(&decision), true).invocations_complete(), want: false);
     sim_assert_eq!(have: joined.fork(decision, false).invocations_complete(), want: true);
     Ok(())

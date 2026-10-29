@@ -914,7 +914,7 @@ pub(super) fn summarize_exits(exits: Vec<Exit>) -> Vec<Exit> {
                 Predicate::False,
                 Coverage::Partial,
             );
-            representative.state.active = vec![super::DecisionEdge { test, taken: true }];
+            representative.state.active = vec![super::DecisionEdge { test, taken: true }].into();
             representative.state.sites.clear();
             representative.state.text_sites.clear();
             representative.state.observation_count = super::output::BranchCounts::default();

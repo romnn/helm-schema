@@ -1,6 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use serde::Serialize;
+use std::sync::Arc;
 
 use crate::{
     CollectionDomain, CollectionQuantifier, Guard, GuardValue, Predicate, ProviderSchemaUse,
@@ -150,11 +151,11 @@ pub enum ConditionalGuard {
         bound: i64,
     },
     /// Logical negation of a guard.
-    Not(Box<ConditionalGuard>),
+    Not(Arc<ConditionalGuard>),
     /// Conjunction of every enclosed guard.
-    AllOf(Vec<ConditionalGuard>),
+    AllOf(Arc<Vec<ConditionalGuard>>),
     /// Disjunction of the enclosed guards.
-    AnyOf(Vec<ConditionalGuard>),
+    AnyOf(Arc<Vec<ConditionalGuard>>),
 }
 
 impl ConditionalGuard {
@@ -163,7 +164,7 @@ impl ConditionalGuard {
             .iter()
             .map(Self::try_from)
             .collect::<Result<Vec<_>, _>>()
-            .map(Self::AllOf)
+            .map(|guards| Self::AllOf(guards.into()))
     }
 
     /// Canonicalizes a guard conjunction and every nested Boolean guard set.
@@ -177,9 +178,19 @@ impl ConditionalGuard {
 
     fn canonicalize_nested(&mut self) {
         match self {
-            Self::Not(inner) => inner.canonicalize_nested(),
+            Self::Not(inner) => {
+                let mut canonical = inner.as_ref().clone();
+                canonical.canonicalize_nested();
+                if canonical != **inner {
+                    *inner = Arc::new(canonical);
+                }
+            }
             Self::AllOf(nested) | Self::AnyOf(nested) => {
-                Self::canonicalize_conjunction(nested);
+                let mut canonical = nested.as_ref().clone();
+                Self::canonicalize_conjunction(&mut canonical);
+                if canonical != **nested {
+                    *nested = Arc::new(canonical);
+                }
             }
             Self::Truthy { .. }
             | Self::With { .. }
@@ -239,7 +250,18 @@ impl ConditionalGuard {
     /// Reconstructs the exact Boolean predicate represented by this schema guard.
     #[must_use]
     pub fn predicate(&self) -> Predicate {
-        match self {
+        self.shared_predicate(&mut ahash::AHashMap::new())
+    }
+
+    fn shared_predicate(
+        &self,
+        projected: &mut ahash::AHashMap<*const Self, Predicate>,
+    ) -> Predicate {
+        let key = std::ptr::from_ref(self);
+        if let Some(predicate) = projected.get(&key) {
+            return predicate.clone();
+        }
+        let predicate = match self {
             Self::Truthy { path } => Predicate::from(Guard::Truthy { path: path.clone() }),
             Self::With { path } => Predicate::from(Guard::With { path: path.clone() }),
             Self::Eq { path, value } => Predicate::from(Guard::Eq {
@@ -313,10 +335,22 @@ impl ConditionalGuard {
                 path: path.clone(),
                 bound: *bound,
             }),
-            Self::Not(inner) => inner.predicate().negated(),
-            Self::AllOf(guards) => Predicate::all(guards.iter().map(Self::predicate).collect()),
-            Self::AnyOf(guards) => Predicate::Or(guards.iter().map(Self::predicate).collect()),
-        }
+            Self::Not(inner) => inner.shared_predicate(projected).negated(),
+            Self::AllOf(guards) => Predicate::all(
+                guards
+                    .iter()
+                    .map(|guard| guard.shared_predicate(projected))
+                    .collect(),
+            ),
+            Self::AnyOf(guards) => Predicate::Or(
+                guards
+                    .iter()
+                    .map(|guard| guard.shared_predicate(projected))
+                    .collect(),
+            ),
+        };
+        projected.insert(key, predicate.clone());
+        predicate
     }
 }
 
@@ -330,7 +364,7 @@ impl TryFrom<&Guard> for ConditionalGuard {
     fn try_from(guard: &Guard) -> Result<Self, Self::Error> {
         Ok(match guard {
             Guard::Truthy { path } => Self::Truthy { path: path.clone() },
-            Guard::Not { path } => Self::Not(Box::new(Self::Truthy { path: path.clone() })),
+            Guard::Not { path } => Self::Not(Arc::new(Self::Truthy { path: path.clone() })),
             Guard::Eq { path, value } => Self::Eq {
                 path: path.clone(),
                 value: value.clone(),
@@ -367,20 +401,22 @@ impl TryFrom<&Guard> for ConditionalGuard {
                 paths
                     .iter()
                     .map(|path| Self::Truthy { path: path.clone() })
-                    .collect(),
+                    .collect::<Vec<_>>()
+                    .into(),
             ),
             Guard::AnyOf { alternatives } => Self::AnyOf(
                 alternatives
                     .iter()
                     .map(|guards| Self::conjunction(guards))
-                    .collect::<Result<Vec<_>, _>>()?,
+                    .collect::<Result<Vec<_>, _>>()?
+                    .into(),
             ),
             Guard::With { path } => Self::With { path: path.clone() },
             Guard::TypeIs { path, schema_type } => Self::TypeIs {
                 path: path.clone(),
                 schema_type: schema_type.clone(),
             },
-            Guard::NotTypeIs { path, schema_type } => Self::Not(Box::new(Self::TypeIs {
+            Guard::NotTypeIs { path, schema_type } => Self::Not(Arc::new(Self::TypeIs {
                 path: path.clone(),
                 schema_type: schema_type.clone(),
             })),
@@ -401,7 +437,7 @@ impl TryFrom<&Guard> for ConditionalGuard {
                 path: path.clone(),
                 key: key.clone(),
             },
-            Guard::NotHasKey { path, key } => Self::Not(Box::new(Self::HasKey {
+            Guard::NotHasKey { path, key } => Self::Not(Arc::new(Self::HasKey {
                 path: path.clone(),
                 key: key.clone(),
             })),
@@ -440,7 +476,7 @@ impl ConditionalGuard {
     #[must_use]
     pub fn value_paths(&self) -> BTreeSet<ValuesPath> {
         let mut paths = BTreeSet::new();
-        self.collect_value_paths(&mut paths);
+        self.collect_value_paths(&mut paths, &mut ahash::AHashSet::new());
         paths
     }
 
@@ -451,7 +487,8 @@ impl ConditionalGuard {
     where
         F: FnMut(ValuesPath) -> ValuesPath,
     {
-        match self {
+        let original = self.clone();
+        let mapped = match self {
             Self::Truthy { path } => Self::Truthy { path: map(path) },
             Self::With { path } => Self::With { path: map(path) },
             Self::Eq { path, value } => Self::Eq {
@@ -520,23 +557,35 @@ impl ConditionalGuard {
                 path: map(path),
                 bound,
             },
-            Self::Not(inner) => Self::Not(Box::new(inner.map_value_paths(map))),
+            Self::Not(inner) => Self::Not(Arc::new(inner.as_ref().clone().map_value_paths(map))),
             Self::AllOf(guards) => Self::AllOf(
                 guards
-                    .into_iter()
+                    .iter()
+                    .cloned()
                     .map(|guard| guard.map_value_paths(map))
-                    .collect(),
+                    .collect::<Vec<_>>()
+                    .into(),
             ),
             Self::AnyOf(guards) => Self::AnyOf(
                 guards
-                    .into_iter()
+                    .iter()
+                    .cloned()
                     .map(|guard| guard.map_value_paths(map))
-                    .collect(),
+                    .collect::<Vec<_>>()
+                    .into(),
             ),
-        }
+        };
+        if mapped == original { original } else { mapped }
     }
 
-    fn collect_value_paths(&self, paths: &mut BTreeSet<ValuesPath>) {
+    fn collect_value_paths(
+        &self,
+        paths: &mut BTreeSet<ValuesPath>,
+        visited: &mut ahash::AHashSet<*const Self>,
+    ) {
+        if !visited.insert(std::ptr::from_ref(self)) {
+            return;
+        }
         match self {
             Self::Truthy { path }
             | Self::With { path }
@@ -562,10 +611,10 @@ impl ConditionalGuard {
             | Self::MinMembers { path, .. } => {
                 paths.insert(path.clone());
             }
-            Self::Not(inner) => inner.collect_value_paths(paths),
+            Self::Not(inner) => inner.collect_value_paths(paths, visited),
             Self::AllOf(guards) | Self::AnyOf(guards) => {
-                for guard in guards {
-                    guard.collect_value_paths(paths);
+                for guard in guards.iter() {
+                    guard.collect_value_paths(paths, visited);
                 }
             }
         }

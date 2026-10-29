@@ -334,15 +334,18 @@ pub(super) fn append_merge_shadow_arms(
                 guards.extend(merge.shadowed_by().map(|earlier| {
                     let earlier_live = match earlier.transform {
                         helm_schema_core::MergeLayerTransform::ParsedMap => {
-                            ConditionalGuard::AllOf(vec![
-                                ConditionalGuard::TypeIs {
-                                    path: earlier.path.clone(),
-                                    schema_type: "object".to_string(),
-                                },
-                                ConditionalGuard::Truthy {
-                                    path: earlier.path.clone(),
-                                },
-                            ])
+                            ConditionalGuard::AllOf(
+                                vec![
+                                    ConditionalGuard::TypeIs {
+                                        path: earlier.path.clone(),
+                                        schema_type: "object".to_string(),
+                                    },
+                                    ConditionalGuard::Truthy {
+                                        path: earlier.path.clone(),
+                                    },
+                                ]
+                                .into(),
+                            )
                         }
                         helm_schema_core::MergeLayerTransform::Identity
                         | helm_schema_core::MergeLayerTransform::NilScrubbed => {
@@ -351,7 +354,7 @@ pub(super) fn append_merge_shadow_arms(
                             }
                         }
                     };
-                    ConditionalGuard::Not(Box::new(earlier_live))
+                    ConditionalGuard::Not(std::sync::Arc::new(earlier_live))
                 }));
                 guards.extend(provider_use.outer_guards.iter().cloned());
                 ConditionalGuard::canonicalize_conjunction(&mut guards);
@@ -398,7 +401,7 @@ pub(super) fn append_merge_shadow_arms(
                 let mut guards: Vec<ConditionalGuard> = merge
                     .shadowed_by()
                     .map(|earlier| {
-                        ConditionalGuard::Not(Box::new(ConditionalGuard::HasKey {
+                        ConditionalGuard::Not(std::sync::Arc::new(ConditionalGuard::HasKey {
                             path: earlier.path.clone(),
                             key: member.clone(),
                         }))

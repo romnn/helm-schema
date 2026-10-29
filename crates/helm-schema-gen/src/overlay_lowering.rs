@@ -8,9 +8,7 @@ use serde_json::Value;
 use serde_yaml::Value as YamlValue;
 
 use crate::common_prefix_len;
-use crate::condition_encoding::{
-    build_condition_clauses, evaluate_guard_set_on_values, guard_encodes_fully,
-};
+use crate::condition_encoding::{evaluate_guard_set_on_values, guard_encodes_fully};
 use crate::emission_policy::{
     ConditionalFlavor, EmissionClass, EmissionOrigin, GuardScopes, NestedGuardScope, TerminalWhen,
 };
@@ -924,12 +922,15 @@ fn append_type_permission_fallback(
             resolved.values_yaml_schema.clone(),
         )
     };
-    let guards = vec![ConditionalGuard::Not(Box::new(ConditionalGuard::AnyOf(
-        permissions
-            .into_iter()
-            .map(ConditionalGuard::AllOf)
-            .collect(),
-    )))];
+    let guards = vec![ConditionalGuard::Not(std::sync::Arc::new(
+        ConditionalGuard::AnyOf(
+            permissions
+                .into_iter()
+                .map(|guards| ConditionalGuard::AllOf(guards.into()))
+                .collect::<Vec<_>>()
+                .into(),
+        ),
+    ))];
     let target_segments = &resolved.path_segments;
     let Some((outer_guards, nested_guard_scopes)) =
         partition_guard_scopes(target_segments, &guards)

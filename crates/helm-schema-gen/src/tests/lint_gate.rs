@@ -11,9 +11,9 @@ use serde_json::{Value, json};
 use test_util::prelude::sim_assert_eq;
 use tracing_subscriber::prelude::*;
 
+use super::condition_encoding::build_condition_clauses;
 use crate::condition_encoding::{
-    AbsenceDefaults, ConditionPolarity, HELM_TRUTHY_DEFINITION_NAME, build_condition_clauses,
-    helm_truthy_definition_schema,
+    AbsenceDefaults, ConditionPolarity, HELM_TRUTHY_DEFINITION_NAME, helm_truthy_definition_schema,
 };
 use crate::emission_report::{LintDocument, LintOutcome, LintWithdrawal};
 use crate::schema_node::SchemaNode;
@@ -553,7 +553,7 @@ fn tuple_guard_lint_projection_uses_the_emitted_draft07_dialect() -> eyre::Resul
         ],
         items: None,
     };
-    let guard = ConditionalGuard::Not(Box::new(ConditionalGuard::MatchesValue {
+    let guard = ConditionalGuard::Not(std::sync::Arc::new(ConditionalGuard::MatchesValue {
         path: ValuesPath::parse("subject"),
         pattern,
     }));

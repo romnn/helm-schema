@@ -238,7 +238,7 @@ fn branch_sources(
         let Some(when_true) = execution.observed_site_truth(site) else {
             continue;
         };
-        if !memo.exactly_implies(site.condition(), &covered) {
+        if !memo.exactly_implies(&site.condition(), &covered) {
             continue;
         }
         let Some(provenance) = condition_provenance(root, source, site.span()) else {

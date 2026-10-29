@@ -291,7 +291,7 @@ mod frozen_test_helpers;
 pub(crate) struct State {
     heap: Heap,
     frames: Vec<Rc<Frame>>,
-    active: Vec<DecisionEdge>,
+    active: Rc<Vec<DecisionEdge>>,
     output: TextBuffer,
     output_widened: bool,
     observation_count: output::BranchCounts,
@@ -489,13 +489,13 @@ pub(crate) struct ExecutedSite {
     ordinal: usize,
     span: helm_schema_syntax::Span,
     source_path: Option<String>,
-    condition: Predicate,
+    condition: output::RuntimeCondition,
     value: FrozenValue,
     raw_format_inputs: Vec<RawFormatInput>,
     plain_scalar_placement: helm_schema_core::PlainScalarPlacement,
     rendered: bool,
 }
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Eq)]
 pub(crate) struct ExecutedText {
     program: u64,
     coverage_exact: bool,
@@ -504,7 +504,7 @@ pub(crate) struct ExecutedText {
     bytes: String,
     span: helm_schema_syntax::Span,
     source_path: Option<String>,
-    condition: Predicate,
+    condition: output::RuntimeCondition,
 }
 
 pub(crate) struct RenderedContainerUse {
@@ -689,13 +689,13 @@ struct CompletedExecution {
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct ExecutedInvocationRecord {
-    condition: Predicate,
     ordinal: usize,
     invocation: u64,
     program: u64,
     site: u64,
     function: String,
     wrapper: Option<ProgramWrapperMetadata>,
+    condition: output::RuntimeCondition,
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct ProgramWrapperMetadata {

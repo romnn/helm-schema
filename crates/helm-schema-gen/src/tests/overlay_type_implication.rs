@@ -69,15 +69,18 @@ fn guard_proof_requires_every_disjunct_and_the_correct_target() {
         (string.clone(), true),
         (unrelated.clone(), false),
         (
-            ConditionalGuard::AllOf(vec![unrelated.clone(), string.clone()]),
+            ConditionalGuard::AllOf(vec![unrelated.clone(), string.clone()].into()),
             true,
         ),
         (
-            ConditionalGuard::AnyOf(vec![unrelated, string.clone()]),
+            ConditionalGuard::AnyOf(vec![unrelated, string.clone()].into()),
             false,
         ),
-        (ConditionalGuard::AnyOf(vec![number, string.clone()]), false),
-        (ConditionalGuard::Not(Box::new(string)), false),
+        (
+            ConditionalGuard::AnyOf(vec![number, string.clone()].into()),
+            false,
+        ),
+        (ConditionalGuard::Not(std::sync::Arc::new(string)), false),
     ] {
         sim_assert_eq!(
             have: type_guard_implies_schema(&guard, &target, &schema),

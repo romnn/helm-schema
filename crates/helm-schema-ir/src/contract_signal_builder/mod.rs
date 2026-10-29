@@ -32,3 +32,7 @@ use contract_rows::{
 use final_signals::{SourceUseFactSplit, finish_schema_signals, path_accumulator};
 pub(crate) use input_channels::derive_schema_signals_from_contract_parts;
 use requirements::{record_fail_conjunction, record_member_access_implications};
+
+#[cfg(test)]
+#[path = "../tests/guard_projection.rs"]
+mod tests;

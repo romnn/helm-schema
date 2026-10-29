@@ -143,7 +143,7 @@ fn an_unknown_or_inexact_piece_only_invalidates_its_included_arm() -> eyre::Resu
         .iter_mut()
         .next()
         .ok_or_eyre("missing text site")?;
-    site.condition = guard.clone();
+    site.condition = guard.clone().into();
     site.coverage_exact = false;
     let execution = document(state);
     sim_assert_eq!(have: execution.observed_marker_complete(span), want: false);

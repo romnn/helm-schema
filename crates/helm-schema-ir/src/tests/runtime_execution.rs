@@ -1569,8 +1569,8 @@ mod render_session {
             .filter(|site| site.bytes == "later")
             .collect();
         sim_assert_eq!(have: later.len(), want: 1);
-        let observed = Predicate::Or(later.iter().map(|site| site.condition.clone()).collect())
-            .normalize_boolean();
+        let observed =
+            Predicate::Or(later.iter().map(|site| site.condition()).collect()).normalize_boolean();
         let completed = Predicate::Or(
             execution
                 .iter()
@@ -2856,8 +2856,8 @@ mod runtime_reachability_laws {
             };
             sim_assert_eq!(have: selected.implies_test(&joined), want: Some(expected));
             let mut state = initial.clone();
-            state.active = edges;
-            state.active.push(DecisionEdge {
+            state.active = edges.into();
+            std::rc::Rc::make_mut(&mut state.active).push(DecisionEdge {
                 test: Rc::clone(&joined),
                 taken: true,
             });
@@ -2972,7 +2972,7 @@ mod window_buffer_review_laws {
                     .state
                     .text_sites
                     .iter()
-                    .map(|site| (site.program, site.bytes.clone(), site.condition.clone()))
+                    .map(|site| (site.program, site.bytes.clone(), site.condition()))
                     .collect(),
                 invocation_records_complete: exit.state.invocation_records_complete,
             })

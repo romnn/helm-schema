@@ -270,16 +270,35 @@ fn negated_boolean_guard_lowers_to_not_condition() {
         ),
     );
 
-    sim_assert_eq!(
-        have: schema.pointer("/properties/feature/allOf/0/if/not/properties/enabled/$ref"),
-        want: Some(&serde_json::json!("#/$defs/t")),
-        "negated boolean guards should lower to JSON Schema `not`: {schema}"
-    );
-    sim_assert_eq!(
-        have: schema.pointer("/properties/feature/allOf/0/then/properties/host/type"),
-        want: Some(&serde_json::json!("string")),
-        "negated guard should still reapply the target schema in the then branch: {schema}"
-    );
+    sim_assert_eq!(have: schema, want: serde_json::json!({
+        "$defs": {
+            "helm-condition-0": {"not": {
+                "properties": {"enabled": {"$ref": "#/$defs/t"}},
+                "required": ["enabled"], "type": "object"
+            }}, "t": {"anyOf": [
+                {"const": true},
+                {"not": {"const": 0}, "type": "number"},
+                {"minLength": 1, "type": "string"},
+                {"minItems": 1, "type": "array"},
+                {"minProperties": 1, "type": "object"}
+            ]}
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+            "feature": {
+                "additionalProperties": {},
+                "allOf": [{
+                    "if": {"$ref": "#/$defs/helm-condition-0"},
+                    "then": {"additionalProperties": {}, "properties": {"host": {"type": "string"}}}
+                }],
+                "properties": {"enabled": {}, "host": {}},
+                "type": "object"
+            },
+            "global": {}
+        },
+        "type": "object"
+    }));
 }
 
 #[test]
@@ -546,23 +565,39 @@ fn or_boolean_guards_lower_to_any_of_condition() {
         ),
     );
 
-    sim_assert_eq!(
-        have: schema.pointer("/allOf/0/if/anyOf/0/properties/feature/properties/enabled/$ref"),
-        want: Some(&serde_json::json!("#/$defs/t")),
-        "disjunctions should lower to anyOf clauses: {schema}"
-    );
-    sim_assert_eq!(
-        have: schema.pointer(
-            "/allOf/0/if/anyOf/1/properties/global/properties/featureEnabled/$ref"
-        ),
-        want: Some(&serde_json::json!("#/$defs/t")),
-        "all boolean branches in the disjunction should be preserved: {schema}"
-    );
-    sim_assert_eq!(
-        have: schema.pointer("/allOf/0/then/properties/feature/properties/host/type"),
-        want: Some(&serde_json::json!("string")),
-        "root-level disjunctions should still apply the guarded target schema: {schema}"
-    );
+    sim_assert_eq!(have: schema, want: serde_json::json!({
+        "$defs": {
+            "helm-condition-0": {"anyOf": [
+                {"properties": {"feature": {
+                    "properties": {"enabled": {"$ref": "#/$defs/t"}},
+                    "required": ["enabled"], "type": "object"
+                }}, "required": ["feature"], "type": "object"},
+                {"properties": {"global": {
+                    "properties": {"featureEnabled": {"$ref": "#/$defs/t"}},
+                    "required": ["featureEnabled"], "type": "object"
+                }}, "required": ["global"], "type": "object"}
+            ]}, "t": {"anyOf": [
+                {"const": true},
+                {"not": {"const": 0}, "type": "number"},
+                {"minLength": 1, "type": "string"},
+                {"minItems": 1, "type": "array"},
+                {"minProperties": 1, "type": "object"}
+            ]}
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "allOf": [{
+            "if": {"$ref": "#/$defs/helm-condition-0"},
+            "then": {"additionalProperties": {}, "properties": {
+                "feature": {"additionalProperties": {}, "properties": {"host": {"type": "string"}}}
+            }}
+        }],
+        "properties": {
+            "feature": {"additionalProperties": {}, "properties": {"enabled": {}, "host": {}}, "type": "object"},
+            "global": {"additionalProperties": {}, "properties": {"featureEnabled": {}}, "type": "object"}
+        },
+        "type": "object"
+    }));
 }
 
 #[test]

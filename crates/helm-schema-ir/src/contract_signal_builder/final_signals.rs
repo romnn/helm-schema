@@ -98,7 +98,7 @@ fn kind_selector_path(
             }
             ConditionalGuard::Not(inner) => collect(inner, kinds, out),
             ConditionalGuard::AllOf(inner) | ConditionalGuard::AnyOf(inner) => {
-                for guard in inner {
+                for guard in inner.iter() {
                     collect(guard, kinds, out);
                 }
             }

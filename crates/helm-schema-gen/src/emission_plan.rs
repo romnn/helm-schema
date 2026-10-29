@@ -208,6 +208,7 @@ pub(crate) struct ProjectedTree {
     /// The base owner materialized for each resolved path.
     pub(crate) base_owners: BTreeMap<helm_schema_core::ValuesPath, BaseOwnerDecision>,
     provider_definitions: BTreeMap<String, Value>,
+    condition_definitions: BTreeMap<String, Value>,
     /// Content origins of the private provider-definition handles.
     definition_origins: BTreeMap<String, Vec<DefinitionOrigin>>,
 }
@@ -217,6 +218,7 @@ pub(crate) struct MaterializedTree {
     pub(crate) schema: Value,
     pub(crate) emission_report: EmissionReport,
     provider_definitions: BTreeMap<String, Value>,
+    condition_definitions: BTreeMap<String, Value>,
     definition_origins: BTreeMap<String, Vec<DefinitionOrigin>>,
 }
 
@@ -410,6 +412,10 @@ impl LoweredEmissionPlan {
             &self.documents.coalesced_defaults,
             &provider_definitions,
         );
+        uncoalesced_root_gate.reserve_condition_names(&document.clone().into_value());
+        for conditional in &selected_conditionals {
+            uncoalesced_root_gate.reserve_condition_names(&conditional.schema.clone().into_value());
+        }
         append_selected_constraints(
             &mut document,
             selected_conditionals,
@@ -435,6 +441,14 @@ impl LoweredEmissionPlan {
                 &mut uncoalesced_root_gate,
             );
         }
+        let mut condition_definitions = uncoalesced_root_gate.take_condition_definitions();
+        prune_unreachable_provider_definitions(&document, &mut condition_definitions);
+        definition_origins.extend(
+            condition_definitions
+                .keys()
+                .cloned()
+                .map(|name| (name, Vec::new())),
+        );
         emission_report.lint_withdrawals = uncoalesced_root_gate.into_relaxed();
         prune_unreachable_provider_definitions(&document, &mut provider_definitions);
 
@@ -443,6 +457,7 @@ impl LoweredEmissionPlan {
             emission_report,
             base_owners,
             provider_definitions,
+            condition_definitions,
             definition_origins,
         }
     }
@@ -513,6 +528,7 @@ impl LoweredEmissionPlan {
             emission_report,
             base_owners: _,
             provider_definitions,
+            condition_definitions,
             definition_origins,
         } = projected;
         let mut schema = document.into_value();
@@ -520,15 +536,17 @@ impl LoweredEmissionPlan {
             && declared_defaults.is_object()
         {
             let _span = tracing::info_span!("preserve_declared_defaults").entered();
-            schema = crate::resolve_policy::preserve_declared_default_in_schema(
+            schema = crate::resolve_policy::preserve_declared_default_with_definitions(
                 schema,
                 &declared_defaults,
+                &condition_definitions,
             );
         }
         MaterializedTree {
             schema,
             emission_report,
             provider_definitions,
+            condition_definitions,
             definition_origins,
         }
     }
@@ -553,6 +571,10 @@ impl LoweredEmissionPlan {
     ) -> MaterializedTree {
         let truthy_span = tracing::info_span!("helm_truthy_scan").entered();
         if value_references_helm_truthy(&materialized.schema)
+            || materialized
+                .condition_definitions
+                .values()
+                .any(value_references_helm_truthy)
             || materialized
                 .provider_definitions
                 .values()
@@ -584,6 +606,10 @@ impl LoweredEmissionPlan {
                     .values_program_wrapper_exclusions(),
             );
         }
+        insert_definitions_into_root(
+            &mut materialized.schema,
+            std::mem::take(&mut materialized.condition_definitions),
+        );
         materialized
     }
 

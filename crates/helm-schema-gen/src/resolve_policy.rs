@@ -1253,7 +1253,7 @@ fn collect_positive_self_types(
         }
         helm_schema_core::ConditionalGuard::AllOf(guards)
         | helm_schema_core::ConditionalGuard::AnyOf(guards) => {
-            for guard in guards {
+            for guard in guards.iter() {
                 collect_positive_self_types(guard, target_value_path, negated, out);
             }
         }
@@ -1305,7 +1305,7 @@ mod declared_default;
 
 pub(crate) use declared_default::{
     ConditionalSchemaAcceptanceMemo, open_objects_rejecting_declared_members,
-    preserve_declared_default_in_schema,
+    preserve_declared_default_with_definitions,
 };
 use declared_default::{
     schema_type_for_guard_value, should_merge_values_yaml_into_conditional_branch,

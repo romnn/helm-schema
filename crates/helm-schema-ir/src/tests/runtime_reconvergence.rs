@@ -123,12 +123,12 @@ fn three_surviving_paths_reconverge_in_every_order_without_losing_correlation() 
         };
         for assignment in 0_u8..8 {
             let mut selected = exit.state.clone();
-            selected
-                .active
-                .extend(atoms.iter().enumerate().map(|(index, test)| DecisionEdge {
+            Rc::make_mut(&mut selected.active).extend(atoms.iter().enumerate().map(
+                |(index, test)| DecisionEdge {
                     test: Rc::clone(test),
                     taken: assignment & (1 << index) != 0,
-                }));
+                },
+            ));
             let possible = assignment & 1 == 0 || assignment & 2 != 0;
             sim_assert_eq!(have: selected.path_predicate() != Predicate::False, want: possible);
             if possible {
@@ -175,12 +175,12 @@ fn overlapping_paths_preserve_both_outcomes_only_in_their_original_domains() -> 
     };
     for assignment in 0_u8..4 {
         let mut selected = exit.state.clone();
-        selected
-            .active
-            .extend(atoms.iter().enumerate().map(|(index, test)| DecisionEdge {
+        Rc::make_mut(&mut selected.active).extend(atoms.iter().enumerate().map(|(index, test)| {
+            DecisionEdge {
                 test: Rc::clone(test),
                 taken: assignment & (1 << index) != 0,
-            }));
+            }
+        }));
         sim_assert_eq!(have: selected.path_predicate() != Predicate::False, want: assignment != 0);
         if assignment == 0 {
             continue;

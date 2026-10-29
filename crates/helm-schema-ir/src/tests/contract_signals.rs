@@ -234,7 +234,7 @@ fn sibling_adoption_uses_the_target_branch_window() -> eyre::Result<()> {
                 ConditionalGuard::Truthy {
                     path: conditional_path("b"),
                 },
-                ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
+                ConditionalGuard::Not(std::sync::Arc::new(ConditionalGuard::Truthy {
                     path: conditional_path("a"),
                 })),
             ]],
@@ -675,7 +675,7 @@ fn contract_ir_path_evidence_preserves_values_decidable_guard_predicate_shapes()
         have: evidence
             .get(&conditional_path("feature.disabled"))
             .map(|evidence| &evidence.guard_predicates),
-        want: Some(&vec![ConditionalGuard::Not(Box::new(
+        want: Some(&vec![ConditionalGuard::Not(std::sync::Arc::new(
             ConditionalGuard::Truthy {
                 path: conditional_path("feature.disabled"),
             },
@@ -698,14 +698,17 @@ fn contract_ir_path_evidence_preserves_values_decidable_guard_predicate_shapes()
             path: conditional_path("feature.name"),
         }]),
     );
-    let disjunction = ConditionalGuard::AnyOf(vec![
-        ConditionalGuard::Truthy {
-            path: conditional_path("feature.primary"),
-        },
-        ConditionalGuard::Truthy {
-            path: conditional_path("feature.secondary"),
-        },
-    ]);
+    let disjunction = ConditionalGuard::AnyOf(
+        vec![
+            ConditionalGuard::Truthy {
+                path: conditional_path("feature.primary"),
+            },
+            ConditionalGuard::Truthy {
+                path: conditional_path("feature.secondary"),
+            },
+        ]
+        .into(),
+    );
     sim_assert_eq!(
         have: evidence
             .get(&conditional_path("feature.primary"))
@@ -718,20 +721,26 @@ fn contract_ir_path_evidence_preserves_values_decidable_guard_predicate_shapes()
             .map(|evidence| &evidence.guard_predicates),
         want: Some(&vec![disjunction]),
     );
-    let nested_disjunction = ConditionalGuard::AnyOf(vec![
-        ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
-            path: conditional_path("feature.skip"),
-        })),
-        ConditionalGuard::AllOf(vec![
-            ConditionalGuard::Truthy {
-                path: conditional_path("feature.managed"),
-            },
-            ConditionalGuard::Eq {
-                path: conditional_path("feature.tier"),
-                value: GuardValue::string("prod"),
-            },
-        ]),
-    ]);
+    let nested_disjunction = ConditionalGuard::AnyOf(
+        vec![
+            ConditionalGuard::Not(std::sync::Arc::new(ConditionalGuard::Truthy {
+                path: conditional_path("feature.skip"),
+            })),
+            ConditionalGuard::AllOf(
+                vec![
+                    ConditionalGuard::Truthy {
+                        path: conditional_path("feature.managed"),
+                    },
+                    ConditionalGuard::Eq {
+                        path: conditional_path("feature.tier"),
+                        value: GuardValue::string("prod"),
+                    },
+                ]
+                .into(),
+            ),
+        ]
+        .into(),
+    );
     for path in ["feature.managed", "feature.tier", "feature.skip"] {
         sim_assert_eq!(
             have: evidence
@@ -1069,7 +1078,7 @@ fn contract_ir_conditional_path_overlays_preserve_values_decidable_not_and_or() 
         .expect("image.tag overlay");
     sim_assert_eq!(
         have: feature_overlay.guards,
-        want: vec![ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
+        want: vec![ConditionalGuard::Not(std::sync::Arc::new(ConditionalGuard::Truthy {
             path: conditional_path("feature.enabled"),
         }))],
     );
@@ -1082,7 +1091,7 @@ fn contract_ir_conditional_path_overlays_preserve_values_decidable_not_and_or() 
             ConditionalGuard::Truthy {
                 path: conditional_path("second.enabled"),
             },
-        ])],
+        ].into())],
     );
     sim_assert_eq!(
         have: preset_overlay.guards,
@@ -1094,7 +1103,7 @@ fn contract_ir_conditional_path_overlays_preserve_values_decidable_not_and_or() 
     sim_assert_eq!(
         have: image_overlay.guards,
         want: vec![ConditionalGuard::AnyOf(vec![
-            ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
+            ConditionalGuard::Not(std::sync::Arc::new(ConditionalGuard::Truthy {
                 path: conditional_path("global.imageDisabled"),
             })),
             ConditionalGuard::AllOf(vec![
@@ -1105,8 +1114,8 @@ fn contract_ir_conditional_path_overlays_preserve_values_decidable_not_and_or() 
                     path: conditional_path("image.mode"),
                     value: GuardValue::string("managed"),
                 },
-            ]),
-        ])],
+            ].into()),
+        ].into())],
     );
     assert!(
         overlays.iter().all(|overlay| !overlay.preserve_base_schema),
@@ -2346,7 +2355,7 @@ fn conditional_guard_conversion_preserves_negative_pattern_string_domain() {
             path: conditional_path("mode"),
             schema_type: "string".to_string(),
         },
-        ConditionalGuard::Not(Box::new(ConditionalGuard::MatchesPattern {
+        ConditionalGuard::Not(std::sync::Arc::new(ConditionalGuard::MatchesPattern {
             path: conditional_path("mode"),
             pattern: "^external$".to_string(),
         })),
@@ -2354,7 +2363,7 @@ fn conditional_guard_conversion_preserves_negative_pattern_string_domain() {
     ConditionalGuard::canonicalize_conjunction(&mut expected);
     sim_assert_eq!(
         have: conditional_overlays_for(&signals).into_iter().map(|overlay| overlay.guards).collect::<Vec<_>>(),
-        want: vec![vec![ConditionalGuard::AllOf(expected)]],
+        want: vec![vec![ConditionalGuard::AllOf(expected.into())]],
     );
 }
 

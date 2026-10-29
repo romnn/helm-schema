@@ -56,11 +56,11 @@ fn helper_range_break_scopes_later_provider_candidates() {
         security_contexts.is_some_and(|evidence| {
             evidence.requirement_implications.iter().any(|implication| {
                 implication.outer_guards
-                    == [helm_schema_core::ConditionalGuard::Not(Box::new(
-                        helm_schema_core::ConditionalGuard::Absent {
+                    == [helm_schema_core::ConditionalGuard::Not(
+                        std::sync::Arc::new(helm_schema_core::ConditionalGuard::Absent {
                             path: helm_schema_core::ValuesPath::parse("worker.securityContexts"),
-                        },
-                    ))]
+                        }),
+                    )]
                     && matches!(
                         implication.requirements.as_slice(),
                         [helm_schema_core::FailValueRequirement::SchemaTypeEvenNull(schema_type)]

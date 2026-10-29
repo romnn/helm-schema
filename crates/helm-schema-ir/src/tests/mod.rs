@@ -215,14 +215,17 @@ fn ranged_tpl_executes_a_selected_nested_default_program() {
         path: conditional_path(r"grafana\.ini.server.domain"),
         value: helm_schema_core::GuardValue::string(program),
     };
-    let ingress_branch = helm_schema_core::ConditionalGuard::AllOf(vec![
-        helm_schema_core::ConditionalGuard::Truthy {
-            path: conditional_path("ingress.enabled"),
-        },
-        helm_schema_core::ConditionalGuard::Truthy {
-            path: conditional_path("ingress.hosts"),
-        },
-    ]);
+    let ingress_branch = helm_schema_core::ConditionalGuard::AllOf(
+        vec![
+            helm_schema_core::ConditionalGuard::Truthy {
+                path: conditional_path("ingress.enabled"),
+            },
+            helm_schema_core::ConditionalGuard::Truthy {
+                path: conditional_path("ingress.hosts"),
+            },
+        ]
+        .into(),
+    );
 
     sim_assert_eq!(
         have: signals.terminal_clauses(),
@@ -238,14 +241,14 @@ fn ranged_tpl_executes_a_selected_nested_default_program() {
                 helm_schema_core::ConditionalGuard::Absent {
                     path: conditional_path("route"),
                 },
-                helm_schema_core::ConditionalGuard::Not(Box::new(ingress_branch.clone())),
+                helm_schema_core::ConditionalGuard::Not(std::sync::Arc::new(ingress_branch.clone())),
             ],
             vec![
                 selected_program,
                 helm_schema_core::ConditionalGuard::Absent {
                     path: conditional_path("route.main"),
                 },
-                helm_schema_core::ConditionalGuard::Not(Box::new(ingress_branch)),
+                helm_schema_core::ConditionalGuard::Not(std::sync::Arc::new(ingress_branch)),
             ],
         ],
     );

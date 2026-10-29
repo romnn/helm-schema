@@ -42,7 +42,7 @@ impl State {
         Self {
             heap,
             frames: vec![frame],
-            active: Vec::new(),
+            active: Rc::default(),
             output: super::TextBuffer::default(),
             output_widened: false,
             observation_count: super::output::BranchCounts::default(),
@@ -235,7 +235,7 @@ impl State {
         let mut active = self.active.clone();
         let forced = test.constant_outcome() == Some(taken);
         if !forced {
-            active.push(DecisionEdge { test, taken });
+            Rc::make_mut(&mut active).push(DecisionEdge { test, taken });
         }
         let mut output = self.output.clone();
         output.restrict_budget(&self.heap.arena.runtime_path(&active), &self.heap.arena);
@@ -392,7 +392,7 @@ impl State {
         let mut joined = State {
             heap,
             frames,
-            active,
+            active: active.into(),
             output: super::TextBuffer::default(),
             output_widened: false,
             observation_count: super::output::BranchCounts::default(),

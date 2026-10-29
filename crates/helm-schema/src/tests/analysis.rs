@@ -609,7 +609,7 @@ fn signoz_smtp_existing_secret_name_is_rendered_as_secret_ref_name() -> eyre::Re
                 helm_schema_ir::ConditionalGuard::Truthy {
                     path: conditional_path("signoz.smtpVars.existingSecret.usernameKey"),
                 },
-            ]),
+            ].into()),
         ]
     );
     let provider_use = overlay

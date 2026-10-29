@@ -161,10 +161,6 @@ fn nullable_scalar_preserved_for_with_guarded_render_use() {
     "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
-    let priority = schema
-        .pointer("/properties/priorityClassName")
-        .expect("priorityClassName present");
-    assert!(permits_null(priority));
     for value in [serde_json::Value::Null, serde_json::json!("priority")] {
         assert!(
             schema_accepts_instance(&schema, &serde_json::json!({ "priorityClassName": value })),
@@ -328,11 +324,8 @@ fn truthy_guarded_scalar_allows_null_without_explicit_null_default() {
     let ir = parse_ir(src);
     let schema = schema_for_values_yaml(&ir, Some(values_yaml));
 
-    let fullname = schema
-        .pointer("/properties/fullnameOverride")
-        .expect("fullnameOverride present");
     assert!(
-        permits_null(fullname),
-        "truthy-guarded fullnameOverride should allow null, got {fullname}"
+        schema_accepts_instance(&schema, &serde_json::json!({ "fullnameOverride": null })),
+        "truthy-guarded fullnameOverride should allow null, got {schema}"
     );
 }

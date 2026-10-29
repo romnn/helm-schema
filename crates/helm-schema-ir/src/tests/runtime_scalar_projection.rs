@@ -85,7 +85,7 @@ fn site(state: &State, value: &Value) -> ExecutedSite {
         ordinal: 0,
         span: helm_schema_syntax::Span::new(0, 1),
         source_path: None,
-        condition: Predicate::True,
+        condition: Predicate::True.into(),
         value: state.heap.freeze(value),
         raw_format_inputs: Vec::new(),
         plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,

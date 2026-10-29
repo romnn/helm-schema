@@ -359,7 +359,7 @@ fn validate_selected_parameter(
     let depth = state.active.len();
     let mut plans = Vec::new();
     for taken in [true, false] {
-        state.active.push(super::DecisionEdge {
+        std::rc::Rc::make_mut(&mut state.active).push(super::DecisionEdge {
             test: Rc::clone(decision),
             taken,
         });
@@ -374,7 +374,7 @@ fn validate_selected_parameter(
                 remaining,
             )
         };
-        state.active.truncate(depth);
+        std::rc::Rc::make_mut(&mut state.active).truncate(depth);
         plans.push(plan);
     }
     let mut plans = plans.into_iter();

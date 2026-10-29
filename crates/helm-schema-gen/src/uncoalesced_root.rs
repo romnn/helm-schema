@@ -1,7 +1,7 @@
 //! The documents `helm lint` validates, as further must-accept documents.
 
 use std::borrow::Cow;
-use std::cell::OnceCell;
+use std::cell::{OnceCell, RefCell};
 use std::collections::{BTreeMap, BTreeSet};
 
 use helm_schema_core::{ConditionalGuard, Segment, ValuesPath};
@@ -9,7 +9,7 @@ use serde_json::Value;
 use serde_yaml::Value as YamlValue;
 
 use crate::condition_encoding::{
-    AbsenceDefaults, ConditionPolarity, HELM_TRUTHY_DEFINITION_NAME, build_condition_clauses,
+    AbsenceDefaults, ConditionFragmentCache, ConditionPolarity, HELM_TRUTHY_DEFINITION_NAME,
     evaluate_guard_set_on_values, helm_truthy_definition_schema, input_path_present_condition,
     value_references_helm_truthy,
 };
@@ -74,6 +74,7 @@ pub(crate) struct UncoalescedRootGate<'a> {
     coalesced_defaults: &'a Value,
     definitions: &'a BTreeMap<String, Value>,
     relaxed: Vec<LintWithdrawal>,
+    conditions: RefCell<ConditionFragmentCache>,
 }
 
 impl<'a> UncoalescedRootGate<'a> {
@@ -87,13 +88,55 @@ impl<'a> UncoalescedRootGate<'a> {
             let floor_yaml = serde_yaml::to_value(&floor).unwrap_or(YamlValue::Null);
             (floor, floor_yaml)
         });
+        let mut conditions = ConditionFragmentCache::new();
+        for (name, definition) in definitions {
+            conditions.reserve(&serde_json::json!({ "$ref": helm_schema_json_schema_walk::definition_reference(name) }));
+            conditions.reserve(definition);
+        }
         Self {
             uncoalesced_root,
             lint_floor,
             coalesced_defaults,
             definitions,
             relaxed: Vec::new(),
+            conditions: RefCell::new(conditions),
         }
+    }
+
+    pub(crate) fn reserve_condition_names(&self, schema: &Value) {
+        self.conditions.borrow_mut().reserve(schema);
+    }
+
+    pub(crate) fn condition_clauses(
+        &self,
+        guards: &[ConditionalGuard],
+        ancestor: &[String],
+        values: &YamlValue,
+        absence: AbsenceDefaults<'_>,
+        polarity: ConditionPolarity,
+    ) -> Vec<SchemaNode> {
+        self.conditions
+            .borrow_mut()
+            .clauses(guards, ancestor, values, absence, polarity)
+    }
+
+    pub(crate) fn append_conditional(
+        &self,
+        document: &mut crate::schema_tree::SchemaDocument,
+        ancestor: &[String],
+        condition: SchemaNode,
+        then_schema: SchemaNode,
+    ) {
+        document.append_conditional_with_definitions(
+            ancestor,
+            condition,
+            then_schema,
+            &self.conditions.borrow().definitions,
+        );
+    }
+
+    pub(crate) fn take_condition_definitions(&mut self) -> BTreeMap<String, Value> {
+        std::mem::take(&mut self.conditions.borrow_mut().definitions)
     }
 
     /// The `then` part `if condition then then_value`, anchored at
@@ -270,7 +313,7 @@ impl<'a> UncoalescedRootGate<'a> {
             }
         }
         let projected = LintConstraint {
-            condition: SchemaNode::all_of(build_condition_clauses(
+            condition: SchemaNode::all_of(self.condition_clauses(
                 &held,
                 ancestor_segments,
                 encoding.values_yaml_doc,
@@ -393,7 +436,14 @@ impl<'a> UncoalescedRootGate<'a> {
         });
         let mut definitions =
             crate::provider_definitions::definitions_reachable_from(&constraint, self.definitions);
-        if value_references_helm_truthy(&constraint) {
+        let conditions = self.conditions.borrow();
+        definitions.extend(crate::provider_definitions::definitions_reachable_from(
+            &constraint,
+            &conditions.definitions,
+        ));
+        if value_references_helm_truthy(&constraint)
+            || definitions.values().any(value_references_helm_truthy)
+        {
             definitions.insert(
                 HELM_TRUTHY_DEFINITION_NAME.to_string(),
                 helm_truthy_definition_schema(),
@@ -461,7 +511,7 @@ fn collect_tested_keys(guard: &ConditionalGuard, paths: &mut BTreeSet<ValuesPath
         }
         ConditionalGuard::Not(inner) => collect_tested_keys(inner, paths),
         ConditionalGuard::AllOf(guards) | ConditionalGuard::AnyOf(guards) => {
-            for guard in guards {
+            for guard in guards.iter() {
                 collect_tested_keys(guard, paths);
             }
         }

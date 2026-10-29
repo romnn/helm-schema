@@ -906,29 +906,12 @@ fn bounded_projection(predicate: Predicate, purpose: ProjectionPurpose) -> Optio
     }
     // Budget counters can encode exponential cardinality formulas after otherwise ordinary joins.
     // Bound only their exported syntax; runtime guards and semantic control proofs stay exact.
-    let mut pending = vec![&predicate];
-    let mut terms = 0;
-    while let Some(predicate) = pending.pop() {
-        terms += 1;
-        if terms > 256 {
-            tracing::debug!(reason = ?super::BoundReason::BudgetPredicate, "widen budget guard projection");
-            return None;
-        }
-        match predicate.kind() {
-            PredicateKind::And(parts) | PredicateKind::Or(parts) => pending.extend(parts),
-            PredicateKind::Not(inner) => pending.push(inner),
-            PredicateKind::Approximate {
-                marker: _,
-                paths: _,
-                role: _,
-                sound_subset,
-            } => {
-                pending.extend(sound_subset);
-            }
-            PredicateKind::True | PredicateKind::False | PredicateKind::Guard(_) => {}
-        }
+    if predicate.syntax_size() > 256 {
+        tracing::debug!(reason = ?super::BoundReason::BudgetPredicate, "widen budget guard projection");
+        None
+    } else {
+        Some(predicate)
     }
-    Some(predicate)
 }
 
 fn project_union(

@@ -122,17 +122,21 @@ fn expected(case: &Case) -> Value {
         AcceptedInput::Nil | AcceptedInput::Nullable(_) => {
             let path = ValuesPath::parse("input");
             let mut failing = vec![
-                ConditionalGuard::Not(Box::new(ConditionalGuard::Eq {
+                ConditionalGuard::Not(std::sync::Arc::new(ConditionalGuard::Eq {
                     path: path.clone(),
                     value: GuardValue::Null,
                 })),
-                ConditionalGuard::Not(Box::new(ConditionalGuard::Absent { path: path.clone() })),
+                ConditionalGuard::Not(std::sync::Arc::new(ConditionalGuard::Absent {
+                    path: path.clone(),
+                })),
             ];
             if let AcceptedInput::Nullable(kind) = case.accepted {
-                failing.push(ConditionalGuard::Not(Box::new(ConditionalGuard::TypeIs {
-                    path,
-                    schema_type: kind.schema_type().to_owned(),
-                })));
+                failing.push(ConditionalGuard::Not(std::sync::Arc::new(
+                    ConditionalGuard::TypeIs {
+                        path,
+                        schema_type: kind.schema_type().to_owned(),
+                    },
+                )));
             }
             ConditionalGuard::canonicalize_conjunction(&mut failing);
             vec![failing]

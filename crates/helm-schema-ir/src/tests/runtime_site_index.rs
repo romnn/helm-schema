@@ -58,7 +58,7 @@ fn equal_program_and_ordinal_keep_distinct_guarded_records() {
 
     // Neither an equal source span nor an equal branch ordinal merges the observations.
     sim_assert_eq!(have: execution.observations(ObservationId { program: 23, ordinal: 0, span }).filter_map(|observation| match observation { Observation::Value(site) => Some(site.ordinal), Observation::Text(_) => None }).collect::<Vec<_>>(), want: vec![0, 0]);
-    sim_assert_eq!(have: execution.observations(ObservationId { program: 23, ordinal: 0, span }).filter_map(|observation| match observation { Observation::Value(site) => Some(site.condition.clone()), Observation::Text(_) => None }).collect::<Vec<_>>(), want: vec![guard.clone().normalize_boolean(), guard.negated().normalize_boolean()]);
+    sim_assert_eq!(have: execution.observations(ObservationId { program: 23, ordinal: 0, span }).filter_map(|observation| match observation { Observation::Value(site) => Some(site.condition()), Observation::Text(_) => None }).collect::<Vec<_>>(), want: vec![guard.clone().normalize_boolean(), guard.negated().normalize_boolean()]);
     sim_assert_eq!(have: execution.observations(ObservationId { program: 23, ordinal: 0, span }).filter_map(|observation| match observation { Observation::Value(site) => site.value.literal().cloned(), Observation::Text(_) => None }).collect::<Vec<_>>(), want: vec![GuardValue::String("left".to_owned()), GuardValue::String("right".to_owned())]);
 }
 

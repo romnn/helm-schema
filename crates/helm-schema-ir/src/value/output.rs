@@ -452,7 +452,7 @@ impl ExecutedSite {
     fn same_site(&self, other: &Self) -> bool {
         let Self {
             program,
-            coverage_exact,
+            coverage_exact: _,
             rendered_unchanged,
             ordinal,
             span,
@@ -465,7 +465,7 @@ impl ExecutedSite {
         } = self;
         let Self {
             program: other_program,
-            coverage_exact: other_coverage,
+            coverage_exact: _,
             rendered_unchanged: other_unchanged,
             ordinal: other_ordinal,
             span: other_span,
@@ -477,20 +477,20 @@ impl ExecutedSite {
             rendered: other_rendered,
         } = other;
         program == other_program
-            && coverage_exact == other_coverage
             && rendered_unchanged == other_unchanged
             && ordinal == other_ordinal
             && span == other_span
             && source_path == other_source
-            && condition == other_condition
             && raw_format_inputs == other_raw_format_inputs
             && plain_scalar_placement == other_plain_scalar_placement
             && same_frozen_value(value, other_value)
             && rendered == other_rendered
+            && condition == other_condition
+            && self.coverage_exact() == other.coverage_exact()
     }
 
     pub(crate) fn coverage_exact(&self) -> bool {
-        self.coverage_exact
+        self.coverage_exact && self.condition.exact()
     }
 
     pub(crate) fn span(&self) -> helm_schema_syntax::Span {
@@ -499,8 +499,8 @@ impl ExecutedSite {
     pub(crate) fn source_path(&self) -> Option<&str> {
         self.source_path.as_deref()
     }
-    pub(crate) fn condition(&self) -> &Predicate {
-        &self.condition
+    pub(crate) fn condition(&self) -> Predicate {
+        self.condition.predicate()
     }
     pub(crate) fn rendered(&self) -> bool {
         self.rendered
@@ -509,7 +509,7 @@ impl ExecutedSite {
         &self.value
     }
     pub(crate) fn projected_scalar(&self) -> Option<super::ScalarValueDispatch> {
-        if !self.coverage_exact {
+        if !self.coverage_exact() {
             return None;
         }
         let mut arms = Vec::new();
@@ -546,7 +546,7 @@ impl ExecutedSite {
 
     pub(crate) fn formatted_containers(&self) -> Vec<super::RenderedContainerUse> {
         let mut uses = Vec::new();
-        if !self.rendered || !self.coverage_exact {
+        if !self.rendered || !self.coverage_exact() {
             return uses;
         }
         for super::RawFormatInput { condition, path } in &self.raw_format_inputs {
@@ -962,42 +962,6 @@ impl BranchCounts {
         }
     }
 
-    fn below_with(
-        &self,
-        threshold: usize,
-        arena: &super::Arena,
-        query: &mut CountThreshold,
-    ) -> Result<super::guard::RuntimeGuard, super::BoundReason> {
-        let expression = match &*self.state.borrow() {
-            CountState::Empty => return Ok(super::guard::RuntimeGuard::False),
-            CountState::Exact(expression) => std::rc::Rc::clone(expression),
-            CountState::Exhausted => return Err(super::BoundReason::BudgetNodes),
-        };
-        let result = query
-            .below(&expression, threshold, arena)
-            .and_then(|selected| {
-                query.select(
-                    &selected,
-                    &self.domain,
-                    &super::guard::RuntimeGuard::False,
-                    arena,
-                )
-            });
-        if result.is_err() {
-            self.exhaust();
-        }
-        result
-    }
-
-    #[tracing::instrument(skip_all, level = "debug", target = "helm_schema_ir::value::budget_work", fields(threshold, domain = self.domain.id()))]
-    fn below(
-        &self,
-        threshold: usize,
-        arena: &super::Arena,
-    ) -> Result<super::guard::RuntimeGuard, super::BoundReason> {
-        self.below_with(threshold, arena, &mut CountThreshold::default())
-    }
-
     #[tracing::instrument(
         skip_all,
         level = "debug",
@@ -1101,10 +1065,82 @@ impl BranchCounts {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+enum Admission {
+    All,
+    Restricted(super::guard::RuntimeGuard),
+}
+
+#[derive(Clone, Debug)]
+pub(super) struct RuntimeCondition {
+    arena: std::rc::Rc<super::Arena>,
+    // Retain the admitted joint so its existing projection entries remain reachable.
+    admitted: super::guard::RuntimeGuard,
+    ambient: std::rc::Rc<Vec<super::DecisionEdge>>,
+    admission: Admission,
+}
+
+impl PartialEq for RuntimeCondition {
+    fn eq(&self, other: &Self) -> bool {
+        let Self {
+            arena,
+            admitted,
+            ambient,
+            admission,
+        } = self;
+        let Self {
+            arena: other_arena,
+            admitted: other_admitted,
+            ambient: other_ambient,
+            admission: other_admission,
+        } = other;
+        (std::rc::Rc::ptr_eq(arena, other_arena)
+            && admitted == other_admitted
+            && ambient == other_ambient
+            && admission == other_admission)
+            || self.predicate() == other.predicate()
+    }
+}
+impl Eq for RuntimeCondition {}
+
+impl RuntimeCondition {
+    fn restricted_test(&self) -> Option<std::rc::Rc<super::FrozenTest>> {
+        match &self.admission {
+            Admission::All => None,
+            Admission::Restricted(_) => Some(self.arena.budget_test(self.admitted.clone())),
+        }
+    }
+
+    fn exact(&self) -> bool {
+        self.restricted_test()
+            .is_none_or(|test| test.coverage == super::Coverage::Exact)
+    }
+
+    #[tracing::instrument(skip_all, level = "debug", target = "helm_schema_ir::value::proof_materialization", fields(admitted = self.admitted.id(), restricted = matches!(self.admission, Admission::Restricted(_))))]
+    fn predicate(&self) -> Predicate {
+        if self.admitted.is_impossible() {
+            return Predicate::False;
+        }
+        // Preserve each frozen test's partial-coverage envelope at the observation boundary.
+        let domain = Predicate::all(
+            self.ambient
+                .iter()
+                .map(|edge| edge.test.possible_predicate(edge.taken))
+                .collect(),
+        );
+        match self.restricted_test() {
+            None => domain,
+            Some(admitted) => self.arena.predicate_memo.normalize(Predicate::all(vec![
+                domain,
+                admitted.possible_predicate(true),
+            ])),
+        }
+    }
+}
+
 pub(super) struct BudgetSlot {
-    pub(super) condition: Predicate,
+    pub(super) condition: RuntimeCondition,
     pub(super) ordinal: usize,
-    pub(super) coverage_exact: bool,
 }
 
 impl super::State {
@@ -1123,16 +1159,36 @@ impl super::State {
         }
         let ambient_slot = || {
             vec![BudgetSlot {
-                condition: self.path_predicate(),
+                condition: RuntimeCondition {
+                    arena: std::rc::Rc::clone(&self.heap.arena),
+                    admitted: count.domain.clone(),
+                    ambient: std::rc::Rc::clone(&self.active),
+                    admission: Admission::All,
+                },
                 ordinal,
-                coverage_exact: true,
             }]
         };
         // Storage ordinals preserve event order; only admission consumes the branch-local budget.
         if count.definitely_below(128) {
             return Ok((ambient_slot(), false));
         }
-        let admitted = count.below(128, &self.heap.arena)?;
+        let mut query = CountThreshold::default();
+        let expression = match &*count.state.borrow() {
+            CountState::Exact(expression) => std::rc::Rc::clone(expression),
+            CountState::Empty => return Ok((Vec::new(), false)),
+            CountState::Exhausted => return Err(super::BoundReason::BudgetNodes),
+        };
+        let admission = query
+            .below(&expression, 128, &self.heap.arena)
+            .inspect_err(|_| count.exhaust())?;
+        let admitted = query
+            .select(
+                &admission,
+                &count.domain,
+                &super::guard::RuntimeGuard::False,
+                &self.heap.arena,
+            )
+            .inspect_err(|_| count.exhaust())?;
         let rejected = admitted != count.domain;
         if admitted.is_impossible() {
             return Ok((Vec::new(), rejected));
@@ -1141,16 +1197,15 @@ impl super::State {
         if !rejected {
             return Ok((ambient_slot(), false));
         }
-        let admitted = self.heap.arena.budget_test(admitted);
-        let memo = &self.heap.arena.predicate_memo;
         Ok((
             vec![BudgetSlot {
-                condition: memo.normalize(Predicate::all(vec![
-                    self.path_predicate(),
-                    admitted.possible_predicate(true),
-                ])),
+                condition: RuntimeCondition {
+                    arena: std::rc::Rc::clone(&self.heap.arena),
+                    admitted,
+                    ambient: std::rc::Rc::clone(&self.active),
+                    admission: Admission::Restricted(admission),
+                },
                 ordinal,
-                coverage_exact: admitted.coverage == super::Coverage::Exact,
             }],
             rejected,
         ))
@@ -1265,8 +1320,7 @@ impl super::State {
                 coverage_exact: self
                     .active
                     .iter()
-                    .all(|edge| edge.test.coverage == super::Coverage::Exact)
-                    && slot.coverage_exact,
+                    .all(|edge| edge.test.coverage == super::Coverage::Exact),
                 ordinal: slot.ordinal,
                 bytes: bytes.to_owned(),
                 span,
@@ -1319,8 +1373,7 @@ impl super::State {
                 coverage_exact: self
                     .active
                     .iter()
-                    .all(|edge| edge.test.coverage == super::Coverage::Exact)
-                    && slot.coverage_exact,
+                    .all(|edge| edge.test.coverage == super::Coverage::Exact),
                 ordinal: slot.ordinal,
                 span,
                 source_path: source_path.map(str::to_owned),
@@ -1430,9 +1483,7 @@ impl DocumentExecution {
                 reads.push(crate::fragment_eval::ValueRead {
                     values_path,
                     kind: crate::ValueKind::Serialized,
-                    condition: helm_schema_core::GuardDnf::from_conjunction([site
-                        .condition
-                        .clone()]),
+                    condition: helm_schema_core::GuardDnf::from_conjunction([site.condition()]),
                     resource: None,
                     provenance: Vec::new(),
                     dependency: true,
@@ -1734,9 +1785,42 @@ fn json(
     }
 }
 
+impl PartialEq for ExecutedText {
+    fn eq(&self, other: &Self) -> bool {
+        let Self {
+            program,
+            coverage_exact: _,
+            rendered_unchanged,
+            ordinal,
+            bytes,
+            span,
+            source_path,
+            condition,
+        } = self;
+        let Self {
+            program: other_program,
+            coverage_exact: _,
+            rendered_unchanged: other_unchanged,
+            ordinal: other_ordinal,
+            bytes: other_bytes,
+            span: other_span,
+            source_path: other_source,
+            condition: other_condition,
+        } = other;
+        program == other_program
+            && rendered_unchanged == other_unchanged
+            && ordinal == other_ordinal
+            && bytes == other_bytes
+            && span == other_span
+            && source_path == other_source
+            && condition == other_condition
+            && self.coverage_exact() == other.coverage_exact()
+    }
+}
+
 impl super::ExecutedText {
     pub(crate) fn coverage_exact(&self) -> bool {
-        self.coverage_exact
+        self.coverage_exact && self.condition.exact()
     }
 
     pub(crate) fn span(&self) -> helm_schema_syntax::Span {
@@ -1745,8 +1829,8 @@ impl super::ExecutedText {
     pub(crate) fn source_path(&self) -> Option<&str> {
         self.source_path.as_deref()
     }
-    pub(crate) fn condition(&self) -> &Predicate {
-        &self.condition
+    pub(crate) fn condition(&self) -> Predicate {
+        self.condition.predicate()
     }
     pub(crate) fn bytes(&self) -> &str {
         &self.bytes
@@ -1961,3 +2045,7 @@ mod raw_format_input_tests;
 #[cfg(test)]
 #[path = "../tests/runtime_count_expression.rs"]
 mod count_expression_tests;
+
+#[cfg(test)]
+#[path = "../tests/runtime_conditions.rs"]
+mod condition_tests;

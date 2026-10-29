@@ -7,7 +7,7 @@ use crate::{
     PreparedValuesDocuments, ValuesSchemaInput, generate_values_schema,
     resolve_policy::{
         ProviderValueUsePolicy, ResolvePolicy, ValuePathSchemaFacts, ValuePathSchemaInputs,
-        open_objects_rejecting_declared_members, preserve_declared_default_in_schema,
+        open_objects_rejecting_declared_members,
     },
     schema_node::SchemaNode,
     values_yaml::ValuesYamlPathFacts,
@@ -19,6 +19,14 @@ use helm_schema_ir::{
     ProviderSchemaUse, ResourceRef, SymbolicIrContext, SymbolicPolicy, ValueKind, YamlPath,
 };
 use helm_schema_k8s::{Chain, CrdsCatalogSchemaProvider, KubernetesJsonSchemaProvider};
+
+fn preserve_declared_default_in_schema(schema: Value, declared: &Value) -> Value {
+    crate::resolve_policy::preserve_declared_default_with_definitions(
+        schema,
+        declared,
+        &BTreeMap::new(),
+    )
+}
 
 mod authoring_policy;
 mod block_scalar_projection;

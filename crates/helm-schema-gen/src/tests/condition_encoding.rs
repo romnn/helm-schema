@@ -8,9 +8,24 @@ use serde_json::{Value, json};
 use test_util::prelude::sim_assert_eq;
 
 use crate::condition_encoding::{
-    AbsenceDefaults, ConditionFragmentCache, ConditionPolarity, build_condition_clauses,
-    build_condition_clauses_cached, guard_encodes_fully,
+    AbsenceDefaults, ConditionFragmentCache, ConditionPolarity, guard_encodes_fully,
 };
+
+pub(super) fn build_condition_clauses(
+    guards: &[ConditionalGuard],
+    ancestor_segments: &[String],
+    values_yaml_doc: &serde_yaml::Value,
+    absence: AbsenceDefaults<'_>,
+    polarity: ConditionPolarity,
+) -> Vec<crate::schema_node::SchemaNode> {
+    ConditionFragmentCache::default().clauses(
+        guards,
+        ancestor_segments,
+        values_yaml_doc,
+        absence,
+        polarity,
+    )
+}
 
 #[test]
 fn condition_cache_separates_selected_values_documents() -> eyre::Result<()> {
@@ -30,9 +45,14 @@ fn condition_cache_separates_selected_values_documents() -> eyre::Result<()> {
     let mut cache = ConditionFragmentCache::new();
 
     let base_fragments =
-        build_condition_clauses_cached(&guards, &ancestor, None, &base, absence, &mut cache);
-    let guarded_fragments =
-        build_condition_clauses_cached(&guards, &ancestor, Some(0), &guarded, absence, &mut cache);
+        cache.clauses(&guards, &ancestor, &base, absence, ConditionPolarity::Widen);
+    let guarded_fragments = cache.clauses(
+        &guards,
+        &ancestor,
+        &guarded,
+        absence,
+        ConditionPolarity::Widen,
+    );
     let expected_guarded = build_condition_clauses(
         &guards,
         &ancestor,
@@ -260,7 +280,7 @@ fn check_collection_case(case: CollectionCase) -> eyre::Result<()> {
         for polarity in [ConditionPolarity::Widen, ConditionPolarity::Narrow] {
             for negated in [false, true] {
                 let guard = if negated {
-                    ConditionalGuard::Not(Box::new(guard.clone()))
+                    ConditionalGuard::Not(std::sync::Arc::new(guard.clone()))
                 } else {
                     guard.clone()
                 };
@@ -338,10 +358,12 @@ fn collection_pattern_quantifiers_abstain_on_current_member_paths() {
         quantifier: CollectionQuantifier::All,
         pattern: "^a$".to_owned(),
     };
-    for guard in [array_guard, object_guard]
-        .into_iter()
-        .flat_map(|guard| [guard.clone(), ConditionalGuard::Not(Box::new(guard))])
-    {
+    for guard in [array_guard, object_guard].into_iter().flat_map(|guard| {
+        [
+            guard.clone(),
+            ConditionalGuard::Not(std::sync::Arc::new(guard)),
+        ]
+    }) {
         sim_assert_eq!(have: guard_encodes_fully(&guard, &[], &absent, absence), want: false);
         for polarity in [ConditionPolarity::Widen, ConditionPolarity::Narrow] {
             sim_assert_eq!(have: build_condition_clauses(std::slice::from_ref(&guard), &[], &absent, absence, polarity), want: vec![]);
@@ -553,7 +575,7 @@ fn check_value_pattern(
     for polarity in [ConditionPolarity::Widen, ConditionPolarity::Narrow] {
         for negated in [false, true] {
             let guard = if negated {
-                ConditionalGuard::Not(Box::new(guard.clone()))
+                ConditionalGuard::Not(std::sync::Arc::new(guard.clone()))
             } else {
                 guard.clone()
             };
@@ -780,4 +802,258 @@ fn value_patterns_conjunction_and_contains_keep_their_empty_set_semantics() -> e
             },
         ],
     )
+}
+
+pub(super) fn expand_conditions(
+    value: serde_json::Value,
+    definitions: &std::collections::BTreeMap<String, serde_json::Value>,
+) -> serde_json::Value {
+    match value {
+        serde_json::Value::Object(object) => {
+            if object.len() == 1
+                && let Some(reference) = object.get("$ref").and_then(serde_json::Value::as_str)
+                && let Some(reference) =
+                    helm_schema_json_schema_walk::parse_definition_reference(reference)
+                && let Some(body) = definitions.get(&reference.name)
+            {
+                return expand_conditions(body.clone(), definitions);
+            }
+            serde_json::Value::Object(
+                object
+                    .into_iter()
+                    .map(|(key, child)| (key, expand_conditions(child, definitions)))
+                    .collect(),
+            )
+        }
+        serde_json::Value::Array(children) => serde_json::Value::Array(
+            children
+                .into_iter()
+                .map(|child| expand_conditions(child, definitions))
+                .collect(),
+        ),
+        leaf => leaf,
+    }
+}
+
+#[test]
+fn shared_condition_definitions_preserve_formula_scope_values_and_polarity() -> eyre::Result<()> {
+    let empty = serde_yaml::Value::Null;
+    let mapping = serde_yaml::from_str("feature: {enabled: true}")?;
+    let roots = BTreeSet::new();
+    let absence = AbsenceDefaults {
+        runtime_defaults: &empty,
+        dependency_refill: &empty,
+        dependency_roots: &roots,
+    };
+    let leaf = ConditionalGuard::Truthy {
+        path: ValuesPath::parse("feature"),
+    };
+    let guard = ConditionalGuard::Not(std::sync::Arc::new(ConditionalGuard::AnyOf(
+        vec![leaf.clone(), leaf].into(),
+    )));
+    let mut cache = ConditionFragmentCache::new();
+    for values in [&empty, &mapping] {
+        for ancestor in [Vec::new(), vec!["feature".to_owned()]] {
+            for polarity in [ConditionPolarity::Widen, ConditionPolarity::Narrow] {
+                let guards = std::slice::from_ref(&guard);
+                let encoded = cache.clauses(guards, &ancestor, values, absence, polarity);
+                let expected =
+                    build_condition_clauses(guards, &ancestor, values, absence, polarity);
+                let actual = encoded
+                    .into_iter()
+                    .map(crate::schema_node::SchemaNode::into_value)
+                    .map(|value| expand_conditions(value, &cache.definitions))
+                    .collect::<Vec<_>>();
+                sim_assert_eq!(have: actual, want: expected.into_iter().map(crate::schema_node::SchemaNode::into_value).collect::<Vec<_>>());
+            }
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn generated_condition_graph_keeps_shared_boolean_bodies_linear() {
+    let empty = serde_yaml::Value::Null;
+    let roots = BTreeSet::new();
+    let absence = AbsenceDefaults {
+        runtime_defaults: &empty,
+        dependency_refill: &empty,
+        dependency_roots: &roots,
+    };
+    let mut guard = ConditionalGuard::Truthy {
+        path: ValuesPath::parse("seed"),
+    };
+    for index in 0..6 {
+        guard = ConditionalGuard::AnyOf(
+            vec![
+                ConditionalGuard::AllOf(
+                    vec![
+                        guard.clone(),
+                        ConditionalGuard::Truthy {
+                            path: ValuesPath::parse(&format!("left{index}")),
+                        },
+                    ]
+                    .into(),
+                ),
+                ConditionalGuard::AllOf(
+                    vec![
+                        ConditionalGuard::Not(std::sync::Arc::new(guard)),
+                        ConditionalGuard::Truthy {
+                            path: ValuesPath::parse(&format!("right{index}")),
+                        },
+                    ]
+                    .into(),
+                ),
+            ]
+            .into(),
+        );
+    }
+    let mut cache = ConditionFragmentCache::new();
+    let encoded = cache.clauses(
+        std::slice::from_ref(&guard),
+        &[],
+        &empty,
+        absence,
+        ConditionPolarity::Widen,
+    );
+    let expected =
+        build_condition_clauses(&[guard], &[], &empty, absence, ConditionPolarity::Widen);
+    sim_assert_eq!(have: encoded.into_iter().map(crate::schema_node::SchemaNode::into_value).map(|value| expand_conditions(value, &cache.definitions)).collect::<Vec<_>>(), want: expected.into_iter().map(crate::schema_node::SchemaNode::into_value).collect::<Vec<_>>());
+    assert!(cache.definitions.len() <= 48);
+}
+
+#[test]
+fn private_condition_names_avoid_definitions_and_dangling_references() {
+    let empty = serde_yaml::Value::Null;
+    let roots = BTreeSet::new();
+    let absence = AbsenceDefaults {
+        runtime_defaults: &empty,
+        dependency_refill: &empty,
+        dependency_roots: &roots,
+    };
+    let mut cache = ConditionFragmentCache::new();
+    cache.reserve(&serde_json::json!({ "$defs": { "helm-condition-0": true }, "allOf": [{ "$ref": "#/$defs/helm-condition-1" }], "properties": { "id": { "const": { "$id": "data" } } } }));
+    let guard = ConditionalGuard::Not(std::sync::Arc::new(ConditionalGuard::Truthy {
+        path: ValuesPath::parse("flag"),
+    }));
+    let encoded = cache.clauses(&[guard], &[], &empty, absence, ConditionPolarity::Widen);
+    sim_assert_eq!(have: encoded.into_iter().map(crate::schema_node::SchemaNode::into_value).collect::<Vec<_>>(), want: vec![serde_json::json!({ "$ref": "#/$defs/helm-condition-2" })]);
+    sim_assert_eq!(have: cache.definitions.keys().cloned().collect::<Vec<_>>(), want: vec!["helm-condition-2".to_owned()]);
+}
+
+#[test]
+fn scalar_default_validation_resolves_only_the_supplied_condition_definitions() {
+    let schema = serde_json::json!({ "if": { "$ref": "#/$defs/condition" }, "then": { "const": "yes" }, "else": { "const": "" } });
+    let definitions = std::collections::BTreeMap::from([
+        (
+            "condition".to_owned(),
+            serde_json::json!({ "$ref": "#/$defs/inner" }),
+        ),
+        (
+            "inner".to_owned(),
+            serde_json::json!({ "$ref": format!("#/$defs/{}", crate::condition_encoding::HELM_TRUTHY_DEFINITION_NAME) }),
+        ),
+        (
+            "unreachable".to_owned(),
+            serde_json::json!({ "$ref": "#/$defs/missing" }),
+        ),
+    ]);
+    let declared = serde_json::json!("yes");
+    sim_assert_eq!(have: crate::resolve_policy::preserve_declared_default_with_definitions(schema.clone(), &declared, &definitions), want: schema.clone());
+    let fallback = super::preserve_declared_default_in_schema(schema.clone(), &declared);
+    sim_assert_eq!(have: fallback, want: serde_json::json!({ "anyOf": [{ "const": "yes" }, schema] }));
+}
+
+#[test]
+fn shared_type_partition_conditions_keep_the_original_host_shape() {
+    let empty = serde_yaml::Value::Null;
+    let roots = BTreeSet::new();
+    let absence = AbsenceDefaults {
+        runtime_defaults: &empty,
+        dependency_refill: &empty,
+        dependency_roots: &roots,
+    };
+    let guards = [ConditionalGuard::Not(std::sync::Arc::new(
+        ConditionalGuard::AnyOf(
+            vec![
+                ConditionalGuard::TypeIs {
+                    path: ValuesPath::parse("value"),
+                    schema_type: "string".to_owned(),
+                },
+                ConditionalGuard::TypeIs {
+                    path: ValuesPath::parse("value"),
+                    schema_type: "array".to_owned(),
+                },
+            ]
+            .into(),
+        ),
+    ))];
+    let ancestor = vec!["value".to_owned()];
+    let mut cache = ConditionFragmentCache::new();
+    let encoded = crate::schema_node::SchemaNode::all_of(cache.clauses(
+        &guards,
+        &ancestor,
+        &empty,
+        absence,
+        ConditionPolarity::Widen,
+    ));
+    let original = crate::schema_node::SchemaNode::all_of(build_condition_clauses(
+        &guards,
+        &ancestor,
+        &empty,
+        absence,
+        ConditionPolarity::Widen,
+    ));
+    let mut shared = crate::schema_tree::SchemaDocument::new_root_object(crate::RootPolicy::Open);
+    let mut inline = shared.clone();
+    shared.append_conditional_with_definitions(
+        &ancestor,
+        encoded,
+        crate::schema_node::SchemaNode::from_value(serde_json::json!({"required":["child"]})),
+        &cache.definitions,
+    );
+    inline.append_conditional_with_definitions(
+        &ancestor,
+        original,
+        crate::schema_node::SchemaNode::from_value(serde_json::json!({"required":["child"]})),
+        &std::collections::BTreeMap::new(),
+    );
+    sim_assert_eq!(have: expand_conditions(shared.into_value(), &cache.definitions), want: inline.into_value());
+}
+
+#[test]
+fn resource_scopes_and_addressed_inline_conditions_keep_bodies_inline() {
+    let empty = serde_yaml::Value::Null;
+    let roots = BTreeSet::new();
+    let absence = AbsenceDefaults {
+        runtime_defaults: &empty,
+        dependency_refill: &empty,
+        dependency_roots: &roots,
+    };
+    let guard = ConditionalGuard::Not(std::sync::Arc::new(ConditionalGuard::Truthy {
+        path: ValuesPath::parse("flag"),
+    }));
+    for source in [
+        serde_json::json!({ "properties": { "nested": { "$id": "urn:example:nested", "type": "object" } } }),
+        serde_json::json!({ "$ref": "#/allOf/0/if/allOf/0" }),
+    ] {
+        let mut cache = ConditionFragmentCache::new();
+        cache.reserve(&source);
+        let encoded = cache.clauses(
+            std::slice::from_ref(&guard),
+            &[],
+            &empty,
+            absence,
+            ConditionPolarity::Widen,
+        );
+        let expected = build_condition_clauses(
+            std::slice::from_ref(&guard),
+            &[],
+            &empty,
+            absence,
+            ConditionPolarity::Widen,
+        );
+        sim_assert_eq!(have: encoded.into_iter().map(crate::schema_node::SchemaNode::into_value).collect::<Vec<_>>(), want: expected.into_iter().map(crate::schema_node::SchemaNode::into_value).collect::<Vec<_>>());
+        sim_assert_eq!(have: cache.definitions.is_empty(), want: true);
+    }
 }

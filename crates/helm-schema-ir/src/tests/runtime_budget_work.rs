@@ -1232,18 +1232,18 @@ fn invocation_operand_fallback_sharing_preserves_selected_leaf_relations() {
         );
         let no = Value::influenced(BTreeSet::from([ValuesPath::parse("no")]));
         let mut fallback = None;
-        state.active.push(DecisionEdge {
+        std::rc::Rc::make_mut(&mut state.active).push(DecisionEdge {
             test: Rc::clone(&selector),
             taken: true,
         });
         let yes = state.test_with_unknown(&yes, &mut fallback);
-        state.active.pop();
-        state.active.push(DecisionEdge {
+        std::rc::Rc::make_mut(&mut state.active).pop();
+        std::rc::Rc::make_mut(&mut state.active).push(DecisionEdge {
             test: Rc::clone(&selector),
             taken: false,
         });
         let no = state.test_with_unknown(&no, &mut fallback);
-        state.active.pop();
+        std::rc::Rc::make_mut(&mut state.active).pop();
         let query = state.heap.arena.choose_test(Rc::clone(&selector), yes, no);
         let guard = state.heap.arena.runtime_path(&[DecisionEdge {
             test: query,

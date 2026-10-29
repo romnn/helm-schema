@@ -354,12 +354,12 @@ impl State {
         if let ValueNode::Select { decision, yes, no } = value.node.as_ref() {
             let depth = self.active.len();
             for (taken, arm) in [(true, yes), (false, no)] {
-                self.active.push(super::DecisionEdge {
+                std::rc::Rc::make_mut(&mut self.active).push(super::DecisionEdge {
                     test: Rc::clone(decision),
                     taken,
                 });
                 self.record_selector_host(arm, live);
-                self.active.truncate(depth);
+                std::rc::Rc::make_mut(&mut self.active).truncate(depth);
             }
             return;
         }

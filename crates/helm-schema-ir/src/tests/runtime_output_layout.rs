@@ -37,7 +37,7 @@ fn fixture(prefix: &str, suffix: &str) -> Fixture {
         ordinal: 0,
         span: Span::new(0, 1),
         source_path: None,
-        condition: Predicate::True,
+        condition: Predicate::True.into(),
         value,
         raw_format_inputs: Vec::new(),
         rendered: true,
@@ -214,11 +214,11 @@ fn selected_output_uses_the_target_condition_without_forking_state() {
         ],
         ..TextBuffer::default()
     };
-    fixture.site.condition = condition;
+    fixture.site.condition = condition.into();
     let decisions = fixture.state.heap.arena.next_decision.get();
     sim_assert_eq!(have: placement(&fixture), want: PlainScalarPlacement::BlockValue);
     sim_assert_eq!(have: fixture.state.heap.arena.next_decision.get(), want: decisions);
-    fixture.site.condition = Predicate::True;
+    fixture.site.condition = Predicate::True.into();
     sim_assert_eq!(have: placement(&fixture), want: PlainScalarPlacement::Unknown);
 }
 
@@ -278,7 +278,7 @@ fn partial_control_does_not_hide_output_failure_or_a_possible_survivor() {
             .heap
             .arena
             .decision(Predicate::False, Predicate::False, Coverage::Partial);
-    fixture.state.active.push(DecisionEdge {
+    Rc::make_mut(&mut fixture.state.active).push(DecisionEdge {
         test: decision,
         taken: true,
     });

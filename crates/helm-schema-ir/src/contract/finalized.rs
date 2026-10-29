@@ -27,9 +27,10 @@ fn activation_guard_disjunction(guard_sets: Vec<Vec<ConditionalGuard>>) -> Vec<C
                 .into_iter()
                 .map(|mut guards| match guards.len() {
                     1 => guards.remove(0),
-                    _ => ConditionalGuard::AllOf(guards),
+                    _ => ConditionalGuard::AllOf(guards.into()),
                 })
-                .collect(),
+                .collect::<Vec<_>>()
+                .into(),
         )],
     }
 }

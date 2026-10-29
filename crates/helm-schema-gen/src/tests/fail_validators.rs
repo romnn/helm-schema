@@ -678,12 +678,12 @@ fn localized_terminal_clauses_preserve_negated_presence_semantics() -> eyre::Res
     let signals = ContractSchemaSignals::new(
         BTreeMap::new(),
         vec![vec![
-            helm_schema_core::ConditionalGuard::Not(Box::new(
+            helm_schema_core::ConditionalGuard::Not(std::sync::Arc::new(
                 helm_schema_core::ConditionalGuard::Truthy {
                     path: helm_schema_core::ValuesPath::parse("tags.feature"),
                 },
             )),
-            helm_schema_core::ConditionalGuard::Not(Box::new(
+            helm_schema_core::ConditionalGuard::Not(std::sync::Arc::new(
                 helm_schema_core::ConditionalGuard::Absent {
                     path: helm_schema_core::ValuesPath::parse("tags.feature"),
                 },

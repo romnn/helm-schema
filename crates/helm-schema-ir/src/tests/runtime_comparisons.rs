@@ -376,7 +376,7 @@ fn comparison_local_paths_preserve_heap_observations_and_caller_decisions() -> e
     let last = old_sites.last().ok_or_eyre("later observation was lost")?;
     assert!(old_sites.len() >= 2);
     assert!(std::rc::Rc::ptr_eq(&first.value().heap, &last.value().heap));
-    sim_assert_eq!(have: first.condition(), want: &Predicate::truthy_path("enabled"));
+    sim_assert_eq!(have: first.condition(), want: Predicate::truthy_path("enabled"));
     for site in old_sites {
         sim_assert_eq!(have: Predicate::all(vec![site.condition().clone(), Predicate::truthy_path("enabled").negated()]).normalize_boolean(), want: Predicate::False);
     }

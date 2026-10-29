@@ -732,7 +732,7 @@ fn lift_value_choice(
 ) -> ValuePlan {
     let depth = state.active.len();
     let [yes, no] = [true, false].map(|taken| {
-        state.active.push(super::DecisionEdge {
+        std::rc::Rc::make_mut(&mut state.active).push(super::DecisionEdge {
             test: Rc::clone(decision),
             taken,
         });
@@ -750,7 +750,7 @@ fn lift_value_choice(
             }
             transfer_values(&invocation, state, remaining, queries)
         };
-        state.active.truncate(depth);
+        std::rc::Rc::make_mut(&mut state.active).truncate(depth);
         plan
     });
     join_value_plans(state, decision, yes, no)
@@ -860,12 +860,12 @@ struct ComparisonBudget {
 }
 
 struct ComparisonCase {
-    active: Vec<super::DecisionEdge>,
+    active: Rc<Vec<super::DecisionEdge>>,
     first: Value,
 }
 
 struct ComparisonExit {
-    active: Vec<super::DecisionEdge>,
+    active: Rc<Vec<super::DecisionEdge>>,
     flow: Flow,
 }
 
@@ -1013,7 +1013,7 @@ fn first_comparison_cases(
                     budget,
                 ));
             }
-            state.active.truncate(depth);
+            std::rc::Rc::make_mut(&mut state.active).truncate(depth);
         }
         return cases;
     }
@@ -1033,7 +1033,7 @@ fn first_comparison_cases(
             );
             let mut active = state.active.clone();
             if decision.constant_outcome() != Some(true) {
-                active.push(super::DecisionEdge {
+                Rc::make_mut(&mut active).push(super::DecisionEdge {
                     test: decision,
                     taken: true,
                 });
@@ -1094,7 +1094,7 @@ fn comparison_walk(
                                 next.push(state.active.clone());
                             }
                         }
-                        state.active.truncate(depth);
+                        std::rc::Rc::make_mut(&mut state.active).truncate(depth);
                     }
                 }
             }
@@ -1119,7 +1119,7 @@ fn comparison_walk(
 
 fn comparison_push(state: &mut State, test: Rc<super::FrozenTest>, taken: bool) {
     if test.constant_outcome() != Some(taken) {
-        state.active.push(super::DecisionEdge { test, taken });
+        std::rc::Rc::make_mut(&mut state.active).push(super::DecisionEdge { test, taken });
     }
 }
 
@@ -1185,7 +1185,7 @@ impl super::control::Reconvergent for ComparisonExit {
             &mut widened,
         );
         Self {
-            active,
+            active: active.into(),
             flow: Flow::Normal(Normal { value }),
         }
     }
@@ -1281,7 +1281,7 @@ fn compare_pair_inner(
                     budget,
                 ));
             }
-            state.active.truncate(depth);
+            std::rc::Rc::make_mut(&mut state.active).truncate(depth);
         }
         return comparison_reconverge(state, exits);
     }
@@ -1323,7 +1323,7 @@ fn compare_pair_inner(
                 },
             });
         }
-        state.active.truncate(depth);
+        std::rc::Rc::make_mut(&mut state.active).truncate(depth);
     }
     exits
 }

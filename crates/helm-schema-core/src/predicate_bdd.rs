@@ -104,12 +104,12 @@ fn normalize_with_memo(predicate: Predicate, memo: Option<&PredicateMemo>) -> Pr
     }
     candidates
         .into_iter()
-        .min_by_key(|candidate| (predicate_size(candidate), candidate.clone()))
+        .min_by_key(|candidate| (candidate.syntax_size(), candidate.clone()))
         .unwrap_or(Predicate::False)
 }
 
 fn simplify_structure(predicate: Predicate, memo: Option<&PredicateMemo>) -> Predicate {
-    match predicate.kind() {
+    let simplified = match predicate.kind() {
         PredicateKind::Not(inner) => {
             let inner = simplify_structure(inner.clone(), memo);
             match inner.kind() {
@@ -186,7 +186,12 @@ fn simplify_structure(predicate: Predicate, memo: Option<&PredicateMemo>) -> Pre
                 _ => Predicate::Or(alternatives.into_iter().collect()),
             }
         }
-        _ => predicate,
+        _ => predicate.clone(),
+    };
+    if simplified == predicate {
+        predicate
+    } else {
+        simplified
     }
 }
 
@@ -594,19 +599,6 @@ fn predicate_from_false_paths(paths: Vec<Vec<Predicate>>) -> Predicate {
         .into_iter()
         .collect::<Vec<_>>();
     Predicate::all(clauses)
-}
-
-fn predicate_size(predicate: &Predicate) -> usize {
-    match predicate.kind() {
-        PredicateKind::Not(inner) => 1 + predicate_size(inner),
-        PredicateKind::And(predicates) | PredicateKind::Or(predicates) => {
-            1 + predicates.iter().map(predicate_size).sum::<usize>()
-        }
-        PredicateKind::True
-        | PredicateKind::False
-        | PredicateKind::Approximate { .. }
-        | PredicateKind::Guard(_) => 1,
-    }
 }
 
 #[cfg(test)]

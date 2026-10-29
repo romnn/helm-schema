@@ -1,8 +1,8 @@
 use super::{
     BTreeMap, BTreeSet, ConditionalGuard, ConditionalPathOverlay, EmissionClass, EmissionReport,
     GuardValue, LoweredConjunct, NestedGuardScope, PathSchemaResolver, ResolvedPathSchema,
-    SchemaDocument, SchemaNode, Value, YamlValue, build_condition_clauses, common_prefix_len,
-    evaluate_guard_set_on_values, guard_encodes_fully,
+    SchemaDocument, SchemaNode, Value, YamlValue, common_prefix_len, evaluate_guard_set_on_values,
+    guard_encodes_fully,
 };
 use helm_schema_core::ValuesPath;
 
@@ -489,7 +489,7 @@ fn append_guarded_values_default_source_clauses(
                 .collect::<Vec<_>>();
             let (_, values_yaml_doc, absence) =
                 documents.condition_context(guards, dependency_roots, predicate_memo);
-            let mut conditions = build_condition_clauses(
+            let mut conditions = gate.condition_clauses(
                 &remaining_guards,
                 &[],
                 values_yaml_doc,
@@ -669,7 +669,6 @@ pub(crate) fn append_selected_constraints(
     predicate_memo: &helm_schema_core::PredicateMemo,
     gate: &mut UncoalescedRootGate<'_>,
 ) {
-    let mut condition_cache = crate::condition_encoding::ConditionFragmentCache::new();
     // Conditionals sharing one guard set and scope conjoin into one if/then:
     // `allOf [{if G then A}, {if G then B}]` is `{if G then A ∧ B}`, and the
     // repeated `if` blocks dominate emitted size on charts with many guarded
@@ -703,7 +702,7 @@ pub(crate) fn append_selected_constraints(
     }
     let mut by_content: BTreeMap<(Vec<String>, String), ContentGroup> = BTreeMap::new();
     for ((ancestor_segments, guards), group) in grouped {
-        let (values_document, values_yaml_doc, absence) =
+        let (_, values_yaml_doc, absence) =
             documents.condition_context(&guards, dependency_roots, predicate_memo);
         let mut merged: Option<(Value, usize, usize)> = None;
         let mut separate = Vec::new();
@@ -712,24 +711,19 @@ pub(crate) fn append_selected_constraints(
         let mut guard_condition = None;
         for conditional in group {
             let mandatory = usize::from(matches!(conditional.class, EmissionClass::Mandatory));
-            let Some(fragment) = build_scoped_target_fragment(
-                &conditional,
-                values_yaml_doc,
-                absence,
-                values_document,
-                &mut condition_cache,
-            ) else {
+            let Some(fragment) =
+                build_scoped_target_fragment(&conditional, values_yaml_doc, absence, gate)
+            else {
                 report.mandatory_outcomes.fallback += mandatory;
                 continue;
             };
             let condition = guard_condition.get_or_insert_with(|| {
-                SchemaNode::all_of(crate::condition_encoding::build_condition_clauses_cached(
+                SchemaNode::all_of(gate.condition_clauses(
                     &guards,
                     &ancestor_segments,
-                    values_document,
                     values_yaml_doc,
                     absence,
-                    &mut condition_cache,
+                    crate::condition_encoding::ConditionPolarity::Widen,
                 ))
             });
             let encoding = GuardEncoding {
@@ -813,15 +807,14 @@ pub(crate) fn append_selected_constraints(
             helm_schema_core::GuardDnf::normalize_conditional_guard_disjunction(group.guard_sets)
                 .into_iter()
                 .map(|guards| {
-                    let (values_document, values_yaml_doc, absence) =
+                    let (_, values_yaml_doc, absence) =
                         documents.condition_context(&guards, dependency_roots, predicate_memo);
-                    SchemaNode::all_of(crate::condition_encoding::build_condition_clauses_cached(
+                    SchemaNode::all_of(gate.condition_clauses(
                         &guards,
                         &ancestor_segments,
-                        values_document,
                         values_yaml_doc,
                         absence,
-                        &mut condition_cache,
+                        crate::condition_encoding::ConditionPolarity::Widen,
                     ))
                 })
                 .collect();
@@ -863,7 +856,12 @@ pub(crate) fn append_selected_constraints(
         };
         report.carriers.grouping_fan_in = report.carriers.grouping_fan_in.max(emission.facts);
         report.mandatory_outcomes.fallback += emission.mandatory_facts;
-        root_schema.append_conditional(&emission.ancestor_segments, emission.condition, content);
+        gate.append_conditional(
+            root_schema,
+            &emission.ancestor_segments,
+            emission.condition,
+            content,
+        );
     }
 }
 
@@ -924,8 +922,7 @@ fn build_scoped_target_fragment(
     conditional: &LoweredConjunct,
     values_yaml_doc: &YamlValue,
     absence: crate::condition_encoding::AbsenceDefaults<'_>,
-    values_document: Option<usize>,
-    condition_cache: &mut crate::condition_encoding::ConditionFragmentCache,
+    gate: &UncoalescedRootGate<'_>,
 ) -> Option<Value> {
     let mut target_segments = conditional.carrier.ancestor_segments.clone();
     target_segments.extend(conditional.carrier.relative_target_segments.iter().cloned());
@@ -940,15 +937,13 @@ fn build_scoped_target_fragment(
         }) {
             return None;
         }
-        let condition =
-            SchemaNode::all_of(crate::condition_encoding::build_condition_clauses_cached(
-                &scope.guards,
-                &scope.ancestor_segments,
-                values_document,
-                values_yaml_doc,
-                absence,
-                condition_cache,
-            ));
+        let condition = SchemaNode::all_of(gate.condition_clauses(
+            &scope.guards,
+            &scope.ancestor_segments,
+            values_yaml_doc,
+            absence,
+            crate::condition_encoding::ConditionPolarity::Widen,
+        ));
         let condition = condition.into_value();
         content = if crate::schema_model::is_empty_schema(&condition) {
             then_schema
@@ -1063,7 +1058,7 @@ fn append_terminal_clause(
         absence,
         polarity: crate::condition_encoding::ConditionPolarity::Narrow,
     };
-    let condition = SchemaNode::all_of(build_condition_clauses(
+    let condition = SchemaNode::all_of(gate.condition_clauses(
         guards,
         ancestor_segments,
         values_yaml_doc,
@@ -1097,7 +1092,8 @@ fn append_unless_withdrawn(
         Value::Bool(false),
         encoding,
     ) {
-        root_schema.append_conditional(
+        gate.append_conditional(
+            root_schema,
             ancestor_segments,
             condition,
             SchemaNode::foreign(then_schema),

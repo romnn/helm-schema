@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use super::{
     HELM_TRUTHY_DEFINITION_NAME, PLAIN_SCALAR_NULL_TOKEN_PATTERN, SchemaNode, Value,
@@ -64,18 +64,23 @@ fn validator_accepts(validator: Option<&jsonschema::Validator>, instance: &Value
 }
 
 pub(crate) fn open_objects_rejecting_declared_members(schema: Value, declared: &Value) -> Value {
-    preserve_declared_default(schema, declared, false)
+    preserve_declared_default(schema, declared, false, &BTreeMap::new())
 }
 
-pub(crate) fn preserve_declared_default_in_schema(schema: Value, declared: &Value) -> Value {
-    let schema = preserve_declared_default(schema, declared, true);
-    preserve_declared_plain_scalar_empty_defaults(schema, declared)
+pub(crate) fn preserve_declared_default_with_definitions(
+    schema: Value,
+    declared: &Value,
+    definitions: &BTreeMap<String, Value>,
+) -> Value {
+    let schema = preserve_declared_default(schema, declared, true, definitions);
+    preserve_declared_plain_scalar_empty_defaults(schema, declared, definitions)
 }
 
 pub(super) fn preserve_declared_default(
     mut schema: Value,
     declared: &Value,
     preserve_scalar: bool,
+    definitions: &BTreeMap<String, Value>,
 ) -> Value {
     let (Some(schema_object), Some(declared_object)) =
         (schema.as_object_mut(), declared.as_object())
@@ -89,10 +94,13 @@ pub(super) fn preserve_declared_default(
                     std::mem::take(items_schema),
                     declared_item,
                     preserve_scalar,
+                    definitions,
                 );
             }
         }
-        return if !preserve_scalar || schema_accepts_json_value(&schema, declared) {
+        return if !preserve_scalar
+            || schema_accepts_json_value_with_definitions(&schema, declared, definitions)
+        {
             schema
         } else {
             union_schema_list(vec![
@@ -107,14 +115,15 @@ pub(super) fn preserve_declared_default(
             continue;
         };
         for branch in branches {
-            *branch = preserve_declared_default(std::mem::take(branch), declared, false);
+            *branch =
+                preserve_declared_default(std::mem::take(branch), declared, false, definitions);
         }
     }
     for keyword in ["then", "else"] {
         let Some(branch) = schema_object.get_mut(keyword) else {
             continue;
         };
-        *branch = preserve_declared_default(std::mem::take(branch), declared, false);
+        *branch = preserve_declared_default(std::mem::take(branch), declared, false, definitions);
     }
 
     let known_properties = schema_object
@@ -161,8 +170,12 @@ pub(super) fn preserve_declared_default(
         let Some(child_default) = declared_object.get(key) else {
             continue;
         };
-        *child_schema =
-            preserve_declared_default(std::mem::take(child_schema), child_default, preserve_scalar);
+        *child_schema = preserve_declared_default(
+            std::mem::take(child_schema),
+            child_default,
+            preserve_scalar,
+            definitions,
+        );
     }
     schema
 }
@@ -170,10 +183,11 @@ pub(super) fn preserve_declared_default(
 pub(super) fn preserve_declared_plain_scalar_empty_defaults(
     mut schema: Value,
     declared: &Value,
+    definitions: &BTreeMap<String, Value>,
 ) -> Value {
     if declared.as_str() == Some("") {
         return if has_plain_scalar_implicit_token_exclusion(&schema)
-            && !schema_accepts_json_value(&schema, declared)
+            && !schema_accepts_json_value_with_definitions(&schema, declared, definitions)
         {
             union_schema_list(vec![
                 schema,
@@ -193,6 +207,7 @@ pub(super) fn preserve_declared_plain_scalar_empty_defaults(
                 *items_schema = preserve_declared_plain_scalar_empty_defaults(
                     std::mem::take(items_schema),
                     declared_item,
+                    definitions,
                 );
             }
         }
@@ -209,15 +224,21 @@ pub(super) fn preserve_declared_plain_scalar_empty_defaults(
     for keyword in ["allOf", "anyOf", "oneOf"] {
         if let Some(branches) = schema_object.get_mut(keyword).and_then(Value::as_array_mut) {
             for branch in branches {
-                *branch =
-                    preserve_declared_plain_scalar_empty_defaults(std::mem::take(branch), declared);
+                *branch = preserve_declared_plain_scalar_empty_defaults(
+                    std::mem::take(branch),
+                    declared,
+                    definitions,
+                );
             }
         }
     }
     for keyword in ["then", "else"] {
         if let Some(branch) = schema_object.get_mut(keyword) {
-            *branch =
-                preserve_declared_plain_scalar_empty_defaults(std::mem::take(branch), declared);
+            *branch = preserve_declared_plain_scalar_empty_defaults(
+                std::mem::take(branch),
+                declared,
+                definitions,
+            );
         }
     }
     if let Some(properties) = schema_object
@@ -231,6 +252,7 @@ pub(super) fn preserve_declared_plain_scalar_empty_defaults(
             *child_schema = preserve_declared_plain_scalar_empty_defaults(
                 std::mem::take(child_schema),
                 child_default,
+                definitions,
             );
         }
     }
@@ -245,6 +267,7 @@ pub(super) fn preserve_declared_plain_scalar_empty_defaults(
                 *member_schema = preserve_declared_plain_scalar_empty_defaults(
                     std::mem::take(member_schema),
                     declared_value,
+                    definitions,
                 );
             }
         }
@@ -264,9 +287,22 @@ pub(super) fn should_merge_values_yaml_into_conditional_branch(
         || (is_scalar_like_schema(branch_schema) && is_scalar_like_schema(values_yaml_schema))
 }
 
-pub(super) fn schema_accepts_json_value(schema: &Value, instance: &Value) -> bool {
-    let document =
-        value_references_helm_truthy(schema).then(|| helm_truthy_acceptance_document(schema));
+fn schema_accepts_json_value_with_definitions(
+    schema: &Value,
+    instance: &Value,
+    definitions: &BTreeMap<String, Value>,
+) -> bool {
+    let mut reachable =
+        crate::provider_definitions::definitions_reachable_from(schema, definitions);
+    if value_references_helm_truthy(schema) || reachable.values().any(value_references_helm_truthy)
+    {
+        reachable.insert(
+            HELM_TRUTHY_DEFINITION_NAME.to_owned(),
+            helm_truthy_definition_schema(),
+        );
+    }
+    let document = (!reachable.is_empty())
+        .then(|| serde_json::json!({ "$defs": reachable, "allOf": [schema] }));
     jsonschema::validator_for(document.as_ref().unwrap_or(schema))
         .map(|validator| validator.is_valid(instance))
         .unwrap_or(false)

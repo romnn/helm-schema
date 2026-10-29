@@ -78,7 +78,7 @@ fn condition_polarities_preserve_independent_partial_proofs() {
         positive
             .iter()
             .any(|site| site.coverage_exact()
-                && site.condition() == &Predicate::truthy_path("enabled")),
+                && site.condition() == Predicate::truthy_path("enabled")),
         "the known positive arm was lost"
     );
     assert!(
