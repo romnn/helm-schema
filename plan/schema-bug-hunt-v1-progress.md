@@ -9563,4 +9563,29 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   architecture KEEP with 140–210 LOC cleanup (sol 20261028T095212-0443f3d0). Both folded into the C06a rebase onto 63ed5d62
   (branch r3b/merged-c06a). The R3b builder moves to C09 (legacy adapter deletion). A landing-preview lane (sol
   20261028T101112-dee355fd) dumps the corpus and runs the live battery on 63ed5d62 to surface landing flips early. Orchestrator.
-Next: C06a rebase + P1 + cleanup → merge; C09 slices; slice 3 + C05 step 2; landing preview report; F20 → landing 20.
+- 08:02 (Oct 29) — **R3b line advanced to 8900ce9a; the landing preview shows R3b is far from parity with main, so it re-plans to weeks.**
+  Commits on r3b/construction, in order:
+  - 61dedbce and ad33fed8: C09 slices 2–3. Legacy adapters deleted, −1,627 production LOC. W1 verdicts and their 1,418 hashes are unchanged.
+  - fb40958c: slice 3, deferring runtime proofs through observation histories. KPS 7.39 → 5.33 CPU-s over 7 pairs; milvus 232 → 141 MB; +383 LOC.
+    Correction: slice 3 does not preserve bytes against its base. Shared condition definitions re-lay 159 chart schemas. The per-chart Helm pair screen showed 0 flips; the 7 flagged witnesses are inherited raw-lint audits that base/base A/A runs reproduce.
+  - 8900ce9a: root closure. ADR 0042 policy is restored, and a root unknown-read region no longer forces RootPolicy::Open, an override C02 had added.
+    - 157/157 corpus charts are closed, against 154 on main.
+    - Also fixes an inherited `stop` footprint defect.
+    - +50 LOC. Helm pair screens show 0 flips on 14 charts.
+    - The combined tree has 568 unit failures, all inherited, 0 new.
+  Landing preview 1, at 63ed5d62 against ROSTER_BASELINE (live, 157 charts plus 4 lean):
+  - 90,586 new false-acceptance cells and 7,543 false-rejection cells.
+  - Schema bytes: 191 MB on main against 12.6 MB for R3b.
+  - Preview 2 at ad33fed8 reproduces the counts exactly so far, so C06a and C09 did not move parity.
+  Analysis (sol-high 20261028T233147-00d6ed57), checked against the Helm evidence: the losses are regressions, not ADR 0013 widening.
+  - Provider-backed constraints, 28.8k cells (C06b): since C02, frozen toYaml and helper output project as taint, so the surviving provider path is never fed.
+  - YAML placement/type, 21k cells (C06b).
+  - Heap/member nilness, 30k cells (C03b).
+  - Root closure, now fixed.
+  Orchestrator decision: R3b lands only at parity with main, per plan :601. Estimate about 2 weeks (Nov 10–12, range Nov 7–19).
+  Critical path:
+  - The heap-history redesign, a HeapVersion DAG with lazy bounded queries (sol-high builder 20261029T004316-2b7d7f1d).
+  - Then C06b (design 20261028T235830-e8771f61) and C03b.
+  The open-cells tpl step was blocked by mixed precise/Widened heap joins (KPS over a 6 GB cap); it is folded into the heap redesign.
+  Designs: round8/designs/{heap-history,C06b-serialized-placement,parity-analysis}.md. Plan: round8/r3b-remaining-plan.md. Orchestrator.
+Next: heap-history hand-back → C06b red tests + implementation, C03b; F20 → landing 20; targeted previews per fixed class.
