@@ -23,6 +23,25 @@ fn command() -> Command {
     command
 }
 
+fn command_with_definitions(override_path: &std::path::Path) -> Command {
+    let mut command = command();
+    command
+        .arg("--keep-refs")
+        .arg("--override-schema")
+        .arg(override_path);
+    command
+}
+
+fn named_definition() -> Value {
+    json!({
+        "$defs": {"layout-string-value": {"type": "string"}},
+        "properties": {
+            "layoutLeft": {"$ref": "#/$defs/layout-string-value"},
+            "layoutRight": {"$ref": "#/$defs/layout-string-value"}
+        }
+    })
+}
+
 fn run(command: &mut Command) -> eyre::Result<Output> {
     let output = command.output()?;
     eyre::ensure!(
@@ -41,14 +60,11 @@ fn auto_compacts_large_output_for_files_and_stdout_and_reports_json_diagnostics(
     let output_path = scratch.path().join("schema.json");
     let map_path = scratch.path().join("defs-map.json");
     // Indentation pushes this schema over the limit while compact JSON still fits.
-    std::fs::write(
-        &override_path,
-        serde_json::to_vec(&json!({
-            "$comment": "x".repeat(4_800_000),
-            "enum": (0..50_000).collect::<Vec<_>>()
-        }))?,
-    )?;
-    let stdout = run(command().arg("--override-schema").arg(&override_path))?;
+    let mut override_schema = named_definition();
+    override_schema["$comment"] = json!("x".repeat(4_800_000));
+    override_schema["enum"] = json!((0..50_000).collect::<Vec<_>>());
+    std::fs::write(&override_path, serde_json::to_vec(&override_schema)?)?;
+    let stdout = run(&mut command_with_definitions(&override_path))?;
     let schema: Value = serde_json::from_slice(&stdout.stdout)?;
     assert!(serde_json::to_vec_pretty(&schema)?.len() > HELM_MAX_CHART_FILE_BYTES);
     assert!(stdout.stdout.len() <= HELM_MAX_CHART_FILE_BYTES);
@@ -66,9 +82,7 @@ fn auto_compacts_large_output_for_files_and_stdout_and_reports_json_diagnostics(
         )),
         "{stderr}"
     );
-    let file = run(command()
-        .arg("--override-schema")
-        .arg(&override_path)
+    let file = run(command_with_definitions(&override_path)
         .args(["--output-layout", "auto"])
         .arg("--output")
         .arg(&output_path)
@@ -77,10 +91,7 @@ fn auto_compacts_large_output_for_files_and_stdout_and_reports_json_diagnostics(
     sim_assert_eq!(have: std::fs::read(&output_path)?, want: stdout.stdout);
     sim_assert_eq!(have: String::from_utf8(file.stderr)?, want: stderr);
 
-    let pretty = run(command()
-        .arg("--override-schema")
-        .arg(&override_path)
-        .args(["--output-layout", "pretty"]))?;
+    let pretty = run(command_with_definitions(&override_path).args(["--output-layout", "pretty"]))?;
     assert!(pretty.stdout.len() > HELM_MAX_CHART_FILE_BYTES);
     assert!(String::from_utf8(pretty.stderr)?.contains("warning:"));
     let readable: Value = serde_json::from_slice(&pretty.stdout)?;
@@ -90,15 +101,10 @@ fn auto_compacts_large_output_for_files_and_stdout_and_reports_json_diagnostics(
     rename_definitions(&mut restored, &names);
     sim_assert_eq!(have: restored, want: readable);
 
-    let compact = run(command()
-        .arg("--override-schema")
-        .arg(&override_path)
-        .args(["--output-layout", "compact"]))?;
+    let compact =
+        run(command_with_definitions(&override_path).args(["--output-layout", "compact"]))?;
     sim_assert_eq!(have: compact.stdout, want: stdout.stdout);
-    let json_diagnostics = run(command()
-        .arg("--override-schema")
-        .arg(&override_path)
-        .arg("--diag-format=json"))?;
+    let json_diagnostics = run(command_with_definitions(&override_path).arg("--diag-format=json"))?;
     let diagnostics = serde_json::Deserializer::from_slice(&json_diagnostics.stderr)
         .into_iter::<Value>()
         .collect::<Result<Vec<_>, _>>()?;
@@ -225,12 +231,15 @@ fn every_layout_writes_oversized_output_with_a_warning_and_exits_successfully() 
 fn small_auto_and_pretty_output_stay_readable_and_compact_always_shortens() -> eyre::Result<()> {
     let scratch = ScratchDir::new("output-layout-small")?;
     let map_path = scratch.path().join("defs-map.json");
-    let default = run(&mut command())?;
-    let pretty = run(command().args(["--output-layout", "pretty"]))?;
+    let override_path = scratch.path().join("override.json");
+    // Explicit shared references keep this a layout test across inference changes.
+    std::fs::write(&override_path, serde_json::to_vec(&named_definition())?)?;
+    let default = run(&mut command_with_definitions(&override_path))?;
+    let pretty = run(command_with_definitions(&override_path).args(["--output-layout", "pretty"]))?;
     sim_assert_eq!(have: &default.stdout, want: &pretty.stdout);
     let readable: Value = serde_json::from_slice(&pretty.stdout)?;
     for layout in ["auto", "pretty", "compact"] {
-        let output = run(command()
+        let output = run(command_with_definitions(&override_path)
             .args(["--output-layout", layout])
             .arg("--defs-map")
             .arg(&map_path))?;

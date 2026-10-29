@@ -248,7 +248,17 @@ fn small_generated_schemas_stay_readable_and_explicit_shortening_writes_the_map(
     let readable_path = dir.path().join("readable.json");
     let shortened_path = dir.path().join("shortened.json");
     let map = dir.path().join("defs-map.json");
-    let common = ["--offline", "--no-k8s-schemas", "--no-config"];
+    let override_path = dir.path().join("override.json");
+    // Name transport needs a retained definition independently of inferred contracts.
+    std::fs::write(&override_path, serde_json::to_vec(&readable_schema(0))?)?;
+    let common = [
+        "--offline",
+        "--no-k8s-schemas",
+        "--no-config",
+        "--keep-refs",
+        "--override-schema",
+        path_arg(&override_path)?,
+    ];
 
     let mut readable_args = vec![path_arg(&chart)?, "-o", path_arg(&readable_path)?];
     readable_args.extend(common);

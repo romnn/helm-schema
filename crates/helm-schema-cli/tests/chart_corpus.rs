@@ -82,23 +82,7 @@ const KNOWN_VALUES_REJECTIONS: &[&str] = &[
 /// A landing fix therefore breaks the corresponding test on purpose, and the
 /// chart must be promoted out of this list by the same change that adjudicates
 /// its new fixture.
-const QUARANTINED_FALSE_REJECTIONS: &[&str] = &[
-    "aws-ebs-csi-driver",
-    "eck-stack",
-    "gitea",
-    "headscale",
-    "imgproxy",
-    "kube-starrocks",
-    "milvus",
-    "nacos",
-    "netbox",
-    "nginx-ingress",
-    "openebs",
-    "openldap-stack-ha",
-    "stacks-blockchain-api",
-    "synapse",
-    "yourls",
-];
+const QUARANTINED_FALSE_REJECTIONS: &[&str] = &[];
 
 /// Charts vendored in one batch from the Artifact Hub popularity ranking, whose
 /// fixtures are pinned for **drift detection only**.

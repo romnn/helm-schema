@@ -121,7 +121,6 @@ fn correlated_constructor(function: &str) {
             vec![choice; count]
         };
         let Measured { exits: _, work } = measure(|| invoke(&executor, function, values, state));
-        eprintln!("{function} members={count}: {work:?}");
         measured.push(work);
     }
     sim_assert_eq!(have: measured, want: (0..5).map(|_| Work {
@@ -187,7 +186,6 @@ fn correlated_constructor_chain_enters_include_once() -> eyre::Result<()> {
         }
         results
     });
-    eprintln!("list/dict/include: {work:?}");
     sim_assert_eq!(have: work, want: Work { alternatives: 3, forks: 0, allocations: 1, helpers: 1, exits: 1 });
     let exit = exits.first().ok_or_eyre("include exit missing")?;
     let Flow::Normal(normal) = &exit.flow else {
@@ -218,7 +216,6 @@ fn conditional_dictionary_keys_still_split_and_repeated_keys_keep_the_last_membe
             state,
         )
     });
-    eprintln!("dict conditional key: {work:?}");
     sim_assert_eq!(have: work, want: Work { alternatives: 2, forks: 2, allocations: 2, helpers: 0, exits: 1 });
     for exit in exits {
         let Flow::Normal(normal) = exit.flow else {
@@ -303,7 +300,6 @@ fn independent_constructor_members_do_not_form_an_execution_product() {
                 .collect();
             let Measured { exits: _, work } =
                 measure(|| invoke(&executor, function, values, state));
-            eprintln!("{function} independent={count}: {work:?}");
             let key = format!("{function} members={count}");
             measured.insert(key.clone(), work);
             expected.insert(
@@ -605,7 +601,6 @@ fn guarded_members_preserve_the_concrete_json_depth_boundary() -> eyre::Result<(
                 } else {
                     None
                 };
-                eprintln!("JSON nesting={depth}, branch={taken}");
                 sim_assert_eq!(have: branch.heap.freeze(&value).exact_text(), want: expected);
             }
         }
