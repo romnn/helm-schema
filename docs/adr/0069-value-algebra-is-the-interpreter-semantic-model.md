@@ -1,6 +1,8 @@
 # 0069. The value algebra is the interpreter's single semantic model
 
-Status: Accepted (2026-10-23, user decisions D1–D4 of plan/value-algebra-r0.md §7: D1 no, D2 yes, D3 B, D4 yes)
+Status: Accepted (2026-10-23, user decisions D1–D4 of plan/value-algebra-r0.md §7: D1 no, D2 yes, D3 B, D4 yes);
+refined by [0070](0070-one-symbolic-interpreter-is-the-only-source-of-constraints.md), with deletions gated by
+[0071](0071-rearchitectures-prove-corpus-parity-before-deleting.md)
 Date: 2026-10-22 (R0 design closure; plan of 2026-10-21, user decision to rearchitect W1)
 
 ## Context
