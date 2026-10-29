@@ -517,23 +517,47 @@ impl Executor<'_> {
             exits.extend(self.range_else(program, boundaries, state.fork(Rc::clone(&test), false)));
             state.fork(test, true)
         };
-        super::operations::invalidate(&mut state);
-        state.enter_scope(Some(member.clone()));
-        if let Some(name) = &bindings.key {
-            bind_range(
-                &mut state,
-                name,
-                Value::influenced(value.inputs()),
-                bindings.assignment,
-            );
-        }
-        if let Some(name) = &bindings.value {
-            bind_range(&mut state, name, member, bindings.assignment);
-        }
         let id = state.loop_id(bindings.body.start as u64);
-        if let Some(id) = id {
-            state.loops.push(id);
-        }
+        let iteration = |mut state: State| {
+            state.enter_scope(Some(member.clone()));
+            if let Some(name) = &bindings.key {
+                bind_range(
+                    &mut state,
+                    name,
+                    Value::influenced(value.inputs()),
+                    bindings.assignment,
+                );
+            }
+            if let Some(name) = &bindings.value {
+                bind_range(&mut state, name, member.clone(), bindings.assignment);
+            }
+            if let Some(id) = id {
+                state.loops.push(id);
+            }
+            state
+        };
+        // The first possible iteration can read named inputs before loop-carried
+        // writes erase their provenance.
+        // Retain only its widening reads; output and narrowing evidence belong
+        // to the summary over all iterations below.
+        let first_reads = self
+            .window(
+                program,
+                bindings.body,
+                normal(iteration(state.clone()), Value::nil()),
+            )
+            .into_iter()
+            .flat_map(|exit| {
+                exit.state
+                    .reads
+                    .iter()
+                    .filter(|read| read.coverage != super::ReadCoverage::MemberHost)
+                    .cloned()
+                    .collect::<Vec<_>>()
+            })
+            .collect();
+        super::operations::invalidate(&mut state);
+        let state = iteration(state);
         let mut body_exits = self.window(
             program,
             Window {
@@ -543,6 +567,7 @@ impl Executor<'_> {
             normal(state, Value::nil()),
         );
         for exit in &mut body_exits {
+            exit.state.reads = exit.state.reads.union(&first_reads);
             if id.is_some() {
                 exit.state.loops.pop();
             }

@@ -724,14 +724,15 @@ fn read_footprint(kind: ValueKind, path: &str) -> ContractIr {
 }
 
 #[test]
-fn unknown_root_read_region_withdraws_only_inferred_root_closure() {
+fn unknown_root_read_region_preserves_authoring_root_closure() {
     let contract = read_footprint(ValueKind::WidenedRegion, "");
     sim_assert_eq!(
         have: schema_with_policy(contract, "{}", STRICT, SchemaProfile::Full),
         want: serde_json::json!({
             "$schema": "http://json-schema.org/draft-07/schema#",
             "type": "object",
-            "properties": { "global": {} }
+            "properties": { "global": {} },
+            "additionalProperties": false
         })
     );
 }
@@ -825,7 +826,123 @@ fn unknown_root_read_preserves_independent_provider_closure() {
                     "additionalProperties": false
                 },
                 "global": {}
+            },
+            "additionalProperties": false
+        })
+    );
+}
+
+#[test]
+fn unknown_read_regions_keep_declared_keys_and_helm_global_in_a_closed_root() {
+    for path in ["", "opaque"] {
+        let contract = read_footprint(ValueKind::WidenedRegion, path);
+        let properties = if path.is_empty() {
+            serde_json::json!({ "global": {}, "declared": {} })
+        } else {
+            serde_json::json!({
+                "global": {}, "declared": {}, "opaque": {}
+            })
+        };
+        sim_assert_eq!(
+            have: schema_with_policy(contract, "declared: 3", STRICT, SchemaProfile::Full),
+            want: serde_json::json!({
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "type": "object",
+                "properties": properties,
+                "additionalProperties": false
+            })
+        );
+    }
+}
+
+#[test]
+fn unknown_root_read_region_respects_explicit_open_root() {
+    sim_assert_eq!(
+        have: schema_with_policy(
+            read_footprint(ValueKind::WidenedRegion, ""), "declared: 3",
+            OPEN_ROOT, SchemaProfile::Full
+        ),
+        want: serde_json::json!({
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": { "global": {} }
+        })
+    );
+}
+
+#[test]
+fn dependency_root_remains_open_under_closed_authoring_policy() {
+    let mut contract = read_footprint(ValueKind::WidenedRegion, "");
+    contract.push_dependency_values_root(undeclared_dependency_root("sub"));
+    sim_assert_eq!(
+        have: schema_with_policy(contract, "sub: {}", STRICT, SchemaProfile::Full),
+        want: serde_json::json!({
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "global": {},
+                "sub": { "type": "object", "properties": { "global": {} } }
             }
         })
     );
+}
+
+#[test]
+fn whole_root_serialization_does_not_select_open_root_policy() {
+    sim_assert_eq!(
+        have: schema_with_policy(
+            read_footprint(ValueKind::YamlSerialized, ""), "{}", STRICT, SchemaProfile::Full
+        ),
+        want: serde_json::json!({
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": { "global": {} }
+        })
+    );
+}
+
+#[test]
+fn whole_root_template_reads_follow_authoring_policy() {
+    for template in [
+        "{{ toYaml .Values }}",
+        "{{ range $k, $v := .Values }}{{ $k }}: {{ $v }}{{ end }}",
+    ] {
+        sim_assert_eq!(
+            have: schema_with_policy(parse_ir(template), "{}", STRICT, SchemaProfile::Full),
+            want: serde_json::json!({
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": { "global": {} }
+            })
+        );
+    }
+}
+
+#[test]
+fn written_input_member_read_keeps_its_root_name_under_closed_policy() {
+    let template = indoc! {r#"
+        {{ $_ := merge .Values (dict "choose" true) }}
+        {{ if eq (coalesce (include "h" .) false) nil }}{{ fail "nil" }}{{ end }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: state
+    "#};
+    let helpers = r#"{{ define "h" }}{{ if .Values.choose }}ok{{ end }}{{ end }}"#;
+    for profile in [SchemaProfile::Full, SchemaProfile::Lean] {
+        sim_assert_eq!(
+            have: schema_with_policy(
+                parse_ir_with_helpers(template, helpers), "{}", STRICT, profile
+            ),
+            want: serde_json::json!({
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": { "choose": {}, "global": {} }
+            })
+        );
+    }
 }

@@ -407,6 +407,45 @@ impl State {
                 self.selector_field(no, key),
             );
         }
+        // A read of a written input-root member keeps the authoring key after
+        // its value loses input provenance. It adds no input-shape evidence.
+        if let ValueNode::Leaf(Leaf {
+            datum:
+                Datum::Map {
+                    view: _,
+                    target: Some(id),
+                },
+            origin: _,
+        }) = value.node.as_ref()
+            && let Some(path) = self.heap.arena.input_paths.borrow().get(id)
+            && path.segments().next().is_none()
+        {
+            let mut members = Vec::new();
+            if let Some(field) = self.lookup_field(&value, key) {
+                field_inputs(&field, &mut members);
+            }
+            let erased = if members.is_empty() {
+                self.untouched_map_child_identity(&value, key).is_none()
+            } else {
+                members.iter().all(|member| {
+                    !self.heap.freeze(member).inputs().iter().any(|path| {
+                        path.segments()
+                            .next()
+                            .and_then(helm_schema_core::Segment::literal)
+                            == Some(key)
+                    })
+                })
+            };
+            if erased {
+                self.reads.insert(super::RuntimeRead {
+                    path: ValuesPath::from_segments([helm_schema_core::Segment::Literal(
+                        key.to_owned(),
+                    )]),
+                    condition: self.path_predicate(),
+                    coverage: super::ReadCoverage::ExactPath,
+                });
+            }
+        }
         if let ValueNode::Leaf(Leaf {
             datum:
                 Datum::Map {

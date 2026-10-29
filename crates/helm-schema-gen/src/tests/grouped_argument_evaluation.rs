@@ -2763,6 +2763,28 @@ fn approximate_break_keeps_later_exact_and_symbolic_range_consumers_guarded() {
     );
 }
 
+/// A symbolic loop retains named root reads even when its output is approximate.
+#[test]
+fn symbolic_range_keeps_named_root_reads_without_inferring_their_shape() {
+    let source = indoc! {r"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+        {{- range .Values.items }}
+          stop: {{ tpl $.Values.stop $ | quote }}
+        {{- end }}
+    "};
+    let expected = serde_json::json!({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": { "global": {}, "items": {}, "stop": {} },
+        "type": "object",
+    });
+    sim_assert_eq!(have: schema_for(parse_ir(source)), want: expected);
+}
+
 /// Escaped and direct branch segments retain their shared source order.
 #[test]
 fn escaped_batch_and_direct_nodes_keep_assignment_order() {

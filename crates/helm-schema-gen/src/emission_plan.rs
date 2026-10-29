@@ -761,15 +761,9 @@ fn materialize_base_document(
     usize,
     BTreeMap<helm_schema_core::ValuesPath, BaseOwnerDecision>,
 ) {
-    let root_policy = if contract_schema_signals
-        .evidence_for(&helm_schema_core::ValuesPath::default())
-        .is_some_and(|evidence| evidence.facts.has_unknown_read_region)
-    {
-        crate::RootPolicy::Open
-    } else {
-        authoring_policy.root
-    };
-    let mut document = SchemaDocument::new_root_object(root_policy);
+    // Root closure is caller-selected authoring policy (ADR 0042), independent
+    // of inference coverage in unknown read regions.
+    let mut document = SchemaDocument::new_root_object(authoring_policy.root);
     let mut insertion_abstentions = 0;
     let mut base_owners = BTreeMap::new();
     let base_span = tracing::info_span!("base_path_insertion").entered();
