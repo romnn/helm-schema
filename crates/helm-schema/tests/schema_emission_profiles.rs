@@ -8,6 +8,7 @@ use test_util::prelude::sim_assert_eq;
 use test_util::scratch::ScratchDir;
 
 mod acceptance_intake;
+mod roster_generator_support;
 
 use helm_schema_test_support::acceptance::adjudicate as lint_adjudication;
 use helm_schema_test_support::acceptance::discovery as harness;
@@ -56,13 +57,14 @@ mod known_undecided_acceptances;
 use helm_adjudication::{KubernetesVerdict, OfflineKubernetesValidator, PinnedHelmChart};
 use helm_pool::PoolLimits;
 use known_false_acceptances::{
-    Baseline, ContextFalseAcceptance, Family, KNOWN_CONTEXT_FALSE_ACCEPTANCES,
-    KNOWN_FALSE_ACCEPTANCES, KnownFalseAcceptances, Probe, ROSTER_BASELINE, Rejection,
+    Baseline, ContextFalseAcceptance, ExactFalseAcceptance, Family,
+    KNOWN_CONTEXT_FALSE_ACCEPTANCES, KNOWN_EXACT_FALSE_ACCEPTANCES, KNOWN_FALSE_ACCEPTANCES,
+    KnownFalseAcceptances, Probe, ROSTER_BASELINE, Rejection,
 };
 use known_inherited_failures::{KNOWN_INHERITED_FAILURES, validate_inherited_failures};
 use known_undecided_acceptances::{
-    ContextUndecidedAcceptance, KNOWN_CONTEXT_UNDECIDED_ACCEPTANCES, KNOWN_UNDECIDED_ACCEPTANCES,
-    KnownUndecidedAcceptances,
+    ContextUndecidedAcceptance, ExactUndecidedAcceptance, KNOWN_CONTEXT_UNDECIDED_ACCEPTANCES,
+    KNOWN_EXACT_UNDECIDED_ACCEPTANCES, KNOWN_UNDECIDED_ACCEPTANCES, KnownUndecidedAcceptances,
 };
 
 use harness::{
@@ -268,22 +270,26 @@ fn validate_helm_adjudication_coverage(
     roster: &[KnownFalseAcceptances],
     undecided_roster: &[KnownUndecidedAcceptances],
 ) -> eyre::Result<()> {
-    validate_helm_adjudication_coverage_with_contexts(
+    validate_helm_adjudication_coverage_with_rosters(
         coverage,
         roster,
         undecided_roster,
         KNOWN_CONTEXT_FALSE_ACCEPTANCES,
         KNOWN_CONTEXT_UNDECIDED_ACCEPTANCES,
+        ExactRosters {
+            false_acceptances: KNOWN_EXACT_FALSE_ACCEPTANCES,
+            undecided_acceptances: KNOWN_EXACT_UNDECIDED_ACCEPTANCES,
+        },
     )
 }
 
-fn validate_helm_adjudication_coverage_with_contexts(
-    coverage: &HelmAdjudicationCoverage,
-    roster: &[KnownFalseAcceptances],
-    undecided_roster: &[KnownUndecidedAcceptances],
-    contextual_false: &[ContextFalseAcceptance],
-    contextual_undecided: &[ContextUndecidedAcceptance],
-) -> eyre::Result<()> {
+#[derive(Clone, Copy, Default)]
+struct ExactRosters<'a> {
+    false_acceptances: &'a [ExactFalseAcceptance],
+    undecided_acceptances: &'a [ExactUndecidedAcceptance],
+}
+
+fn helm_outcome_accounting_problems(coverage: &HelmAdjudicationCoverage) -> Vec<String> {
     let mut problems = Vec::new();
     let outcomes = coverage.flips_adjudicated
         + coverage.screened_flips_collapsed
@@ -308,11 +314,45 @@ fn validate_helm_adjudication_coverage_with_contexts(
             "adjudicated flip outcome accounting mismatch: {coverage:?}"
         ));
     }
+    problems
+}
+
+fn validate_helm_adjudication_coverage_with_contexts(
+    coverage: &HelmAdjudicationCoverage,
+    roster: &[KnownFalseAcceptances],
+    undecided_roster: &[KnownUndecidedAcceptances],
+    contextual_false: &[ContextFalseAcceptance],
+    contextual_undecided: &[ContextUndecidedAcceptance],
+) -> eyre::Result<()> {
+    validate_helm_adjudication_coverage_with_rosters(
+        coverage,
+        roster,
+        undecided_roster,
+        contextual_false,
+        contextual_undecided,
+        ExactRosters::default(),
+    )
+}
+
+fn validate_helm_adjudication_coverage_with_rosters(
+    coverage: &HelmAdjudicationCoverage,
+    roster: &[KnownFalseAcceptances],
+    undecided_roster: &[KnownUndecidedAcceptances],
+    contextual_false: &[ContextFalseAcceptance],
+    contextual_undecided: &[ContextUndecidedAcceptance],
+    exact: ExactRosters<'_>,
+) -> eyre::Result<()> {
+    let ExactRosters {
+        false_acceptances: exact_false,
+        undecided_acceptances: exact_undecided,
+    } = exact;
+    let mut problems = helm_outcome_accounting_problems(coverage);
     for observed in &coverage.loosenings_with_uncertain_kubernetes {
         let listed = undecided_roster
             .iter()
             .any(|group| group.lists(&observed.case, &observed.uncertain))
-            || context_undecided_lists(contextual_undecided, observed)?;
+            || context_undecided_lists(contextual_undecided, observed)?
+            || exact_undecided.iter().any(|row| row.lists(observed));
         if !listed {
             problems.push(format!(
                 "accepted cell whose changed resources Kubernetes could not decide, missing \
@@ -327,7 +367,8 @@ fn validate_helm_adjudication_coverage_with_contexts(
         let listed = roster
             .iter()
             .any(|group| group.lists(&observed.case, observed.rejection, observed.baseline))
-            || context_false_is_known(contextual_false, observed)?;
+            || context_false_is_known(contextual_false, observed)?
+            || exact_false.iter().any(|row| row.lists(observed));
         if !listed {
             problems.push(format!(
                 "false acceptance missing from KNOWN_FALSE_ACCEPTANCES: {} ({:?}, {:?}){}",
@@ -339,6 +380,11 @@ fn validate_helm_adjudication_coverage_with_contexts(
         }
     }
     let mut fixed = false_acceptance_rows_not_observed(coverage, roster);
+    fixed.extend(exact_rows_not_observed(
+        coverage,
+        exact_false,
+        exact_undecided,
+    ));
     for group in undecided_roster {
         if !coverage.charts_adjudicated.contains(group.chart) {
             continue;
@@ -371,6 +417,61 @@ fn validate_helm_adjudication_coverage_with_contexts(
     }
     eyre::ensure!(problems.is_empty(), "{}", problems.join("\n"));
     Ok(())
+}
+
+impl ExactFalseAcceptance {
+    fn lists(&self, observed: &ObservedFalseAcceptance) -> bool {
+        !self.probe.starts_with("document=")
+            && observed.case == format!("{}: {}", self.chart, self.probe)
+            && self.rejection == observed.rejection
+            && self.baseline == observed.baseline
+    }
+}
+
+impl ExactUndecidedAcceptance {
+    fn lists(&self, observed: &ObservedUndecidedAcceptance) -> bool {
+        !self.probe.starts_with("document=")
+            && observed.case == format!("{}: {}", self.chart, self.probe)
+            && self.uncertain == observed.uncertain.as_slice()
+    }
+}
+
+fn exact_rows_not_observed(
+    coverage: &HelmAdjudicationCoverage,
+    false_roster: &[ExactFalseAcceptance],
+    undecided_roster: &[ExactUndecidedAcceptance],
+) -> Vec<String> {
+    let mut fixed = Vec::new();
+    for row in false_roster {
+        let case = format!("{}: {}", row.chart, row.probe);
+        if coverage.charts_adjudicated.contains(row.chart)
+            && !coverage.unreachable_cases.contains(&case)
+            && !coverage.false_acceptances.iter().any(|observed| {
+                observed.case == case
+                    && observed.rejection == row.rejection
+                    && observed.baseline == row.baseline
+            })
+        {
+            fixed.push(format!(
+                "{case} ({:?}, {:?}, {:?})",
+                row.rejection, row.baseline, row.family
+            ));
+        }
+    }
+    for row in undecided_roster {
+        let case = format!("{}: {}", row.chart, row.probe);
+        if coverage.charts_adjudicated.contains(row.chart)
+            && !coverage
+                .loosenings_with_uncertain_kubernetes
+                .iter()
+                .any(|observed| {
+                    observed.case == case && observed.uncertain.as_slice() == row.uncertain
+                })
+        {
+            fixed.push(format!("{case} (undecided: {:?})", row.uncertain));
+        }
+    }
+    fixed
 }
 
 fn context_false_is_known(

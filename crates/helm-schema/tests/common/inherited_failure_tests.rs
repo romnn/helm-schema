@@ -63,6 +63,60 @@ fn inherited_unlisted_hard_failure_fails() -> eyre::Result<()> {
 }
 
 #[test]
+fn inherited_exact_probe_names_keep_every_identity_check() -> eyre::Result<()> {
+    let row = KnownInheritedFailure {
+        selector: FailureSelector::ExactProbe {
+            name: "all declared keys deleted",
+            kubernetes_version: "1.29.0",
+        },
+        ..row()
+    };
+    let mut coverage = coverage()?;
+    let observed = coverage
+        .adjudication_failures
+        .first_mut()
+        .ok_or_eyre("missing control failure")?;
+    observed.case = "control: all declared keys deleted".into();
+    validate_inherited_failures(&coverage, std::slice::from_ref(&row))?;
+
+    // An exact probe cannot authorize a targeted suffix or a changed failure input.
+    for replacement in [
+        "control: root guard 1 satisfied [targeted: all declared keys deleted]",
+        "other: all declared keys deleted",
+    ] {
+        let observed = coverage
+            .adjudication_failures
+            .first_mut()
+            .ok_or_eyre("missing control failure")?;
+        observed.case = replacement.into();
+        assert!(validate_inherited_failures(&coverage, std::slice::from_ref(&row)).is_err());
+    }
+    let observed = coverage
+        .adjudication_failures
+        .first_mut()
+        .ok_or_eyre("missing control failure")?;
+    observed.case = "control: all declared keys deleted".into();
+    observed.input = None;
+    assert!(validate_inherited_failures(&coverage, std::slice::from_ref(&row)).is_err());
+    coverage.adjudication_failures.clear();
+    assert!(validate_inherited_failures(&coverage, &[row]).is_err());
+    Ok(())
+}
+
+#[test]
+fn inherited_exact_probe_cannot_replace_context_identity() -> eyre::Result<()> {
+    let row = KnownInheritedFailure {
+        selector: FailureSelector::ExactProbe {
+            name: "document=LintRaw transport=values-file kube=1.29.0 overlay={\"dependency\":{\"enabled\":null}}",
+            kubernetes_version: "1.29.0",
+        },
+        ..row()
+    };
+    assert!(validate_inherited_failures(&coverage()?, &[row]).is_err());
+    Ok(())
+}
+
+#[test]
 fn inherited_stale_entry_fails() -> eyre::Result<()> {
     let mut coverage = coverage()?;
     coverage.adjudication_failures.clear();

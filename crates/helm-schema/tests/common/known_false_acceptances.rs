@@ -20,8 +20,8 @@ use color_eyre::eyre;
 
 pub(crate) use helm_schema_test_support::acceptance::{Baseline, Rejection};
 
-/// A defect family of the schema-bug-hunt-v1 campaign, as numbered in
-/// `plan/schema-bug-hunt-v1.md`.
+/// A defect family of the schema-bug-hunt-v1 campaign or an R3b residual package.
+/// Campaign families are numbered in `plan/schema-bug-hunt-v1.md`.
 ///
 /// The false-acceptance roster below and the frozen-witness catalog
 /// (`family_witnesses.rs`) both attribute their rows to these families.
@@ -257,6 +257,18 @@ pub(crate) enum Family {
     DependencyDisableRequirements,
     /// A guarded required call receives a computed constant nil operand.
     ComputedNilRequired,
+    /// R3b regression vs main, package A: consumed/comparison provenance.
+    R3bA,
+    /// R3b regression vs main, package B: iterable domains and loop outcomes.
+    R3bB,
+    /// R3b regression vs main, package C: parser, collection and validation transfers.
+    R3bC,
+    /// R3b regression vs main, package D: widening-only execution projection.
+    R3bD,
+    /// R3b regression vs main, package E: helper execution precision.
+    R3bE,
+    /// R3b regression vs main, package F: dependency graph and document pullback.
+    R3bF,
     /// No family filed yet: a hard-coded API version the pinned server no
     /// longer serves, an empty `{}` item rendered as a document, a nil
     /// dereference of a deleted table, a non-empty conjunct of a `kindIs`
@@ -266,11 +278,28 @@ pub(crate) enum Family {
     Unfiled,
 }
 
+impl Family {
+    fn r3b_family(label: &str) -> Option<Self> {
+        Some(match label {
+            "R3bA" => Self::R3bA,
+            "R3bB" => Self::R3bB,
+            "R3bC" => Self::R3bC,
+            "R3bD" => Self::R3bD,
+            "R3bE" => Self::R3bE,
+            "R3bF" => Self::R3bF,
+            _ => return None,
+        })
+    }
+}
+
 impl FromStr for Family {
     type Err = String;
 
     /// Parses a family label as the plan spells it, such as `F69` or `D5`.
     fn from_str(label: &str) -> Result<Self, Self::Err> {
+        if let Some(family) = Self::r3b_family(label) {
+            return Ok(family);
+        }
         let family = match label {
             "F0" => Self::F0,
             "F1" => Self::F1,
@@ -386,6 +415,17 @@ pub(crate) struct KnownFalseAcceptances {
     pub(crate) family: Family,
     pub(crate) probes: &'static [Probe],
 }
+
+/// A structural probe that has no path/class assignment, matched by its complete name.
+pub(crate) struct ExactFalseAcceptance {
+    pub(crate) chart: &'static str,
+    pub(crate) probe: &'static str,
+    pub(crate) rejection: Rejection,
+    pub(crate) baseline: Baseline,
+    pub(crate) family: Family,
+}
+
+pub(crate) const KNOWN_EXACT_FALSE_ACCEPTANCES: &[ExactFalseAcceptance] = &[];
 
 /// A schema document's exact values-file context, independent of legacy path classes.
 #[derive(Clone, Copy, Debug)]

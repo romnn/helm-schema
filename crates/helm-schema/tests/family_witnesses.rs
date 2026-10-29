@@ -42,7 +42,8 @@ use family_witnesses::{
     SchemaVerdict, SetPair, SetValue, ShippedOutput, SizeObligation, Witness,
 };
 use known_false_acceptances::{
-    Family, KNOWN_CONTEXT_FALSE_ACCEPTANCES, KNOWN_FALSE_ACCEPTANCES, ROSTER_BASELINE, Rejection,
+    Family, KNOWN_CONTEXT_FALSE_ACCEPTANCES, KNOWN_EXACT_FALSE_ACCEPTANCES,
+    KNOWN_FALSE_ACCEPTANCES, ROSTER_BASELINE, Rejection,
 };
 
 /// Schema errors printed beside a failing row.
@@ -1029,6 +1030,9 @@ fn family_tallies(catalog: &[FamilyWitnesses], run: &GateRun) -> BTreeMap<Family
     for row in KNOWN_CONTEXT_FALSE_ACCEPTANCES {
         tallies.entry(row.family).or_default().roster += 1;
     }
+    for row in KNOWN_EXACT_FALSE_ACCEPTANCES {
+        tallies.entry(row.family).or_default().roster += 1;
+    }
     for conflict in &run.conflicts {
         for family in &conflict.families {
             tallies.entry(*family).or_default().conflicts += 1;
@@ -1055,6 +1059,13 @@ fn write_roster_report(report: &mut String) -> eyre::Result<()> {
             row.selector.case(row.chart)?,
             row.rejection,
             row.baseline
+        )?;
+    }
+    for row in KNOWN_EXACT_FALSE_ACCEPTANCES {
+        writeln!(
+            report,
+            "roster {:?}: {}: {} ({:?}, baseline {:?} at {ROSTER_BASELINE})",
+            row.family, row.chart, row.probe, row.rejection, row.baseline
         )?;
     }
     Ok(())

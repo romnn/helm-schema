@@ -13,6 +13,11 @@ use super::known_false_acceptances::{
 
 pub(crate) enum FailureSelector {
     Context(ContextSelector),
+    /// A complete structural probe name, without targeted-suffix matching.
+    ExactProbe {
+        name: &'static str,
+        kubernetes_version: &'static str,
+    },
     Probe {
         probe: Probe,
         kubernetes_version: &'static str,
@@ -23,6 +28,13 @@ impl FailureSelector {
     fn case(&self, chart: &str) -> eyre::Result<String> {
         match self {
             Self::Context(selector) => selector.case(chart),
+            Self::ExactProbe { name, .. } => {
+                eyre::ensure!(
+                    !name.starts_with("document="),
+                    "contextual inherited failures require a context selector"
+                );
+                Ok(format!("{chart}: {name}"))
+            }
             Self::Probe { probe, .. } => Ok(format!("{chart}: {} <- {}", probe.path, probe.value)),
         }
     }
@@ -31,6 +43,9 @@ impl FailureSelector {
         match self {
             Self::Context(selector) => selector.kubernetes_version,
             Self::Probe {
+                kubernetes_version, ..
+            }
+            | Self::ExactProbe {
                 kubernetes_version, ..
             } => kubernetes_version,
         }

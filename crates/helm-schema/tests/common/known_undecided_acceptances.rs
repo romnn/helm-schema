@@ -27,6 +27,15 @@ pub(crate) struct ContextUndecidedAcceptance {
     pub(crate) uncertain: &'static [&'static str],
 }
 
+/// A structural probe without a path/class assignment and its exact ordered uncertainty.
+pub(crate) struct ExactUndecidedAcceptance {
+    pub(crate) chart: &'static str,
+    pub(crate) probe: &'static str,
+    pub(crate) uncertain: &'static [&'static str],
+}
+
+pub(crate) const KNOWN_EXACT_UNDECIDED_ACCEPTANCES: &[ExactUndecidedAcceptance] = &[];
+
 pub(crate) const KNOWN_CONTEXT_UNDECIDED_ACCEPTANCES: &[ContextUndecidedAcceptance] = &[
     // The pinned bundle/catalog lacks the rendered resource versions below, so their
     // changed resources remain undecided despite a successful Helm render.
