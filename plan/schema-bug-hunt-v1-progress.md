@@ -9588,7 +9588,7 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Then C06b (design 20261028T235830-e8771f61) and C03b.
   The open-cells tpl step was blocked by mixed precise/Widened heap joins (KPS over a 6 GB cap); it is folded into the heap redesign.
   Designs: round8/designs/{heap-history,C06b-serialized-placement,parity-analysis}.md. Plan: round8/r3b-remaining-plan.md. Orchestrator.
-- 13:50 (Oct 29) — **User decisions: R3b lands at parity on the big classes, with the residual rostered; F20 is parked and its fixes move to R3b.**
+- 13:36 (Oct 29) — **User decisions: R3b lands at parity on the big classes, with the residual rostered; F20 is parked and its fixes move to R3b.**
   - Residual triage (sol-high 20261029T101055-013245f3) found six more independent packages beyond C06b/C03b, about 23–40 engineer-days:
     A operand provenance, B iterable domains, C validation transfers, D widening-only projection (most of the 6.3k false rejections),
     E helper precision, F dependency graph. Another 3k hard failures are oracle-bundle gaps.
