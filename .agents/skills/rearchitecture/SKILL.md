@@ -43,6 +43,11 @@ Sibling skills own the mechanics: `acceptance-battery` (the battery, rosters), `
   actual schema: the witness value, absent, null, a valid object and each guard's controls. If they agree on every
   document, the constraint already holds. Rewrite the expectation to the actual encoding and mark the test green.
   In C03b, 8 of 10 "encoding" reds were already enforced.
+- **Reductions are mechanism tests, not acceptance.** Keep at least one red per class that loads the whole vendored
+  chart through its registered recipe, for an exact corpus cell (for example, bitnami-redis `auth` null deletion).
+  A builder's hand-back names the corpus cells it expects to move and shows, with a targeted live battery on those
+  charts, that they moved. A green reduction says only that the transfer works on a fresh heap. Full-chart execution
+  adds earlier files, unknown programs and shared effects that can erase the facts first.
 
 ## 3. Measure parity at every checkpoint
 
@@ -102,3 +107,4 @@ tests were real regressions; treating them as stale would have hidden the whole 
 | Frozen-witness or roster tests fail in the unit profile | They read adopted fixtures | Adopt the dump's fixtures first, as the landing chain does |
 | Load of 60+, everyone slow | Parallel builders each running full nextest | `--test-threads 3`, `CARGO_BUILD_JOBS=3`, focused filters |
 | A "simplification" shrinks the schemas 15× | Producers deleted with no successor | Inventory first, then gate the deletion on parity |
+| Hundreds of unit tests close, and the targeted preview counts do not move at all | Reductions run on a fresh heap; in full charts an earlier unknown `tpl` or writer widened the whole heap and the join forgot the untouched branch | Full-chart reds per class, and a targeted battery in every hand-back; fix the upstream loss before the downstream classes |
