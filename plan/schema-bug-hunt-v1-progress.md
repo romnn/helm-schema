@@ -9604,4 +9604,32 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
     - Simplicity: 4 P2s, including scalar ownership rebuilt in the interpreter and duplicate skeleton builders.
   - 1,597 of F20's 3,977 added production lines sit in legacy files R3b deletes.
   - User decision: park F20 and port its 12 witness fixes, plus the F80 guard, to R3b (round8/designs/f20-witness-transitions.patch). Landing 20 is not merged.
-Next: heap-history hand-back → C06b and C03b implementation; port the F20 witnesses to R3b; R3b landing roster plan.
+- 03:58 (Oct 30) — **R3b line at 9f74c296 with C03b merged; user decision: false rejections are fixed, never rostered; package D restarts on a single mechanism.**
+  - The r3b/construction commits since 8900ce9a:
+    - ebdf0972: merge of main e199da82.
+    - ac5e2899: roster generator. It refuses must-fix classes and every false rejection. A dry run on preview 2 can roster
+      A 6,802, B 3,529, C 100 and F 67 cells.
+    - f61320f2: battery oracle with 12 pinned CRD schemas, which closes 3,019 undecided gaps.
+    - 468bb85a and 0bec1290: integration and unit suites reconciled with main. 567 of 568 unit differences are real regressions;
+      248 integration differences are mapped to classes.
+    - 1ae03162: ignore marks for 272 tests covering packages A, B and C.
+    - 9f74c296: C03b member-host identity. All 8 public reds are green, 31 unit tests are closed, +923 LOC.
+  - Unit run on 9f74c296: 351 failures, all mapped (C06b 112, E/F 108, D 92, C03b residual 31, mixed A/B/C 7, family_witnesses 1).
+  - The heap-history ownership is correct but costs 67.8 CPU-s on KPS, 13× the base. It is not committed; its patches stay in
+    round8-r3b-heap/transfer/.
+  - User decision: fix every false rejection against main before landing. There is no false-rejection roster.
+  - User decision: write down the interpreter goal and the parity-preview rule permanently. Recorded in cf89e865:
+    ADRs 0070 and 0071, AGENTS.md and the rearchitecture skill.
+  - Package D, the old builder: patching found regressions. A sol-xhigh design consult (20261030T024357-d6851ac1) judged the diff
+    a local maximum.
+    - Replacement: guarded consumer projection over frozen value provenance, with one `ConsumerUse` owner in `value/consumer.rs`
+      (round8/designs/D-consumer-roles.md).
+    - Rejected: ReadRole back-propagation, the analysis_db recognizers, LookupRole and shape-erasure maps, scoped_raw_reads,
+      and the generator-side has_formatted_provider.
+    - Estimate: 6–9 days, plus 2–4 if C06b placement is late.
+  - Running:
+    - C06b turn 2 (20261029T153033-05ccaa14). After turn 1: 1/5 public reds, KPS 6.03 CPU-s, +1,126 LOC.
+    - E/F turn 2 (20261029T154152-28c35965) on the performance fix. Turn 1 passed all 98 E/F false-rejection witnesses but measured
+      KPS 9.70 against a 5.2 base.
+    - D2 builder (20261030T025617-6f9b058b) in round8-r3b-d2, on steps 1–3 of the design.
+Next: merge C06b and E/F on hand-back (KPS within the cap); D2 placement join after C06b; FA ignore marks; targeted previews, then the full preview and landing chain in a fresh clone.
