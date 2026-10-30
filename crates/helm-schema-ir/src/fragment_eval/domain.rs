@@ -256,6 +256,10 @@ pub(crate) struct SpliceMeta {
     /// so scalar equality and pattern tests can project through its exact
     /// stringification preimage.
     pub stringified: bool,
+    /// The enclosing executed file removes Helm's nil marker from serialized text.
+    pub strip_marker: bool,
+    /// Original input members overwritten or removed before this occurrence.
+    pub omitted_members: std::collections::BTreeMap<String, Vec<helm_schema_core::Guard>>,
     /// Executed-output layout certificate for this whole scalar occurrence.
     pub plain_scalar_placement: helm_schema_core::PlainScalarPlacement,
     /// Lexical divergences between the raw string and the rendered value
@@ -271,6 +275,8 @@ impl SpliceMeta {
         let Self {
             input_identity,
             stringified,
+            strip_marker: _,
+            omitted_members: _,
             plain_scalar_placement: _,
             lexical_escapes,
             site: _,

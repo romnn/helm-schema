@@ -15,6 +15,8 @@ mod constructor_laws;
 mod range_laws;
 #[path = "runtime_reconvergence.rs"]
 mod reconvergence_laws;
+#[path = "runtime_serialized_payload.rs"]
+mod serialized_payload_laws;
 
 impl super::Heap {
     /// A session heap with a private predicate memo, for tests that build heaps directly.

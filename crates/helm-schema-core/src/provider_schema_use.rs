@@ -15,6 +15,8 @@ pub struct ProviderSchemaUse {
     /// Whether Go template rendering stringifies the source before the
     /// completed YAML document reparses it.
     pub stringified: bool,
+    /// The executed file removes Helm's nil marker before decoding this serialization.
+    pub strip_marker: bool,
     /// Positive placement certificate scoped to this provider occurrence.
     pub plain_scalar_placement: PlainScalarPlacement,
     /// Resource whose schema owns the slot.

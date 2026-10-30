@@ -1969,7 +1969,19 @@ impl CompletedExecution {
                 exit.state.calls.pop();
                 exit.state.loops = helper.loops.clone();
                 let returned = if function == "tpl" {
-                    exit.state.output.stripped_value()
+                    let result = exit.state.output.stripped_value();
+                    self.invocation.operands.first().map_or_else(
+                        || result.clone(),
+                        |operand| {
+                            Value::frozen_text(
+                                super::text::TextTerm::Tpl {
+                                    source: exit.state.heap.freeze(&operand.value),
+                                    result: exit.state.heap.freeze(&result),
+                                },
+                                result.inputs(),
+                            )
+                        },
+                    )
                 } else {
                     super::text::capture(&exit.state.output, false)
                 };

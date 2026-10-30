@@ -204,6 +204,9 @@ pub struct ContractUse {
     /// so a provider slot observes text rather than the raw input shape.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub stringified: bool,
+    /// Helm removes its nil marker from this serialization at the executed file boundary.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub strip_marker: bool,
     /// Positive plain-block placement proof for this particular rendered use.
     #[serde(default, skip_serializing_if = "is_default")]
     pub plain_scalar_placement: PlainScalarPlacement,
@@ -302,6 +305,7 @@ impl ContractUse {
             resource,
             provenance: provenance.into_iter().collect(),
             stringified: false,
+            strip_marker: false,
             plain_scalar_placement: PlainScalarPlacement::Unknown,
             template_supplied_member_keys: std::collections::BTreeSet::new(),
             split_segment: None,
@@ -341,6 +345,7 @@ impl ContractUse {
             resource: _,
             provenance: _,
             stringified: _,
+            strip_marker: _,
             plain_scalar_placement: _,
             template_supplied_member_keys: _,
             split_segment: _,

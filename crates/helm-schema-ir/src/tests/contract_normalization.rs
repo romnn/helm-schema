@@ -30,6 +30,7 @@ fn normalization_deduplicates_expanded_rows_before_subsumption() {
 fn canonicalization_merges_provenance_for_semantically_identical_uses() {
     let mut uses = vec![
         ContractUse {
+            strip_marker: false,
             source_expr: helm_schema_core::ValuesPath::parse("image.tag"),
             path: YamlPath(vec!["spec".to_string(), "tag".to_string()]),
             kind: ValueKind::Scalar,
@@ -52,6 +53,7 @@ fn canonicalization_merges_provenance_for_semantically_identical_uses() {
             merge_operand: false,
         },
         ContractUse {
+            strip_marker: false,
             source_expr: helm_schema_core::ValuesPath::parse("image.tag"),
             path: YamlPath(vec!["spec".to_string(), "tag".to_string()]),
             kind: ValueKind::Scalar,

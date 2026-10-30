@@ -276,6 +276,7 @@ fn helper_defaulted_root_service_account_name_allows_null() {
 #[test]
 fn parent_values_seed_does_not_override_exact_defaulted_child_path() {
     let mut contract = ContractIr::from_contract_uses(vec![ContractUse {
+        strip_marker: false,
         source_expr: helm_schema_core::ValuesPath::parse("signoz-otel-gateway.serviceAccount.name"),
         path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
         kind: ValueKind::Scalar,
@@ -350,6 +351,7 @@ fn parent_values_seed_does_not_override_exact_defaulted_child_path() {
 #[test]
 fn guarded_fragment_parent_seed_stays_open_after_guard_child_insert() {
     let mut contract = ContractIr::from_contract_uses(vec![ContractUse {
+        strip_marker: false,
         source_expr: helm_schema_core::ValuesPath::parse("clickhouse.securityContext"),
         path: YamlPath(vec![
             "spec".to_string(),
@@ -408,6 +410,7 @@ fn guarded_fragment_parent_seed_stays_open_after_guard_child_insert() {
 fn referenced_empty_string_child_survives_parent_pruning() {
     let mut contract = ContractIr::from_contract_uses(vec![
         ContractUse {
+            strip_marker: false,
             source_expr: helm_schema_core::ValuesPath::parse(
                 "signoz.smtpVars.existingSecret.fromKey",
             ),
@@ -430,6 +433,7 @@ fn referenced_empty_string_child_survives_parent_pruning() {
             merge_operand: false,
         },
         ContractUse {
+            strip_marker: false,
             source_expr: helm_schema_core::ValuesPath::parse("signoz.smtpVars.existingSecret.name"),
             path: YamlPath(vec![
                 "env[*]".to_string(),
@@ -508,6 +512,7 @@ fn referenced_empty_string_child_survives_parent_pruning() {
 #[test]
 fn guarded_array_fragment_parent_seed_stays_array_shaped() {
     let mut contract = ContractIr::from_contract_uses(vec![ContractUse {
+        strip_marker: false,
         source_expr: helm_schema_core::ValuesPath::parse("alertmanager.tolerations"),
         path: YamlPath(vec![
             "spec".to_string(),
@@ -561,6 +566,7 @@ fn guarded_array_fragment_parent_seed_stays_array_shaped() {
 #[test]
 fn guarded_null_object_fragment_parent_seed_preserves_null_default() {
     let mut contract = ContractIr::from_contract_uses(vec![ContractUse {
+        strip_marker: false,
         source_expr: helm_schema_core::ValuesPath::parse(
             "clickhouse.clickhouseOperator.configs.confdFiles",
         ),
@@ -664,6 +670,7 @@ fn self_default_guarded_branch_lowers_without_losing_else_branch_precision() {
     let contract = with_type_hints(
         ContractIr::from_contract_uses(vec![
             ContractUse {
+                strip_marker: false,
                 source_expr: helm_schema_core::ValuesPath::parse("serviceAccount.name"),
                 path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
                 kind: ValueKind::Scalar,
@@ -689,6 +696,7 @@ fn self_default_guarded_branch_lowers_without_losing_else_branch_precision() {
                 merge_operand: false,
             },
             ContractUse {
+                strip_marker: false,
                 source_expr: helm_schema_core::ValuesPath::parse("serviceAccount.name"),
                 path: YamlPath(vec![
                     "spec".to_string(),

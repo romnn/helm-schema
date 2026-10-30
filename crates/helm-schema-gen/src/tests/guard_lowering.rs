@@ -7,6 +7,7 @@ use super::*;
 fn exclusive_boolean_guarded_path_lowers_to_if_then_overlay() {
     let contract = with_type_hints(
         ContractIr::from_contract_uses(vec![ContractUse {
+            strip_marker: false,
             source_expr: helm_schema_core::ValuesPath::parse("feature.host"),
             path: YamlPath(vec!["data".to_string(), "host".to_string()]),
             kind: ValueKind::Scalar,
@@ -162,6 +163,7 @@ fn guarded_declared_ancestor_keeps_referenced_siblings_beside_child_overlay() {
 fn default_true_boolean_guard_lowers_absence_as_active_branch() {
     let contract = with_type_hints(
         ContractIr::from_contract_uses(vec![ContractUse {
+            strip_marker: false,
             source_expr: helm_schema_core::ValuesPath::parse("feature.host"),
             path: YamlPath(vec!["data".to_string(), "host".to_string()]),
             kind: ValueKind::Scalar,
@@ -238,6 +240,7 @@ fn default_true_boolean_guard_lowers_absence_as_active_branch() {
 fn negated_boolean_guard_lowers_to_not_condition() {
     let contract = with_type_hints(
         ContractIr::from_contract_uses(vec![ContractUse {
+            strip_marker: false,
             source_expr: helm_schema_core::ValuesPath::parse("feature.host"),
             path: YamlPath(vec!["data".to_string(), "host".to_string()]),
             kind: ValueKind::Scalar,
@@ -305,6 +308,7 @@ fn negated_boolean_guard_lowers_to_not_condition() {
 fn not_equal_guard_lowers_to_value_decidable_condition() {
     let contract = with_type_hints(
         ContractIr::from_contract_uses(vec![ContractUse {
+            strip_marker: false,
             source_expr: helm_schema_core::ValuesPath::parse("feature.host"),
             path: YamlPath(vec!["data".to_string(), "host".to_string()]),
             kind: ValueKind::Scalar,
@@ -393,6 +397,7 @@ fn not_equal_guard_lowers_to_value_decidable_condition() {
 fn equal_false_guard_lowers_to_exact_default_aware_condition() {
     let contract = with_type_hints(
         ContractIr::from_contract_uses(vec![ContractUse {
+            strip_marker: false,
             source_expr: helm_schema_core::ValuesPath::parse("feature.host"),
             path: YamlPath(vec!["data".to_string(), "host".to_string()]),
             kind: ValueKind::Scalar,
@@ -474,6 +479,7 @@ fn equal_false_guard_lowers_to_exact_default_aware_condition() {
 fn equal_nil_guard_treats_absent_path_as_matching_nil() {
     let contract = with_type_hints(
         ContractIr::from_contract_uses(vec![ContractUse {
+            strip_marker: false,
             source_expr: helm_schema_core::ValuesPath::parse("feature.host"),
             path: YamlPath(vec!["data".to_string(), "host".to_string()]),
             kind: ValueKind::Scalar,
@@ -528,6 +534,7 @@ fn equal_nil_guard_treats_absent_path_as_matching_nil() {
 fn or_boolean_guards_lower_to_any_of_condition() {
     let contract = with_type_hints(
         ContractIr::from_contract_uses(vec![ContractUse {
+            strip_marker: false,
             source_expr: helm_schema_core::ValuesPath::parse("feature.host"),
             path: YamlPath(vec!["data".to_string(), "host".to_string()]),
             kind: ValueKind::Scalar,
@@ -604,6 +611,7 @@ fn or_boolean_guards_lower_to_any_of_condition() {
 fn structural_any_of_guards_preserve_conjunctive_branches() {
     let contract = with_type_hints(
         ContractIr::from_contract_uses(vec![ContractUse {
+            strip_marker: false,
             source_expr: helm_schema_core::ValuesPath::parse("feature.host"),
             path: YamlPath(vec!["data".to_string(), "host".to_string()]),
             kind: ValueKind::Scalar,
@@ -688,6 +696,7 @@ fn structural_any_of_guards_preserve_conjunctive_branches() {
 fn multiple_guarded_variants_lower_branch_specific_target_schemas() {
     let schema_signals = schema_signals_for(vec![
         ContractUse {
+            strip_marker: false,
             source_expr: helm_schema_core::ValuesPath::parse("feature.value"),
             path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
             kind: ValueKind::Scalar,
@@ -709,6 +718,7 @@ fn multiple_guarded_variants_lower_branch_specific_target_schemas() {
             merge_operand: false,
         },
         ContractUse {
+            strip_marker: false,
             source_expr: helm_schema_core::ValuesPath::parse("feature.value"),
             path: YamlPath(vec!["metadata".to_string(), "labels".to_string()]),
             kind: ValueKind::Fragment,
@@ -785,6 +795,7 @@ fn multiple_guarded_variants_lower_branch_specific_target_schemas() {
 #[test]
 fn inactive_scalar_branch_preserves_scalar_values_default_domain() {
     let schema_signals = schema_signals_for(vec![ContractUse {
+        strip_marker: false,
         source_expr: helm_schema_core::ValuesPath::parse("feature.value"),
         path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
         kind: ValueKind::Scalar,
@@ -860,6 +871,7 @@ fn branch_has_mode_enum(branch: &Value, mode: &str) -> bool {
 fn guarded_branch_keeps_unconditional_base_schema_when_both_exist() {
     let schema_signals = schema_signals_for(vec![
         ContractUse {
+            strip_marker: false,
             source_expr: helm_schema_core::ValuesPath::parse("feature.value"),
             path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
             kind: ValueKind::Scalar,
@@ -878,6 +890,7 @@ fn guarded_branch_keeps_unconditional_base_schema_when_both_exist() {
             merge_operand: false,
         },
         ContractUse {
+            strip_marker: false,
             source_expr: helm_schema_core::ValuesPath::parse("feature.value"),
             path: YamlPath(vec!["metadata".to_string(), "labels".to_string()]),
             kind: ValueKind::Fragment,
@@ -960,6 +973,7 @@ fn guarded_branch_keeps_unconditional_base_schema_when_both_exist() {
 #[test]
 fn non_boolean_truthy_guard_lowers_to_typed_condition_overlay() {
     let schema_signals = schema_signals_for(vec![ContractUse {
+        strip_marker: false,
         source_expr: helm_schema_core::ValuesPath::parse("feature.host"),
         path: YamlPath(vec!["data".to_string(), "host".to_string()]),
         kind: ValueKind::Scalar,

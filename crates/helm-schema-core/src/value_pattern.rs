@@ -11,6 +11,16 @@ use crate::CollectionQuantifier;
 pub enum ValuePattern {
     /// Every JSON value.
     Any,
+    /// No string or mapping key contains a template action opener or Helm's removed marker.
+    TemplateFree,
+    /// No string or mapping key contains a template action opener.
+    TemplateActionFree,
+    /// No string or mapping key contains Helm's removed marker.
+    MarkerFree,
+    /// Every string and mapping key has a spelling stable in a YAML flow node.
+    YamlFlowStable,
+    /// A nullable map of nullable strings, as decoded by Helm's metadata reader.
+    StringMap,
     /// A string matching the regular expression.
     String {
         /// Regular expression tested against the string.
@@ -32,11 +42,36 @@ pub enum ValuePattern {
 }
 
 impl ValuePattern {
+    /// Characters that withdraw a proved YAML flow spelling.
+    pub const YAML_FLOW_UNSTABLE_STRING_PATTERN: &str = "[^A-Za-z0-9_ ./-]";
+
     /// Tests JSON membership, returning `None` when an invalid pattern prevents a verdict.
     #[must_use]
     pub fn matches(&self, value: &Value) -> Option<bool> {
         match self {
             Self::Any => Some(true),
+            Self::TemplateFree => Some(serialized_text_unchanged(value, true)),
+            Self::TemplateActionFree => {
+                Some(serialized_texts_match(value, |text| !text.contains("{{")))
+            }
+            Self::MarkerFree => Some(serialized_text_unchanged(value, false)),
+            Self::YamlFlowStable => {
+                static PATTERN: std::sync::LazyLock<Result<regex::Regex, regex::Error>> =
+                    std::sync::LazyLock::new(|| {
+                        regex::Regex::new(ValuePattern::YAML_FLOW_UNSTABLE_STRING_PATTERN)
+                    });
+                let pattern = PATTERN.as_ref().ok()?;
+                Some(serialized_texts_match(value, |text| {
+                    !pattern.is_match(text)
+                }))
+            }
+            Self::StringMap => Some(match value {
+                Value::Null => true,
+                Value::Object(fields) => fields
+                    .values()
+                    .all(|value| value.is_string() || value.is_null()),
+                Value::Bool(_) | Value::Number(_) | Value::String(_) | Value::Array(_) => false,
+            }),
             Self::String { pattern } => match value {
                 Value::String(value) => regex::Regex::new(pattern)
                     .ok()
@@ -110,4 +145,28 @@ fn quantify(
         }
     }
     (!unknown).then_some(!decisive)
+}
+
+fn serialized_text_unchanged(value: &Value, templated: bool) -> bool {
+    serialized_texts_match(value, |text| {
+        !text.contains("<no value>") && (!templated || !text.contains("{{"))
+    })
+}
+
+fn serialized_texts_match(value: &Value, preserved: impl Fn(&str) -> bool) -> bool {
+    let mut pending = vec![value];
+    while let Some(value) = pending.pop() {
+        match value {
+            Value::String(text) if !preserved(text) => return false,
+            Value::Array(items) => pending.extend(items),
+            Value::Object(fields) => {
+                if fields.keys().any(|key| !preserved(key)) {
+                    return false;
+                }
+                pending.extend(fields.values());
+            }
+            Value::Null | Value::Bool(_) | Value::Number(_) | Value::String(_) => {}
+        }
+    }
+    true
 }

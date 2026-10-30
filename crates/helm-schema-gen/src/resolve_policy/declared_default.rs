@@ -9,7 +9,7 @@ use super::{
 /// Stores compiled acceptance validators for one generation.
 ///
 /// Each entry is keyed by the complete schema document handed to the
-/// validator (including an injected Helm-truthy definition), so every instance
+/// validator (including internal shared definitions), so every instance
 /// checked against the same document reuses one retained entry. A document
 /// that fails to compile is stored as `None` and accepts nothing. Entries are
 /// retained for the whole generation, one per distinct self-contained document.
@@ -20,8 +20,7 @@ pub(crate) struct ConditionalSchemaAcceptanceMemo {
 
 impl ConditionalSchemaAcceptanceMemo {
     pub(crate) fn accepts(&mut self, schema: &Value, instance: &Value) -> bool {
-        let wrapped =
-            value_references_helm_truthy(schema).then(|| helm_truthy_acceptance_document(schema));
+        let wrapped = acceptance_document(schema, BTreeMap::new());
         let document = wrapped.as_ref().unwrap_or(schema);
         // An external resource is resolved at compile time, so two equal
         // documents can compile differently; such a document is never retained.
@@ -292,30 +291,28 @@ fn schema_accepts_json_value_with_definitions(
     instance: &Value,
     definitions: &BTreeMap<String, Value>,
 ) -> bool {
-    let mut reachable =
-        crate::provider_definitions::definitions_reachable_from(schema, definitions);
-    if value_references_helm_truthy(schema) || reachable.values().any(value_references_helm_truthy)
-    {
-        reachable.insert(
-            HELM_TRUTHY_DEFINITION_NAME.to_owned(),
-            helm_truthy_definition_schema(),
-        );
-    }
-    let document = (!reachable.is_empty())
-        .then(|| serde_json::json!({ "$defs": reachable, "allOf": [schema] }));
+    let reachable = crate::provider_definitions::definitions_reachable_from(schema, definitions);
+    let document = acceptance_document(schema, reachable);
     jsonschema::validator_for(document.as_ref().unwrap_or(schema))
         .map(|validator| validator.is_valid(instance))
         .unwrap_or(false)
 }
 
-/// Wraps `schema` with the Helm-truthy definition its references resolve to.
-fn helm_truthy_acceptance_document(schema: &Value) -> Value {
-    serde_json::json!({
-        "$defs": {
-            HELM_TRUTHY_DEFINITION_NAME: helm_truthy_definition_schema()
-        },
-        "allOf": [schema]
-    })
+/// Supplies internal shared definitions before testing a provisional schema.
+fn acceptance_document(schema: &Value, mut definitions: BTreeMap<String, Value>) -> Option<Value> {
+    let internal = super::scalar_preimage::serialized_definitions(
+        std::iter::once(schema).chain(definitions.values()),
+    );
+    definitions.extend(internal);
+    if value_references_helm_truthy(schema)
+        || definitions.values().any(value_references_helm_truthy)
+    {
+        definitions.insert(
+            HELM_TRUTHY_DEFINITION_NAME.to_owned(),
+            helm_truthy_definition_schema(),
+        );
+    }
+    (!definitions.is_empty()).then(|| serde_json::json!({"$defs": definitions, "allOf": [schema]}))
 }
 
 pub(super) fn should_open_fragment_values_schema(

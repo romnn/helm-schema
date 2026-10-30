@@ -80,6 +80,7 @@ impl MemberAccessConditions {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(super) struct PathSchemaFactsAccumulator {
     pub(super) metadata_field_kinds: BTreeSet<MetadataFieldKind>,
+    pub(super) metadata_omitted_members: BTreeSet<String>,
     pub(super) provider_schema_uses: Vec<ProviderSchemaUse>,
     pub(super) facts: ContractValuePathFacts,
     pub(super) range_domain: Option<RangeDomain>,
@@ -90,6 +91,7 @@ impl Default for PathSchemaFactsAccumulator {
     fn default() -> Self {
         Self {
             metadata_field_kinds: BTreeSet::new(),
+            metadata_omitted_members: BTreeSet::new(),
             provider_schema_uses: Vec::new(),
             facts: ContractValuePathFacts::default(),
             range_domain: None,
@@ -103,9 +105,28 @@ impl PathSchemaFactsAccumulator {
         self.all_uses_nullable &= nullable;
     }
 
-    pub(super) fn record_metadata_field_kind(&mut self, field_kind: Option<MetadataFieldKind>) {
+    pub(super) fn record_metadata_field_kind(
+        &mut self,
+        field_kind: Option<MetadataFieldKind>,
+        omitted: &BTreeMap<String, Vec<Guard>>,
+    ) {
         if let Some(field_kind) = field_kind {
+            if field_kind == MetadataFieldKind::StringMap {
+                self.record_metadata_omissions(omitted.keys().cloned().collect());
+            }
             self.metadata_field_kinds.insert(field_kind);
+        }
+    }
+
+    fn record_metadata_omissions(&mut self, omitted: BTreeSet<String>) {
+        if self
+            .metadata_field_kinds
+            .contains(&MetadataFieldKind::StringMap)
+        {
+            self.metadata_omitted_members
+                .retain(|key| omitted.contains(key));
+        } else {
+            self.metadata_omitted_members = omitted;
         }
     }
 
@@ -188,6 +209,12 @@ impl PathSchemaFactsAccumulator {
         for provider_schema_use in other.provider_schema_uses {
             self.record_provider_schema_use(provider_schema_use);
         }
+        if other
+            .metadata_field_kinds
+            .contains(&MetadataFieldKind::StringMap)
+        {
+            self.record_metadata_omissions(other.metadata_omitted_members);
+        }
         self.metadata_field_kinds.extend(other.metadata_field_kinds);
         self.record_facts(other.facts);
         self.all_uses_nullable &= other.all_uses_nullable;
@@ -242,6 +269,7 @@ impl PathSchemaFactsAccumulator {
             facts,
             range_domain,
             metadata_field_kinds: self.metadata_field_kinds,
+            metadata_omitted_members: self.metadata_omitted_members,
             type_hints,
             provider_schema_uses: self.provider_schema_uses,
         }
@@ -696,14 +724,18 @@ pub(super) fn record_contract_use_conjunction(
     // dispatch guard predicates instead, and a `tpl`-style string arm's
     // placement says nothing about the raw value.
     let complement_dispatched = type_dispatched
-        && predicates.iter().all(|predicate| {
-            !predicate_tests_source_type(predicate, &source_expr)
-                || matches!(
-                    predicate.kind(),
-                    helm_schema_core::PredicateKind::Not(inner)
-                        if predicate_tests_source_type(inner, &source_expr)
-                )
-        });
+        && predicates
+            .iter()
+            .flat_map(flattened_conjuncts)
+            .all(|predicate| {
+                !predicate_tests_source_type(predicate, &source_expr)
+                    || matches!(predicate.kind(), helm_schema_core::PredicateKind::Guard(Guard::NotTypeIs { path, .. }) if path == &source_path)
+                    || matches!(
+                        predicate.kind(),
+                        helm_schema_core::PredicateKind::Not(inner)
+                            if predicate_tests_source_type(inner, &source_expr)
+                    )
+            });
     let total_stringified = contract_use.stringified
         && !matches!(
             contract_use.kind,
@@ -803,34 +835,15 @@ pub(super) fn record_contract_use_conjunction(
         facts.has_unlayered_non_control_use = facts.has_non_control_use && merge_layered.is_none();
         let acc = path_accumulator(paths, &source_path);
         acc.requiredness.is_positive_header |= positive_header;
-        // A positive dispatch arm normally abstains from provider typing
-        // (a transformed scalar arm observes derived text), but an arm that
-        // splices the VALUE structurally — a fragment under its own lowered
-        // structured-type partition — observes the value itself, so the
-        // provider projection rides the overlay scoped to the tested type.
-        // Scalar-type partitions (a `tpl` string arm rendered as a fragment)
-        // still abstain: their provider projection would be vacuous under
-        // the partition and only bloats the encoding.
+        // Serialized payloads retain the input preimage under every proved type partition.
+        // A plain fragment carries a structural value only in its object and array arms;
+        // its scalar arms observe transformed text instead.
         let structural_dispatch_arm = type_dispatched
-            && matches!(
-                contract_use.kind,
-                ValueKind::Fragment
-                    | ValueKind::YamlSerialized
-                    | ValueKind::TemplatedYamlSerialized
-            )
-            && (matches!(
-                contract_use.kind,
-                ValueKind::YamlSerialized | ValueKind::TemplatedYamlSerialized
-            ) && complement_dispatched
-                || lowerable_guards.as_ref().is_some_and(|guards| {
-                    guards.iter().any(|guard| {
-                        matches!(
-                            guard,
-                            ConditionalGuard::TypeIs { schema_type, .. }
-                                if schema_type == "object" || schema_type == "array"
-                        )
-                    })
-                }));
+            && (matches!(contract_use.kind, ValueKind::YamlSerialized | ValueKind::TemplatedYamlSerialized)
+                || contract_use.kind == ValueKind::Fragment
+                    && lowerable_guards.as_ref().is_some_and(|guards| guards.iter().any(|guard| {
+                        matches!(guard, ConditionalGuard::TypeIs { schema_type, .. } if schema_type == "object" || schema_type == "array")
+                    })));
         // A serialized splice renders text the sink cannot type back onto
         // the input, so it contributes no metadata field kind either. A
         // structural type partition is different: the selected object or
@@ -839,11 +852,13 @@ pub(super) fn record_contract_use_conjunction(
         let metadata_field_kind = if matches!(
             contract_use.kind,
             ValueKind::PartialScalar | ValueKind::Serialized
-        ) || (contract_use.stringified
-            && !matches!(
-                contract_use.kind,
-                ValueKind::YamlSerialized | ValueKind::TemplatedYamlSerialized
-            ))
+        ) || (contract_use.kind == ValueKind::TemplatedYamlSerialized
+            && contract_use.resource.is_none())
+            || (contract_use.stringified
+                && !matches!(
+                    contract_use.kind,
+                    ValueKind::YamlSerialized | ValueKind::TemplatedYamlSerialized
+                ))
             || (type_dispatched && !structural_dispatch_arm)
         {
             None
@@ -989,6 +1004,7 @@ pub(super) fn record_contract_use_conjunction(
                 lowerable_guards,
                 branch_provider_use,
                 metadata_field_kind,
+                &contract_use.omitted_members,
             );
         }
     }

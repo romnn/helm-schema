@@ -586,6 +586,12 @@ impl LoweredEmissionPlan {
             );
         }
         drop(truthy_span);
+        let definitions = crate::resolve_policy::scalar_preimage::serialized_definitions(
+            std::iter::once(&materialized.schema)
+                .chain(materialized.condition_definitions.values())
+                .chain(materialized.provider_definitions.values()),
+        );
+        materialized.provider_definitions.extend(definitions);
         insert_definitions_into_root(
             &mut materialized.schema,
             std::mem::take(&mut materialized.provider_definitions),

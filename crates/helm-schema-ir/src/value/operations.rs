@@ -2,7 +2,7 @@ use super::{
     AbortReason, Datum, Field, Leaf, MapType, ObjectData, ObjectVersion, Remainder, State, Value,
     ValueNode,
 };
-use helm_schema_core::GuardValue;
+use helm_schema_core::{GuardValue, ValuesPath};
 use std::collections::{BTreeMap, BTreeSet};
 use std::rc::Rc;
 
@@ -56,6 +56,7 @@ pub(super) fn transfer(
     }
     match function {
         "semverCompare" => Ok(transfer_semver_compare(input)),
+        "contains" => Ok(transfer_contains(input, state)),
         "dict" => Ok(transfer_dictionary(input, state)),
         "list" | "tuple" => Ok(transfer_sequence(input)),
         "set" | "unset" => transfer_write_map(input, state),
@@ -651,16 +652,25 @@ fn transfer_serialize(
     }
     let frozen = state.heap.freeze(&first);
     let guard = state.heap.arena.runtime_path(&state.active);
+    let mut remaining = 4096;
     let mut query = super::output::JsonQuery {
         preserve_nil_collections: false,
-        remaining: None,
+        remaining: Some(&mut remaining),
         outcome: &|test| guard.implies_test(test),
         choice: None,
     };
     let Some(json) = frozen.json_with(&mut query) else {
         return match query.choice {
             Some(decision) => Err(TransferDemand::Choice(decision)),
-            None => Ok(Value::influenced(first.inputs())),
+            None => Ok(Value::frozen_text(
+                super::text::TextTerm::Json {
+                    value: frozen,
+                    pretty: function == "toPrettyJson",
+                    escape_html: matches!(function, "toJson" | "mustToJson" | "toPrettyJson"),
+                    literal: None,
+                },
+                influences.clone(),
+            )),
         };
     };
     let text = if function == "toPrettyJson" {
@@ -680,10 +690,201 @@ fn transfer_serialize(
             text
         }
     });
-    Ok(text.map_or_else(
-        || Value::influenced(influences.clone()),
-        |text| Value::string(&text),
+    Ok(Value::frozen_text(
+        super::text::TextTerm::Json {
+            value: frozen,
+            pretty: function == "toPrettyJson",
+            escape_html: matches!(function, "toJson" | "mustToJson" | "toPrettyJson"),
+            literal: text.map(GuardValue::String),
+        },
+        influences.clone(),
     ))
+}
+
+fn transfer_contains(input: TransferInput<'_>, state: &State) -> Value {
+    let TransferInput {
+        function: _,
+        arguments: _,
+        influences,
+        first,
+        last,
+    } = input;
+    let Some(GuardValue::String(needle)) = first.constant() else {
+        return Value::influenced(influences);
+    };
+    if needle.is_empty() {
+        return Value::literal(GuardValue::Bool(true));
+    }
+    contains_text(needle, &last, state, &influences, &mut 128)
+}
+
+fn contains_text(
+    needle: &str,
+    last: &Value,
+    state: &State,
+    influences: &BTreeSet<ValuesPath>,
+    remaining: &mut usize,
+) -> Value {
+    use helm_schema_core::{Guard, Predicate};
+    let Some(next) = remaining.checked_sub(1) else {
+        return Value::influenced(influences.clone());
+    };
+    *remaining = next;
+    if let ValueNode::Select { decision, yes, no } = last.node.as_ref() {
+        return Value::select(
+            Rc::clone(decision),
+            contains_text(needle, yes, state, influences, remaining),
+            contains_text(needle, no, state, influences, remaining),
+        );
+    }
+    if let Some(GuardValue::String(text)) = last.constant() {
+        return Value::literal(GuardValue::Bool(text.contains(needle)));
+    }
+    let predicate = if let Some(path) = last.identity() {
+        Some(Predicate::from(Guard::MatchesPattern {
+            path: path.clone(),
+            pattern: regex::escape(needle),
+            templated: false,
+        }))
+    } else if needle == "{{" {
+        if let Some(source) = json_source(last, remaining) {
+            return json_source_contains(source, state, influences, remaining);
+        }
+        None
+    } else {
+        None
+    };
+    let Some(predicate) = predicate else {
+        return Value::influenced(influences.clone());
+    };
+    let decision = state.heap.arena.decision(
+        predicate.clone(),
+        predicate.negated(),
+        super::Coverage::Exact,
+    );
+    Value::select(
+        decision,
+        Value::literal(GuardValue::Bool(true)),
+        Value::literal(GuardValue::Bool(false)),
+    )
+}
+
+fn json_source<'a>(value: &'a Value, remaining: &mut usize) -> Option<&'a super::FrozenValue> {
+    let ValueNode::Leaf(Leaf {
+        datum: Datum::Text(text),
+        origin: _,
+    }) = value.node.as_ref()
+    else {
+        return None;
+    };
+    let mut term = &text.0;
+    loop {
+        *remaining = remaining.checked_sub(1)?;
+        match term.as_ref() {
+            super::text::TextTerm::Json {
+                value,
+                pretty: _,
+                escape_html: _,
+                literal: _,
+            } => return Some(value),
+            super::text::TextTerm::Resolved {
+                term: nested,
+                literal: _,
+            } => term = nested,
+            super::text::TextTerm::Yaml {
+                value: _,
+                pretty: _,
+            }
+            | super::text::TextTerm::Capture {
+                graph: _,
+                strip_marker: _,
+            }
+            | super::text::TextTerm::Tpl {
+                source: _,
+                result: _,
+            }
+            | super::text::TextTerm::Indent {
+                value: _,
+                width: _,
+                newline: _,
+            }
+            | super::text::TextTerm::Quote { value: _ }
+            | super::text::TextTerm::Encoded {
+                value: _,
+                alphabet: _,
+            } => return None,
+        }
+    }
+}
+
+fn json_source_contains(
+    source: &super::FrozenValue,
+    state: &State,
+    influences: &BTreeSet<ValuesPath>,
+    remaining: &mut usize,
+) -> Value {
+    use helm_schema_core::{Guard, Predicate, ValuePattern};
+    let Some(next) = remaining.checked_sub(1) else {
+        return Value::influenced(influences.clone());
+    };
+    *remaining = next;
+    if let Some(literal) = source.literal() {
+        return Value::literal(GuardValue::Bool(
+            matches!(literal, GuardValue::String(text) if text.contains("{{")),
+        ));
+    }
+    if let ValueNode::Select { decision, yes, no } = source.value.node.as_ref() {
+        let yes = super::FrozenValue {
+            heap: Rc::clone(&source.heap),
+            value: yes.clone(),
+        };
+        let no = super::FrozenValue {
+            heap: Rc::clone(&source.heap),
+            value: no.clone(),
+        };
+        return Value::select(
+            Rc::clone(decision),
+            json_source_contains(&yes, state, influences, remaining),
+            json_source_contains(&no, state, influences, remaining),
+        );
+    }
+    let inputs = state.heap.arena.input_objects.borrow();
+    let mut query = super::output::PayloadQuery::with_limit(
+        &inputs,
+        super::output::PayloadShape::Mapping,
+        *remaining,
+    );
+    let view = query.json_source(source);
+    *remaining = remaining.saturating_sub(query.work());
+    if view.unknown != Predicate::False {
+        return Value::influenced(influences.clone());
+    }
+    let [payload] = view.known.as_slice() else {
+        return Value::influenced(influences.clone());
+    };
+    if payload.condition != Predicate::True {
+        return Value::influenced(influences.clone());
+    }
+    let predicate = Predicate::Or(vec![
+        Predicate::from(Guard::Absent {
+            path: payload.path.clone(),
+        }),
+        Predicate::from(Guard::MatchesValue {
+            path: payload.path.clone(),
+            pattern: ValuePattern::TemplateActionFree,
+        }),
+    ])
+    .negated();
+    let decision = state.heap.arena.decision(
+        predicate.clone(),
+        predicate.negated(),
+        super::Coverage::Exact,
+    );
+    Value::select(
+        decision,
+        Value::literal(GuardValue::Bool(true)),
+        Value::literal(GuardValue::Bool(false)),
+    )
 }
 
 fn transfer_deserialize(input: TransferInput<'_>, state: &mut State) -> Value {

@@ -1,6 +1,6 @@
 //! Fragment projection from the file's sealed executed-output ownership.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::rc::Rc;
 
 use helm_schema_core::{GuardDnf, Predicate};
@@ -96,6 +96,7 @@ pub(crate) fn project_execution_at_offset(
             db,
             resources,
             children,
+            payload_remaining: std::cell::Cell::new(1024),
         };
         for index in roots {
             root.extend(projection.node(index));
@@ -117,6 +118,7 @@ struct Projection<'a> {
     db: &'a IrAnalysisDb,
     resources: Vec<PlacedResource>,
     children: Vec<Vec<usize>>,
+    payload_remaining: std::cell::Cell<usize>,
 }
 
 struct KeyArm {
@@ -125,6 +127,19 @@ struct KeyArm {
 }
 
 impl Projection<'_> {
+    fn payload<'a>(
+        &self,
+        value: &'a crate::value::FrozenValue,
+        shape: crate::value::output::PayloadShape,
+    ) -> crate::value::output::PayloadView<'a> {
+        let mut remaining = self.payload_remaining.get();
+        let view = self
+            .execution
+            .bounded_serialized_payload(value, shape, &mut remaining);
+        self.payload_remaining.set(remaining);
+        view
+    }
+
     fn node(&self, index: usize) -> Guarded<AbstractFragment> {
         let Some(node) = self.document.ownership.nodes.get(index) else {
             return Guarded::empty();
@@ -136,6 +151,24 @@ impl Projection<'_> {
             span,
             pieces: _,
         } = *node;
+        if matches!(
+            kind,
+            YamlNodeKind::Mapping
+                | YamlNodeKind::FlowMapping
+                | YamlNodeKind::Sequence
+                | YamlNodeKind::FlowSequence
+                | YamlNodeKind::Scalar(ScalarStyle::Plain)
+        ) && let Some(mut result) = self.serialized_pair(span)
+        {
+            result.guard_all(&self.document.condition, self.db.predicate_memo());
+            return result;
+        }
+        if kind == YamlNodeKind::Item
+            && let Some(mut result) = self.serialized_items(span)
+        {
+            result.guard_all(&self.document.condition, self.db.predicate_memo());
+            return result;
+        }
         let mut result = match kind {
             YamlNodeKind::Document | YamlNodeKind::Item => {
                 let mut result = Guarded::empty();
@@ -164,16 +197,59 @@ impl Projection<'_> {
             | YamlNodeKind::DocumentEnd => Guarded::empty(),
         };
         result.guard_all(&self.document.condition, self.db.predicate_memo());
+        result.guard_all(
+            &self.document.selection_guard(span),
+            self.db.predicate_memo(),
+        );
         result
     }
 
     fn mapping(&self, index: usize) -> Guarded<AbstractFragment> {
         let mut mapping = Mapping::default();
-        for pair in self.children.get(index).into_iter().flatten() {
+        let pairs = self
+            .children
+            .get(index)
+            .into_iter()
+            .flatten()
+            .copied()
+            .collect::<Vec<_>>();
+        let mut serialized = pairs
+            .iter()
+            .filter_map(|pair| {
+                let node = self.document.ownership.nodes.get(*pair)?;
+                self.serialized_pair(node.span).map(|value| (*pair, value))
+            })
+            .collect::<BTreeMap<_, _>>();
+        let last_serialized = serialized.keys().next_back().copied();
+        let multiple_serialized = serialized.len() > 1;
+        for pair in &pairs {
             let Some(pair_node) = self.document.ownership.nodes.get(*pair) else {
                 continue;
             };
             if !matches!(pair_node.kind, YamlNodeKind::Pair | YamlNodeKind::FlowPair) {
+                continue;
+            }
+            if let Some(mut value) = serialized.remove(pair) {
+                // Unknown later maps can overwrite any earlier member and supply later required keys.
+                if multiple_serialized {
+                    continue;
+                }
+                let Some(omitted) = self.later_member_keys(&pairs, *pair) else {
+                    continue;
+                };
+                for (_, fragment) in &mut value.arms {
+                    if let AbstractFragment::Splice(splice) = fragment {
+                        splice.meta.input_identity &= omitted.is_empty();
+                        splice
+                            .meta
+                            .omitted_members
+                            .extend(omitted.iter().cloned().map(|key| (key, Vec::new())));
+                    }
+                }
+                mapping.entries.push(MappingEntry {
+                    key: EntryKey::Literal(String::new()),
+                    value,
+                });
                 continue;
             }
             let children = self.children.get(*pair).into_iter().flatten();
@@ -190,15 +266,38 @@ impl Projection<'_> {
             else {
                 continue;
             };
-            let mut value = Guarded::empty();
-            for child in children.filter(|child| **child != key) {
-                value.extend(self.node(*child));
-            }
+            let value = if last_serialized.is_some_and(|last| *pair < last) {
+                // A later member splice can overwrite the value; the template still supplies its key.
+                Guarded::unconditional(AbstractFragment::Scalar(AbstractString {
+                    parts: vec![StringPart::Taint(TaintPart::abstaining(BTreeSet::new()))],
+                    suppressed: false,
+                }))
+            } else {
+                let mut value = Guarded::empty();
+                for child in children.filter(|child| **child != key) {
+                    value.extend(self.node(*child));
+                }
+                value
+            };
             for KeyArm { condition, key } in self.keys(key) {
                 let mut value = value.clone();
                 value.guard_all(&condition, self.db.predicate_memo());
                 if !value.is_empty() {
-                    mapping.entries.push(MappingEntry { key, value });
+                    if let Some(existing) = mapping.entries.iter_mut().find(|entry| {
+                        entry.key == key
+                            && value.arms.iter().all(|(condition, _)| {
+                                entry.value.arms.iter().all(|(other, _)| {
+                                    self.db.predicate_memo().normalize(Predicate::all(vec![
+                                        condition.clone(),
+                                        other.clone(),
+                                    ])) == Predicate::False
+                                })
+                            })
+                    }) {
+                        existing.value.extend(value);
+                    } else {
+                        mapping.entries.push(MappingEntry { key, value });
+                    }
                 }
             }
         }
@@ -207,6 +306,136 @@ impl Projection<'_> {
         } else {
             Guarded::unconditional(AbstractFragment::Mapping(mapping))
         }
+    }
+
+    fn later_member_keys(&self, pairs: &[usize], pair: usize) -> Option<BTreeSet<String>> {
+        let mut omitted = BTreeSet::new();
+        let mut complete = true;
+        for later in pairs.iter().filter(|later| **later > pair) {
+            let key = self
+                .children
+                .get(*later)
+                .into_iter()
+                .flatten()
+                .find(|child| {
+                    self.document
+                        .ownership
+                        .nodes
+                        .get(**child)
+                        .is_some_and(|node| node.key)
+                });
+            let Some(key) = key else {
+                continue;
+            };
+            for arm in self.keys(*key) {
+                if let EntryKey::Literal(key) = arm.key {
+                    omitted.insert(key);
+                } else {
+                    complete = false;
+                }
+            }
+        }
+        complete.then_some(omitted)
+    }
+
+    fn serialized_pair(&self, span: Span) -> Option<Guarded<AbstractFragment>> {
+        let term = self.document.terms(span).find(|term| term.placeholder)?;
+        let text = self
+            .document
+            .ownership
+            .skeleton
+            .text
+            .get(term.range.start..term.range.end)?;
+        let pair = self
+            .document
+            .ownership
+            .skeleton
+            .text
+            .get(span.start..span.end)?;
+        if text.trim() != pair.trim() {
+            return None;
+        }
+        let alternatives = term.frozen_alternatives()?;
+        let mut result = Guarded::empty();
+        for (guard, value) in alternatives {
+            let mut payload = self.payload(value, crate::value::output::PayloadShape::Mapping);
+            let scalar = !payload
+                .known
+                .iter()
+                .any(|arm| arm.spelling.trim() == text.trim());
+            if scalar {
+                payload = self.payload(value, crate::value::output::PayloadShape::Scalar);
+            }
+            for mut arm in payload.known {
+                if arm.spelling.trim() != text.trim() {
+                    continue;
+                }
+                if self.document.flow_context(span) && !arm.flow_node {
+                    if !arm.omitted_members.is_empty() {
+                        continue;
+                    }
+                    let coverage = arm.flow_condition();
+                    arm.condition = Predicate::all(vec![arm.condition, coverage]);
+                }
+                if scalar {
+                    let mut conditions = vec![arm.scalar_condition()];
+                    if !self.document.block_value(span) {
+                        conditions.push(arm.flow_condition());
+                    }
+                    conditions.push(arm.condition);
+                    arm.condition = Predicate::all(conditions);
+                }
+                let mut fragment = super::lower::lower_serialized_payload(&arm);
+                fragment.guard_all(&guard, self.db.predicate_memo());
+                fragment.guard_all(
+                    &self.document.placement_guard(term.range),
+                    self.db.predicate_memo(),
+                );
+                self.stamp(&mut fragment, &term, span, None);
+                result.extend(fragment);
+            }
+        }
+        (!result.is_empty()).then_some(result)
+    }
+
+    fn serialized_items(&self, span: Span) -> Option<Guarded<AbstractFragment>> {
+        let term = self.document.terms(span).find(|term| term.placeholder)?;
+        let text = self
+            .document
+            .ownership
+            .skeleton
+            .text
+            .get(term.range.start..term.range.end)?;
+        let item = self
+            .document
+            .ownership
+            .skeleton
+            .text
+            .get(span.start..span.end)?;
+        if text.trim() != item.trim() {
+            return None;
+        }
+        let mut result = Guarded::empty();
+        for (guard, value) in term.frozen_alternatives()? {
+            for arm in self
+                .payload(value, crate::value::output::PayloadShape::Sequence)
+                .known
+            {
+                if arm.spelling.trim() != text.trim() {
+                    continue;
+                }
+                let mut fragment =
+                    super::lower::lower_serialized_items(&arm, self.db.predicate_memo());
+                fragment.guard_all(&guard, self.db.predicate_memo());
+                fragment.guard_all(
+                    &self.document.placement_guard(term.range),
+                    self.db.predicate_memo(),
+                );
+                self.stamp(&mut fragment, &term, span, None);
+                result.extend(fragment);
+            }
+        }
+        (!result.is_empty()).then_some(result)
     }
 
     fn keys(&self, index: usize) -> Vec<KeyArm> {

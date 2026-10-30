@@ -10,6 +10,10 @@ use super::{Datum, FrozenValue, Leaf, TextBuffer, Value, ValueNode};
 pub(super) struct FrozenText(pub(super) Rc<TextTerm>);
 
 pub(super) enum TextTerm {
+    Resolved {
+        term: Rc<TextTerm>,
+        literal: helm_schema_core::GuardValue,
+    },
     Encoded {
         value: FrozenValue,
         alphabet: crate::function_semantics::OutputAlphabet,
@@ -25,6 +29,16 @@ pub(super) enum TextTerm {
         value: FrozenValue,
         pretty: bool,
     },
+    Json {
+        value: FrozenValue,
+        pretty: bool,
+        escape_html: bool,
+        literal: Option<helm_schema_core::GuardValue>,
+    },
+    Tpl {
+        source: FrozenValue,
+        result: FrozenValue,
+    },
     Indent {
         value: FrozenValue,
         width: usize,
@@ -35,6 +49,9 @@ pub(super) enum TextTerm {
 impl fmt::Debug for TextTerm {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::Resolved { term: _, literal } => {
+                formatter.debug_tuple("Resolved").field(literal).finish()
+            }
             Self::Encoded { value, alphabet } => formatter
                 .debug_struct("Encoded")
                 .field("snapshot", &value.heap.id.ordinal)
@@ -57,6 +74,21 @@ impl fmt::Debug for TextTerm {
                 .field("snapshot", &value.heap.id.ordinal)
                 .field("pretty", pretty)
                 .finish_non_exhaustive(),
+            Self::Json {
+                value,
+                pretty,
+                escape_html,
+                literal: _,
+            } => formatter
+                .debug_struct("Json")
+                .field("snapshot", &value.heap.id.ordinal)
+                .field("pretty", pretty)
+                .field("escape_html", escape_html)
+                .finish_non_exhaustive(),
+            Self::Tpl { source, result: _ } => formatter
+                .debug_struct("Tpl")
+                .field("snapshot", &source.heap.id.ordinal)
+                .finish_non_exhaustive(),
             Self::Indent {
                 value,
                 width,
@@ -73,7 +105,20 @@ impl fmt::Debug for TextTerm {
 
 impl PartialEq for FrozenText {
     fn eq(&self, other: &Self) -> bool {
-        Rc::ptr_eq(&self.0, &other.0)
+        if Rc::ptr_eq(&self.0, &other.0) {
+            return true;
+        }
+        if let (
+            TextTerm::Resolved { term, literal },
+            TextTerm::Resolved {
+                term: other_term,
+                literal: other_literal,
+            },
+        ) = (self.0.as_ref(), other.0.as_ref())
+        {
+            return Rc::ptr_eq(term, other_term) && literal == other_literal;
+        }
+        false
     }
 }
 impl Eq for FrozenText {}
@@ -85,14 +130,27 @@ impl Value {
 }
 
 pub(super) fn capture(graph: &TextBuffer, strip_marker: bool) -> Value {
+    let inputs = graph.inputs();
     if let Some(text) = graph.exact_text() {
-        return Value::string(&if strip_marker {
+        let text = if strip_marker {
             text.replace("<no value>", "")
         } else {
             text
-        });
+        };
+        if inputs.is_empty() || !serialized_buffer(graph, &|_| None, &mut 1024) {
+            return Value::string(&text);
+        }
+        return Value::frozen_text(
+            TextTerm::Resolved {
+                term: Rc::new(TextTerm::Capture {
+                    graph: Rc::new(graph.clone()),
+                    strip_marker,
+                }),
+                literal: helm_schema_core::GuardValue::String(text),
+            },
+            inputs,
+        );
     }
-    let inputs = graph.inputs();
     // A widened node carries dependencies but no text structure to retain.
     if opaque(graph) {
         return Value::scalar(super::ScalarType::String, None).with_influences(inputs);
@@ -148,6 +206,16 @@ impl FrozenText {
     }
 
     pub(super) fn projected(&self, original: &Value, outcome: &Outcome<'_>) -> Value {
+        if matches!(
+            self.0.as_ref(),
+            TextTerm::Resolved { .. }
+                | TextTerm::Json {
+                    literal: Some(_),
+                    ..
+                }
+        ) {
+            return original.clone();
+        }
         // Exhaustion publishes no partial frontier that later queries could refine again.
         self.project(original, outcome, &mut 4096)
             .unwrap_or_else(|| original.clone())
@@ -160,7 +228,14 @@ impl FrozenText {
         remaining: &mut usize,
     ) -> Option<Value> {
         match resolve(&self.0, outcome, remaining) {
-            Ok(text) => Some(Value::string(&text)),
+            Ok(text) if !serialized_term(&self.0, outcome, &mut 1024) => Some(Value::string(&text)),
+            Ok(text) => Some(Value::frozen_text(
+                TextTerm::Resolved {
+                    term: Rc::clone(&self.0),
+                    literal: helm_schema_core::GuardValue::String(text),
+                },
+                original.inputs(),
+            )),
             Err(Unresolved::Unknown) => Some(original.clone()),
             Err(Unresolved::Exhausted) => None,
             Err(Unresolved::Choice(decision)) => {
@@ -185,6 +260,91 @@ impl FrozenText {
     }
 }
 
+fn serialized_value(value: &Value, outcome: &Outcome<'_>, remaining: &mut usize) -> bool {
+    let Some(next) = remaining.checked_sub(1) else {
+        return true;
+    };
+    *remaining = next;
+    match value.node.as_ref() {
+        ValueNode::Select { decision, yes, no } => match outcome(decision) {
+            Some(true) => serialized_value(yes, outcome, remaining),
+            Some(false) => serialized_value(no, outcome, remaining),
+            None => {
+                serialized_value(yes, outcome, remaining)
+                    || serialized_value(no, outcome, remaining)
+            }
+        },
+        ValueNode::Leaf(Leaf {
+            datum: Datum::Text(text),
+            origin: _,
+        }) => serialized_term(&text.0, outcome, remaining),
+        ValueNode::Leaf(Leaf {
+            datum: _,
+            origin: _,
+        }) => false,
+    }
+}
+
+fn serialized_buffer(buffer: &TextBuffer, outcome: &Outcome<'_>, remaining: &mut usize) -> bool {
+    for part in &buffer.parts {
+        let Some(next) = remaining.checked_sub(1) else {
+            return true;
+        };
+        *remaining = next;
+        let serialized = match part.content() {
+            super::TextPart::Frozen(value) => serialized_value(&value.value, outcome, remaining),
+            super::TextPart::Select { decision, yes, no } => match outcome(decision) {
+                Some(true) => serialized_buffer(yes, outcome, remaining),
+                Some(false) => serialized_buffer(no, outcome, remaining),
+                None => {
+                    serialized_buffer(yes, outcome, remaining)
+                        || serialized_buffer(no, outcome, remaining)
+                }
+            },
+            super::TextPart::Bytes(_) | super::TextPart::Unknown(_) => false,
+        };
+        if serialized {
+            return true;
+        }
+    }
+    false
+}
+
+fn serialized_term(term: &TextTerm, outcome: &Outcome<'_>, remaining: &mut usize) -> bool {
+    let Some(next) = remaining.checked_sub(1) else {
+        return true;
+    };
+    *remaining = next;
+    match term {
+        TextTerm::Yaml { value, pretty: _ }
+        | TextTerm::Json {
+            value,
+            pretty: _,
+            escape_html: _,
+            literal: _,
+        } => value.identity().is_some() || serialized_value(&value.value, outcome, remaining),
+        TextTerm::Resolved { term, literal: _ } => serialized_term(term, outcome, remaining),
+        TextTerm::Capture {
+            graph,
+            strip_marker: _,
+        } => serialized_buffer(graph, outcome, remaining),
+        TextTerm::Indent {
+            value,
+            width: _,
+            newline: _,
+        } => serialized_value(&value.value, outcome, remaining),
+        TextTerm::Tpl { source, result } => {
+            serialized_value(&source.value, outcome, remaining)
+                || serialized_value(&result.value, outcome, remaining)
+        }
+        TextTerm::Quote { value: _ }
+        | TextTerm::Encoded {
+            value: _,
+            alphabet: _,
+        } => false,
+    }
+}
+
 fn resolve(
     term: &TextTerm,
     outcome: &Outcome<'_>,
@@ -192,6 +352,10 @@ fn resolve(
 ) -> Result<String, Unresolved> {
     *remaining = remaining.checked_sub(1).ok_or(Unresolved::Exhausted)?;
     match term {
+        TextTerm::Resolved { term: _, literal } => match literal {
+            helm_schema_core::GuardValue::String(text) => Ok(text.clone()),
+            _ => Err(Unresolved::Unknown),
+        },
         TextTerm::Capture {
             graph,
             strip_marker,
@@ -219,6 +383,16 @@ fn resolve(
             Ok(indent(&text, *width, *newline))
         }
         TextTerm::Yaml { value, pretty } => yaml_text(value, *pretty, outcome, remaining),
+        TextTerm::Json {
+            value: _,
+            pretty: _,
+            escape_html: _,
+            literal,
+        } => match literal {
+            Some(helm_schema_core::GuardValue::String(text)) => Ok(text.clone()),
+            _ => Err(Unresolved::Unknown),
+        },
+        TextTerm::Tpl { source: _, result } => value_text(result, outcome, remaining),
         TextTerm::Quote { value: _ }
         | TextTerm::Encoded {
             value: _,

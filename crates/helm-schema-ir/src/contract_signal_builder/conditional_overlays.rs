@@ -284,6 +284,7 @@ pub(super) fn provider_schema_use(
         kind: contract_use.kind,
         stringified: contract_use.stringified,
         plain_scalar_placement: contract_use.plain_scalar_placement,
+        strip_marker: contract_use.strip_marker,
         resource,
         template_supplied_member_keys: contract_use.template_supplied_member_keys.clone(),
         split_segment: contract_use.split_segment.clone(),
@@ -658,7 +659,9 @@ pub(super) fn record_member_range_requirement(
 pub(super) fn predicate_tests_source_type(predicate: &Predicate, source_expr: &str) -> bool {
     let source_path = helm_schema_core::ValuesPath::parse(source_expr);
     match predicate.kind() {
-        helm_schema_core::PredicateKind::Guard(Guard::TypeIs { path, .. }) => path == &source_path,
+        helm_schema_core::PredicateKind::Guard(
+            Guard::TypeIs { path, .. } | Guard::NotTypeIs { path, .. },
+        ) => path == &source_path,
         helm_schema_core::PredicateKind::Not(inner) => {
             predicate_tests_source_type(inner, source_expr)
         }

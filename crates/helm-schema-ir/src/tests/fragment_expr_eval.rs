@@ -489,7 +489,7 @@ fn direct_provider_scalar_keeps_positive_subset_of_int_cast_guard() {
                 })
                 .map(|overlay| overlay.evidence.provider_schema_uses)
         }),
-        want: Some(vec![crate::ProviderSchemaUse {
+        want: Some(vec![crate::ProviderSchemaUse { strip_marker: false,
             value_path: helm_schema_core::ValuesPath::parse("master.service.ports.redis"),
             path: crate::YamlPath(vec![
                 "spec".to_string(),
@@ -1548,7 +1548,7 @@ fn helper_range_fallback_retains_the_root_provider_candidate() {
             ValuesPath::parse("securityContexts.containers"),
             ValuesPath::parse("worker.securityContexts.container"),
         ]),
-        "every reachable provider candidate must survive the helper boundary: {result:#?}"
+        "every reachable provider candidate must survive the helper boundary"
     );
 }
 

@@ -62,3 +62,62 @@ fn lower_rendered_parts(rendered: &[ScalarRenderPart], kind: ValueKind) -> Vec<S
     }
     parts
 }
+
+pub(crate) fn lower_serialized_payload(
+    payload: &crate::value::output::SerializedPayload<'_>,
+) -> Guarded<AbstractFragment> {
+    let crate::value::output::SerializedPayload {
+        condition,
+        path,
+        kind,
+        spelling: _,
+        strip_marker,
+        flow_node: _,
+        omitted_members,
+    } = payload;
+    Guarded {
+        arms: vec![(
+            condition.clone(),
+            AbstractFragment::Splice(Splice {
+                values_path: (*path).clone(),
+                kind: *kind,
+                meta: SpliceMeta {
+                    input_identity: omitted_members.is_empty(),
+                    strip_marker: *strip_marker,
+                    omitted_members: omitted_members
+                        .iter()
+                        .cloned()
+                        .map(|key| (key, Vec::new()))
+                        .collect(),
+                    ..SpliceMeta::default()
+                },
+            }),
+        )],
+    }
+}
+
+pub(crate) fn lower_serialized_items(
+    payload: &crate::value::output::SerializedPayload<'_>,
+    memo: &helm_schema_core::PredicateMemo,
+) -> Guarded<AbstractFragment> {
+    let mut result = lower_serialized_payload(payload);
+    for (_, fragment) in &mut result.arms {
+        if let AbstractFragment::Splice(splice) = fragment {
+            splice.values_path = helm_schema_core::ValuesPath::from_segments(
+                splice
+                    .values_path
+                    .segments()
+                    .cloned()
+                    .chain(std::iter::once(helm_schema_core::Segment::EachMember)),
+            );
+        }
+    }
+    result.guard_all(
+        &helm_schema_core::Predicate::from(helm_schema_core::Guard::TypeIs {
+            path: payload.path.clone(),
+            schema_type: "array".to_owned(),
+        }),
+        memo,
+    );
+    result
+}

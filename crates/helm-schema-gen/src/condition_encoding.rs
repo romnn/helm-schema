@@ -290,7 +290,9 @@ fn build_single_condition_fragment(
                 .collect::<Vec<_>>();
             let relative_segments = strip_ancestor_prefix(&segments, ancestor_segments)?;
             if relative_segments.is_empty() {
-                return None;
+                // Root shape belongs to authoring policy; a root has no enclosing property.
+                // A nested current node is present, so only its nil spelling satisfies absence.
+                return (!segments.is_empty()).then(|| SchemaNode::enum_values(vec![Value::Null]));
             }
             // Helm validates the COALESCED values — the same document the
             // templates render from — so a missing key means the render
@@ -1135,6 +1137,15 @@ pub(crate) fn evaluate_guard_set_on_values(
 fn value_pattern_schema(pattern: &ValuePattern) -> Option<Value> {
     Some(match pattern {
         ValuePattern::Any => Value::Bool(true),
+        ValuePattern::TemplateFree => serde_json::json!({"$ref": "#/$defs/Q"}),
+        ValuePattern::TemplateActionFree => {
+            serde_json::json!({"$ref": helm_schema_json_schema_walk::definition_reference(crate::resolve_policy::scalar_preimage::NO_TEMPLATE_ACTIONS_DEFINITION_NAME)})
+        }
+        ValuePattern::MarkerFree => serde_json::json!({"$ref": "#/$defs/helm-marker-free"}),
+        ValuePattern::YamlFlowStable => {
+            serde_json::json!({"$ref": helm_schema_json_schema_walk::definition_reference(crate::resolve_policy::scalar_preimage::YAML_FLOW_STABLE_DEFINITION_NAME)})
+        }
+        ValuePattern::StringMap => crate::path_resolver::serialized_string_map_schema(),
         ValuePattern::String { pattern } => {
             serde_json::json!({"type": "string", "pattern": crate::path_resolver::ecma_compatible_pattern(pattern)?})
         }

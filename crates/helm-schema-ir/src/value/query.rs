@@ -101,9 +101,42 @@ impl Value {
                 | None => None,
             },
             ValueNode::Leaf(Leaf {
+                datum: Datum::Text(text),
+                origin: _,
+            }) => match text.0.as_ref() {
+                super::text::TextTerm::Resolved { term: _, literal } => Some(literal),
+                super::text::TextTerm::Json {
+                    value: _,
+                    pretty: _,
+                    escape_html: _,
+                    literal,
+                } => literal.as_ref(),
+                super::text::TextTerm::Yaml {
+                    value: _,
+                    pretty: _,
+                }
+                | super::text::TextTerm::Tpl {
+                    source: _,
+                    result: _,
+                }
+                | super::text::TextTerm::Indent {
+                    value: _,
+                    width: _,
+                    newline: _,
+                }
+                | super::text::TextTerm::Capture {
+                    graph: _,
+                    strip_marker: _,
+                }
+                | super::text::TextTerm::Quote { value: _ }
+                | super::text::TextTerm::Encoded {
+                    value: _,
+                    alphabet: _,
+                } => None,
+            },
+            ValueNode::Leaf(Leaf {
                 datum:
-                    Datum::Text(_)
-                    | Datum::Map { view: _, target: _ }
+                    Datum::Map { view: _, target: _ }
                     | Datum::Sequence(_)
                     | Datum::Strings(_)
                     | Datum::Slot {

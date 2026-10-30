@@ -921,6 +921,7 @@ fn runtime_default_refill_accepts_null_without_parent_consumer() {
 #[test]
 fn pathless_conditional_target_does_not_own_descendant_defaults() {
     let mut contract = ContractIr::from_contract_uses(vec![ContractUse {
+        strip_marker: false,
         source_expr: helm_schema_core::ValuesPath::parse(""),
         path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
         kind: ValueKind::Scalar,

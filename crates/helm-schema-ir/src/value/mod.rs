@@ -10,7 +10,7 @@ mod invoke;
 pub(crate) mod kinds;
 mod namespace;
 mod operations;
-mod output;
+pub(crate) mod output;
 mod query;
 mod quoted;
 mod read_set;

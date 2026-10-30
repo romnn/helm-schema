@@ -56,6 +56,7 @@ impl LexicalState {
             return matches!(self, Double | Escape | FoldedDouble).then_some(FoldedDouble);
         }
         Some(match self {
+            PlainStart if character == ' ' => PlainStart,
             PlainStart if character.is_ascii_alphanumeric() || character == '_' => Plain,
             Plain if character.is_ascii_alphanumeric() || " _./-".contains(character) => Plain,
             PlainStart | Plain => return None,
@@ -661,4 +662,36 @@ fn class_character(character: u32) -> Option<String> {
     } else {
         char::from_u32(character)?.to_string()
     })
+}
+
+pub(super) fn serialized_input(
+    states: BTreeMap<LexicalState, Predicate>,
+    value: &super::FrozenValue,
+    memo: &PredicateMemo,
+) -> BTreeMap<LexicalState, Predicate> {
+    let mut result = BTreeMap::new();
+    let Some(path) = value.identity() else {
+        return result;
+    };
+    for (state, condition) in states {
+        // Boolean and null spellings agree across the pinned JSON/YAML serializers.
+        for schema_type in ["boolean", "null", "number"] {
+            let spelling = match schema_type {
+                "null" => "null",
+                "number" => "0",
+                _ => "true",
+            };
+            let guard = Predicate::all(vec![
+                condition.clone(),
+                Predicate::from(Guard::TypeIs {
+                    path: path.clone(),
+                    schema_type: schema_type.to_owned(),
+                }),
+            ]);
+            for (end, guard) in literal(BTreeMap::from([(state, guard)]), spelling, memo) {
+                merge(&mut result, end, guard, memo);
+            }
+        }
+    }
+    result
 }

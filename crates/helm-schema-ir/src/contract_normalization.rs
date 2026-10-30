@@ -608,6 +608,7 @@ fn contract_use_base_cmp(left: &ContractUse, right: &ContractUse) -> std::cmp::O
         .then_with(|| left.digest.cmp(&right.digest))
         .then_with(|| left.merge_operand.cmp(&right.merge_operand))
         .then_with(|| left.range_key.cmp(&right.range_key))
+        .then_with(|| left.strip_marker.cmp(&right.strip_marker))
 }
 
 fn merge_contract_use_provenance(

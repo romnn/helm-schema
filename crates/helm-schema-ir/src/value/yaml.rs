@@ -94,10 +94,11 @@ impl NodeRef {
     }
 }
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 struct SelectedSpan {
     range: Span,
     condition: Predicate,
+    local: bool,
 }
 
 #[derive(Debug)]
@@ -117,6 +118,7 @@ struct DocumentLayout {
     scope: Span,
     condition: Predicate,
     boundaries: Vec<PrefixBoundary>,
+    selections: Vec<SelectedSpan>,
 }
 
 #[derive(Clone, Debug)]
@@ -241,6 +243,26 @@ impl PlacedDocument<'_> {
     pub(crate) fn block_value(&self, span: Span) -> bool {
         block_value(self.ownership, span)
     }
+    pub(crate) fn flow_context(&self, span: Span) -> bool {
+        self.ownership
+            .nodes
+            .iter()
+            .filter(|node| node.span == span)
+            .any(|node| {
+                let mut parent = node.parent;
+                while let Some(node) = parent.and_then(|parent| self.ownership.nodes.get(parent)) {
+                    if matches!(
+                        node.kind,
+                        YamlNodeKind::FlowMapping | YamlNodeKind::FlowSequence
+                    ) {
+                        return true;
+                    }
+                    parent = node.parent;
+                }
+                false
+            })
+    }
+
     pub(crate) fn terms(&self, span: Span) -> impl Iterator<Item = PlacedTerm<'_>> {
         self.ownership
             .skeleton
@@ -269,7 +291,15 @@ impl PlacedDocument<'_> {
             })
     }
 
+    pub(crate) fn selection_guard(&self, span: Span) -> Predicate {
+        selection_guard(&self.document.selections, span)
+    }
+
     pub(crate) fn placement_guard(&self, span: Span) -> Predicate {
+        Predicate::all(vec![self.selection_guard(span), self.prefix_guard(span)])
+    }
+
+    fn prefix_guard(&self, span: Span) -> Predicate {
         let mut consumed = 0;
         let mut guard = Predicate::True;
         for boundary in &self.document.boundaries {
@@ -321,12 +351,14 @@ impl OutputPlacement {
         output: FileOutput,
         syntax: &mut SyntaxContexts,
         input_paths: &BTreeMap<super::ObjectId, ValuesPath>,
+        input_objects: &BTreeMap<ValuesPath, super::InputBacking>,
     ) -> Self {
         let mut build = LayoutBuilder {
             layouts: Vec::new(),
             unknown: Vec::new(),
             remaining: 1024,
             lexical: LexicalTransfers::new(input_paths),
+            input_objects,
             root_condition: condition.clone(),
             output,
             markers: MarkerProvenance::default(),
@@ -511,6 +543,7 @@ impl FilePlacement {
                     output,
                     &mut syntax,
                     &exit.state.heap.arena.input_paths.borrow(),
+                    &exit.state.heap.arena.input_objects.borrow(),
                 )
             } else {
                 OutputPlacement {
@@ -592,6 +625,7 @@ struct LayoutBuilder<'a> {
     unknown: Vec<Predicate>,
     remaining: usize,
     lexical: LexicalTransfers<'a>,
+    input_objects: &'a BTreeMap<ValuesPath, super::InputBacking>,
     root_condition: Predicate,
     output: FileOutput,
     markers: MarkerProvenance,
@@ -654,24 +688,54 @@ impl LayoutBuilder<'_> {
             match output.content() {
                 TextPart::Select { decision, yes, no } => {
                     let active = self.active(&contexts, ambient);
-                    let delta = self.choices(decision, [yes, no], &node, &active);
+                    let mut delta = self.choices(decision, [yes, no], &node, &active);
+                    self.local_choices(&contexts, &mut delta);
                     contexts = self.then(contexts, delta, ambient);
                 }
                 TextPart::Frozen(value) => {
-                    if let Some(capture) = captured_layout(value, &mut 128) {
-                        self.append(&mut contexts, &capture.prefix, false, &node);
-                        if !contexts.known.is_empty() {
-                            let active = self.active(&contexts, ambient);
-                            let nested = self.walk(
-                                &capture.graph,
-                                indentation.saturating_add(capture.indentation),
-                                &Rc::new(
-                                    context.iter().chain(&output.occurrences).copied().collect(),
-                                ),
-                                &active,
-                            );
-                            contexts = self.then(contexts, nested, ambient);
+                    let payload = self.payload(value, &contexts);
+                    if !payload.known.is_empty()
+                        && payload.unknown != Predicate::False
+                        && let Some(capture) = captured_layout(value, &mut 128)
+                    {
+                        let active = self.active(&contexts, ambient);
+                        let captured = self.capture(&capture, &node, &active);
+                        contexts = self.then(contexts, captured, ambient);
+                    } else if !payload.known.is_empty() {
+                        let mut spellings = BTreeMap::<String, Vec<Predicate>>::new();
+                        for arm in payload.known {
+                            spellings
+                                .entry(arm.spelling)
+                                .or_default()
+                                .push(arm.condition);
                         }
+                        let mut delta = LayoutContexts {
+                            known: Vec::new(),
+                            unknown: Predicate::False,
+                        };
+                        for (spelling, guards) in spellings {
+                            let mut layout = LayoutContext::empty();
+                            layout.condition = self.memo.normalize(Predicate::Or(guards));
+                            if layout.append_selected(&spelling, node.clone()) {
+                                delta.known.push(layout);
+                            } else {
+                                delta.unknown = Predicate::True;
+                            }
+                        }
+                        if payload.unknown != Predicate::False {
+                            let mut layout = LayoutContext::empty();
+                            layout.condition = payload.unknown;
+                            if layout.append_selected("00000000", node.clone()) {
+                                delta.known.push(layout);
+                            } else {
+                                delta.unknown = Predicate::True;
+                            }
+                        }
+                        contexts = self.then(contexts, delta, ambient);
+                    } else if let Some(capture) = captured_layout(value, &mut 128) {
+                        let active = self.active(&contexts, ambient);
+                        let captured = self.capture(&capture, &node, &active);
+                        contexts = self.then(contexts, captured, ambient);
                     } else {
                         let text = value.exact_text();
                         self.append(
@@ -687,6 +751,109 @@ impl LayoutBuilder<'_> {
             }
         }
         contexts
+    }
+
+    fn capture(
+        &mut self,
+        capture: &CapturedLayout,
+        node: &NodeRef,
+        ambient: &Predicate,
+    ) -> LayoutContexts {
+        let mut prefix = LayoutContext::empty();
+        if !prefix.append(&capture.prefix, false, node.clone()) {
+            return LayoutContexts {
+                known: Vec::new(),
+                unknown: Predicate::True,
+            };
+        }
+        let occurrences = node
+            .node()
+            .into_iter()
+            .flat_map(|output| &output.occurrences);
+        let nested = self.walk(
+            &capture.graph,
+            node.indentation.saturating_add(capture.indentation),
+            &Rc::new(node.context.iter().chain(occurrences).copied().collect()),
+            ambient,
+        );
+        self.then(
+            LayoutContexts {
+                known: vec![prefix],
+                unknown: Predicate::False,
+            },
+            nested,
+            ambient,
+        )
+    }
+
+    fn payload<'v>(
+        &mut self,
+        value: &'v FrozenValue,
+        contexts: &LayoutContexts,
+    ) -> super::output::PayloadView<'v> {
+        use super::output::{PayloadQuery, PayloadShape};
+        let mut query =
+            PayloadQuery::with_limit(self.input_objects, PayloadShape::Mapping, self.remaining);
+        let mapping = query.value(value);
+        self.remaining = self.remaining.saturating_sub(query.work());
+        if self.remaining == 0 {
+            return super::output::PayloadView {
+                known: Vec::new(),
+                unknown: Predicate::True,
+            };
+        }
+        if mapping.known.is_empty() {
+            return mapping;
+        }
+        let scalar = mapping.shaped(PayloadShape::Scalar, &mut self.remaining);
+        if self.remaining == 0 {
+            return super::output::PayloadView {
+                known: Vec::new(),
+                unknown: Predicate::True,
+            };
+        }
+        if scalar
+            .known
+            .iter()
+            .all(|arm| arm.spelling.trim() == "00000000")
+            && contexts.known.iter().all(|prefix| {
+                scalar
+                    .known
+                    .iter()
+                    .all(|arm| scalar_payload_position(&prefix.skeleton.text, &arm.spelling))
+            })
+        {
+            return scalar;
+        }
+        if self.remaining == 0 {
+            return mapping;
+        }
+        let sequence = mapping.shaped(PayloadShape::Sequence, &mut self.remaining);
+        if self.remaining == 0 {
+            return super::output::PayloadView {
+                known: Vec::new(),
+                unknown: Predicate::True,
+            };
+        }
+        if !sequence.known.is_empty()
+            && sequence.known.len() == mapping.known.len()
+            && contexts.known.iter().all(|prefix| {
+                mapping
+                    .known
+                    .iter()
+                    .zip(&sequence.known)
+                    .all(|(mapping, sequence)| {
+                        sequence_payload_position(
+                            &prefix.skeleton.text,
+                            &mapping.spelling,
+                            &sequence.spelling,
+                        )
+                    })
+            })
+        {
+            return sequence;
+        }
+        mapping
     }
 
     fn feasible(&self, ambient: &Predicate, condition: &Predicate) -> bool {
@@ -816,6 +983,77 @@ impl LayoutBuilder<'_> {
         result
     }
 
+    fn local_choices(&mut self, prefixes: &LayoutContexts, delta: &mut LayoutContexts) {
+        if delta.unknown != Predicate::False || delta.known.len() != 2 {
+            return;
+        }
+        if prefixes.known.iter().any(|prefix| {
+            !prefix.skeleton.text.trim().is_empty()
+                && helm_schema_syntax::first_document_ownership(prefix.skeleton.clone()).is_err()
+        }) {
+            return;
+        }
+        let mut shape = None;
+        for branch in &delta.known {
+            if branch.skeleton.text.trim().is_empty() {
+                continue;
+            }
+            let Some(found) = block_branch(&branch.skeleton.text) else {
+                return;
+            };
+            if shape.is_some_and(|previous| previous != found) {
+                return;
+            }
+            shape = Some(found);
+        }
+        let Some((kind, indentation)) = shape else {
+            return;
+        };
+        let exclusive = self.memo.normalize(Predicate::all(
+            delta
+                .known
+                .iter()
+                .map(|branch| branch.condition.clone())
+                .collect(),
+        )) == Predicate::False;
+        let literal_sequence = kind == YamlNodeKind::Sequence
+            && delta.known.iter().all(|branch| {
+                branch
+                    .skeleton
+                    .segments
+                    .iter()
+                    .all(|segment| !segment.placeholder)
+            })
+            && !prefixes.known.is_empty()
+            && prefixes
+                .known
+                .iter()
+                .all(|prefix| sequence_tail(&prefix.skeleton, indentation));
+        // Literal sequence continuations cannot replace their shared prefix. Their members retain
+        // their selection guards, including unknown selections that prohibit sink typing.
+        if (indentation == 0 || !exclusive) && !literal_sequence {
+            return;
+        }
+        let mut merged = LayoutContext::empty();
+        let mut covered = Vec::new();
+        for mut branch in delta.known.clone() {
+            covered.push(branch.condition.clone());
+            for selection in &mut branch.selections {
+                selection.local = true;
+            }
+            branch.selections.push(SelectedSpan {
+                range: Span::new(0, branch.skeleton.text.len()),
+                condition: branch.condition.clone(),
+                local: true,
+            });
+            if !merged.extend(branch) {
+                return;
+            }
+        }
+        merged.condition = self.memo.normalize(Predicate::Or(covered));
+        delta.known = vec![merged];
+    }
+
     fn selected(
         &self,
         result: &mut LayoutContexts,
@@ -858,6 +1096,7 @@ impl LayoutBuilder<'_> {
         }
         selections.push(SelectedSpan {
             range: Span::new(0, skeleton.text.len()),
+            local: false,
             condition: if exact {
                 guard.clone()
             } else {
@@ -921,6 +1160,7 @@ impl LayoutBuilder<'_> {
         if covered != Predicate::True {
             selections.push(SelectedSpan {
                 range: Span::new(0, yes_skeleton.text.len()),
+                local: false,
                 condition: covered.clone(),
             });
         }
@@ -1013,7 +1253,45 @@ impl LayoutBuilder<'_> {
     }
 
     #[tracing::instrument(skip_all)]
+    fn recover_multiline(
+        &mut self,
+        skeleton: &mut Skeleton,
+        terms: &[NodeRef],
+        removed: &mut Vec<Span>,
+    ) -> Vec<DocumentLayout> {
+        let mut text = String::new();
+        let mut start = 0;
+        for segment in &mut skeleton.segments {
+            if !segment.placeholder
+                && skeleton.text[segment.range.start..segment.range.end].contains('\n')
+                && terms
+                    .get(segment.piece)
+                    .and_then(NodeRef::node)
+                    .is_some_and(|node| matches!(node.content(), TextPart::Frozen(_)))
+            {
+                segment.placeholder = true;
+                text.push_str(&skeleton.text[start..segment.range.start]);
+                text.extend(std::iter::repeat_n(
+                    '0',
+                    segment.range.end - segment.range.start,
+                ));
+                start = segment.range.end;
+            }
+        }
+        if start != 0 {
+            text.push_str(&skeleton.text[start..]);
+            skeleton.text = text;
+            *removed = marker_ranges(&skeleton.text);
+            return self.syntax.documents(skeleton, removed).unwrap_or_default();
+        }
+        Vec::new()
+    }
+
     fn finish_layout(&mut self, context: LayoutContext) {
+        if !context.local_selections_complete() {
+            self.unknown.push(context.condition);
+            return;
+        }
         let LayoutContext {
             mut skeleton,
             terms,
@@ -1037,34 +1315,7 @@ impl LayoutBuilder<'_> {
         // Recover multiline frozen text for unindented quoted continuations Helm accepts.
         // Its hole retains the complete lexical transfer, including every structural byte.
         if matches!(self.output, FileOutput::Manifest) && !empty && owned_documents.is_empty() {
-            let mut text = String::new();
-            let mut start = 0;
-            for segment in &mut skeleton.segments {
-                if !segment.placeholder
-                    && skeleton.text[segment.range.start..segment.range.end].contains('\n')
-                    && terms
-                        .get(segment.piece)
-                        .and_then(NodeRef::node)
-                        .is_some_and(|node| matches!(node.content(), TextPart::Frozen(_)))
-                {
-                    segment.placeholder = true;
-                    text.push_str(&skeleton.text[start..segment.range.start]);
-                    text.extend(std::iter::repeat_n(
-                        '0',
-                        segment.range.end - segment.range.start,
-                    ));
-                    start = segment.range.end;
-                }
-            }
-            if start != 0 {
-                text.push_str(&skeleton.text[start..]);
-                skeleton.text = text;
-                removed = marker_ranges(&skeleton.text);
-                owned_documents = self
-                    .syntax
-                    .documents(&skeleton, &removed)
-                    .unwrap_or_default();
-            }
+            owned_documents = self.recover_multiline(&mut skeleton, &terms, &mut removed);
         }
         let mut failures = Vec::new();
         let mut documents = Vec::new();
@@ -1075,16 +1326,51 @@ impl LayoutBuilder<'_> {
                         selections
                             .iter()
                             .filter(|selection| {
-                                !removed.is_empty()
-                                    || (selection.range.start <= document.scope.end
-                                        && document.scope.start <= selection.range.end)
+                                !selection.local
+                                    && (!removed.is_empty()
+                                        || (selection.range.start <= document.scope.end
+                                            && document.scope.start <= selection.range.end))
                             })
                             .map(|selection| selection.condition.clone()),
                     )
                     .collect(),
             ));
-            let result = quoted_tokens(&document.ownership, &terms, &mut self.lexical, self.memo);
+            if removed.is_empty() {
+                document.selections = selections
+                    .iter()
+                    .filter(|selection| selection.local)
+                    .filter_map(|selection| {
+                        let start = selection.range.start.max(document.offset);
+                        let end = selection.range.end.min(document.scope.end);
+                        (start < end).then(|| SelectedSpan {
+                            range: Span::new(start - document.offset, end - document.offset),
+                            condition: selection.condition.clone(),
+                            local: true,
+                        })
+                    })
+                    .collect();
+            } else if selections.iter().any(|selection| selection.local) {
+                self.unknown.push(condition.clone());
+                return;
+            }
+            let result = quoted_tokens(
+                &document.ownership,
+                &terms,
+                &mut self.lexical,
+                self.input_objects,
+                &document.selections,
+                self.memo,
+            );
             failures.push(result.invalid);
+            failures.push(serialized_failures(
+                &document.ownership,
+                &terms,
+                &result.boundaries,
+                &document.selections,
+                self.input_objects,
+                self.memo,
+                &mut self.lexical.remaining,
+            ));
             document.boundaries = result.boundaries;
             // Recovery proves only irreversible lexical failure, not resource placement.
             if !recovered {
@@ -1107,6 +1393,25 @@ impl LayoutBuilder<'_> {
 }
 
 impl LayoutContext {
+    fn local_selections_complete(&self) -> bool {
+        !self.selections.iter().any(|selection| {
+            selection.local
+                && self
+                    .skeleton
+                    .text
+                    .get(selection.range.end..)
+                    .is_some_and(|suffix| {
+                        !suffix.is_empty()
+                            && !suffix.starts_with('\n')
+                            && !self
+                                .skeleton
+                                .text
+                                .get(..selection.range.end)
+                                .is_some_and(|prefix| prefix.ends_with('\n'))
+                    })
+        })
+    }
+
     fn empty() -> Self {
         Self {
             skeleton: Skeleton {
@@ -1156,11 +1461,24 @@ impl LayoutContext {
         for SelectedSpan {
             range,
             condition: _,
+            local: _,
         } in &mut selections
         {
             *range = Span::new(bytes + range.start, bytes + range.end);
         }
         self.selections.append(&mut selections);
+        true
+    }
+
+    fn append_selected(&mut self, bytes: &str, node: NodeRef) -> bool {
+        if !self.append(bytes, true, node) {
+            return false;
+        }
+        self.selections.push(SelectedSpan {
+            range: Span::new(0, self.skeleton.text.len()),
+            local: false,
+            condition: self.condition.clone(),
+        });
         true
     }
 
@@ -1248,9 +1566,23 @@ fn captured_layout(value: &FrozenValue, remaining: &mut usize) -> Option<Capture
             (capture.prefix.len() <= 64 * 1024 && capture.indentation <= 64 * 1024)
                 .then_some(capture)
         }
-        super::text::TextTerm::Capture {
+        super::text::TextTerm::Resolved {
+            term: _,
+            literal: _,
+        }
+        | super::text::TextTerm::Capture {
             graph: _,
             strip_marker: true,
+        }
+        | super::text::TextTerm::Tpl {
+            source: _,
+            result: _,
+        }
+        | super::text::TextTerm::Json {
+            value: _,
+            pretty: _,
+            escape_html: _,
+            literal: _,
         }
         | super::text::TextTerm::Quote { value: _ }
         | super::text::TextTerm::Yaml {
@@ -1355,6 +1687,7 @@ fn documents(skeleton: &Skeleton) -> Option<Vec<DocumentLayout>> {
             scope,
             condition: Predicate::True,
             boundaries: Vec::new(),
+            selections: Vec::new(),
         });
     }
     Some(documents)
@@ -1722,6 +2055,9 @@ impl<'a> LexicalTransfers<'a> {
     ) -> States {
         let initial = BTreeMap::from([(state, Predicate::True)]);
         match text.0.as_ref() {
+            super::text::TextTerm::Resolved { term: _, literal } => {
+                quoted::literal(initial, &literal.to_string(), memo)
+            }
             super::text::TextTerm::Capture {
                 graph,
                 strip_marker: _,
@@ -1783,10 +2119,14 @@ impl<'a> LexicalTransfers<'a> {
                 }
                 result
             }
-            super::text::TextTerm::Yaml {
-                value: _,
+            super::text::TextTerm::Tpl { source: _, result } => self.value(result, state, memo),
+            super::text::TextTerm::Yaml { value, pretty: _ }
+            | super::text::TextTerm::Json {
+                value,
                 pretty: _,
-            } => States::new(),
+                escape_html: _,
+                literal: _,
+            } => quoted::serialized_input(initial, value, memo),
         }
     }
 
@@ -2002,24 +2342,53 @@ struct QuotedPrefix {
     boundaries: Vec<PrefixBoundary>,
 }
 
+impl QuotedPrefix {
+    fn unknown() -> Self {
+        Self {
+            invalid: Predicate::False,
+            boundaries: Vec::new(),
+        }
+    }
+}
+
 #[tracing::instrument(skip_all)]
 fn quoted_tokens(
     owned: &YamlOwnership,
     terms: &[NodeRef],
     lexical: &mut LexicalTransfers,
+    inputs: &BTreeMap<ValuesPath, super::InputBacking>,
+    selections: &[SelectedSpan],
     memo: &PredicateMemo,
 ) -> QuotedPrefix {
     if owned.skeleton.text.contains('<') {
-        return QuotedPrefix {
-            invalid: Predicate::False,
-            boundaries: Vec::new(),
-        };
+        return QuotedPrefix::unknown();
     }
     let mut prefix = Predicate::True;
     let mut failures = Vec::new();
     let mut consumed = 0;
     let mut boundaries = Vec::new();
+    let mut payloads = super::output::PayloadQuery::new(inputs);
     for node in &owned.nodes {
+        if node.span.end <= consumed {
+            continue;
+        }
+        if let Some((span, preserved)) =
+            serialized_boundary(owned, node, terms, &mut payloads, &mut lexical.remaining).or_else(
+                || serialized_node_boundary(owned, node, terms, inputs, &mut lexical.remaining),
+            )
+        {
+            let active = selection_guard(selections, span);
+            prefix = memo.normalize(Predicate::all(vec![
+                prefix,
+                Predicate::Or(vec![active.negated(), preserved]),
+            ]));
+            boundaries.push(PrefixBoundary {
+                span,
+                preserved: prefix.clone(),
+            });
+            consumed = span.end;
+            continue;
+        }
         let style = match node.kind {
             YamlNodeKind::Scalar(style) => style,
             YamlNodeKind::Document
@@ -2055,25 +2424,18 @@ fn quoted_tokens(
             ScalarStyle::SingleQuoted => LexicalState::SingleEnd,
             ScalarStyle::Plain => LexicalState::Plain,
         };
+        let active = selection_guard(selections, node.span);
         let mut states = lexical.token(owned, node, terms, memo);
         failures.push(Predicate::all(vec![
             prefix.clone(),
+            active.clone(),
             lexical.flow_tail(owned, node, terms, &states, memo),
         ]));
-        failures.push(Predicate::all(vec![
-            prefix.clone(),
-            invalid_states(owned, node, &mut states),
-        ]));
-        if ends_document(owned, node.span) {
+        for failure in token_failures(owned, node, &mut states) {
             failures.push(Predicate::all(vec![
                 prefix.clone(),
-                Predicate::Or(
-                    states
-                        .iter()
-                        .filter(|(state, _)| state.is_unterminated())
-                        .map(|(_, condition)| condition.clone())
-                        .collect(),
-                ),
+                active.clone(),
+                failure,
             ]));
         }
         let mut preserved = vec![states.remove(&closed).unwrap_or(Predicate::False)];
@@ -2082,7 +2444,10 @@ fn quoted_tokens(
                 preserved.push(states.remove(&end).unwrap_or(Predicate::False));
             }
         }
-        prefix = memo.normalize(Predicate::all(vec![prefix, Predicate::Or(preserved)]));
+        prefix = memo.normalize(Predicate::all(vec![
+            prefix,
+            Predicate::Or(vec![active.negated(), Predicate::Or(preserved)]),
+        ]));
         boundaries.push(PrefixBoundary {
             span: node.span,
             preserved: prefix.clone(),
@@ -2093,6 +2458,391 @@ fn quoted_tokens(
         invalid: memo.normalize(Predicate::Or(failures)),
         boundaries,
     }
+}
+
+fn token_failures(
+    owned: &YamlOwnership,
+    node: &helm_schema_syntax::YamlNode,
+    states: &mut States,
+) -> Vec<Predicate> {
+    let mut failures = vec![invalid_states(owned, node, states)];
+    if ends_document(owned, node.span) {
+        failures.push(Predicate::Or(
+            states
+                .iter()
+                .filter(|(state, _)| state.is_unterminated())
+                .map(|(_, condition)| condition.clone())
+                .collect(),
+        ));
+    }
+    failures
+}
+
+// A block serializer owns a complete node; its synthetic key and value are not scalar emissions.
+fn serialized_node_boundary(
+    owned: &YamlOwnership,
+    node: &helm_schema_syntax::YamlNode,
+    terms: &[NodeRef],
+    inputs: &BTreeMap<ValuesPath, super::InputBacking>,
+    remaining: &mut usize,
+) -> Option<(Span, Predicate)> {
+    let shape = match node.kind {
+        YamlNodeKind::Scalar(ScalarStyle::Plain) if !node.key => {
+            super::output::PayloadShape::Scalar
+        }
+        YamlNodeKind::Item => super::output::PayloadShape::Sequence,
+        YamlNodeKind::FlowMapping => super::output::PayloadShape::Mapping,
+        _ => return None,
+    };
+    let segment = owned.skeleton.segments.iter().find(|segment| {
+        segment.placeholder
+            && segment.range.start <= node.span.start
+            && node.span.end <= segment.range.end
+    })?;
+    let text = owned
+        .skeleton
+        .text
+        .get(segment.range.start..segment.range.end)?;
+    if text.trim()
+        != owned
+            .skeleton
+            .text
+            .get(node.span.start..node.span.end)?
+            .trim()
+    {
+        return None;
+    }
+    let term = PlacedTerm {
+        range: segment.range,
+        placeholder: true,
+        source_offset: None,
+        node: terms.get(segment.piece)?,
+    };
+    let mut query = super::output::PayloadQuery::with_shape(inputs, shape);
+    let mut preserved = Vec::new();
+    for (guard, value) in term.frozen_alternatives()? {
+        for payload in query.bounded_value(value, remaining).known {
+            if payload.spelling.trim() != text.trim() {
+                continue;
+            }
+            if !payload.omitted_members.is_empty()
+                && block_parent(owned, node).is_none()
+                && !payload.flow_node
+            {
+                continue;
+            }
+            let kind = if shape == super::output::PayloadShape::Sequence {
+                Predicate::all(vec![
+                    Predicate::from(Guard::TypeIs {
+                        path: payload.path.clone(),
+                        schema_type: "array".to_owned(),
+                    }),
+                    Predicate::truthy_path(payload.path.encode()),
+                ])
+            } else if shape == super::output::PayloadShape::Scalar {
+                if block_parent(owned, node).is_some() {
+                    payload.scalar_condition()
+                } else {
+                    Predicate::all(vec![payload.scalar_condition(), payload.flow_condition()])
+                }
+            } else if payload.flow_node {
+                payload.unchanged_condition()
+            } else {
+                Predicate::all(vec![
+                    payload.unchanged_condition(),
+                    payload.flow_condition(),
+                ])
+            };
+            let unchanged = payload.unchanged_condition();
+            let mut condition = vec![guard.clone(), payload.condition, kind];
+            if payload.kind == crate::ValueKind::TemplatedYamlSerialized {
+                condition.push(unchanged);
+            }
+            preserved.push(Predicate::all(condition));
+        }
+    }
+    (!preserved.is_empty()).then(|| {
+        (
+            Span::new(node.span.start, segment.range.end),
+            Predicate::Or(preserved),
+        )
+    })
+}
+
+fn serialized_boundary<'a>(
+    owned: &YamlOwnership,
+    node: &helm_schema_syntax::YamlNode,
+    terms: &'a [NodeRef],
+    query: &mut super::output::PayloadQuery<'a, '_>,
+    remaining: &mut usize,
+) -> Option<(Span, Predicate)> {
+    if node.kind != YamlNodeKind::Pair {
+        return None;
+    }
+    let segment = owned.skeleton.segments.iter().find(|segment| {
+        segment.placeholder
+            && segment.range.start <= node.span.start
+            && node.span.end <= segment.range.end
+    })?;
+    let text = owned
+        .skeleton
+        .text
+        .get(segment.range.start..segment.range.end)?;
+    let pair = owned.skeleton.text.get(node.span.start..node.span.end)?;
+    if text.trim() != pair.trim() {
+        return None;
+    }
+    let mapping = owned.nodes.get(node.parent?)?;
+    if mapping.kind != YamlNodeKind::Mapping {
+        return None;
+    }
+    let whole = owned
+        .nodes
+        .iter()
+        .filter(|child| child.parent == node.parent)
+        .count()
+        == 1;
+    let block_operand = whole
+        && mapping
+            .parent
+            .and_then(|parent| owned.nodes.get(parent))
+            .is_some_and(|parent| matches!(parent.kind, YamlNodeKind::Pair | YamlNodeKind::Item));
+    let term = PlacedTerm {
+        range: segment.range,
+        placeholder: true,
+        source_offset: None,
+        node: terms.get(segment.piece)?,
+    };
+    let mut preserved = Vec::new();
+    for (guard, value) in term.frozen_alternatives()? {
+        for payload in query.bounded_value(value, remaining).known {
+            if block_operand && payload.kind == crate::ValueKind::YamlSerialized {
+                preserved.push(Predicate::all(vec![guard.clone(), payload.condition]));
+                continue;
+            }
+            let unchanged = payload.unchanged_condition();
+            let mut parts = vec![guard.clone(), payload.condition, unchanged];
+            if !whole {
+                parts.push(Predicate::from(Guard::TypeIs {
+                    path: payload.path.clone(),
+                    schema_type: "object".to_owned(),
+                }));
+                parts.push(Predicate::from(Guard::MinMembers {
+                    path: payload.path.clone(),
+                    bound: 1,
+                }));
+            }
+            preserved.push(Predicate::all(parts));
+        }
+    }
+    Some((
+        Span::new(node.span.start, segment.range.end),
+        Predicate::Or(preserved),
+    ))
+}
+
+fn selection_guard(selections: &[SelectedSpan], span: Span) -> Predicate {
+    Predicate::all(
+        selections
+            .iter()
+            .filter(|selection| {
+                selection.range.start <= span.start && span.end <= selection.range.end
+            })
+            .map(|selection| selection.condition.clone())
+            .collect(),
+    )
+}
+
+#[tracing::instrument(skip_all, level = "debug", name = "sequence_continuation")]
+fn sequence_tail(skeleton: &Skeleton, indentation: usize) -> bool {
+    let Some(documents) = documents(skeleton) else {
+        return false;
+    };
+    let Some(document) = documents.last() else {
+        return false;
+    };
+    let ownership = &document.ownership;
+    let mut current = ownership
+        .nodes
+        .iter()
+        .filter(|node| {
+            matches!(
+                node.kind,
+                YamlNodeKind::Scalar(_) | YamlNodeKind::BlockScalar
+            )
+        })
+        .max_by_key(|node| node.span.end);
+    while let Some(node) = current {
+        if node.kind == YamlNodeKind::Sequence
+            && node
+                .parent
+                .and_then(|parent| ownership.nodes.get(parent))
+                .is_some_and(|parent| parent.kind == YamlNodeKind::Pair)
+            && let Some(before) = ownership.skeleton.text.get(..node.span.start)
+        {
+            let line = before.rsplit('\n').next().unwrap_or_default();
+            if line.len() == indentation && line.bytes().all(|byte| byte == b' ') {
+                return true;
+            }
+        }
+        current = node.parent.and_then(|parent| ownership.nodes.get(parent));
+    }
+    false
+}
+
+fn block_branch(text: &str) -> Option<(YamlNodeKind, usize)> {
+    if !text.starts_with('\n') {
+        return None;
+    }
+    let lines = text
+        .lines()
+        .filter(|line| !line.trim().is_empty())
+        .collect::<Vec<_>>();
+    let indentation = lines.first()?.len() - lines.first()?.trim_start_matches(' ').len();
+    if lines
+        .iter()
+        .any(|line| line.len() - line.trim_start_matches(' ').len() < indentation)
+    {
+        return None;
+    }
+    let text = lines
+        .iter()
+        .map(|line| line.get(indentation..))
+        .collect::<Option<Vec<_>>>()?
+        .join("\n");
+    let documents = documents(&Skeleton {
+        text,
+        segments: Vec::new(),
+    })?;
+    let [document] = documents.as_slice() else {
+        return None;
+    };
+    if document.offset != 0
+        || document
+            .ownership
+            .nodes
+            .iter()
+            .any(|node| node.kind == YamlNodeKind::DocumentEnd)
+    {
+        return None;
+    }
+    let owned = &document.ownership;
+    let root = owned.nodes.iter().find(|node| {
+        node.parent
+            .and_then(|parent| owned.nodes.get(parent))
+            .is_some_and(|parent| parent.kind == YamlNodeKind::Document)
+    })?;
+    matches!(root.kind, YamlNodeKind::Mapping | YamlNodeKind::Sequence)
+        .then_some((root.kind, indentation))
+}
+
+fn scalar_payload_position(prefix: &str, spelling: &str) -> bool {
+    let Some(first) = spelling.find('0') else {
+        return false;
+    };
+    let start = prefix.len() + first;
+    let text = format!("{prefix}{spelling}");
+    let Some(mut tree) = helm_schema_syntax::parse_yaml(&text) else {
+        return false;
+    };
+    if tree.root_node().has_error() {
+        let mut pending = vec![tree.root_node()];
+        let mut delimiters = Vec::new();
+        let mut remaining = 256_usize;
+        while let Some(node) = pending.pop() {
+            let Some(next) = remaining.checked_sub(1) else {
+                return false;
+            };
+            remaining = next;
+            match node.kind() {
+                "[" => delimiters.push(']'),
+                "{" => delimiters.push('}'),
+                "]" | "}" => {
+                    if delimiters.pop().is_none_or(|expected| {
+                        node.kind() != if expected == ']' { "]" } else { "}" }
+                    }) {
+                        return false;
+                    }
+                }
+                "plain_scalar" | "double_quote_scalar" | "single_quote_scalar" | "block_scalar" => {
+                }
+                _ => {
+                    let mut cursor = node.walk();
+                    let children = node.children(&mut cursor).collect::<Vec<_>>();
+                    pending.extend(children.into_iter().rev());
+                }
+            }
+        }
+        drop(pending);
+        if !delimiters.is_empty() && delimiters.len() <= 8 {
+            let completed = format!("{text}{}", delimiters.into_iter().rev().collect::<String>());
+            if let Some(completed) = helm_schema_syntax::parse_yaml(&completed) {
+                tree = completed;
+            }
+        }
+    }
+    let Some(mut node) = tree
+        .root_node()
+        .named_descendant_for_byte_range(start, start + 8)
+    else {
+        return false;
+    };
+    let mut atomic = false;
+    loop {
+        match node.kind() {
+            "plain_scalar" => atomic = node.start_byte() == start && node.end_byte() == start + 8,
+            "single_quote_scalar" | "double_quote_scalar" | "block_scalar" => return false,
+            "flow_sequence" | "flow_mapping" if atomic => return true,
+            "flow_pair" if atomic => {
+                return node
+                    .child_by_field_name("value")
+                    .is_some_and(|value| value.start_byte() <= start && start < value.end_byte());
+            }
+            "block_mapping_pair" if atomic => {
+                return node.child_by_field_name("value").is_some_and(|value| {
+                    value.start_byte() <= start
+                        && start < value.end_byte()
+                        && node.start_position().row == value.start_position().row
+                });
+            }
+            _ => {}
+        }
+        let Some(parent) = node.parent() else {
+            return false;
+        };
+        node = parent;
+    }
+}
+
+fn sequence_payload_position(prefix: &str, mapping: &str, sequence: &str) -> bool {
+    let mapping = Skeleton {
+        text: format!("{prefix}{mapping}"),
+        segments: Vec::new(),
+    };
+    if helm_schema_syntax::first_document_ownership(mapping).is_ok() {
+        return false;
+    }
+    let skeleton = Skeleton {
+        text: format!("{prefix}{sequence}"),
+        segments: Vec::new(),
+    };
+    let Ok(owned) = helm_schema_syntax::first_document_ownership(skeleton) else {
+        return false;
+    };
+    owned.nodes.iter().any(|node| {
+        node.kind == YamlNodeKind::Item
+            && prefix.len() <= node.span.start
+            && owned
+                .skeleton
+                .text
+                .get(node.span.start..node.span.end)
+                .is_some_and(|text| text.trim() == sequence.trim())
+            && owned.nodes.iter().any(|peer| {
+                peer.kind == YamlNodeKind::Item
+                    && peer.parent == node.parent
+                    && peer.span.end <= prefix.len()
+            })
+    })
 }
 
 fn ends_document(owned: &YamlOwnership, span: Span) -> bool {
@@ -2146,3 +2896,453 @@ fn invalid_states(
 #[cfg(test)]
 #[path = "../tests/runtime_output_layout.rs"]
 mod tests;
+
+fn serialized_prefix(
+    owned: &YamlOwnership,
+    boundaries: &[PrefixBoundary],
+    start: usize,
+) -> Option<Predicate> {
+    if owned.skeleton.segments.iter().any(|other| {
+        other.placeholder
+            && other.range.end <= start
+            && !boundaries
+                .iter()
+                .any(|boundary| other.range.end <= boundary.span.end && boundary.span.end <= start)
+    }) {
+        return None;
+    }
+    Some(
+        boundaries
+            .iter()
+            .take_while(|boundary| boundary.span.end <= start)
+            .last()
+            .map_or(Predicate::True, |boundary| boundary.preserved.clone()),
+    )
+}
+
+fn serialized_failures(
+    owned: &YamlOwnership,
+    terms: &[NodeRef],
+    boundaries: &[PrefixBoundary],
+    selections: &[SelectedSpan],
+    inputs: &BTreeMap<ValuesPath, super::InputBacking>,
+    memo: &PredicateMemo,
+    remaining: &mut usize,
+) -> Predicate {
+    let mut failures = vec![serialized_atomic_failures(
+        owned, terms, boundaries, selections, inputs, memo, remaining,
+    )];
+    let mut query = super::output::PayloadQuery::new(inputs);
+    for segment in owned
+        .skeleton
+        .segments
+        .iter()
+        .filter(|segment| segment.placeholder)
+    {
+        let Some(text) = owned
+            .skeleton
+            .text
+            .get(segment.range.start..segment.range.end)
+        else {
+            continue;
+        };
+        let Some(pair) = owned.nodes.iter().find(|node| {
+            node.kind == YamlNodeKind::Pair
+                && segment.range.start <= node.span.start
+                && node.span.end <= segment.range.end
+                && owned
+                    .skeleton
+                    .text
+                    .get(node.span.start..node.span.end)
+                    .is_some_and(|pair| pair.trim() == text.trim())
+        }) else {
+            continue;
+        };
+        let Some(mapping_index) = pair.parent else {
+            continue;
+        };
+        let Some(mapping) = owned.nodes.get(mapping_index) else {
+            continue;
+        };
+        if mapping.kind != YamlNodeKind::Mapping {
+            continue;
+        }
+        if owned.nodes.iter().any(|node| {
+            node.parent == pair.parent
+                && node.kind == YamlNodeKind::Pair
+                && node.span.start >= pair.span.end
+        }) {
+            continue;
+        }
+        let members = owned
+            .nodes
+            .iter()
+            .filter(|node| node.parent == Some(mapping_index) && node.kind == YamlNodeKind::Pair)
+            .count()
+            > 1;
+        let path = mapping_path(owned, mapping_index);
+        let metadata = path.as_deref().is_some_and(|path| matches!(path, [metadata, field] if metadata == "metadata" && field == "annotations"));
+        let root = mapping
+            .parent
+            .and_then(|parent| owned.nodes.get(parent))
+            .is_some_and(|parent| parent.kind == YamlNodeKind::Document);
+        if !members && !metadata && !root {
+            continue;
+        }
+        let Some(term) = terms.get(segment.piece) else {
+            continue;
+        };
+        let placed = PlacedTerm {
+            range: segment.range,
+            placeholder: true,
+            source_offset: None,
+            node: term,
+        };
+        let Some(alternatives) = placed.frozen_alternatives() else {
+            continue;
+        };
+        let Some(prefix) = serialized_prefix(owned, boundaries, segment.range.start) else {
+            continue;
+        };
+        for (guard, value) in alternatives {
+            for payload in query.bounded_value(value, remaining).known {
+                if !payload.omitted_members.is_empty() {
+                    continue;
+                }
+                failures.push(Predicate::all(vec![
+                    prefix.clone(),
+                    selection_guard(selections, segment.range),
+                    guard.clone(),
+                    serialized_failure(&payload, metadata, members),
+                ]));
+            }
+        }
+    }
+    memo.normalize(Predicate::Or(failures))
+}
+
+#[derive(Clone, Copy)]
+enum SerializedDecoding {
+    Annotations,
+    String,
+    Document,
+}
+
+struct SerializedPosition {
+    decoding: Option<SerializedDecoding>,
+    flow: Option<YamlNodeKind>,
+    inline: bool,
+    sequence: bool,
+}
+
+impl SerializedPosition {
+    fn new(owned: &YamlOwnership, index: usize, node: &helm_schema_syntax::YamlNode) -> Self {
+        let decoding = match mapping_path(owned, index).as_deref() {
+            Some([metadata, field]) if metadata == "metadata" && field == "annotations" => {
+                Some(SerializedDecoding::Annotations)
+            }
+            Some([field]) if matches!(field.as_str(), "apiVersion" | "kind") => {
+                Some(SerializedDecoding::String)
+            }
+            Some([metadata, field]) if metadata == "metadata" && field == "name" => {
+                Some(SerializedDecoding::String)
+            }
+            _ if node
+                .parent
+                .and_then(|parent| owned.nodes.get(parent))
+                .is_some_and(|parent| parent.kind == YamlNodeKind::Document) =>
+            {
+                Some(SerializedDecoding::Document)
+            }
+            _ => None,
+        };
+        let mut flow = None;
+        let mut parent = node.parent;
+        while let Some(ancestor) = parent.and_then(|parent| owned.nodes.get(parent)) {
+            if matches!(
+                ancestor.kind,
+                YamlNodeKind::FlowMapping | YamlNodeKind::FlowSequence
+            ) {
+                flow = Some(ancestor.kind);
+                break;
+            }
+            parent = ancestor.parent;
+        }
+        let inline = node
+            .parent
+            .and_then(|parent| owned.nodes.get(parent))
+            .is_some_and(|parent| {
+                parent.kind == YamlNodeKind::Pair
+                    && owned
+                        .skeleton
+                        .text
+                        .get(parent.span.start..node.span.start)
+                        .is_some_and(|text| !text.contains('\n'))
+            });
+        Self {
+            decoding,
+            flow,
+            inline,
+            sequence: node.kind == YamlNodeKind::Item,
+        }
+    }
+
+    fn invalid(&self, path: &ValuesPath) -> Predicate {
+        if let Some(decoding) = self.decoding {
+            let accepted = match decoding {
+                SerializedDecoding::Annotations => Predicate::from(Guard::MatchesValue {
+                    path: path.clone(),
+                    pattern: helm_schema_core::ValuePattern::StringMap,
+                }),
+                SerializedDecoding::String => Predicate::from(Guard::TypeIs {
+                    path: path.clone(),
+                    schema_type: "string".to_owned(),
+                }),
+                SerializedDecoding::Document => Predicate::from(Guard::TypeIs {
+                    path: path.clone(),
+                    schema_type: "object".to_owned(),
+                }),
+            };
+            return Predicate::Or(vec![
+                Predicate::from(Guard::Absent { path: path.clone() }),
+                Predicate::from(Guard::TypeIs {
+                    path: path.clone(),
+                    schema_type: "null".to_owned(),
+                }),
+                accepted,
+            ])
+            .negated();
+        }
+        let nonempty = |schema_type: &str, bound| {
+            Predicate::all(vec![
+                Predicate::from(Guard::TypeIs {
+                    path: path.clone(),
+                    schema_type: schema_type.to_owned(),
+                }),
+                if schema_type == "array" {
+                    Predicate::truthy_path(path.encode())
+                } else {
+                    Predicate::from(Guard::MinMembers {
+                        path: path.clone(),
+                        bound,
+                    })
+                },
+            ])
+        };
+        if self.sequence {
+            return nonempty("array", 1).negated();
+        }
+        let mut invalid = vec![
+            nonempty("array", 1),
+            nonempty(
+                "object",
+                if self.flow == Some(YamlNodeKind::FlowSequence) {
+                    2
+                } else {
+                    1
+                },
+            ),
+        ];
+        if self.flow.is_some() {
+            invalid.push(Predicate::from(Guard::MatchesPattern {
+                path: path.clone(),
+                pattern: "\n".to_owned(),
+                templated: false,
+            }));
+        }
+        Predicate::Or(invalid)
+    }
+}
+
+fn serialized_atomic_failures(
+    owned: &YamlOwnership,
+    terms: &[NodeRef],
+    boundaries: &[PrefixBoundary],
+    selections: &[SelectedSpan],
+    inputs: &BTreeMap<ValuesPath, super::InputBacking>,
+    memo: &PredicateMemo,
+    remaining: &mut usize,
+) -> Predicate {
+    let mut failures = Vec::new();
+    for segment in owned
+        .skeleton
+        .segments
+        .iter()
+        .filter(|segment| segment.placeholder)
+    {
+        let Some((node_index, node)) = owned.nodes.iter().enumerate().find(|(_, node)| {
+            !node.key
+                && matches!(
+                    node.kind,
+                    YamlNodeKind::Scalar(ScalarStyle::Plain)
+                        | YamlNodeKind::Item
+                        | YamlNodeKind::FlowMapping
+                )
+                && segment.range.start <= node.span.start
+                && node.span.end <= segment.range.end
+                && owned
+                    .skeleton
+                    .text
+                    .get(segment.range.start..segment.range.end)
+                    .zip(owned.skeleton.text.get(node.span.start..node.span.end))
+                    .is_some_and(|(text, node)| text.trim() == node.trim())
+        }) else {
+            continue;
+        };
+        let position = SerializedPosition::new(owned, node_index, node);
+        if !position.inline
+            && position.flow.is_none()
+            && !position.sequence
+            && position.decoding.is_none()
+        {
+            continue;
+        }
+        let Some(reference) = terms.get(segment.piece) else {
+            continue;
+        };
+        let term = PlacedTerm {
+            range: segment.range,
+            placeholder: true,
+            source_offset: None,
+            node: reference,
+        };
+        let Some(alternatives) = term.frozen_alternatives() else {
+            continue;
+        };
+        let Some(prefix) = serialized_prefix(owned, boundaries, segment.range.start) else {
+            continue;
+        };
+        let shape = if position.sequence {
+            super::output::PayloadShape::Sequence
+        } else if node.kind == YamlNodeKind::FlowMapping {
+            super::output::PayloadShape::Mapping
+        } else {
+            super::output::PayloadShape::Scalar
+        };
+        let mut query = super::output::PayloadQuery::with_shape(inputs, shape);
+        let Some(text) = owned
+            .skeleton
+            .text
+            .get(segment.range.start..segment.range.end)
+        else {
+            continue;
+        };
+        for (guard, value) in alternatives {
+            for payload in query.bounded_value(value, remaining).known {
+                if !payload.omitted_members.is_empty()
+                    || (node.kind == YamlNodeKind::FlowMapping
+                        && position.decoding.is_none()
+                        && payload.flow_node)
+                {
+                    continue;
+                }
+                if payload.spelling.trim() != text.trim() {
+                    continue;
+                }
+                let invalid = position.invalid(payload.path);
+                let coverage = if position.flow.is_some() && node.kind != YamlNodeKind::FlowMapping
+                {
+                    payload.flow_condition()
+                } else {
+                    payload.unchanged_condition()
+                };
+                failures.push(Predicate::all(vec![
+                    prefix.clone(),
+                    selection_guard(selections, segment.range),
+                    guard.clone(),
+                    payload.condition,
+                    coverage,
+                    invalid,
+                ]));
+            }
+        }
+    }
+    memo.normalize(Predicate::Or(failures))
+}
+
+fn serialized_failure(
+    payload: &super::output::SerializedPayload<'_>,
+    metadata: bool,
+    members: bool,
+) -> Predicate {
+    let accepted = if metadata {
+        Predicate::from(Guard::MatchesValue {
+            path: payload.path.clone(),
+            pattern: helm_schema_core::ValuePattern::StringMap,
+        })
+    } else {
+        Predicate::from(Guard::TypeIs {
+            path: payload.path.clone(),
+            schema_type: "object".to_owned(),
+        })
+    };
+    let accepted = if members {
+        Predicate::all(vec![
+            accepted,
+            Predicate::from(Guard::MinMembers {
+                path: payload.path.clone(),
+                bound: 1,
+            }),
+        ])
+    } else if !metadata {
+        Predicate::Or(vec![
+            accepted,
+            Predicate::from(Guard::TypeIs {
+                path: payload.path.clone(),
+                schema_type: "null".to_owned(),
+            }),
+            Predicate::from(Guard::Absent {
+                path: payload.path.clone(),
+            }),
+        ])
+    } else {
+        accepted
+    };
+    let accepted = if members {
+        accepted
+    } else {
+        Predicate::Or(vec![
+            accepted,
+            Predicate::from(Guard::Absent {
+                path: payload.path.clone(),
+            }),
+        ])
+    };
+    Predicate::all(vec![
+        payload.condition.clone(),
+        payload.unchanged_condition(),
+        accepted.negated(),
+    ])
+}
+
+fn mapping_path(owned: &YamlOwnership, mut index: usize) -> Option<Vec<String>> {
+    let mut path = Vec::new();
+    let mut remaining = 128_usize;
+    while let Some(node) = owned.nodes.get(index) {
+        remaining = remaining.checked_sub(1)?;
+        if matches!(node.kind, YamlNodeKind::Pair | YamlNodeKind::FlowPair) {
+            let key = owned
+                .nodes
+                .iter()
+                .find(|key| key.parent == Some(index) && key.key)?;
+            if owned.skeleton.segments.iter().any(|segment| {
+                segment.placeholder
+                    && segment.range.start < key.span.end
+                    && key.span.start < segment.range.end
+            }) {
+                return None;
+            }
+            let text = owned.skeleton.text.get(key.span.start..key.span.end)?;
+            path.push(helm_schema_syntax::parse_yaml_key(&format!("{text}:"))?);
+        }
+        if matches!(node.kind, YamlNodeKind::Item) {
+            path.push("[*]".to_owned());
+        }
+        let Some(parent) = node.parent else {
+            break;
+        };
+        index = parent;
+    }
+    path.reverse();
+    Some(path)
+}

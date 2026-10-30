@@ -1161,6 +1161,7 @@ fn provider_schema_for_container_resources_path_keeps_open_quantity_maps() {
         kind: helm_schema_ir::ValueKind::Fragment,
         stringified: false,
         plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
+        strip_marker: false,
         resource: ResourceRef::concrete("apps/v1".to_string(), "Deployment".to_string()),
         is_self_range_collection: false,
         source_null_tolerant: false,

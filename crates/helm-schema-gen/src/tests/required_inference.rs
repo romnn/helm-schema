@@ -49,6 +49,7 @@ fn generate_with_required(src: &str, values_yaml: Option<&str>) -> Value {
 fn contract_default_guard_excludes_path_without_external_fallback_scan() {
     let contract = contract_for(vec![
         ContractUse {
+            strip_marker: false,
             source_expr: helm_schema_core::ValuesPath::parse("feature"),
             path: YamlPath(Vec::new()),
             kind: ValueKind::Scalar,
@@ -67,6 +68,7 @@ fn contract_default_guard_excludes_path_without_external_fallback_scan() {
             merge_operand: false,
         },
         ContractUse {
+            strip_marker: false,
             source_expr: helm_schema_core::ValuesPath::parse("feature"),
             path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
             kind: ValueKind::Scalar,
@@ -106,6 +108,7 @@ fn contract_default_guard_excludes_path_without_external_fallback_scan() {
 #[test]
 fn plain_pathless_scalar_use_does_not_mark_required_without_header_guard() {
     let contract = contract_for(vec![ContractUse {
+        strip_marker: false,
         source_expr: helm_schema_core::ValuesPath::parse("feature"),
         path: YamlPath(Vec::new()),
         kind: ValueKind::Scalar,
@@ -142,6 +145,7 @@ fn plain_pathless_scalar_use_does_not_mark_required_without_header_guard() {
 #[test]
 fn explicit_nested_values_defaults_suppress_required_inference() {
     let contract = contract_for(vec![ContractUse {
+        strip_marker: false,
         source_expr: helm_schema_core::ValuesPath::parse("controller.kind"),
         path: YamlPath(Vec::new()),
         kind: ValueKind::Scalar,

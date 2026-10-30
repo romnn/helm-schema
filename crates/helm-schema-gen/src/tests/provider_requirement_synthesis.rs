@@ -31,6 +31,7 @@ fn hpa_merge_layer_use(
         kind: ValueKind::Scalar,
         stringified: false,
         plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
+        strip_marker: false,
         resource: ResourceRef::concrete(
             "autoscaling/v2".to_string(),
             "HorizontalPodAutoscaler".to_string(),

@@ -108,6 +108,7 @@ fn independent_string_contract_intersects_boolean_provider_preimage() -> eyre::R
         },
         type_hints: BTreeSet::from(["string".to_string()]),
         provider_schema_uses: vec![ProviderSchemaUse {
+            strip_marker: false,
             value_path: helm_schema_core::ValuesPath::parse("image.repository"),
             path: YamlPath(vec!["spec".to_string(), "enabled".to_string()]),
             kind: ValueKind::Scalar,
@@ -209,6 +210,7 @@ fn bounded_numeric_preimage_keeps_unknown_strings_beneath_serialized_parent() ->
         },
         type_hints: BTreeSet::from(["string".to_string()]),
         provider_schema_uses: vec![ProviderSchemaUse {
+            strip_marker: false,
             value_path: helm_schema_core::ValuesPath::parse("image.repository"),
             path: YamlPath(vec!["spec".to_string(), "count".to_string()]),
             kind: ValueKind::Scalar,

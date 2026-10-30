@@ -167,7 +167,8 @@ fn insert_candidate(
         use_.split_segment.clone(),
         use_.omitted_members.clone(),
     )
-    .with_plain_scalar_placement(use_.plain_scalar_placement);
+    .with_plain_scalar_placement(use_.plain_scalar_placement)
+    .with_strip_marker(use_.strip_marker);
     let key = CandidateKey {
         resource: use_.resource.clone(),
         path: use_.path.clone(),

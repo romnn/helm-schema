@@ -221,6 +221,7 @@ impl ContractPathAccumulator {
         lowerable_guards: Option<Vec<ConditionalGuard>>,
         provider_schema_use: Option<ProviderSchemaUse>,
         metadata_field_kind: Option<MetadataFieldKind>,
+        metadata_omitted_members: &BTreeMap<String, Vec<helm_schema_core::Guard>>,
     ) {
         self.referenced = true;
         if lowerable_guards.is_none() {
@@ -245,7 +246,8 @@ impl ContractPathAccumulator {
             if let Some(provider_use) = provider_schema_use.clone() {
                 self.facts.record_provider_schema_use(provider_use);
             }
-            self.facts.record_metadata_field_kind(metadata_field_kind);
+            self.facts
+                .record_metadata_field_kind(metadata_field_kind, metadata_omitted_members);
         }
         if facts.branch.has_render_use {
             let path_is_unconditional = facts.path.has_render_use
@@ -261,7 +263,7 @@ impl ContractPathAccumulator {
                 let branch = self.conditional_overlay_branches.entry(guards).or_default();
                 branch.facts.is_nullable = true;
                 branch.record_nullable_observation(source_null_tolerant);
-                branch.record_metadata_field_kind(metadata_field_kind);
+                branch.record_metadata_field_kind(metadata_field_kind, metadata_omitted_members);
                 branch.record_facts(facts.branch);
 
                 if let Some(provider_schema_use) = provider_schema_use {
@@ -486,6 +488,7 @@ impl ContractPathAccumulator {
             facts,
             guard_predicates,
             metadata_field_kinds: path_facts.metadata_field_kinds,
+            metadata_omitted_members: path_facts.metadata_omitted_members,
             type_hints,
             guarded_type_hints,
             fallback_type_hints,

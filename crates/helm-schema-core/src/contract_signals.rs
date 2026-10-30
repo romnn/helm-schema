@@ -687,6 +687,8 @@ pub struct ConditionalOverlayEvidence {
     pub range_domain: Option<RangeDomain>,
     /// Kubernetes metadata field roles reached in the branch.
     pub metadata_field_kinds: BTreeSet<MetadataFieldKind>,
+    /// Original members hidden from every string-map metadata use in this scope.
+    pub metadata_omitted_members: BTreeSet<String>,
     /// JSON Schema type names implied by branch-local consumers.
     pub type_hints: BTreeSet<String>,
     /// Resource-schema sinks reached in the selected branch.
@@ -702,6 +704,7 @@ impl ConditionalOverlayEvidence {
             facts: self.facts,
             guard_predicates: Vec::new(),
             metadata_field_kinds: self.metadata_field_kinds.clone(),
+            metadata_omitted_members: self.metadata_omitted_members.clone(),
             type_hints: self.type_hints.clone(),
             guarded_type_hints: BTreeSet::new(),
             fallback_type_hints: BTreeSet::new(),
@@ -762,6 +765,8 @@ pub struct ContractPathSchemaEvidence {
     pub guard_predicates: Vec<ConditionalGuard>,
     /// Kubernetes metadata field roles reached from the path.
     pub metadata_field_kinds: BTreeSet<MetadataFieldKind>,
+    /// Original members hidden from every string-map metadata use in this scope.
+    pub metadata_omitted_members: BTreeSet<String>,
     /// Unconditional JSON Schema type hints.
     pub type_hints: BTreeSet<String>,
     /// Hints observed only under branch predicates. At the path level these

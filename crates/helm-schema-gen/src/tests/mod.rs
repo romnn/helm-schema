@@ -422,23 +422,33 @@ fn merge_composed_override(base: &mut Value, overrides: Value) {
 }
 
 fn schema_accepts_instance(schema: &Value, instance: &Value) -> bool {
-    // Schema fragments reference the truthiness definition without the document
-    // root that defines it; supply the definition then. A full document
-    // resolves its own `$defs`, and wrapping it would hide them from `#/…`
-    // pointers, so existing definitions are preserved and the wrap only
-    // fires when the referenced definition is genuinely absent.
+    // Detached fragments need their internal shared definitions.
+    // Preserve a complete document's own definitions so its references keep their scope.
     let needs_truthy = crate::condition_encoding::value_references_helm_truthy(schema)
         && schema
             .get("$defs")
             .and_then(|defs| defs.get(crate::condition_encoding::HELM_TRUTHY_DEFINITION_NAME))
             .is_none();
-    let document = needs_truthy.then(|| {
+    let mut shared =
+        crate::resolve_policy::scalar_preimage::serialized_definitions(std::iter::once(schema));
+    shared.retain(|name, _| {
+        schema
+            .get("$defs")
+            .and_then(|defs| defs.get(name))
+            .is_none()
+    });
+    let document = (needs_truthy || !shared.is_empty()).then(|| {
         let mut defs = schema
             .get("$defs")
             .cloned()
             .unwrap_or_else(|| serde_json::json!({}));
-        defs[crate::condition_encoding::HELM_TRUTHY_DEFINITION_NAME] =
-            crate::condition_encoding::helm_truthy_definition_schema();
+        if needs_truthy {
+            defs[crate::condition_encoding::HELM_TRUTHY_DEFINITION_NAME] =
+                crate::condition_encoding::helm_truthy_definition_schema();
+        }
+        if let Some(defs) = defs.as_object_mut() {
+            defs.extend(shared);
+        }
         serde_json::json!({ "$defs": defs, "allOf": [schema] })
     });
     jsonschema::validator_for(document.as_ref().unwrap_or(schema))

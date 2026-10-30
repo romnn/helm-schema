@@ -122,6 +122,7 @@ fn chain_infers_networkpolicy_matchlabels_schema_from_empty_api_version() {
         kind: ValueKind::Fragment,
         stringified: false,
         plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
+        strip_marker: false,
         resource: ResourceRef::concrete(String::new(), "NetworkPolicy".to_string()),
         is_self_range_collection: false,
         template_supplied_member_keys: std::collections::BTreeSet::default(),

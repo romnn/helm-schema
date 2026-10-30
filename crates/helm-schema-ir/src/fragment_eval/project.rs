@@ -239,6 +239,8 @@ fn splice_row(
         splice.meta.site.as_deref(),
     );
     row.stringified = splice.meta.stringified;
+    row.strip_marker = splice.meta.strip_marker;
+    row.omitted_members = splice.meta.omitted_members.clone();
     row.plain_scalar_placement = splice.meta.plain_scalar_placement;
     row.template_supplied_member_keys = member_sibling_keys.clone();
     row

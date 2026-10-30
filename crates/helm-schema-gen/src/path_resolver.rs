@@ -322,10 +322,8 @@ fn build_path_schema_inputs(
     provider_resolutions: &ProviderSchemaResolutions,
 ) -> (ValuePathSchemaInputs, Option<ProviderSchemaCandidate>) {
     let provider_schemas = provider_schemas_for_path_evidence(evidence, provider_resolutions);
-    let (provider_schema, provider_schema_candidate) = provider_schema_for_path(
-        provider_schemas,
-        metadata_schema(&evidence.metadata_field_kinds),
-    );
+    let (provider_schema, provider_schema_candidate) =
+        provider_schema_for_path(provider_schemas, metadata_schema(evidence));
     let mut values_yaml_facts = values_yaml_info.map_or_else(
         ValuesYamlPathFacts::absent,
         super::values_yaml::ValuesYamlPathInfo::facts,
@@ -394,17 +392,52 @@ fn metadata_field_schema(field: MetadataFieldKind) -> Value {
     }
 }
 
-fn metadata_schema(field_kinds: &BTreeSet<MetadataFieldKind>) -> Value {
+fn metadata_schema(evidence: &ContractPathSchemaEvidence) -> Value {
+    let field_kinds = &evidence.metadata_field_kinds;
     if field_kinds.is_empty() {
         empty_schema()
     } else {
-        intersect_schema_list(
+        let schema = intersect_schema_list(
             field_kinds
                 .iter()
                 .copied()
-                .map(metadata_field_schema)
+                .map(|field| {
+                    let mut schema = if field == MetadataFieldKind::StringMap
+                        && evidence.facts.used_as_yaml_serialized
+                    {
+                        serialized_string_map_schema()
+                    } else {
+                        metadata_field_schema(field)
+                    };
+                    if field == MetadataFieldKind::StringMap
+                        && !evidence.metadata_omitted_members.is_empty()
+                        && let Some(object) = schema.as_object_mut()
+                    {
+                        let properties = object
+                            .entry("properties")
+                            .or_insert_with(|| serde_json::json!({}));
+                        if let Some(properties) = properties.as_object_mut() {
+                            for key in &evidence.metadata_omitted_members {
+                                properties.insert(key.clone(), empty_schema());
+                            }
+                        }
+                    }
+                    schema
+                })
                 .collect(),
-        )
+        );
+        let templated = !evidence.provider_schema_uses.is_empty()
+            && evidence
+                .provider_schema_uses
+                .iter()
+                .all(|site| site.kind == helm_schema_core::ValueKind::TemplatedYamlSerialized);
+        if evidence.facts.used_as_yaml_serialized || templated {
+            crate::resolve_policy::scalar_preimage::serialized_yaml_provider_preimage(
+                schema, templated,
+            )
+        } else {
+            schema
+        }
     }
 }
 
@@ -608,4 +641,8 @@ fn string_map_schema() -> Value {
     schema.insert("type".to_string(), Value::String("object".to_string()));
     schema.insert("additionalProperties".to_string(), type_schema("string"));
     Value::Object(schema)
+}
+
+pub(crate) fn serialized_string_map_schema() -> Value {
+    serde_json::json!({"type": ["object", "null"], "additionalProperties": {"type": ["string", "null"]}})
 }

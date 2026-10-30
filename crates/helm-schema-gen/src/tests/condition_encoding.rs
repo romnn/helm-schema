@@ -1057,3 +1057,53 @@ fn resource_scopes_and_addressed_inline_conditions_keep_bodies_inline() {
         sim_assert_eq!(have: cache.definitions.is_empty(), want: true);
     }
 }
+
+/// Relativizing an absent source never turns its arm into an unconditional provider constraint.
+#[test]
+fn current_value_absence_remains_exact_in_both_polarities() -> eyre::Result<()> {
+    let defaults = serde_yaml::Value::Null;
+    let roots = BTreeSet::new();
+    let absence = AbsenceDefaults {
+        runtime_defaults: &defaults,
+        dependency_refill: &defaults,
+        dependency_roots: &roots,
+    };
+    let root = ConditionalGuard::Absent {
+        path: ValuesPath::default(),
+    };
+    assert!(!guard_encodes_fully(&root, &[], &defaults, absence));
+    let guard = ConditionalGuard::Absent {
+        path: ValuesPath::parse("subject"),
+    };
+    for polarity in [ConditionPolarity::Widen, ConditionPolarity::Narrow] {
+        for negated in [false, true] {
+            let guard = if negated {
+                ConditionalGuard::Not(std::sync::Arc::new(guard.clone()))
+            } else {
+                guard.clone()
+            };
+            assert!(guard_encodes_fully(
+                &guard,
+                &["subject".to_owned()],
+                &defaults,
+                absence
+            ));
+            let fragments = build_condition_clauses(
+                &[guard],
+                &["subject".to_owned()],
+                &defaults,
+                absence,
+                polarity,
+            );
+            let actual = fragments
+                .first()
+                .ok_or_eyre("missing current-value absence condition")?
+                .clone()
+                .into_value();
+            sim_assert_eq!(have: fragments.len(), want: 1);
+            let expected = json!({"enum": [null]});
+            sim_assert_eq!(have: &actual, want: &if negated { json!({"not": expected}) } else { expected });
+        }
+    }
+    Ok(())
+}

@@ -57,6 +57,7 @@ fn placement(fixture: &Fixture) -> PlainScalarPlacement {
         crate::value::FileOutput::Manifest,
         &mut super::SyntaxContexts::default(),
         &fixture.state.heap.arena.input_paths.borrow(),
+        &fixture.state.heap.arena.input_objects.borrow(),
     )
     .plain_placement(&fixture.site, &fixture.memo)
 }
@@ -269,6 +270,7 @@ fn partial_control_does_not_hide_output_failure_or_a_possible_survivor() {
         FileOutput::Manifest,
         &mut super::SyntaxContexts::default(),
         &fixture.state.heap.arena.input_paths.borrow(),
+        &fixture.state.heap.arena.input_objects.borrow(),
     )
     .invalid(&fixture.memo);
     assert_ne!(expected, Predicate::False);
@@ -404,6 +406,7 @@ fn independent_scalar_choices_share_one_ownership_context() {
         crate::value::FileOutput::Manifest,
         &mut super::SyntaxContexts::default(),
         &fixture.state.heap.arena.input_paths.borrow(),
+        &fixture.state.heap.arena.input_objects.borrow(),
     );
     sim_assert_eq!(have: placement.layouts.len(), want: 1);
     sim_assert_eq!(have: placement.unknown, want: Predicate::False);
@@ -501,6 +504,7 @@ fn infeasible_structural_choices_do_not_consume_the_layout_budget() {
         crate::value::FileOutput::Manifest,
         &mut super::SyntaxContexts::default(),
         &fixture.state.heap.arena.input_paths.borrow(),
+        &fixture.state.heap.arena.input_objects.borrow(),
     );
     sim_assert_eq!(have: placement.layouts.len(), want: 1);
     sim_assert_eq!(have: placement.unknown, want: Predicate::False);
@@ -572,6 +576,7 @@ fn recovered_frozen_continuations_do_not_certify_resource_placement() {
         crate::value::FileOutput::Manifest,
         &mut super::SyntaxContexts::default(),
         &fixture.state.heap.arena.input_paths.borrow(),
+        &fixture.state.heap.arena.input_objects.borrow(),
     );
     assert_ne!(placed.invalid(&fixture.memo), Predicate::False);
     sim_assert_eq!(have: placed.layouts.iter().map(|layout| layout.documents.len()).sum::<usize>(), want: 0);
@@ -595,6 +600,7 @@ fn shared_syntax_keeps_frozen_inputs_and_guards_separate() {
         crate::value::FileOutput::Manifest,
         &mut syntax,
         &first.state.heap.arena.input_paths.borrow(),
+        &first.state.heap.arena.input_objects.borrow(),
     );
     let guard = Predicate::truthy_path("flag");
     let second = OutputPlacement::new(
@@ -604,6 +610,7 @@ fn shared_syntax_keeps_frozen_inputs_and_guards_separate() {
         crate::value::FileOutput::Manifest,
         &mut syntax,
         &second.state.heap.arena.input_paths.borrow(),
+        &second.state.heap.arena.input_objects.borrow(),
     );
     assert!(Rc::ptr_eq(
         &first.layouts[0].documents[0].ownership,

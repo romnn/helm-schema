@@ -657,7 +657,7 @@ fn collect_scalar_projection(
             }
             *remaining -= 1;
             let content = match datum {
-                Datum::Text(_) => None,
+                Datum::Text(_) => value.constant().cloned().map(ScalarContent::Literal),
                 Datum::Scalar {
                     go_type: _,
                     content: Some(content),
@@ -2166,7 +2166,7 @@ fn original_input_is_unchanged(path: &helm_schema_core::ValuesPath, state: &supe
 
 fn pristine_input_backing(object: &super::ObjectVersion) -> bool {
     matches!(object, super::ObjectVersion {
-        revision: _, multiplicity: super::Multiplicity::Singleton,
+        revision: _, multiplicity: _,
         data: ObjectData::Map { fields, remainder: super::Remainder::Input },
     } if fields.is_empty())
 }
@@ -2182,3 +2182,806 @@ mod count_expression_tests;
 #[cfg(test)]
 #[path = "../tests/runtime_conditions.rs"]
 mod condition_tests;
+/// A serialization relationship, queried independently of its eventual destination.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct SerializedPayload<'a> {
+    pub(crate) condition: Predicate,
+    pub(crate) path: &'a helm_schema_core::ValuesPath,
+    pub(crate) kind: crate::ValueKind,
+    pub(crate) spelling: String,
+    pub(crate) strip_marker: bool,
+    pub(crate) flow_node: bool,
+    pub(crate) omitted_members: BTreeSet<String>,
+}
+
+impl SerializedPayload<'_> {
+    pub(crate) fn unchanged_condition(&self) -> Predicate {
+        use helm_schema_core::{Guard, ValuePattern};
+        if self.kind != crate::ValueKind::TemplatedYamlSerialized && !self.strip_marker {
+            return Predicate::True;
+        }
+        Predicate::Or(vec![
+            Predicate::from(Guard::Absent {
+                path: self.path.clone(),
+            }),
+            Predicate::from(Guard::MatchesValue {
+                path: self.path.clone(),
+                pattern: if self.kind == crate::ValueKind::TemplatedYamlSerialized {
+                    ValuePattern::TemplateFree
+                } else {
+                    ValuePattern::MarkerFree
+                },
+            }),
+        ])
+    }
+
+    pub(crate) fn flow_condition(&self) -> Predicate {
+        Predicate::Or(vec![
+            Predicate::from(helm_schema_core::Guard::Absent {
+                path: self.path.clone(),
+            }),
+            Predicate::from(helm_schema_core::Guard::MatchesValue {
+                path: self.path.clone(),
+                pattern: helm_schema_core::ValuePattern::YamlFlowStable,
+            }),
+        ])
+    }
+
+    pub(crate) fn scalar_condition(&self) -> Predicate {
+        Predicate::Or(vec![
+            Predicate::from(helm_schema_core::Guard::TypeIs {
+                path: self.path.clone(),
+                schema_type: "object".to_owned(),
+            }),
+            Predicate::from(helm_schema_core::Guard::TypeIs {
+                path: self.path.clone(),
+                schema_type: "array".to_owned(),
+            }),
+        ])
+        .negated()
+    }
+}
+
+/// Missing coverage remains unknown, including exhausted queries.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct PayloadView<'a> {
+    pub(crate) known: Vec<SerializedPayload<'a>>,
+    pub(crate) unknown: Predicate,
+}
+
+impl PayloadView<'_> {
+    fn unknown() -> Self {
+        Self {
+            known: Vec::new(),
+            unknown: Predicate::True,
+        }
+    }
+
+    pub(crate) fn shaped(&self, shape: PayloadShape, remaining: &mut usize) -> Self {
+        let cost = PayloadQuery::copy_work(self);
+        let Some(rest) = remaining.checked_sub(cost) else {
+            return Self::unknown();
+        };
+        *remaining = rest;
+        let mut view = self.clone();
+        for arm in &mut view.known {
+            if arm.flow_node {
+                continue;
+            }
+            let prototype = match shape {
+                PayloadShape::Mapping => "00000000: 00000000",
+                PayloadShape::Scalar => "00000000",
+                PayloadShape::Sequence => "- 00000000",
+            };
+            // These are query-owned certificates, never serialized source bytes.
+            arm.spelling = arm.spelling.replacen("00000000: 00000000", prototype, 1);
+        }
+        view
+    }
+}
+
+/// A syntax probe consumed with a position-specific source-kind proof.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum PayloadShape {
+    Mapping,
+    Scalar,
+    Sequence,
+}
+
+pub(super) struct PayloadQuery<'a, 'inputs> {
+    inputs: &'inputs BTreeMap<helm_schema_core::ValuesPath, super::InputBacking>,
+    values: BTreeMap<(*const super::HeapVersion, *const ValueNode), PayloadView<'a>>,
+    remaining: usize,
+    limit: usize,
+    shape: PayloadShape,
+    omission_depth: usize,
+    predicates: helm_schema_core::PredicateMemo,
+}
+
+impl<'a, 'inputs> PayloadQuery<'a, 'inputs> {
+    pub(super) fn new(
+        inputs: &'inputs BTreeMap<helm_schema_core::ValuesPath, super::InputBacking>,
+    ) -> Self {
+        Self::with_shape(inputs, PayloadShape::Mapping)
+    }
+
+    pub(super) fn with_shape(
+        inputs: &'inputs BTreeMap<helm_schema_core::ValuesPath, super::InputBacking>,
+        shape: PayloadShape,
+    ) -> Self {
+        Self::with_limit(inputs, shape, 1024)
+    }
+
+    pub(super) fn with_limit(
+        inputs: &'inputs BTreeMap<helm_schema_core::ValuesPath, super::InputBacking>,
+        shape: PayloadShape,
+        limit: usize,
+    ) -> Self {
+        let limit = limit.min(1024);
+        Self {
+            inputs,
+            values: BTreeMap::new(),
+            remaining: limit,
+            limit,
+            shape,
+            omission_depth: 0,
+            predicates: helm_schema_core::PredicateMemo::new(),
+        }
+    }
+
+    pub(super) fn work(&self) -> usize {
+        self.limit - self.remaining
+    }
+
+    fn charge(&mut self, cost: usize) -> bool {
+        if let Some(remaining) = self.remaining.checked_sub(cost) {
+            self.remaining = remaining;
+            true
+        } else {
+            self.remaining = 0;
+            false
+        }
+    }
+
+    #[tracing::instrument(skip_all, level = "debug", name = "serialized_payload")]
+    pub(super) fn value(&mut self, frozen: &'a FrozenValue) -> PayloadView<'a> {
+        self.node(&frozen.value, &frozen.heap)
+    }
+
+    pub(super) fn json_source(&mut self, frozen: &'a FrozenValue) -> PayloadView<'a> {
+        self.operand(&frozen.value, &frozen.heap, true, false)
+    }
+
+    pub(super) fn bounded_value(
+        &mut self,
+        frozen: &'a FrozenValue,
+        remaining: &mut usize,
+    ) -> PayloadView<'a> {
+        if *remaining == 0 {
+            return PayloadView::unknown();
+        }
+        let before = self.work();
+        let view = self.value(frozen);
+        let cost = self.work() - before;
+        if let Some(rest) = remaining.checked_sub(cost) {
+            *remaining = rest;
+            view
+        } else {
+            *remaining = 0;
+            PayloadView::unknown()
+        }
+    }
+
+    fn node(&mut self, value: &'a Value, heap: &'a super::HeapVersion) -> PayloadView<'a> {
+        let key = (std::ptr::from_ref(heap), std::rc::Rc::as_ptr(&value.node));
+        if let Some(view) = self.values.get(&key) {
+            let cost = Self::copy_work(view);
+            if !self.charge(cost) {
+                return PayloadView::unknown();
+            }
+            return self
+                .values
+                .get(&key)
+                .cloned()
+                .unwrap_or_else(PayloadView::unknown);
+        }
+        if !self.charge(1) {
+            return PayloadView::unknown();
+        }
+        let result = match value.node.as_ref() {
+            ValueNode::Select { decision, yes, no } => {
+                let yes = self.node(yes, heap);
+                let no = self.node(no, heap);
+                self.choice(decision, yes, no)
+            }
+            ValueNode::Leaf(Leaf {
+                datum: Datum::Text(text),
+                origin: _,
+            }) => self.text(&text.0),
+            ValueNode::Leaf(Leaf {
+                datum:
+                    Datum::Scalar {
+                        go_type: _,
+                        content: _,
+                    }
+                    | Datum::Map { view: _, target: _ }
+                    | Datum::Sequence(_)
+                    | Datum::Strings(_)
+                    | Datum::Slot {
+                        backing: _,
+                        index: _,
+                    }
+                    | Datum::Unknown(_),
+                origin: _,
+            }) => PayloadView::unknown(),
+        };
+        if self.charge(Self::copy_work(&result)) {
+            self.values.insert(key, result.clone());
+        }
+        result
+    }
+
+    fn copy_work(view: &PayloadView<'_>) -> usize {
+        view.known.iter().fold(1_usize, |cost, arm| {
+            let keys = arm.omitted_members.iter().fold(0_usize, |cost, key| {
+                cost.saturating_add(key.len().div_ceil(64).saturating_add(1))
+            });
+            cost.saturating_add(
+                arm.spelling
+                    .len()
+                    .div_ceil(64)
+                    .saturating_add(keys)
+                    .saturating_add(1),
+            )
+        })
+    }
+
+    fn text(&mut self, term: &'a super::text::TextTerm) -> PayloadView<'a> {
+        use super::text::TextTerm;
+        let Some(remaining) = self.remaining.checked_sub(1) else {
+            return PayloadView::unknown();
+        };
+        self.remaining = remaining;
+        match term {
+            TextTerm::Resolved { term, literal: _ } => self.text(term),
+            TextTerm::Yaml { value, pretty: _ } => {
+                self.operand(&value.value, &value.heap, false, true)
+            }
+            TextTerm::Json {
+                value,
+                pretty: _,
+                escape_html,
+                literal: _,
+            } => self.operand(&value.value, &value.heap, true, !escape_html),
+            TextTerm::Indent {
+                value,
+                width,
+                newline,
+            } => {
+                let mut view = self.value(value);
+                if *width > 1024 {
+                    return PayloadView::unknown();
+                }
+                for arm in &mut view.known {
+                    let lines = arm
+                        .spelling
+                        .bytes()
+                        .filter(|byte| *byte == b'\n')
+                        .count()
+                        .saturating_add(1);
+                    let bytes = arm
+                        .spelling
+                        .len()
+                        .saturating_add(lines.saturating_mul(*width))
+                        .saturating_add(usize::from(*newline));
+                    if !self.charge(bytes.div_ceil(64)) {
+                        return PayloadView::unknown();
+                    }
+                    arm.spelling = super::text::indent(&arm.spelling, *width, *newline);
+                    if arm.spelling.len() > 64 * 1024 {
+                        return PayloadView::unknown();
+                    }
+                }
+                view
+            }
+            TextTerm::Tpl { source, result } => self.template(source, result),
+            TextTerm::Capture {
+                graph,
+                strip_marker: _,
+            } => self.buffer(graph),
+            TextTerm::Quote { value: _ }
+            | TextTerm::Encoded {
+                value: _,
+                alphabet: _,
+            } => PayloadView::unknown(),
+        }
+    }
+
+    fn template(&mut self, source: &'a FrozenValue, result: &'a FrozenValue) -> PayloadView<'a> {
+        let mut view = self.value(result);
+        let mut source = self.value(source);
+        let cost = source.known.len().saturating_add(3);
+        if !self.charge(cost) {
+            view.unknown = Predicate::True;
+            return view;
+        }
+        let rejected = Predicate::Or(
+            source
+                .known
+                .iter()
+                .filter(|arm| !arm.omitted_members.is_empty())
+                .map(|arm| arm.condition.clone())
+                .collect(),
+        );
+        source.unknown = self
+            .predicates
+            .normalize(Predicate::Or(vec![source.unknown, rejected]));
+        source.known.retain(|arm| arm.omitted_members.is_empty());
+        for arm in &mut source.known {
+            arm.kind = crate::ValueKind::TemplatedYamlSerialized;
+        }
+        for arm in source.known {
+            if !self.retain_claim(&mut view.known, arm) {
+                view.unknown = Predicate::True;
+                return view;
+            }
+        }
+        view.unknown = self
+            .predicates
+            .normalize(Predicate::all(vec![view.unknown, source.unknown]));
+        view
+    }
+
+    fn operand(
+        &mut self,
+        value: &'a Value,
+        heap: &'a super::HeapVersion,
+        json: bool,
+        strip_marker: bool,
+    ) -> PayloadView<'a> {
+        let Some(remaining) = self.remaining.checked_sub(1) else {
+            return PayloadView::unknown();
+        };
+        self.remaining = remaining;
+        match value.node.as_ref() {
+            ValueNode::Select { decision, yes, no } => {
+                let yes = self.operand(yes, heap, json, strip_marker);
+                let no = self.operand(no, heap, json, strip_marker);
+                self.choice(decision, yes, no)
+            }
+            ValueNode::Leaf(Leaf { datum: _, origin }) => {
+                let scalar = match value.node.as_ref() {
+                    ValueNode::Leaf(Leaf {
+                        datum:
+                            Datum::Scalar {
+                                content: Some(ScalarContent::Identity(path)),
+                                go_type: _,
+                            },
+                        origin: _,
+                    }) => Some(path),
+                    _ => None,
+                };
+                let path = origin.identity.as_ref().or(scalar).or_else(|| {
+                    let ValueNode::Leaf(Leaf {
+                        datum:
+                            Datum::Map {
+                                target: Some(target),
+                                view: _,
+                            },
+                        origin: _,
+                    }) = value.node.as_ref()
+                    else {
+                        return None;
+                    };
+                    origin.influences.iter().take(self.remaining).find(|path| {
+                        if !self.charge(1) {
+                            return false;
+                        }
+                        self.inputs
+                            .get(*path)
+                            .is_some_and(|backing| backing.object == *target)
+                    })
+                });
+                let Some(path) = path else {
+                    return PayloadView::unknown();
+                };
+                let Some(omitted_members) = self.omissions(path, heap) else {
+                    return PayloadView::unknown();
+                };
+                if !self.charge(1) {
+                    return PayloadView::unknown();
+                }
+                let condition = if omitted_members.is_empty() {
+                    Predicate::True
+                } else {
+                    Predicate::from(helm_schema_core::Guard::TypeIs {
+                        path: path.clone(),
+                        schema_type: "object".to_owned(),
+                    })
+                };
+                PayloadView {
+                    known: vec![SerializedPayload {
+                        condition: condition.clone(),
+                        path,
+                        kind: crate::ValueKind::YamlSerialized,
+                        strip_marker,
+                        flow_node: json,
+                        omitted_members,
+                        spelling: if json {
+                            "{\"00000000\": 00000000}"
+                        } else {
+                            match self.shape {
+                                PayloadShape::Mapping => "00000000: 00000000",
+                                PayloadShape::Scalar => "00000000",
+                                PayloadShape::Sequence => "- 00000000",
+                            }
+                        }
+                        .to_owned(),
+                    }],
+                    unknown: condition.negated(),
+                }
+            }
+        }
+    }
+
+    fn unchanged(
+        &mut self,
+        path: &helm_schema_core::ValuesPath,
+        heap: &super::HeapVersion,
+    ) -> bool {
+        self.omissions(path, heap)
+            .is_some_and(|omitted| omitted.is_empty())
+    }
+
+    fn omissions(
+        &mut self,
+        path: &helm_schema_core::ValuesPath,
+        heap: &super::HeapVersion,
+    ) -> Option<BTreeSet<String>> {
+        if self.omission_depth >= 32 {
+            return None;
+        }
+        self.omission_depth += 1;
+        let result = self.omissions_inner(path, heap);
+        self.omission_depth -= 1;
+        result
+    }
+
+    fn omissions_inner(
+        &mut self,
+        path: &helm_schema_core::ValuesPath,
+        heap: &super::HeapVersion,
+    ) -> Option<BTreeSet<String>> {
+        let mut prefix = helm_schema_core::ValuesPath::default();
+        for segment in path.segments() {
+            self.remaining = self.remaining.checked_sub(1)?;
+            match segment {
+                helm_schema_core::Segment::Literal(key) => prefix.push(key.clone()),
+                helm_schema_core::Segment::EachMember => {
+                    // A wildcard cannot bind overwritten or removed original collection members.
+                    if self
+                        .inputs
+                        .get(&prefix)
+                        .and_then(|backing| heap.object(&backing.object))
+                        .is_some_and(|object| !pristine_input_backing(object))
+                    {
+                        return None;
+                    }
+                    prefix.push_each_member();
+                }
+            }
+        }
+        let mut omitted = BTreeSet::new();
+        if let Some(object) = self
+            .inputs
+            .get(path)
+            .and_then(|backing| heap.object(&backing.object))
+        {
+            let super::ObjectVersion {
+                revision: _,
+                multiplicity: _,
+                data,
+            } = object;
+            let ObjectData::Map {
+                fields,
+                remainder: super::Remainder::Input,
+            } = data
+            else {
+                return None;
+            };
+            for (key, field) in fields {
+                self.remaining = self.remaining.checked_sub(1)?;
+                if key.contains("<no value>") || !self.serializable_field(field, heap) {
+                    return None;
+                }
+                self.remaining = self.remaining.checked_sub(key.len().div_ceil(64))?;
+                omitted.insert(key.clone());
+            }
+        }
+        let mut first_child = path.clone();
+        first_child.push("\0");
+        for (candidate, backing) in self
+            .inputs
+            .range(first_child..)
+            .take_while(|(candidate, _)| candidate.is_descendant_of(path))
+        {
+            self.remaining = self.remaining.checked_sub(1)?;
+            let Some(object) = heap.object(&backing.object) else {
+                continue;
+            };
+            if pristine_input_backing(object) {
+                continue;
+            }
+            let super::ObjectVersion {
+                revision: _,
+                multiplicity: _,
+                data,
+            } = object;
+            let ObjectData::Map {
+                fields,
+                remainder: super::Remainder::Input,
+            } = data
+            else {
+                return None;
+            };
+            for (key, field) in fields {
+                self.remaining = self.remaining.checked_sub(1)?;
+                if key.contains("<no value>") || !self.serializable_field(field, heap) {
+                    return None;
+                }
+            }
+            let helm_schema_core::Segment::Literal(key) =
+                candidate.segments().nth(path.segments().len())?
+            else {
+                return None;
+            };
+            self.remaining = self.remaining.checked_sub(key.len().div_ceil(64))?;
+            omitted.insert(key.clone());
+        }
+        Some(omitted)
+    }
+
+    fn serializable_field(&mut self, field: &super::Field, heap: &super::HeapVersion) -> bool {
+        if self.remaining == 0 {
+            return false;
+        }
+        self.remaining -= 1;
+        match field {
+            super::Field::Absent => true,
+            super::Field::Unknown => false,
+            super::Field::Select {
+                decision: _,
+                yes,
+                no,
+            } => self.serializable_field(yes, heap) && self.serializable_field(no, heap),
+            super::Field::Present(value) => self.serializable_value(value, heap),
+        }
+    }
+
+    fn serializable_value(&mut self, value: &Value, heap: &super::HeapVersion) -> bool {
+        if self.remaining == 0 {
+            return false;
+        }
+        self.remaining -= 1;
+        match value.node.as_ref() {
+            ValueNode::Select {
+                decision: _,
+                yes,
+                no,
+            } => self.serializable_value(yes, heap) && self.serializable_value(no, heap),
+            ValueNode::Leaf(Leaf { datum: _, origin })
+                if origin
+                    .identity
+                    .as_ref()
+                    .is_some_and(|path| self.unchanged(path, heap)) =>
+            {
+                true
+            }
+            ValueNode::Leaf(Leaf {
+                datum: Datum::Text(_),
+                origin: _,
+            }) => true,
+            ValueNode::Leaf(Leaf {
+                datum:
+                    Datum::Scalar {
+                        go_type,
+                        content: _,
+                    },
+                origin: _,
+            }) => !matches!(go_type, super::ScalarType::Complex128),
+            ValueNode::Leaf(Leaf {
+                datum: _,
+                origin: _,
+            }) => {
+                let mut query = JsonQuery {
+                    preserve_nil_collections: true,
+                    remaining: Some(&mut self.remaining),
+                    outcome: &|_| None,
+                    choice: None,
+                };
+                json(value, heap, &mut BTreeSet::new(), 0, &mut query).is_some()
+            }
+        }
+    }
+
+    fn buffer(&mut self, buffer: &'a TextBuffer) -> PayloadView<'a> {
+        let Some(remaining) = self.remaining.checked_sub(1) else {
+            return PayloadView::unknown();
+        };
+        self.remaining = remaining;
+        let [part] = buffer.parts.as_slice() else {
+            return PayloadView::unknown();
+        };
+        match part.content() {
+            TextPart::Frozen(value) => self.value(value),
+            TextPart::Select { decision, yes, no } => {
+                let yes = self.buffer(yes);
+                let no = self.buffer(no);
+                self.choice(decision, yes, no)
+            }
+            TextPart::Bytes(_) | TextPart::Unknown(_) => PayloadView::unknown(),
+        }
+    }
+
+    fn retain_claim(
+        &mut self,
+        known: &mut Vec<SerializedPayload<'a>>,
+        arm: SerializedPayload<'a>,
+    ) -> bool {
+        let Some(remaining) = self.remaining.checked_sub(1) else {
+            return false;
+        };
+        self.remaining = remaining;
+        for existing in known.iter_mut() {
+            if !self.charge(1) {
+                return false;
+            }
+            if existing.path == arm.path
+                && existing.kind == arm.kind
+                && existing.spelling == arm.spelling
+                && existing.strip_marker == arm.strip_marker
+                && existing.flow_node == arm.flow_node
+                && existing.omitted_members == arm.omitted_members
+            {
+                if !self.charge(1) {
+                    return false;
+                }
+                existing.condition = self.predicates.normalize(Predicate::Or(vec![
+                    existing.condition.clone(),
+                    arm.condition,
+                ]));
+                return true;
+            }
+        }
+        if known.len() >= super::MAX_SCALAR_DISPATCH_STATES {
+            return false;
+        }
+        known.push(arm);
+        true
+    }
+
+    fn common_choice(&mut self, yes: PayloadView<'a>, no: &PayloadView<'a>) -> PayloadView<'a> {
+        let mut known = Vec::new();
+        for yes in yes.known {
+            for no in &no.known {
+                let Some(remaining) = self.remaining.checked_sub(1) else {
+                    return PayloadView {
+                        known,
+                        unknown: Predicate::True,
+                    };
+                };
+                self.remaining = remaining;
+                if yes.path == no.path && yes.spelling == no.spelling {
+                    if !self.charge(1) {
+                        return PayloadView {
+                            known,
+                            unknown: Predicate::True,
+                        };
+                    }
+                    let arm = SerializedPayload {
+                        condition: self.predicates.normalize(Predicate::all(vec![
+                            yes.condition.clone(),
+                            no.condition.clone(),
+                        ])),
+                        path: yes.path,
+                        kind: if yes.kind == no.kind {
+                            yes.kind
+                        } else {
+                            crate::ValueKind::TemplatedYamlSerialized
+                        },
+                        spelling: yes.spelling.clone(),
+                        strip_marker: yes.strip_marker || no.strip_marker,
+                        flow_node: yes.flow_node && no.flow_node,
+                        omitted_members: yes
+                            .omitted_members
+                            .union(&no.omitted_members)
+                            .cloned()
+                            .collect(),
+                    };
+                    if !self.retain_claim(&mut known, arm) {
+                        return PayloadView {
+                            known,
+                            unknown: Predicate::True,
+                        };
+                    }
+                }
+            }
+        }
+        let covered = Predicate::Or(known.iter().map(|arm| arm.condition.clone()).collect());
+        PayloadView {
+            known,
+            unknown: self.predicates.normalize(covered.negated()),
+        }
+    }
+
+    fn choice(
+        &mut self,
+        decision: &super::FrozenTest,
+        yes: PayloadView<'a>,
+        no: PayloadView<'a>,
+    ) -> PayloadView<'a> {
+        let super::FrozenTest {
+            id: _,
+            when_true,
+            when_false,
+            coverage,
+            runtime: _,
+        } = decision;
+        if !self.charge(1) {
+            return PayloadView::unknown();
+        }
+        if *coverage != super::Coverage::Exact
+            || when_true.contains_approximation()
+            || when_false.contains_approximation()
+        {
+            return self.common_choice(yes, &no);
+        }
+        let mut known = Vec::new();
+        let mut unknown = Vec::new();
+        for (branch, guard) in [(yes, when_true), (no, when_false)] {
+            if !self.charge(1) {
+                return PayloadView {
+                    known,
+                    unknown: Predicate::True,
+                };
+            }
+            unknown.push(Predicate::all(vec![guard.clone(), branch.unknown]));
+            for mut arm in branch.known {
+                if !self.charge(1) {
+                    return PayloadView {
+                        known,
+                        unknown: Predicate::True,
+                    };
+                }
+                arm.condition = self
+                    .predicates
+                    .normalize(Predicate::all(vec![guard.clone(), arm.condition]));
+                if arm.condition != Predicate::False && !self.retain_claim(&mut known, arm) {
+                    return PayloadView {
+                        known,
+                        unknown: Predicate::True,
+                    };
+                }
+            }
+        }
+        PayloadView {
+            known,
+            unknown: self.predicates.normalize(Predicate::Or(unknown)),
+        }
+    }
+}
+
+impl DocumentExecution {
+    pub(crate) fn bounded_serialized_payload<'a>(
+        &self,
+        value: &'a FrozenValue,
+        shape: PayloadShape,
+        remaining: &mut usize,
+    ) -> PayloadView<'a> {
+        let Some(exit) = self.exits.first() else {
+            return PayloadView::unknown();
+        };
+        let inputs = exit.state.heap.arena.input_objects.borrow();
+        PayloadQuery::with_limit(&inputs, shape, *remaining).bounded_value(value, remaining)
+    }
+}

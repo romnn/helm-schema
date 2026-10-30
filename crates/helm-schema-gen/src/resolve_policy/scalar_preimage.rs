@@ -3,7 +3,7 @@ use super::{
     PLAIN_SCALAR_DECIMAL_NUMBER_TOKEN_PATTERN, PLAIN_SCALAR_INTEGER_SLOT_TOKEN_PATTERN,
     PLAIN_SCALAR_NULL_TOKEN_PATTERN, PLAIN_SCALAR_NUMBER_TOKEN_PATTERN,
     PLAIN_SCALAR_SPECIAL_FLOAT_TOKEN_PATTERN, SchemaNode, Value, is_annotation_keyword,
-    merge_schema_list, schema_allows_type, schema_type, union_schema_list,
+    merge_schema_list, schema_type, union_schema_list,
 };
 use crate::schema_node::JsonSchemaType;
 
@@ -455,30 +455,112 @@ pub(super) fn helm_falsy_schema() -> Value {
     .into_value()
 }
 
-/// The branch schema is the strongest available evidence schema that is not a
-/// vacuous placeholder when real content exists and accepts the chart's
-/// shipped default whenever the branch tolerates its own absence.
-/// Projects provider constraints through `tpl (toYaml …)`.
-///
-/// YAML serialization preserves mappings, sequences, and scalar kinds.
-/// `tpl` then changes only strings containing template actions, so those
-/// program strings bypass constraints on the rendered string while every
-/// structural and action-free constraint remains intact.
-pub(super) fn templated_yaml_provider_preimage(mut schema: Value) -> Value {
-    fn admit_template_programs(schema: &mut Value) {
-        helm_schema_json_schema_walk::visit_subschemas_mut(
+/// Constrains only serialization that `tpl` cannot change, including mapping keys.
+pub(crate) fn templated_yaml_provider_preimage(schema: Value) -> Value {
+    serialized_yaml_provider_preimage(schema, true)
+}
+
+pub(crate) fn serialized_yaml_provider_preimage(schema: Value, templated: bool) -> Value {
+    let name = if templated { "Q" } else { "helm-marker-free" };
+    Value::Object(serde_json::Map::from_iter([(
+        "anyOf".to_owned(),
+        Value::Array(vec![
+            serde_json::json!({"not": {"$ref": helm_schema_json_schema_walk::definition_reference(name)}}),
             schema,
-            helm_schema_json_schema_walk::ReferenceSiblings::Skip,
-            &mut admit_template_programs,
-        );
-        if schema_allows_type(schema, "string") {
-            *schema = union_schema_list(vec![
-                std::mem::take(schema),
-                serde_json::json!({ "type": "string", "pattern": "\\{\\{" }),
-            ]);
+        ]),
+    )]))
+}
+
+pub(crate) const NO_TEMPLATE_ACTIONS_DEFINITION_NAME: &str = "helm-no-template-actions";
+pub(crate) const YAML_FLOW_STABLE_DEFINITION_NAME: &str = "helm-yaml-flow-stable";
+
+pub(crate) fn unchanged_serialized_schema(name: &str, templated: bool) -> Value {
+    let pattern = if templated {
+        "\\{\\{|<no value>"
+    } else {
+        "<no value>"
+    };
+    recursive_serialized_strings(
+        name,
+        serde_json::Map::from_iter([("not".to_owned(), serde_json::json!({"pattern": pattern}))]),
+    )
+}
+
+fn recursive_serialized_strings(
+    name: &str,
+    mut constraint: serde_json::Map<String, Value>,
+) -> Value {
+    let reference = helm_schema_json_schema_walk::definition_reference(name);
+    let property_names = Value::Object(constraint.clone());
+    constraint.insert("type".to_owned(), serde_json::json!("string"));
+    let string = Value::Object(constraint);
+    serde_json::json!({"anyOf": [
+        {"type": ["null", "boolean", "number"]},
+        string,
+        {"type": "array", "items": {"$ref": reference}},
+        {"type": "object", "propertyNames": property_names, "additionalProperties": {"$ref": reference}}
+    ]})
+}
+
+pub(crate) fn references_serialized_schema(schema: &Value, name: &str) -> bool {
+    if schema
+        .get("$ref")
+        .and_then(Value::as_str)
+        .is_some_and(|reference| {
+            reference == helm_schema_json_schema_walk::definition_reference(name)
+        })
+    {
+        return true;
+    }
+    let mut found = false;
+    helm_schema_json_schema_walk::visit_subschemas(
+        schema,
+        helm_schema_json_schema_walk::ReferenceSiblings::Visit,
+        &mut |child| {
+            found |= references_serialized_schema(child, name);
+        },
+    );
+    found
+}
+
+pub(crate) fn serialized_definitions<'a>(
+    schemas: impl IntoIterator<Item = &'a Value>,
+) -> std::collections::BTreeMap<String, Value> {
+    let mut needed = [false; 4];
+    for schema in schemas {
+        for (required, name) in needed.iter_mut().zip([
+            "Q",
+            "helm-marker-free",
+            YAML_FLOW_STABLE_DEFINITION_NAME,
+            NO_TEMPLATE_ACTIONS_DEFINITION_NAME,
+        ]) {
+            if !*required {
+                *required = references_serialized_schema(schema, name);
+            }
+        }
+        if needed.iter().all(|required| *required) {
+            break;
         }
     }
-
-    admit_template_programs(&mut schema);
-    schema
+    let mut definitions = std::collections::BTreeMap::new();
+    for (required, (name, templated)) in needed.into_iter().zip([
+        ("Q", true),
+        ("helm-marker-free", false),
+        (YAML_FLOW_STABLE_DEFINITION_NAME, false),
+        (NO_TEMPLATE_ACTIONS_DEFINITION_NAME, false),
+    ]) {
+        if required {
+            definitions.insert(
+                name.to_owned(),
+                if name == YAML_FLOW_STABLE_DEFINITION_NAME {
+                    recursive_serialized_strings(name, serde_json::Map::from_iter([("not".to_owned(), serde_json::json!({"pattern": helm_schema_core::ValuePattern::YAML_FLOW_UNSTABLE_STRING_PATTERN}))]))
+                } else if name == NO_TEMPLATE_ACTIONS_DEFINITION_NAME {
+                    recursive_serialized_strings(name, serde_json::Map::from_iter([("not".to_owned(), serde_json::json!({"pattern": "\\{\\{"}))]))
+                } else {
+                    unchanged_serialized_schema(name, templated)
+                },
+            );
+        }
+    }
+    definitions
 }

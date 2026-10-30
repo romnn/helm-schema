@@ -191,6 +191,7 @@ pub(crate) enum ValuePathSchemaInputs {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct ProviderValueUsePolicy {
     kind: ValueKind,
+    strip_marker: bool,
     stringified: bool,
     plain_scalar_placement: helm_schema_core::PlainScalarPlacement,
     is_self_range_collection: bool,
@@ -210,6 +211,7 @@ impl ProviderValueUsePolicy {
     ) -> Self {
         Self {
             kind,
+            strip_marker: false,
             stringified,
             plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
             is_self_range_collection,
@@ -217,6 +219,11 @@ impl ProviderValueUsePolicy {
             split_segment,
             omitted_members,
         }
+    }
+
+    pub(crate) fn with_strip_marker(mut self, strip_marker: bool) -> Self {
+        self.strip_marker = strip_marker;
+        self
     }
 
     pub(crate) fn with_plain_scalar_placement(
@@ -248,16 +255,23 @@ impl ResolvePolicy {
             }
             // `toYaml` accepts every input kind but preserves that kind in
             // the rendered YAML value, so a typed provider sink projects
-            // directly back to the input. Opaque fragment output does not
+            // back through marker-preserving coverage. Opaque fragment output does not
             // provide that identity guarantee; only a sequence placement is
             // structurally load-bearing there.
-            ValueKind::YamlSerialized => Some(subtract_omitted_members(
-                relax_template_supplied_required(
-                    schema.clone(),
-                    &policy.template_supplied_member_keys,
-                ),
-                &policy.omitted_members,
-            )),
+            ValueKind::YamlSerialized => {
+                let schema = subtract_omitted_members(
+                    relax_template_supplied_required(
+                        schema.clone(),
+                        &policy.template_supplied_member_keys,
+                    ),
+                    &policy.omitted_members,
+                );
+                Some(if policy.strip_marker {
+                    scalar_preimage::serialized_yaml_provider_preimage(schema, false)
+                } else {
+                    schema
+                })
+            }
             // A self-ranged FRAGMENT use renders loop-body ITEMS derived
             // from the members, so the slot's item schema types the
             // rendered items, never the source's members: rangeability
@@ -931,9 +945,7 @@ fn subtract_omitted_members(
         return schema;
     }
     if let Some(object) = schema.as_object_mut() {
-        if object.contains_key("properties")
-            || object.get("additionalProperties") == Some(&Value::Bool(false))
-        {
+        if object.contains_key("properties") || object.contains_key("additionalProperties") {
             let properties = object
                 .entry("properties")
                 .or_insert_with(|| Value::Object(serde_json::Map::new()));
@@ -961,7 +973,7 @@ fn subtract_omitted_members(
 }
 
 mod go_format;
-mod scalar_preimage;
+pub(crate) mod scalar_preimage;
 
 #[cfg(test)]
 pub(crate) use scalar_preimage::plain_scalar_safe_comment_string_schema;

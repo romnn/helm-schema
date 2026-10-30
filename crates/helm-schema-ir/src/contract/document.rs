@@ -23,7 +23,15 @@ impl ContractDocument {
         Self::from_normalized_contract_uses(uses)
     }
 
-    pub(in crate::contract) fn from_normalized_contract_uses(uses: Vec<ContractUse>) -> Self {
+    pub(in crate::contract) fn from_normalized_contract_uses(mut uses: Vec<ContractUse>) -> Self {
+        // Unconditional reads add no activation context; show placed claims before those summaries.
+        uses.sort_by(|left, right| {
+            left.source_expr.cmp(&right.source_expr).then_with(|| {
+                let left_summary = left.path.0.is_empty() && left.condition.is_unconditional();
+                let right_summary = right.path.0.is_empty() && right.condition.is_unconditional();
+                left_summary.cmp(&right_summary)
+            })
+        });
         Self {
             version: Self::VERSION,
             uses,

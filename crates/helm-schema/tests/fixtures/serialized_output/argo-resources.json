@@ -1,0 +1,195 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "global": {},
+    "applicationSet": {
+      "type": "object",
+      "additionalProperties": {},
+      "properties": {
+        "resources": {
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-marker-free"
+              }
+            },
+            {
+              "properties": {
+                "claims": {
+                  "items": {
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "name"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "x-kubernetes-list-map-keys": [
+                    "name"
+                  ],
+                  "x-kubernetes-list-type": "map"
+                },
+                "limits": {
+                  "additionalProperties": {
+                    "oneOf": [
+                      {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      }
+                    ]
+                  },
+                  "type": [
+                    "object",
+                    "null"
+                  ]
+                },
+                "requests": {
+                  "additionalProperties": {
+                    "oneOf": [
+                      {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      }
+                    ]
+                  },
+                  "type": [
+                    "object",
+                    "null"
+                  ]
+                }
+              },
+              "type": [
+                "object",
+                "null"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        }
+      }
+    }
+  },
+  "x-helm-schema-generated": true,
+  "x-helm-schema-policy": {
+    "annotation-format-version": 1,
+    "requested-profile": "full",
+    "policy-vocabulary-version": 2,
+    "resolved": {
+      "root-anchored-conditionals": true,
+      "local-conditionals": true,
+      "terminal-clauses": true,
+      "kind-partitions": true
+    },
+    "authoring": {
+      "root": "closed",
+      "declared-types": "annotate"
+    },
+    "narrowing": [],
+    "modifiers": {
+      "overrides": {
+        "count": 0,
+        "digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "reference-mode": "bundled"
+    },
+    "policy-fingerprint": "b28fd01d710d87673d204ba4cdf8333388b4a8086cba088db9d9751d42e7c9cf"
+  },
+  "allOf": [
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "applicationSet": {}
+              },
+              "required": [
+                "applicationSet"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "applicationSet": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "applicationSet"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    }
+  ],
+  "$defs": {
+    "helm-marker-free": {
+      "anyOf": [
+        {
+          "type": [
+            "null",
+            "boolean",
+            "number"
+          ]
+        },
+        {
+          "type": "string",
+          "not": {
+            "pattern": "<no value>"
+          }
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/helm-marker-free"
+          }
+        },
+        {
+          "type": "object",
+          "propertyNames": {
+            "not": {
+              "pattern": "<no value>"
+            }
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/helm-marker-free"
+          }
+        }
+      ]
+    }
+  }
+}

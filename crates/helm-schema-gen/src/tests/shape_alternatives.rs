@@ -293,11 +293,11 @@ fn ranged_document_type_dispatch_bounds_the_item_domain() {
 fn structural_conversion_and_kind_guards_preserve_input_shape_alternatives() {
     let src = indoc! {r#"
         {{- if kindIs "map" .Values.extraArgs }}
-        args: {{ toYaml .Values.extraArgs }}
+        args: {{ toYaml .Values.extraArgs | nindent 2 }}
         {{- else if kindIs "slice" .Values.extraArgs }}
-        args: {{ toYaml .Values.extraArgs }}
+        args: {{ toYaml .Values.extraArgs | nindent 2 }}
         {{- end }}
-        parsed: {{ .Values.config | fromYaml | toYaml }}
+        parsed: {{ .Values.config | fromYaml | toYaml | nindent 2 }}
         joined: {{ join "," .Values.urls }}
     "#};
     let values_yaml = indoc! {r#"
