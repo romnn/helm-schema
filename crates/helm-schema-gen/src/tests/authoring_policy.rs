@@ -946,3 +946,25 @@ fn written_input_member_read_keeps_its_root_name_under_closed_policy() {
         );
     }
 }
+
+#[test]
+fn unknown_regions_do_not_retype_unobserved_members_through_parent_defaults() {
+    let mut contract = read_footprint(ValueKind::WidenedRegion, "");
+    contract.append(read_footprint(ValueKind::WidenedDependency, "config.used"));
+    sim_assert_eq!(
+        have: schema_with_policy(contract, indoc! {"
+            config:
+              used: value
+              unused: 3
+        "}, STRICT, SchemaProfile::Full),
+        want: serde_json::json!({
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+                "config": { "type": "object", "properties": { "used": {} }, "additionalProperties": {} },
+                "global": {}
+            },
+            "additionalProperties": false
+        })
+    );
+}

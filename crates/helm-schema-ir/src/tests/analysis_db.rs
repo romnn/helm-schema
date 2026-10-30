@@ -145,13 +145,13 @@ fn unknown_expressions_preserve_unknown_output() {
 }
 
 #[test]
-fn tpl_programs_preserve_unknown_output_without_a_static_helper_walk() {
+fn missing_chart_files_execute_empty_tpl_programs_through_helpers() {
     let source = indoc! {r#"
         {{- define "render-file" -}}
         {{- tpl (.Files.Get "files/program.tpl") . -}}
         {{- end -}}
     "#};
-    assert_unknown_helper_output(source, r#"{{ include "render-file" . }}"#);
+    sim_assert_eq!(have: helper_outputs(source, r#"{{ include "render-file" . }}"#), want: vec![Some(String::new())]);
 }
 
 #[test]
@@ -379,8 +379,6 @@ fn parsed_defines_share_parses_and_preserve_file_roles() {
     let execution = crate::value::tests::execute_document(r#"{{ include "leaf" . }}"#, None, &db);
     sim_assert_eq!(have: execution.abort_predicate(), want: Predicate::False);
     sim_assert_eq!(have: execution.text().map(|(_, text)| text.exact_text()).collect::<Vec<_>>(), want: vec![Some("value".to_string())]);
-    assert!(db.file_source("templates/_helpers.tpl").is_some());
-    sim_assert_eq!(have: db.file_source_paths(), want: vec!["templates/_helpers.tpl"]);
 }
 
 /// Caps bound helper values before recursive structure causes combinatorial expansion.
@@ -397,7 +395,7 @@ fn static_file_define_text_is_not_a_namespace_declaration() {
     let parsed = ParsedDefines::new(&defines);
     assert!(parsed.template_sources().is_empty());
     let db = IrAnalysisDb::with_parsed_policy(&parsed, crate::symbolic::SymbolicPolicy::default());
-    sim_assert_eq!(have: db.file_source("files/program.tpl"), want: Some(r#"{{ define "payload" }}text{{ end }}"#));
+    sim_assert_eq!(have: db.chart_files().get("").and_then(|files| files.get("files/program.tpl")).map(Vec::as_slice), want: Some(br#"{{ define "payload" }}text{{ end }}"#.as_slice()));
 }
 
 #[test]

@@ -269,18 +269,11 @@ impl Executor<'_> {
                 return normal(state, Value::invalid());
             }
         }
-        let candidate = crate::function_semantics::Method::resolve(
-            crate::function_semantics::MethodReceiver::Values,
-            key,
-        );
-        let receiver = (!candidate.is_foreign()).then(|| state.consumed(&value));
-        let descriptor = receiver
-            .as_ref()
-            .map_or(candidate, |receiver| super::hosts::method(receiver, key));
+        let descriptor = super::hosts::method(&value, key);
         if !descriptor.is_foreign() {
             return self.invoke_callee(
                 super::Callee::Method {
-                    receiver: receiver.unwrap_or(value),
+                    receiver: value,
                     descriptor,
                 },
                 &[],

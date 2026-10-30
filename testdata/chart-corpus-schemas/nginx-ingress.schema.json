@@ -7627,47 +7627,6 @@
           "const": true
         }
       ]
-    },
-    "values/controller.appprotect.configManager.securityContext": {
-      "additionalProperties": {},
-      "properties": {
-        "allowPrivilegeEscalation": {
-          "type": "boolean"
-        },
-        "capabilities": {
-          "additionalProperties": {},
-          "properties": {
-            "drop": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            }
-          },
-          "type": "object"
-        },
-        "runAsNonRoot": {
-          "type": "boolean"
-        },
-        "runAsUser": {
-          "description": "nginx",
-          "type": "integer"
-        }
-      },
-      "type": "object"
-    },
-    "values/controller.initContainerResources.requests": {
-      "additionalProperties": {},
-      "properties": {
-        "cpu": {
-          "type": "string"
-        },
-        "memory": {
-          "description": "limits:\ncpu: 1\nmemory: 1Gi",
-          "type": "string"
-        }
-      },
-      "type": "object"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -8957,10 +8916,6 @@
         "affinity": {
           "description": "The affinity of the Ingress Controller pods."
         },
-        "allowEmptyIngressHost": {
-          "description": "Allows Ingress resources to omit the host field.\nspec.tls is not supported on Ingress resources without a host; use controller.defaultTLS.secret instead.\nnginx.org/listen-ports and nginx.org/listen-ports-ssl are not supported; use controller.defaultHTTPListenerPort and controller.defaultHTTPSListenerPort instead.",
-          "type": "boolean"
-        },
         "annotations": {
           "description": "Annotations for deployments and daemonsets"
         },
@@ -8968,139 +8923,15 @@
           "additionalProperties": {},
           "description": "Support for App Protect WAF",
           "properties": {
-            "configManager": {
-              "additionalProperties": {},
-              "description": "Configuration for App Protect WAF v5 Configuration Manager",
-              "properties": {
-                "image": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "pullPolicy": {
-                      "description": "The pull policy for the App Protect WAF v5 Configuration Manager image.",
-                      "type": "string"
-                    },
-                    "repository": {
-                      "description": "The image repository of the App Protect WAF v5 Configuration Manager.",
-                      "type": "string"
-                    },
-                    "tag": {
-                      "description": "The tag of the App Protect WAF v5 Configuration Manager image.\nThe digest of the App Protect WAF v5 Configuration Manager image.\nIf digest is specified it has precedence over tag and will be used instead\ndigest: \"sha256:CHANGEME\"",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "resources": {
-                  "additionalProperties": {},
-                  "description": "The resources of the App Protect WAF v5 Configuration Manager container.\nrequests:\ncpu: 100m\nmemory: 128Mi\nlimits:\ncpu: 500m\nmemory: 512Mi",
-                  "type": "object"
-                },
-                "securityContext": {
-                  "$ref": "#/$defs/values~1controller.appprotect.configManager.securityContext"
-                }
-              },
-              "type": "object"
-            },
             "enable": {
               "description": "Enable the App Protect WAF module in the Ingress Controller."
-            },
-            "enforcer": {
-              "additionalProperties": {},
-              "description": "Configuration for App Protect WAF v5 Enforcer",
-              "properties": {
-                "host": {
-                  "description": "Host that the App Protect WAF v5 Enforcer runs on.\nThis will normally be \"127.0.0.1\" as the Enforcer container\nwill run in the same pod as the Ingress Controller container.",
-                  "type": "string"
-                },
-                "image": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "pullPolicy": {
-                      "description": "The pull policy for the App Protect WAF v5 Enforcer image.",
-                      "type": "string"
-                    },
-                    "repository": {
-                      "description": "The image repository of the App Protect WAF v5 Enforcer.",
-                      "type": "string"
-                    },
-                    "tag": {
-                      "description": "The tag of the App Protect WAF v5 Enforcer image.\nThe digest of the App Protect WAF v5 Enforcer image.\nIf digest is specified it has precedence over tag and will be used instead\ndigest: \"sha256:CHANGEME\"",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "port": {
-                  "description": "Port that the App Protect WAF v5 Enforcer runs on.",
-                  "type": "integer"
-                },
-                "resources": {
-                  "additionalProperties": {},
-                  "description": "The resources of the App Protect WAF v5 Enforcer container.\nrequests:\ncpu: 100m\nmemory: 128Mi\nlimits:\ncpu: 500m\nmemory: 512Mi",
-                  "type": "object"
-                },
-                "securityContext": {
-                  "additionalProperties": {},
-                  "type": "object"
-                }
-              },
-              "type": "object"
             },
             "ipIntelligence": {
               "additionalProperties": {},
               "description": "Configuration for App Protect WAF v5 IP Intelligence",
               "properties": {
-                "enable": {},
-                "image": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "pullPolicy": {
-                      "description": "The pull policy for the App Protect WAF v5 IP Intelligence image.",
-                      "type": "string"
-                    },
-                    "repository": {
-                      "description": "The image repository of the App Protect WAF v5 IP Intelligence.",
-                      "type": "string"
-                    },
-                    "tag": {
-                      "description": "The tag of the App Protect WAF v5 IP Intelligence image.\nThe digest of the App Protect WAF v5 IP Intelligence image.\nIf digest is specified it has precedence over tag and will be used instead\ndigest: \"sha256:CHANGEME\"",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "securityContext": {
-                  "$ref": "#/$defs/values~1controller.appprotect.configManager.securityContext"
-                }
-              },
-              "type": "object"
-            },
-            "plmStorage": {
-              "additionalProperties": {},
-              "description": "Configuration for fetching bundles compiled by F5 WAF Policy Controller (PLM).\nRequires nginxplus=true, appprotect.enable=true, and appprotect.v5=true.\nSecret references must use the namespace/name format.",
-              "properties": {
-                "caSecret": {
-                  "description": "Optional Secret containing ca.crt for SeaweedFS TLS verification, namespace/name format.",
-                  "type": "string"
-                },
-                "clientSSLSecret": {
-                  "description": "Optional Secret containing tls.crt and tls.key for SeaweedFS mTLS, namespace/name format.",
-                  "type": "string"
-                },
-                "credentialsSecret": {
-                  "description": "Secret containing the SeaweedFS admin secret under seaweedfs_admin_secret, namespace/name format.",
-                  "type": "string"
-                },
-                "insecureSkipVerify": {
-                  "description": "Disable SeaweedFS TLS verification. For development and testing only.",
-                  "type": "boolean"
-                },
-                "url": {
-                  "description": "SeaweedFS S3 endpoint. Leave empty to disable PLM support.",
-                  "type": "string"
-                }
-              },
-              "type": "object"
+                "enable": {}
+              }
             },
             "v5": {
               "description": "Enables App Protect WAF v5.\nSets log level for App Protect WAF. Allowed values: fatal, error, warn, info, debug, trace\nlogLevel: fatal"
@@ -9108,35 +8939,7 @@
             "volumes": {
               "description": "Volumes for App Protect WAF v5\nRequired volumes are: app-protect-bd-config, app-protect-config, and app-protect-bundles"
             }
-          },
-          "type": "object"
-        },
-        "appprotectdos": {
-          "additionalProperties": {},
-          "description": "Support for App Protect DoS",
-          "properties": {
-            "debug": {
-              "description": "Enable debugging for App Protect DoS.",
-              "type": "boolean"
-            },
-            "enable": {
-              "description": "Enable the App Protect DoS module in the Ingress Controller.",
-              "type": "boolean"
-            },
-            "maxDaemons": {
-              "description": "Max number of ADMD instances.",
-              "type": "integer"
-            },
-            "maxWorkers": {
-              "description": "Max number of nginx processes to support.",
-              "type": "integer"
-            },
-            "memory": {
-              "description": "RAM memory size to consume in MB.",
-              "type": "integer"
-            }
-          },
-          "type": "object"
+          }
         },
         "autoscaling": {
           "additionalProperties": {},
@@ -9147,147 +8950,9 @@
             }
           }
         },
-        "config": {
-          "additionalProperties": {},
-          "description": "The name of the ConfigMap used by the Ingress Controller.\nAutogenerated if not set or set to \"\".\nname: nginx-config",
-          "properties": {
-            "annotations": {
-              "additionalProperties": {},
-              "description": "The annotations of the Ingress Controller configmap.",
-              "type": "object"
-            },
-            "entries": {
-              "additionalProperties": {},
-              "description": "The entries of the ConfigMap for customizing NGINX configuration.",
-              "type": "object"
-            }
-          },
-          "type": "object"
-        },
         "containerPort": {},
-        "customConfigMap": {
-          "description": "The custom ConfigMap to use instead of the one provided by default",
-          "type": "string"
-        },
-        "customPorts": {
-          "description": "A list of custom ports to expose on the NGINX Ingress Controller pod. Follows the conventional Kubernetes yaml syntax for container ports.",
-          "items": {},
-          "type": "array"
-        },
-        "defaultHTTPListenerPort": {
-          "description": "Sets the port for the HTTP `default_server` listener. When controller.allowEmptyIngressHost is enabled, also configures the HTTP listener port for Ingress resources without a host.",
-          "type": "integer"
-        },
-        "defaultHTTPSListenerPort": {
-          "description": "Sets the port for the HTTPS `default_server` listener. When controller.allowEmptyIngressHost is enabled, also configures the HTTPS listener port for Ingress resources without a host.",
-          "type": "integer"
-        },
-        "defaultTLS": {
-          "additionalProperties": {},
-          "description": "It is recommended to use your own TLS certificates and keys",
-          "properties": {
-            "cert": {
-              "description": "The base64-encoded TLS certificate for the default HTTPS server.\nNote: It is recommended that you specify your own certificate. Alternatively, omitting the default server secret completely will configure NGINX to reject TLS connections to the default server.",
-              "type": "string"
-            },
-            "key": {
-              "description": "The base64-encoded TLS key for the default HTTPS server.\nNote: It is recommended that you specify your own key. Alternatively, omitting the default server secret completely will configure NGINX to reject TLS connections to the default server.",
-              "type": "string"
-            },
-            "secret": {
-              "description": "The secret with a TLS certificate and key for the default HTTPS server.\nThe value must follow the following format: `<namespace>/<name>`.\nUsed as an alternative to specifying a certificate and key using `controller.defaultTLS.cert` and `controller.defaultTLS.key` parameters.\nNote: Alternatively, omitting the default server secret completely will configure NGINX to reject TLS connections to the default server.\nWhen controller.allowEmptyIngressHost is enabled, this secret also provides TLS for Ingress resources without a host.\nFormat: <namespace>/<secret_name>",
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
-        "directiveAutoAdjust": {
-          "description": "Enables auto adjusting some of the NGINX directives to help with safe configuration and prevent NGINX misconfigurations.\nSee https://docs.nginx.com/nginx-ingress-controller/configuration/proxy-buffers-configuration/  for more details of which configuration options are affected",
-          "type": "boolean"
-        },
-        "disableIPV6": {
-          "description": "Disable IPV6 listeners explicitly for nodes that do not support the IPV6 stack.",
-          "type": "boolean"
-        },
         "dnsPolicy": {
           "description": "DNS policy for the Ingress Controller pods"
-        },
-        "enableCertManager": {
-          "description": "Enable cert manager for Virtual Server resources. Requires controller.enableCustomResources.",
-          "type": "boolean"
-        },
-        "enableConfigSafety": {
-          "description": "Enable config validation prior to reloading NGINX.",
-          "type": "boolean"
-        },
-        "enableCustomResources": {
-          "description": "Enable the custom resources.",
-          "type": "boolean"
-        },
-        "enableExternalDNS": {
-          "description": "Enable external DNS for Virtual Server resources. Requires controller.enableCustomResources.",
-          "type": "boolean"
-        },
-        "enableLatencyMetrics": {
-          "description": "Enable collection of latency metrics for upstreams. Requires prometheus.create.",
-          "type": "boolean"
-        },
-        "enableOIDC": {
-          "description": "Enable OIDC policies.",
-          "type": "boolean"
-        },
-        "enableSSLDynamicReload": {
-          "description": "Enable dynamic reloading of certificates",
-          "type": "boolean"
-        },
-        "enableSnippets": {
-          "description": "Enable custom NGINX configuration snippets in Ingress, VirtualServer, VirtualServerRoute and TransportServer resources.",
-          "type": "boolean"
-        },
-        "enableTLSPassthrough": {
-          "description": "Enable TLS Passthrough on port 443. Requires controller.enableCustomResources.",
-          "type": "boolean"
-        },
-        "enableWeightChangesDynamicReload": {
-          "description": "Allows weight adjustments without reloading the NGINX Configuration for two-way splits in NGINX Plus.\nMay require increasing map_hash_bucket_size, map_hash_max_size,\nvariable_hash_bucket_size, and variable_hash_max_size in the ConfigMap based on the number of two-way splits.",
-          "type": "boolean"
-        },
-        "env": {
-          "description": "The additional environment variables to be set on the Ingress Controller pods.\n- name: MY_VAR\nvalue: myvalue",
-          "items": {},
-          "type": "array"
-        },
-        "extraContainers": {
-          "description": "Extra containers for the Ingress Controller pods.\n- name: container\nimage: busybox:1.34\ncommand: ['sh', '-c', 'echo this is a sidecar!']",
-          "items": {},
-          "type": "array"
-        },
-        "globalConfiguration": {
-          "additionalProperties": {},
-          "properties": {
-            "create": {
-              "description": "Creates the GlobalConfiguration custom resource. Requires controller.enableCustomResources.",
-              "type": "boolean"
-            },
-            "customName": {
-              "description": "customName: \"the-namespace/the-name-of-the-global-configuration-custom-resource\"\nThe name of the GlobalConfiguration custom resource to use instead of the one provided by default.\nMake sure the namespace is watched when watchNamespace or watchNamespaceLabel parameters are in use.",
-              "type": "string"
-            },
-            "spec": {
-              "additionalProperties": {},
-              "description": "The spec of the GlobalConfiguration for defining the global configuration parameters of the Ingress Controller.\n# Ensure both curly brackets are removed when adding listeners in YAML format.\nlisteners:\n- name: dns-udp\nport: 5353\nprotocol: UDP\n- name: dns-tcp\nport: 5353\nprotocol: TCP",
-              "type": "object"
-            }
-          },
-          "type": "object"
-        },
-        "healthStatus": {
-          "description": "Add a location based on the value of health-status-uri to the default server. The location responds with the 200 status code for any request.\nUseful for external health-checking of the Ingress Controller.",
-          "type": "boolean"
-        },
-        "healthStatusURI": {
-          "description": "Sets the URI of health status location in the default server. Requires controller.healthStatus.",
-          "type": "string"
         },
         "hostNetwork": {
           "description": "Enables the Ingress Controller pods to use the host's network namespace."
@@ -9298,59 +8963,11 @@
           "properties": {
             "enable": {
               "description": "Enables hostPort for the Ingress Controller pods."
-            },
-            "http": {
-              "description": "The HTTP hostPort configuration for the Ingress Controller pods.",
-              "type": "integer"
-            },
-            "https": {
-              "description": "The HTTPS hostPort configuration for the Ingress Controller pods.",
-              "type": "integer"
             }
-          },
-          "type": "object"
+          }
         },
         "image": {
           "additionalProperties": {}
-        },
-        "ingressClass": {
-          "additionalProperties": {},
-          "description": "Configures the ingress class the Ingress Controller uses.\nA class of the Ingress Controller.",
-          "properties": {
-            "create": {
-              "description": "Creates a new IngressClass object with the name \"controller.ingressClass.name\". To use an existing IngressClass with the same name, set this value to false. If you use helm upgrade, do not change the values from the previous release as helm will delete IngressClass objects managed by helm. If you are upgrading from a release earlier than 3.3.0, do not set the value to false.",
-              "type": "boolean"
-            },
-            "name": {
-              "description": "The Ingress Controller processes all the resources that do not have the \"ingressClassName\" field for all versions of kubernetes.",
-              "type": "string"
-            },
-            "setAsDefaultIngress": {
-              "description": "New Ingresses without an ingressClassName field specified will be assigned the class specified in `controller.ingressClass`. Requires \"controller.ingressClass.create\".",
-              "type": "boolean"
-            }
-          },
-          "type": "object"
-        },
-        "initContainerResources": {
-          "additionalProperties": {},
-          "description": "The resources for the Ingress Controller init container which is used when readOnlyRootFilesystem is set to true.",
-          "properties": {
-            "requests": {
-              "$ref": "#/$defs/values~1controller.initContainerResources.requests"
-            }
-          },
-          "type": "object"
-        },
-        "initContainerSecurityContext": {
-          "additionalProperties": {},
-          "description": "The security context for the Ingress Controller init container which is used when readOnlyRootFilesystem is set to true.",
-          "type": "object"
-        },
-        "initContainers": {
-          "description": "InitContainers for the Ingress Controller pods.\n- name: init-container\nimage: busybox:1.34\ncommand: ['sh', '-c', 'echo this is initial setup!']",
-          "items": {},
-          "type": "array"
         },
         "kind": {
           "anyOf": [
@@ -9371,82 +8988,8 @@
         "lifecycle": {
           "description": "The lifecycle of the Ingress Controller pods."
         },
-        "logFormat": {
-          "description": "Sets the log format of Ingress Controller. Options include: glog, json, json-unix, json-unix-ms, text, text-unix, text-unix-ms",
-          "type": "string"
-        },
-        "logLevel": {
-          "description": "The log level of the Ingress Controller. Options include: trace, debug, info, warning, error, fatal",
-          "type": "string"
-        },
-        "mgmt": {
-          "additionalProperties": {},
-          "description": "Configures NGINX mgmt block for NGINX Plus",
-          "properties": {
-            "licenseTokenSecretName": {
-              "description": "Secret name of license token for NGINX Plus\nrequired for NGINX Plus",
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
-        "minReadySeconds": {
-          "description": "The minimum number of seconds for which a newly created Pod should be ready without any of its containers crashing, for it to be considered available.",
-          "type": "integer"
-        },
         "name": {
           "description": "The name of the Ingress Controller daemonset, deployment, or statefulset."
-        },
-        "networkPolicy": {
-          "additionalProperties": {},
-          "description": "Configure an optional NetworkPolicy for the Ingress Controller pods.",
-          "properties": {
-            "egress": {
-              "description": "Configure egress rules. When non-empty, the Egress policy type is added automatically.",
-              "items": {},
-              "type": "array"
-            },
-            "enabled": {
-              "description": "Create a NetworkPolicy that targets the controller pods.",
-              "type": "boolean"
-            },
-            "ingress": {
-              "description": "If enabled=true and both ingress and egress are empty, the resulting NetworkPolicy denies all ingress by default.\nConfigure ingress rules. When non-empty, the Ingress policy type is added automatically.",
-              "items": {},
-              "type": "array"
-            }
-          },
-          "type": "object"
-        },
-        "nginxDebug": {
-          "description": "Enables debugging for NGINX. Uses the nginx-debug binary. Requires error-log-level: debug in the ConfigMap via `controller.config.entries`.",
-          "type": "boolean"
-        },
-        "nginxReloadTimeout": {
-          "description": "Timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start.",
-          "type": "integer"
-        },
-        "nginxStatus": {
-          "additionalProperties": {},
-          "properties": {
-            "allowCidrs": {
-              "description": "Add IPv4 IP/CIDR blocks to the allow list for NGINX stub_status or the NGINX Plus API. Separate multiple IP/CIDR by commas.",
-              "type": "string"
-            },
-            "enable": {
-              "description": "Enable the NGINX stub_status, or the NGINX Plus API.",
-              "type": "boolean"
-            },
-            "port": {
-              "description": "Set the port where the NGINX stub_status or the NGINX Plus API is exposed.",
-              "type": "integer"
-            }
-          },
-          "type": "object"
-        },
-        "nginxplus": {
-          "description": "Deploys the Ingress Controller for NGINX Plus.",
-          "type": "boolean"
         },
         "nodeSelector": {},
         "pod": {
@@ -9460,22 +9003,6 @@
             }
           }
         },
-        "podDisruptionBudget": {
-          "additionalProperties": {},
-          "description": "Pod disruption budget for the Ingress Controller pods.",
-          "properties": {
-            "annotations": {
-              "additionalProperties": {},
-              "description": "The annotations of the Ingress Controller pod disruption budget.\nThe number of Ingress Controller pods that should be available. This is a mutually exclusive setting with \"maxUnavailable\".\nminAvailable: 1\nThe number of Ingress Controller pods that can be unavailable. This is a mutually exclusive setting with \"minAvailable\".\nmaxUnavailable: 1",
-              "type": "object"
-            },
-            "enabled": {
-              "description": "Enables PodDisruptionBudget.",
-              "type": "boolean"
-            }
-          },
-          "type": "object"
-        },
         "podSecurityContext": {
           "description": "The security context for the Ingress Controller pods."
         },
@@ -9483,188 +9010,18 @@
         "readOnlyRootFilesystem": {
           "description": "Configure root filesystem as read-only and add volumes for temporary data.\nThree major releases after 3.5.x this argument will be moved to the `securityContext` section.\nThis value will not be used if `controller.securityContext` is set"
         },
-        "readyStatus": {
-          "additionalProperties": {},
-          "properties": {
-            "enable": {
-              "description": "Enables readiness endpoint \"/nginx-ready\". The endpoint returns a success code when NGINX has loaded all the config after startup.",
-              "type": "boolean"
-            },
-            "initialDelaySeconds": {
-              "description": "The number of seconds after the Ingress Controller pod has started before readiness probes are initiated.",
-              "type": "integer"
-            },
-            "port": {
-              "description": "Set the port where the readiness endpoint is exposed.",
-              "type": "integer"
-            }
-          },
-          "type": "object"
-        },
         "replicaCount": {
           "description": "The number of replicas of the Ingress Controller deployment."
-        },
-        "reportIngressStatus": {
-          "additionalProperties": {},
-          "properties": {
-            "annotations": {
-              "additionalProperties": {},
-              "description": "The annotations of the leader election Lease.",
-              "type": "object"
-            },
-            "enable": {
-              "description": "Updates the address field in the status of Ingress resources with an external address of the Ingress Controller.\nYou must also specify the source of the external address either through an external service via controller.reportIngressStatus.externalService,\ncontroller.reportIngressStatus.ingressLink or the external-status-address entry in the ConfigMap via controller.config.entries.\nNote: controller.config.entries.external-status-address takes precedence over the others.",
-              "type": "boolean"
-            },
-            "enableLeaderElection": {
-              "description": "Enable Leader election to avoid multiple replicas of the controller reporting the status of Ingress resources. controller.reportIngressStatus.enable must be set to true.",
-              "type": "boolean"
-            },
-            "ingressLink": {
-              "description": "Specifies the name of the IngressLink resource, which exposes the Ingress Controller pods via a BIG-IP system.\nThe IP of the BIG-IP system is used when reporting the status of Ingress, VirtualServer and VirtualServerRoute resources.\ncontroller.reportIngressStatus.enable must be set to true.",
-              "type": "string"
-            },
-            "leaderElectionLockName": {
-              "description": "Specifies the name to be used as the lock for leader election. controller.reportIngressStatus.enableLeaderElection must be set to true.\nThe default is autogenerated.",
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
-        "resources": {
-          "additionalProperties": {},
-          "description": "The resources of the Ingress Controller pods.",
-          "properties": {
-            "requests": {
-              "$ref": "#/$defs/values~1controller.initContainerResources.requests"
-            }
-          },
-          "type": "object"
         },
         "securityContext": {
           "additionalProperties": {},
           "description": "The security context for the Ingress Controller containers.",
           "properties": {
             "readOnlyRootFilesystem": {}
-          },
-          "type": "object"
+          }
         },
         "selectorLabels": {
           "description": "The selectorLabels used to override the default values."
-        },
-        "service": {
-          "additionalProperties": {},
-          "properties": {
-            "annotations": {
-              "additionalProperties": {},
-              "description": "The annotations of the Ingress Controller service.",
-              "type": "object"
-            },
-            "clusterIP": {
-              "description": "The ClusterIP for the Ingress Controller service, autoassigned if not specified.",
-              "type": "string"
-            },
-            "create": {
-              "description": "Creates a service to expose the Ingress Controller pods.",
-              "type": "boolean"
-            },
-            "customPorts": {
-              "description": "A list of custom ports to expose through the Ingress Controller service. Follows the conventional Kubernetes yaml syntax for service ports.",
-              "items": {},
-              "type": "array"
-            },
-            "externalIPs": {
-              "description": "The list of external IPs for the Ingress Controller service.",
-              "items": {},
-              "type": "array"
-            },
-            "externalTrafficPolicy": {
-              "description": "The externalTrafficPolicy of the service. The value Local preserves the client source IP.",
-              "type": "string"
-            },
-            "extraLabels": {
-              "additionalProperties": {},
-              "description": "The extra labels of the service.",
-              "type": "object"
-            },
-            "httpPort": {
-              "additionalProperties": {},
-              "properties": {
-                "enable": {
-                  "description": "Enables the HTTP port for the Ingress Controller service.",
-                  "type": "boolean"
-                },
-                "name": {
-                  "description": "The name of the HTTP port.",
-                  "type": "string"
-                },
-                "port": {
-                  "description": "The HTTP port of the Ingress Controller service.",
-                  "type": "integer"
-                },
-                "targetPort": {
-                  "description": "The HTTP port on the POD where the Ingress Controller service is running.",
-                  "type": "integer"
-                }
-              },
-              "type": "object"
-            },
-            "httpsPort": {
-              "additionalProperties": {},
-              "properties": {
-                "enable": {
-                  "description": "Enables the HTTPS port for the Ingress Controller service.",
-                  "type": "boolean"
-                },
-                "name": {
-                  "description": "The name of the HTTPS port.",
-                  "type": "string"
-                },
-                "port": {
-                  "description": "The HTTPS port of the Ingress Controller service.",
-                  "type": "integer"
-                },
-                "targetPort": {
-                  "description": "The HTTPS port on the POD where the Ingress Controller service is running.",
-                  "type": "integer"
-                }
-              },
-              "type": "object"
-            },
-            "loadBalancerIP": {
-              "description": "The static IP address for the load balancer. Requires controller.service.type set to LoadBalancer. The cloud provider must support this feature.",
-              "type": "string"
-            },
-            "loadBalancerSourceRanges": {
-              "description": "The IP ranges (CIDR) that are allowed to access the load balancer. Requires controller.service.type set to LoadBalancer. The cloud provider must support this feature.",
-              "items": {},
-              "type": "array"
-            },
-            "sessionAffinity": {
-              "additionalProperties": {},
-              "description": "Session affinity configuration for the Ingress Controller service, ensures requests from the same client IP go to the same pod",
-              "properties": {
-                "enable": {
-                  "description": "Enable session affinity. Valid values: None, ClientIP",
-                  "type": "boolean"
-                },
-                "timeoutSeconds": {
-                  "description": "Session affinity timeout in seconds (default: 3600 = 1 hour)",
-                  "type": "integer"
-                },
-                "type": {
-                  "description": "Session affinity type. Currently only ClientIP is supported.",
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            },
-            "type": {
-              "description": "The type of service to create for the Ingress Controller.",
-              "type": "string"
-            }
-          },
-          "type": "object"
         },
         "serviceAccount": {
           "additionalProperties": {},
@@ -9675,110 +9032,15 @@
         "shareProcessNamespace": {
           "description": "Share process namespace between containers in the Ingress Controller pod."
         },
-        "startupStatus": {
-          "additionalProperties": {},
-          "properties": {
-            "enable": {
-              "description": "Enable the startup probe.",
-              "type": "boolean"
-            }
-          },
-          "type": "object"
-        },
-        "statefulset": {
-          "additionalProperties": {},
-          "description": "StatefulSet-specific configuration (only used when kind is \"statefulset\")",
-          "properties": {
-            "nginxCachePVC": {
-              "additionalProperties": {},
-              "description": "Configuration for StatefulSet nginx-cache PVC",
-              "properties": {
-                "accessModes": {
-                  "description": "Access modes for the nginx-cache volume",
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                },
-                "size": {
-                  "description": "Storage size for the nginx-cache volume",
-                  "type": "string"
-                },
-                "storageClass": {
-                  "description": "Storage class for the nginx-cache volume. If empty, uses the cluster default.",
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            },
-            "persistentVolumeClaimRetentionPolicy": {
-              "additionalProperties": {},
-              "description": "PersistentVolumeClaim retention policy for StatefulSet\nDetermines when to delete PVCs when the StatefulSet is deleted or scaled down",
-              "properties": {
-                "whenDeleted": {
-                  "description": "When to delete PVCs when the StatefulSet is deleted. Can be \"Retain\" or \"Delete\".",
-                  "type": "string"
-                },
-                "whenScaled": {
-                  "description": "When to delete PVCs when the StatefulSet is scaled down. Can be \"Retain\" or \"Delete\".",
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            },
-            "podManagementPolicy": {
-              "description": "Pod management policy for StatefulSet. Can be \"OrderedReady\" or \"Parallel\".\nOrderedReady will start pods one at a time in order, Parallel will start all pods at once.",
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
-        "strategy": {
-          "additionalProperties": {},
-          "description": "Strategy used to replace old Pods by new ones. .spec.strategy.type can be \"Recreate\" or \"RollingUpdate\" for Deployments, and \"OnDelete\" or \"RollingUpdate\" for Daemonsets. \"RollingUpdate\" is the default value.",
-          "type": "object"
-        },
-        "telemetryReporting": {
-          "additionalProperties": {},
-          "description": "Configure telemetry reporting options",
-          "properties": {
-            "enable": {
-              "description": "Enable telemetry reporting",
-              "type": "boolean"
-            }
-          },
-          "type": "object"
-        },
         "terminationGracePeriodSeconds": {
           "description": "The termination grace period of the Ingress Controller pod."
-        },
-        "tlsPassthroughPort": {
-          "description": "Set the port for TLS Passthrough. Requires controller.enableCustomResources and controller.enableTLSPassthrough.",
-          "type": "integer"
         },
         "tolerations": {
           "description": "The tolerations of the Ingress Controller pods."
         },
         "topologySpreadConstraints": {},
-        "volumeMounts": {
-          "description": "The volumeMounts of the Ingress Controller pods.\n- name: extra-conf\nmountPath: /etc/nginx/conf.d/extra.conf\nsubPath: extra.conf",
-          "items": {},
-          "type": "array"
-        },
         "volumes": {
           "description": "The volumes of the Ingress Controller pods.\n- name: extra-conf\nconfigMap:\nname: extra-conf"
-        },
-        "watchNamespace": {
-          "description": "Comma separated list of namespaces to watch for Ingress resources. By default, the Ingress Controller watches all namespaces. Mutually exclusive with \"controller.watchNamespaceLabel\".",
-          "type": "string"
-        },
-        "watchNamespaceLabel": {
-          "description": "Configures the Ingress Controller to watch only those namespaces with label foo=bar. By default, the Ingress Controller watches all namespaces. Mutually exclusive with \"controller.watchNamespace\".",
-          "type": "string"
-        },
-        "watchSecretNamespace": {
-          "description": "Comma separated list of namespaces to watch for Secret resources. By default, the Ingress Controller watches all namespaces.",
-          "type": "string"
         },
         "wildcardTLS": {
           "additionalProperties": {},
@@ -9815,10 +9077,6 @@
         },
         "endpointHost": {},
         "endpointPort": {},
-        "instanceGroup": {
-          "description": "Agent V2 configuration\nIf nginxAgent.instanceGroup is not set the value of nginx-ingress.controller.fullname will be used",
-          "type": "string"
-        },
         "instanceManager": {
           "additionalProperties": {},
           "properties": {
@@ -9834,18 +9092,13 @@
                   "description": "nginx.org/ca secret for verification of Instance Manager TLS"
                 },
                 "enable": {},
-                "enabled": {
-                  "type": "boolean"
-                },
                 "secret": {
                   "description": "kubernetes.io/tls secret with a TLS certificate and key for using mTLS between NGINX Agent and Instance Manager"
                 },
                 "skipVerify": {}
-              },
-              "type": "object"
+              }
             }
-          },
-          "type": "object"
+          }
         },
         "logLevel": {},
         "napMonitoring": {
@@ -9864,8 +9117,7 @@
           }
         },
         "tlsSkipVerify": {}
-      },
-      "type": "object"
+      }
     },
     "prometheus": {
       "additionalProperties": {},

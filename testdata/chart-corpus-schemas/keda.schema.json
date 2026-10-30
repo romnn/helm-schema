@@ -1507,101 +1507,17 @@
     "webhooks": {
       "additionalProperties": {},
       "properties": {
-        "affinity": {
-          "additionalProperties": {},
-          "description": "[Affinity] for pod scheduling for KEDA admission webhooks. Takes precedence over the `affinity` field\npodAntiAffinity:\nrequiredDuringSchedulingIgnoredDuringExecution:\n- labelSelector:\nmatchExpressions:\n- key: app\noperator: In\nvalues:\n- keda-admission-webhooks\ntopologyKey: \"kubernetes.io/hostname\"",
-          "type": "object"
-        },
-        "dnsConfig": {
-          "additionalProperties": {},
-          "description": "DNS config for KEDA admission webhooks pod",
-          "type": "object"
-        },
         "enabled": {
           "description": "It also used to enable or disable webhook patching in the operator"
         },
         "failurePolicy": {
           "description": "[Failure policy](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#failure-policy) to use with KEDA admission webhooks"
         },
-        "healthProbePort": {
-          "description": "Port number to use for KEDA admission webhooks health probe",
-          "type": "integer"
-        },
-        "livenessProbe": {
-          "additionalProperties": {},
-          "description": "Liveness probes for admission webhooks ([docs](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/))",
-          "properties": {
-            "failureThreshold": {
-              "type": "integer"
-            },
-            "initialDelaySeconds": {
-              "type": "integer"
-            },
-            "periodSeconds": {
-              "type": "integer"
-            },
-            "successThreshold": {
-              "type": "integer"
-            },
-            "timeoutSeconds": {
-              "type": "integer"
-            }
-          },
-          "type": "object"
-        },
         "name": {
           "description": "Name of the KEDA admission webhooks"
         },
-        "nodeSelector": {
-          "additionalProperties": {},
-          "description": "Node selector for pod scheduling ([docs](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/))",
-          "type": "object"
-        },
-        "port": {
-          "description": "Port number to use for KEDA admission webhooks. Default is 9443.",
-          "type": "string"
-        },
-        "readinessProbe": {
-          "additionalProperties": {},
-          "description": "Readiness probes for admission webhooks ([docs](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-readiness-probes))",
-          "properties": {
-            "failureThreshold": {
-              "type": "integer"
-            },
-            "initialDelaySeconds": {
-              "type": "integer"
-            },
-            "periodSeconds": {
-              "type": "integer"
-            },
-            "successThreshold": {
-              "type": "integer"
-            },
-            "timeoutSeconds": {
-              "type": "integer"
-            }
-          },
-          "type": "object"
-        },
-        "replicaCount": {
-          "description": "Capability to configure the number of replicas for KEDA admission webhooks",
-          "type": "integer"
-        },
-        "revisionHistoryLimit": {
-          "description": "ReplicaSets for this Deployment you want to retain (Default: 10)",
-          "type": "integer"
-        },
         "timeoutSeconds": {
           "description": "Timeout in seconds for KEDA admission webhooks"
-        },
-        "tolerations": {
-          "description": "Tolerations for pod scheduling ([docs](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/))",
-          "items": {},
-          "type": "array"
-        },
-        "useHostNetwork": {
-          "description": "Enable webhook to use host network, this is required on EKS with custom CNI",
-          "type": "boolean"
         }
       },
       "type": "object"

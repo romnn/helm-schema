@@ -270,6 +270,7 @@
     "extraObjects": {
       "description": "Array of extra K8s manifests to deploy\n- apiVersion: external-secrets.io/v1\nkind: ExternalSecret\nmetadata:\nname: '{{ include \"gitlab-runner.secret\" . }}'\nspec:\nrefreshInterval: 1h\nsecretStoreRef:\nkind: SecretStore\nname: my-secret-store\ntarget:\ntemplate:\ndata:\nrunner-registration-token: \"\" # need to leave as an empty string for compatibility reasons\nrunner-token: \"{{`{{ .runnerToken }}`}}\"\ndataFrom:\n- extract:\nkey: my-secret-store-secret"
     },
+    "fullnameOverride": {},
     "global": {},
     "hostAliases": {
       "description": "list of hosts and IPs that will be injected into the pod's hosts file\nExample:\n- ip: \"127.0.0.1\"\nhostnames:\n- \"foo.local\"\n- \"bar.local\"\n- ip: \"10.1.2.3\"\nhostnames:\n- \"foo.remote\"\n- \"bar.remote\""
@@ -305,43 +306,30 @@
       "description": "Configure integrated Prometheus metrics exporter\nref: https://docs.gitlab.com/runner/monitoring/#configuration-of-the-metrics-http-server",
       "properties": {
         "enabled": {},
-        "podMonitor": {
-          "additionalProperties": {},
-          "description": "Configure a prometheus-operator podMonitor to scrape metrics directly from pods.\nRECOMMENDED: PodMonitor is the preferred method for collecting metrics as it:\n- Scrapes metrics directly from pods without requiring a Service\n- Continues to collect metrics during graceful shutdown when pods are marked NotReady\n- Provides better visibility into shutdown metrics and termination behavior",
-          "properties": {
-            "enabled": {
-              "type": "boolean"
-            },
-            "namespace": {
-              "description": "Namespace where PodMonitor should be installed. Defaults to the\nsame namespace where the release will be installed.",
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
-        "port": {
-          "description": "Provide a port number for the integrated Prometheus metrics exporter",
-          "type": "integer"
-        },
         "portName": {
-          "description": "Define a name for the metrics port",
-          "type": "string"
+          "description": "Define a name for the metrics port"
         },
         "serviceMonitor": {
           "additionalProperties": {},
           "description": "Configure a prometheus-operator serviceMonitor to allow autodetection of\nthe scraping target. Requires enabling the service resource below.\nDEPRECATED: Use podMonitor instead. ServiceMonitor requires a Service and\ncannot collect metrics during graceful shutdown when pods are marked NotReady.",
           "properties": {
+            "annotations": {},
             "enabled": {},
+            "interval": {},
+            "labels": {},
+            "metricRelabelings": {},
             "namespace": {
-              "description": "Namespace where ServiceMonitor should be installed. Defaults to the\nsame namespace where the release will be installed.",
-              "type": "string"
-            }
+              "description": "Namespace where ServiceMonitor should be installed. Defaults to the\nsame namespace where the release will be installed."
+            },
+            "scheme": {},
+            "tlsConfig": {}
           },
           "type": "object"
         }
       },
       "type": "object"
     },
+    "nameOverride": {},
     "nodeSelector": {
       "description": "Node labels for pod assignment\nref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/\nExample: The gitlab runner manager should not run on spot instances so you can assign\nthem to the regular worker nodes only.\nnode-role.kubernetes.io/worker: \"true\""
     },

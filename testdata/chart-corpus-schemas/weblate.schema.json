@@ -7327,46 +7327,6 @@
             }
           }
         },
-        "httpRoute": {
-          "additionalProperties": {},
-          "properties": {
-            "annotations": {
-              "additionalProperties": {},
-              "description": "gatewayApi.httpRoute.annotations -- HTTPRoute annotations",
-              "type": "object"
-            },
-            "create": {
-              "description": "gatewayApi.httpRoute.create -- Create an HTTPRoute resource",
-              "type": "boolean"
-            },
-            "hostnames": {
-              "description": "gatewayApi.httpRoute.hostnames -- Hostnames the HTTPRoute should match",
-              "items": {},
-              "type": "array"
-            },
-            "labels": {
-              "additionalProperties": {},
-              "description": "gatewayApi.httpRoute.labels -- Additional HTTPRoute labels",
-              "type": "object"
-            },
-            "parentRefs": {
-              "description": "gatewayApi.httpRoute.parentRefs -- Parent references for the HTTPRoute. If empty and gateway.create is true, defaults to the created Gateway",
-              "items": {},
-              "type": "array"
-            },
-            "rules": {
-              "description": "gatewayApi.httpRoute.rules -- HTTPRoute rules. If empty, a default rule routing all traffic to the Weblate service is created",
-              "items": {},
-              "type": "array"
-            },
-            "timeouts": {
-              "additionalProperties": {},
-              "description": "gatewayApi.httpRoute.timeouts -- Timeouts applied to the default generated rule. Ignored when custom rules are specified",
-              "type": "object"
-            }
-          },
-          "type": "object"
-        },
         "tlsRoute": {
           "additionalProperties": {},
           "properties": {
@@ -7509,49 +7469,10 @@
                 "auth": {
                   "additionalProperties": {},
                   "properties": {
-                    "database": {
-                      "description": "Name for a custom database to create (overrides `auth.database`)",
-                      "type": "string"
-                    },
-                    "existingSecret": {
-                      "description": "Name of existing secret to use for PostgreSQL credentials (overrides `auth.existingSecret`).",
-                      "type": "string"
-                    },
-                    "password": {
-                      "description": "Password for the custom user to create (overrides `auth.password`)",
-                      "type": "string"
-                    },
-                    "postgresPassword": {
-                      "description": "Password for the \"postgres\" admin user (overrides `auth.postgresPassword`)",
-                      "type": "string"
-                    },
-                    "secretKeys": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "adminPasswordKey": {
-                          "description": "Name of key in existing secret to use for PostgreSQL credentials (overrides `auth.secretKeys.adminPasswordKey`). Only used when `global.postgresql.auth.existingSecret` is set.",
-                          "type": "string"
-                        },
-                        "metricsPasswordKey": {
-                          "description": "Name of key in existing secret to use for PostgreSQL credentials (overrides `auth.secretKeys.metricsPasswordKey`). Only used when `global.postgresql.auth.existingSecret` is set.",
-                          "type": "string"
-                        },
-                        "replicationPasswordKey": {
-                          "description": "Name of key in existing secret to use for PostgreSQL credentials (overrides `auth.secretKeys.replicationPasswordKey`). Only used when `global.postgresql.auth.existingSecret` is set.",
-                          "type": "string"
-                        },
-                        "userPasswordKey": {
-                          "description": "Name of key in existing secret to use for PostgreSQL credentials (overrides `auth.secretKeys.userPasswordKey`). Only used when `global.postgresql.auth.existingSecret` is set.",
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
                     "username": {
                       "description": "Name for a custom user to create (overrides `auth.username`)"
                     }
-                  },
-                  "type": "object"
+                  }
                 },
                 "fullnameOverride": {
                   "description": "Full chart name (overrides `fullnameOverride`)"

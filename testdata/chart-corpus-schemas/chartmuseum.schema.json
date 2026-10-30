@@ -1,6 +1,2170 @@
 {
+  "$defs": {
+    "constrains/annotations": {
+      "properties": {
+        "annotations": {
+          "additionalProperties": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": [
+            "object",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "annotations"
+      ],
+      "type": "object"
+    },
+    "constrains/annotations:helm-marker-free": {
+      "properties": {
+        "annotations": {
+          "$ref": "#/$defs/constrains~1annotations:helm-marker-free~1:helm-marker-free"
+        }
+      },
+      "required": [
+        "annotations"
+      ],
+      "type": "object"
+    },
+    "constrains/annotations:helm-marker-free/:helm-marker-free": {
+      "$ref": "#/$defs/helm-marker-free"
+    },
+    "constrains/annotations:t": {
+      "properties": {
+        "annotations": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "annotations"
+      ],
+      "type": "object"
+    },
+    "constrains/annotations=null": {
+      "properties": {
+        "annotations": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "annotations"
+      ],
+      "type": "object"
+    },
+    "constrains/annotations@2": {
+      "properties": {
+        "annotations": {}
+      },
+      "required": [
+        "annotations"
+      ],
+      "type": "object"
+    },
+    "constrains/fullnameOverride": {
+      "properties": {
+        "fullnameOverride": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/fullnameOverride+fullnameOverride:t": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t@2"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+service+8more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations+service.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:helm-marker-free"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type@2"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+service+8more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1service.servicename"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations+service.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:helm-marker-free"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+service+8more@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations+service.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:helm-marker-free"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type@2"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+service+8more@4": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1service.servicename"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations+service.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:helm-marker-free"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+service+8more@5": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations+service.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:helm-marker-free"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+service+8more@6": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1service.annotations+service.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:helm-marker-free"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+service+8more@7": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+service+service.annotations+7more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+service+service.annotations+7more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+service+service.annotations+7more@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+service+service.annotations+7more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+service+service.annotations+7more@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+service+service.annotations+7more@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+service+service.annotations+7more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+service+service.annotations+7more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+service+8more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+service+8more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+service+8more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+service+8more@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+service+8more@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+service+service.annotations+7more@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+service+service.annotations+7more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+service+service.annotations+7more@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+service+service.annotations+7more@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+service+service.annotations+7more@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+service+service.annotations+7more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+service+service.annotations+7more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+service+service.annotations+7more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+service+service.annotations+7more@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+service+service.annotations+7more@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+service+8more@6"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+serviceAccount+7more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.annotations+serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.name"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.annotations:helm-marker-free"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.name:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.name@3"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+serviceAccount+7more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.annotations+serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.name@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.annotations:helm-marker-free"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.name:t@2"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+serviceAccount+7more@3": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+serviceAccount+serviceAccount.annotations+6more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+serviceAccount+serviceAccount.annotations+6more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+serviceAccount+7more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+serviceAccount+7more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+serviceAccount+7more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+serviceAccount+7more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+serviceAccount+7more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+serviceAccount+7more@2"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride:t+service+service.annotations+7more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations+service.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:helm-marker-free"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type@2"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride:t+service+service.annotations+7more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1service.servicename"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations+service.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:helm-marker-free"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride:t+service+service.annotations+7more@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations+service.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:helm-marker-free"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type@2"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride:t+service+service.annotations+7more@4": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1service.servicename"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations+service.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:helm-marker-free"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride:t+service+service.annotations+7more@5": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations+service.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:helm-marker-free"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride:t+service+service.annotations+7more@6": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations+service.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:helm-marker-free"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride:t+serviceAccount+7more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.annotations+serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.name"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.annotations:helm-marker-free"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.name:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.name@3"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride:t+serviceAccount+7more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.annotations+serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.name@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.annotations:helm-marker-free"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.name:t@2"
+        }
+      ]
+    },
+    "constrains/fullnameOverride:t": {
+      "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+    },
+    "constrains/fullnameOverride:t+nameOverride+nameOverride:t": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        }
+      ]
+    },
+    "constrains/fullnameOverride:t+nameOverride+nameOverride:t+service+service.annotations+7more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations+service.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:helm-marker-free"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type@2"
+        }
+      ]
+    },
+    "constrains/fullnameOverride:t+nameOverride+nameOverride:t+service+service.annotations+7more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1service.servicename"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations+service.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:helm-marker-free"
+        }
+      ]
+    },
+    "constrains/fullnameOverride:t+nameOverride+nameOverride:t+service+service.annotations+7more@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations+service.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:helm-marker-free"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type@2"
+        }
+      ]
+    },
+    "constrains/fullnameOverride:t+nameOverride+nameOverride:t+service+service.annotations+7more@4": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1service.servicename"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations+service.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:helm-marker-free"
+        }
+      ]
+    },
+    "constrains/fullnameOverride:t+nameOverride+nameOverride:t+service+service.annotations+7more@5": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations+service.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:helm-marker-free"
+        }
+      ]
+    },
+    "constrains/fullnameOverride:t+nameOverride+nameOverride:t+service+service.annotations+7more@6": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations+service.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:helm-marker-free"
+        }
+      ]
+    },
+    "constrains/fullnameOverride:t+nameOverride+nameOverride:t+serviceAccount+7more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.annotations+serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.name"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.annotations:helm-marker-free"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.name:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.name@3"
+        }
+      ]
+    },
+    "constrains/fullnameOverride:t+nameOverride+nameOverride:t+serviceAccount+7more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.annotations+serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.name@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.annotations:helm-marker-free"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.name:t@2"
+        }
+      ]
+    },
+    "constrains/fullnameOverride:t+nameOverride:t+service+service.annotations+7more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations+service.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:helm-marker-free"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type@2"
+        }
+      ]
+    },
+    "constrains/fullnameOverride:t+nameOverride:t+service+service.annotations+7more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1service.servicename"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations+service.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:helm-marker-free"
+        }
+      ]
+    },
+    "constrains/fullnameOverride:t+nameOverride:t+service+service.annotations+7more@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations+service.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:helm-marker-free"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type@2"
+        }
+      ]
+    },
+    "constrains/fullnameOverride:t+nameOverride:t+service+service.annotations+7more@4": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1service.servicename"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations+service.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:helm-marker-free"
+        }
+      ]
+    },
+    "constrains/fullnameOverride:t+nameOverride:t+service+service.annotations+7more@5": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations+service.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:helm-marker-free"
+        }
+      ]
+    },
+    "constrains/fullnameOverride:t+nameOverride:t+service+service.annotations+7more@6": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations+service.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.annotations:helm-marker-free"
+        }
+      ]
+    },
+    "constrains/fullnameOverride:t+nameOverride:t+serviceAccount+serviceAccount.annotations+6more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.annotations+serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.name"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.annotations:helm-marker-free"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.name:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.name@3"
+        }
+      ]
+    },
+    "constrains/fullnameOverride:t+nameOverride:t+serviceAccount+serviceAccount.annotations+6more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.annotations+serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.name@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.annotations:helm-marker-free"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.name:t@2"
+        }
+      ]
+    },
+    "constrains/fullnameOverride:t@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+      }
+    },
+    "constrains/fullnameOverride:t@3": {
+      "not": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+      }
+    },
+    "constrains/fullnameOverride:t@4": {
+      "properties": {
+        "fullnameOverride": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride": {
+      "not": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
+    },
+    "constrains/nameOverride+nameOverride:t": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+        }
+      ]
+    },
+    "constrains/nameOverride:t": {
+      "$ref": "#/$defs/constrains~1nameOverride:t@3"
+    },
+    "constrains/nameOverride:t@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@4"
+      }
+    },
+    "constrains/nameOverride:t@3": {
+      "not": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@4"
+      }
+    },
+    "constrains/nameOverride:t@4": {
+      "properties": {
+        "nameOverride": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride@2": {
+      "properties": {
+        "nameOverride": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/service+service.servicename+service.servicename:t": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1service.servicename@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.servicename:t"
+        }
+      ]
+    },
+    "constrains/service+service.type+service.type=null": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1service.type"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type@2"
+        }
+      ]
+    },
+    "constrains/service.annotations": {
+      "$ref": "#/$defs/constrains~1service.annotations@2"
+    },
+    "constrains/service.annotations+service.annotations=null": {
+      "$ref": "#/$defs/constrains~1service.annotations+service.annotations=null@2"
+    },
+    "constrains/service.annotations+service.annotations=null@2": {
+      "not": {
+        "anyOf": [
+          {
+            "properties": {
+              "service": {
+                "$ref": "#/$defs/constrains~1annotations=null"
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "service": {
+                  "$ref": "#/$defs/constrains~1annotations@2"
+                }
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      }
+    },
+    "constrains/service.annotations:helm-marker-free": {
+      "properties": {
+        "service": {
+          "$ref": "#/$defs/constrains~1annotations:helm-marker-free"
+        }
+      },
+      "required": [
+        "service"
+      ],
+      "type": "object"
+    },
+    "constrains/service.annotations:t": {
+      "properties": {
+        "service": {
+          "$ref": "#/$defs/constrains~1annotations:t"
+        }
+      },
+      "required": [
+        "service"
+      ],
+      "type": "object"
+    },
+    "constrains/service.annotations@2": {
+      "not": {
+        "properties": {
+          "service": {
+            "$ref": "#/$defs/constrains~1annotations"
+          }
+        },
+        "required": [
+          "service"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/service.servicename": {
+      "$ref": "#/$defs/constrains~1service.servicename@2"
+    },
+    "constrains/service.servicename/string;pattern-x20-x30": {
+      "pattern": "^(?:(?:[\\x20])*[\\x30-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x20\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*)$",
+      "type": "string"
+    },
+    "constrains/service.servicename:t": {
+      "not": {
+        "$ref": "#/$defs/constrains~1service.servicename:t@2"
+      }
+    },
+    "constrains/service.servicename:t@2": {
+      "properties": {
+        "service": {
+          "properties": {
+            "servicename": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "servicename"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "service"
+      ],
+      "type": "object"
+    },
+    "constrains/service.servicename@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1service.servicename@4"
+      }
+    },
+    "constrains/service.servicename@3": {
+      "properties": {
+        "service": {
+          "properties": {
+            "servicename": {
+              "$ref": "#/$defs/constrains~1service.servicename~1string;pattern-x20-x30"
+            }
+          },
+          "required": [
+            "servicename"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "service"
+      ],
+      "type": "object"
+    },
+    "constrains/service.servicename@4": {
+      "properties": {
+        "service": {
+          "properties": {
+            "servicename": {
+              "pattern": "^(?:(?:[\\x20])*)$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "servicename"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "service"
+      ],
+      "type": "object"
+    },
+    "constrains/service.type": {
+      "not": {
+        "properties": {
+          "service": {
+            "properties": {
+              "type": {}
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "service"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/service.type+service.type=null": {
+      "$ref": "#/$defs/constrains~1service.type+service.type=null@4"
+    },
+    "constrains/service.type+service.type=null@2": {
+      "$ref": "#/$defs/constrains~1service.type+service.type=null@5"
+    },
+    "constrains/service.type+service.type=null@3": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1service.type"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.type=null"
+        }
+      ]
+    },
+    "constrains/service.type+service.type=null@4": {
+      "not": {
+        "$ref": "#/$defs/constrains~1service.type+service.type=null@3"
+      }
+    },
+    "constrains/service.type+service.type=null@5": {
+      "not": {
+        "$ref": "#/$defs/constrains~1service.type+service.type=null@3"
+      }
+    },
+    "constrains/service.type=null": {
+      "properties": {
+        "service": {
+          "properties": {
+            "type": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "service"
+      ],
+      "type": "object"
+    },
+    "constrains/service.type@2": {
+      "properties": {
+        "service": {
+          "properties": {
+            "type": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "service"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceAccount+serviceAccount.name+serviceAccount.name:t": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.name:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.name@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.name@3"
+        }
+      ]
+    },
+    "constrains/serviceAccount.annotations": {
+      "$ref": "#/$defs/constrains~1serviceAccount.annotations@2"
+    },
+    "constrains/serviceAccount.annotations+serviceAccount.annotations=null": {
+      "$ref": "#/$defs/constrains~1serviceAccount.annotations+serviceAccount.annotations=null@2"
+    },
+    "constrains/serviceAccount.annotations+serviceAccount.annotations=null@2": {
+      "not": {
+        "anyOf": [
+          {
+            "properties": {
+              "serviceAccount": {
+                "$ref": "#/$defs/constrains~1annotations=null"
+              }
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "serviceAccount": {
+                  "$ref": "#/$defs/constrains~1annotations@2"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      }
+    },
+    "constrains/serviceAccount.annotations:helm-marker-free": {
+      "properties": {
+        "serviceAccount": {
+          "$ref": "#/$defs/constrains~1annotations:helm-marker-free"
+        }
+      },
+      "required": [
+        "serviceAccount"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceAccount.annotations:t": {
+      "properties": {
+        "serviceAccount": {
+          "$ref": "#/$defs/constrains~1annotations:t"
+        }
+      },
+      "required": [
+        "serviceAccount"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceAccount.annotations@2": {
+      "not": {
+        "properties": {
+          "serviceAccount": {
+            "$ref": "#/$defs/constrains~1annotations"
+          }
+        },
+        "required": [
+          "serviceAccount"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/serviceAccount.create:t": {
+      "not": {
+        "$ref": "#/$defs/constrains~1serviceAccount.create:t@2"
+      }
+    },
+    "constrains/serviceAccount.create:t@2": {
+      "properties": {
+        "serviceAccount": {
+          "properties": {
+            "create": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "create"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "serviceAccount"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceAccount.name": {
+      "$ref": "#/$defs/constrains~1serviceAccount.name@2"
+    },
+    "constrains/serviceAccount.name:t": {
+      "not": {
+        "$ref": "#/$defs/constrains~1serviceAccount.name:t@2"
+      }
+    },
+    "constrains/serviceAccount.name:t@2": {
+      "properties": {
+        "serviceAccount": {
+          "properties": {
+            "name": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "serviceAccount"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceAccount.name@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1serviceAccount.name@4"
+      }
+    },
+    "constrains/serviceAccount.name@3": {
+      "properties": {
+        "serviceAccount": {
+          "properties": {
+            "name": {
+              "$ref": "#/$defs/constrains~1service.servicename~1string;pattern-x20-x30"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "serviceAccount"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceAccount.name@4": {
+      "properties": {
+        "serviceAccount": {
+          "properties": {
+            "name": {
+              "pattern": "^(?:(?:[\\x20])*)$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "serviceAccount"
+      ],
+      "type": "object"
+    },
+    "helm-marker-free": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/constrains~1annotations:helm-marker-free~1:helm-marker-free"
+          },
+          "propertyNames": {
+            "not": {
+              "pattern": "<no value>"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "type": [
+            "null",
+            "boolean",
+            "number"
+          ]
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/constrains~1annotations:helm-marker-free~1:helm-marker-free"
+          },
+          "type": "array"
+        },
+        {
+          "not": {
+            "pattern": "<no value>"
+          },
+          "type": "string"
+        }
+      ]
+    },
+    "t": {
+      "anyOf": [
+        {
+          "minProperties": 1,
+          "type": "object"
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "const": true
+        }
+      ]
+    },
+    "values/object,null;annotations-is-an-unstructured": {
+      "additionalProperties": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
+      "type": [
+        "object",
+        "null"
+      ]
+    }
+  },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1serviceAccount.create:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1serviceAccount.name:t@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "serviceAccount": {
+            "additionalProperties": {},
+            "properties": {
+              "annotations": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/t"
+                    }
+                  },
+                  {
+                    "$ref": "#/$defs/values~1object,null;annotations-is-an-unstructured"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/constrains~1annotations:helm-marker-free~1:helm-marker-free"
+                    }
+                  }
+                ],
+                "description": "Annotations for the Service Account"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1service.servicename:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1service+service.type+service.type=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1service+service.servicename+service.servicename:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "additionalProperties": {},
+            "properties": {
+              "annotations": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/t"
+                    }
+                  },
+                  {
+                    "$ref": "#/$defs/values~1object,null;annotations-is-an-unstructured"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/constrains~1annotations:helm-marker-free~1:helm-marker-free"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+serviceAccount+7more@3"
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+service+8more@7"
+      },
+      "then": false
+    }
+  ],
   "properties": {
     "affinity": {},
     "bearerAuth": {},
@@ -10,9 +2174,19 @@
     "containerSecurityContext": {},
     "deployment": {},
     "env": {
-      "description": "team_name: dev"
+      "additionalProperties": {},
+      "description": "team_name: dev",
+      "properties": {
+        "existingSecret": {
+          "description": "Name of an existing secret to get the secret values ftom"
+        },
+        "secret": {
+          "description": "POD_IP: status.podIP"
+        }
+      }
     },
     "extraArgs": {},
+    "fullnameOverride": {},
     "gcp": {
       "description": "Adding secrets to tiller is not a great option, so If you want to use an existing\nsecret that contains the json file, you can use the following entries"
     },
@@ -21,6 +2195,7 @@
     "ingress": {
       "description": "Ingress for load balancer"
     },
+    "nameOverride": {},
     "nodeSelector": {},
     "oracle": {},
     "persistence": {},
@@ -38,13 +2213,64 @@
     "resources": {
       "description": "limits:\ncpu: 100m\nmemory: 128Mi\nrequests:\ncpu: 80m\nmemory: 64Mi"
     },
-    "secret": {},
+    "secret": {
+      "additionalProperties": {},
+      "properties": {
+        "labels": {}
+      }
+    },
     "securityContext": {
       "description": "UID/GID 1000 is the default user \"chartmuseum\" used in\nthe container image starting in v0.8.0 and above. This\nis required for local persistent storage. If your cluster\ndoes not allow this, try setting securityContext: {}"
     },
-    "service": {},
-    "serviceAccount": {},
-    "serviceMonitor": {},
+    "service": {
+      "additionalProperties": {},
+      "properties": {
+        "annotations": {},
+        "clusterIP": {},
+        "externalPort": {
+          "description": "clusterIP: None"
+        },
+        "externalTrafficPolicy": {},
+        "labels": {},
+        "loadBalancerIP": {
+          "description": "Uses pre-assigned IP address from cloud provider\nOnly valid if service.type: LoadBalancer"
+        },
+        "loadBalancerSourceRanges": {
+          "description": "Limits which cidr blocks can connect to service's load balancer\nOnly valid if service.type: LoadBalancer"
+        },
+        "nodePort": {},
+        "servicename": {},
+        "targetPort": {
+          "description": "targetPort of the container to use. If a sidecar should handle the\nrequests first, use the named port from the sidecar. See sidecar example\nfrom deployment above. Leave empty to use chartmuseum directly."
+        },
+        "type": {}
+      }
+    },
+    "serviceAccount": {
+      "additionalProperties": {},
+      "properties": {
+        "annotations": {
+          "description": "Annotations for the Service Account"
+        },
+        "create": {},
+        "name": {}
+      }
+    },
+    "serviceMonitor": {
+      "additionalProperties": {},
+      "properties": {
+        "enabled": {},
+        "interval": {},
+        "labels": {
+          "description": "namespace: prometheus"
+        },
+        "metricsPath": {
+          "description": "timeout: 60\ninterval: 60"
+        },
+        "namespace": {},
+        "timeout": {}
+      }
+    },
     "strategy": {},
     "tolerations": {},
     "volumePermissions": {

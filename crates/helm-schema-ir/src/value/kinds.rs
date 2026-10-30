@@ -334,11 +334,11 @@ fn incompatible_parameter_view(value: &super::Value, expected: GoType) -> bool {
         ValueNode::Leaf(super::Leaf {
             datum:
                 super::Datum::Map {
-                    view: super::MapType::String,
+                    view: super::MapType::String | super::MapType::Files,
                     target: _,
                 }
                 | super::Datum::Unknown(super::UnknownValue {
-                    types: super::TypeCoverage::Map(super::MapType::String),
+                    types: super::TypeCoverage::Map(super::MapType::String | super::MapType::Files),
                     aliases: _,
                 }),
             origin: _,
@@ -347,6 +347,16 @@ fn incompatible_parameter_view(value: &super::Value, expected: GoType) -> bool {
             datum: super::Datum::Strings(_),
             origin: _,
         }) => expected == GoType::Slice,
+        ValueNode::Leaf(super::Leaf {
+            datum: super::Datum::Sequence(sequence),
+            origin: _,
+        }) => {
+            expected == GoType::Slice
+                && sequence
+                    .storage
+                    .as_ref()
+                    .is_some_and(|storage| storage.is_bytes())
+        }
         ValueNode::Leaf(super::Leaf {
             datum: _,
             origin: _,
@@ -652,16 +662,32 @@ fn descriptor_name(value: &super::Value, kind_only: bool) -> Option<&'static str
                 ScalarType::Float64 => "float64",
                 ScalarType::Complex128 => "complex128",
             }),
-            Datum::Map { view, target: _ } => Some(if kind_only {
-                "map"
-            } else {
-                match view {
-                    MapType::Interface => "map[string]interface {}",
-                    MapType::String => "map[string]string",
-                    MapType::Values => "common.Values",
+            Datum::Map { view, target: _ } => Some(match (view, kind_only) {
+                (MapType::Capabilities, true) => "ptr",
+                (MapType::KubeVersion, true) => "struct",
+                (MapType::ApiVersions, true) => "slice",
+                (MapType::Interface | MapType::String | MapType::Values | MapType::Files, true) => {
+                    "map"
                 }
+                (MapType::Interface, false) => "map[string]interface {}",
+                (MapType::String, false) => "map[string]string",
+                (MapType::Values, false) => "common.Values",
+                (MapType::Files, false) => "engine.files",
+                (MapType::Capabilities, false) => "*common.Capabilities",
+                (MapType::KubeVersion, false) => "common.KubeVersion",
+                (MapType::ApiVersions, false) => "common.VersionSet",
             }),
-            Datum::Sequence(_) => Some(if kind_only { "slice" } else { "[]interface {}" }),
+            Datum::Sequence(sequence) => Some(if kind_only {
+                "slice"
+            } else if sequence
+                .storage
+                .as_ref()
+                .is_some_and(|storage| storage.is_bytes())
+            {
+                "[]uint8"
+            } else {
+                "[]interface {}"
+            }),
             Datum::Strings(_) => Some(if kind_only { "slice" } else { "[]string" }),
             Datum::Text(_)
             | Datum::Slot {
@@ -700,7 +726,7 @@ pub(super) fn nilness(value: &super::Value) -> Option<bool> {
                 start: _,
                 length: _,
                 capacity: _,
-            }) => Some(storage.is_none()),
+            }) => Some(storage.as_ref().is_none_or(|storage| storage.is_nil())),
             Datum::Text(_)
             | Datum::Strings(_)
             | Datum::Slot {

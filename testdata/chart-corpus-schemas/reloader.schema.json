@@ -9,7 +9,44 @@
     "image": {},
     "kubernetes": {},
     "nameOverride": {},
-    "reloader": {}
+    "namespace": {},
+    "reloader": {
+      "additionalProperties": {},
+      "properties": {
+        "serviceMonitor": {
+          "additionalProperties": {},
+          "properties": {
+            "annotations": {
+              "description": "Used to pass annotations that are used by the Prometheus installed in your cluster to select Service Monitors to work with\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec"
+            },
+            "enabled": {
+              "description": "Deprecated: Service monitor will be removed in future releases of reloader in favour of Pod monitor\nEnabling this requires service to be enabled as well, or no endpoints will be found\nSet the namespace the ServiceMonitor should be deployed\nnamespace: monitoring"
+            }
+          },
+          "type": "object"
+        },
+        "verticalPodAutoscaler": {
+          "additionalProperties": {},
+          "description": "Enable vertical pod autoscaler",
+          "properties": {
+            "controlledResources": {
+              "description": "List of resources that the vertical pod autoscaler can control. Defaults to cpu and memory\nSpecifies which resource values should be controlled: RequestsOnly or RequestsAndLimits.\ncontrolledValues: RequestsAndLimits"
+            },
+            "controlledValues": {},
+            "enabled": {},
+            "maxAllowed": {
+              "description": "Define the max allowed resources for the pod"
+            },
+            "minAllowed": {
+              "description": "cpu: 200m\nmemory: 100Mi\nDefine the min allowed resources for the pod\ncpu: 200m\nmemory: 100Mi"
+            },
+            "recommenders": {},
+            "updatePolicy": {}
+          },
+          "type": "object"
+        }
+      }
+    }
   },
   "type": "object"
 }

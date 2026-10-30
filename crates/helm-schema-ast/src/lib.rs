@@ -111,12 +111,14 @@ pub enum DefineSourceRole {
 #[derive(Default, Debug, Clone)]
 pub struct DefineIndex {
     files: HashMap<String, IndexedSource>,
+    chart_files: std::collections::BTreeMap<String, std::collections::BTreeMap<String, Vec<u8>>>,
 }
 
 #[derive(Debug, Clone)]
 struct IndexedSource {
     role: DefineSourceRole,
     src: String,
+    chart_instance: Option<String>,
 }
 
 impl DefineIndex {
@@ -131,9 +133,47 @@ impl DefineIndex {
         self.insert(path, src, DefineSourceRole::Template);
     }
 
-    /// Adds or replaces one `.Files.Get` payload, keyed by its chart-relative path.
+    /// Adds a static file to the unqualified chart instance used by standalone templates.
     pub fn add_files_get_source(&mut self, path: &str, src: &str) {
-        self.insert(path, src, DefineSourceRole::FilesGet);
+        self.add_chart_file("", path, src.as_bytes());
+    }
+
+    /// Adds a frozen file payload under its chart instance and chart-relative name.
+    pub fn add_chart_file(&mut self, chart_instance: &str, path: &str, bytes: &[u8]) {
+        self.chart_files
+            .entry(chart_instance.to_owned())
+            .or_default()
+            .insert(path.to_owned(), bytes.to_vec());
+        if let Ok(source) = std::str::from_utf8(bytes) {
+            let qualified = if chart_instance.is_empty() {
+                path.to_owned()
+            } else {
+                format!("{chart_instance}/{path}")
+            };
+            self.insert(&qualified, source, DefineSourceRole::FilesGet);
+        }
+    }
+
+    /// The frozen static file catalogs keyed by chart instance and relative file name.
+    #[must_use]
+    pub fn chart_files(
+        &self,
+    ) -> &std::collections::BTreeMap<String, std::collections::BTreeMap<String, Vec<u8>>> {
+        &self.chart_files
+    }
+
+    /// Registers a template with the chart instance supplying its Helm root context.
+    pub fn add_chart_template_source(&mut self, chart_instance: &str, path: &str, src: &str) {
+        self.add_file_source(path, src);
+        if let Some(entry) = self.files.get_mut(path) {
+            entry.chart_instance = Some(chart_instance.to_owned());
+        }
+    }
+
+    /// Returns the chart instance owning a registered template.
+    #[must_use]
+    pub fn chart_instance(&self, path: &str) -> Option<&str> {
+        self.files.get(path)?.chart_instance.as_deref()
     }
 
     fn insert(&mut self, path: &str, src: &str, role: DefineSourceRole) {
@@ -144,6 +184,7 @@ impl DefineIndex {
             IndexedSource {
                 role,
                 src: src.to_string(),
+                chart_instance: None,
             },
         );
     }

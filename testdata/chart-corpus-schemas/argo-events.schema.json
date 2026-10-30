@@ -534,26 +534,6 @@
           "const": true
         }
       ]
-    },
-    "values/webhook.livenessProbe.failureThreshold": {
-      "description": "Minimum consecutive failures for the [probe] to be considered failed after having succeeded",
-      "type": "integer"
-    },
-    "values/webhook.livenessProbe.initialDelaySeconds": {
-      "description": "Number of seconds after the container has started before [probe] is initiated",
-      "type": "integer"
-    },
-    "values/webhook.livenessProbe.periodSeconds": {
-      "description": "How often (in seconds) to perform the [probe]",
-      "type": "integer"
-    },
-    "values/webhook.livenessProbe.successThreshold": {
-      "description": "Minimum consecutive successes for the [probe] to be considered successful after having failed",
-      "type": "integer"
-    },
-    "values/webhook.livenessProbe.timeoutSeconds": {
-      "description": "Number of seconds after which the [probe] times out",
-      "type": "integer"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -891,155 +871,8 @@
       ],
       "description": "Argo Events admission webhook",
       "properties": {
-        "affinity": {
-          "additionalProperties": {},
-          "description": "Assign custom [affinity] rules to the deployment",
-          "type": "object"
-        },
-        "containerSecurityContext": {
-          "additionalProperties": {},
-          "description": "Event controller container-level security context\ncapabilities:\ndrop:\n- all\nreadOnlyRootFilesystem: true\nrunAsNonRoot: true",
-          "type": "object"
-        },
-        "deploymentAnnotations": {
-          "additionalProperties": {},
-          "description": "Annotations to be added to admission webhook Deployment",
-          "type": "object"
-        },
-        "enabled": {
-          "description": "Enable admission webhook. Applies only for cluster-wide installation",
-          "type": "boolean"
-        },
-        "env": {
-          "description": "Environment variables to pass to event controller\n- name: DEBUG_LOG\nvalue: \"true\"",
-          "items": {},
-          "type": "array"
-        },
-        "envFrom": {
-          "description": "envFrom to pass to event controller\n- configMapRef:\nname: config-map-name\n- secretRef:\nname: secret-name",
-          "items": {},
-          "type": "array"
-        },
-        "image": {
-          "additionalProperties": {},
-          "properties": {
-            "imagePullPolicy": {
-              "description": "Image pull policy for the event controller",
-              "type": "string"
-            },
-            "repository": {
-              "description": "Repository to use for the event controller",
-              "type": "string"
-            },
-            "tag": {
-              "description": "Tag to use for the event controller",
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
-        "livenessProbe": {
-          "additionalProperties": {},
-          "properties": {
-            "failureThreshold": {
-              "$ref": "#/$defs/values~1webhook.livenessProbe.failureThreshold"
-            },
-            "initialDelaySeconds": {
-              "$ref": "#/$defs/values~1webhook.livenessProbe.initialDelaySeconds"
-            },
-            "periodSeconds": {
-              "$ref": "#/$defs/values~1webhook.livenessProbe.periodSeconds"
-            },
-            "successThreshold": {
-              "$ref": "#/$defs/values~1webhook.livenessProbe.successThreshold"
-            },
-            "timeoutSeconds": {
-              "$ref": "#/$defs/values~1webhook.livenessProbe.timeoutSeconds"
-            }
-          },
-          "type": "object"
-        },
         "name": {
           "description": "Argo Events admission webhook name string"
-        },
-        "nodeSelector": {
-          "additionalProperties": {},
-          "description": "[Node selector]",
-          "type": "object"
-        },
-        "pdb": {
-          "additionalProperties": {},
-          "description": "Pod disruption budget",
-          "properties": {
-            "annotations": {
-              "additionalProperties": {},
-              "description": "Annotations to be added to admission webhook pdb",
-              "type": "object"
-            },
-            "enabled": {
-              "description": "Deploy a PodDisruptionBudget for the admission webhook\nminAvailable: 1\nmaxUnavailable: 0",
-              "type": "boolean"
-            },
-            "labels": {
-              "additionalProperties": {},
-              "description": "Labels to be added to admission webhook pdb",
-              "type": "object"
-            }
-          },
-          "type": "object"
-        },
-        "podAnnotations": {
-          "additionalProperties": {},
-          "description": "Annotations to be added to event controller pods",
-          "type": "object"
-        },
-        "podLabels": {
-          "additionalProperties": {},
-          "description": "Labels to be added to event controller pods",
-          "type": "object"
-        },
-        "port": {
-          "description": "Port to listen on",
-          "type": "integer"
-        },
-        "priorityClassName": {
-          "description": "Priority class for the event controller pods",
-          "type": "string"
-        },
-        "readinessProbe": {
-          "additionalProperties": {},
-          "description": "Readiness and liveness probes for default backend\nRef: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/",
-          "properties": {
-            "failureThreshold": {
-              "$ref": "#/$defs/values~1webhook.livenessProbe.failureThreshold"
-            },
-            "initialDelaySeconds": {
-              "$ref": "#/$defs/values~1webhook.livenessProbe.initialDelaySeconds"
-            },
-            "periodSeconds": {
-              "$ref": "#/$defs/values~1webhook.livenessProbe.periodSeconds"
-            },
-            "successThreshold": {
-              "$ref": "#/$defs/values~1webhook.livenessProbe.successThreshold"
-            },
-            "timeoutSeconds": {
-              "$ref": "#/$defs/values~1webhook.livenessProbe.timeoutSeconds"
-            }
-          },
-          "type": "object"
-        },
-        "replicas": {
-          "description": "The number of webhook pods to run.",
-          "type": "integer"
-        },
-        "resources": {
-          "additionalProperties": {},
-          "description": "Resource limits and requests for the event controller pods\nlimits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 250m\nmemory: 256Mi",
-          "type": "object"
-        },
-        "revisionHistoryLimit": {
-          "description": "The number of replicasets history to keep",
-          "type": "integer"
         },
         "serviceAccount": {
           "additionalProperties": {},
@@ -1059,26 +892,6 @@
             }
           },
           "type": "object"
-        },
-        "tolerations": {
-          "description": "[Tolerations] for use with node taints",
-          "items": {},
-          "type": "array"
-        },
-        "topologySpreadConstraints": {
-          "description": "Assign custom [TopologySpreadConstraints] rules to the event controller\nRef: https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/\nIf labelSelector is left out, it will default to the labelSelector configuration of the deployment\n- maxSkew: 1\ntopologyKey: topology.kubernetes.io/zone\nwhenUnsatisfiable: DoNotSchedule",
-          "items": {},
-          "type": "array"
-        },
-        "volumeMounts": {
-          "description": "Additional volumeMounts to the event controller main container",
-          "items": {},
-          "type": "array"
-        },
-        "volumes": {
-          "description": "Additional volumes to the event controller pod",
-          "items": {},
-          "type": "array"
         }
       },
       "type": "object"

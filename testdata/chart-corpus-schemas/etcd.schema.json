@@ -78,7 +78,7 @@
           "$ref": "#/$defs/constrains~1auth+auth.token+auth.token.enabled+auth.token.enabled=null+11more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null@5"
+          "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null@6"
         },
         {
           "$ref": "#/$defs/constrains~1auth+auth.token+auth.token.enabled+auth.token.enabled=null+3more"
@@ -218,15 +218,18 @@
       ]
     },
     "constrains/auth.token+auth.token.enabled+auth.token.enabled=null": {
-      "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null@3"
+      "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null@4"
     },
     "constrains/auth.token+auth.token.enabled+auth.token.enabled=null@2": {
-      "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null@4"
+      "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null@3"
     },
     "constrains/auth.token+auth.token.enabled+auth.token.enabled=null@3": {
-      "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null@4"
+      "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null@5"
     },
     "constrains/auth.token+auth.token.enabled+auth.token.enabled=null@4": {
+      "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null@5"
+    },
+    "constrains/auth.token+auth.token.enabled+auth.token.enabled=null@5": {
       "anyOf": [
         {
           "not": {
@@ -289,7 +292,7 @@
         }
       ]
     },
-    "constrains/auth.token+auth.token.enabled+auth.token.enabled=null@5": {
+    "constrains/auth.token+auth.token.enabled+auth.token.enabled=null@6": {
       "not": {
         "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null@2"
       }
@@ -1331,14 +1334,6 @@
           "const": true
         }
       ]
-    },
-    "values/auth.client.enableAuthentication": {
-      "description": "Switch to enable host authentication using TLS certificates. Requires existing secret",
-      "type": "boolean"
-    },
-    "values/auth.client.useAutoTLS": {
-      "description": "Switch to automatically create the TLS certificates",
-      "type": "boolean"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -1452,153 +1447,52 @@
             ]
           },
           "then": false
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "token": {
-              "allOf": [
-                {
-                  "if": {
-                    "allOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1enabled+enabled=null+enabled=true+privateKey.existingSecret:t+type+type=jwt+1more@2"
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "properties": {
-                              "privateKey": {
-                                "enum": [
-                                  null
-                                ]
-                              }
-                            },
-                            "required": [
-                              "privateKey"
-                            ],
-                            "type": "object"
-                          },
-                          {
-                            "not": {
-                              "properties": {
-                                "privateKey": {}
-                              },
-                              "required": [
-                                "privateKey"
-                              ],
-                              "type": "object"
-                            }
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  "then": false
-                }
-              ],
-              "description": "Authentication token\nref: https://etcd.io/docs/latest/learning/design-auth-v3/#two-types-of-tokens-simple-and-jwt"
-            }
-          }
         }
       ],
       "description": "Authentication parameters",
       "properties": {
-        "client": {
-          "additionalProperties": {},
-          "description": "TLS authentication for client-to-server communications\nref: https://etcd.io/docs/current/op-guide/security/",
-          "properties": {
-            "caFilename": {
-              "description": "Name of the file containing the client CA certificate\nIf not specified and `auth.client.enableAuthentication=true` or `auth.rbac.enabled=true`, the default is is `ca.crt`",
-              "type": "string"
-            },
-            "certFilename": {
-              "description": "Name of the file containing the client certificate",
-              "type": "string"
-            },
-            "certKeyFilename": {
-              "description": "Name of the file containing the client certificate private key",
-              "type": "string"
-            },
-            "enableAuthentication": {
-              "$ref": "#/$defs/values~1auth.client.enableAuthentication"
-            },
-            "existingSecret": {
-              "description": "Name of the existing secret containing the TLS certificates for client-to-server communications",
-              "type": "string"
-            },
-            "secureTransport": {
-              "description": "Switch to encrypt client-to-server communications using TLS certificates",
-              "type": "boolean"
-            },
-            "useAutoTLS": {
-              "$ref": "#/$defs/values~1auth.client.useAutoTLS"
-            }
-          },
-          "type": "object"
-        },
-        "peer": {
-          "additionalProperties": {},
-          "description": "TLS authentication for server-to-server communications\nref: https://etcd.io/docs/current/op-guide/security/",
-          "properties": {
-            "caFilename": {
-              "description": "Name of the file containing the peer CA certificate\nIf not specified and `auth.peer.enableAuthentication=true` or `rbac.enabled=true`, the default is is `ca.crt`",
-              "type": "string"
-            },
-            "certFilename": {
-              "description": "Name of the file containing the peer certificate",
-              "type": "string"
-            },
-            "certKeyFilename": {
-              "description": "Name of the file containing the peer certificate private key",
-              "type": "string"
-            },
-            "enableAuthentication": {
-              "$ref": "#/$defs/values~1auth.client.enableAuthentication"
-            },
-            "existingSecret": {
-              "description": "Name of the existing secret containing the TLS certificates for server-to-server communications",
-              "type": "string"
-            },
-            "secureTransport": {
-              "description": "Switch to encrypt server-to-server communications using TLS certificates",
-              "type": "boolean"
-            },
-            "useAutoTLS": {
-              "$ref": "#/$defs/values~1auth.client.useAutoTLS"
-            }
-          },
-          "type": "object"
-        },
-        "rbac": {
-          "additionalProperties": {},
-          "description": "Role-based access control parameters\nref: https://etcd.io/docs/current/op-guide/authentication/",
-          "properties": {
-            "allowNoneAuthentication": {
-              "description": "Allow to use etcd without configuring RBAC authentication",
-              "type": "boolean"
-            },
-            "create": {
-              "description": "Switch to enable RBAC authentication",
-              "type": "boolean"
-            },
-            "existingSecret": {
-              "description": "Name of the existing secret containing credentials for the root user",
-              "type": "string"
-            },
-            "existingSecretPasswordKey": {
-              "description": "Name of key containing password to be retrieved from the existing secret",
-              "type": "string"
-            },
-            "rootPassword": {
-              "description": "Root user password. The root user is always `root`",
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
         "token": {
           "additionalProperties": {},
+          "allOf": [
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1enabled+enabled=null+enabled=true+privateKey.existingSecret:t+type+type=jwt+1more@2"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "privateKey": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "privateKey"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "privateKey": {}
+                          },
+                          "required": [
+                            "privateKey"
+                          ],
+                          "type": "object"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              "then": false
+            }
+          ],
           "description": "Authentication token\nref: https://etcd.io/docs/latest/learning/design-auth-v3/#two-types-of-tokens-simple-and-jwt",
           "properties": {
             "enabled": {
@@ -1612,14 +1506,6 @@
                   "description": "Name of the existing secret containing the private key for signing the JWT token"
                 }
               }
-            },
-            "signMethod": {
-              "description": "JWT token sign method\nNOTE: Ignored if auth.token.type=simple",
-              "type": "string"
-            },
-            "ttl": {
-              "description": "JWT token TTL\nNOTE: Ignored if auth.token.type=simple",
-              "type": "string"
             },
             "type": {
               "description": "Authentication token type. Allowed values: 'simple' or 'jwt'\nref: https://etcd.io/docs/latest/op-guide/configuration/#--auth-token"

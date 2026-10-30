@@ -320,18 +320,6 @@
         "cluster": {
           "additionalProperties": {},
           "properties": {
-            "consensus": {
-              "additionalProperties": {},
-              "properties": {
-                "tick_period_ms": {
-                  "type": "integer"
-                }
-              },
-              "type": "object"
-            },
-            "enabled": {
-              "type": "boolean"
-            },
             "p2p": {
               "additionalProperties": {},
               "properties": {
@@ -342,18 +330,8 @@
             }
           },
           "type": "object"
-        },
-        "service": {
-          "additionalProperties": {},
-          "properties": {
-            "enable_tls": {
-              "type": "boolean"
-            }
-          },
-          "type": "object"
         }
-      },
-      "type": "object"
+      }
     },
     "containerSecurityContext": {},
     "env": {
@@ -399,19 +377,10 @@
       "additionalProperties": {},
       "properties": {
         "enabled": {},
-        "mountPath": {
-          "description": "Must not conflict with /qdrant/snapshots or /qdrant/storage",
-          "type": "string"
-        },
-        "pvcName": {
-          "description": "Set pvcName if you want to restore from a separately-created PVC. Only supported for single-node clusters unless the PVC is ReadWriteMany.\nIf you set snapshotPersistence.enabled and want to restore a snapshot from there, you can leave this blank to skip mounting an external volume.",
-          "type": "string"
-        },
         "snapshots": {
           "description": "- /qdrant/snapshot-restoration/test_collection/test_collection-2022-10-24-13-56-50.snapshot:test_collection"
         }
-      },
-      "type": "object"
+      }
     },
     "startupProbe": {},
     "tolerations": {},

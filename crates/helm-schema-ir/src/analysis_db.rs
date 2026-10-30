@@ -304,7 +304,8 @@ pub struct ParsedDefines {
 
 struct ParsedDefinesInner {
     template_sources: Vec<Rc<ParsedTemplateSource>>,
-    file_sources: HashMap<String, String>,
+    chart_files: BTreeMap<String, BTreeMap<String, Vec<u8>>>,
+    template_charts: BTreeMap<String, String>,
     catalog: RefCell<ProgramCatalog>,
 }
 
@@ -314,11 +315,9 @@ impl ParsedDefines {
     pub fn new(defines: &DefineIndex) -> Self {
         let mut catalog = ProgramCatalog::default();
         let mut template_sources = Vec::new();
-        let mut file_sources = HashMap::new();
         let mut sources: Vec<_> = defines.file_sources().collect();
         sources.sort_by(|(left, _, _), (right, _, _)| helm_template_order(left, right));
         for (path, role, source) in sources {
-            file_sources.insert(path.to_string(), source.to_string());
             match role {
                 DefineSourceRole::FilesGet => continue,
                 DefineSourceRole::Template => {}
@@ -329,7 +328,13 @@ impl ParsedDefines {
         Self {
             inner: Rc::new(ParsedDefinesInner {
                 template_sources,
-                file_sources,
+                chart_files: defines.chart_files().clone(),
+                template_charts: defines
+                    .file_sources()
+                    .filter_map(|(path, _, _)| {
+                        Some((path.to_owned(), defines.chart_instance(path)?.to_owned()))
+                    })
+                    .collect(),
                 catalog: RefCell::new(catalog),
             }),
         }
@@ -540,12 +545,16 @@ impl IrAnalysisDb {
         &self.static_root_strings
     }
 
-    pub(crate) fn file_source(&self, path: &str) -> Option<&str> {
+    pub(crate) fn chart_instance(&self, source: &str) -> &str {
         self.parsed_defines
             .inner
-            .file_sources
-            .get(path)
-            .map(String::as_str)
+            .template_charts
+            .get(source)
+            .map_or("", String::as_str)
+    }
+
+    pub(crate) fn chart_files(&self) -> &BTreeMap<String, BTreeMap<String, Vec<u8>>> {
+        &self.parsed_defines.inner.chart_files
     }
 
     /// Chart-authored defaults that one exact or wildcard values provenance
@@ -579,20 +588,6 @@ impl IrAnalysisDb {
                 Some((path.as_str(), value.as_str()))
             })
             .collect()
-    }
-
-    /// Indexed chart file paths (templates plus `.Files.Get` sources),
-    /// sorted for deterministic enumeration.
-    pub(crate) fn file_source_paths(&self) -> Vec<&str> {
-        let mut paths: Vec<&str> = self
-            .parsed_defines
-            .inner
-            .file_sources
-            .keys()
-            .map(String::as_str)
-            .collect();
-        paths.sort_unstable();
-        paths
     }
 
     pub(crate) fn template_sources(&self) -> &[Rc<ParsedTemplateSource>] {

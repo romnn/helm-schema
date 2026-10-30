@@ -3356,15 +3356,6 @@
       },
       "type": "string"
     },
-    "values/webhook.livenessProbe": {
-      "additionalProperties": {},
-      "properties": {
-        "initialDelaySeconds": {
-          "type": "integer"
-        }
-      },
-      "type": "object"
-    },
     "when/monitoring!=null/then/fail": {
       "if": {
         "properties": {
@@ -4799,33 +4790,12 @@
       ],
       "description": "The webhook configuration.",
       "properties": {
-        "livenessProbe": {
-          "$ref": "#/$defs/values~1webhook.livenessProbe"
-        },
         "mutating": {
           "additionalProperties": {},
           "properties": {
             "create": {},
             "failurePolicy": {}
           }
-        },
-        "port": {
-          "type": "integer"
-        },
-        "readinessProbe": {
-          "$ref": "#/$defs/values~1webhook.livenessProbe"
-        },
-        "startupProbe": {
-          "additionalProperties": {},
-          "properties": {
-            "failureThreshold": {
-              "type": "integer"
-            },
-            "periodSeconds": {
-              "type": "integer"
-            }
-          },
-          "type": "object"
         },
         "validating": {
           "additionalProperties": {},

@@ -78,9 +78,127 @@ enum Datum {
     Unknown(UnknownValue),
 }
 
+#[derive(Clone, Debug)]
+enum SequenceStorage {
+    Interfaces {
+        values: Vec<Value>,
+    },
+    Bytes {
+        content: Option<Vec<u8>>,
+        values: std::cell::OnceCell<Vec<Value>>,
+    },
+}
+
+// Materializing scalar elements does not change immutable byte identity.
+impl PartialEq for SequenceStorage {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Interfaces { values: left }, Self::Interfaces { values: right }) => {
+                left == right
+            }
+            (
+                Self::Bytes {
+                    content: left,
+                    values: _,
+                },
+                Self::Bytes {
+                    content: right,
+                    values: _,
+                },
+            ) => left == right,
+            (
+                Self::Interfaces { values: _ },
+                Self::Bytes {
+                    content: _,
+                    values: _,
+                },
+            )
+            | (
+                Self::Bytes {
+                    content: _,
+                    values: _,
+                },
+                Self::Interfaces { values: _ },
+            ) => false,
+        }
+    }
+}
+
+impl Eq for SequenceStorage {}
+
+impl SequenceStorage {
+    fn get(&self, range: std::ops::Range<usize>) -> Option<&[Value]> {
+        match self {
+            Self::Interfaces { values } => values.get(range),
+            Self::Bytes { content, values } => values
+                .get_or_init(|| {
+                    content
+                        .as_deref()
+                        .unwrap_or(&[])
+                        .iter()
+                        .map(|byte| {
+                            Value::scalar(
+                                ScalarType::Uint8,
+                                Some(ScalarContent::Literal(helm_schema_core::GuardValue::Int(
+                                    i64::from(*byte),
+                                ))),
+                            )
+                        })
+                        .collect()
+                })
+                .get(range),
+        }
+    }
+
+    fn iter(&self) -> std::slice::Iter<'_, Value> {
+        match self {
+            Self::Interfaces { values } => values.iter(),
+            // Byte elements carry neither input identity nor heap aliases.
+            Self::Bytes {
+                content: _,
+                values: _,
+            } => [].iter(),
+        }
+    }
+
+    fn len(&self) -> usize {
+        match self {
+            Self::Interfaces { values } => values.len(),
+            Self::Bytes { content, values: _ } => content.as_ref().map_or(0, Vec::len),
+        }
+    }
+
+    fn is_bytes(&self) -> bool {
+        matches!(
+            self,
+            Self::Bytes {
+                content: _,
+                values: _
+            }
+        )
+    }
+
+    fn is_nil(&self) -> bool {
+        matches!(
+            self,
+            Self::Bytes {
+                content: None,
+                values: _
+            }
+        )
+    }
+
+    fn bytes(&self) -> Option<&[u8]> {
+        match self {
+            Self::Bytes { content, values: _ } => Some(content.as_deref().unwrap_or(&[])),
+            Self::Interfaces { values: _ } => None,
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct InterfaceSequence {
-    storage: Option<Rc<Vec<Value>>>,
+    storage: Option<Rc<SequenceStorage>>,
     start: usize,
     length: usize,
     capacity: Option<usize>,
@@ -107,10 +225,35 @@ impl Value {
     fn sequence(items: Vec<Value>) -> Self {
         let length = items.len();
         Self::leaf(Datum::Sequence(InterfaceSequence {
-            storage: Some(Rc::new(items)),
+            storage: Some(Rc::new(SequenceStorage::Interfaces { values: items })),
             start: 0,
             length,
             capacity: Some(length),
+        }))
+    }
+
+    fn byte_sequence(items: Vec<u8>, capacity: Option<usize>) -> Self {
+        let length = items.len();
+        Self::leaf(Datum::Sequence(InterfaceSequence {
+            storage: Some(Rc::new(SequenceStorage::Bytes {
+                content: Some(items),
+                values: std::cell::OnceCell::new(),
+            })),
+            start: 0,
+            length,
+            capacity,
+        }))
+    }
+
+    fn nil_byte_sequence() -> Self {
+        Self::leaf(Datum::Sequence(InterfaceSequence {
+            storage: Some(Rc::new(SequenceStorage::Bytes {
+                content: None,
+                values: std::cell::OnceCell::new(),
+            })),
+            start: 0,
+            length: 0,
+            capacity: Some(0),
         }))
     }
 
@@ -150,6 +293,10 @@ enum ScalarType {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum MapType {
+    Files,
+    ApiVersions,
+    Capabilities,
+    KubeVersion,
     Interface,
     String,
     Values,

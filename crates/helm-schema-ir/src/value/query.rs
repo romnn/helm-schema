@@ -890,7 +890,7 @@ impl State {
     }
     pub(super) fn field(&mut self, value: &Value, key: &str) -> Value {
         let value = self.consumed(value);
-        match value.node.as_ref() {
+        super::hosts::file_field(&value, key, self).unwrap_or_else(|| match value.node.as_ref() {
             ValueNode::Leaf(Leaf {
                 datum:
                     Datum::Unknown(super::UnknownValue {
@@ -987,7 +987,7 @@ impl State {
                 datum: _,
                 origin: _,
             }) => Value::influenced(value.inputs()),
-        }
+        })
     }
     fn unknown_child_value(
         &self,
@@ -1443,7 +1443,7 @@ fn runtime_type(value: &Value, remaining: &mut usize) -> super::kinds::GoType {
                 ScalarType::Float64 => GoType::Float64,
                 ScalarType::Uint8 | ScalarType::Complex128 => GoType::Unknown,
             },
-            Datum::Map { view: _, target: _ } => GoType::Map,
+            Datum::Map { view, target: _ } => super::hosts::go_type(*view),
             Datum::Sequence(_) | Datum::Strings(_) => GoType::Slice,
             Datum::Text(_)
             | Datum::Slot {
@@ -1451,7 +1451,7 @@ fn runtime_type(value: &Value, remaining: &mut usize) -> super::kinds::GoType {
                 index: _,
             } => GoType::String,
             Datum::Unknown(super::UnknownValue { types, aliases: _ }) => match types {
-                super::TypeCoverage::Map(_) => GoType::Map,
+                super::TypeCoverage::Map(view) => super::hosts::go_type(*view),
                 super::TypeCoverage::Sequence => GoType::Slice,
                 super::TypeCoverage::Scalar(kind) => kind.query_type(),
                 super::TypeCoverage::Unresolved | super::TypeCoverage::InputNonMap => {

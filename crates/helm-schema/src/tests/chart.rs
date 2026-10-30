@@ -1074,6 +1074,10 @@ fn templates_are_indexed_under_their_execution_names() -> eyre::Result<()> {
         &chart_dir.join("charts/kid/templates/frag.yaml")?,
         "child: yes\n",
     )?;
+    test_util::write(
+        &chart_dir.join("charts/kid/files/payload.yaml")?,
+        "child payload: yes\n",
+    )?;
 
     let charts = discover_chart_contexts(&chart_dir)?;
     let corpus = LoadedChartCorpus::load(&charts, false)?;
@@ -1082,8 +1086,9 @@ fn templates_are_indexed_under_their_execution_names() -> eyre::Result<()> {
     sim_assert_eq!(
         have: defines.file_sources().map(|(path, ..)| path).collect::<Vec<_>>(),
         want: vec![
-            "files/payload.yaml",
+            "root/charts/kid/files/payload.yaml",
             "root/charts/kid/templates/frag.yaml",
+            "root/files/payload.yaml",
             "root/templates/frag.yaml",
             "root/templates/sub/deep.yaml",
         ],
@@ -1092,5 +1097,9 @@ fn templates_are_indexed_under_their_execution_names() -> eyre::Result<()> {
         have: defines.get_file("root/charts/kid/templates/frag.yaml"),
         want: Some("child: yes\n"),
     );
+    sim_assert_eq!(have: defines.chart_files(), want: &BTreeMap::from([
+        ("root".to_owned(), BTreeMap::from([("files/payload.yaml".to_owned(), b"payload: yes\n".to_vec())])),
+        ("root/charts/kid".to_owned(), BTreeMap::from([("files/payload.yaml".to_owned(), b"child payload: yes\n".to_vec())])),
+    ]));
     Ok(())
 }

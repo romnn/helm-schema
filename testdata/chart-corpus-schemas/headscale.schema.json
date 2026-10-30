@@ -7462,43 +7462,6 @@
           "then": false
         },
         {
-          "additionalProperties": {},
-          "properties": {
-            "acl": {
-              "allOf": [
-                {
-                  "if": {
-                    "allOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1enabled:t"
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/constrains~1data=null"
-                          },
-                          {
-                            "not": {
-                              "properties": {
-                                "data": {}
-                              },
-                              "required": [
-                                "data"
-                              ],
-                              "type": "object"
-                            }
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  "then": false
-                }
-              ]
-            }
-          }
-        },
-        {
           "if": {
             "anyOf": [
               {
@@ -7551,6 +7514,36 @@
       "properties": {
         "acl": {
           "additionalProperties": {},
+          "allOf": [
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1enabled:t"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1data=null"
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "data": {}
+                          },
+                          "required": [
+                            "data"
+                          ],
+                          "type": "object"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              "then": false
+            }
+          ],
           "properties": {
             "data": {},
             "enabled": {
@@ -7626,11 +7619,7 @@
           "description": "Configure persistence settings for the chart under this key.",
           "properties": {
             "enabled": {},
-            "mountPath": {},
-            "retain": {
-              "description": "storageClass: \"\"\naccessMode: ReadWriteOnce\nsize: 1Gi",
-              "type": "boolean"
-            }
+            "mountPath": {}
           },
           "type": "object"
         }
@@ -7745,76 +7734,6 @@
       "additionalProperties": {},
       "allOf": [
         {
-          "additionalProperties": {},
-          "properties": {
-            "main": {
-              "allOf": [
-                {
-                  "if": {
-                    "allOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1ports+ports=null"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1ports+ports=null@2"
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "properties": {
-                                "ports": {
-                                  "properties": {
-                                    "http": {}
-                                  },
-                                  "required": [
-                                    "http"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "ports"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          {
-                            "properties": {
-                              "ports": {
-                                "properties": {
-                                  "http": {
-                                    "enum": [
-                                      null
-                                    ]
-                                  }
-                                },
-                                "required": [
-                                  "http"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "ports"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1ports:t"
-                      }
-                    ]
-                  },
-                  "then": false
-                }
-              ],
-              "description": "Configures service settings for the chart."
-            }
-          }
-        },
-        {
           "if": {
             "anyOf": [
               {
@@ -7828,81 +7747,133 @@
             ]
           },
           "then": false
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "main": {
-              "allOf": [
-                {
-                  "if": {
-                    "allOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1ports+ports=null"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1ports+ports=null@2"
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "properties": {
-                                "ports": {
-                                  "properties": {
-                                    "metrics": {}
-                                  },
-                                  "required": [
-                                    "metrics"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "ports"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          {
-                            "properties": {
-                              "ports": {
-                                "properties": {
-                                  "metrics": {
-                                    "enum": [
-                                      null
-                                    ]
-                                  }
-                                },
-                                "required": [
-                                  "metrics"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "ports"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1ports:t"
-                      }
-                    ]
-                  },
-                  "then": false
-                }
-              ],
-              "description": "Configures service settings for the chart."
-            }
-          }
         }
       ],
       "properties": {
         "main": {
           "additionalProperties": {},
+          "allOf": [
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1ports+ports=null"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1ports+ports=null@2"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "ports": {
+                              "properties": {
+                                "http": {}
+                              },
+                              "required": [
+                                "http"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "ports"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "ports": {
+                            "properties": {
+                              "http": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "http"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "ports"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1ports:t"
+                  }
+                ]
+              },
+              "then": false
+            },
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1ports+ports=null"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1ports+ports=null@2"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "ports": {
+                              "properties": {
+                                "metrics": {}
+                              },
+                              "required": [
+                                "metrics"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "ports"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "ports": {
+                            "properties": {
+                              "metrics": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "metrics"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "ports"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1ports:t"
+                  }
+                ]
+              },
+              "then": false
+            }
+          ],
           "description": "Configures service settings for the chart.",
           "properties": {
             "ports": {

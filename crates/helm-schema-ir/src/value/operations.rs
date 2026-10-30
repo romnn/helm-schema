@@ -1046,6 +1046,16 @@ fn transfer_string_transform(input: TransferInput<'_>) -> Value {
     } = input;
 
     if function == "toString"
+        && let ValueNode::Leaf(Leaf {
+            datum: Datum::Sequence(sequence),
+            origin: _,
+        }) = last.node.as_ref()
+        && let Some(bytes) = super::hosts::sequence_bytes(sequence)
+    {
+        return std::str::from_utf8(bytes)
+            .map_or_else(|_| Value::influenced(influences.clone()), Value::string);
+    }
+    if function == "toString"
         && matches!(
             last.node.as_ref(),
             ValueNode::Leaf(Leaf {
@@ -1432,27 +1442,7 @@ fn copy(
         ValueNode::Leaf(Leaf {
             datum: Datum::Sequence(sequence),
             origin: _,
-        }) => {
-            if sequence.storage.is_none() {
-                return Value::with_influences(Value::nil_sequence(), influences);
-            }
-            let Some(items) = sequence.items() else {
-                return Value::influenced(influences);
-            };
-            let mut copied: Vec<_> = items
-                .iter()
-                .map(|value| copy(value, state, &mut seen.clone(), depth + 1))
-                .collect();
-            if let Some(capacity) = sequence.capacity {
-                copied.resize_with(capacity, Value::nil);
-            }
-            Value::leaf(Datum::Sequence(super::InterfaceSequence {
-                storage: Some(Rc::new(copied)),
-                start: 0,
-                length: sequence.length,
-                capacity: sequence.capacity,
-            }))
-        }
+        }) => copy_sequence(sequence, state, seen, depth, influences.clone()),
         ValueNode::Leaf(Leaf {
             datum:
                 Datum::Text(_)
@@ -1478,6 +1468,43 @@ fn copy(
         ),
     };
     Value::with_influences(copied, influences)
+}
+
+fn copy_sequence(
+    sequence: &super::InterfaceSequence,
+    state: &mut State,
+    seen: &BTreeSet<super::ObjectId>,
+    depth: usize,
+    influences: BTreeSet<ValuesPath>,
+) -> Value {
+    if sequence
+        .storage
+        .as_ref()
+        .is_some_and(|storage| storage.is_bytes())
+    {
+        return Value::with_influences(Value::leaf(Datum::Sequence(sequence.clone())), influences);
+    }
+    if sequence.storage.is_none() {
+        return Value::with_influences(Value::nil_sequence(), influences);
+    }
+    let Some(items) = sequence.items() else {
+        return Value::influenced(influences);
+    };
+    let mut copied: Vec<_> = items
+        .iter()
+        .map(|value| copy(value, state, &mut seen.clone(), depth + 1))
+        .collect();
+    if let Some(capacity) = sequence.capacity {
+        copied.resize_with(capacity, Value::nil);
+    }
+    Value::leaf(Datum::Sequence(super::InterfaceSequence {
+        storage: Some(Rc::new(super::SequenceStorage::Interfaces {
+            values: copied,
+        })),
+        start: 0,
+        length: sequence.length,
+        capacity: sequence.capacity,
+    }))
 }
 
 fn copy_unstructured(

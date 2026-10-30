@@ -3519,7 +3519,17 @@
     "ignoreDaemonSets": {
       "description": "ignoreDaemonSets causes kubectl to skip Daemon Set managed pods."
     },
-    "image": {},
+    "image": {
+      "additionalProperties": {},
+      "properties": {
+        "pullPolicy": {},
+        "pullSecrets": {},
+        "repository": {},
+        "tag": {
+          "description": "Overrides the image tag whose default is {{ printf \"v%s\" .Chart.AppVersion }}"
+        }
+      }
+    },
     "instanceMetadataURL": {
       "description": "(TESTING USE): Override the default metadata URL (default: http://169.254.169.254:80)"
     },
@@ -3586,7 +3596,18 @@
     },
     "priorityClassName": {},
     "probes": {
-      "description": "Liveness probe settings"
+      "additionalProperties": {},
+      "description": "Liveness probe settings",
+      "properties": {
+        "httpGet": {
+          "additionalProperties": {},
+          "properties": {
+            "path": {},
+            "port": {}
+          },
+          "type": "object"
+        }
+      }
     },
     "procUptimeFile": {
       "description": "(TESTING USE): Mount path for uptime file"

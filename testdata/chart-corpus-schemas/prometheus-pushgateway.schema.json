@@ -16175,8 +16175,7 @@
         "probe": {
           "additionalProperties": {}
         }
-      },
-      "type": "object"
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -16656,10 +16655,6 @@
         "enabled": {
           "description": "If true, pushgateway will create/use a Persistent Volume Claim\nIf false, use emptyDir"
         },
-        "existingClaim": {
-          "description": "pushgateway data Persistent Volume existing claim name\nRequires pushgateway.persistentVolume.enabled: true\nIf defined, PVC must be created manually before volume will be bound",
-          "type": "string"
-        },
         "mountPath": {
           "description": "pushgateway data Persistent Volume mount root path"
         },
@@ -16670,8 +16665,7 @@
         "subPath": {
           "description": "Subdirectory of pushgateway data Persistent Volume to mount\nUseful if the volume's root directory is not empty"
         }
-      },
-      "type": "object"
+      }
     },
     "persistentVolumeLabels": {
       "description": "Optional persistentVolume labels"
@@ -16711,49 +16705,10 @@
     "service": {
       "additionalProperties": {},
       "properties": {
-        "clusterIP": {
-          "description": "Optional - Can be used for headless if value is \"None\"",
-          "type": "string"
-        },
-        "ipDualStack": {
-          "additionalProperties": {},
-          "properties": {
-            "enabled": {
-              "type": "boolean"
-            },
-            "ipFamilies": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            "ipFamilyPolicy": {
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
-        "loadBalancerIP": {
-          "type": "string"
-        },
-        "loadBalancerSourceRanges": {
-          "items": {},
-          "type": "array"
-        },
-        "port": {
-          "type": "integer"
-        },
         "portName": {
           "description": "nodePort: 32100"
-        },
-        "targetPort": {
-          "type": "integer"
-        },
-        "type": {
-          "type": "string"
         }
-      },
-      "type": "object"
+      }
     },
     "serviceAccount": {
       "additionalProperties": {},
@@ -16799,11 +16754,6 @@
           "description": "Metric relabel configs to apply to samples before ingestion.\n[Metric Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs)\n- action: keep\nregex: 'kube_(daemonset|deployment|pod|namespace|node|statefulset).+'\nsourceLabels: [__name__]"
         },
         "namespace": {},
-        "relabelings": {
-          "description": "Relabel configs to apply to samples before ingestion.\n[Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config)\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntargetLabel: nodename\nreplacement: $1\naction: replace",
-          "items": {},
-          "type": "array"
-        },
         "scheme": {
           "description": "scheme: HTTP scheme to use for scraping. Can be used with `tlsConfig` for example if using istio mTLS."
         },
@@ -16816,8 +16766,7 @@
         "tlsConfig": {
           "description": "tlsConfig: TLS configuration to use when scraping the endpoint. For example if using istio mTLS.\nOf type: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#tlsconfig"
         }
-      },
-      "type": "object"
+      }
     },
     "strategy": {
       "description": "Deployment Strategy type"

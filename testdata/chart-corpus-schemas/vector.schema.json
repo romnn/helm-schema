@@ -2464,15 +2464,6 @@
         }
       ]
     },
-    "values/haproxy.livenessProbe.tcpSocket": {
-      "additionalProperties": {},
-      "properties": {
-        "port": {
-          "type": "integer"
-        }
-      },
-      "type": "object"
-    },
     "values/null;name-must-be-unique": {
       "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
       "type": "null"
@@ -3134,74 +3125,11 @@
       ],
       "description": "Optional built-in HAProxy load balancer.",
       "properties": {
-        "affinity": {
-          "additionalProperties": {},
-          "description": "haproxy.affinity -- Configure [affinity](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity)\nrules for HAProxy Pods.",
-          "type": "object"
-        },
-        "autoscaling": {
-          "additionalProperties": {},
-          "properties": {
-            "customMetric": {
-              "additionalProperties": {},
-              "description": "haproxy.autoscaling.customMetric -- Target a custom metric for autoscaling.\n- type: Pods\npods:\nmetric:\nname: utilization\ntarget:\ntype: AverageValue\naverageValue: 95",
-              "type": "object"
-            },
-            "enabled": {
-              "description": "haproxy.autoscaling.enabled -- Create a HorizontalPodAutoscaler for HAProxy.",
-              "type": "boolean"
-            },
-            "external": {
-              "description": "haproxy.autoscaling.external -- HAProxy is controlled by an external HorizontalPodAutoscaler.",
-              "type": "boolean"
-            },
-            "maxReplicas": {
-              "description": "haproxy.autoscaling.maxReplicas -- Maximum replicas for HAProxy's HPA.",
-              "type": "integer"
-            },
-            "minReplicas": {
-              "description": "haproxy.autoscaling.minReplicas -- Minimum replicas for HAProxy's HPA.",
-              "type": "integer"
-            },
-            "targetCPUUtilizationPercentage": {
-              "description": "haproxy.autoscaling.targetCPUUtilizationPercentage -- Target CPU utilization for HAProxy's HPA.",
-              "type": "integer"
-            },
-            "targetMemoryUtilizationPercentage": {
-              "description": "haproxy.autoscaling.targetMemoryUtilizationPercentage -- (int) Target memory utilization for HAProxy's HPA."
-            }
-          },
-          "type": "object"
-        },
-        "containerPorts": {
-          "description": "haproxy.containerPorts -- Manually define HAProxy's containerPorts, overrides automated generation of containerPorts.",
-          "items": {},
-          "type": "array"
-        },
-        "customConfig": {
-          "description": "haproxy.customConfig -- Override HAProxy's default configs, if used **all** options need to be specified.\nThis parameter supports using Helm templates to insert values dynamically. By default, this chart will parse\nVector's configuration from customConfig to generate HAProxy's config, which can be overwritten with\nhaproxy.customConfig.",
-          "type": "string"
-        },
         "enabled": {
           "description": "haproxy.enabled -- If true, create a HAProxy load balancer."
         },
         "existingConfigMap": {
           "description": "haproxy.existingConfigMap -- Use this existing ConfigMap for HAProxy's configuration instead of creating a new one.\nAdditionally, haproxy.containerPorts and haproxy.service.ports should be specified based on your supplied\nconfiguration. If set, this parameter takes precedence over customConfig and the chart's default configs."
-        },
-        "extraContainers": {
-          "description": "haproxy.extraContainers -- Extra Containers to be added to the HAProxy Pods.\nThis also supports template content, which will eventually be converted to yaml.",
-          "items": {},
-          "type": "array"
-        },
-        "extraVolumeMounts": {
-          "description": "haproxy.extraVolumeMounts -- Additional Volume to mount into HAProxy Containers.",
-          "items": {},
-          "type": "array"
-        },
-        "extraVolumes": {
-          "description": "haproxy.extraVolumes -- Additional Volumes to use with HAProxy Pods.",
-          "items": {},
-          "type": "array"
         },
         "image": {
           "additionalProperties": {},
@@ -3211,73 +3139,6 @@
               "description": "haproxy.image.tag -- The tag to use for HAProxy's image."
             }
           }
-        },
-        "initContainers": {
-          "description": "haproxy.initContainers -- Init Containers to be added to the HAProxy Pods.\nThis also supports template content, which will eventually be converted to yaml.",
-          "items": {},
-          "type": "array"
-        },
-        "livenessProbe": {
-          "additionalProperties": {},
-          "description": "haproxy.livenessProbe -- Override default HAProxy liveness probe settings.",
-          "properties": {
-            "tcpSocket": {
-              "$ref": "#/$defs/values~1haproxy.livenessProbe.tcpSocket"
-            }
-          },
-          "type": "object"
-        },
-        "nodeSelector": {
-          "additionalProperties": {},
-          "description": "haproxy.nodeSelector -- Configure a [nodeSelector](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector)\nfor HAProxy Pods",
-          "type": "object"
-        },
-        "podAnnotations": {
-          "additionalProperties": {},
-          "description": "haproxy.podAnnotations -- Set annotations on HAProxy Pods.",
-          "type": "object"
-        },
-        "podLabels": {
-          "additionalProperties": {},
-          "description": "haproxy.podLabels -- Set labels on HAProxy Pods.",
-          "type": "object"
-        },
-        "podPriorityClassName": {
-          "description": "haproxy.podPriorityClassName -- Set the priorityClassName on HAProxy Pods.",
-          "type": "string"
-        },
-        "podSecurityContext": {
-          "additionalProperties": {},
-          "description": "haproxy.podSecurityContext -- Allows you to overwrite the default PodSecurityContext for HAProxy.\nfsGroup: 2000",
-          "type": "object"
-        },
-        "readinessProbe": {
-          "additionalProperties": {},
-          "description": "haproxy.readinessProbe -- Override default HAProxy readiness probe settings.",
-          "properties": {
-            "tcpSocket": {
-              "$ref": "#/$defs/values~1haproxy.livenessProbe.tcpSocket"
-            }
-          },
-          "type": "object"
-        },
-        "replicas": {
-          "description": "haproxy.replicas -- Set the number of HAProxy Pods to create.",
-          "type": "integer"
-        },
-        "resources": {
-          "additionalProperties": {},
-          "description": "haproxy.resources -- Set HAProxy resource requests and limits.\nlimits:\ncpu: 100m\nmemory: 128Mi\nrequests:\ncpu: 100m\nmemory: 128Mi",
-          "type": "object"
-        },
-        "rollWorkload": {
-          "description": "haproxy.rollWorkload -- Add a checksum of the generated ConfigMap to the HAProxy Deployment.",
-          "type": "boolean"
-        },
-        "securityContext": {
-          "additionalProperties": {},
-          "description": "haproxy.securityContext -- Specify securityContext on HAProxy containers.\ncapabilities:\ndrop:\n- ALL\nreadOnlyRootFilesystem: true\nrunAsNonRoot: true\nrunAsUser: 1000",
-          "type": "object"
         },
         "service": {
           "additionalProperties": {},
@@ -3319,20 +3180,6 @@
               "description": "haproxy.serviceAccount.name -- The name of the HAProxy ServiceAccount to use. If not set and create is true, a\nname is generated using the fullname template."
             }
           }
-        },
-        "strategy": {
-          "additionalProperties": {},
-          "description": "haproxy.strategy -- Customize the [strategy](https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/deployment-v1/)\nused to replace HAProxy Pods.\nrollingUpdate:\nmaxSurge: 25%\nmaxUnavailable: 25%\ntype: RollingUpdate",
-          "type": "object"
-        },
-        "terminationGracePeriodSeconds": {
-          "description": "haproxy.terminationGracePeriodSeconds -- Override HAProxy's terminationGracePeriodSeconds.",
-          "type": "integer"
-        },
-        "tolerations": {
-          "description": "haproxy.tolerations -- Configure HAProxy Pods to be scheduled on [tainted](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/)\nnodes.",
-          "items": {},
-          "type": "array"
         }
       },
       "type": "object"

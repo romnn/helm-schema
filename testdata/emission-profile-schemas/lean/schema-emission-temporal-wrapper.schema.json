@@ -1325,6 +1325,12 @@
         }
       ]
     },
+    "values/global": {
+      "additionalProperties": {},
+      "properties": {
+        "imagePullSecrets": {}
+      }
+    },
     "values/temporal.additionalAnnotations": {
       "additionalProperties": {},
       "type": "object"
@@ -1614,6 +1620,30 @@
         }
       },
       "type": "object"
+    },
+    "values/temporal.prometheus.kube-state-metrics.releaseLabel": {
+      "description": "set to true to add the release label so scraping of the servicemonitor with kube-prometheus-stack works out of the box"
+    },
+    "values/temporal.prometheus.kube-state-metrics.serviceAccount.name": {
+      "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
+    },
+    "values/temporal.prometheus.kube-state-metrics.verticalPodAutoscaler.controlledResources": {
+      "description": "List of resources that the vertical pod autoscaler can control. Defaults to cpu and memory\nSpecifies which resource values should be controlled: RequestsOnly or RequestsAndLimits.\ncontrolledValues: RequestsAndLimits"
+    },
+    "values/temporal.prometheus.kube-state-metrics.verticalPodAutoscaler.minAllowed": {
+      "description": "cpu: 200m\nmemory: 100Mi\nDefine the min allowed resources for the pod\ncpu: 200m\nmemory: 100Mi"
+    },
+    "values/temporal.prometheus.prometheus-node-exporter.prometheus.monitor.attachMetadata": {
+      "description": "Attach node metadata to discovered targets. Requires Prometheus v2.35.0 and above."
+    },
+    "values/temporal.prometheus.prometheus-node-exporter.prometheus.monitor.sampleLimit": {
+      "description": "SampleLimit defines per-scrape limit on number of scraped samples that will be accepted."
+    },
+    "values/temporal.prometheus.prometheus-node-exporter.prometheus.monitor.targetLimit": {
+      "description": "TargetLimit defines a limit on the number of scraped targets that will be accepted."
+    },
+    "values/temporal.prometheus.prometheus-node-exporter.serviceAccount.create": {
+      "description": "Specifies whether a ServiceAccount should be created"
     },
     "values/temporal.prometheus.prometheus-pushgateway.liveness": {
       "additionalProperties": {},
@@ -1991,7 +2021,9 @@
     }
   ],
   "properties": {
-    "global": {},
+    "global": {
+      "$ref": "#/$defs/values~1global"
+    },
     "temporal": {
       "additionalProperties": {},
       "properties": {
@@ -2434,7 +2466,9 @@
           }
         },
         "fullnameOverride": {},
-        "global": {},
+        "global": {
+          "$ref": "#/$defs/values~1global"
+        },
         "grafana": {
           "additionalProperties": {},
           "properties": {
@@ -2595,18 +2629,373 @@
                 }
               }
             },
+            "commonMetaLabels": {
+              "description": "Additional labels to attach to all resources"
+            },
             "enabled": {},
-            "global": {},
+            "forceNamespace": {
+              "description": "Force namespace of namespaced resources"
+            },
+            "global": {
+              "$ref": "#/$defs/values~1global"
+            },
             "kube-state-metrics": {
+              "additionalProperties": {},
               "description": "kube-state-metrics sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-state-metrics",
               "properties": {
-                "global": {}
+                "autosharding": {
+                  "additionalProperties": {},
+                  "description": "If set to true, this will deploy kube-state-metrics as a StatefulSet and the data\nwill be automatically sharded across <.Values.replicas> pods using the built-in\nautodiscovery feature: https://github.com/kubernetes/kube-state-metrics#automated-sharding\nThis is an experimental feature and there are no stability guarantees.",
+                  "properties": {
+                    "enabled": {}
+                  },
+                  "type": "object"
+                },
+                "customLabels": {
+                  "description": "Additional labels to add to all resources\napp: kube-state-metrics"
+                },
+                "enabled": {
+                  "description": "If false, kube-state-metrics sub-chart will not be installed"
+                },
+                "fullnameOverride": {},
+                "global": {},
+                "nameOverride": {},
+                "namespaceOverride": {
+                  "description": "Override the deployment namespace"
+                },
+                "prometheus": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "monitor": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "additionalLabels": {},
+                        "enabled": {}
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                "rbac": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "create": {
+                      "description": "If true, create & use RBAC resources"
+                    }
+                  },
+                  "type": "object"
+                },
+                "releaseLabel": {
+                  "$ref": "#/$defs/values~1temporal.prometheus.kube-state-metrics.releaseLabel"
+                },
+                "selectorOverride": {
+                  "description": "Override selector labels"
+                },
+                "serviceAccount": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "create": {
+                      "description": "Specifies whether a ServiceAccount should be created, require rbac true"
+                    },
+                    "name": {
+                      "$ref": "#/$defs/values~1temporal.prometheus.kube-state-metrics.serviceAccount.name"
+                    }
+                  },
+                  "type": "object"
+                },
+                "verticalPodAutoscaler": {
+                  "additionalProperties": {},
+                  "description": "Enable vertical pod autoscaler support for kube-state-metrics",
+                  "properties": {
+                    "controlledResources": {
+                      "$ref": "#/$defs/values~1temporal.prometheus.kube-state-metrics.verticalPodAutoscaler.controlledResources"
+                    },
+                    "controlledValues": {},
+                    "enabled": {},
+                    "maxAllowed": {
+                      "description": "Define the max allowed resources for the pod"
+                    },
+                    "minAllowed": {
+                      "$ref": "#/$defs/values~1temporal.prometheus.kube-state-metrics.verticalPodAutoscaler.minAllowed"
+                    },
+                    "recommenders": {},
+                    "updatePolicy": {}
+                  },
+                  "type": "object"
+                }
               }
             },
+            "nameOverride": {},
             "prometheus-node-exporter": {
+              "additionalProperties": {},
               "description": "prometheus-node-exporter sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-node-exporter",
               "properties": {
-                "global": {}
+                "enabled": {
+                  "description": "If false, node-exporter will not be installed"
+                },
+                "extraManifests": {
+                  "description": "Extra manifests to deploy as an array\n- |\napiVersion: v1\nkind: ConfigMap\nmetadata:\nname: prometheus-extra\ndata:\nextra-data: \"value\""
+                },
+                "fullnameOverride": {},
+                "global": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "imagePullSecrets": {
+                      "description": "To help compatibility with other charts which use global.imagePullSecrets.\nAllow either an array of {name: pullSecret} maps (k8s-style), or an array of strings (more common helm-style).\nglobal:\nimagePullSecrets:\n- name: pullSecret1\n- name: pullSecret2\nor\nglobal:\nimagePullSecrets:\n- pullSecret1\n- pullSecret2"
+                    }
+                  },
+                  "type": "object"
+                },
+                "kubeRBACProxy": {
+                  "additionalProperties": {},
+                  "description": "Configure kube-rbac-proxy. When enabled, creates a kube-rbac-proxy to protect the node-exporter http endpoint.\nThe requests are served through the same service but requests are HTTPS.",
+                  "properties": {
+                    "enabled": {}
+                  },
+                  "type": "object"
+                },
+                "nameOverride": {
+                  "description": "- name: \"image-pull-secret\""
+                },
+                "namespaceOverride": {
+                  "description": "- name: <secretName>\nmountPath: <mountPatch>\nOverride the deployment namespace"
+                },
+                "networkPolicy": {
+                  "additionalProperties": {},
+                  "description": "Set a NetworkPolicy with:\ningress only on service.port\nno egress permitted",
+                  "properties": {
+                    "enabled": {}
+                  },
+                  "type": "object"
+                },
+                "podLabels": {
+                  "description": "Extra labels to be added to node exporter pods"
+                },
+                "prometheus": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "monitor": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "additionalLabels": {},
+                        "apiVersion": {
+                          "description": "prometheus.monitor.apiVersion ApiVersion for the serviceMonitor Resource(defaults to \"monitoring.coreos.com/v1\")"
+                        },
+                        "attachMetadata": {
+                          "$ref": "#/$defs/values~1temporal.prometheus.prometheus-node-exporter.prometheus.monitor.attachMetadata"
+                        },
+                        "basicAuth": {},
+                        "bearerTokenFile": {},
+                        "enabled": {},
+                        "interval": {},
+                        "jobLabel": {},
+                        "labelLimit": {
+                          "description": "Per-scrape limit on number of labels that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
+                        },
+                        "labelNameLengthLimit": {
+                          "description": "Per-scrape limit on length of labels name that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
+                        },
+                        "labelValueLengthLimit": {
+                          "description": "Per-scrape limit on length of labels value that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
+                        },
+                        "metricRelabelings": {},
+                        "namespace": {},
+                        "podTargetLabels": {
+                          "description": "List of pod labels to add to node exporter metrics\nhttps://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#servicemonitor"
+                        },
+                        "proxyUrl": {
+                          "description": "proxyUrl: URL of a proxy that should be used for scraping."
+                        },
+                        "relabelings": {},
+                        "sampleLimit": {
+                          "$ref": "#/$defs/values~1temporal.prometheus.prometheus-node-exporter.prometheus.monitor.sampleLimit"
+                        },
+                        "scheme": {},
+                        "scrapeTimeout": {},
+                        "selectorOverride": {
+                          "description": "Override serviceMonitor selector"
+                        },
+                        "targetLimit": {
+                          "$ref": "#/$defs/values~1temporal.prometheus.prometheus-node-exporter.prometheus.monitor.targetLimit"
+                        },
+                        "tlsConfig": {}
+                      }
+                    },
+                    "podMonitor": {
+                      "additionalProperties": {},
+                      "description": "PodMonitor defines monitoring for a set of pods.\nref. https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#monitoring.coreos.com/v1.PodMonitor\nUsing a PodMonitor may be preferred in some environments where there is very large number\nof Node Exporter endpoints (1000+) behind a single service.\nThe PodMonitor is disabled by default. When switching from ServiceMonitor to PodMonitor,\nthe time series resulting from the configuration through PodMonitor may have different labels.\nFor instance, there will not be the service label any longer which might\naffect PromQL queries selecting that label.",
+                      "properties": {
+                        "additionalLabels": {
+                          "description": "Additional labels, e.g. setting a label for pod monitor selector as set in prometheus"
+                        },
+                        "apiVersion": {
+                          "description": "apiVersion defaults to monitoring.coreos.com/v1."
+                        },
+                        "attachMetadata": {
+                          "$ref": "#/$defs/values~1temporal.prometheus.prometheus-node-exporter.prometheus.monitor.attachMetadata"
+                        },
+                        "authorization": {
+                          "description": "Authorization section for this endpoint.\nhttps://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#monitoring.coreos.com/v1.SafeAuthorization"
+                        },
+                        "basicAuth": {
+                          "description": "BasicAuth allow an endpoint to authenticate over basic authentication.\nMore info: https://prometheus.io/docs/operating/configuration/#endpoint"
+                        },
+                        "bearerTokenSecret": {
+                          "description": "Secret to mount to read bearer token for scraping targets.\nThe secret needs to be in the same namespace as the pod monitor and accessible by the Prometheus Operator.\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#secretkeyselector-v1-core"
+                        },
+                        "enableHttp2": {
+                          "description": "Whether to enable HTTP2. Default false."
+                        },
+                        "enabled": {},
+                        "filterRunning": {
+                          "description": "Drop pods that are not running. (Failed, Succeeded).\nEnabled by default. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-phase"
+                        },
+                        "followRedirects": {
+                          "description": "FollowRedirects configures whether scrape requests follow HTTP 3xx redirects. Default false."
+                        },
+                        "honorLabels": {
+                          "description": "HonorLabels chooses the metric’s labels on collisions with target labels."
+                        },
+                        "honorTimestamps": {
+                          "description": "HonorTimestamps controls whether Prometheus respects the timestamps present in scraped data."
+                        },
+                        "interval": {
+                          "description": "Interval at which endpoints should be scraped. If not specified Prometheus’ global scrape interval is used."
+                        },
+                        "jobLabel": {
+                          "description": "The label to use to retrieve the job name from. Defaults to label app.kubernetes.io/name."
+                        },
+                        "labelLimit": {
+                          "description": "Per-scrape limit on number of labels that will be accepted for a sample.\nOnly valid in Prometheus versions 2.27.0 and newer."
+                        },
+                        "labelNameLengthLimit": {
+                          "description": "Per-scrape limit on length of labels name that will be accepted for a sample.\nOnly valid in Prometheus versions 2.27.0 and newer."
+                        },
+                        "labelValueLengthLimit": {
+                          "description": "Per-scrape limit on length of labels value that will be accepted for a sample.\nOnly valid in Prometheus versions 2.27.0 and newer."
+                        },
+                        "metricRelabelings": {
+                          "description": "MetricRelabelConfigs to apply to samples before ingestion."
+                        },
+                        "namespace": {
+                          "description": "Namespace in which to deploy the pod monitor. Defaults to the release namespace."
+                        },
+                        "oauth2": {
+                          "description": "OAuth2 for the URL. Only valid in Prometheus versions 2.27.0 and newer.\nhttps://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#monitoring.coreos.com/v1.OAuth2"
+                        },
+                        "params": {
+                          "description": "Optional HTTP URL parameters"
+                        },
+                        "path": {
+                          "description": "Path to scrape metrics at."
+                        },
+                        "podTargetLabels": {
+                          "description": "release: kube-prometheus-stack\nPodTargetLabels transfers labels of the Kubernetes Pod onto the target."
+                        },
+                        "proxyUrl": {
+                          "description": "ProxyURL eg http://proxyserver:2195. Directs scrapes through proxy to this endpoint."
+                        },
+                        "relabelings": {
+                          "description": "RelabelConfigs to apply to samples before scraping. Prometheus Operator automatically adds\nrelabelings for a few standard Kubernetes fields. The original scrape job’s name\nis available via the __tmp_prometheus_job_name label.\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config"
+                        },
+                        "sampleLimit": {
+                          "$ref": "#/$defs/values~1temporal.prometheus.prometheus-node-exporter.prometheus.monitor.sampleLimit"
+                        },
+                        "scheme": {
+                          "description": "Scheme/protocol to use for scraping."
+                        },
+                        "scrapeTimeout": {
+                          "description": "Timeout after which the scrape is ended. If not specified, the Prometheus global scrape interval is used."
+                        },
+                        "selectorOverride": {
+                          "description": "Override pod selector to select pod objects."
+                        },
+                        "targetLimit": {
+                          "$ref": "#/$defs/values~1temporal.prometheus.prometheus-node-exporter.prometheus.monitor.targetLimit"
+                        },
+                        "tlsConfig": {
+                          "description": "TLS configuration to use when scraping the endpoint."
+                        }
+                      }
+                    }
+                  },
+                  "type": "object"
+                },
+                "rbac": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "create": {
+                      "description": "If true, create & use RBAC resources"
+                    },
+                    "pspAnnotations": {},
+                    "pspEnabled": {
+                      "description": "If true, create & use Pod Security Policy resources\nhttps://kubernetes.io/docs/concepts/policy/pod-security-policy/"
+                    }
+                  },
+                  "type": "object"
+                },
+                "releaseLabel": {
+                  "$ref": "#/$defs/values~1temporal.prometheus.kube-state-metrics.releaseLabel"
+                },
+                "service": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "annotations": {},
+                    "clusterIP": {},
+                    "enabled": {},
+                    "externalTrafficPolicy": {},
+                    "ipDualStack": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "enabled": {},
+                        "ipFamilies": {},
+                        "ipFamilyPolicy": {}
+                      },
+                      "type": "object"
+                    },
+                    "nodePort": {},
+                    "port": {},
+                    "portName": {},
+                    "targetPort": {},
+                    "type": {}
+                  },
+                  "type": "object"
+                },
+                "serviceAccount": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "annotations": {},
+                    "create": {
+                      "$ref": "#/$defs/values~1temporal.prometheus.prometheus-node-exporter.serviceAccount.create"
+                    },
+                    "imagePullSecrets": {},
+                    "name": {
+                      "$ref": "#/$defs/values~1temporal.prometheus.kube-state-metrics.serviceAccount.name"
+                    }
+                  },
+                  "type": "object"
+                },
+                "verticalPodAutoscaler": {
+                  "additionalProperties": {},
+                  "description": "Enable vertical pod autoscaler support for prometheus-node-exporter",
+                  "properties": {
+                    "controlledResources": {
+                      "$ref": "#/$defs/values~1temporal.prometheus.kube-state-metrics.verticalPodAutoscaler.controlledResources"
+                    },
+                    "controlledValues": {},
+                    "enabled": {},
+                    "maxAllowed": {
+                      "description": "Define the max allowed resources for the pod"
+                    },
+                    "minAllowed": {
+                      "$ref": "#/$defs/values~1temporal.prometheus.kube-state-metrics.verticalPodAutoscaler.minAllowed"
+                    },
+                    "recommenders": {},
+                    "updatePolicy": {}
+                  },
+                  "type": "object"
+                }
               }
             },
             "prometheus-pushgateway": {
@@ -2735,10 +3124,10 @@
                   "additionalProperties": {},
                   "properties": {
                     "create": {
-                      "description": "Specifies whether a ServiceAccount should be created"
+                      "$ref": "#/$defs/values~1temporal.prometheus.prometheus-node-exporter.serviceAccount.create"
                     },
                     "name": {
-                      "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
+                      "$ref": "#/$defs/values~1temporal.prometheus.kube-state-metrics.serviceAccount.name"
                     }
                   }
                 },
@@ -2785,13 +3174,29 @@
             "server": {
               "additionalProperties": {},
               "properties": {
+                "fullnameOverride": {},
+                "name": {
+                  "description": "Prometheus server container name"
+                },
+                "statefulSet": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "annotations": {},
+                    "enabled": {
+                      "description": "If true, use a statefulset instead of a deployment for pod management.\nThis allows to scale replicas to more than 1 pod"
+                    },
+                    "labels": {}
+                  }
+                },
                 "verticalAutoscaler": {
                   "additionalProperties": {},
                   "description": "Vertical Pod Autoscaler config\nRef: https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler",
                   "properties": {
+                    "containerPolicies": {},
                     "enabled": {
                       "description": "If true a VPA object will be created for the controller (either StatefulSet or Deployemnt, based on above configs)\nupdateMode: \"Auto\"\ncontainerPolicies:\n- containerName: 'prometheus-server'"
-                    }
+                    },
+                    "updateMode": {}
                   }
                 }
               }

@@ -1495,13 +1495,6 @@
         }
       ]
     },
-    "values/ltb-passwd.ingress.hosts": {
-      "description": "Ingress Host",
-      "items": {
-        "type": "string"
-      },
-      "type": "array"
-    },
     "values/ltb-passwd.ingress.path": {
       "description": "See https://kubernetes.io/docs/concepts/services-networking/ingress/#ingressclass-scope\ningressClassName: nginx"
     },
@@ -2294,9 +2287,6 @@
             "annotations": {},
             "apiVersion": {},
             "enabled": {},
-            "hosts": {
-              "$ref": "#/$defs/values~1ltb-passwd.ingress.hosts"
-            },
             "ingressClassName": {},
             "path": {
               "$ref": "#/$defs/values~1ltb-passwd.ingress.path"
@@ -2305,8 +2295,7 @@
             "tls": {
               "description": "Ingress cert\n- secretName: ssl-ldap2.example\nhosts:\n- ssl-ldap2.example\nldap:\nif you want to restrict search base tree for users instead of complete domain\nsearchBase: \"ou=....,dc=mydomain,dc=com\"\nif you want to use a dedicated bindDN for the search with less permissions instead of cn=admin one\nbindDN: \"cn=....,dc=mydomain,dc=com\"\nif you want to use a specific key of the credentials secret instead of the default one (LDAP_ADMIN_PASSWORD)\npassKey: LDAP_MY_KEY"
             }
-          },
-          "type": "object"
+          }
         },
         "kubeVersion": {},
         "nameOverride": {},
@@ -2430,9 +2419,6 @@
             "annotations": {},
             "apiVersion": {},
             "enabled": {},
-            "hosts": {
-              "$ref": "#/$defs/values~1ltb-passwd.ingress.hosts"
-            },
             "ingressClassName": {},
             "path": {
               "$ref": "#/$defs/values~1ltb-passwd.ingress.path"
@@ -2441,8 +2427,7 @@
             "tls": {
               "description": "Ingress cert\n- secretName: phpldapadmin.example\nhosts:\n- phpldapadmin.example"
             }
-          },
-          "type": "object"
+          }
         },
         "kubeVersion": {},
         "nameOverride": {},
@@ -2503,43 +2488,11 @@
       "additionalProperties": {},
       "description": "Service for read only cluster pods (if enabled)",
       "properties": {
-        "annotations": {
-          "additionalProperties": {},
-          "description": "If service type NodePort, define the value here\nldapPortNodePort:\nsslLdapPortNodePort:",
-          "type": "object"
-        },
-        "enableLdapPort": {
-          "description": "Disable if you do not want to expose port on service",
-          "type": "boolean"
-        },
-        "enableSslLdapPort": {
-          "type": "boolean"
-        },
-        "externalIPs": {
-          "description": "List of IP addresses at which the service is available\nRef: https://kubernetes.io/docs/user-guide/services/#external-ips",
-          "items": {},
-          "type": "array"
-        },
-        "externalTrafficPolicy": {
-          "type": "string"
-        },
         "headlessEnableLdapPort": {
           "description": "Control ports used in statefulset"
         },
-        "headlessEnableSslLdapPort": {},
-        "ipFamilyPolicy": {
-          "description": "Represents the dual-stack-ness requested or required by this Service. Possible values are\nSingleStack, PreferDualStack or RequireDualStack.\nThe ipFamilies and clusterIPs fields depend on the value of this field.\nRef: https://kubernetes.io/docs/concepts/services-networking/dual-stack/",
-          "type": "string"
-        },
-        "sessionAffinity": {
-          "type": "string"
-        },
-        "type": {
-          "description": "Define a static clusterIP\nclusterIP:\nloadBalancerIP:\nloadBalancerSourceRanges: []",
-          "type": "string"
-        }
-      },
-      "type": "object"
+        "headlessEnableSslLdapPort": {}
+      }
     },
     "sidecars": {
       "description": "Add additional sidecar containers to the OPENLDAP  pod(s)\ne.g:\nsidecars:\n- name: your-image-name\nimage: your-image\nimagePullPolicy: Always\nports:\n- name: portname\ncontainerPort: 1234"

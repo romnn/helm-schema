@@ -23,11 +23,13 @@
     "extraManifests": {
       "description": "Extra manifests to deploy as an array"
     },
+    "fullnameOverride": {},
     "global": {},
     "image": {},
     "labels": {
       "$ref": "#/$defs/values~1labels"
     },
+    "nameOverride": {},
     "networkPolicy": {},
     "nodeSelector": {},
     "podSecurityContext": {
@@ -49,10 +51,39 @@
     },
     "securityContext": {},
     "service": {
-      "description": "- name: REDIS_PASSWORD\nvalueFrom:\nsecretKeyRef:\nkey: redis-password\nname: redis-config-0.0.2"
+      "additionalProperties": {},
+      "description": "- name: REDIS_PASSWORD\nvalueFrom:\nsecretKeyRef:\nkey: redis-password\nname: redis-config-0.0.2",
+      "properties": {
+        "portName": {}
+      }
     },
     "serviceAccount": {},
-    "serviceMonitor": {},
+    "serviceMonitor": {
+      "additionalProperties": {},
+      "properties": {
+        "additionalLabels": {},
+        "additionalMetricsRelabels": {
+          "description": "for every targets, url and name must be set,\nan individual additionalRelabeling can be set for every target\n- url: \"redis://myredis:6379\"\nname: \"my-redis\"\n- url: \"redis://my-redis-cluster:6379\"\nname: \"bar\"\nadditionalRelabeling:\n- sourceLabels: [type]\ntargetLabel: type\nreplacement: cluster\nadditionalMetricsRelabels:\ntype: cluster"
+        },
+        "apiVersion": {},
+        "bearerTokenFile": {},
+        "enabled": {
+          "description": "When set true then use a ServiceMonitor to configure scraping"
+        },
+        "interval": {},
+        "labels": {},
+        "metricRelabelings": {},
+        "multipleTarget": {},
+        "namespace": {},
+        "relabelings": {},
+        "scheme": {},
+        "scrapeTimeout": {},
+        "targets": {},
+        "telemetryPath": {},
+        "timeout": {},
+        "tlsConfig": {}
+      }
+    },
     "tolerations": {}
   },
   "type": "object"

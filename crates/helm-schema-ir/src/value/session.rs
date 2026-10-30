@@ -76,7 +76,8 @@ pub(super) fn execute_files(
     if sources.is_empty() {
         return;
     }
-    let state = initial_state(db);
+    let mut state = initial_state(db);
+    let file_catalogs = super::hosts::file_catalogs(db, &mut state);
     let root = state.read_root().cloned().unwrap_or_else(Value::unknown);
     let mut seen = BTreeSet::new();
     let roster = db
@@ -101,7 +102,7 @@ pub(super) fn execute_files(
     let mut files: Vec<_> = sources.into_iter().enumerate().collect();
     files.sort_by(|(_, left), (_, right)| helm_template_order(&left.name, &right.name));
     for (index, source) in files {
-        let mut execution = execute_file(&mut states, &source, &root, db);
+        let mut execution = execute_file(&mut states, &source, &root, db, &file_catalogs);
         execution.exits.splice(0..0, std::mem::take(&mut startup));
         seal(index, execution);
     }
@@ -113,6 +114,7 @@ fn execute_file(
     source: &ParsedTemplateSource,
     root: &Value,
     db: &IrAnalysisDb,
+    file_catalogs: &BTreeMap<String, Value>,
 ) -> FileExecution {
     let mut programs = BTreeMap::new();
     let output = if source.name.ends_with("NOTES.txt") {
@@ -130,6 +132,16 @@ fn execute_file(
     let occurrence = FileOccurrence::new(first);
     let mut exits = super::ExitBuffer::default();
     for mut state in std::mem::take(states) {
+        if let Some(target) = state.map_target(root) {
+            let files = file_catalogs
+                .get(db.chart_instance(&source.name))
+                .cloned()
+                .unwrap_or_else(|| {
+                    let empty = state.heap.map(Remainder::Closed);
+                    super::hosts::as_files(empty)
+                });
+            state.heap.write(&target, "Files", Field::Present(files));
+        }
         begin_file(&mut state, root, source.root.source_path(), &occurrence);
         let namespace = Rc::clone(&state.namespace);
         for lookup in namespace.resolve(&source.name, state) {
@@ -290,24 +302,14 @@ fn initial_state(db: &IrAnalysisDb) -> State {
         };
         state.heap.write(&id, "Values", Field::Present(values));
     }
-    for key in ["Chart", "Release", "Capabilities", "Subcharts", "Template"] {
+    for key in ["Chart", "Release", "Subcharts", "Template"] {
         let value = Value::unknown();
         state.heap.write(&id, key, Field::Present(value));
     }
-    let files = state.heap.allocate(
-        ObjectData::Opaque {
-            reachable: super::AliasSet::RenderGraph,
-        },
-        super::Multiplicity::Singleton,
-    );
-    state.heap.write(
-        &id,
-        "Files",
-        Field::Present(Value::leaf(Datum::Unknown(super::UnknownValue {
-            types: super::TypeCoverage::Unresolved,
-            aliases: super::AliasSet::Known(BTreeSet::from([files])),
-        }))),
-    );
+    let capabilities = super::hosts::capabilities(&mut state);
+    state
+        .heap
+        .write(&id, "Capabilities", Field::Present(capabilities));
     for (path, text) in db.static_root_strings() {
         let mut parent = root.clone();
         let Some((last, parents)) = path.split_last() else {

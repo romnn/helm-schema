@@ -1,8 +1,5 @@
 {
   "$defs": {
-    "values/autoscaling": {
-      "description": "only available if kind is Deployment"
-    },
     "values/extraContainers": {
       "description": "This supports either a structured array or a templatable string"
     }
@@ -14,7 +11,41 @@
     "annotations": {},
     "args": {},
     "autoscaling": {
-      "$ref": "#/$defs/values~1autoscaling"
+      "additionalProperties": {},
+      "description": "only available if kind is Deployment",
+      "properties": {
+        "vpa": {
+          "additionalProperties": {},
+          "properties": {
+            "annotations": {},
+            "controlledResources": {
+              "description": "List of resources that the vertical pod autoscaler can control. Defaults to cpu and memory"
+            },
+            "controlledValues": {
+              "description": "Values that the vertical pod autoscaler can control. Allowed values are RequestsAndLimits and RequestsOnly. Default is RequestsAndLimits."
+            },
+            "enabled": {},
+            "maxAllowed": {
+              "description": "Define the max allowed resources for the pod"
+            },
+            "minAllowed": {
+              "description": "cpu: 200m\nmemory: 100Mi\nDefine the min allowed resources for the pod\ncpu: 200m\nmemory: 100Mi"
+            },
+            "recommender": {
+              "description": "Name of the VPA recommender that will provide recommendations for vertical scaling."
+            },
+            "updatePolicy": {
+              "additionalProperties": {},
+              "properties": {
+                "updateMode": {
+                  "description": "Specifies whether recommended updates are applied when a Pod is started and whether recommended updates\nare applied during the life of a Pod. Possible values are \"Off\", \"Initial\", \"Recreate\", and \"Auto\"."
+                }
+              }
+            }
+          },
+          "type": "object"
+        }
+      }
     },
     "command": {},
     "config": {
@@ -56,7 +87,7 @@
     "image": {},
     "imagePullSecrets": {},
     "ingress": {
-      "$ref": "#/$defs/values~1autoscaling"
+      "description": "only available if kind is Deployment"
     },
     "initContainers": {
       "$ref": "#/$defs/values~1extraContainers"
@@ -85,7 +116,7 @@
     },
     "podAnnotations": {},
     "podDisruptionBudget": {
-      "$ref": "#/$defs/values~1autoscaling"
+      "description": "only available if kind is Deployment"
     },
     "podLabels": {},
     "podSecurityContext": {
@@ -109,7 +140,20 @@
     },
     "service": {},
     "serviceAccount": {},
-    "serviceMonitor": {},
+    "serviceMonitor": {
+      "additionalProperties": {},
+      "properties": {
+        "enabled": {
+          "description": "namespace: monitoring\ninterval: 10s\nscrapeTimeout: 10s\nselector:\nprometheus: my-prometheus\nmetric relabel configs to apply to samples before ingestion.\nmetricRelabelings:\n- sourceLabels: [__meta_kubernetes_service_label_cluster]\ntargetLabel: cluster\nregex: (.*)\nreplacement: ${1}\naction: replace\nrelabel configs to apply to samples after ingestion.\nrelabelings:\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntargetLabel: nodename\nreplacement: $1\naction: replace\nscheme: \"\"\ntlsConfig: {}"
+        },
+        "interval": {},
+        "metricRelabelings": {},
+        "namespace": {},
+        "path": {},
+        "scrapeTimeout": {},
+        "selector": {}
+      }
+    },
     "terminationGracePeriodSeconds": {
       "description": "How long (in seconds) a pod may take to exit (useful with lifecycle hooks to ensure lb deregistration is done)"
     },

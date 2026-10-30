@@ -14102,10 +14102,6 @@
         }
       ]
     },
-    "values/endpoints.dev.gatewayAPI.gateway.namespace": {
-      "description": "Namespace where the Gateway is located (REQUIRED when gatewayAPI.enabled is true)",
-      "type": "string"
-    },
     "values/ingress-nginx.commonLabels": {
       "description": "Labels to apply to all resources\nscmhash: abc123\nmyLabel: aakkmd"
     },
@@ -14206,6 +14202,18 @@
     },
     "values/ingress-nginx.namespaceOverride": {
       "description": "Override the deployment namespace; defaults to .Release.Namespace"
+    },
+    "values/regcredsManager": {
+      "additionalProperties": {},
+      "properties": {
+        "internalCertificate": {
+          "additionalProperties": {},
+          "properties": {
+            "annotations": {}
+          },
+          "type": "object"
+        }
+      }
     },
     "when/controller.admissionWebhooks.certManager+3more/then/fail": {
       "if": {
@@ -15628,75 +15636,6 @@
       "additionalProperties": {},
       "allOf": [
         {
-          "additionalProperties": {},
-          "properties": {
-            "dev": {
-              "additionalProperties": {},
-              "properties": {
-                "gatewayAPI": {
-                  "allOf": [
-                    {
-                      "if": {
-                        "allOf": [
-                          {
-                            "$ref": "#/$defs/constrains~1enabled:t"
-                          },
-                          {
-                            "anyOf": [
-                              {
-                                "not": {
-                                  "properties": {
-                                    "wildcardHTTPRoute": {
-                                      "properties": {
-                                        "backendTrafficPolicy": {}
-                                      },
-                                      "required": [
-                                        "backendTrafficPolicy"
-                                      ],
-                                      "type": "object"
-                                    }
-                                  },
-                                  "required": [
-                                    "wildcardHTTPRoute"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              {
-                                "properties": {
-                                  "wildcardHTTPRoute": {
-                                    "properties": {
-                                      "backendTrafficPolicy": {
-                                        "enum": [
-                                          null
-                                        ]
-                                      }
-                                    },
-                                    "required": [
-                                      "backendTrafficPolicy"
-                                    ],
-                                    "type": "object"
-                                  }
-                                },
-                                "required": [
-                                  "wildcardHTTPRoute"
-                                ],
-                                "type": "object"
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      "then": false
-                    }
-                  ],
-                  "description": "Gateway API configuration for HTTPRoutes in dev namespaces"
-                }
-              }
-            }
-          }
-        },
-        {
           "if": {
             "anyOf": [
               {
@@ -15716,142 +15655,130 @@
             ]
           },
           "then": false
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "dev": {
-              "additionalProperties": {},
-              "properties": {
-                "gatewayAPI": {
-                  "allOf": [
-                    {
-                      "if": {
-                        "allOf": [
-                          {
-                            "$ref": "#/$defs/constrains~1enabled:t"
-                          },
-                          {
-                            "anyOf": [
-                              {
-                                "not": {
-                                  "properties": {
-                                    "wildcardHTTPRoute": {}
-                                  },
-                                  "required": [
-                                    "wildcardHTTPRoute"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              {
-                                "properties": {
-                                  "wildcardHTTPRoute": {
-                                    "enum": [
-                                      null
-                                    ]
-                                  }
-                                },
-                                "required": [
-                                  "wildcardHTTPRoute"
-                                ],
-                                "type": "object"
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      "then": false
-                    }
-                  ],
-                  "description": "Gateway API configuration for HTTPRoutes in dev namespaces"
-                }
-              }
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "dev": {
-              "allOf": [
-                {
-                  "if": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1gatewayAPI=null"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/$defs/constrains~1gatewayAPI"
-                        }
-                      }
-                    ]
-                  },
-                  "then": false
-                }
-              ]
-            }
-          }
         }
       ],
       "description": "Endpoints configuration for the Okteto control plane and dev namespaces",
       "properties": {
         "dev": {
           "additionalProperties": {},
+          "allOf": [
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1gatewayAPI=null"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/constrains~1gatewayAPI"
+                    }
+                  }
+                ]
+              },
+              "then": false
+            }
+          ],
           "properties": {
             "gatewayAPI": {
               "additionalProperties": {},
+              "allOf": [
+                {
+                  "if": {
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1enabled:t"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "properties": {
+                                "wildcardHTTPRoute": {
+                                  "properties": {
+                                    "backendTrafficPolicy": {}
+                                  },
+                                  "required": [
+                                    "backendTrafficPolicy"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "wildcardHTTPRoute"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          {
+                            "properties": {
+                              "wildcardHTTPRoute": {
+                                "properties": {
+                                  "backendTrafficPolicy": {
+                                    "enum": [
+                                      null
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "backendTrafficPolicy"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "wildcardHTTPRoute"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "then": false
+                },
+                {
+                  "if": {
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1enabled:t"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "properties": {
+                                "wildcardHTTPRoute": {}
+                              },
+                              "required": [
+                                "wildcardHTTPRoute"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          {
+                            "properties": {
+                              "wildcardHTTPRoute": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "wildcardHTTPRoute"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "then": false
+                }
+              ],
               "description": "Gateway API configuration for HTTPRoutes in dev namespaces",
               "properties": {
-                "annotations": {
-                  "additionalProperties": {},
-                  "description": "Custom annotations added to all HTTPRoutes in dev namespaces",
-                  "type": "object"
-                },
-                "defaultBackendHTTPRoute": {
-                  "additionalProperties": {},
-                  "description": "Controls rendering of the wildcard HTTPRoute that forwards unmatched traffic to the\ndefault backend. Disable when an Ingress controller (or another Gateway listener) sits\nin front and already handles wildcard routing itself, to avoid duplicate catch-all routes.",
-                  "properties": {
-                    "enabled": {
-                      "type": "boolean"
-                    }
-                  },
-                  "type": "object"
-                },
                 "enabled": {
                   "description": "Enable Gateway API HTTPRoute mutation webhook"
-                },
-                "gateway": {
-                  "additionalProperties": {},
-                  "description": "Gateway reference configuration",
-                  "properties": {
-                    "force": {
-                      "description": "Force mode: if true, applies transformations to ALL HTTPRoutes with gateway parentRefs\nand overrides their gateway reference to use the configured gateway.\nIf false, only applies transformations to HTTPRoutes whose parentRef already matches\nthe configured gateway name/namespace.",
-                      "type": "boolean"
-                    },
-                    "name": {
-                      "description": "Name of the Gateway to use for HTTPRoutes (REQUIRED when gatewayAPI.enabled is true)",
-                      "type": "string"
-                    },
-                    "namespace": {
-                      "$ref": "#/$defs/values~1endpoints.dev.gatewayAPI.gateway.namespace"
-                    },
-                    "section": {
-                      "description": "Section name within the Gateway (e.g., https, http)",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "labels": {
-                  "additionalProperties": {},
-                  "description": "Custom labels added to all HTTPRoutes in dev namespaces",
-                  "type": "object"
-                },
-                "subdomain": {
-                  "description": "Subdomain for generating hosts. If empty, inherits from top-level subdomain value.\nUsed for the \"generate-host\" annotation to create hostnames like: <name>-<namespace>.<subdomain>",
-                  "type": "string"
                 },
                 "wildcardHTTPRoute": {
                   "additionalProperties": {},
@@ -15862,134 +15789,11 @@
                       "properties": {
                         "enabled": {}
                       }
+                    },
+                    "name": {
+                      "description": "Name of the external wildcard HTTPRoute to attach the policy to."
                     }
                   }
-                }
-              },
-              "type": "object"
-            },
-            "ingress": {
-              "additionalProperties": {},
-              "description": "Ingress configuration for dev namespaces",
-              "properties": {
-                "annotations": {
-                  "additionalProperties": {},
-                  "description": "Custom annotations added to all ingresses in dev namespaces.\nTakes precedence over namespace.ingress.annotations (legacy); merged with legacy values when both are set.",
-                  "type": "object"
-                },
-                "class": {
-                  "description": "Ingress class for dev namespace ingresses. Leave empty to use the cluster's default ingress class.\nTakes precedence over ingress.class (legacy). If both are empty, falls back to built-in defaults.",
-                  "type": "string"
-                },
-                "enabled": {
-                  "description": "Informational flag indicating whether ingress-based endpoints are enabled for dev applications",
-                  "type": "boolean"
-                },
-                "forceClass": {
-                  "description": "If enabled, all ingresses in dev namespaces will have their ingress class overwritten.\nAlso enabled when ingress.forceIngressClass (legacy) is true.",
-                  "type": "boolean"
-                },
-                "forceSubdomain": {
-                  "description": "If enabled, all ingresses in dev namespaces must match the okteto wildcard subdomain.\nAlso enabled when ingress.forceIngressSubdomain (legacy) is true.",
-                  "type": "boolean"
-                },
-                "labels": {
-                  "additionalProperties": {},
-                  "description": "Custom labels added to all ingresses in dev namespaces.\nTakes precedence over namespace.ingress.labels (legacy); merged with legacy values when both are set.",
-                  "type": "object"
-                },
-                "subdomain": {
-                  "description": "Subdomain for generating hosts. If empty, inherits from top-level subdomain value.",
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            }
-          },
-          "type": "object"
-        },
-        "okteto": {
-          "additionalProperties": {},
-          "description": "Okteto control plane exposure configuration.\nExactly one of ingress or gatewayAPI must be enabled.",
-          "properties": {
-            "gatewayAPI": {
-              "additionalProperties": {},
-              "properties": {
-                "annotations": {
-                  "additionalProperties": {},
-                  "description": "Custom annotations added to all HTTPRoute resources for the control plane",
-                  "type": "object"
-                },
-                "controller": {
-                  "additionalProperties": {},
-                  "description": "IP of the gateway controller for internal DNS resolution.\nREQUIRED when gatewayAPI.enabled is true (no nginx fallback in Gateway API mode).",
-                  "properties": {
-                    "ip": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "enabled": {
-                  "description": "Enable Gateway API HTTPRoute-based exposure for the Okteto control plane.\nRequires ingress-nginx.enabled: false.\nThe chart creates HTTPRoute objects; operators must provide an existing Gateway.",
-                  "type": "boolean"
-                },
-                "gateway": {
-                  "additionalProperties": {},
-                  "description": "Reference to the operator-managed Gateway to attach HTTPRoutes to.",
-                  "properties": {
-                    "name": {
-                      "description": "Name of the Gateway (REQUIRED when gatewayAPI.enabled is true)",
-                      "type": "string"
-                    },
-                    "namespace": {
-                      "$ref": "#/$defs/values~1endpoints.dev.gatewayAPI.gateway.namespace"
-                    },
-                    "section": {
-                      "description": "Optional: section name within the Gateway (e.g., \"https\")",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "labels": {
-                  "additionalProperties": {},
-                  "description": "Custom labels added to all HTTPRoute resources for the control plane",
-                  "type": "object"
-                }
-              },
-              "type": "object"
-            },
-            "ingress": {
-              "additionalProperties": {},
-              "properties": {
-                "annotations": {
-                  "additionalProperties": {},
-                  "description": "Custom annotations added to all Ingress resources for the control plane",
-                  "type": "object"
-                },
-                "class": {
-                  "description": "IngressClass used for Okteto control plane ingress resources.\nIf empty, falls back to ingress.oktetoIngressClass (default: okteto-controlplane-nginx)",
-                  "type": "string"
-                },
-                "controller": {
-                  "additionalProperties": {},
-                  "description": "IP of the ingress controller for internal DNS resolution.\nIf empty, falls back to ingress.ip",
-                  "properties": {
-                    "ip": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "enabled": {
-                  "description": "Enable Ingress-based exposure for the Okteto control plane (default behavior).\nRequires ingress-nginx.enabled: true",
-                  "type": "boolean"
-                },
-                "labels": {
-                  "additionalProperties": {},
-                  "description": "Custom labels added to all Ingress resources for the control plane",
-                  "type": "object"
                 }
               },
               "type": "object"
@@ -16002,6 +15806,7 @@
     },
     "externalNames": {},
     "frontend": {},
+    "fullnameOverride": {},
     "gc": {},
     "github": {
       "description": "Specific config for github integration"
@@ -16541,7 +16346,15 @@
     "installerChecker": {
       "description": "Example:\nextraInitContainers:\n- name: wait-for-db\nimage: busybox:1.36\ncommand: [\"sh\", \"-c\", \"until nc -z localhost 5432; do sleep 2; done\"]\nresources:\nrequests:\ncpu: \"10m\"\nmemory: \"16Mi\"\nlimits:\ncpu: \"100m\"\nmemory: \"64Mi\"\nEnable a cron to detect git, stack and helm stucked deploys"
     },
-    "internalCertificate": {},
+    "internalCertificate": {
+      "additionalProperties": {},
+      "properties": {
+        "annotations": {},
+        "duration": {},
+        "durationDays": {},
+        "version": {}
+      }
+    },
     "kubeAPIServerProxy": {},
     "kubetoken": {},
     "license": {},
@@ -16552,6 +16365,7 @@
       "description": "Specific termination grace period"
     },
     "migration": {},
+    "nameOverride": {},
     "namespace": {},
     "namespaceDestroyAll": {
       "description": "Enable Destroy All for namespaces"
@@ -17099,18 +16913,64 @@
     "privateRegistry": {
       "description": "A list of private registries and its corresponding credentials. The kubelet will use them when pulling images."
     },
+    "publicOverride": {},
     "pullAlways": {},
     "pullPolicy": {},
     "quotas": {},
     "redis": {
       "description": "Redis configuration for the Resource Manager (installed when resourceManager.enabled is true)"
     },
-    "regcredsManager": {},
+    "regcredsManager": {
+      "$ref": "#/$defs/values~1regcredsManager"
+    },
     "registry": {},
     "reloader": {
+      "additionalProperties": {},
       "properties": {
+        "enabled": {},
+        "fullnameOverride": {},
         "global": {
           "description": "Generated from deployments/kubernetes/templates/chart/values.yaml.tmpl"
+        },
+        "nameOverride": {},
+        "namespace": {},
+        "reloader": {
+          "additionalProperties": {},
+          "properties": {
+            "serviceMonitor": {
+              "additionalProperties": {},
+              "properties": {
+                "annotations": {
+                  "description": "Used to pass annotations that are used by the Prometheus installed in your cluster to select Service Monitors to work with\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec"
+                },
+                "enabled": {
+                  "description": "Deprecated: Service monitor will be removed in future releases of reloader in favour of Pod monitor\nEnabling this requires service to be enabled as well, or no endpoints will be found\nSet the namespace the ServiceMonitor should be deployed\nnamespace: monitoring"
+                }
+              },
+              "type": "object"
+            },
+            "verticalPodAutoscaler": {
+              "additionalProperties": {},
+              "description": "Enable vertical pod autoscaler",
+              "properties": {
+                "controlledResources": {
+                  "description": "List of resources that the vertical pod autoscaler can control. Defaults to cpu and memory\nSpecifies which resource values should be controlled: RequestsOnly or RequestsAndLimits.\ncontrolledValues: RequestsAndLimits"
+                },
+                "controlledValues": {},
+                "enabled": {},
+                "maxAllowed": {
+                  "description": "Define the max allowed resources for the pod"
+                },
+                "minAllowed": {
+                  "description": "cpu: 200m\nmemory: 100Mi\nDefine the min allowed resources for the pod\ncpu: 200m\nmemory: 100Mi"
+                },
+                "recommenders": {},
+                "updatePolicy": {}
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
         }
       }
     },
@@ -17150,8 +17010,17 @@
     "volumes": {
       "description": "Configuration related to Volumes"
     },
-    "webhook": {},
-    "wildcardCertificate": {}
+    "webhook": {
+      "$ref": "#/$defs/values~1regcredsManager"
+    },
+    "wildcardCertificate": {
+      "additionalProperties": {},
+      "properties": {
+        "annotations": {},
+        "create": {},
+        "name": {}
+      }
+    }
   },
   "type": "object"
 }

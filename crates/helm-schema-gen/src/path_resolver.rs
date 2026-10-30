@@ -75,7 +75,7 @@ impl<'a> PathSchemaResolver<'a> {
         declared_types: DeclaredTypes,
         provider_resolutions: &'a ProviderSchemaResolutions,
     ) -> Self {
-        let values_yaml_info = build_values_yaml_path_info(
+        let mut values_yaml_info = build_values_yaml_path_info(
             values_yaml_doc,
             contract_signals.referenced_value_paths(),
             contract_signals.pruned_parent_value_paths(),
@@ -83,8 +83,12 @@ impl<'a> PathSchemaResolver<'a> {
             contract_signals.direct_ranged_value_paths(),
             helm_global_namespaces,
         );
+        let evidence_by_path = contract_signals.schema_evidence_by_value_path();
+        // An unresolved region cannot retype unobserved children through an ancestor-only host.
+        values_yaml_info
+            .retain(|path, _| !unobserved_parent_in_unknown_region(path, evidence_by_path));
         Self {
-            schema_evidence_by_value_path: contract_signals.schema_evidence_by_value_path(),
+            schema_evidence_by_value_path: evidence_by_path,
             values_yaml_info,
             declared_types,
             runtime_default_paths: contract_signals
@@ -150,6 +154,29 @@ impl<'a> PathSchemaResolver<'a> {
             })
             .collect()
     }
+}
+
+fn unobserved_parent_in_unknown_region(
+    path: &ValuesPath,
+    evidence_by_path: &BTreeMap<ValuesPath, ContractPathSchemaEvidence>,
+) -> bool {
+    let Some(evidence) = evidence_by_path.get(path) else {
+        return false;
+    };
+    if evidence.facts.has_non_control_use || !evidence.facts.has_referenced_descendants {
+        return false;
+    }
+    let mut ancestor = Some(path.clone());
+    while let Some(path) = ancestor {
+        if evidence_by_path
+            .get(&path)
+            .is_some_and(|evidence| evidence.facts.has_unknown_read_region)
+        {
+            return true;
+        }
+        ancestor = path.parent();
+    }
+    false
 }
 
 fn resolve_path_evidence(

@@ -490,20 +490,8 @@
         "renewBefore": {
           "description": "30 days"
         },
-        "revisionHistoryLimit": {},
-        "rootCert": {
-          "additionalProperties": {},
-          "description": "Root CA certificate configuration",
-          "properties": {
-            "duration": {
-              "description": "5 years",
-              "type": "string"
-            }
-          },
-          "type": "object"
-        }
-      },
-      "type": "object"
+        "revisionHistoryLimit": {}
+      }
     },
     "cluster": {
       "additionalProperties": {},
@@ -512,8 +500,7 @@
         "dnsDomain": {
           "description": "Cluster DNS domain (required for requesting TLS certificates)"
         }
-      },
-      "type": "object"
+      }
     },
     "clusterName": {
       "description": "The name of the Kubernetes cluster. A non-empty value is required"
@@ -536,8 +523,7 @@
           },
           "type": "object"
         }
-      },
-      "type": "object"
+      }
     },
     "createIngressClassResource": {
       "description": "To use IngressClass resource instead of annotation, before you need to install the IngressClass resource pointing to controller.\nIf specified as true, the IngressClass resource will be created."
@@ -668,8 +654,7 @@
         "matchLabels": {
           "description": "- key: <key>\noperator: <operator>\nvalues:\n- <value>\nkey: value"
         }
-      },
-      "type": "object"
+      }
     },
     "podAnnotations": {},
     "podDisruptionBudget": {
@@ -683,8 +668,7 @@
         "failurePolicy": {
           "description": "whether or not to fail the pod creation if the webhook fails"
         }
-      },
-      "type": "object"
+      }
     },
     "podSecurityContext": {},
     "priorityClassName": {
@@ -710,21 +694,13 @@
         "annotations": {
           "description": "Annotations to add to the service account"
         },
-        "automountServiceAccountToken": {
-          "description": "Automount API credentials for a Service Account.",
-          "type": "boolean"
-        },
         "create": {
           "description": "Specifies whether a service account should be created"
-        },
-        "imagePullSecrets": {
-          "description": "List of image pull secrets to add to the Service Account.\n- name: docker"
         },
         "name": {
           "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template"
         }
-      },
-      "type": "object"
+      }
     },
     "serviceAnnotations": {
       "description": "serviceAnnotations contains annotations to be added to the provisioned webhook service resource"
@@ -756,8 +732,7 @@
         "scrapeTimeout": {
           "description": "Prometheus scrape timeout"
         }
-      },
-      "type": "object"
+      }
     },
     "serviceMutatorWebhookConfig": {
       "additionalProperties": {},
@@ -783,8 +758,7 @@
         "operations": {
           "description": "- key: <key>\noperator: <operator>\nvalues:\n- <value>\nwhich operations trigger the webhook"
         }
-      },
-      "type": "object"
+      }
     },
     "serviceTargetENISGTags": {
       "description": "serviceTargetENISGTags specifies AWS tags, in addition to the cluster tags, for finding the target ENI SG to which to add inbound rules from NLBs."
@@ -844,8 +818,7 @@
           "properties": {
             "matchExpressions": {},
             "matchLabels": {}
-          },
-          "type": "object"
+          }
         },
         "ingressValidationObjectSelector": {
           "additionalProperties": {},
@@ -853,11 +826,9 @@
           "properties": {
             "matchExpressions": {},
             "matchLabels": {}
-          },
-          "type": "object"
+          }
         }
-      },
-      "type": "object"
+      }
     },
     "webhookNamespaceSelectors": {
       "description": "array of namespace selectors for the pod mutator webhook\n- key: elbv2.k8s.aws/pod-readiness-gate-inject\noperator: In\nvalues:\n- enabled"

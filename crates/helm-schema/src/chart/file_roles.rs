@@ -36,20 +36,23 @@ pub(crate) struct ChartFile {
 pub(crate) struct LoadedChartFile {
     pub(crate) path: VfsPath,
     roles: BTreeSet<FileRole>,
-    source: Option<String>,
+    source: Result<String, std::string::FromUtf8Error>,
 }
 
 impl LoadedChartFile {
     pub(crate) fn source(&self) -> EngineResult<&str> {
         self.source
             .as_deref()
-            .ok_or_else(|| CliError::NonUtf8ChartSource {
+            .map_err(|_| CliError::NonUtf8ChartSource {
                 path: self.path.as_str().to_string(),
             })
     }
 
-    pub(crate) fn utf8_source(&self) -> Option<&str> {
-        self.source.as_deref()
+    pub(crate) fn bytes(&self) -> &[u8] {
+        match &self.source {
+            Ok(source) => source.as_bytes(),
+            Err(err) => err.as_bytes(),
+        }
     }
 
     pub(crate) fn has_role(&self, role: FileRole) -> bool {
@@ -85,7 +88,7 @@ impl LoadedChartCorpus {
                 files.push(LoadedChartFile {
                     path: file.path,
                     roles: file.roles,
-                    source: String::from_utf8(bytes).ok(),
+                    source: String::from_utf8(bytes),
                 });
             }
             loaded.insert(chart.chart_dir.as_str().to_string(), LoadedChart { files });

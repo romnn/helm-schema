@@ -18,7 +18,11 @@
     "firehose": {},
     "fullnameOverride": {},
     "global": {
-      "description": "Override the deployment namespace\nnamespaceOverride:"
+      "additionalProperties": {},
+      "description": "Override the deployment namespace\nnamespaceOverride:",
+      "properties": {
+        "namespaceOverride": {}
+      }
     },
     "hostNetwork": {
       "description": "Set hostNetwork to true and dnsPolicy to ClusterFirstWithHostNet to use Kubelet to get the Metadata for large clusters\nCheck this link for more details https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights-use-kubelet.html"
@@ -43,7 +47,27 @@
     "s3": {},
     "service": {},
     "serviceAccount": {},
-    "serviceMonitor": {},
+    "serviceMonitor": {
+      "additionalProperties": {},
+      "properties": {
+        "enabled": {
+          "description": "- port: 2021\ntargetPort: 2021\nprotocol: TCP\nname: metrics\nWhen set true then use a ServiceMonitor to configure scraping"
+        },
+        "extraEndpoints": {
+          "description": "- port: metrics\npath: /metrics\ninterval: 30s\nscrapeTimeout: 10s\nscheme: http"
+        },
+        "interval": {},
+        "jobLabel": {},
+        "labels": {},
+        "metricRelabelings": {},
+        "relabelings": {},
+        "targetLabels": {},
+        "telemetryPath": {},
+        "timeout": {
+          "description": "app: example-application\nteamname: example"
+        }
+      }
+    },
     "tolerations": {},
     "updateStrategy": {},
     "volumeMounts": {},

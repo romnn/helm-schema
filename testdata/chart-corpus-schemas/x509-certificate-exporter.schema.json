@@ -1,10 +1,4 @@
 {
-  "$defs": {
-    "values/hostPathsExporter.podSecurityContext.seccompProfile.type": {
-      "description": "type: object\nadditionalProperties: true\nproperties: {}",
-      "type": "string"
-    }
-  },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "properties": {
@@ -51,214 +45,10 @@
       "additionalProperties": {},
       "description": "type: object\nadditionalProperties: {type: string}",
       "properties": {
-        "affinity": {
-          "additionalProperties": {},
-          "description": "Affinity for Pods of hostPath exporters (default for all hostPathsExporter.daemonSets)",
-          "type": "object"
-        },
-        "annotations": {
-          "additionalProperties": {},
-          "description": "Additional DaemonSet annotations",
-          "type": "object"
-        },
         "daemonSets": {
           "description": "[SEE README] Map to define one or many DaemonSets running hostPath exporters. Key is used as a name ; value is a map to override all default settings set by `hostPathsExporter.*`."
-        },
-        "debugMode": {
-          "description": "Should debug messages be produced by hostPath exporters (default for all hostPathsExporter.daemonSets)",
-          "type": "boolean"
-        },
-        "env": {
-          "description": "Additional environment variables for containers\n- name: GOMAXPROCS\nvalue: \"1\"",
-          "items": {},
-          "type": "array"
-        },
-        "extraVolumeMounts": {
-          "description": "Additional volume mounts added to Pod containers of hostPath exporters (default for all hostPathsExporter.daemonSets ; combined with global `extraVolumeMounts`)",
-          "items": {},
-          "type": "array"
-        },
-        "extraVolumes": {
-          "description": "Additional volumes added to Pods of hostPath exporters (default for all hostPathsExporter.daemonSets ; combined with global `extraVolumes`)\ntype: array\nitems: {type: object}",
-          "items": {},
-          "type": "array"
-        },
-        "hostPathVolumeType": {
-          "description": "Type for HostPath volumes used with watched paths. Can be set to `\"\"` or null to use Kubernetes defaults. May be required with RKE if Pods don't start.\ntype: array\nitems: {type: string}",
-          "type": "string"
-        },
-        "livenessProbe": {
-          "additionalProperties": {},
-          "description": "Liveness probe definition for the host paths exporter (.httpGet cannot be changed)",
-          "properties": {
-            "initialDelaySeconds": {
-              "type": "integer"
-            },
-            "periodSeconds": {
-              "description": "type: object\nadditionalProperties: {type: string}",
-              "type": "integer"
-            }
-          },
-          "type": "object"
-        },
-        "nodeSelector": {
-          "additionalProperties": {},
-          "description": "Node selector for Pods of hostPath exporters (default for all hostPathsExporter.daemonSets)\ntype: array\nitems: {type: object}",
-          "type": "object"
-        },
-        "podAnnotations": {
-          "additionalProperties": {},
-          "description": "Annotations added to Pods of hostPath exporters (default for all hostPathsExporter.daemonSets)\ntype: object\nadditionalProperties: true\nproperties: {}",
-          "type": "object"
-        },
-        "podExtraLabels": {
-          "additionalProperties": {},
-          "description": "Additional labels added to Pods of hostPath exporters (default for all hostPathsExporter.daemonSets)\ntype: object\nadditionalProperties: {type: string}",
-          "type": "object"
-        },
-        "podSecurityContext": {
-          "additionalProperties": {},
-          "description": "PodSecurityContext for Pods of hostPath exporters (default for all hostPathsExporter.daemonSets)",
-          "properties": {
-            "seccompProfile": {
-              "additionalProperties": {},
-              "properties": {
-                "type": {
-                  "$ref": "#/$defs/values~1hostPathsExporter.podSecurityContext.seccompProfile.type"
-                }
-              },
-              "type": "object"
-            }
-          },
-          "type": "object"
-        },
-        "priorityClassName": {
-          "description": "PriorityClassName for Pods of hostPath exporters\ntype: object\nadditionalProperties: {type: string}",
-          "type": "string"
-        },
-        "readinessProbe": {
-          "additionalProperties": {},
-          "description": "Readiness probe definition for the host paths exporter (.httpGet cannot be changed)",
-          "properties": {
-            "initialDelaySeconds": {
-              "type": "integer"
-            },
-            "periodSeconds": {
-              "description": "type: object\nadditionalProperties: true\nproperties: {}",
-              "type": "integer"
-            }
-          },
-          "type": "object"
-        },
-        "refreshInterval": {
-          "description": "Polling interval at which the file source re-walks watched paths and re-parses changed files. Accepts a Go duration (e.g. `30s`, `5m`). Default is suited for slowly-rotated PKI; lower it for tests or fast-rotation flows.\nenum: [Always]",
-          "type": "string"
-        },
-        "resources": {
-          "additionalProperties": {},
-          "description": "ResourceRequirements for containers of hostPath exporters (default for all hostPathsExporter.daemonSets)",
-          "properties": {
-            "limits": {
-              "additionalProperties": {},
-              "properties": {
-                "cpu": {
-                  "type": "integer"
-                },
-                "memory": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            },
-            "requests": {
-              "additionalProperties": {},
-              "properties": {
-                "cpu": {
-                  "type": "string"
-                },
-                "memory": {
-                  "$ref": "#/$defs/values~1hostPathsExporter.podSecurityContext.seccompProfile.type"
-                }
-              },
-              "type": "object"
-            }
-          },
-          "type": "object"
-        },
-        "restartPolicy": {
-          "description": "restartPolicy for Pods of hostPath exporters (default for all hostPathsExporter.daemonSets)\ntype: object\nadditionalProperties: true",
-          "type": "string"
-        },
-        "revisionHistoryLimit": {
-          "description": "(int) Number of old ReplicaSets to retain for rollback (default for all hostPathsExporter.daemonSets)\ntype: object\nadditionalProperties: true\nproperties: {}"
-        },
-        "securityContext": {
-          "additionalProperties": {},
-          "description": "SecurityContext for containers of hostPath exporters (default for all hostPathsExporter.daemonSets)",
-          "properties": {
-            "allowPrivilegeEscalation": {
-              "type": "boolean"
-            },
-            "capabilities": {
-              "additionalProperties": {},
-              "properties": {
-                "drop": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                }
-              },
-              "type": "object"
-            },
-            "readOnlyRootFilesystem": {
-              "type": "boolean"
-            },
-            "runAsGroup": {
-              "type": "integer"
-            },
-            "runAsUser": {
-              "type": "integer"
-            }
-          },
-          "type": "object"
-        },
-        "skipSymlinks": {
-          "description": "Skip symlinks when scanning files and directories. Does not apply to Kubernetes secrets.",
-          "type": "boolean"
-        },
-        "tolerations": {
-          "description": "Tolerations for Pods of hostPath exporters (default for all hostPathsExporter.daemonSets)\ntype: object\nadditionalProperties: true",
-          "items": {},
-          "type": "array"
-        },
-        "updateStrategy": {
-          "additionalProperties": {},
-          "description": "updateStrategy for DaemonSets of hostPath exporters (default for all hostPathsExporter.daemonSets)\ntype: [integer, 'null']",
-          "type": "object"
-        },
-        "watchDirectories": {
-          "description": "[SEE README] List of directory paths of the host to scan for PEM encoded certificate files to be watched and exported as metrics. Each entry is a literal directory (scanned one level deep, default) or a shell-glob pattern with `**` for recursion — e.g. `/var/lib/kubelet/pods/**/*.crt` walks every Pod's volume subtree. The static prefix before any `*`/`?`/`[`/`**` is what gets mounted from the host, so a recursive pattern still binds the smallest containing directory rather than the whole filesystem.\ntype: array\nitems: {type: string}",
-          "items": {},
-          "type": "array"
-        },
-        "watchFiles": {
-          "description": "[SEE README] List of file paths of the host for PEM encoded certificates to be watched and exported as metrics (one level deep)\ntype: array\nitems: {type: string}",
-          "items": {},
-          "type": "array"
-        },
-        "watchKubeconfFiles": {
-          "description": "[SEE README] List of Kubeconf file paths of the host to scan for embedded certificates to export metrics about",
-          "items": {},
-          "type": "array"
-        },
-        "watchSpecificExtensionDirectories": {
-          "description": "[SEE README] List of directory paths of the host to scan for specific extension files to be watched and exported as metrics (one level deep)\ntype: array\nitems: {type: string}",
-          "items": {},
-          "type": "array"
         }
-      },
-      "type": "object"
+      }
     },
     "image": {},
     "imagePullSecrets": {
@@ -303,29 +93,10 @@
     "service": {
       "additionalProperties": {},
       "properties": {
-        "annotations": {
-          "additionalProperties": {},
-          "description": "Annotations to add to the Service\ntype: object\nadditionalProperties: {type: string}",
-          "type": "object"
-        },
         "create": {
           "description": "Should a Service be installed, targeting all Deployment and DaemonSet instances (required for ServiceMonitor)"
-        },
-        "extraLabels": {
-          "additionalProperties": {},
-          "description": "Additional labels to add to the Service",
-          "type": "object"
-        },
-        "headless": {
-          "description": "Should the Service be headless (`clusterIP: None`).\ntype: integer\nminimum: 1\nmaximum: 65535",
-          "type": "boolean"
-        },
-        "port": {
-          "description": "TCP port to expose the Service on\ntype: object\nadditionalProperties: {type: string}",
-          "type": "integer"
         }
-      },
-      "type": "object"
+      }
     },
     "web": {},
     "webConfiguration": {

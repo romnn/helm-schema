@@ -56,6 +56,7 @@
     "extraVolumes": {
       "description": "- name: secret-blackbox-oauth-htpasswd\nsecret:\ndefaultMode: 420\nsecretName: blackbox-oauth-htpasswd\n- name: storage-volume\npersistentVolumeClaim:\nclaimName: example"
     },
+    "fullnameOverride": {},
     "global": {},
     "hostAliases": {
       "description": "Hostaliases allow to add additional DNS entries to be injected directly into pods.\nThis will take precedence over your implemented DNS solution\n- ip: 192.168.1.1\nhostNames:\n- test.example.com\n- another.example.net"
@@ -73,6 +74,7 @@
       "description": "Override Kubernetes version if your distribution does not follow semver v2"
     },
     "livenessProbe": {},
+    "nameOverride": {},
     "namespaceOverride": {
       "description": "Override the namespace"
     },
@@ -119,14 +121,40 @@
     },
     "service": {},
     "serviceAccount": {},
-    "serviceMonitor": {},
+    "serviceMonitor": {
+      "additionalProperties": {},
+      "properties": {
+        "enabled": {
+          "description": "If true, a ServiceMonitor CRD is created for a prometheus operator\nhttps://github.com/coreos/prometheus-operator for each target"
+        },
+        "targets": {
+          "description": "- name: example                    # Human readable URL that will appear in Prometheus / AlertManager\nurl: http://example.com/healthz  # The URL that blackbox will scrape\nhostname: example.com            # HTTP probes can accept an additional `hostname` parameter that will set `Host` header and TLS SNI\nlabels: {}                       # Map of labels for ServiceMonitor. Overrides value set in `defaults`\ninterval: 60s                    # Scraping interval. Overrides value set in `defaults`\nscrapeTimeout: 60s               # Scrape timeout. Overrides value set in `defaults`\nmodule: http_2xx                 # Module used for scraping. Overrides value set in `defaults`\nadditionalMetricsRelabels: {}    # Map of metric labels and values to add\nadditionalRelabeling: []         # List of metric relabeling actions to run"
+        }
+      }
+    },
     "strategy": {},
     "tolerations": {},
     "topologySpreadConstraints": {
       "description": "Topology spread constraints rely on node labels to identify the topology domain(s) that each Node is in.\nRef: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/\n- maxSkew: 1\ntopologyKey: failure-domain.beta.kubernetes.io/zone\nwhenUnsatisfiable: DoNotSchedule\nlabelSelector:\nmatchLabels:\napp.kubernetes.io/instance: jiralert"
     },
     "verticalPodAutoscaler": {
-      "description": "Enable vertical pod autoscaler support for prometheus-blackbox-exporter"
+      "additionalProperties": {},
+      "description": "Enable vertical pod autoscaler support for prometheus-blackbox-exporter",
+      "properties": {
+        "controlledResources": {
+          "description": "List of resources that the vertical pod autoscaler can control. Defaults to cpu and memory\nSpecifies which resource values should be controlled: RequestsOnly or RequestsAndLimits.\ncontrolledValues: RequestsAndLimits"
+        },
+        "controlledValues": {},
+        "enabled": {},
+        "maxAllowed": {
+          "description": "Define the max allowed resources for the pod"
+        },
+        "minAllowed": {
+          "description": "cpu: 200m\nmemory: 100Mi\nDefine the min allowed resources for the pod\ncpu: 200m\nmemory: 100Mi"
+        },
+        "recommenders": {},
+        "updatePolicy": {}
+      }
     }
   },
   "type": "object"

@@ -1333,7 +1333,38 @@
       "additionalProperties": {},
       "description": "Prometheus ServiceMonitor configuration",
       "properties": {
-        "enabled": {}
+        "additionalLabels": {
+          "description": "Additional labels to add to the ServiceMonitor"
+        },
+        "annotations": {
+          "description": "Additional annotations to add to the ServiceMonitor"
+        },
+        "basicAuth": {},
+        "enabled": {},
+        "interval": {
+          "description": "Scrape interval. If not set, the Prometheus default scrape interval is used."
+        },
+        "metricRelabelings": {
+          "description": "Prometheus [MetricRelabelConfigs] to apply to samples before ingestion"
+        },
+        "namespace": {
+          "description": "Namespace where the ServiceMonitor resource should be created, default is\nthe same as the release namespace"
+        },
+        "relabelings": {
+          "description": "Prometheus [RelabelConfigs] to apply to samples before scraping"
+        },
+        "scheme": {
+          "description": "Scheme to use when scraping, e.g. http (default) or https."
+        },
+        "scrapeTimeout": {
+          "description": "Timeout if metrics can't be retrieved in given time interval"
+        },
+        "selector": {
+          "description": "Prometheus ServiceMonitor selector, only select Prometheus's with these\nlabels (if not set, select any Prometheus)"
+        },
+        "tlsConfig": {
+          "description": "TLS configuration to use when scraping, only applicable for scheme https."
+        }
       }
     },
     "strategy": {},

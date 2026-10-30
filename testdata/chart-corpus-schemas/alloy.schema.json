@@ -1069,11 +1069,6 @@
     "controller": {
       "additionalProperties": {},
       "properties": {
-        "affinity": {
-          "additionalProperties": {},
-          "description": "Affinity configuration for pods.",
-          "type": "object"
-        },
         "autoscaling": {
           "additionalProperties": {},
           "properties": {
@@ -1094,98 +1089,23 @@
             }
           }
         },
-        "dnsPolicy": {
-          "description": "Configures the DNS policy for the pod. https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy",
-          "type": "string"
-        },
-        "enableStatefulSetAutoDeletePVC": {
-          "description": "Whether to enable automatic deletion of stale PVCs due to a scale down operation, when controller.type is 'statefulset'.",
-          "type": "boolean"
-        },
         "extraAnnotations": {
           "description": "Annotations to add to controller."
-        },
-        "extraContainers": {
-          "description": "Additional containers to run alongside the Alloy container and initContainers.",
-          "items": {},
-          "type": "array"
         },
         "extraLabels": {
           "description": "Extra labels to add to the controller."
         },
-        "hostNetwork": {
-          "description": "Configures Pods to use the host network. When set to true, the ports that will be used must be specified.",
-          "type": "boolean"
-        },
-        "hostPID": {
-          "description": "Configures Pods to use the host PID namespace.",
-          "type": "boolean"
-        },
-        "initContainers": {
-          "description": "Additional init containers to run.\nref: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/",
-          "items": {},
-          "type": "array"
-        },
         "minReadySeconds": {
           "description": "How many additional seconds to wait before considering a pod ready."
         },
-        "nodeSelector": {
-          "additionalProperties": {},
-          "description": "nodeSelector to apply to Grafana Alloy pods.",
-          "type": "object"
-        },
         "parallelRollout": {
           "description": "Whether to deploy pods in parallel. Only used when controller.type is\n'statefulset'."
-        },
-        "podAnnotations": {
-          "additionalProperties": {},
-          "description": "Extra pod annotations to add.",
-          "type": "object"
-        },
-        "podDisruptionBudget": {
-          "additionalProperties": {},
-          "description": "PodDisruptionBudget configuration.",
-          "properties": {
-            "enabled": {
-              "description": "Whether to create a PodDisruptionBudget for the controller.",
-              "type": "boolean"
-            },
-            "maxUnavailable": {
-              "description": "Maximum number of pods that can be unavailable during a disruption.\nNote: Only one of minAvailable or maxUnavailable should be set."
-            },
-            "minAvailable": {
-              "description": "Minimum number of pods that must be available during a disruption.\nNote: Only one of minAvailable or maxUnavailable should be set."
-            }
-          },
-          "type": "object"
-        },
-        "podLabels": {
-          "additionalProperties": {},
-          "description": "Extra pod labels to add.",
-          "type": "object"
-        },
-        "priorityClassName": {
-          "description": "priorityClassName to apply to Grafana Alloy pods.",
-          "type": "string"
         },
         "replicas": {
           "description": "Number of pods to deploy. Ignored when controller.type is 'daemonset'."
         },
         "revisionHistoryLimit": {
           "description": "The maximum number of revisions that will be maintained in the Controllers's revision history. The history consists of all revisions not represented by a currently applied reversion."
-        },
-        "terminationGracePeriodSeconds": {
-          "description": "Termination grace period in seconds for the Grafana Alloy pods.\nThe default value used by Kubernetes if unspecifed is 30 seconds."
-        },
-        "tolerations": {
-          "description": "Tolerations to apply to Grafana Alloy pods.",
-          "items": {},
-          "type": "array"
-        },
-        "topologySpreadConstraints": {
-          "description": "Topology Spread Constraints to apply to Grafana Alloy pods.",
-          "items": {},
-          "type": "array"
         },
         "type": {
           "anyOf": [
@@ -1202,27 +1122,6 @@
             }
           ],
           "description": "Type of controller to use for deploying Grafana Alloy in the cluster.\nMust be one of 'daemonset', 'deployment', or 'statefulset'."
-        },
-        "updateStrategy": {
-          "additionalProperties": {},
-          "description": "Update strategy for updating deployed Pods.",
-          "type": "object"
-        },
-        "volumeClaimTemplates": {
-          "description": "volumeClaimTemplates to add when controller.type is 'statefulset'.",
-          "items": {},
-          "type": "array"
-        },
-        "volumes": {
-          "additionalProperties": {},
-          "properties": {
-            "extra": {
-              "description": "Extra volumes to add to the Grafana Alloy pod.",
-              "items": {},
-              "type": "array"
-            }
-          },
-          "type": "object"
         }
       },
       "type": "object"

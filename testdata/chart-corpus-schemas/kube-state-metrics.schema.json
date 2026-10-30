@@ -47,6 +47,7 @@
     "extraManifests": {
       "description": "Extra manifests to deploy as an array\n- apiVersion: v1\nkind: ConfigMap\nmetadata:\nlabels:\nname: prometheus-extra\ndata:\nextra-data: \"value\""
     },
+    "fullnameOverride": {},
     "global": {},
     "hostNetwork": {},
     "hostUsers": {
@@ -83,6 +84,7 @@
     "metricLabelsAllowlist": {
       "description": "Comma-separated list of additional Kubernetes label keys that will be used in the resource's\nlabels metric. By default the metric contains only name and namespace labels.\nTo include additional labels, provide a list of resource names in their plural form and Kubernetes\nlabel keys you would like to allow for them (Example: '=namespaces=[k8s-label-1,k8s-label-n,...],pods=[app],...)'.\nA single '*' can be provided per resource instead to allow any labels, but that has\nsevere performance implications (Example: '=pods=[*]').\n- namespaces=[k8s-label-1,k8s-label-n]"
     },
+    "nameOverride": {},
     "namespaceOverride": {
       "description": "Override the deployment namespace"
     },
@@ -147,7 +149,11 @@
       "description": "Topology spread constraints for pod assignment\nRef: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/"
     },
     "verticalPodAutoscaler": {
-      "description": "Enable vertical pod autoscaler support for kube-state-metrics"
+      "additionalProperties": {},
+      "description": "Enable vertical pod autoscaler support for kube-state-metrics",
+      "properties": {
+        "enabled": {}
+      }
     },
     "volumeMounts": {
       "description": "volumeMounts are used to add custom volume mounts to deployment.\nSee example below\n- mountPath: /etc/config\nname: config-volume"

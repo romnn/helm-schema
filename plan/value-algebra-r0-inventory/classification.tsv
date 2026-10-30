@@ -895,3 +895,6 @@ field:value/mod.rs:Arena.exported_paths	K	pure exported path predicate memo	aren
 field:value/query.rs:PathPredicateCache.active	K	weak active-vector identity cache key	weak ownership prevents stale cache hits and retains no execution handles	keep		E/F performance cache audit, 2026-10-30	""
 field:value/query.rs:PathPredicateCache.predicate	K	cached exported active-path predicate	pure immutable projection; runtime guard checks retain their original execution order	keep		E/F performance cache audit, 2026-10-30	""
 field:value/mod.rs:ExecutedSite.raw_format_inputs	O	executed observation ExecutedSite.raw_format_inputs	in-walk immutable read/text/site observations	keep		R3b construction root audit, 2026-10-26	
+field:analysis_db.rs:ParsedDefinesInner.template_charts	D	frozen chart instance owning each registered template	chart-local Helm root receiver installation	keep		typed Helm host catalog audit, 2026-10-30	""
+variant:value/mod.rs:SequenceStorage::Interfaces	R	immutable interface slice backing values	canonical runtime sequence storage	keep		typed Helm byte slice audit, 2026-10-30	""
+variant:value/mod.rs:SequenceStorage::Bytes	R	immutable bytes with a lazy scalar projection	canonical runtime sequence storage	keep		typed Helm byte slice audit, 2026-10-30	""

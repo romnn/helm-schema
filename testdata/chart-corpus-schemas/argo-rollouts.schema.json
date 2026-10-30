@@ -9765,129 +9765,11 @@
         }
       ],
       "properties": {
-        "affinity": {
-          "additionalProperties": {},
-          "description": "Assign custom [affinity] rules to the deployment",
-          "type": "object"
-        },
         "component": {
           "description": "Value of label `app.kubernetes.io/component`"
         },
-        "containerSecurityContext": {
-          "additionalProperties": {},
-          "description": "Security Context to set on container level",
-          "type": "object"
-        },
-        "createClusterRole": {
-          "description": "flag to enable creation of dashbord cluster role (requires cluster RBAC)",
-          "type": "boolean"
-        },
-        "deploymentAnnotations": {
-          "additionalProperties": {},
-          "description": "Annotations to be added to the dashboard deployment",
-          "type": "object"
-        },
-        "deploymentLabels": {
-          "additionalProperties": {},
-          "description": "Labels to be added to the dashboard deployment",
-          "type": "object"
-        },
         "enabled": {
           "description": "Deploy dashboard server"
-        },
-        "extraArgs": {
-          "description": "Additional command line arguments to pass to rollouts-dashboard. A list of flags.",
-          "items": {},
-          "type": "array"
-        },
-        "extraEnv": {
-          "description": "Additional environment variables for rollouts-dashboard. A list of name/value maps.\n- name: FOO\nvalue: bar",
-          "items": {},
-          "type": "array"
-        },
-        "httproute": {
-          "additionalProperties": {},
-          "description": "HTTPRoute configuration (Gateway API).\nref: https://gateway-api.sigs.k8s.io/api-types/httproute/",
-          "properties": {
-            "annotations": {
-              "additionalProperties": {},
-              "description": "Additional HTTPRoute annotations",
-              "type": "object"
-            },
-            "enabled": {
-              "description": "Enable HTTPRoute resource for the dashboard (Gateway API)",
-              "type": "boolean"
-            },
-            "hostnames": {
-              "description": "List of hostnames for the HTTPRoute\n- argorollouts.example.com",
-              "items": {},
-              "type": "array"
-            },
-            "labels": {
-              "additionalProperties": {},
-              "description": "Additional HTTPRoute labels",
-              "type": "object"
-            },
-            "parentRefs": {
-              "description": "Gateway API parentRefs for the HTTPRoute\nMust reference an existing Gateway\n- name: example-gateway\nnamespace: example-gateway-namespace\nsectionName: https",
-              "items": {},
-              "type": "array"
-            },
-            "rules": {
-              "description": "HTTPRoute rules configuration",
-              "items": {
-                "additionalProperties": {},
-                "properties": {
-                  "matches": {
-                    "items": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "path": {
-                          "additionalProperties": {},
-                          "properties": {
-                            "type": {
-                              "type": "string"
-                            },
-                            "value": {
-                              "type": "string"
-                            }
-                          },
-                          "type": "object"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  }
-                },
-                "type": "object"
-              },
-              "type": "array"
-            }
-          },
-          "type": "object"
-        },
-        "image": {
-          "additionalProperties": {},
-          "properties": {
-            "pullPolicy": {
-              "description": "Image pull policy",
-              "type": "string"
-            },
-            "registry": {
-              "description": "Registry to use",
-              "type": "string"
-            },
-            "repository": {
-              "description": "Repository to use",
-              "type": "string"
-            },
-            "tag": {
-              "description": "Overrides the image tag (default is the chart appVersion)",
-              "type": "string"
-            }
-          },
-          "type": "object"
         },
         "ingress": {
           "additionalProperties": {},
@@ -9911,25 +9793,6 @@
             }
           }
         },
-        "logging": {
-          "additionalProperties": {},
-          "properties": {
-            "kloglevel": {
-              "description": "Set the klog logging level",
-              "type": "string"
-            },
-            "level": {
-              "description": "Set the logging level (one of: `debug`, `info`, `warn`, `error`)",
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
-        "nodeSelector": {
-          "additionalProperties": {},
-          "description": "[Node selector]",
-          "type": "object"
-        },
         "pdb": {
           "additionalProperties": {},
           "description": "Configure Pod Disruption Budget for the dashboard",
@@ -9950,47 +9813,6 @@
               "description": "Minimum number / percentage of pods that should remain scheduled\n1"
             }
           }
-        },
-        "podAnnotations": {
-          "additionalProperties": {},
-          "description": "Annotations to be added to application dashboard pods",
-          "type": "object"
-        },
-        "podLabels": {
-          "additionalProperties": {},
-          "description": "Labels to be added to the application dashboard pods",
-          "type": "object"
-        },
-        "podSecurityContext": {
-          "additionalProperties": {},
-          "description": "Security Context to set on pod level",
-          "properties": {
-            "runAsNonRoot": {
-              "type": "boolean"
-            }
-          },
-          "type": "object"
-        },
-        "priorityClassName": {
-          "description": "[priorityClassName] for the dashboard server",
-          "type": "string"
-        },
-        "readonly": {
-          "description": "Set cluster role to readonly",
-          "type": "boolean"
-        },
-        "replicas": {
-          "description": "The number of dashboard pods to run",
-          "type": "integer"
-        },
-        "resources": {
-          "additionalProperties": {},
-          "description": "Resource limits and requests for the dashboard pods.",
-          "type": "object"
-        },
-        "rootPath": {
-          "description": "Set the root path of the dashboard (e.g. `/rollouts`). Useful when running behind a reverse proxy with a path prefix.",
-          "type": "string"
         },
         "service": {
           "additionalProperties": {},
@@ -10037,26 +9859,6 @@
               "description": "Specifies whether a dashboard service account should be created"
             }
           }
-        },
-        "tolerations": {
-          "description": "[Tolerations] for use with node taints",
-          "items": {},
-          "type": "array"
-        },
-        "topologySpreadConstraints": {
-          "description": "Assign custom [TopologySpreadConstraints] rules to the dashboard server\nRef: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/\nIf labelSelector is left out, it will default to the labelSelector configuration of the deployment\n- maxSkew: 1\ntopologyKey: topology.kubernetes.io/zone\nwhenUnsatisfiable: DoNotSchedule",
-          "items": {},
-          "type": "array"
-        },
-        "volumeMounts": {
-          "description": "Additional volumeMounts to add to the dashboard container",
-          "items": {},
-          "type": "array"
-        },
-        "volumes": {
-          "description": "Additional volumes to add to the dashboard pod",
-          "items": {},
-          "type": "array"
         }
       },
       "type": "object"

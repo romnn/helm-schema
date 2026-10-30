@@ -160,9 +160,17 @@
     },
     "image": {},
     "imagePullSecrets": {
-      "description": "The imagePullSecret names to add to the Crossplane ServiceAccount.",
-      "items": {},
-      "type": "array"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        }
+      ],
+      "description": "The imagePullSecret names to add to the Crossplane ServiceAccount."
     },
     "leaderElection": {
       "description": "Enable [leader election](https://docs.crossplane.io/latest/guides/pods/#leader-election) for the Crossplane pod."
@@ -209,10 +217,6 @@
         },
         "customAnnotations": {
           "description": "Add custom `annotations` to the Crossplane ServiceAccount."
-        },
-        "name": {
-          "description": "Provide the name of an already created Crossplane ServiceAccount. Required when `serviceAccount.create` is `false`",
-          "type": "string"
         }
       },
       "type": "object"

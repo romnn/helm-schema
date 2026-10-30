@@ -1919,12 +1919,31 @@ fn json_sequence(
     depth: usize,
     query: &mut JsonQuery<'_>,
 ) -> Option<serde_json::Value> {
-    if sequence.storage.is_none() {
+    if sequence
+        .storage
+        .as_ref()
+        .is_none_or(|storage| storage.is_nil())
+    {
         return Some(if query.preserve_nil_collections {
             serde_json::Value::Array(Vec::new())
         } else {
             serde_json::Value::Null
         });
+    }
+    if sequence
+        .storage
+        .as_ref()
+        .is_some_and(|storage| storage.is_bytes())
+        && !query.preserve_nil_collections
+    {
+        use base64::Engine as _;
+        let bytes = super::hosts::sequence_bytes(sequence)?;
+        if let Some(remaining) = query.remaining.as_mut() {
+            **remaining = remaining.checked_sub(bytes.len())?;
+        }
+        return Some(serde_json::Value::String(
+            base64::engine::general_purpose::STANDARD.encode(bytes),
+        ));
     }
     Some(serde_json::Value::Array(
         sequence

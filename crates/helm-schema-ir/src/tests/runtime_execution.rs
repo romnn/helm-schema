@@ -11,6 +11,8 @@ use test_util::prelude::sim_assert_eq;
 
 #[path = "runtime_constructors.rs"]
 mod constructor_laws;
+#[path = "runtime_helm_hosts.rs"]
+mod host_laws;
 #[path = "runtime_ranges.rs"]
 mod range_laws;
 #[path = "runtime_reconvergence.rs"]

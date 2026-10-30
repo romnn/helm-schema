@@ -584,29 +584,29 @@
         }
       ]
     },
-    "values/collectors.containerEngine.engines.bpm": {
-      "additionalProperties": {},
-      "properties": {
-        "enabled": {
-          "type": "boolean"
-        }
-      },
-      "type": "object"
+    "values/falco-talon.serviceMonitor.enabled": {
+      "description": "enable the deployment of a Service Monitor for the Prometheus Operator."
     },
-    "values/collectors.containerEngine.engines.containerd": {
-      "additionalProperties": {},
-      "properties": {
-        "enabled": {
-          "type": "boolean"
-        },
-        "sockets": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        }
-      },
-      "type": "object"
+    "values/falcosidekick.config.alertmanager.checkcert": {
+      "description": "check if ssl certificate of the output is valid"
+    },
+    "values/falcosidekick.config.alertmanager.minimumpriority": {
+      "description": "minimum priority of event to use this output, order is `emergency\\|alert\\|critical\\|error\\|warning\\|notice\\|informational\\|debug or \"\"`"
+    },
+    "values/falcosidekick.config.alertmanager.mutualtls": {
+      "description": "if true, checkcert flag will be ignored (server cert will always be checked)"
+    },
+    "values/falcosidekick.config.dynatrace.minimumpriority": {
+      "description": "minimum priority of event for using this output, order is emergency|alert|critical|error|warning|notice|informational|debug or \"\""
+    },
+    "values/falcosidekick.config.elasticsearch.customheaders": {
+      "description": "a list of comma separated custom headers to add, syntax is \"key:value,key:value\""
+    },
+    "values/falcosidekick.config.loki.extralabels": {
+      "description": "comma separated list of fields to use as labels additionally to rule, source, priority, tags and custom_fields"
+    },
+    "values/falcosidekick.config.nats.subjecttemplate": {
+      "description": "template for the subject, tokens <priority> and <rule> will be automatically replaced (default: falco.<priority>.<rule>)"
     },
     "values/k8s-metacollector.healthChecks.livenessProbe.httpGet.path": {
       "description": "path is the specific endpoint on which the HTTP GET request will be made.",
@@ -1086,101 +1086,18 @@
       "additionalProperties": {},
       "description": "Collectors for data enrichment (scenario requirement)",
       "properties": {
-        "containerEngine": {
-          "additionalProperties": {},
-          "description": "This collector is designed to collect metadata from various container engines and provide a unified interface through the container plugin.\nWhen enabled, it will deploy the container plugin and use it to collect metadata from the container engines.\nKeep in mind that the old collectors (docker, containerd, crio, podman) will use the container plugin to collect metadata under the hood.",
-          "properties": {
-            "enabled": {
-              "description": "Enable Container Engine support.",
-              "type": "boolean"
-            },
-            "engines": {
-              "additionalProperties": {},
-              "description": "engines specify the container engines that will be used to collect metadata.\nSee https://github.com/falcosecurity/plugins/blob/main/plugins/container/README.md#configuration",
-              "properties": {
-                "bpm": {
-                  "$ref": "#/$defs/values~1collectors.containerEngine.engines.bpm"
-                },
-                "containerd": {
-                  "$ref": "#/$defs/values~1collectors.containerEngine.engines.containerd"
-                },
-                "cri": {
-                  "$ref": "#/$defs/values~1collectors.containerEngine.engines.containerd"
-                },
-                "docker": {
-                  "$ref": "#/$defs/values~1collectors.containerEngine.engines.containerd"
-                },
-                "libvirt_lxc": {
-                  "$ref": "#/$defs/values~1collectors.containerEngine.engines.bpm"
-                },
-                "lxc": {
-                  "$ref": "#/$defs/values~1collectors.containerEngine.engines.bpm"
-                },
-                "podman": {
-                  "$ref": "#/$defs/values~1collectors.containerEngine.engines.containerd"
-                }
-              },
-              "type": "object"
-            },
-            "hooks": {
-              "description": "hooks specify the hooks that will be used to collect metadata from the container engine.\nThe available hooks are: create, start.\nSome fields might not be available in create hook, but we are guaranteed that it gets triggered before first process gets started.",
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            "labelMaxLen": {
-              "description": "labelMaxLen is the maximum length of the labels that can be used in the container plugin.\ncontainer labels larger than this value won't be collected.",
-              "type": "integer"
-            },
-            "pluginRef": {
-              "description": "pluginRef is the OCI reference for the container plugin. It could be a full reference such as\n\"ghcr.io/falcosecurity/plugins/plugin/container:0.7.1\". Or just name + tag: container:0.7.1.",
-              "type": "string"
-            },
-            "withSize": {
-              "description": "withSize specifies whether to enable container size inspection, which is inherently slow.",
-              "type": "boolean"
-            }
-          },
-          "type": "object"
-        },
-        "enabled": {
-          "description": "Enable/disable all the metadata collectors.",
-          "type": "boolean"
-        },
         "kubernetes": {
           "additionalProperties": {},
           "description": "kubernetes holds the configuration for the kubernetes collector. Starting from version 0.37.0 of Falco, the legacy\nkubernetes client has been removed. A new standalone component named k8s-metacollector and a Falco plugin have been developed\nto solve the issues that were present in the old implementation. More info here: https://github.com/falcosecurity/falco/issues/2973",
           "properties": {
-            "collectorHostname": {
-              "description": "collectorHostname is the address of the k8s-metacollector. When not specified it will be set to match\nk8s-metacollector service. e.x: falco-k8smetacollecto.falco.svc. If for any reason you need to override\nit, make sure to set here the address of the k8s-metacollector.\nIt is used by the k8smeta plugin to connect to the k8s-metacollector.",
-              "type": "string"
-            },
-            "collectorPort": {
-              "description": "collectorPort designates the port on which the k8s-metacollector gRPC service listens. If not specified\nthe value of the port named `broker-grpc` in k8s-metacollector.service.ports is used. The default values is 45000.\nIt is used by the k8smeta plugin to connect to the k8s-metacollector.",
-              "type": "string"
-            },
             "enabled": {
               "description": "enabled specifies whether the Kubernetes metadata should be collected using the k8smeta plugin and the k8s-metacollector component.\nIt will deploy the k8s-metacollector external component that fetches Kubernetes metadata and pushes them to Falco instances.\nFor more info see:\nhttps://github.com/falcosecurity/k8s-metacollector\nhttps://github.com/falcosecurity/charts/tree/master/charts/k8s-metacollector\nWhen this option is disabled, Falco falls back to the container annotations to grab the metadata.\nIn such a case, only the ID, name, namespace, labels of the pod will be available.",
               "type": "boolean"
-            },
-            "hostProc": {
-              "description": "The plugin needs to scan the '/proc' of the host on which is running.\nIn Falco usually we put the host '/proc' folder under '/host/proc' so\nthe default for this config is '/host'.\nThe path used here must not have a final '/'.\nDeprecated since falco 0.41.0 and k8smeta 0.3.0.",
-              "type": "string"
-            },
-            "pluginRef": {
-              "description": "--pluginRef is the OCI reference for the k8smeta plugin. It could be a full reference such as:\n\"ghcr.io/falcosecurity/plugins/plugin/k8smeta:0.4.1\". Or just name + tag: k8smeta:0.4.1.",
-              "type": "string"
-            },
-            "verbosity": {
-              "description": "verbosity level for the plugin logger: trace, debug, info, warning, error, critical.",
-              "type": "string"
             }
           },
           "type": "object"
         }
-      },
-      "type": "object"
+      }
     },
     "containerSecurityContext": {
       "description": "Set securityContext for the Falco container.For more info see the \"falco.securityContext\" helper in \"pod-template.tpl\""
@@ -1271,7 +1188,7 @@
               "description": "additionalLabels specifies labels to be added on the Service Monitor."
             },
             "enabled": {
-              "description": "enable the deployment of a Service Monitor for the Prometheus Operator."
+              "$ref": "#/$defs/values~1falco-talon.serviceMonitor.enabled"
             },
             "interval": {
               "description": "interval specifies the time interval at which Prometheus should scrape metrics from the service."
@@ -1308,9 +1225,1639 @@
       "description": "falcoctl config  #"
     },
     "falcosidekick": {
+      "additionalProperties": {},
       "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
       "properties": {
-        "global": {}
+        "config": {
+          "additionalProperties": {},
+          "properties": {
+            "alertmanager": {
+              "additionalProperties": {},
+              "properties": {
+                "checkcert": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.checkcert"
+                },
+                "customseveritymap": {
+                  "description": "comma separated list of tuple composed of a ':' separated Falco priority and Alertmanager severity that is used to override the severity label associated to the priority level of falco event. Example: debug:value_1,critical:value2. Default mapping: emergency:critical,alert:critical,critical:critical,error:warning,warning:warning,notice:information,informational:information,debug:information."
+                },
+                "dropeventdefaultpriority": {
+                  "description": "default priority of dropped events, values are emergency|alert|critical|error|warning|notice|informational|debug"
+                },
+                "dropeventthresholds": {
+                  "description": "comma separated list of priority re-evaluation thresholds of dropped events composed of a ':' separated integer threshold and string priority. Example: `10000:critical, 100:warning, 1:informational`"
+                },
+                "endpoint": {
+                  "description": "alertmanager endpoint on which falcosidekick posts alerts, choice is: `\"/api/v1/alerts\" or \"/api/v2/alerts\" , default is \"/api/v1/alerts\"`"
+                },
+                "expireafter": {
+                  "description": "if set to a non-zero value, alert expires after that time in seconds (default: 0)"
+                },
+                "extraannotations": {
+                  "description": "comma separated list of annotations composed of a ':' separated name and value that is added to the Alerts. Example: my_annotation_1:my_value_1, my_annotation_1:my_value_2"
+                },
+                "extralabels": {
+                  "description": "comma separated list of labels composed of a ':' separated name and value that is added to the Alerts. Example: my_label_1:my_value_1, my_label_1:my_value_2"
+                },
+                "hostport": {
+                  "description": "Comma separated list of http://{domain or ip}:{port} that will all receive the payload, if not empty, Alertmanager output is enabled"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                },
+                "mutualtls": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.mutualtls"
+                }
+              },
+              "type": "object"
+            },
+            "aws": {
+              "additionalProperties": {},
+              "properties": {
+                "accesskeyid": {
+                  "description": "AWS Access Key Id (optionnal if you use EC2 Instance Profile)"
+                },
+                "checkidentity": {
+                  "description": "check the identity credentials, set to false for locale developments"
+                },
+                "cloudwatchlogs": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "loggroup": {
+                      "description": "AWS CloudWatch Logs Group name, if not empty, CloudWatch Logs output is *enabled*"
+                    },
+                    "logstream": {
+                      "description": "AWS CloudWatch Logs Stream name, if empty, Falcosidekick will try to create a log stream"
+                    },
+                    "minimumpriority": {
+                      "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                    }
+                  },
+                  "type": "object"
+                },
+                "externalid": {
+                  "description": "External id for the role to assume (optional if you use EC2 Instance Profile)"
+                },
+                "kinesis": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "minimumpriority": {
+                      "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                    },
+                    "streamname": {
+                      "description": "AWS Kinesis Stream Name, if not empty, Kinesis output is *enabled*"
+                    }
+                  },
+                  "type": "object"
+                },
+                "lambda": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "functionname": {
+                      "description": "AWS Lambda Function Name, if not empty, AWS Lambda output is *enabled*"
+                    },
+                    "minimumpriority": {
+                      "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                    }
+                  },
+                  "type": "object"
+                },
+                "region": {
+                  "description": "AWS Region (optionnal if you use EC2 Instance Profile)"
+                },
+                "rolearn": {
+                  "description": "AWS IAM role ARN for falcosidekick service account to associate with (optionnal if you use EC2 Instance Profile)"
+                },
+                "s3": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "bucket": {
+                      "description": "AWS S3, bucket name"
+                    },
+                    "endpoint": {
+                      "description": "Endpoint URL that overrides the default generated endpoint, use this for S3 compatible APIs"
+                    },
+                    "minimumpriority": {
+                      "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                    },
+                    "objectcannedacl": {
+                      "description": "Canned ACL (x-amz-acl) to use when creating the object"
+                    },
+                    "prefix": {
+                      "description": "AWS S3, name of prefix, keys will have format: s3://<bucket>/<prefix>/YYYY-MM-DD/YYYY-MM-DDTHH:mm:ss.s+01:00.json"
+                    }
+                  },
+                  "type": "object"
+                },
+                "secretaccesskey": {
+                  "description": "AWS Secret Access Key (optionnal if you use EC2 Instance Profile)"
+                },
+                "securitylake": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "accountid": {
+                      "description": "Account ID"
+                    },
+                    "batchsize": {
+                      "description": "Max number of events by parquet file"
+                    },
+                    "bucket": {
+                      "description": "Bucket for AWS SecurityLake data, if not empty, AWS SecurityLake output is enabled"
+                    },
+                    "interval": {
+                      "description": "Time in minutes between two puts to S3 (must be between 5 and 60min)"
+                    },
+                    "minimumpriority": {
+                      "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                    },
+                    "prefix": {
+                      "description": "Prefix for keys"
+                    },
+                    "region": {
+                      "description": "Bucket Region"
+                    }
+                  },
+                  "type": "object"
+                },
+                "sns": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "minimumpriority": {
+                      "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                    },
+                    "rawjson": {
+                      "description": "Send RawJSON from `falco` or parse it to AWS SNS"
+                    },
+                    "topicarn": {
+                      "description": "AWS SNS TopicARN, if not empty, AWS SNS output is *enabled*"
+                    }
+                  },
+                  "type": "object"
+                },
+                "sqs": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "minimumpriority": {
+                      "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                    },
+                    "url": {
+                      "description": "AWS SQS Queue URL, if not empty, AWS SQS output is *enabled*"
+                    }
+                  },
+                  "type": "object"
+                },
+                "useirsa": {
+                  "description": "Use IRSA, if true, the rolearn value will be used to set the ServiceAccount annotations and not the env var"
+                }
+              },
+              "type": "object"
+            },
+            "azure": {
+              "additionalProperties": {},
+              "properties": {
+                "eventHub": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "minimumpriority": {
+                      "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                    },
+                    "name": {
+                      "description": "Name of the Hub, if not empty, EventHub is *enabled*"
+                    },
+                    "namespace": {
+                      "description": "Name of the space the Hub is in"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "cliq": {
+              "additionalProperties": {},
+              "properties": {
+                "icon": {
+                  "description": "Cliq icon (avatar)"
+                },
+                "messageformat": {
+                  "description": "a Go template to format Google Chat Text above Attachment, displayed in addition to the output from `cliq.outputformat`. If empty, no Text is displayed before sections."
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                },
+                "outputformat": {
+                  "description": "`all` (default), `text` (only text is displayed in Cliq), `fields` (only fields are displayed in Cliq)"
+                },
+                "useemoji": {
+                  "description": "Prefix message text with an emoji"
+                },
+                "webhookurl": {
+                  "description": "Zoho Cliq Channel URL (ex: <https://cliq.zoho.eu/api/v2/channelsbyname/XXXX/message?zapikey=YYYY>), if not empty, Cliq Chat output is *enabled*"
+                }
+              },
+              "type": "object"
+            },
+            "cloudevents": {
+              "additionalProperties": {},
+              "properties": {
+                "address": {
+                  "description": "CloudEvents consumer http address, if not empty, CloudEvents output is *enabled*"
+                },
+                "extension": {
+                  "description": "Extensions to add in the outbound Event, useful for routing"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                }
+              },
+              "type": "object"
+            },
+            "datadog": {
+              "additionalProperties": {},
+              "properties": {
+                "apikey": {
+                  "description": "Datadog API Key, if not `empty`, Datadog output is *enabled*"
+                },
+                "host": {
+                  "description": "Datadog host. Override if you are on the Datadog EU site. Defaults to american site with \"<https://api.datadoghq.com>\""
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                }
+              },
+              "type": "object"
+            },
+            "datadoglogs": {
+              "additionalProperties": {},
+              "properties": {
+                "apikey": {
+                  "description": "Datadog API Key, if not empty, Datadog Logs output is enabled"
+                },
+                "host": {
+                  "description": "Datadog host. Override if you are on the Datadog EU site. Defaults to american site with \"https://http-intake.logs.datadoghq.com/\""
+                },
+                "minimumpriority": {
+                  "description": "minimum priority of event for using this output, order is emergency|alert|critical|error|warning|notice|informational|debug or \"\" (default)"
+                },
+                "service": {
+                  "description": "The name of the application or service generating the log events."
+                }
+              },
+              "type": "object"
+            },
+            "discord": {
+              "additionalProperties": {},
+              "properties": {
+                "icon": {
+                  "description": "Discord icon (avatar)"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                },
+                "webhookurl": {
+                  "description": "Discord WebhookURL (ex: <https://discord.com/api/webhooks/xxxxxxxxxx>...), if not empty, Discord output is *enabled*"
+                }
+              },
+              "type": "object"
+            },
+            "dogstatsd": {
+              "additionalProperties": {},
+              "properties": {
+                "forwarder": {
+                  "description": "The address for the DogStatsD forwarder, in the form <http://host:port>, if not empty DogStatsD is *enabled*"
+                },
+                "namespace": {
+                  "description": "A prefix for all metrics"
+                },
+                "tags": {
+                  "description": "A comma-separated list of tags to add to all metrics"
+                }
+              },
+              "type": "object"
+            },
+            "dynatrace": {
+              "additionalProperties": {},
+              "properties": {
+                "apitoken": {
+                  "description": "Dynatrace API token with the \"logs.ingest\" scope, more info : https://dt-url.net/8543sda, if not empty, Dynatrace output is enabled"
+                },
+                "apiurl": {
+                  "description": "Dynatrace API url, use https://ENVIRONMENTID.live.dynatrace.com/api for Dynatrace SaaS and https://YOURDOMAIN/e/ENVIRONMENTID/api for Dynatrace Managed, more info : https://dt-url.net/ej43qge"
+                },
+                "checkcert": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.checkcert"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.dynatrace.minimumpriority"
+                }
+              },
+              "type": "object"
+            },
+            "elasticsearch": {
+              "additionalProperties": {},
+              "properties": {
+                "apikey": {
+                  "description": "Use this APIKey to authenticate to Elasticsearch if the APIKey is not empty (default: \"\")"
+                },
+                "batching": {
+                  "additionalProperties": {},
+                  "description": "batching configuration, improves throughput dramatically utilizing _bulk Elasticsearch API",
+                  "properties": {
+                    "batchsize": {
+                      "description": "batch size in bytes (default: 5 MB) (use string to avoid the conversion into float64 by helm)"
+                    },
+                    "enabled": {
+                      "description": "if true enables batching"
+                    },
+                    "flushinterval": {
+                      "description": "batch fush interval (default: 1s)"
+                    }
+                  },
+                  "type": "object"
+                },
+                "checkcert": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.checkcert"
+                },
+                "createindextemplate": {
+                  "description": "Create an index template (default: false)"
+                },
+                "customheaders": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.elasticsearch.customheaders"
+                },
+                "enablecompression": {
+                  "description": "if true enables gzip compression for http requests (default: false)"
+                },
+                "flattenfields": {
+                  "description": "Replace . by _ to avoid mapping conflicts, force to true if createindextemplate==true (default: false)"
+                },
+                "hostport": {
+                  "description": "Elasticsearch <http://host:port>, if not `empty`, Elasticsearch is *enabled*"
+                },
+                "index": {
+                  "description": "Elasticsearch index"
+                },
+                "maxconcurrentrequests": {
+                  "description": "max number of concurrent http requests (default: 1)"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                },
+                "mutualtls": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.mutualtls"
+                },
+                "numberofreplicas": {
+                  "description": "Number of replicas set by the index template (default: 3)"
+                },
+                "numberofshards": {
+                  "description": "Number of shards set by the index template (default: 3)"
+                },
+                "password": {
+                  "description": "Use this password to authenticate to Elasticsearch if the password is not empty"
+                },
+                "pipeline": {
+                  "description": "Optional ingest pipeline name"
+                },
+                "suffix": {
+                  "description": "Date suffix for index rotation : daily, monthly, annually, none"
+                },
+                "type": {
+                  "description": "Elasticsearch document type"
+                },
+                "username": {
+                  "description": "Use this username to authenticate to Elasticsearch if the username is not empty"
+                }
+              },
+              "type": "object"
+            },
+            "fission": {
+              "additionalProperties": {},
+              "properties": {
+                "checkcert": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.checkcert"
+                },
+                "function": {
+                  "description": "Name of Fission function, if not empty, Fission is enabled"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                },
+                "mutualtls": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.mutualtls"
+                },
+                "routernamespace": {
+                  "description": "Namespace of Fission Router, \"fission\" (default)"
+                },
+                "routerport": {
+                  "description": "Port of service of Fission Router\nPort of service of Fission Router"
+                },
+                "routerservice": {
+                  "description": "Service of Fission Router, \"router\" (default)"
+                }
+              },
+              "type": "object"
+            },
+            "gcp": {
+              "additionalProperties": {},
+              "properties": {
+                "cloudfunctions": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "minimumpriority": {
+                      "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                    },
+                    "name": {
+                      "description": "The name of the Cloud Function which is in form `projects/<project_id>/locations/<region>/functions/<function_name>`"
+                    }
+                  },
+                  "type": "object"
+                },
+                "cloudrun": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "endpoint": {
+                      "description": "the URL of the Cloud Run function\nthe URL of the Cloud Run function"
+                    },
+                    "jwt": {
+                      "description": "JWT for the private access to Cloud Run function\nJWT for the private access to Cloud Run function"
+                    },
+                    "minimumpriority": {
+                      "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                    }
+                  },
+                  "type": "object"
+                },
+                "credentials": {
+                  "description": "Base64 encoded JSON key file for the GCP service account"
+                },
+                "pubsub": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "customattributes": {
+                      "$ref": "#/$defs/values~1falcosidekick.config.elasticsearch.customheaders"
+                    },
+                    "minimumpriority": {
+                      "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                    },
+                    "projectid": {
+                      "description": "The GCP Project ID containing the Pub/Sub Topic"
+                    },
+                    "topic": {
+                      "description": "Name of the Pub/Sub topic"
+                    }
+                  },
+                  "type": "object"
+                },
+                "storage": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "bucket": {
+                      "description": "The name of the bucket"
+                    },
+                    "minimumpriority": {
+                      "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                    },
+                    "prefix": {
+                      "description": "Name of prefix, keys will have format: gs://<bucket>/<prefix>/YYYY-MM-DD/YYYY-MM-DDTHH:mm:ss.s+01:00.json"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "googlechat": {
+              "additionalProperties": {},
+              "properties": {
+                "messageformat": {
+                  "description": "a Go template to format Google Chat Text above Attachment, displayed in addition to the output from `config.googlechat.outputformat`. If empty, no Text is displayed before Attachment"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                },
+                "outputformat": {
+                  "description": "`all` (default), `text` (only text is displayed in Google chat)"
+                },
+                "webhookurl": {
+                  "description": "Google Chat Webhook URL (ex: <https://chat.googleapis.com/v1/spaces/XXXXXX/YYYYYY>), if not `empty`, Google Chat output is *enabled*"
+                }
+              },
+              "type": "object"
+            },
+            "gotify": {
+              "additionalProperties": {},
+              "properties": {
+                "checkcert": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.checkcert"
+                },
+                "format": {
+                  "description": "Format of the messages (plaintext, markdown, json)"
+                },
+                "hostport": {
+                  "description": "http://{domain or ip}:{port}, if not empty, Gotify output is enabled"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                },
+                "token": {
+                  "description": "API Token"
+                }
+              },
+              "type": "object"
+            },
+            "grafana": {
+              "additionalProperties": {},
+              "properties": {
+                "allfieldsastags": {
+                  "description": "if true, all custom fields are added as tags (default: false)"
+                },
+                "apikey": {
+                  "description": "API Key to authenticate to Grafana, if not empty, Grafana output is *enabled*"
+                },
+                "checkcert": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.checkcert"
+                },
+                "customheaders": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.elasticsearch.customheaders"
+                },
+                "dashboardid": {
+                  "description": "annotations are scoped to a specific dashboard. Optionnal."
+                },
+                "hostport": {
+                  "description": "<http://{domain> or ip}:{port}, if not empty, Grafana output is *enabled*"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                },
+                "mutualtls": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.mutualtls"
+                },
+                "panelid": {
+                  "description": "annotations are scoped to a specific panel. Optionnal."
+                }
+              },
+              "type": "object"
+            },
+            "grafanaoncall": {
+              "additionalProperties": {},
+              "properties": {
+                "checkcert": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.checkcert"
+                },
+                "customheaders": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.elasticsearch.customheaders"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                },
+                "mutualtls": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.mutualtls"
+                },
+                "webhookurl": {
+                  "description": "if not empty, Grafana OnCall output is enabled"
+                }
+              },
+              "type": "object"
+            },
+            "influxdb": {
+              "additionalProperties": {},
+              "properties": {
+                "checkcert": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.checkcert"
+                },
+                "database": {
+                  "description": "Influxdb database"
+                },
+                "hostport": {
+                  "description": "Influxdb <http://host:port>, if not `empty`, Influxdb is *enabled*"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                },
+                "mutualtls": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.mutualtls"
+                },
+                "organization": {
+                  "description": "Influxdb organization"
+                },
+                "password": {
+                  "description": "Password to use if auth is *enabled* in Influxdb"
+                },
+                "precision": {
+                  "description": "write precision"
+                },
+                "token": {
+                  "description": "API token to use if auth in enabled in Influxdb (disables user and password)"
+                },
+                "user": {
+                  "description": "User to use if auth is *enabled* in Influxdb"
+                }
+              },
+              "type": "object"
+            },
+            "kafka": {
+              "additionalProperties": {},
+              "properties": {
+                "async": {
+                  "description": "produce messages without blocking"
+                },
+                "balancer": {
+                  "description": "partition balancing strategy when producing"
+                },
+                "clientid": {
+                  "description": "specify a client.id when communicating with the broker for tracing"
+                },
+                "compression": {
+                  "description": "enable message compression using this algorithm, no compression (GZIP|SNAPPY|LZ4|ZSTD|NONE)"
+                },
+                "hostport": {
+                  "description": "comma separated list of Apache Kafka bootstrap nodes for establishing the initial connection to the cluster (ex: localhost:9092,localhost:9093). Defaults to port 9092 if no port is specified after the domain, if not empty, Kafka output is *enabled*"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                },
+                "password": {
+                  "description": "use this password to authenticate to Kafka via SASL"
+                },
+                "requiredacks": {
+                  "description": "number of acknowledges from partition replicas required before receiving"
+                },
+                "sasl": {
+                  "description": "SASL authentication mechanism, if empty, no authentication (PLAIN|SCRAM_SHA256|SCRAM_SHA512)"
+                },
+                "tls": {
+                  "description": "Use TLS for the connections"
+                },
+                "topic": {
+                  "description": "Name of the topic, if not empty, Kafka output is enabled"
+                },
+                "topiccreation": {
+                  "description": "auto create the topic if it doesn't exist"
+                },
+                "username": {
+                  "description": "use this username to authenticate to Kafka via SASL"
+                }
+              },
+              "type": "object"
+            },
+            "kafkarest": {
+              "additionalProperties": {},
+              "properties": {
+                "address": {
+                  "description": "The full URL to the topic (example \"http://kafkarest:8082/topics/test\")"
+                },
+                "checkcert": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.checkcert"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                },
+                "mutualtls": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.mutualtls"
+                },
+                "version": {
+                  "description": "Kafka Rest Proxy API version 2|1 (default: 2)"
+                }
+              },
+              "type": "object"
+            },
+            "kubeless": {
+              "additionalProperties": {},
+              "properties": {
+                "checkcert": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.checkcert"
+                },
+                "function": {
+                  "description": "Name of Kubeless function, if not empty, EventHub is *enabled*"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                },
+                "mutualtls": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.mutualtls"
+                },
+                "namespace": {
+                  "description": "Namespace of Kubeless function (mandatory)"
+                },
+                "port": {
+                  "description": "Port of service of Kubeless function. Default is `8080`"
+                }
+              },
+              "type": "object"
+            },
+            "loki": {
+              "additionalProperties": {},
+              "properties": {
+                "apikey": {
+                  "description": "API Key for Grafana Logs"
+                },
+                "checkcert": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.checkcert"
+                },
+                "customheaders": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.elasticsearch.customheaders"
+                },
+                "endpoint": {
+                  "description": "Loki endpoint URL path, more info: <https://grafana.com/docs/loki/latest/api/#post-apiprompush>"
+                },
+                "extralabels": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.loki.extralabels"
+                },
+                "format": {
+                  "description": "Format for the log entry value: json, text (default)"
+                },
+                "hostport": {
+                  "description": "Loki <http://host:port>, if not `empty`, Loki is *enabled*"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                },
+                "mutualtls": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.mutualtls"
+                },
+                "tenant": {
+                  "description": "Loki tenant, if not `empty`, Loki tenant is *enabled*"
+                },
+                "user": {
+                  "description": "user for Grafana Logs"
+                }
+              },
+              "type": "object"
+            },
+            "mattermost": {
+              "additionalProperties": {},
+              "properties": {
+                "checkcert": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.checkcert"
+                },
+                "footer": {
+                  "description": "Mattermost Footer"
+                },
+                "icon": {
+                  "description": "Mattermost icon (avatar)"
+                },
+                "messageformat": {
+                  "description": "a Go template to format Mattermost Text above Attachment, displayed in addition to the output from `slack.outputformat`. If empty, no Text is displayed before Attachment"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                },
+                "mutualtls": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.mutualtls"
+                },
+                "outputformat": {
+                  "description": "`all` (default), `text` (only text is displayed in Slack), `fields` (only fields are displayed in Mattermost)"
+                },
+                "username": {
+                  "description": "Mattermost username"
+                },
+                "webhookurl": {
+                  "description": "Mattermost Webhook URL (ex: <https://XXXX/hooks/YYYY>), if not `empty`, Mattermost output is *enabled*"
+                }
+              },
+              "type": "object"
+            },
+            "mqtt": {
+              "additionalProperties": {},
+              "properties": {
+                "broker": {
+                  "description": "Broker address, can start with tcp:// or ssl://, if not empty, MQTT output is enabled"
+                },
+                "checkcert": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.checkcert"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                },
+                "password": {
+                  "description": "Password if the authentication is enabled in the broker"
+                },
+                "qos": {
+                  "description": "QOS for messages"
+                },
+                "retained": {
+                  "description": "If true, messages are retained"
+                },
+                "topic": {
+                  "description": "Topic for messages"
+                },
+                "user": {
+                  "description": "User if the authentication is enabled in the broker"
+                }
+              },
+              "type": "object"
+            },
+            "n8n": {
+              "additionalProperties": {},
+              "properties": {
+                "address": {
+                  "description": "N8N address, if not empty, N8N output is enabled"
+                },
+                "checkcert": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.checkcert"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.dynatrace.minimumpriority"
+                },
+                "password": {
+                  "description": "Password to authenticate with N8N in basic auth"
+                },
+                "user": {
+                  "description": "Username to authenticate with N8N in basic auth"
+                }
+              },
+              "type": "object"
+            },
+            "nats": {
+              "additionalProperties": {},
+              "properties": {
+                "checkcert": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.checkcert"
+                },
+                "hostport": {
+                  "description": "NATS \"nats://host:port\", if not `empty`, NATS is *enabled*"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                },
+                "mutualtls": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.mutualtls"
+                },
+                "subjecttemplate": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.nats.subjecttemplate"
+                }
+              },
+              "type": "object"
+            },
+            "nodered": {
+              "additionalProperties": {},
+              "properties": {
+                "address": {
+                  "description": "Node-RED address, if not empty, Node-RED output is enabled"
+                },
+                "checkcert": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.checkcert"
+                },
+                "customheaders": {
+                  "description": "Custom headers to add in POST, useful for Authentication, syntax is \"key:value\\,key:value\""
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                },
+                "password": {
+                  "description": "Password if Basic Auth is enabled for 'http in' node in Node-RED"
+                },
+                "user": {
+                  "description": "User if Basic Auth is enabled for 'http in' node in Node-RED"
+                }
+              },
+              "type": "object"
+            },
+            "openfaas": {
+              "additionalProperties": {},
+              "properties": {
+                "checkcert": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.checkcert"
+                },
+                "functionname": {
+                  "description": "Name of OpenFaaS function, if not empty, OpenFaaS is *enabled*"
+                },
+                "functionnamespace": {
+                  "description": "Namespace of OpenFaaS function, \"openfaas-fn\" (default)"
+                },
+                "gatewaynamespace": {
+                  "description": "Namespace of OpenFaaS Gateway, \"openfaas\" (default)"
+                },
+                "gatewayport": {
+                  "description": "Port of service of OpenFaaS Gateway Default is `8080`"
+                },
+                "gatewayservice": {
+                  "description": "Service of OpenFaaS Gateway, \"gateway\" (default)"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                },
+                "mutualtls": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.mutualtls"
+                }
+              },
+              "type": "object"
+            },
+            "openobserve": {
+              "additionalProperties": {},
+              "properties": {
+                "checkcert": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.checkcert"
+                },
+                "customheaders": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.elasticsearch.customheaders"
+                },
+                "hostport": {
+                  "description": "http://{domain or ip}:{port}, if not empty, OpenObserve output is enabled"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.dynatrace.minimumpriority"
+                },
+                "mutualtls": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.mutualtls"
+                },
+                "organizationname": {
+                  "description": "Organization name"
+                },
+                "password": {
+                  "description": "use this password to authenticate to OpenObserve if the password is not empty"
+                },
+                "streamname": {
+                  "description": "Stream name"
+                },
+                "username": {
+                  "description": "use this username to authenticate to OpenObserve if the username is not empty"
+                }
+              },
+              "type": "object"
+            },
+            "opsgenie": {
+              "additionalProperties": {},
+              "properties": {
+                "apikey": {
+                  "description": "Opsgenie API Key, if not empty, Opsgenie output is *enabled*"
+                },
+                "checkcert": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.checkcert"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                },
+                "mutualtls": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.mutualtls"
+                },
+                "region": {
+                  "description": "(`us` or `eu`) region of your domain"
+                }
+              },
+              "type": "object"
+            },
+            "otlp": {
+              "additionalProperties": {},
+              "properties": {
+                "metrics": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "endpoint": {
+                      "description": "OTLP endpoint, typically in the form http{s}://{domain or ip}:4318/v1/metrics"
+                    },
+                    "extraattributes": {
+                      "description": "Comma-separated list of fields to use as labels additionally to source, priority, rule, hostname, tags, k8s_ns_name, k8s_pod_name and custom_fields"
+                    },
+                    "extraenvvars": {
+                      "description": "Extra env vars (override the other settings) (default: \"\")\n- OTEL_EXPORTER_OTLP_METRICS_TIMEOUT: 10000\n- OTEL_EXPORTER_OTLP_TIMEOUT: 10000"
+                    },
+                    "headers": {
+                      "description": "List of headers to apply to all outgoing metrics in the form of \"some-key=some-value,other-key=other-value\" (default: \"\")"
+                    },
+                    "protocol": {
+                      "description": "OTLP transport protocol to be used for metrics data; it can be \"grpc\" or \"http/protobuf\" (default: \"grpc\")"
+                    },
+                    "timeout": {
+                      "description": "OTLP timeout for outgoing metrics in milliseconds (default: \"\" which uses SDK default: 10000)"
+                    }
+                  },
+                  "type": "object"
+                },
+                "traces": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "checkcert": {
+                      "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.checkcert"
+                    },
+                    "duration": {
+                      "description": "Artificial span duration in milliseconds (default: 1000)"
+                    },
+                    "endpoint": {
+                      "description": "OTLP endpoint in the form of http://{domain or ip}:4318/v1/traces, if not empty, OTLP Traces output is enabled"
+                    },
+                    "headers": {
+                      "description": "OTLP headers: list of headers to apply to all outgoing traces in the form of \"some-key=some-value,other-key=other-value\" (default: \"\")"
+                    },
+                    "minimumpriority": {
+                      "$ref": "#/$defs/values~1falcosidekick.config.dynatrace.minimumpriority"
+                    },
+                    "protocol": {
+                      "description": "OTLP protocol http/json, http/protobuf, grpc (default: \"\" which uses SDK default: http/json)"
+                    },
+                    "synced": {
+                      "description": "Set to true if you want traces to be sent synchronously (default: false)"
+                    },
+                    "timeout": {
+                      "description": "OTLP timeout: timeout value in milliseconds (default: \"\" which uses SDK default: 10000)"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "pagerduty": {
+              "additionalProperties": {},
+              "properties": {
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                },
+                "region": {
+                  "description": "Pagerduty Region, can be 'us' or 'eu'"
+                },
+                "routingkey": {
+                  "description": "Pagerduty Routing Key, if not empty, Pagerduty output is *enabled*"
+                }
+              },
+              "type": "object"
+            },
+            "policyreport": {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "description": "if true; policyreport output is *enabled*"
+                },
+                "kubeconfig": {
+                  "description": "Kubeconfig file to use (only if falcosidekick is running outside the cluster)"
+                },
+                "maxevents": {
+                  "description": "the max number of events that can be in a policyreport"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                },
+                "prunebypriority": {
+                  "description": "if true; the events with lowest severity are pruned first, in FIFO order"
+                }
+              },
+              "type": "object"
+            },
+            "prometheus": {
+              "additionalProperties": {},
+              "properties": {
+                "extralabels": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.loki.extralabels"
+                }
+              },
+              "type": "object"
+            },
+            "rabbitmq": {
+              "additionalProperties": {},
+              "properties": {
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                },
+                "queue": {
+                  "description": "Rabbitmq Queue name"
+                },
+                "url": {
+                  "description": "Rabbitmq URL, if not empty, Rabbitmq output is *enabled*"
+                }
+              },
+              "type": "object"
+            },
+            "redis": {
+              "additionalProperties": {},
+              "properties": {
+                "address": {
+                  "description": "Redis address, if not empty, Redis output is enabled"
+                },
+                "database": {
+                  "description": "Redis database number"
+                },
+                "key": {
+                  "description": "Redis storage key name for hashmap, list"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.dynatrace.minimumpriority"
+                },
+                "password": {
+                  "description": "Password to authenticate with Redis"
+                },
+                "storagetype": {
+                  "description": "Redis storage type: hashmap or list"
+                }
+              },
+              "type": "object"
+            },
+            "rocketchat": {
+              "additionalProperties": {},
+              "properties": {
+                "checkcert": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.checkcert"
+                },
+                "icon": {
+                  "description": "Rocketchat icon (avatar)"
+                },
+                "messageformat": {
+                  "description": "a Go template to format Rocketchat Text above Attachment, displayed in addition to the output from `slack.outputformat`. If empty, no Text is displayed before Attachment"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                },
+                "mutualtls": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.mutualtls"
+                },
+                "outputformat": {
+                  "description": "`all` (default), `text` (only text is displayed in Rocketcaht), `fields` (only fields are displayed in Rocketchat)"
+                },
+                "username": {
+                  "description": "Rocketchat username"
+                },
+                "webhookurl": {
+                  "description": "Rocketchat Webhook URL (ex: <https://XXXX/hooks/YYYY>), if not `empty`, Rocketchat output is *enabled*"
+                }
+              },
+              "type": "object"
+            },
+            "slack": {
+              "additionalProperties": {},
+              "properties": {
+                "channel": {
+                  "description": "Slack channel (optionnal)"
+                },
+                "footer": {
+                  "description": "Slack Footer"
+                },
+                "icon": {
+                  "description": "Slack icon (avatar)"
+                },
+                "messageformat": {
+                  "description": "a Go template to format Slack Text above Attachment, displayed in addition to the output from `slack.outputformat`. If empty, no Text is displayed before Attachment"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                },
+                "outputformat": {
+                  "description": "`all` (default), `text` (only text is displayed in Slack), `fields` (only fields are displayed in Slack)"
+                },
+                "username": {
+                  "description": "Slack username"
+                },
+                "webhookurl": {
+                  "description": "Slack Webhook URL (ex: <https://hooks.slack.com/services/XXXX/YYYY/ZZZZ>), if not `empty`, Slack output is *enabled*"
+                }
+              },
+              "type": "object"
+            },
+            "smtp": {
+              "additionalProperties": {},
+              "properties": {
+                "authmechanism": {
+                  "description": "SASL Mechanisms : plain, oauthbearer, external, anonymous or \"\" (disable SASL)"
+                },
+                "from": {
+                  "description": "Sender address (mandatory if SMTP output is *enabled*)"
+                },
+                "hostport": {
+                  "description": "\"host:port\" address of SMTP server, if not empty, SMTP output is *enabled*"
+                },
+                "identity": {
+                  "description": "identity string for Plain and External Mechanisms"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                },
+                "outputformat": {
+                  "description": "html, text"
+                },
+                "password": {
+                  "description": "password to access SMTP server"
+                },
+                "tls": {
+                  "description": "use TLS connection (true/false)"
+                },
+                "to": {
+                  "description": "comma-separated list of Recipident addresses, can't be empty (mandatory if SMTP output is *enabled*)"
+                },
+                "token": {
+                  "description": "OAuthBearer token for OAuthBearer Mechanism"
+                },
+                "trace": {
+                  "description": "trace string for Anonymous Mechanism"
+                },
+                "user": {
+                  "description": "user to access SMTP server"
+                }
+              },
+              "type": "object"
+            },
+            "spyderbat": {
+              "additionalProperties": {},
+              "properties": {
+                "apikey": {
+                  "description": "Spyderbat API key with access to the organization"
+                },
+                "apiurl": {
+                  "description": "Spyderbat API url"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                },
+                "orguid": {
+                  "description": "Organization to send output to, if not empty, Spyderbat output is enabled"
+                },
+                "source": {
+                  "description": "Spyderbat source ID, max 32 characters"
+                },
+                "sourcedescription": {
+                  "description": "Spyderbat source description and display name if not empty, max 256 characters"
+                }
+              },
+              "type": "object"
+            },
+            "stan": {
+              "additionalProperties": {},
+              "properties": {
+                "checkcert": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.checkcert"
+                },
+                "clientid": {
+                  "description": "Client ID, if not empty, STAN output is *enabled*"
+                },
+                "clusterid": {
+                  "description": "Cluster name, if not empty, STAN output is *enabled*"
+                },
+                "hostport": {
+                  "description": "Stan nats://{domain or ip}:{port}, if not empty, STAN output is *enabled*"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                },
+                "mutualtls": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.mutualtls"
+                },
+                "subjecttemplate": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.nats.subjecttemplate"
+                }
+              },
+              "type": "object"
+            },
+            "statsd": {
+              "additionalProperties": {},
+              "properties": {
+                "forwarder": {
+                  "description": "The address for the StatsD forwarder, in the form <http://host:port>, if not empty StatsD is *enabled*"
+                },
+                "namespace": {
+                  "description": "A prefix for all metrics"
+                }
+              },
+              "type": "object"
+            },
+            "syslog": {
+              "additionalProperties": {},
+              "properties": {
+                "format": {
+                  "description": "Syslog payload format. It can be either \"json\" or \"cef\""
+                },
+                "host": {
+                  "description": "Syslog Host, if not empty, Syslog output is *enabled*"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                },
+                "port": {
+                  "description": "Syslog endpoint port number"
+                },
+                "protocol": {
+                  "description": "Syslog transport protocol. It can be either \"tcp\" or \"udp\""
+                }
+              },
+              "type": "object"
+            },
+            "teams": {
+              "additionalProperties": {},
+              "properties": {
+                "activityimage": {
+                  "description": "Teams section image"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                },
+                "outputformat": {
+                  "description": "`all` (default), `text` (only text is displayed in Teams), `facts` (only facts are displayed in Teams)"
+                },
+                "webhookurl": {
+                  "description": "Teams Webhook URL (ex: <https://outlook.office.com/webhook/XXXXXX/IncomingWebhook/YYYYYY>\"), if not `empty`, Teams output is *enabled*"
+                }
+              },
+              "type": "object"
+            },
+            "tekton": {
+              "additionalProperties": {},
+              "properties": {
+                "checkcert": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.checkcert"
+                },
+                "eventlistener": {
+                  "description": "EventListener address, if not empty, Tekton output is enabled"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                }
+              },
+              "type": "object"
+            },
+            "telegram": {
+              "additionalProperties": {},
+              "properties": {
+                "chatid": {
+                  "description": "telegram Identifier of the shared chat"
+                },
+                "checkcert": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.checkcert"
+                },
+                "messagethreadid": {
+                  "description": "Telegram individual chats within the group"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.dynatrace.minimumpriority"
+                },
+                "token": {
+                  "description": "telegram bot authentication token"
+                }
+              },
+              "type": "object"
+            },
+            "timescaledb": {
+              "additionalProperties": {},
+              "properties": {
+                "database": {
+                  "description": "TimescaleDB database used"
+                },
+                "host": {
+                  "description": "TimescaleDB host, if not empty, TImescaleDB output is enabled"
+                },
+                "hypertablename": {
+                  "description": "Hypertable to store data events (default: falco_events) See TimescaleDB setup for more info"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                },
+                "password": {
+                  "description": "Password to authenticate with TimescaleDB"
+                },
+                "port": {
+                  "description": "TimescaleDB port (default: 5432)"
+                },
+                "user": {
+                  "description": "Username to authenticate with TimescaleDB"
+                }
+              },
+              "type": "object"
+            },
+            "tlsserver": {
+              "additionalProperties": {},
+              "properties": {
+                "notlspaths": {
+                  "description": "a comma separated list of endpoints, if not empty, and tlsserver.deploy is true, a separate http server will be deployed for the specified endpoints (/ping endpoint needs to be notls for Kubernetes to be able to perform the healthchecks)"
+                },
+                "notlsport": {
+                  "description": "port to serve http server serving selected endpoints"
+                }
+              },
+              "type": "object"
+            },
+            "wavefront": {
+              "additionalProperties": {},
+              "properties": {
+                "batchsize": {
+                  "description": "Wavefront batch size. If empty uses the default 10000. Only used when endpointtype is 'direct'"
+                },
+                "endpointhost": {
+                  "description": "Wavefront endpoint address (only the host). If not empty, with endpointhost, Wavefront output is *enabled*"
+                },
+                "endpointmetricport": {
+                  "description": "Port to send metrics. Only used when endpointtype is 'proxy'"
+                },
+                "endpointtoken": {
+                  "description": "Wavefront token. Must be used only when endpointtype is 'direct'"
+                },
+                "endpointtype": {
+                  "description": "Wavefront endpoint type, must be 'direct' or 'proxy'. If not empty, with endpointhost, Wavefront output is *enabled*"
+                },
+                "flushintervalseconds": {
+                  "description": "Wavefront flush interval in seconds. Defaults to 1"
+                },
+                "metricname": {
+                  "description": "Metric to be created in Wavefront. Defaults to falco.alert"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                }
+              },
+              "type": "object"
+            },
+            "webhook": {
+              "additionalProperties": {},
+              "properties": {
+                "address": {
+                  "description": "Webhook address, if not empty, Webhook output is *enabled*"
+                },
+                "checkcert": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.checkcert"
+                },
+                "customHeaders": {
+                  "description": "a list of comma separated custom headers to add, syntax is \"key:value\\,key:value\""
+                },
+                "method": {
+                  "description": "HTTP method: POST or PUT"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                },
+                "mutualtls": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.mutualtls"
+                }
+              },
+              "type": "object"
+            },
+            "yandex": {
+              "additionalProperties": {},
+              "properties": {
+                "accesskeyid": {
+                  "description": "yandex access key"
+                },
+                "datastreams": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "endpoint": {
+                      "description": "yandex data streams endpoint (default: https://yds.serverless.yandexcloud.net)"
+                    },
+                    "minimumpriority": {
+                      "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                    },
+                    "streamname": {
+                      "description": "stream name in format /${region}/${folder_id}/${ydb_id}/${stream_name}"
+                    }
+                  },
+                  "type": "object"
+                },
+                "region": {
+                  "description": "yandex storage region (default: ru-central-1)"
+                },
+                "s3": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "bucket": {
+                      "description": "Yandex storage, bucket name"
+                    },
+                    "endpoint": {
+                      "description": "yandex storage endpoint (default: https://storage.yandexcloud.net)"
+                    },
+                    "minimumpriority": {
+                      "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                    },
+                    "prefix": {
+                      "description": "name of prefix, keys will have format: s3://<bucket>/<prefix>/YYYY-MM-DD/YYYY-MM-DDTHH:mm:ss.s+01:00.json"
+                    }
+                  },
+                  "type": "object"
+                },
+                "secretaccesskey": {
+                  "description": "yandex secret access key"
+                }
+              },
+              "type": "object"
+            },
+            "zincsearch": {
+              "additionalProperties": {},
+              "properties": {
+                "checkcert": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.checkcert"
+                },
+                "hostport": {
+                  "description": "http://{domain or ip}:{port}, if not empty, ZincSearch output is enabled"
+                },
+                "index": {
+                  "description": "index"
+                },
+                "minimumpriority": {
+                  "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
+                },
+                "password": {
+                  "description": "use this password to authenticate to ZincSearch"
+                },
+                "username": {
+                  "description": "use this username to authenticate to ZincSearch"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "customAnnotations": {
+          "description": "custom annotations to add to all resources"
+        },
+        "customLabels": {
+          "description": "custom labels to add to all resources"
+        },
+        "enabled": {
+          "description": "Enable falcosidekick deployment."
+        },
+        "fullnameOverride": {
+          "description": "Override the name"
+        },
+        "global": {},
+        "nameOverride": {
+          "description": "Override name"
+        },
+        "service": {
+          "additionalProperties": {},
+          "properties": {
+            "annotations": {
+              "description": "Service annotations"
+            },
+            "port": {
+              "description": "Service port"
+            },
+            "type": {
+              "description": "Service type"
+            }
+          },
+          "type": "object"
+        },
+        "serviceMonitor": {
+          "additionalProperties": {},
+          "properties": {
+            "additionalLabels": {
+              "description": "specify Additional labels to be added on the Service Monitor."
+            },
+            "additionalProperties": {
+              "description": "allows setting additional properties on the endpoint such as relabelings, metricRelabelings etc."
+            },
+            "enabled": {
+              "$ref": "#/$defs/values~1falco-talon.serviceMonitor.enabled"
+            },
+            "interval": {
+              "description": "specify a user defined interval. When not specified Prometheus default interval is used."
+            },
+            "scrapeTimeout": {
+              "description": "specify a user defined scrape timeout. When not specified Prometheus default scrape timeout is used."
+            }
+          },
+          "type": "object"
+        },
+        "webui": {
+          "additionalProperties": {},
+          "properties": {
+            "customAnnotations": {},
+            "customLabels": {},
+            "enabled": {
+              "description": "enable Falcosidekick-UI"
+            },
+            "redis": {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "description": "Is mutually exclusive with webui.externalRedis.enabled"
+                },
+                "service": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "annotations": {
+                      "description": "The web UI Redis service annotations (use this to set a internal LB, for example.)"
+                    },
+                    "port": {
+                      "description": "The web UI Redis service port dor the falcosidekick-ui"
+                    },
+                    "targetPort": {
+                      "description": "The web UI Redis service targetPort"
+                    },
+                    "type": {
+                      "description": "The web UI Redis service type (i. e: LoadBalancer)"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "service": {
+              "additionalProperties": {},
+              "properties": {
+                "annotations": {
+                  "description": "The web UI service annotations (use this to set a internal LB, for example.)\nservice.beta.kubernetes.io/aws-load-balancer-internal: \"true\""
+                },
+                "nodePort": {
+                  "description": "The web UI service nodePort"
+                },
+                "port": {
+                  "description": "The web UI service port dor the falcosidekick-ui"
+                },
+                "targetPort": {
+                  "description": "The web UI service targetPort"
+                },
+                "type": {
+                  "description": "The web UI service type"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
       }
     },
     "fullnameOverride": {
@@ -1701,8 +3248,7 @@
         "enabled": {
           "type": "boolean"
         }
-      },
-      "type": "object"
+      }
     },
     "scc": {},
     "serviceAccount": {},

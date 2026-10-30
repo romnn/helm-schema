@@ -1165,12 +1165,62 @@
       "description": "Add extra objects manifests"
     },
     "global": {
-      "description": "Default values for longhorn.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates."
+      "additionalProperties": {},
+      "description": "Default values for longhorn.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
+      "properties": {
+        "cattle": {
+          "additionalProperties": {},
+          "properties": {
+            "systemDefaultRegistry": {
+              "description": "Default system registry."
+            }
+          },
+          "type": "object"
+        },
+        "imagePullSecrets": {
+          "description": "Global override for image pull secrets for container registry."
+        },
+        "imageRegistry": {
+          "description": "Global override for container image registry."
+        },
+        "timezone": {
+          "description": "Set container timezone (TZ env) for all Longhorn workloads. Leave empty to use container default."
+        }
+      },
+      "type": "object"
     },
     "httproute": {
       "description": "If you're providing your own certificates, please use this to add the certificates as secrets\nkey and certificate should start with -----BEGIN CERTIFICATE----- or\nname should line up with a tlsSecret set further up\nIf you're using kube-lego, this is unneeded, as it will create the secret for you if it is not set\nIt is also possible to create and manage the certificates outside of this helm chart\nPlease see README.md for more information\n- name: longhorn.local-tls\nkey:\ncertificate:"
     },
-    "image": {},
+    "image": {
+      "additionalProperties": {},
+      "properties": {
+        "longhorn": {
+          "additionalProperties": {},
+          "properties": {
+            "manager": {
+              "additionalProperties": {},
+              "properties": {
+                "registry": {
+                  "description": "Registry for the Longhorn Manager image."
+                },
+                "repository": {
+                  "description": "Repository for the Longhorn Manager image."
+                },
+                "tag": {
+                  "description": "Tag for the Longhorn Manager image."
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "pullPolicy": {
+          "description": "Image pull policy that applies to all user-deployed Longhorn components, such as Longhorn Manager, Longhorn driver, and Longhorn UI."
+        }
+      }
+    },
     "ingress": {
       "additionalProperties": {},
       "description": "If you want to set node selector for Longhorn UI Deployment, delete the `{}` in the line above\nand uncomment this example block\nlabel-key1: \"label-value1\"\nlabel-key2: \"label-value2\"",
@@ -1186,6 +1236,7 @@
       "description": "If you want to set node selector for Longhorn Driver Deployer Deployment, delete the `{}` in the line above\nand uncomment this example block\nlabel-key1: \"label-value1\"\nlabel-key2: \"label-value2\""
     },
     "metrics": {},
+    "nameOverride": {},
     "namespaceOverride": {
       "description": "Specify override namespace, specifically this is useful for using longhorn as sub-chart and its release namespace is not the `longhorn-system`."
     },
@@ -1206,7 +1257,17 @@
     },
     "persistence": {},
     "preUpgradeChecker": {},
-    "privateRegistry": {},
+    "privateRegistry": {
+      "additionalProperties": {},
+      "properties": {
+        "registrySecret": {
+          "description": "If create a new private registry secret is true, create a Kubernetes secret with this name; else use the existing secret of this name. Use it to pull images from your private registry."
+        },
+        "registryUrl": {
+          "description": "URL of a private registry. When unspecified, Longhorn uses the default system registry."
+        }
+      }
+    },
     "service": {},
     "serviceAccount": {}
   },

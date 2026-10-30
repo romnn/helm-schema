@@ -85,102 +85,6 @@
           "const": true
         }
       ]
-    },
-    "values/scheduling.corePods": {
-      "additionalProperties": {},
-      "properties": {
-        "nodeAffinity": {
-          "additionalProperties": {},
-          "properties": {
-            "matchNodePurpose": {
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
-        "tolerations": {
-          "items": {
-            "additionalProperties": {},
-            "properties": {
-              "effect": {
-                "type": "string"
-              },
-              "key": {
-                "type": "string"
-              },
-              "operator": {
-                "type": "string"
-              },
-              "value": {
-                "type": "string"
-              }
-            },
-            "type": "object"
-          },
-          "type": "array"
-        }
-      },
-      "type": "object"
-    },
-    "values/scheduling.userPlaceholder.annotations": {
-      "additionalProperties": {},
-      "type": "object"
-    },
-    "values/scheduling.userPlaceholder.containerSecurityContext": {
-      "additionalProperties": {},
-      "properties": {
-        "allowPrivilegeEscalation": {
-          "type": "boolean"
-        },
-        "capabilities": {
-          "additionalProperties": {},
-          "properties": {
-            "drop": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            }
-          },
-          "type": "object"
-        },
-        "runAsGroup": {
-          "description": "nobody group",
-          "type": "integer"
-        },
-        "runAsNonRoot": {
-          "type": "boolean"
-        },
-        "runAsUser": {
-          "description": "nobody user",
-          "type": "integer"
-        },
-        "seccompProfile": {
-          "additionalProperties": {},
-          "properties": {
-            "type": {
-              "type": "string"
-            }
-          },
-          "type": "object"
-        }
-      },
-      "type": "object"
-    },
-    "values/scheduling.userScheduler.pluginConfig@items.args.scoringStrategy.resources": {
-      "items": {
-        "additionalProperties": {},
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "weight": {
-            "type": "integer"
-          }
-        },
-        "type": "object"
-      },
-      "type": "array"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -309,53 +213,6 @@
       "additionalProperties": {},
       "allOf": [
         {
-          "additionalProperties": {},
-          "properties": {
-            "userScheduler": {
-              "allOf": [
-                {
-                  "if": {
-                    "allOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1enabled:t"
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "properties": {
-                              "serviceAccount": {
-                                "enum": [
-                                  null
-                                ]
-                              }
-                            },
-                            "required": [
-                              "serviceAccount"
-                            ],
-                            "type": "object"
-                          },
-                          {
-                            "not": {
-                              "properties": {
-                                "serviceAccount": {}
-                              },
-                              "required": [
-                                "serviceAccount"
-                              ],
-                              "type": "object"
-                            }
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  "then": false
-                }
-              ]
-            }
-          }
-        },
-        {
           "if": {
             "anyOf": [
               {
@@ -373,209 +230,56 @@
       ],
       "description": "scheduling relates to the user-scheduler pods and user-placeholder pods.",
       "properties": {
-        "corePods": {
-          "$ref": "#/$defs/values~1scheduling.corePods"
-        },
-        "podPriority": {
-          "additionalProperties": {},
-          "properties": {
-            "defaultPriority": {
-              "type": "integer"
-            },
-            "enabled": {
-              "type": "boolean"
-            },
-            "globalDefault": {
-              "type": "boolean"
-            },
-            "imagePullerPriority": {
-              "type": "integer"
-            },
-            "userPlaceholderPriority": {
-              "type": "integer"
-            }
-          },
-          "type": "object"
-        },
-        "userPlaceholder": {
-          "additionalProperties": {},
-          "properties": {
-            "annotations": {
-              "$ref": "#/$defs/values~1scheduling.userPlaceholder.annotations"
-            },
-            "containerSecurityContext": {
-              "$ref": "#/$defs/values~1scheduling.userPlaceholder.containerSecurityContext"
-            },
-            "enabled": {
-              "type": "boolean"
-            },
-            "extraPodSpec": {
-              "$ref": "#/$defs/values~1scheduling.userPlaceholder.annotations"
-            },
-            "image": {
-              "additionalProperties": {},
-              "properties": {
-                "name": {
-                  "type": "string"
-                },
-                "pullPolicy": {},
-                "pullSecrets": {
-                  "items": {},
-                  "type": "array"
-                },
-                "tag": {
-                  "description": "tag is automatically bumped to new patch versions by the\nwatch-dependencies.yaml workflow.\nIf you update this, also update prePuller.pause.image.tag",
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            },
-            "labels": {
-              "$ref": "#/$defs/values~1scheduling.userPlaceholder.annotations"
-            },
-            "replicas": {
-              "type": "integer"
-            },
-            "resources": {
-              "$ref": "#/$defs/values~1scheduling.userPlaceholder.annotations"
-            },
-            "revisionHistoryLimit": {}
-          },
-          "type": "object"
-        },
-        "userPods": {
-          "$ref": "#/$defs/values~1scheduling.corePods"
-        },
         "userScheduler": {
           "additionalProperties": {},
-          "properties": {
-            "annotations": {
-              "$ref": "#/$defs/values~1scheduling.userPlaceholder.annotations"
-            },
-            "containerSecurityContext": {
-              "$ref": "#/$defs/values~1scheduling.userPlaceholder.containerSecurityContext"
-            },
-            "enabled": {},
-            "extraPodSpec": {
-              "$ref": "#/$defs/values~1scheduling.userPlaceholder.annotations"
-            },
-            "image": {
-              "additionalProperties": {},
-              "properties": {
-                "name": {
-                  "description": "IMPORTANT: Bumping the minor version of this binary should go hand in\nhand with an inspection of the user-scheduler's RBAC\nresources that we have forked in\ntemplates/scheduling/user-scheduler/rbac.yaml.\nDebugging advice:\n- Is configuration of kube-scheduler broken in\ntemplates/scheduling/user-scheduler/configmap.yaml?\n- Is the kube-scheduler binary's compatibility to work\nagainst a k8s api-server that is too new or too old?\n- You can update the GitHub workflow that runs tests to\ninclude \"deploy/user-scheduler\" in the k8s namespace report\nand reduce the user-scheduler deployments replicas to 1 in\ndev-config.yaml to get relevant logs from the user-scheduler\npods. Inspect the \"Kubernetes namespace report\" action!\n- Typical failures are that kube-scheduler fails to search for\nresources via its \"informers\", and won't start trying to\nschedule pods before they succeed which may require\nadditional RBAC permissions or that the k8s api-server is\naware of the resources.\n- If \"successfully acquired lease\" can be seen in the logs, it\nis a good sign kube-scheduler is ready to schedule pods.",
-                  "type": "string"
-                },
-                "pullPolicy": {},
-                "pullSecrets": {
-                  "items": {},
-                  "type": "array"
-                },
-                "tag": {
-                  "description": "tag is automatically bumped to new patch versions by the\nwatch-dependencies.yaml workflow. The minor version is pinned in the\nworkflow, and should be updated there if a minor version bump is done\nhere. We aim to stay around 1 minor version behind the latest k8s\nversion.\nref: https://github.com/kubernetes/kubernetes/tree/master/CHANGELOG",
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            },
-            "labels": {
-              "$ref": "#/$defs/values~1scheduling.userPlaceholder.annotations"
-            },
-            "logLevel": {
-              "type": "integer"
-            },
-            "nodeSelector": {
-              "$ref": "#/$defs/values~1scheduling.userPlaceholder.annotations"
-            },
-            "pdb": {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "type": "boolean"
-                },
-                "maxUnavailable": {
-                  "type": "integer"
-                },
-                "minAvailable": {}
-              },
-              "type": "object"
-            },
-            "pluginConfig": {
-              "items": {
-                "additionalProperties": {},
-                "properties": {
-                  "args": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "scoringStrategy": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "resources": {
-                            "$ref": "#/$defs/values~1scheduling.userScheduler.pluginConfig@items.args.scoringStrategy.resources"
-                          },
-                          "type": {
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      }
-                    },
-                    "type": "object"
+          "allOf": [
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1enabled:t"
                   },
-                  "name": {
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              },
-              "type": "array"
-            },
-            "plugins": {
-              "additionalProperties": {},
-              "description": "plugins are configured on the user-scheduler to make us score how we\nschedule user pods in a way to help us schedule on the most busy node. By\ndoing this, we help scale down more effectively. It isn't obvious how to\nenable/disable scoring plugins, and configure them, to accomplish this.\nplugins ref: https://kubernetes.io/docs/reference/scheduling/config/#scheduling-plugins-1\nmigration ref: https://kubernetes.io/docs/reference/scheduling/config/#scheduler-configuration-migrations",
-              "properties": {
-                "score": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "disabled": {
-                      "description": "We make use of the default scoring plugins, but we re-enable some with\na new priority, leave some enabled with their lower default priority,\nand disable some.\nBelow are the default scoring plugins as of 2024-09-23 according to\nhttps://kubernetes.io/docs/reference/scheduling/config/#scheduling-plugins.\nRe-enabled with high priority:\n- NodeAffinity\n- InterPodAffinity\n- NodeResourcesFit\n- ImageLocality\nRemains enabled with low default priority:\n- TaintToleration\n- PodTopologySpread\n- VolumeBinding\nDisabled for scoring:\n- NodeResourcesBalancedAllocation",
-                      "items": {
-                        "additionalProperties": {},
+                  {
+                    "anyOf": [
+                      {
                         "properties": {
-                          "name": {
-                            "type": "string"
+                          "serviceAccount": {
+                            "enum": [
+                              null
+                            ]
                           }
                         },
+                        "required": [
+                          "serviceAccount"
+                        ],
                         "type": "object"
                       },
-                      "type": "array"
-                    },
-                    "enabled": {
-                      "$ref": "#/$defs/values~1scheduling.userScheduler.pluginConfig@items.args.scoringStrategy.resources"
-                    }
-                  },
-                  "type": "object"
-                }
+                      {
+                        "not": {
+                          "properties": {
+                            "serviceAccount": {}
+                          },
+                          "required": [
+                            "serviceAccount"
+                          ],
+                          "type": "object"
+                        }
+                      }
+                    ]
+                  }
+                ]
               },
-              "type": "object"
-            },
-            "replicas": {
-              "type": "integer"
-            },
-            "resources": {
-              "$ref": "#/$defs/values~1scheduling.userPlaceholder.annotations"
-            },
-            "revisionHistoryLimit": {},
+              "then": false
+            }
+          ],
+          "properties": {
+            "enabled": {},
             "serviceAccount": {
               "additionalProperties": {},
               "properties": {
                 "create": {},
                 "name": {}
               }
-            },
-            "tolerations": {
-              "items": {},
-              "type": "array"
             }
           },
           "type": "object"

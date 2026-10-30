@@ -30,7 +30,7 @@ const ROSTER_CELLS: usize = 1857;
 const ROSTER_SHA256: &str = "091f2742483d33935424de383b4de12d5bcee161129e88c099ec8071c81b1a89";
 
 /// Concurrent generations: each is a short CLI run over a one-template chart.
-const WORKERS: usize = 4;
+const WORKERS: usize = 3;
 
 type Schemas = BTreeMap<(String, DeclaredTypes), Result<jsonschema::Validator, String>>;
 

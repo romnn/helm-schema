@@ -2177,76 +2177,14 @@
       "additionalProperties": {},
       "description": "LDAP configuration",
       "properties": {
-        "authorisationEnabled": {
-          "description": "Enable LDAP authorisation. Please set 'advancedConfiguration' with tag, topic, resources and vhost mappings\nref: https://www.rabbitmq.com/ldap.html#authorisation",
-          "type": "boolean"
-        },
         "basedn": {
           "description": "Base DN path where binddn account will search for the users.\nref: https://www.rabbitmq.com/ldap.html#usernames-and-dns"
-        },
-        "binddn": {
-          "description": "DN of the account used to search in the LDAP server.",
-          "type": "string"
-        },
-        "bindpw": {
-          "description": "Password for binddn account.",
-          "type": "string"
         },
         "enabled": {
           "description": "Enable LDAP support"
         },
-        "port": {
-          "description": "LDAP servers port. This is valid only if ldap.uri is not set\nDEPRECATED ldap.user_dn_pattern it will removed in a future, please use userDnPattern instead\nPattern used to translate the provided username into a value to be used for the LDAP bind",
-          "type": "string"
-        },
         "servers": {
           "description": "List of LDAP servers hostnames. This is valid only if ldap.uri is not set"
-        },
-        "tls": {
-          "additionalProperties": {},
-          "properties": {
-            "CAFilename": {
-              "description": "CA certificate filename. Should match with the CA entry key in the ldap.tls.certificatesSecret.",
-              "type": "string"
-            },
-            "certFilename": {
-              "description": "Client certificate filename to authenticate against the LDAP server. Should match with certificate the entry key in the ldap.tls.certificatesSecret.",
-              "type": "string"
-            },
-            "certKeyFilename": {
-              "description": "Client Key filename to authenticate against the LDAP server. Should match with certificate the entry key in the ldap.tls.certificatesSecret.",
-              "type": "string"
-            },
-            "certificatesMountPath": {
-              "description": "Where LDAP certifcates are mounted.",
-              "type": "string"
-            },
-            "certificatesSecret": {
-              "description": "Secret with LDAP certificates.",
-              "type": "string"
-            },
-            "enabled": {
-              "description": "Enabled TLS configuration.",
-              "type": "boolean"
-            },
-            "skipVerify": {
-              "description": "Skip any SSL verification (hostanames or certificates)",
-              "type": "boolean"
-            },
-            "startTls": {
-              "description": "Use STARTTLS instead of LDAPS.",
-              "type": "boolean"
-            },
-            "verify": {
-              "description": "Verify connection. Valid values are 'verify_peer' or 'verify_none'",
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
-        "uidField": {
-          "description": "Field used to match with the user name (uid, samAccountName, cn, etc). It matches with 'dn_lookup_attribute' in RabbitMQ configuration\nField used to match with the user name (uid, samAccountName, cn, etc). It matches with 'dn_lookup_attribute' in RabbitMQ configuration",
-          "type": "string"
         },
         "uri": {
           "description": "LDAP connection string."
@@ -2280,10 +2218,6 @@
         },
         "type": {
           "description": "Memory high watermark type. Either `absolute` or `relative`\nMemory high watermark value."
-        },
-        "value": {
-          "description": "Memory high watermark value\nThe default value of 0.4 stands for 40% of available RAM\nNote: the memory relative limit is applied to the resourcesPreset memory limit or the resource.limits.memory to calculate the memory threshold\nYou can also use an absolute value, e.g.: 256Mi",
-          "type": "number"
         }
       },
       "type": "object"

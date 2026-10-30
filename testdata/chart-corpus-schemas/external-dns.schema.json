@@ -2384,39 +2384,6 @@
       },
       "type": "object"
     },
-    "values/provider.webhook.livenessProbe": {
-      "additionalProperties": {},
-      "properties": {
-        "failureThreshold": {
-          "type": "integer"
-        },
-        "httpGet": {
-          "additionalProperties": {},
-          "properties": {
-            "path": {
-              "type": "string"
-            },
-            "port": {
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
-        "initialDelaySeconds": {
-          "type": "integer"
-        },
-        "periodSeconds": {
-          "type": "integer"
-        },
-        "successThreshold": {
-          "type": "integer"
-        },
-        "timeoutSeconds": {
-          "type": "integer"
-        }
-      },
-      "type": "object"
-    },
     "values/string": {
       "allOf": [
         {
@@ -3216,52 +3183,6 @@
         "webhook": {
           "additionalProperties": {},
           "properties": {
-            "args": {
-              "items": {},
-              "type": "array"
-            },
-            "env": {
-              "items": {},
-              "type": "array"
-            },
-            "extraVolumeMounts": {
-              "items": {},
-              "type": "array"
-            },
-            "image": {
-              "additionalProperties": {},
-              "properties": {
-                "pullPolicy": {
-                  "type": "string"
-                },
-                "repository": {},
-                "tag": {}
-              },
-              "type": "object"
-            },
-            "livenessProbe": {
-              "$ref": "#/$defs/values~1provider.webhook.livenessProbe"
-            },
-            "readinessProbe": {
-              "$ref": "#/$defs/values~1provider.webhook.livenessProbe"
-            },
-            "resources": {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            "securityContext": {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            "service": {
-              "additionalProperties": {},
-              "properties": {
-                "port": {
-                  "type": "integer"
-                }
-              },
-              "type": "object"
-            },
             "serviceMonitor": {
               "additionalProperties": {},
               "properties": {
@@ -3272,14 +3193,12 @@
                 "scheme": {},
                 "scrapeTimeout": {},
                 "tlsConfig": {}
-              },
-              "type": "object"
+              }
             }
           },
           "type": "object"
         }
-      },
-      "type": "object"
+      }
     },
     "rbac": {},
     "readinessProbe": {

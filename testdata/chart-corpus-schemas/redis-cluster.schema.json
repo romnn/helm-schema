@@ -944,37 +944,12 @@
             }
           }
         },
-        "init": {
-          "description": "Enable the initialization of the Redis(R) Cluster\nNumber of Redis&reg; nodes to be deployed\nNote:\nThis is total number of nodes including the replicas. Meaning there will be 3 master and 3 replica\nnodes (as replica count is set to 1 by default, there will be 1 replica per master node).\nHence, nodes = numberOfMasterNodes + numberOfMasterNodes * replicas",
-          "type": "boolean"
-        },
-        "nodes": {
-          "description": "The number of master nodes should always be >= 3, otherwise cluster creation will fail",
-          "type": "integer"
-        },
-        "replicas": {
-          "description": "Number of replicas for every master in the cluster\nParameter to be passed as --cluster-replicas to the redis-cli --cluster create\n1 means that we want a replica for every master created",
-          "type": "integer"
-        },
         "update": {
           "additionalProperties": {},
           "description": "This section allows to update the Redis&reg; cluster nodes.",
           "properties": {
             "addNodes": {
               "description": "Boolean to specify if you want to add nodes after the upgrade\nSetting this to true a hook will add nodes to the Redis&reg; cluster after the upgrade. currentNumberOfNodes and currentNumberOfReplicas is required"
-            },
-            "currentNumberOfNodes": {
-              "description": "Number of currently deployed Redis&reg; nodes",
-              "type": "integer"
-            },
-            "currentNumberOfReplicas": {
-              "description": "Number of currently deployed Redis&reg; replicas",
-              "type": "integer"
-            },
-            "newExternalIPs": {
-              "description": "External IPs obtained from the services for the new nodes to add to the cluster",
-              "items": {},
-              "type": "array"
             }
           },
           "type": "object"

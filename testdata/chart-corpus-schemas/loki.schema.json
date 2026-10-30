@@ -7489,30 +7489,6 @@
       },
       "type": "object"
     },
-    "values/monitoring.rules.configs.LokiCanaryLatency": {
-      "additionalProperties": {},
-      "properties": {
-        "enabled": {
-          "type": "boolean"
-        },
-        "for": {
-          "type": "string"
-        },
-        "lookbackPeriod": {
-          "type": "string"
-        },
-        "severity": {
-          "type": "string"
-        },
-        "threshold": {
-          "type": "integer"
-        }
-      },
-      "type": "object"
-    },
-    "values/monitoring.serviceMonitor.scrapeTimeout": {
-      "description": "ServiceMonitor scrape timeout in Go duration format (e.g. 15s)"
-    },
     "values/null;name-must-be-unique": {
       "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
       "type": "null"
@@ -9531,304 +9507,20 @@
             }
           }
         },
-        "rules": {
-          "additionalProperties": {},
-          "description": "Recording rules for monitoring Loki, required for some dashboards",
-          "properties": {
-            "additionalGroups": {
-              "description": "Additional groups to add to the rules file\n- name: additional-loki-rules\nrules:\n- record: job:loki_request_duration_seconds_bucket:sum_rate\nexpr: sum(rate(loki_request_duration_seconds_bucket[1m])) by (le, job)\n- record: job_route:loki_request_duration_seconds_bucket:sum_rate\nexpr: sum(rate(loki_request_duration_seconds_bucket[1m])) by (le, job, route)\n- record: node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate\nexpr: sum(rate(container_cpu_usage_seconds_total[1m])) by (node, namespace, pod, container)",
-              "items": {},
-              "type": "array"
-            },
-            "additionalRuleAnnotations": {
-              "additionalProperties": {},
-              "description": "Additional annotations for PrometheusRule alerts\ne.g.:\nadditionalRuleAnnotations:\nrunbook_url: \"https://runbooks.example.com/oncall/loki\"\nsummary: \"What this alert means and how to respond\"",
-              "type": "object"
-            },
-            "additionalRuleLabels": {
-              "additionalProperties": {},
-              "description": "Additional labels for PrometheusRule alerts",
-              "type": "object"
-            },
-            "alerting": {
-              "description": "Include alerting rules",
-              "type": "boolean"
-            },
-            "annotations": {
-              "additionalProperties": {},
-              "description": "Additional annotations for the rules PrometheusRule resource",
-              "type": "object"
-            },
-            "configs": {
-              "additionalProperties": {},
-              "properties": {
-                "LokiCanaryLatency": {
-                  "$ref": "#/$defs/values~1monitoring.rules.configs.LokiCanaryLatency"
-                },
-                "LokiRequestErrors": {
-                  "$ref": "#/$defs/values~1monitoring.rules.configs.LokiCanaryLatency"
-                },
-                "LokiRequestLatency": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "enabled": {
-                      "type": "boolean"
-                    },
-                    "for": {
-                      "type": "string"
-                    },
-                    "severity": {
-                      "type": "string"
-                    },
-                    "threshold": {
-                      "type": "integer"
-                    }
-                  },
-                  "type": "object"
-                },
-                "LokiRequestPanics": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "enabled": {
-                      "type": "boolean"
-                    },
-                    "lookbackPeriod": {
-                      "type": "string"
-                    },
-                    "severity": {
-                      "type": "string"
-                    },
-                    "threshold": {
-                      "type": "integer"
-                    }
-                  },
-                  "type": "object"
-                },
-                "LokiTooManyCompactorsRunning": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "enabled": {
-                      "type": "boolean"
-                    },
-                    "for": {
-                      "type": "string"
-                    },
-                    "severity": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                }
-              },
-              "type": "object"
-            },
-            "disabled": {
-              "additionalProperties": {},
-              "description": "DEPRECATED: use monitoring.rules.configs.*.enabled instead\nLokiRequestErrors: true\nLokiRequestPanics: true",
-              "type": "object"
-            },
-            "enabled": {
-              "description": "If enabled, create PrometheusRule resource with Loki recording rules",
-              "type": "boolean"
-            },
-            "labels": {
-              "additionalProperties": {},
-              "description": "Additional labels for the rules PrometheusRule resource",
-              "type": "object"
-            },
-            "namespace": {
-              "description": "Alternative namespace to create PrometheusRule resources in"
-            }
-          },
-          "type": "object"
-        },
         "selfMonitoring": {
           "additionalProperties": {},
           "description": "DEPRECATED Self monitoring determines whether Loki should scrape its own logs.\nThis feature relies on Grafana Agent Operator, which is deprecated.\nIt will create custom resources for GrafanaAgent, LogsInstance, and PodLogs to configure\nscrape configs to scrape its own logs with the labels expected by the included dashboards.",
           "properties": {
-            "enabled": {
-              "type": "boolean"
-            },
             "grafanaAgent": {
               "additionalProperties": {},
               "description": "DEPRECATED Grafana Agent configuration",
               "properties": {
-                "annotations": {
-                  "additionalProperties": {},
-                  "description": "Grafana Agent annotations",
-                  "type": "object"
-                },
-                "enableConfigReadAPI": {
-                  "description": "Enable the config read api on port 8080 of the agent",
-                  "type": "boolean"
-                },
                 "installOperator": {
                   "description": "DEPRECATED Controls whether to install the Grafana Agent Operator and its CRDs.\nNote that helm will not install CRDs if this flag is enabled during an upgrade.\nIn that case install the CRDs manually from https://github.com/grafana/agent/tree/main/production/operator/crds",
                   "type": "boolean"
-                },
-                "labels": {
-                  "additionalProperties": {},
-                  "description": "Additional Grafana Agent labels",
-                  "type": "object"
-                },
-                "priorityClassName": {
-                  "description": "The name of the PriorityClass for GrafanaAgent pods"
-                },
-                "resources": {
-                  "additionalProperties": {},
-                  "description": "Resource requests and limits for the grafanaAgent pods\nlimits:\nmemory: 200Mi\nrequests:\ncpu: 50m\nmemory: 100Mi",
-                  "type": "object"
-                },
-                "tolerations": {
-                  "description": "Tolerations for GrafanaAgent pods",
-                  "items": {},
-                  "type": "array"
                 }
               },
               "type": "object"
-            },
-            "logsInstance": {
-              "additionalProperties": {},
-              "description": "LogsInstance configuration",
-              "properties": {
-                "annotations": {
-                  "additionalProperties": {},
-                  "description": "LogsInstance annotations",
-                  "type": "object"
-                },
-                "clients": {
-                  "description": "Additional clients for remote write"
-                },
-                "labels": {
-                  "additionalProperties": {},
-                  "description": "Additional LogsInstance labels",
-                  "type": "object"
-                }
-              },
-              "type": "object"
-            },
-            "podLogs": {
-              "additionalProperties": {},
-              "description": "PodLogs configuration",
-              "properties": {
-                "additionalPipelineStages": {
-                  "description": "Additional pipeline stages to process logs after scraping\nhttps://grafana.com/docs/agent/latest/operator/api/#pipelinestagespec-a-namemonitoringgrafanacomv1alpha1pipelinestagespeca",
-                  "items": {},
-                  "type": "array"
-                },
-                "annotations": {
-                  "additionalProperties": {},
-                  "description": "PodLogs annotations",
-                  "type": "object"
-                },
-                "apiVersion": {
-                  "description": "PodLogs version",
-                  "type": "string"
-                },
-                "labels": {
-                  "additionalProperties": {},
-                  "description": "Additional PodLogs labels",
-                  "type": "object"
-                },
-                "relabelings": {
-                  "description": "PodLogs relabel configs to apply to samples before scraping\nhttps://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#relabelconfig",
-                  "items": {},
-                  "type": "array"
-                }
-              },
-              "type": "object"
-            },
-            "tenant": {
-              "additionalProperties": {},
-              "description": "Tenant to use for self monitoring",
-              "properties": {
-                "name": {
-                  "description": "Name of the tenant",
-                  "type": "string"
-                },
-                "password": {
-                  "description": "Password of the gateway for Basic auth"
-                },
-                "secretNamespace": {
-                  "description": "Namespace to create additional tenant token secret in. Useful if your Grafana instance\nis in a separate namespace. Token will still be created in the canary namespace.",
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            }
-          },
-          "type": "object"
-        },
-        "serviceMonitor": {
-          "additionalProperties": {},
-          "description": "ServiceMonitor configuration",
-          "properties": {
-            "annotations": {
-              "additionalProperties": {},
-              "description": "ServiceMonitor annotations",
-              "type": "object"
-            },
-            "enabled": {
-              "description": "If enabled, ServiceMonitor resources for Prometheus Operator are created",
-              "type": "boolean"
-            },
-            "interval": {
-              "description": "ServiceMonitor scrape interval\nDefault is 15s because included recording rules use a 1m rate, and scrape interval needs to be at\nleast 1/4 rate interval.",
-              "type": "string"
-            },
-            "labels": {
-              "additionalProperties": {},
-              "description": "Additional ServiceMonitor labels",
-              "type": "object"
-            },
-            "metricRelabelings": {
-              "description": "ServiceMonitor metric relabel configs to apply to samples before ingestion\nhttps://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#endpoint",
-              "items": {},
-              "type": "array"
-            },
-            "metricsInstance": {
-              "additionalProperties": {},
-              "description": "DEPRECATED If defined, will create a MetricsInstance for the Grafana Agent Operator.",
-              "properties": {
-                "annotations": {
-                  "additionalProperties": {},
-                  "description": "MetricsInstance annotations",
-                  "type": "object"
-                },
-                "enabled": {
-                  "description": "If enabled, MetricsInstance resources for Grafana Agent Operator are created",
-                  "type": "boolean"
-                },
-                "labels": {
-                  "additionalProperties": {},
-                  "description": "Additional MetricsInstance labels",
-                  "type": "object"
-                },
-                "remoteWrite": {
-                  "description": "If defined a MetricsInstance will be created to remote write metrics."
-                }
-              },
-              "type": "object"
-            },
-            "namespaceSelector": {
-              "additionalProperties": {},
-              "description": "Namespace selector for ServiceMonitor resources",
-              "type": "object"
-            },
-            "relabelings": {
-              "description": "ServiceMonitor relabel configs to apply to samples before scraping\nhttps://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#relabelconfig",
-              "items": {},
-              "type": "array"
-            },
-            "scheme": {
-              "description": "ServiceMonitor will use http by default, but you can pick https as well",
-              "type": "string"
-            },
-            "scrapeTimeout": {
-              "$ref": "#/$defs/values~1monitoring.serviceMonitor.scrapeTimeout"
-            },
-            "tlsConfig": {
-              "description": "ServiceMonitor will use these tlsConfig settings to make the health check requests"
             }
           },
           "type": "object"
@@ -10485,7 +10177,7 @@
               "description": "ServiceMonitor relabel configs to apply to samples before scraping\nhttps://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#relabelconfig"
             },
             "scrapeTimeout": {
-              "$ref": "#/$defs/values~1monitoring.serviceMonitor.scrapeTimeout"
+              "description": "ServiceMonitor scrape timeout in Go duration format (e.g. 15s)"
             }
           }
         },

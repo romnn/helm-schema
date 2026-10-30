@@ -8,11 +8,6 @@ pub(crate) enum SuccessType {
     Selected,
 }
 
-/// Reports whether a function is Helm's `.Files.Get` method, including a receiver-qualified call.
-pub(crate) fn is_files_get(function: &str) -> bool {
-    function == "Files.Get" || function.ends_with(".Files.Get")
-}
-
 /// Classifies whether a nil operand aborts, including the direct-access distinction.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum NilBehavior {
@@ -833,6 +828,9 @@ pub(crate) fn strict_collection_item_pattern(
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum MethodReceiver {
     Values,
+    Files,
+    ApiVersions,
+    KubeVersion,
     Other,
 }
 
@@ -841,6 +839,15 @@ pub(crate) enum Method {
     ValuesAsMap,
     ValuesTable,
     ValuesYaml,
+    FilesGet,
+    FilesGetBytes,
+    FilesGlob,
+    FilesLines,
+    FilesAsConfig,
+    FilesAsSecrets,
+    ApiVersionsHas,
+    KubeVersionGitVersion,
+    KubeVersionString,
     Foreign(std::string::String),
 }
 
@@ -850,7 +857,23 @@ impl Method {
             (MethodReceiver::Values, "AsMap") => Self::ValuesAsMap,
             (MethodReceiver::Values, "Table") => Self::ValuesTable,
             (MethodReceiver::Values, "YAML") => Self::ValuesYaml,
-            (MethodReceiver::Values | MethodReceiver::Other, _) => Self::Foreign(name.to_owned()),
+            (MethodReceiver::Files, "Get") => Self::FilesGet,
+            (MethodReceiver::Files, "GetBytes") => Self::FilesGetBytes,
+            (MethodReceiver::Files, "Glob") => Self::FilesGlob,
+            (MethodReceiver::Files, "Lines") => Self::FilesLines,
+            (MethodReceiver::Files, "AsConfig") => Self::FilesAsConfig,
+            (MethodReceiver::Files, "AsSecrets") => Self::FilesAsSecrets,
+            (MethodReceiver::ApiVersions, "Has") => Self::ApiVersionsHas,
+            (MethodReceiver::KubeVersion, "GitVersion") => Self::KubeVersionGitVersion,
+            (MethodReceiver::KubeVersion, "String") => Self::KubeVersionString,
+            (
+                MethodReceiver::Values
+                | MethodReceiver::Files
+                | MethodReceiver::ApiVersions
+                | MethodReceiver::KubeVersion
+                | MethodReceiver::Other,
+                _,
+            ) => Self::Foreign(name.to_owned()),
         }
     }
 
@@ -859,6 +882,15 @@ impl Method {
             Self::ValuesAsMap => "AsMap",
             Self::ValuesTable => "Table",
             Self::ValuesYaml => "YAML",
+            Self::FilesGet => "Get",
+            Self::FilesGetBytes => "GetBytes",
+            Self::FilesGlob => "Glob",
+            Self::FilesLines => "Lines",
+            Self::FilesAsConfig => "AsConfig",
+            Self::FilesAsSecrets => "AsSecrets",
+            Self::ApiVersionsHas => "Has",
+            Self::KubeVersionGitVersion => "GitVersion",
+            Self::KubeVersionString => "String",
             Self::Foreign(name) => name,
         }
     }
@@ -868,13 +900,32 @@ impl Method {
             Self::ValuesAsMap => KNOWN.selected(&[], None).reading(InputRead::Contents),
             Self::ValuesTable => STRICT.selected(&[Text], None),
             Self::ValuesYaml => KNOWN.fixed(&[], Text).reading(InputRead::Contents),
+            Self::FilesGet => STRICT.fixed(&[Text], Text),
+            Self::FilesGetBytes | Self::FilesLines => STRICT.fixed(&[Text], Slice),
+            Self::FilesGlob => STRICT.fixed(&[Text], Map),
+            Self::FilesAsConfig
+            | Self::FilesAsSecrets
+            | Self::KubeVersionGitVersion
+            | Self::KubeVersionString => KNOWN.fixed(&[], Text),
+            Self::ApiVersionsHas => STRICT.fixed(&[Text], Bool),
             Self::Foreign(_) => UNKNOWN.reading(InputRead::Contents),
         }
     }
 
     pub(crate) fn is_foreign(&self) -> bool {
         match self {
-            Self::ValuesAsMap | Self::ValuesTable | Self::ValuesYaml => false,
+            Self::ValuesAsMap
+            | Self::ValuesTable
+            | Self::ValuesYaml
+            | Self::FilesGet
+            | Self::FilesGetBytes
+            | Self::FilesGlob
+            | Self::FilesLines
+            | Self::FilesAsConfig
+            | Self::FilesAsSecrets
+            | Self::ApiVersionsHas
+            | Self::KubeVersionGitVersion
+            | Self::KubeVersionString => false,
             Self::Foreign(_) => true,
         }
     }

@@ -4004,43 +4004,6 @@
         },
         "enabled": {
           "description": "Enable deployment of Gateway API resources"
-        },
-        "nginx": {
-          "additionalProperties": {},
-          "description": "NGINX Gateway Fabric specific resources. Only relevant when the upstream\nGateway is backed by NGINX Gateway Fabric (nginx.org). Other implementations\n(Envoy Gateway, Cilium, ...) do not impose a default request body size limit.",
-          "properties": {
-            "clientSettingsPolicies": {
-              "additionalProperties": {},
-              "properties": {
-                "annotations": {
-                  "additionalProperties": {},
-                  "description": "Annotations applied to the ClientSettingsPolicy",
-                  "type": "object"
-                },
-                "body": {
-                  "additionalProperties": {},
-                  "description": "Client body settings (required when enabled), e.g. `maxSize`. See `docs/gateway-api.md`.\nmaxSize: 100m",
-                  "type": "object"
-                },
-                "enabled": {
-                  "description": "Render a ClientSettingsPolicy (NGINX Gateway Fabric) to raise the client request body limit",
-                  "type": "boolean"
-                },
-                "labels": {
-                  "additionalProperties": {},
-                  "description": "Additional labels applied to the ClientSettingsPolicy",
-                  "type": "object"
-                },
-                "targetRef": {
-                  "additionalProperties": {},
-                  "description": "Target reference for the ClientSettingsPolicy. Defaults to the chart's HTTPRoute.",
-                  "type": "object"
-                }
-              },
-              "type": "object"
-            }
-          },
-          "type": "object"
         }
       },
       "type": "object"
