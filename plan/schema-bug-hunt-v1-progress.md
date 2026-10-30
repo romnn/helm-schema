@@ -9632,4 +9632,30 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
     - E/F turn 2 (20261029T154152-28c35965) on the performance fix. Turn 1 passed all 98 E/F false-rejection witnesses but measured
       KPS 9.70 against a 5.2 base.
     - D2 builder (20261030T025617-6f9b058b) in round8-r3b-d2, on steps 1–3 of the design.
-Next: merge C06b and E/F on hand-back (KPS within the cap); D2 placement join after C06b; FA ignore marks; targeted previews, then the full preview and landing chain in a fresh clone.
+- 14:50 (Oct 30) — **R3b: C06b checkpoint and E/F merged, but a targeted preview shows no corpus movement; the diagnosis puts heap history back on the critical path.**
+  - r3b/construction commits:
+    - 3ded9720: the C06b checkpoint. 17 units recovered, 1/5 public reds.
+    - d14fad18: the E/F merge. 98/98 witnesses; 9 more units recovered; 200 fixtures re-adopted from one clean dump; KPS −4.6%; +1,497 LOC.
+    - Merged-line units: 325 inherited failures, 0 new.
+  - C06b trajectory review (sol xhigh): REDESIGN the query/placement seam (prototype spellings and per-shape branch cases).
+    - C06b was split into P (placement) and Q (relationship query).
+    - P's turn 3: 5/5 public equalities, validated over 12,181 documents; production net −519 LOC.
+    - Q: one RelationshipQuery, +1,091 LOC. Combined in round8-r3b-c06b2; the join turn is running.
+  - D2 (consumer projection): d60 sample 0 → 8/60, oracle cells 0/193, +1,129 LOC, and it built its own derivation store. Not landable.
+    D3 rebases Q onto the line, then cuts D over to RelationshipQuery.
+  - Targeted live preview 3 on 14 charts at d14fad18, against preview 2:
+    - FA 17,625 → 17,917; FR 1,617 → 1,600.
+    - Counts are identical on 10 charts. airflow FR 86 → 0 but FA +169; rabbitmq FR 153 → 33; the kube-prometheus-stack rise comes from the oracle pins.
+    - Evidence: round8-r3b-preview3-evidence.
+  - Diagnosis (sol xhigh, round8/designs/corpus-gap-diagnosis.md): 10 cells traced through every stage.
+    - In full charts, an earlier unknown `tpl`, unknown-range writer or foreign host call invalidates every heap object
+      (operations.rs:1182). The join then keeps only Widened (heap.rs:692–711), so the later member and placement facts never exist.
+    - Reductions run on a fresh heap and pass.
+    - Separately, airflow lost its declared `workers.*` assertions at gen/resolve_policy.rs:447.
+  - Orchestrator decisions:
+    - Heap history, shelved Oct 29 for KPS 67.8 CPU-s, returns as the critical path: HEAP2 (sol xhigh, round8-r3b-heap2), performance first,
+      with acceptance by full-chart reds plus a targeted live battery.
+    - HOSTS (sol high): typed read-only `.Files`/`.Capabilities` hosts, and main's discard rules for serialized parents.
+    - The rearchitecture skill now requires full-chart reds and targeted battery movement in every hand-back.
+  - Estimate: the landing waits on HEAP2. Corpus parity will be re-measured after it; landing is at least 2 weeks out.
+Next: HEAP2 hand-back → targeted battery on redis/cilium/argo-cd/airflow; then rebase the C06b join, D3 and HOSTS onto it; full preview before landing.
