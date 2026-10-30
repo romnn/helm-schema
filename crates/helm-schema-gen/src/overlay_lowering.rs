@@ -922,15 +922,20 @@ fn append_type_permission_fallback(
             resolved.values_yaml_schema.clone(),
         )
     };
-    let guards = vec![ConditionalGuard::Not(std::sync::Arc::new(
-        ConditionalGuard::AnyOf(
+    // A declaration fallback cannot make a nil entry stricter than a missing entry.
+    // Any consumer that actually reads nil retains its own abort-grade requirement.
+    let guards = vec![
+        ConditionalGuard::Not(std::sync::Arc::new(ConditionalGuard::Absent {
+            path: target.clone(),
+        })),
+        ConditionalGuard::Not(std::sync::Arc::new(ConditionalGuard::AnyOf(
             permissions
                 .into_iter()
                 .map(|guards| ConditionalGuard::AllOf(guards.into()))
                 .collect::<Vec<_>>()
                 .into(),
-        ),
-    ))];
+        ))),
+    ];
     let target_segments = &resolved.path_segments;
     let Some((outer_guards, nested_guard_scopes)) =
         partition_guard_scopes(target_segments, &guards)

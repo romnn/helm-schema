@@ -388,14 +388,19 @@ fn value_text(
 ) -> Result<String, Unresolved> {
     *remaining = remaining.checked_sub(1).ok_or(Unresolved::Exhausted)?;
     match value.value.node.as_ref() {
-        ValueNode::Select { decision, yes, no } => value_text(
-            &FrozenValue {
-                heap: Rc::clone(&value.heap),
-                value: selected(decision, yes, no, outcome)?.clone(),
-            },
-            outcome,
-            remaining,
-        ),
+        ValueNode::Select { decision, yes, no } => {
+            if value.identity().is_some() && outcome(decision).is_none() {
+                return Err(Unresolved::Unknown);
+            }
+            value_text(
+                &FrozenValue {
+                    heap: Rc::clone(&value.heap),
+                    value: selected(decision, yes, no, outcome)?.clone(),
+                },
+                outcome,
+                remaining,
+            )
+        }
         ValueNode::Leaf(Leaf {
             datum: Datum::Text(text),
             origin: _,

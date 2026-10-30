@@ -162,20 +162,31 @@ impl Heap {
             return false;
         };
         if let ObjectData::Widened { inputs } = &object.data {
-            let mut inputs = Rc::clone(inputs);
-            if let Field::Present(value) = &value {
-                let added = self.freeze(value).inputs();
-                if !added.is_subset(&inputs) {
-                    Rc::make_mut(&mut inputs).extend(added);
-                }
-            }
             let multiplicity = object.multiplicity;
+            let inputs = Rc::clone(inputs);
+            let mut fields = BTreeMap::new();
+            let value = match multiplicity {
+                Multiplicity::Singleton => value,
+                Multiplicity::Summary => Field::select(
+                    self.arena.decision(
+                        helm_schema_core::Predicate::False,
+                        helm_schema_core::Predicate::False,
+                        super::Coverage::Partial,
+                    ),
+                    value,
+                    Field::Unknown,
+                ),
+            };
+            fields.insert(key.to_owned(), value);
             self.install(
                 id.clone(),
                 ObjectVersion {
                     revision: self.arena.snapshot(),
                     multiplicity,
-                    data: ObjectData::Widened { inputs },
+                    data: ObjectData::Map {
+                        fields,
+                        remainder: Remainder::Unknown { inputs },
+                    },
                 },
             );
             return true;
@@ -209,7 +220,7 @@ impl Heap {
             tracing::debug!(reason = ?super::BoundReason::ObjectFields, "widen map write");
             let inputs = self.data_inputs(&ObjectData::Map {
                 fields,
-                remainder: *remainder,
+                remainder: remainder.clone(),
             });
             let multiplicity = *multiplicity;
             self.install(
@@ -229,7 +240,7 @@ impl Heap {
             multiplicity: *multiplicity,
             data: ObjectData::Map {
                 fields,
-                remainder: *remainder,
+                remainder: remainder.clone(),
             },
         };
         self.install(id.clone(), object);
@@ -444,10 +455,10 @@ impl HeapVersion {
 }
 
 impl Remainder {
-    pub(super) fn missing(self) -> Field {
+    pub(super) fn missing(&self) -> Field {
         match self {
             Self::Closed => Field::Absent,
-            Self::Open | Self::Input => Field::Unknown,
+            Self::Open | Self::Input | Self::Unknown { inputs: _ } => Field::Unknown,
         }
     }
 }
@@ -652,9 +663,9 @@ fn join_data(
         ) => Ok(join_map_data(
             decision,
             yes,
-            *yes_remainder,
+            yes_remainder.clone(),
             no,
-            *no_remainder,
+            no_remainder.clone(),
         )),
         (ObjectData::Strings(yes), ObjectData::Strings(no)) if yes.len() == no.len() => {
             if yes
@@ -799,6 +810,15 @@ fn join_map_data(
         );
     }
     let remainder = match (yes_remainder, no_remainder) {
+        (Remainder::Unknown { inputs: yes }, Remainder::Unknown { inputs: no }) => {
+            Remainder::Unknown {
+                inputs: Rc::new(yes.union(&no).cloned().collect()),
+            }
+        }
+        (Remainder::Unknown { inputs }, Remainder::Open | Remainder::Closed | Remainder::Input)
+        | (Remainder::Open | Remainder::Closed | Remainder::Input, Remainder::Unknown { inputs }) => {
+            Remainder::Unknown { inputs }
+        }
         (Remainder::Closed, Remainder::Closed) => Remainder::Closed,
         (Remainder::Input, Remainder::Input) => Remainder::Input,
         (Remainder::Open, Remainder::Open | Remainder::Closed | Remainder::Input)
@@ -816,10 +836,10 @@ impl Heap {
     ) -> std::collections::BTreeSet<helm_schema_core::ValuesPath> {
         let mut inputs = std::collections::BTreeSet::new();
         match data {
-            ObjectData::Map {
-                fields,
-                remainder: _,
-            } => {
+            ObjectData::Map { fields, remainder } => {
+                if let Remainder::Unknown { inputs: known } = remainder {
+                    inputs.extend(known.iter().cloned());
+                }
                 for field in fields.values() {
                     collect_field_inputs(self, field, &mut inputs);
                 }

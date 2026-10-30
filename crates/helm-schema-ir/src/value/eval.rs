@@ -55,14 +55,23 @@ impl Executor<'_> {
                     .unwrap_or_else(Value::unknown);
                 normal(state, value)
             }
-            TemplateExpr::Parenthesized(expression) => self.expression(expression, state, site),
+            TemplateExpr::Parenthesized(expression) => self
+                .expression(expression, state, site)
+                .into_iter()
+                .map(|mut exit| {
+                    if let Flow::Normal(normal) = &mut exit.flow {
+                        normal.value = exit.state.evaluated_member_entry(&normal.value);
+                    }
+                    exit
+                })
+                .collect(),
             TemplateExpr::VariableDefinition { name, value }
             | TemplateExpr::Assignment { name, value } => self
                 .expression(value, state, site)
                 .into_iter()
                 .map(|mut exit| {
                     if let Flow::Normal(normal) = &exit.flow {
-                        let value = normal.value.clone();
+                        let value = exit.state.evaluated_member_entry(&normal.value);
                         let name = local_name(name);
                         if matches!(expression, TemplateExpr::VariableDefinition { .. }) {
                             exit.state.bind(name.to_owned(), value);
@@ -144,38 +153,51 @@ impl Executor<'_> {
         exits
     }
     fn selector(&self, state: State, value: Value, path: &[String], site: usize) -> Vec<Exit> {
-        let live = state.selector_live_domain(&value);
+        if path.is_empty() {
+            return normal(state, value);
+        }
+        let mut remaining = super::MAX_SCALAR_DISPATCH_STATES;
+        self.selector_domain(state, value, path, site, &mut remaining)
+    }
+    fn selector_domain(
+        &self,
+        state: State,
+        value: Value,
+        path: &[String],
+        site: usize,
+        remaining: &mut usize,
+    ) -> Vec<Exit> {
+        if *remaining == 0 {
+            let inputs = state.heap.freeze(&value).inputs();
+            return normal(state, Value::influenced(inputs));
+        }
+        *remaining -= 1;
+        let consumed = state.consumed(&value);
+        if let super::ValueNode::Select { decision, yes, no } = consumed.node.as_ref() {
+            let mut exits = super::ExitBuffer::default();
+            for (taken, arm) in [(true, yes), (false, no)] {
+                let branch = state.fork(std::rc::Rc::clone(decision), taken);
+                if !branch.path_is_infeasible() {
+                    exits.extend(self.selector_domain(branch, arm.clone(), path, site, remaining));
+                }
+            }
+            return exits.finish();
+        }
+        let Some(live) = state.selector_entry_domain(&value) else {
+            let inputs = state.heap.freeze(&value).inputs();
+            return normal(state, Value::influenced(inputs));
+        };
+        if state.heap.freeze(&state.consumed(&value)).go_type() == super::kinds::GoType::Nil {
+            return normal(state, Value::invalid());
+        }
         let mut exits = normal(state, value);
         for key in path {
             let mut next = super::ExitBuffer::default();
             for exit in exits {
-                let Exit { mut state, flow } = exit;
+                let Exit { state, flow } = exit;
                 match flow {
                     Flow::Normal(Normal { value }) => {
-                        let candidate = crate::function_semantics::Method::resolve(
-                            crate::function_semantics::MethodReceiver::Values,
-                            key,
-                        );
-                        let receiver = (!candidate.is_foreign()).then(|| state.consumed(&value));
-                        let descriptor = receiver
-                            .as_ref()
-                            .map_or(candidate, |receiver| super::hosts::method(receiver, key));
-                        if descriptor.is_foreign() {
-                            state.record_selector_host(&value, &live);
-                            let value = state.selector_field(&value, key);
-                            next.extend(normal(state, value));
-                        } else {
-                            next.extend(self.invoke_callee(
-                                super::Callee::Method {
-                                    receiver: receiver.unwrap_or(value),
-                                    descriptor,
-                                },
-                                &[],
-                                None,
-                                state,
-                                site,
-                            ));
-                        }
+                        next.extend(self.selector_step(state, &value, key, &live, site, remaining));
                     }
                     flow => next.push(Exit { state, flow }),
                 }
@@ -187,8 +209,104 @@ impl Executor<'_> {
                 exit.state
                     .record_value_read(value, super::ReadCoverage::ExactPath);
             }
+            if let Flow::Normal(Normal { value }) = &mut exit.flow
+                && live != super::Predicate::True
+                && live != super::Predicate::False
+            {
+                let decision = exit.state.heap.arena.decision(
+                    live.clone(),
+                    live.negated(),
+                    super::Coverage::Exact,
+                );
+                *value = Value::select(decision, value.clone(), Value::invalid());
+            }
         }
         exits
+    }
+    fn selector_step(
+        &self,
+        mut state: State,
+        value: &Value,
+        key: &str,
+        live: &super::Predicate,
+        site: usize,
+        remaining: &mut usize,
+    ) -> Vec<Exit> {
+        if *remaining == 0 {
+            let inputs = state.heap.freeze(value).inputs();
+            return normal(state, Value::influenced(inputs));
+        }
+        *remaining -= 1;
+        let value = state.consumed(value);
+        if value.is_invalid() {
+            return normal(state, value);
+        }
+        if let super::ValueNode::Select { decision, yes, no } = value.node.as_ref() {
+            let mut exits = super::ExitBuffer::default();
+            for (taken, arm) in [(true, yes), (false, no)] {
+                let branch = state.fork(std::rc::Rc::clone(decision), taken);
+                if !branch.path_is_infeasible() {
+                    exits.extend(self.selector_step(branch, arm, key, live, site, remaining));
+                }
+            }
+            return exits.finish();
+        }
+        let actual = state.heap.freeze(&value).go_type();
+        if actual == super::kinds::GoType::Nil {
+            let decision =
+                state
+                    .heap
+                    .arena
+                    .decision(live.clone(), live.negated(), super::Coverage::Exact);
+            if decision.constant_outcome() == Some(false)
+                || state
+                    .heap
+                    .arena
+                    .runtime_path(&state.active)
+                    .implies_test(&decision)
+                    == Some(false)
+            {
+                return normal(state, Value::invalid());
+            }
+        }
+        let candidate = crate::function_semantics::Method::resolve(
+            crate::function_semantics::MethodReceiver::Values,
+            key,
+        );
+        let receiver = (!candidate.is_foreign()).then(|| state.consumed(&value));
+        let descriptor = receiver
+            .as_ref()
+            .map_or(candidate, |receiver| super::hosts::method(receiver, key));
+        if !descriptor.is_foreign() {
+            return self.invoke_callee(
+                super::Callee::Method {
+                    receiver: receiver.unwrap_or(value),
+                    descriptor,
+                },
+                &[],
+                None,
+                state,
+                site,
+            );
+        }
+        state.record_member_host(&value, live, super::query::MemberAccess::Selector);
+        match actual {
+            super::kinds::GoType::Map | super::kinds::GoType::Unknown => {
+                let value = state.selector_field(&value, key);
+                normal(state, value)
+            }
+            super::kinds::GoType::Nil
+            | super::kinds::GoType::Bool
+            | super::kinds::GoType::String
+            | super::kinds::GoType::Slice
+            | super::kinds::GoType::Int
+            | super::kinds::GoType::Int64
+            | super::kinds::GoType::Uint64
+            | super::kinds::GoType::Float64 => vec![Exit {
+                state,
+                flow: Flow::Abort(super::AbortReason::Type),
+            }],
+        }
     }
 }
 pub(super) fn normal(state: State, value: Value) -> Vec<Exit> {

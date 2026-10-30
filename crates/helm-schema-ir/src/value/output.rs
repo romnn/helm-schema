@@ -1386,6 +1386,120 @@ impl super::State {
         }
     }
 }
+fn capture_map_argument(
+    read: &super::RuntimeRead,
+    allows_nil: bool,
+    facts: &mut crate::observed_facts::ObservedFacts,
+    failures: &mut Vec<Predicate>,
+) -> bool {
+    let condition = read.condition.clone();
+    let invalid = Predicate::from(helm_schema_core::Guard::TypeIs {
+        path: read.path.clone(),
+        schema_type: "object".to_owned(),
+    })
+    .negated();
+    failures.push(Predicate::all(vec![
+        condition.clone(),
+        invalid,
+        if allows_nil {
+            super::kinds::input_nil_predicate(&read.path).negated()
+        } else {
+            Predicate::True
+        },
+    ]));
+    let mut ranged = crate::range_modes::RangeModes::default();
+    if read
+        .path
+        .segments()
+        .any(helm_schema_core::Segment::is_each_member)
+    {
+        if allows_nil || read.path.item_parent().is_some() {
+            return false;
+        }
+        let collection = helm_schema_core::ValuesPath::from_segments(
+            read.path
+                .segments()
+                .take_while(|segment| !segment.is_each_member())
+                .cloned(),
+        );
+        ranged.mark_member_identity(&collection);
+        ranged.mark_destructured(&collection);
+        let mut parent = read.path.parent();
+        for _ in 0..super::MAX_SCALAR_DISPATCH_STATES {
+            let Some(path) = parent.filter(|path| {
+                path.segments()
+                    .any(helm_schema_core::Segment::is_each_member)
+            }) else {
+                break;
+            };
+            facts.captures.insert(crate::observed_facts::FailCapture {
+                conjunction: helm_schema_core::Conjunction::new([condition.clone()]),
+                ranged: ranged.clone(),
+                kind: crate::observed_facts::CaptureKind::ValueType {
+                    path: path.clone(),
+                    schema_type: "object".to_owned(),
+                    null_aborts: true,
+                },
+            });
+            facts.captures.insert(crate::observed_facts::FailCapture {
+                conjunction: helm_schema_core::Conjunction::new([condition.clone()]),
+                ranged: ranged.clone(),
+                kind: crate::observed_facts::CaptureKind::AbsenceAborts { path: path.clone() },
+            });
+            parent = path.parent();
+        }
+    }
+    let type_condition = super::query::without_ancestor_nil(&condition, &read.path)
+        .unwrap_or_else(|| condition.clone());
+    facts.captures.insert(crate::observed_facts::FailCapture {
+        conjunction: helm_schema_core::Conjunction::new([type_condition]),
+        ranged: ranged.clone(),
+        kind: crate::observed_facts::CaptureKind::ValueType {
+            path: read.path.clone(),
+            schema_type: "object".to_owned(),
+            null_aborts: !allows_nil,
+        },
+    });
+    if !allows_nil {
+        facts.captures.insert(crate::observed_facts::FailCapture {
+            conjunction: helm_schema_core::Conjunction::new([condition]),
+            ranged,
+            kind: crate::observed_facts::CaptureKind::AbsenceAborts {
+                path: read.path.clone(),
+            },
+        });
+    }
+    true
+}
+
+fn capture_member_host(
+    read: &super::RuntimeRead,
+    allows_nil: bool,
+    facts: &mut crate::observed_facts::ObservedFacts,
+) {
+    let mut ranged = crate::range_modes::RangeModes::default();
+    if let Some(parent) = read.path.item_parent() {
+        ranged.mark_member_identity(&parent);
+        ranged.mark_destructured(&parent);
+    }
+    let invalid_host = Predicate::from(helm_schema_core::Guard::TypeIs {
+        path: read.path.clone(),
+        schema_type: "object".to_owned(),
+    })
+    .negated();
+    facts.captures.insert(crate::observed_facts::FailCapture {
+        conjunction: helm_schema_core::Conjunction::new([read.condition.clone(), invalid_host]),
+        ranged,
+        kind: crate::observed_facts::CaptureKind::MemberAccess {
+            handled_kinds: if allows_nil {
+                BTreeSet::from(["null".to_owned()])
+            } else {
+                BTreeSet::new()
+            },
+        },
+    });
+}
+
 impl DocumentExecution {
     pub(super) fn new(mut exits: Vec<Exit>, output: super::FileOutput) -> Self {
         let site_index = super::site_index::SiteIndex::new(&exits);
@@ -1400,34 +1514,52 @@ impl DocumentExecution {
             observed_facts: crate::observed_facts::ObservedFacts::default(),
             placement,
         };
+        let mut observed_type_failures = Vec::new();
+        let mut map_arguments: BTreeMap<_, Vec<_>> = BTreeMap::new();
         for read in execution
             .exits
             .iter()
             .flat_map(|exit| exit.state.reads.iter())
         {
-            if read.coverage != super::ReadCoverage::MemberHost {
-                continue;
+            let allows_nil = match read.coverage {
+                super::ReadCoverage::MemberHost { allows_nil } => allows_nil,
+                super::ReadCoverage::MapArgument { allows_nil } => {
+                    map_arguments
+                        .entry((read.path.clone(), allows_nil))
+                        .or_default()
+                        .push(read.condition.clone());
+                    continue;
+                }
+                super::ReadCoverage::ExactPath | super::ReadCoverage::UnknownRegion => continue,
+            };
+            capture_member_host(read, allows_nil, &mut execution.observed_facts);
+        }
+        for ((path, allows_nil), conditions) in map_arguments {
+            let read = super::RuntimeRead {
+                path,
+                condition: Predicate::Or(conditions).normalize_boolean(),
+                coverage: super::ReadCoverage::MapArgument { allows_nil },
+            };
+            if !capture_map_argument(
+                &read,
+                allows_nil,
+                &mut execution.observed_facts,
+                &mut observed_type_failures,
+            ) {
+                capture_member_host(&read, allows_nil, &mut execution.observed_facts);
             }
-            let invalid_host = Predicate::from(helm_schema_core::Guard::TypeIs {
-                path: read.path.clone(),
-                schema_type: "object".to_owned(),
-            })
-            .negated();
-            execution
-                .observed_facts
-                .captures
-                .insert(crate::observed_facts::FailCapture {
-                    conjunction: helm_schema_core::Conjunction::new([
-                        read.condition.clone(),
-                        invalid_host,
-                    ]),
-                    ranged: crate::range_modes::RangeModes::default(),
-                    kind: crate::observed_facts::CaptureKind::MemberAccess {
-                        handled_kinds: BTreeSet::new(),
-                    },
-                });
         }
         let aborted = execution.abort_predicate();
+        let aborted = execution.exits.first().map_or(aborted.clone(), |exit| {
+            exit.state
+                .heap
+                .arena
+                .predicate_memo
+                .normalize(Predicate::all(vec![
+                    aborted,
+                    Predicate::Or(observed_type_failures).negated(),
+                ]))
+        });
         if aborted != Predicate::False {
             execution
                 .observed_facts
@@ -1457,7 +1589,8 @@ impl DocumentExecution {
                 let kind = match read.coverage {
                     super::ReadCoverage::ExactPath => crate::ValueKind::WidenedDependency,
                     super::ReadCoverage::UnknownRegion => crate::ValueKind::WidenedRegion,
-                    super::ReadCoverage::MemberHost => return None,
+                    super::ReadCoverage::MemberHost { .. }
+                    | super::ReadCoverage::MapArgument { .. } => return None,
                 };
                 Some(crate::fragment_eval::ValueRead {
                     values_path: read.path.clone(),

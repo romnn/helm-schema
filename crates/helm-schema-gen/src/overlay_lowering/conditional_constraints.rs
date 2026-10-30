@@ -239,12 +239,35 @@ fn guards_supported_with_self_path(
         })
 }
 
+fn terminal_guard_ancestor(guards: &[ConditionalGuard], values: &YamlValue) -> Vec<String> {
+    let ancestor = shared_guard_ancestor_segments(guards);
+    let path = ValuesPath::from_segments(
+        ancestor
+            .iter()
+            .map(|segment| helm_schema_core::Segment::from_encoded_component(segment)),
+    );
+    // A missing coalesced ancestor supplies no local instance for the lint comparison.
+    // Keep its definite absence failure at the root so that comparison cannot withdraw it.
+    if matches!(guards, [ConditionalGuard::Absent { .. }])
+        && !matches!(
+            yaml_value_at_values_path(values, &path),
+            Some(YamlValue::Mapping(_))
+        )
+    {
+        Vec::new()
+    } else {
+        ancestor
+    }
+}
+
+/// Lowers terminating validator formulas into `if <guards> then false` clauses.
+///
+/// No valid values document satisfies all of a clause's guards.
+/// Clauses anchor at their shared ancestor, or at the root when a missing ancestor
+/// supplies no coalesced instance for the lint comparison.
+/// Any unencodable guard skips the whole clause: a partially encoded `if` would
+/// reject documents the validator never terminates.
 #[tracing::instrument(skip_all)]
-/// Lower terminating validator formulas: for each clause, no valid values
-/// document satisfies ALL its guards, so the document gets
-/// `if <guards> then false` at the guards' shared ancestor. Clauses with
-/// any unencodable guard are skipped whole — a partially encoded `if`
-/// would reject documents the validator never terminates.
 pub(crate) fn append_terminal_clauses(
     root_schema: &mut SchemaDocument,
     clauses: &[Vec<ConditionalGuard>],
@@ -283,7 +306,7 @@ pub(crate) fn append_terminal_clauses(
     for guards in clauses {
         let (_, values_yaml_doc, absence) =
             documents.condition_context(guards, dependency_roots, predicate_memo);
-        let shared_ancestor = shared_guard_ancestor_segments(guards);
+        let shared_ancestor = terminal_guard_ancestor(guards, values_yaml_doc);
         let all_vacuous = guards.iter().all(guard_holds_vacuously);
         // Keep present values attributed to their nearest shared object.
         // A separate root clause evaluates the original formula only while
@@ -731,9 +754,14 @@ pub(crate) fn append_selected_constraints(
                 absence,
                 polarity: crate::condition_encoding::ConditionPolarity::Widen,
             };
-            let Some(fragment) =
+            // A nil-safe host is already scoped by its actual entry domain.
+            // Strict hasKey presence includes null; a second non-null gate would lose its failure.
+            let kept = if conditional.carrier.relax_untyped_host {
+                Some(fragment)
+            } else {
                 gate.lint_safe_then(&ancestor_segments, &guards, condition, fragment, encoding)
-            else {
+            };
+            let Some(fragment) = kept else {
                 report.mandatory_outcomes.fallback += mandatory;
                 continue;
             };

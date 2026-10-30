@@ -382,14 +382,22 @@ fn invalidation_shares_inputs_and_preserves_frozen_objects() -> eyre::Result<()>
         .version
         .object(&saved_id)
         .ok_or_eyre("written object missing")?;
-    let ObjectData::Widened {
-        inputs: current_inputs,
+    let ObjectData::Map {
+        fields,
+        remainder: Remainder::Unknown {
+            inputs: current_inputs,
+        },
     } = &current.data
     else {
-        eyre::bail!("write recovered an exact object");
+        eyre::bail!("write lost the unknown remainder");
     };
-    assert!(current_inputs.contains(&helm_schema_core::ValuesPath::parse("later")));
-    assert!(!Rc::ptr_eq(&shared_inputs, current_inputs));
+    let later = helm_schema_core::ValuesPath::parse("later");
+    sim_assert_eq!(have: fields.get("later"), want: Some(&Field::Present(Value::input(later.clone()))));
+    assert!(Rc::ptr_eq(&shared_inputs, current_inputs));
+    let inputs = state.heap.freeze(&saved).inputs();
+    sim_assert_eq!(have: inputs.len(), want: 257);
+    assert!(inputs.contains(&later));
+    sim_assert_eq!(have: state.heap.version.field(&saved_id, "unknown"), want: Field::Unknown);
     for (id, object) in state
         .heap
         .version
@@ -2038,7 +2046,7 @@ mod scheduled_file_occurrence_laws {
         for taken in [true, false] {
             let mut branch = state.fork(Rc::clone(&decision), taken);
             branch.frames.clear();
-            branch.enter_file_call(root.clone(), &occurrence);
+            branch.enter_file_call(&root, &occurrence);
             exits.extend(crate::value::eval::Executor { db: &db }.parsed_file_body(
                 "# done",
                 Some("chart/templates/a.yaml"),
@@ -3337,7 +3345,9 @@ mod value_transfer_laws {
             .iter()
             .filter_map(|read| match read.coverage {
                 ReadCoverage::UnknownRegion => Some(read.path.clone()),
-                ReadCoverage::ExactPath | ReadCoverage::MemberHost => None,
+                ReadCoverage::ExactPath
+                | ReadCoverage::MemberHost { .. }
+                | ReadCoverage::MapArgument { .. } => None,
             })
             .collect();
         sim_assert_eq!(have: covered, want: paths);

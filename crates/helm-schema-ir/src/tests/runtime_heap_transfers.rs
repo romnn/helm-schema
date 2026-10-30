@@ -584,3 +584,21 @@ fn widened_destination_cannot_hide_a_mutated_nested_alias() -> eyre::Result<()> 
     sim_assert_eq!(have: execution.abort_predicate(), want: helm_schema_core::Predicate::False);
     Ok(())
 }
+
+/// Capturing a scalar freezes its value while capturing a map retains its alias.
+#[test]
+fn member_scalar_capture_and_map_alias_have_distinct_write_behavior() {
+    sim_assert_eq!(
+        have: texts(r#"{{ $map := dict "value" 1 }}{{ $scalar := $map.value }}{{ $alias := $map }}{{ $_ := set $map "value" 2 }}{{ $scalar }}/{{ $alias.value }}"#),
+        want: vec![Some("1/2".to_owned())]
+    );
+}
+
+/// A known last write restores a single member after an unknown writer.
+#[test]
+fn explicit_member_write_after_havoc_restores_that_member_only() {
+    sim_assert_eq!(
+        have: texts(r#"{{ $map := dict "value" 1 }}{{ $_ := tpl (toString .Values.program) $map }}{{ $_ := set $map "value" 2 }}{{ $map.value }}"#),
+        want: vec![Some("2".to_owned())]
+    );
+}

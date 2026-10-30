@@ -33,7 +33,7 @@ fn extract_bound_values(
     for (name, binding) in get_bindings {
         write!(
             source,
-            "{{{{- ${name} := get .Values.{} ${} -}}}}",
+            "{{{{- ${name} := get $.Values.{} ${} -}}}}",
             binding.base.encode(),
             binding.key_var
         )?;
@@ -66,21 +66,43 @@ fn parse_get_binding_detects_declaration_from_ast() -> eyre::Result<()> {
         .filter(|site| site.rendered())
         .last()
         .ok_or_eyre("missing bound output")?;
-    sim_assert_eq!(have: site.value().identity().map(helm_schema_core::ValuesPath::encode), want: Some("config.frontend".to_string()));
+    // A missing get returns a string, so only the present-member arm has raw identity.
+    let identities = site
+        .value()
+        .alternatives()
+        .iter()
+        .map(|arm| {
+            arm.value()
+                .identity()
+                .map(helm_schema_core::ValuesPath::encode)
+        })
+        .collect::<BTreeSet<_>>();
+    sim_assert_eq!(have: identities, want: BTreeSet::from([None, Some("config.frontend".to_string())]));
     Ok(())
 }
 
 #[test]
 fn parse_get_binding_detects_assignment_from_ast() -> eyre::Result<()> {
     let execution = execute(
-        r#"{{- $key := "frontend" -}}{{- $value := nil -}}{{- $value = get .Values.config $key -}}{{- $value -}}"#,
+        r#"{{- $key := "frontend" -}}{{- $value := "" -}}{{- $value = get .Values.config $key -}}{{- $value -}}"#,
     );
     let site = execution
         .sites()
         .filter(|site| site.rendered())
         .last()
         .ok_or_eyre("missing assigned output")?;
-    sim_assert_eq!(have: site.value().identity().map(helm_schema_core::ValuesPath::encode), want: Some("config.frontend".to_string()));
+    // A missing get returns a string, so only the present-member arm has raw identity.
+    let identities = site
+        .value()
+        .alternatives()
+        .iter()
+        .map(|arm| {
+            arm.value()
+                .identity()
+                .map(helm_schema_core::ValuesPath::encode)
+        })
+        .collect::<BTreeSet<_>>();
+    sim_assert_eq!(have: identities, want: BTreeSet::from([None, Some("config.frontend".to_string())]));
     Ok(())
 }
 

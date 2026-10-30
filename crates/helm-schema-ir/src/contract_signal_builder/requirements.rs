@@ -2196,8 +2196,17 @@ pub(super) fn record_member_access_capture(
         if !capture.ranged.mode(&parent).member_identity {
             return;
         }
+        let mut handled_kinds = handled_kinds.clone();
         let mut outer_guards = Vec::new();
         for predicate in &capture.conjunction {
+            if matches!(
+                predicate.kind(),
+                helm_schema_core::PredicateKind::Not(inner)
+                    if matches!(inner.kind(), helm_schema_core::PredicateKind::Guard(Guard::Absent { path }) if path == &target)
+            ) {
+                handled_kinds.insert("null".to_owned());
+                continue;
+            }
             if matches!(
                 predicate.kind(),
                 helm_schema_core::PredicateKind::Guard(Guard::Range { path }) if path == &parent
@@ -2236,7 +2245,14 @@ pub(super) fn record_member_access_capture(
                         && !capture_mode.json_decoded
                 },
             },
-            vec![FailValueRequirement::SchemaType("object".to_string())],
+            vec![if handled_kinds.is_empty() {
+                FailValueRequirement::SchemaType("object".to_owned())
+            } else {
+                FailValueRequirement::MemberHost {
+                    handled_kinds: handled_kinds.iter().cloned().collect(),
+                    complete_domain: true,
+                }
+            }],
         );
         let acc = path_accumulator(paths, &parent);
         acc.referenced = true;

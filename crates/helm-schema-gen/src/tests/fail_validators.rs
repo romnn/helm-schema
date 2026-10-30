@@ -3192,14 +3192,10 @@ fn capabilities_defaulted_semver_gates_decode_against_the_policy_version() {
     }
 }
 
-/// Sprig `dig` splits its subject and intermediate-step contracts: the
-/// SUBJECT is type-asserted before any missing-key handling (an explicit
-/// null aborts; absence stays open to the caller's defaults), while an
-/// INTERMEDIATE step falls back to the dig default when nil but aborts on
-/// any other non-map — including Helm-falsy scalars (KPS's nulled
-/// `customRules` and trivy-operator's nulled `trivy.resources`).
+/// Sprig `dig` falls back on missing keys.
+/// Present nil subjects and intermediates abort.
 #[test]
-fn dig_subjects_reject_null_while_intermediate_nils_fall_back() {
+fn dig_subjects_and_present_nil_intermediates_reject_null() {
     let src = indoc! {r#"
         {{- if .Values.rules.create }}
         config:
@@ -3251,8 +3247,8 @@ fn dig_subjects_reject_null_while_intermediate_nils_fall_back() {
         (
             serde_json::json!({ "rules": { "create": true }, "customRules": {},
                 "trivy": { "resources": null } }),
-            true,
-            "a nil intermediate step falls back to the default",
+            false,
+            "a present nil intermediate aborts the map assertion",
         ),
         (
             serde_json::json!({ "rules": { "create": true }, "customRules": {},

@@ -7,6 +7,13 @@ use helm_schema_core::{Guard, GuardValue, Predicate, ValuesPath};
 use std::collections::{BTreeMap, BTreeSet};
 use std::rc::Rc;
 
+#[derive(Clone, Copy)]
+pub(super) enum MemberAccess {
+    Selector,
+    StringIndex,
+    MapArgument { allows_nil: bool },
+}
+
 impl Value {
     pub(super) fn with_influences(mut self, inputs: BTreeSet<ValuesPath>) -> Self {
         if let ValueNode::Leaf(Leaf { datum: _, origin }) = Rc::make_mut(&mut self.node) {
@@ -27,6 +34,24 @@ impl Value {
     }
     pub(super) fn nil() -> Self {
         Self::literal(GuardValue::Null)
+    }
+    pub(super) fn invalid() -> Self {
+        Self::scalar(
+            ScalarType::Invalid,
+            Some(ScalarContent::Literal(GuardValue::Null)),
+        )
+    }
+    pub(super) fn is_invalid(&self) -> bool {
+        matches!(
+            self.node.as_ref(),
+            ValueNode::Leaf(Leaf {
+                datum: Datum::Scalar {
+                    go_type: ScalarType::Invalid,
+                    content: _
+                },
+                origin: _,
+            })
+        )
     }
     pub(super) fn input(path: ValuesPath) -> Self {
         Self {
@@ -164,6 +189,13 @@ impl State {
     pub(super) fn record_value_read(&mut self, value: &Value, coverage: super::ReadCoverage) {
         let condition = self.path_predicate();
         for path in self.heap.freeze(value).inputs() {
+            // A summarized member read does not prove a visit or a non-null collection.
+            // The collection read owns authoring openness; member obligations own narrowing.
+            if coverage == super::ReadCoverage::ExactPath
+                && path.segments().any(|segment| segment.literal().is_none())
+            {
+                continue;
+            }
             self.reads.insert(super::RuntimeRead {
                 path,
                 condition: condition.clone(),
@@ -344,55 +376,188 @@ impl State {
         }
     }
 
-    pub(super) fn selector_live_domain(&self, value: &Value) -> Predicate {
+    pub(super) fn selector_entry_domain(&self, value: &Value) -> Option<Predicate> {
         let value = self.consumed(value);
         let mut remaining = super::MAX_SCALAR_DISPATCH_STATES;
         selector_entry_domain(&value, &mut remaining)
     }
 
-    pub(super) fn record_selector_host(&mut self, value: &Value, live: &Predicate) {
-        if let ValueNode::Select { decision, yes, no } = value.node.as_ref() {
-            let depth = self.active.len();
-            for (taken, arm) in [(true, yes), (false, no)] {
-                std::rc::Rc::make_mut(&mut self.active).push(super::DecisionEdge {
-                    test: Rc::clone(decision),
-                    taken,
-                });
-                self.record_selector_host(arm, live);
-                std::rc::Rc::make_mut(&mut self.active).truncate(depth);
-            }
+    pub(super) fn evaluated_member_entry(&self, value: &Value) -> Value {
+        if !value
+            .inputs()
+            .iter()
+            .any(|path| path.item_parent().is_some())
+        {
+            return value.clone();
+        }
+        let mut remaining = super::MAX_SCALAR_DISPATCH_STATES;
+        evaluated_member_entry(self, value, &mut remaining)
+    }
+
+    pub(super) fn record_member_host(
+        &mut self,
+        value: &Value,
+        live: &Predicate,
+        operation: MemberAccess,
+    ) {
+        let exact = self
+            .active
+            .iter()
+            .all(|edge| edge.test.coverage == Coverage::Exact);
+        if !exact && matches!(operation, MemberAccess::MapArgument { .. }) {
             return;
         }
-        let Some(path) = value.identity() else {
-            return;
+        let frozen = self.heap.freeze(value);
+        let ambient = if exact {
+            self.path_predicate()
+        } else {
+            Predicate::all(vec![
+                self.path_predicate(),
+                Predicate::approximate(
+                    "member access execution",
+                    value.inputs().iter().map(ValuesPath::encode).collect(),
+                ),
+            ])
         };
-        if path.segments().next().is_none()
-            || path.segments().any(|segment| segment.literal().is_none())
-            || self
-                .active
-                .iter()
-                .any(|edge| edge.test.coverage != Coverage::Exact)
+        let mut pending = vec![(&frozen.value, Predicate::True)];
+        let mut remaining = super::MAX_SCALAR_DISPATCH_STATES;
+        while let Some((value, selected)) = pending.pop() {
+            if remaining == 0 {
+                return;
+            }
+            remaining -= 1;
+            match value.node.as_ref() {
+                ValueNode::Select { decision, yes, no } => {
+                    if decision.coverage != Coverage::Exact {
+                        continue;
+                    }
+                    pending.push((
+                        yes,
+                        Predicate::all(vec![selected.clone(), decision.when_true.clone()]),
+                    ));
+                    pending.push((
+                        no,
+                        Predicate::all(vec![selected, decision.when_false.clone()]),
+                    ));
+                }
+                ValueNode::Leaf(Leaf { datum, origin }) => {
+                    let Some(source_path) =
+                        self.member_host_path(&frozen, datum, origin, operation)
+                    else {
+                        continue;
+                    };
+                    let path = &source_path;
+                    let member = path.item_parent().is_some();
+                    let strict_member_field =
+                        matches!(operation, MemberAccess::MapArgument { allows_nil: false })
+                            && path
+                                .segments()
+                                .filter(|segment| segment.is_each_member())
+                                .count()
+                                == 1;
+                    if path.segments().next().is_none()
+                        || (!member
+                            && !strict_member_field
+                            && path.segments().any(|segment| segment.literal().is_none()))
+                    {
+                        continue;
+                    }
+                    if !known_nonmap_receiver(datum)
+                        && self
+                            .heap
+                            .arena
+                            .input_objects
+                            .borrow()
+                            .get(path)
+                            .and_then(|backing| frozen.heap.object(&backing.object))
+                            .is_some_and(|object| {
+                                !matches!(
+                                    &object.data,
+                                    ObjectData::Map {
+                                        fields,
+                                        remainder: super::Remainder::Input
+                                    } if fields.is_empty() || matches!(operation, MemberAccess::MapArgument { .. })
+                                )
+                            })
+                    {
+                        continue;
+                    }
+                    self.record_host_path(
+                        path,
+                        operation,
+                        Predicate::all(vec![ambient.clone(), live.clone(), selected]),
+                    );
+                }
+            }
+        }
+    }
+
+    fn member_host_path(
+        &self,
+        frozen: &FrozenValue,
+        datum: &Datum,
+        origin: &super::Origin,
+        operation: MemberAccess,
+    ) -> Option<ValuesPath> {
+        if let Some(path) = &origin.identity {
+            return Some(path.clone());
+        }
+        let Datum::Map {
+            target: Some(id),
+            view: _,
+        } = datum
+        else {
+            return None;
+        };
+        self.input_map_path(
+            frozen,
+            id,
+            matches!(operation, MemberAccess::MapArgument { .. }),
+        )
+    }
+
+    fn input_map_path(
+        &self,
+        frozen: &FrozenValue,
+        id: &super::ObjectId,
+        allow_known_fields: bool,
+    ) -> Option<ValuesPath> {
+        if !matches!(
+            frozen.heap.object(id).map(|object| &object.data),
+            Some(ObjectData::Map {
+                fields,
+                remainder: super::Remainder::Input
+            }) if fields.is_empty() || allow_known_fields
+        ) {
+            return None;
+        }
+        self.heap.arena.input_paths.borrow().get(id).cloned()
+    }
+
+    fn record_host_path(
+        &mut self,
+        path: &ValuesPath,
+        operation: MemberAccess,
+        condition: Predicate,
+    ) {
+        let condition = self.heap.arena.predicate_memo.normalize(condition);
+        if condition == Predicate::False
+            || condition.contains_approximation()
+                && matches!(operation, MemberAccess::MapArgument { .. })
         {
             return;
         }
-        // Materialized inputs may already have template writes; derived hosts have no raw identity.
-        if self
-            .heap
-            .arena
-            .input_objects
-            .borrow()
-            .get(path)
-            .is_some_and(|backing| self.heap.version.object(&backing.object).is_some())
-        {
-            return;
-        }
-        let memo = &self.heap.arena.predicate_memo;
-        let condition = memo.normalize(Predicate::all(vec![self.path_predicate(), live.clone()]));
-        if condition == Predicate::False || condition.contains_approximation() {
-            return;
-        }
+        let member = path.item_parent().is_some();
+        let coverage = match operation {
+            MemberAccess::MapArgument { allows_nil } => super::ReadCoverage::MapArgument {
+                allows_nil: allows_nil && !member,
+            },
+            MemberAccess::Selector | MemberAccess::StringIndex => {
+                super::ReadCoverage::MemberHost { allows_nil: false }
+            }
+        };
         self.reads.insert(super::RuntimeRead {
-            coverage: super::ReadCoverage::MemberHost,
+            coverage,
             path: path.clone(),
             condition,
         });
@@ -400,6 +565,9 @@ impl State {
 
     pub(super) fn selector_field(&mut self, value: &Value, key: &str) -> Value {
         let value = self.consumed(value);
+        if value.is_invalid() {
+            return value;
+        }
         if let ValueNode::Select { decision, yes, no } = value.node.as_ref() {
             return Value::select(
                 Rc::clone(decision),
@@ -591,7 +759,13 @@ impl State {
         path: Option<&ValuesPath>,
         key: &str,
     ) -> Value {
-        if let Some(ObjectData::Widened { inputs }) = id
+        if let Some(
+            ObjectData::Widened { inputs }
+            | ObjectData::Map {
+                fields: _,
+                remainder: super::Remainder::Unknown { inputs },
+            },
+        ) = id
             .and_then(|id| self.heap.version.object(id))
             .map(|object| &object.data)
         {
@@ -838,6 +1012,25 @@ fn truth_test(state: &State, value: &Value, budget: &mut TruthBudget<'_>) -> Rc<
         return budget.unknown(state);
     }
     budget.visits -= 1;
+    if let ValueNode::Leaf(Leaf {
+        datum: Datum::Map {
+            target: Some(id),
+            view: _,
+        },
+        origin: _,
+    }) = value.node.as_ref()
+        && let Some(path) = state.input_map_path(&state.heap.freeze(value), id, false)
+    {
+        if budget.leaves == 0 {
+            return budget.unknown(state);
+        }
+        budget.leaves -= 1;
+        let condition = Predicate::from(Guard::Truthy { path });
+        return state
+            .heap
+            .arena
+            .decision(condition.clone(), condition.negated(), Coverage::Exact);
+    }
     if let Some(length) = state.map_length_of_consumed(value) {
         return truth_test(state, &length, budget);
     }
@@ -891,7 +1084,8 @@ impl FrozenValue {
         self.value.constant()
     }
     pub(crate) fn identity(&self) -> Option<&ValuesPath> {
-        self.value.identity()
+        let mut remaining = super::MAX_SCALAR_DISPATCH_STATES;
+        selector_source_identity(&self.value, &mut remaining)
     }
     pub(crate) fn inputs(&self) -> BTreeSet<ValuesPath> {
         self.collect_inputs(false)
@@ -935,10 +1129,12 @@ impl FrozenValue {
                     continue;
                 };
                 match &object.data {
-                    ObjectData::Map {
-                        fields,
-                        remainder: _,
-                    } => {
+                    ObjectData::Map { fields, remainder } => {
+                        if let super::Remainder::Unknown { inputs: known } = remainder
+                            && seen_input_sets.insert(Rc::as_ptr(known))
+                        {
+                            inputs.extend(known.iter().cloned());
+                        }
                         for field in fields.values() {
                             field_inputs(field, &mut values);
                         }
@@ -991,7 +1187,7 @@ fn runtime_type(value: &Value, remaining: &mut usize) -> super::kinds::GoType {
                 go_type,
                 content: _,
             } => match go_type {
-                ScalarType::Nil => GoType::Nil,
+                ScalarType::Invalid | ScalarType::Nil => GoType::Nil,
                 ScalarType::Bool => GoType::Bool,
                 ScalarType::String => GoType::String,
                 ScalarType::Int => GoType::Int,
@@ -1022,7 +1218,7 @@ impl ScalarType {
     fn query_type(self) -> super::kinds::GoType {
         use super::kinds::GoType;
         match self {
-            Self::Nil => GoType::Nil,
+            Self::Invalid | Self::Nil => GoType::Nil,
             Self::Bool => GoType::Bool,
             Self::String => GoType::String,
             Self::Int => GoType::Int,
@@ -1044,12 +1240,111 @@ impl super::ValueAlternative {
         self.coverage_exact
     }
 }
+// A skipped nil ancestor and its absent descendant have the same source content.
+// Consuming operations still see the invalid entry in the value DAG.
+fn selector_source_identity<'a>(value: &'a Value, remaining: &mut usize) -> Option<&'a ValuesPath> {
+    if *remaining == 0 {
+        return None;
+    }
+    *remaining -= 1;
+    match value.node.as_ref() {
+        ValueNode::Leaf(Leaf { datum: _, origin }) => origin.identity.as_ref(),
+        ValueNode::Select { decision, yes, no } => {
+            if decision.coverage != Coverage::Exact
+                || decision.when_true.contains_approximation()
+                || decision.when_false.contains_approximation()
+                || !no.is_invalid()
+            {
+                return None;
+            }
+            let path = selector_source_identity(yes, remaining)?;
+            let present = ancestor_nil_domain(&decision.when_true, path, remaining)?;
+            (present.normalize_boolean() == Predicate::True
+                && decision.when_false.clone().normalize_boolean()
+                    == decision.when_true.negated().normalize_boolean())
+            .then_some(path)
+        }
+    }
+}
+
+/// Projects ancestor nil tests assuming the descendant exists, or abstains at the query bound.
+pub(super) fn without_ancestor_nil(predicate: &Predicate, path: &ValuesPath) -> Option<Predicate> {
+    let mut remaining = super::MAX_SCALAR_DISPATCH_STATES;
+    ancestor_nil_domain(predicate, path, &mut remaining).map(Predicate::normalize_boolean)
+}
+
+fn ancestor_nil_domain(
+    predicate: &Predicate,
+    path: &ValuesPath,
+    remaining: &mut usize,
+) -> Option<Predicate> {
+    use helm_schema_core::PredicateKind;
+    if *remaining == 0 {
+        return None;
+    }
+    *remaining -= 1;
+    Some(match predicate.kind() {
+        PredicateKind::Guard(
+            Guard::Absent { path: ancestor }
+            | Guard::Eq {
+                path: ancestor,
+                value: GuardValue::Null,
+            },
+        ) if ancestor.segments().len() < path.segments().len()
+            && ancestor
+                .segments()
+                .zip(path.segments())
+                .all(|(left, right)| left == right) =>
+        {
+            Predicate::False
+        }
+        PredicateKind::And(parts) => Predicate::all(
+            parts
+                .iter()
+                .map(|part| ancestor_nil_domain(part, path, remaining))
+                .collect::<Option<Vec<_>>>()?,
+        ),
+        PredicateKind::Or(parts) => Predicate::Or(
+            parts
+                .iter()
+                .map(|part| ancestor_nil_domain(part, path, remaining))
+                .collect::<Option<Vec<_>>>()?,
+        ),
+        PredicateKind::Not(inner) => ancestor_nil_domain(inner, path, remaining)?.negated(),
+        PredicateKind::True
+        | PredicateKind::False
+        | PredicateKind::Guard(_)
+        | PredicateKind::Approximate {
+            marker: _,
+            paths: _,
+            role: _,
+            sound_subset: _,
+        } => predicate.clone(),
+    })
+}
+
 fn alternative_views(
     value: &FrozenValue,
     condition: Predicate,
     coverage_exact: bool,
     result: &mut Vec<super::ValueAlternative>,
 ) {
+    if matches!(
+        value.value.node.as_ref(),
+        ValueNode::Select {
+            decision: _,
+            yes: _,
+            no: _
+        }
+    ) && value.identity().is_some()
+    {
+        result.push(super::ValueAlternative {
+            condition,
+            value: value.clone(),
+            coverage_exact,
+        });
+        return;
+    }
     match value.value.node.as_ref() {
         ValueNode::Leaf(Leaf {
             datum: _,
@@ -1148,7 +1443,12 @@ impl State {
                         .get(path)
                         .map(|backing| backing.object.clone());
                     let child = self.unknown_child_value(id.as_ref(), Some(path), key);
-                    Value::influenced(child.inputs())
+                    {
+                        let missing =
+                            Value::scalar(ScalarType::String, None).with_influences(child.inputs());
+                        let present = self.field_presence(&value, key);
+                        Value::select(self.test(&present), child, missing)
+                    }
                 } else if let Datum::Map {
                     target: Some(id),
                     view: _,
@@ -1156,7 +1456,12 @@ impl State {
                 {
                     let path = self.heap.arena.input_paths.borrow().get(id).cloned();
                     let child = self.unknown_child_value(Some(id), path.as_ref(), key);
-                    Value::influenced(child.inputs())
+                    {
+                        let missing =
+                            Value::scalar(ScalarType::String, None).with_influences(child.inputs());
+                        let present = self.field_presence(&value, key);
+                        Value::select(self.test(&present), child, missing)
+                    }
                 } else {
                     Value::influenced(self.heap.freeze(&value).inputs())
                 };
@@ -1516,9 +1821,60 @@ fn collect_value_children(
     }
 }
 
-fn selector_entry_domain(value: &Value, remaining: &mut usize) -> Predicate {
+fn known_nonmap_receiver(datum: &Datum) -> bool {
+    matches!(
+        datum,
+        Datum::Scalar {
+            go_type: _,
+            content: _
+        } | Datum::Text(_)
+            | Datum::Sequence(_)
+            | Datum::Strings(_)
+            | Datum::Slot {
+                backing: _,
+                index: _
+            }
+            | Datum::Unknown(super::UnknownValue {
+                types: super::TypeCoverage::InputNonMap
+                    | super::TypeCoverage::Scalar(_)
+                    | super::TypeCoverage::Sequence,
+                aliases: _,
+            })
+    )
+}
+
+fn evaluated_member_entry(state: &State, value: &Value, remaining: &mut usize) -> Value {
     if *remaining == 0 {
-        return Predicate::False;
+        return Value::influenced(state.heap.freeze(value).inputs());
+    }
+    *remaining -= 1;
+    match value.node.as_ref() {
+        ValueNode::Select { decision, yes, no } => Value::select(
+            Rc::clone(decision),
+            evaluated_member_entry(state, yes, remaining),
+            evaluated_member_entry(state, no, remaining),
+        ),
+        ValueNode::Leaf(Leaf { datum: _, origin }) => {
+            let Some(path) = origin
+                .identity
+                .as_ref()
+                .filter(|path| path.item_parent().is_some())
+            else {
+                return value.clone();
+            };
+            let nil = Predicate::from(Guard::Absent { path: path.clone() });
+            let decision = state
+                .heap
+                .arena
+                .decision(nil.clone(), nil.negated(), Coverage::Exact);
+            Value::select(decision, Value::invalid(), value.clone())
+        }
+    }
+}
+
+fn selector_entry_domain(value: &Value, remaining: &mut usize) -> Option<Predicate> {
+    if *remaining == 0 {
+        return None;
     }
     *remaining -= 1;
     match value.node.as_ref() {
@@ -1527,29 +1883,27 @@ fn selector_entry_domain(value: &Value, remaining: &mut usize) -> Predicate {
                 || decision.when_true.contains_approximation()
                 || decision.when_false.contains_approximation()
             {
-                return Predicate::False;
+                return None;
             }
-            Predicate::Or(vec![
-                Predicate::all(vec![
-                    decision.when_true.clone(),
-                    selector_entry_domain(yes, remaining),
-                ]),
-                Predicate::all(vec![
-                    decision.when_false.clone(),
-                    selector_entry_domain(no, remaining),
-                ]),
-            ])
-            .normalize_boolean()
+            let yes = selector_entry_domain(yes, remaining)?;
+            let no = selector_entry_domain(no, remaining)?;
+            Some(
+                Predicate::Or(vec![
+                    Predicate::all(vec![decision.when_true.clone(), yes]),
+                    Predicate::all(vec![decision.when_false.clone(), no]),
+                ])
+                .normalize_boolean(),
+            )
         }
         ValueNode::Leaf(Leaf { datum, origin }) => {
             if let Some(path) = &origin.identity {
-                if path.segments().next().is_none() {
-                    return Predicate::True;
+                if path.segments().next().is_none() || path.item_parent().is_some() {
+                    return Some(Predicate::True);
                 }
                 if path.segments().any(|segment| segment.literal().is_none()) {
-                    return Predicate::False;
+                    return None;
                 }
-                return super::kinds::input_nil_predicate(path).negated();
+                return Some(super::kinds::input_nil_predicate(path).negated());
             }
             // Typed nil maps still perform map lookup; only an invalid entry skips the chain.
             if matches!(
@@ -1557,15 +1911,18 @@ fn selector_entry_domain(value: &Value, remaining: &mut usize) -> Predicate {
                 Datum::Map { view: _, target: _ }
                     | Datum::Unknown(super::UnknownValue {
                         types: super::TypeCoverage::Map(_),
-                        aliases: _
+                        aliases: _,
                     })
             ) {
-                return Predicate::True;
+                return Some(Predicate::True);
             }
-            match super::kinds::nilness(value) {
-                Some(false) => Predicate::True,
-                Some(true) | None => Predicate::False,
-            }
+            super::kinds::nilness(value).map(|nil| {
+                if nil {
+                    Predicate::False
+                } else {
+                    Predicate::True
+                }
+            })
         }
     }
 }

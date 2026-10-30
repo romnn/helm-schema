@@ -183,7 +183,8 @@ impl State {
         }
     }
 
-    pub(super) fn enter_call(&mut self, argument: Value) {
+    pub(super) fn enter_call(&mut self, argument: &Value) {
+        let argument = self.evaluated_member_entry(argument);
         self.frames.push(Frame::call(
             argument,
             self.heap.arena.call(),
@@ -194,9 +195,10 @@ impl State {
 
     pub(super) fn enter_file_call(
         &mut self,
-        argument: Value,
+        argument: &Value,
         occurrence: &super::session::FileOccurrence,
     ) {
+        let argument = self.evaluated_member_entry(argument);
         self.frames.push(Frame::call(
             argument,
             occurrence.call,
@@ -431,7 +433,11 @@ impl State {
             .values()
             .flat_map(|page| page.values())
         {
-            if let super::ObjectData::Widened { inputs } = &object.data
+            if let super::ObjectData::Widened { inputs }
+            | super::ObjectData::Map {
+                fields: _,
+                remainder: super::Remainder::Unknown { inputs },
+            } = &object.data
                 && seen_input_sets.insert(Rc::as_ptr(inputs))
             {
                 for path in inputs.iter() {
@@ -451,6 +457,7 @@ impl State {
                         | super::ObjectData::Map {
                             fields: _,
                             remainder: super::Remainder::Open
+                                | super::Remainder::Unknown { inputs: _ }
                         }
                 )
             ) {

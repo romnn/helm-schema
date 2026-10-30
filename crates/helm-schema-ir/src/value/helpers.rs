@@ -174,7 +174,7 @@ impl Executor<'_> {
             program,
         };
         let recursive = state.calls.len() >= 8 || program.is_some() && state.calls.contains(&call);
-        state.enter_call(argument.clone());
+        state.enter_call(argument);
         state.calls.push(call);
         match target {
             HelperTarget::Abort(reason) => {

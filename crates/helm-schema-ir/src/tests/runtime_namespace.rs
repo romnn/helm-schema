@@ -22,7 +22,7 @@ fn execute(defines: &DefineIndex, source: &str) -> eyre::Result<DocumentExecutio
         Field::Present(Value::input(ValuesPath::default())),
     );
     state.frames.clear();
-    state.enter_call(root);
+    state.enter_call(&root);
     let main = db.parsed_source(
         source,
         Some("chart/templates/main.yaml"),

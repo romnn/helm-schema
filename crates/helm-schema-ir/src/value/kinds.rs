@@ -164,6 +164,15 @@ pub(super) fn validate_parameter(
     expected: Option<GoType>,
     form: super::ArgumentForm,
 ) -> Vec<super::Exit> {
+    if expected == Some(GoType::Map) {
+        state.record_member_host(
+            &value,
+            &Predicate::True,
+            super::query::MemberAccess::MapArgument {
+                allows_nil: form != super::ArgumentForm::DirectLookup,
+            },
+        );
+    }
     let mut remaining = super::MAX_SCALAR_DISPATCH_STATES;
     let plan = validate_parameter_inner(&mut state, value, expected, form, &mut remaining);
     finish_parameter_plan(state, plan)
@@ -235,6 +244,11 @@ fn validate_parameter_inner(
     }
     *remaining -= 1;
     let consumed = state.consumed(&value);
+    let allows_nil = consumed.is_invalid()
+        || form != super::ArgumentForm::DirectLookup
+            && consumed
+                .identity()
+                .is_none_or(|path| path.item_parent().is_none());
     if incompatible_parameter_view(&consumed, expected) {
         return ParameterPlan::rejected(state, value);
     }
@@ -254,7 +268,7 @@ fn validate_parameter_inner(
     if actual != GoType::Unknown {
         return if actual == expected
             || actual == GoType::Nil
-                && form != super::ArgumentForm::DirectLookup
+                && allows_nil
                 && matches!(expected, GoType::Map | GoType::Slice)
         {
             let value = if actual == GoType::Nil {
@@ -278,9 +292,7 @@ fn validate_parameter_inner(
     let accepted = if let Some(path) = consumed.identity() {
         let predicate =
             input_type_domain(path, expected).map_or(Predicate::False, |domain| domain.possible);
-        if form != super::ArgumentForm::DirectLookup
-            && matches!(expected, GoType::Map | GoType::Slice | GoType::Nil)
-        {
+        if allows_nil && matches!(expected, GoType::Map | GoType::Slice | GoType::Nil) {
             Predicate::Or(vec![predicate, input_nil_predicate(path)]).normalize_boolean()
         } else {
             predicate
@@ -624,7 +636,7 @@ fn descriptor_name(value: &super::Value, kind_only: bool) -> Option<&'static str
                 go_type,
                 content: _,
             } => Some(match go_type {
-                ScalarType::Nil => {
+                ScalarType::Invalid | ScalarType::Nil => {
                     if kind_only {
                         "invalid"
                     } else {
@@ -681,7 +693,7 @@ pub(super) fn nilness(value: &super::Value) -> Option<bool> {
             Datum::Scalar {
                 go_type,
                 content: _,
-            } => Some(*go_type == ScalarType::Nil),
+            } => Some(matches!(go_type, ScalarType::Invalid | ScalarType::Nil)),
             Datum::Map { view: _, target } => Some(target.is_none()),
             Datum::Sequence(super::InterfaceSequence {
                 storage,
@@ -696,7 +708,9 @@ pub(super) fn nilness(value: &super::Value) -> Option<bool> {
                 index: _,
             } => Some(false),
             Datum::Unknown(UnknownValue { types, aliases: _ }) => match types {
-                TypeCoverage::Scalar(kind) => Some(*kind == ScalarType::Nil),
+                TypeCoverage::Scalar(kind) => {
+                    Some(matches!(kind, ScalarType::Invalid | ScalarType::Nil))
+                }
                 TypeCoverage::Map(_)
                 | TypeCoverage::Sequence
                 | TypeCoverage::InputNonMap

@@ -1629,7 +1629,7 @@ impl<'a> LexicalTransfers<'a> {
             | super::ObjectData::Opaque { reachable: _ }
             | super::ObjectData::Widened { inputs: _ } => return States::new(),
         };
-        let Some(guard) = self.map_guard(target, fields, *remainder) else {
+        let Some(guard) = self.map_guard(target, fields, remainder) else {
             return States::new();
         };
         self.map_depth += 1;
@@ -1681,11 +1681,11 @@ impl<'a> LexicalTransfers<'a> {
         &self,
         target: &super::ObjectId,
         fields: &BTreeMap<String, super::Field>,
-        remainder: super::Remainder,
+        remainder: &super::Remainder,
     ) -> Option<Predicate> {
         match remainder {
             super::Remainder::Closed => Some(Predicate::True),
-            super::Remainder::Open => None,
+            super::Remainder::Open | super::Remainder::Unknown { inputs: _ } => None,
             super::Remainder::Input => {
                 let path = self.input_paths.get(target)?;
                 let keys = fields

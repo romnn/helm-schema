@@ -504,16 +504,33 @@ impl Executor<'_> {
         bindings: &RangeBindings,
         summary: RangeSummary,
     ) -> Vec<Exit> {
-        let RangeSummary { nonempty, member } = summary;
+        let RangeSummary {
+            nonempty,
+            mut member,
+        } = summary;
+        let uniform_path = uniform_member_path(program, bindings, state, value);
+        if let Some(path) = &uniform_path {
+            let mut path = path.clone();
+            path.push_each_member();
+            member = Value::input(path);
+        }
         let mut exits = Vec::new();
         let mut state = if nonempty {
             state.clone()
         } else {
-            let test =
+            let test = if let Some(path) = &uniform_path {
+                let predicate =
+                    Predicate::from(helm_schema_core::Guard::Range { path: path.clone() });
                 state
                     .heap
                     .arena
-                    .decision(Predicate::False, Predicate::False, Coverage::Partial);
+                    .decision(predicate.clone(), predicate.negated(), Coverage::Exact)
+            } else {
+                state
+                    .heap
+                    .arena
+                    .decision(Predicate::False, Predicate::False, Coverage::Partial)
+            };
             exits.extend(self.range_else(program, boundaries, state.fork(Rc::clone(&test), false)));
             state.fork(test, true)
         };
@@ -551,7 +568,7 @@ impl Executor<'_> {
                 exit.state
                     .reads
                     .iter()
-                    .filter(|read| read.coverage != super::ReadCoverage::MemberHost)
+                    .filter(|read| !read.coverage.is_requirement())
                     .cloned()
                     .collect::<Vec<_>>()
             })
@@ -626,6 +643,80 @@ fn literal_span(program: &Program<'_>, next: usize, span: Span) -> Span {
         },
     )
     .unwrap_or_else(|| Span::new(span.start, span.start))
+}
+
+fn uniform_member_path(
+    program: &Program<'_>,
+    bindings: &RangeBindings,
+    state: &State,
+    value: &Value,
+) -> Option<helm_schema_core::ValuesPath> {
+    let path = value.identity()?;
+    if bindings.assignment
+        || bindings.key.is_none()
+            && !matches!(
+                state.heap.freeze(&state.consumed(value)).go_type(),
+                super::kinds::GoType::Map | super::kinds::GoType::Slice
+            )
+        || path.segments().any(|segment| segment.literal().is_none())
+        || state
+            .heap
+            .arena
+            .input_objects
+            .borrow()
+            .get(path)
+            .is_some_and(|backing| state.heap.version.object(&backing.object).is_some())
+        || !uniform_member_body(program, bindings.body)
+    {
+        return None;
+    }
+    Some(path.clone())
+}
+
+// This certificate excludes loop-carried writes and control that can skip later members.
+fn uniform_member_body(program: &Program<'_>, body: Window) -> bool {
+    for action in program
+        .syntax
+        .actions
+        .iter()
+        .filter(|action| action.span.start >= body.start && action.span.start < body.end)
+    {
+        if !matches!(
+            action.kind,
+            ActionKind::Assign | ActionKind::Output { .. } | ActionKind::TemplateComment
+        ) {
+            return false;
+        }
+        let Some(parsed) = program.syntax.expressions.at(action.span) else {
+            return false;
+        };
+        let mut safe = true;
+        for expression in parsed.expressions.iter() {
+            expression.walk(|expr| match expr {
+                TemplateExpr::Assignment { name: _, value: _ } | TemplateExpr::Unknown(_) => {
+                    safe = false;
+                }
+                TemplateExpr::Call { function, args: _ } => {
+                    safe &= crate::function_semantics::function_semantics(function).heap_effect
+                        == crate::function_semantics::HeapEffect::ReadOnly;
+                }
+                TemplateExpr::Literal(_)
+                | TemplateExpr::Field(_)
+                | TemplateExpr::Variable(_)
+                | TemplateExpr::Selector {
+                    operand: _,
+                    path: _,
+                }
+                | TemplateExpr::Pipeline(_)
+                | TemplateExpr::Parenthesized(_)
+                | TemplateExpr::VariableDefinition { name: _, value: _ } => {}
+            });
+        }
+        if !safe {
+            return false;
+        }
+    }
+    true
 }
 
 fn range_domain(state: &State, value: &Value, two_variables: bool) -> RangeInput {
@@ -881,7 +972,7 @@ pub(super) fn summarize_exits(exits: Vec<Exit>) -> Vec<Exit> {
             let mut reads = super::read_set::ReadSet::default();
             for exit in &group {
                 for read in &exit.state.reads {
-                    if read.coverage == super::ReadCoverage::MemberHost {
+                    if read.coverage.is_requirement() {
                         continue;
                     }
                     inputs.insert(read.path.clone());
@@ -918,7 +1009,7 @@ pub(super) fn summarize_exits(exits: Vec<Exit>) -> Vec<Exit> {
                 .state
                 .reads
                 .iter()
-                .filter(|read| read.coverage != super::ReadCoverage::MemberHost)
+                .filter(|read| !read.coverage.is_requirement())
                 .map(|read| super::RuntimeRead {
                     path: read.path.clone(),
                     coverage: read.coverage,

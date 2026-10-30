@@ -66,6 +66,7 @@ pub(super) fn transfer(
             };
             Ok(state.get_field(&input.first, key))
         }
+        "dig" => return transfer_dig(input, state),
         "toStrings" | "sortAlpha" => return string_slice(input.function, &input.first, state),
         "index" => transfer_index(input, state),
         "first" | "last" => transfer_sequence_edge(input, state),
@@ -123,6 +124,93 @@ struct TransferInput<'a> {
     influences: BTreeSet<helm_schema_core::ValuesPath>,
     first: Value,
     last: Value,
+}
+
+fn transfer_dig(input: TransferInput<'_>, state: &mut State) -> Result<Value, TransferDemand> {
+    let Some((subject, prefix)) = input.arguments.split_last() else {
+        return Err(TransferDemand::Abort(AbortReason::Type));
+    };
+    let Some((fallback, keys)) = prefix.split_last().filter(|(_, keys)| !keys.is_empty()) else {
+        return Err(TransferDemand::Abort(AbortReason::Type));
+    };
+    if keys.len() > super::MAX_SCALAR_DISPATCH_STATES
+        || keys
+            .iter()
+            .any(|key| !matches!(key.constant(), Some(GuardValue::String(_))))
+    {
+        return Ok(Value::influenced(input.influences));
+    }
+    let mut value = subject.clone();
+    for key in keys {
+        value = state.consumed(&value);
+        if let ValueNode::Select {
+            decision,
+            yes: _,
+            no: _,
+        } = value.node.as_ref()
+        {
+            return Err(TransferDemand::Choice(Rc::clone(decision)));
+        }
+        state.record_member_host(
+            &value,
+            &super::Predicate::True,
+            super::query::MemberAccess::MapArgument { allows_nil: false },
+        );
+        match state.heap.freeze(&value).go_type() {
+            super::kinds::GoType::Map => {}
+            super::kinds::GoType::Unknown => {
+                let Some(path) = value.identity() else {
+                    return Ok(Value::influenced(input.influences));
+                };
+                let accepted = super::Predicate::from(helm_schema_core::Guard::TypeIs {
+                    path: path.clone(),
+                    schema_type: "object".to_owned(),
+                });
+                let decision = state.heap.arena.decision(
+                    accepted.clone(),
+                    accepted.negated(),
+                    super::Coverage::Exact,
+                );
+                match state
+                    .heap
+                    .arena
+                    .runtime_path(&state.active)
+                    .implies_test(&decision)
+                {
+                    Some(true) => {}
+                    Some(false) => return Err(TransferDemand::Abort(AbortReason::Type)),
+                    None => return Err(TransferDemand::Choice(decision)),
+                }
+            }
+            super::kinds::GoType::Nil
+            | super::kinds::GoType::Bool
+            | super::kinds::GoType::String
+            | super::kinds::GoType::Slice
+            | super::kinds::GoType::Int
+            | super::kinds::GoType::Int64
+            | super::kinds::GoType::Uint64
+            | super::kinds::GoType::Float64 => {
+                return Err(TransferDemand::Abort(AbortReason::Type));
+            }
+        }
+        let Some(GuardValue::String(key)) = key.constant() else {
+            return Ok(Value::influenced(input.influences));
+        };
+        let present = state.field_presence(&value, key);
+        let decision = state.test(&present);
+        match decision.constant_outcome().or_else(|| {
+            state
+                .heap
+                .arena
+                .runtime_path(&state.active)
+                .implies_test(&decision)
+        }) {
+            Some(true) => value = state.field(&value, key),
+            Some(false) => return Ok(fallback.clone()),
+            None => return Err(TransferDemand::Choice(decision)),
+        }
+    }
+    Ok(value)
 }
 
 fn transfer_sequence(input: TransferInput<'_>) -> Value {
@@ -268,7 +356,25 @@ fn transfer_index(input: TransferInput<'_>, state: &mut State) -> Result<Value, 
     let mut value = first;
     for key in arguments.iter().skip(1) {
         value = match key.constant() {
-            Some(GuardValue::String(key)) => state.field(&value, key),
+            Some(GuardValue::String(key)) => {
+                state.record_member_host(
+                    &value,
+                    &super::Predicate::True,
+                    super::query::MemberAccess::StringIndex,
+                );
+                match state.heap.freeze(&value).go_type() {
+                    super::kinds::GoType::Map | super::kinds::GoType::Unknown => {}
+                    super::kinds::GoType::Nil
+                    | super::kinds::GoType::Bool
+                    | super::kinds::GoType::String
+                    | super::kinds::GoType::Slice
+                    | super::kinds::GoType::Int
+                    | super::kinds::GoType::Int64
+                    | super::kinds::GoType::Uint64
+                    | super::kinds::GoType::Float64 => return Err(AbortReason::Type),
+                }
+                state.field(&value, key)
+            }
             Some(GuardValue::Int(index)) => match value.node.as_ref() {
                 ValueNode::Leaf(Leaf {
                     datum: Datum::Strings(slice),
@@ -1334,7 +1440,7 @@ fn map_fields(value: &Value, state: &State) -> Option<MapFields> {
                     .iter()
                     .map(|(key, field)| (key.clone(), state.consumed_field(field)))
                     .collect(),
-                remainder: *remainder,
+                remainder: remainder.clone(),
             }),
             ObjectData::Strings(_)
             | ObjectData::Opaque { reachable: _ }
@@ -1644,6 +1750,7 @@ fn merge(arguments: &[Value], state: &mut State, overwrite: bool) -> Result<Valu
     });
     let mut graph = BTreeSet::new();
     let disjoint = scalar_overwrite
+        || disjoint_map_keys(arguments, state)
         || std::iter::once(&destination)
             .chain(arguments.iter().skip(1))
             .try_fold(true, |disjoint, value| {
@@ -1682,6 +1789,46 @@ fn merge(arguments: &[Value], state: &mut State, overwrite: bool) -> Result<Valu
         }
     }
     Ok(interface_map_view(&destination, state))
+}
+
+// With disjoint root keys Mergo only inserts fields; it never traverses their aliased values.
+fn disjoint_map_keys(arguments: &[Value], state: &State) -> bool {
+    let mut keys = BTreeSet::new();
+    let mut objects = BTreeSet::new();
+    for value in arguments {
+        let ValueNode::Leaf(Leaf {
+            datum:
+                Datum::Map {
+                    target: Some(id),
+                    view: _,
+                },
+            origin: _,
+        }) = value.node.as_ref()
+        else {
+            return false;
+        };
+        if !objects.insert(id) {
+            return false;
+        }
+        let Some(ObjectVersion {
+            data:
+                ObjectData::Map {
+                    fields,
+                    remainder: Remainder::Closed,
+                },
+            multiplicity: super::Multiplicity::Singleton,
+            revision: _,
+        }) = state.heap.version.object(id)
+        else {
+            return false;
+        };
+        for (key, field) in fields {
+            if !matches!(field, Field::Present(_) | Field::Absent) || !keys.insert(key) {
+                return false;
+            }
+        }
+    }
+    true
 }
 
 fn disjoint_closed_graph(
@@ -1820,7 +1967,7 @@ fn merge_maps(
                 source.node.as_ref(),
                 ValueNode::Leaf(Leaf {
                     datum: Datum::Scalar {
-                        go_type: super::ScalarType::Nil,
+                        go_type: super::ScalarType::Invalid | super::ScalarType::Nil,
                         content: _
                     },
                     origin: _,
@@ -1893,10 +2040,11 @@ pub(super) fn widen_operands(arguments: &[Value], state: &mut State) {
                 continue;
             };
             match &object.data {
-                ObjectData::Map {
-                    fields,
-                    remainder: _,
-                } => {
+                ObjectData::Map { fields, remainder } => {
+                    if matches!(remainder, Remainder::Unknown { inputs: _ }) {
+                        invalidate(state);
+                        return;
+                    }
                     let mut fields: Vec<_> = fields.values().collect();
                     while let Some(field) = fields.pop() {
                         match field {

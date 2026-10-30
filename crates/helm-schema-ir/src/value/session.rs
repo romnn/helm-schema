@@ -213,7 +213,7 @@ pub(super) fn begin_file(
     occurrence: &FileOccurrence,
 ) {
     clear_file(state);
-    state.enter_file_call(root.clone(), occurrence);
+    state.enter_file_call(root, occurrence);
     let Some(source_path) = source_path else {
         return;
     };

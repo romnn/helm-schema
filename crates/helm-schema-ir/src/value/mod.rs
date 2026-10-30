@@ -134,6 +134,8 @@ impl Value {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum ScalarType {
+    /// A skipped selector entry; nilable parameters convert it to their zero value.
+    Invalid,
     Nil,
     Bool,
     String,
@@ -270,11 +272,12 @@ enum Field {
     Unknown,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 enum Remainder {
     Closed,
     Open,
     Input,
+    Unknown { inputs: Rc<BTreeSet<ValuesPath>> },
 }
 
 #[derive(Clone, Debug)]
@@ -643,8 +646,19 @@ enum BoundReason {
 enum ReadCoverage {
     ExactPath,
     UnknownRegion,
-    /// A pristine input is the receiver of an executed member selector.
-    MemberHost,
+    /// An input receiver of an executed, operation-compatible member access.
+    MemberHost {
+        allows_nil: bool,
+    },
+    MapArgument {
+        allows_nil: bool,
+    },
+}
+
+impl ReadCoverage {
+    fn is_requirement(self) -> bool {
+        matches!(self, Self::MemberHost { .. } | Self::MapArgument { .. })
+    }
 }
 
 #[derive(Default)]
