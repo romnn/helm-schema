@@ -3348,6 +3348,10 @@ mod value_transfer_laws {
             .filter_map(|read| match read.coverage {
                 ReadCoverage::UnknownRegion => Some(read.path.clone()),
                 ReadCoverage::ExactPath
+                | ReadCoverage::DefaultFallback
+                | ReadCoverage::RootMergeFallback
+                | ReadCoverage::OpaqueValuesRoot
+                | ReadCoverage::SerializedInfluence
                 | ReadCoverage::MemberHost { .. }
                 | ReadCoverage::MapArgument { .. } => None,
             })

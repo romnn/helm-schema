@@ -353,6 +353,7 @@ impl Executor<'_> {
                         },
                     };
                 }
+                let values_fallback_source = values_fallback_source(&invocation, &state);
                 let exits = if transfers_values(&invocation) {
                     let mut state = state;
                     // Each operand has one truth query across mutually exclusive value cases.
@@ -373,6 +374,7 @@ impl Executor<'_> {
                     invocation,
                     execution: Execution { exits },
                     helper_return: None,
+                    values_fallback_source,
                 }
             }
             CompletionInput::Executed {
@@ -383,6 +385,7 @@ impl Executor<'_> {
                 invocation,
                 execution,
                 helper_return,
+                values_fallback_source: None,
             },
             CompletionInput::Summarized {
                 plan,
@@ -1950,6 +1953,131 @@ impl super::control::Reconvergent for Assembled {
 #[path = "../tests/runtime_comparison_work.rs"]
 mod comparison_work_tests;
 
+// Parameter validation accepts nil maps by an exact nil/present selection.
+// Retain its raw source only when both selector predicates prove that same partition.
+fn fallback_input_path(value: &Value) -> Option<&helm_schema_core::ValuesPath> {
+    if let Some(path) = value.identity() {
+        return Some(path);
+    }
+    let ValueNode::Select { decision, yes, no } = value.node.as_ref() else {
+        return None;
+    };
+    let nil_map = |value: &Value| {
+        matches!(
+            value.node.as_ref(),
+            ValueNode::Leaf(Leaf {
+                datum: Datum::Map { target: None, view: _ },
+                origin,
+            }) if origin.identity.is_none() && origin.influences.is_empty()
+        )
+    };
+    let (path, nil_when_true) = if nil_map(yes) {
+        (no.identity()?, true)
+    } else if nil_map(no) {
+        (yes.identity()?, false)
+    } else {
+        return None;
+    };
+    let nil = Predicate::Or(vec![
+        Predicate::from(Guard::Eq {
+            path: path.clone(),
+            value: GuardValue::Null,
+        }),
+        Predicate::from(Guard::Absent { path: path.clone() }),
+    ])
+    .normalize_boolean();
+    let (when_nil, when_present) = if nil_when_true {
+        (&decision.when_true, &decision.when_false)
+    } else {
+        (&decision.when_false, &decision.when_true)
+    };
+    (decision.coverage == Coverage::Exact && when_nil == &nil && when_present == &nil.negated())
+        .then_some(path)
+}
+
+fn pristine_input_path(value: &Value, state: &State) -> Option<helm_schema_core::ValuesPath> {
+    if let Some(path) = fallback_input_path(value) {
+        return Some(path.clone());
+    }
+    let ValueNode::Leaf(Leaf {
+        datum: Datum::Map {
+            target: Some(object),
+            view: _,
+        },
+        origin: _,
+    }) = value.node.as_ref()
+    else {
+        return None;
+    };
+    if !matches!(state.heap.version.object(object), Some(super::ObjectVersion {
+        multiplicity: super::Multiplicity::Singleton,
+        data: super::ObjectData::Map { fields, remainder: super::Remainder::Input },
+        revision: _,
+    }) if fields.is_empty())
+    {
+        return None;
+    }
+    state.heap.arena.input_paths.borrow().get(object).cloned()
+}
+
+fn values_fallback_source(
+    invocation: &Invocation,
+    state: &State,
+) -> Option<crate::ValuesDefaultSource> {
+    if !matches!(
+        invocation.callee.function_name(),
+        Some("mergeOverwrite" | "mustMergeOverwrite")
+    ) {
+        return None;
+    }
+    let [fallback, supplied] = invocation.operands.as_slice() else {
+        return None;
+    };
+    let source_path = pristine_input_path(&fallback.value, state)?;
+    let target_path = pristine_input_path(&supplied.value, state)?;
+    (target_path.segments().next().is_none() && source_path.segments().next().is_some()).then_some(
+        crate::ValuesDefaultSource {
+            target_path,
+            source_path,
+        },
+    )
+}
+
+fn returned_map_objects(
+    value: &Value,
+    state: &State,
+) -> std::collections::BTreeMap<super::ObjectId, super::SnapshotId> {
+    let mut pending = vec![value];
+    let mut seen = std::collections::BTreeSet::new();
+    let mut objects = std::collections::BTreeMap::new();
+    while let Some(value) = pending.pop() {
+        if !seen.insert(Rc::as_ptr(&value.node)) {
+            continue;
+        }
+        match value.node.as_ref() {
+            ValueNode::Select {
+                decision: _,
+                yes,
+                no,
+            } => pending.extend([yes, no]),
+            ValueNode::Leaf(Leaf {
+                datum:
+                    Datum::Map {
+                        target: Some(object),
+                        view: _,
+                    },
+                origin: _,
+            }) => {
+                if let Some(version) = state.heap.version.object(object) {
+                    objects.insert(object.clone(), version.revision);
+                }
+            }
+            ValueNode::Leaf(_) => {}
+        }
+    }
+    objects
+}
+
 impl CompletedExecution {
     fn finish(mut self) -> CallOutcome {
         let Some(first) = self.execution.exits.first() else {
@@ -2002,6 +2130,18 @@ impl CompletedExecution {
                         site: self.invocation.site,
                         function: function.to_owned(),
                         wrapper: wrapper.clone(),
+                        values_fallback: self.values_fallback_source.as_ref().and_then(|source| {
+                            let Flow::Normal(normal) = &exit.flow else {
+                                return None;
+                            };
+                            let result = returned_map_objects(&normal.value, &exit.state);
+                            (!result.is_empty()).then(|| {
+                                Rc::new(super::ExecutedValuesFallback {
+                                    result,
+                                    source: source.clone(),
+                                })
+                            })
+                        }),
                     });
             }
         }

@@ -4,29 +4,55 @@
       "condition": [
         [
           {
-            "path": "fullnameOverride",
+            "path": "serviceMonitor.enabled",
             "type": "truthy"
           },
           {
-            "path": "serviceMonitor.enabled",
-            "type": "truthy"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "surveyor.fullname"
-          ],
-          "span": {
-            "end": 776,
-            "start": 421
-          },
-          "template_path": "charts/surveyor/templates/_helpers.tpl"
-        }
-      ],
       "resource": null,
       "source_expr": "fullnameOverride"
     },
@@ -43,57 +69,193 @@
           }
         ]
       ],
-      "kind": "Scalar",
-      "path": [
-        "metadata",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "surveyor.fullname"
-          ],
-          "span": {
-            "end": 515,
-            "start": 456
-          },
-          "template_path": "charts/surveyor/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "ServiceMonitor"
-      },
-      "source_expr": "fullnameOverride",
-      "stringified": true
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
     },
     {
       "condition": [
         [
           {
-            "path": "global.labels",
+            "path": "fullnameOverride",
             "type": "truthy"
           },
+          {
+            "path": "serviceMonitor.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "fullnameOverride",
+            "schema_type": "string",
+            "type": "type_is"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "condition": [
+        [
           {
             "path": "serviceMonitor.enabled",
             "type": "truthy"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "WidenedDependency",
       "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "surveyor.labels"
-          ],
-          "span": {
-            "end": 1357,
-            "start": 1294
+      "resource": null,
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "serviceMonitor.enabled",
+            "type": "truthy"
           },
-          "template_path": "charts/surveyor/templates/_helpers.tpl"
-        }
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "global"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "serviceMonitor.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "Serialized",
+      "path": [],
       "resource": null,
       "source_expr": "global.labels"
     },
@@ -107,38 +269,235 @@
           {
             "path": "serviceMonitor.enabled",
             "type": "truthy"
+          },
+          {
+            "path": "global",
+            "type": "not_eq",
+            "value": null
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "YamlSerialized",
-      "path": [
-        "metadata",
-        "labels"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "surveyor.labels"
-          ],
-          "span": {
-            "end": 1346,
-            "start": 1332
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "global.labels"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "serviceMonitor.enabled",
+            "type": "truthy"
           },
-          "template_path": "charts/surveyor/templates/_helpers.tpl"
-        }
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "ServiceMonitor"
-      },
-      "source_expr": "global.labels",
-      "template_supplied_member_keys": [
-        "app.kubernetes.io/instance",
-        "app.kubernetes.io/managed-by",
-        "app.kubernetes.io/name",
-        "app.kubernetes.io/version",
-        "helm.sh/chart"
-      ]
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "global.labels"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "global.labels",
+            "type": "truthy"
+          },
+          {
+            "path": "serviceMonitor.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "global",
+            "type": "not_eq",
+            "value": null
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
+      "source_expr": "global.labels"
     },
     {
       "condition": [
@@ -150,23 +509,123 @@
           {
             "path": "fullnameOverride",
             "type": "not"
+          },
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ],
+        [
+          {
+            "path": "serviceMonitor.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "path": "nameOverride",
+            "type": "default"
           }
         ]
       ],
       "kind": "Scalar",
       "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "surveyor.fullname"
-          ],
-          "span": {
-            "end": 765,
-            "start": 585
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "serviceMonitor.enabled",
+            "type": "truthy"
           },
-          "template_path": "charts/surveyor/templates/_helpers.tpl"
-        }
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
+      "kind": "Serialized",
+      "path": [],
       "resource": null,
       "source_expr": "nameOverride"
     },
@@ -182,55 +641,259 @@
             "type": "truthy"
           },
           {
-            "path": "nameOverride",
-            "type": "default"
+            "path": "fullnameOverride",
+            "type": "not"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
-      "path": [
-        "metadata",
-        "labels",
-        "app.kubernetes.io/name"
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "nameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "serviceMonitor.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "surveyor.name"
-          ],
-          "span": {
-            "end": 146,
-            "start": 71
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "serviceMonitor.enabled",
+            "type": "truthy"
           },
-          "template_path": "charts/surveyor/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "surveyor.labels"
-          ],
-          "span": {
-            "end": 1142,
-            "start": 1101
-          },
-          "template_path": "charts/surveyor/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "surveyor.selectorLabels"
-          ],
-          "span": {
-            "end": 1492,
-            "start": 1461
-          },
-          "template_path": "charts/surveyor/templates/_helpers.tpl"
-        }
+          {
+            "path": "fullnameOverride",
+            "type": "not"
+          }
+        ]
       ],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "ServiceMonitor"
-      },
-      "source_expr": "nameOverride",
-      "stringified": true
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "serviceMonitor.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "serviceMonitor.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
     },
     {
       "condition": [
@@ -248,87 +911,29 @@
             "type": "not"
           },
           {
-            "path": "nameOverride",
-            "type": "default"
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Serialized",
-      "path": [
-        "metadata",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "surveyor.fullname"
-          ],
-          "span": {
-            "end": 754,
-            "start": 685
-          },
-          "template_path": "charts/surveyor/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "ServiceMonitor"
-      },
-      "source_expr": "nameOverride",
-      "stringified": true
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "nameOverride",
-            "type": "truthy"
-          },
-          {
-            "path": "serviceMonitor.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "nameOverride",
-            "type": "default"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "selector",
-        "matchLabels",
-        "app.kubernetes.io/name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "surveyor.name"
-          ],
-          "span": {
-            "end": 146,
-            "start": 71
-          },
-          "template_path": "charts/surveyor/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "surveyor.selectorLabels"
-          ],
-          "span": {
-            "end": 1492,
-            "start": 1461
-          },
-          "template_path": "charts/surveyor/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "ServiceMonitor"
-      },
-      "source_expr": "nameOverride",
-      "stringified": true
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
     },
     {
       "condition": [
@@ -340,10 +945,70 @@
           {
             "path": "serviceMonitor.enabled",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [],
       "resource": null,
       "source_expr": "serviceMonitor.annotations"
@@ -358,18 +1023,72 @@
           {
             "path": "serviceMonitor.enabled",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "YamlSerialized",
-      "path": [
-        "metadata",
-        "annotations"
-      ],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "ServiceMonitor"
-      },
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
       "source_expr": "serviceMonitor.annotations"
     },
     {
@@ -378,10 +1097,157 @@
           {
             "path": "serviceMonitor.enabled",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "serviceMonitor.annotations"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "serviceMonitor.annotations",
+            "type": "truthy"
+          },
+          {
+            "path": "serviceMonitor.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
+      "source_expr": "serviceMonitor.annotations"
+    },
+    {
+      "condition": [
+        []
+      ],
+      "kind": "WidenedDependency",
       "path": [],
       "resource": null,
       "source_expr": "serviceMonitor.enabled"
@@ -396,10 +1262,70 @@
           {
             "path": "serviceMonitor.interval",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [],
       "resource": null,
       "source_expr": "serviceMonitor.interval"
@@ -414,19 +1340,224 @@
           {
             "path": "serviceMonitor.interval",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "endpoints[*]",
-        "interval"
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "serviceMonitor.interval"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "serviceMonitor.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "ServiceMonitor"
-      },
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "serviceMonitor.interval"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "serviceMonitor.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "serviceMonitor.interval",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
       "source_expr": "serviceMonitor.interval"
     },
     {
@@ -439,10 +1570,70 @@
           {
             "path": "serviceMonitor.labels",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [],
       "resource": null,
       "source_expr": "serviceMonitor.labels"
@@ -457,26 +1648,225 @@
           {
             "path": "serviceMonitor.labels",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "YamlSerialized",
-      "path": [
-        "metadata",
-        "labels"
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "serviceMonitor.labels"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "serviceMonitor.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "ServiceMonitor"
-      },
-      "source_expr": "serviceMonitor.labels",
-      "template_supplied_member_keys": [
-        "app.kubernetes.io/instance",
-        "app.kubernetes.io/managed-by",
-        "app.kubernetes.io/name",
-        "app.kubernetes.io/version",
-        "helm.sh/chart"
-      ]
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "serviceMonitor.labels"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "serviceMonitor.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "serviceMonitor.labels",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
+      "source_expr": "serviceMonitor.labels"
     },
     {
       "condition": [
@@ -488,10 +1878,70 @@
           {
             "path": "serviceMonitor.metricRelabelings",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [],
       "resource": null,
       "source_expr": "serviceMonitor.metricRelabelings"
@@ -506,19 +1956,224 @@
           {
             "path": "serviceMonitor.metricRelabelings",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "endpoints[*]",
-        "metricRelabelings"
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "serviceMonitor.metricRelabelings"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "serviceMonitor.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "ServiceMonitor"
-      },
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "serviceMonitor.metricRelabelings"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "serviceMonitor.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "serviceMonitor.metricRelabelings",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
       "source_expr": "serviceMonitor.metricRelabelings"
     },
     {
@@ -531,10 +2186,70 @@
           {
             "path": "serviceMonitor.relabelings",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [],
       "resource": null,
       "source_expr": "serviceMonitor.relabelings"
@@ -549,19 +2264,224 @@
           {
             "path": "serviceMonitor.relabelings",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "endpoints[*]",
-        "relabelings"
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "serviceMonitor.relabelings"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "serviceMonitor.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "ServiceMonitor"
-      },
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "serviceMonitor.relabelings"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "serviceMonitor.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "serviceMonitor.relabelings",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
       "source_expr": "serviceMonitor.relabelings"
     },
     {
@@ -574,10 +2494,70 @@
           {
             "path": "serviceMonitor.scrapeTimeout",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [],
       "resource": null,
       "source_expr": "serviceMonitor.scrapeTimeout"
@@ -592,19 +2572,224 @@
           {
             "path": "serviceMonitor.scrapeTimeout",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "endpoints[*]",
-        "scrapeTimeout"
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "serviceMonitor.scrapeTimeout"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "serviceMonitor.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "ServiceMonitor"
-      },
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "serviceMonitor.scrapeTimeout"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "serviceMonitor.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "serviceMonitor.scrapeTimeout",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
       "source_expr": "serviceMonitor.scrapeTimeout"
     }
   ],

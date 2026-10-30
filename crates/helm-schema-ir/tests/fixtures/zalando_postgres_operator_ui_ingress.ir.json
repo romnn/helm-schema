@@ -4,39 +4,293 @@
       "condition": [
         [
           {
-            "path": "fullnameOverride",
+            "path": "ingress.enabled",
             "type": "truthy"
           },
           {
-            "path": "ingress.enabled",
-            "type": "truthy"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "WidenedDependency",
       "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "postgres-operator-ui.fullname"
-          ],
-          "span": {
-            "end": 850,
-            "start": 485
+      "resource": null,
+      "source_expr": ""
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "ingress.enabled",
+            "type": "truthy"
           },
-          "template_path": "charts/zalando-postgres-operator-ui/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "postgres-operator-ui.fullname"
-          ],
-          "span": {
-            "end": 581,
-            "start": 521
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           },
-          "template_path": "charts/zalando-postgres-operator-ui/templates/_helpers.tpl"
-        }
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ],
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "alternatives": [
+                    [
+                      {
+                        "path": "nameOverride",
+                        "type": "truthy"
+                      },
+                      {
+                        "path": "ingress.enabled",
+                        "type": "not"
+                      }
+                    ],
+                    [
+                      {
+                        "path": "nameOverride",
+                        "type": "not"
+                      },
+                      {
+                        "alternatives": [
+                          [
+                            {
+                              "path": "fullnameOverride",
+                              "type": "not"
+                            }
+                          ],
+                          [
+                            {
+                              "path": "ingress.enabled",
+                              "type": "not"
+                            }
+                          ],
+                          [
+                            {
+                              "path": "fullnameOverride",
+                              "schema_type": "string",
+                              "type": "type_is"
+                            }
+                          ]
+                        ],
+                        "type": "any_of"
+                      }
+                    ]
+                  ],
+                  "type": "any_of"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "not_type_is"
+                }
+              ],
+              [
+                {
+                  "alternatives": [
+                    [
+                      {
+                        "path": "fullnameOverride",
+                        "type": "not"
+                      }
+                    ],
+                    [
+                      {
+                        "path": "ingress.enabled",
+                        "type": "not"
+                      }
+                    ],
+                    [
+                      {
+                        "path": "fullnameOverride",
+                        "schema_type": "string",
+                        "type": "type_is"
+                      }
+                    ]
+                  ],
+                  "type": "any_of"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
+      "source_expr": ""
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "ingress.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "Serialized",
+      "path": [],
       "resource": null,
       "source_expr": "fullnameOverride"
     },
@@ -53,68 +307,10 @@
           }
         ]
       ],
-      "kind": "Scalar",
-      "path": [
-        "metadata",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "postgres-operator-ui.fullname"
-          ],
-          "span": {
-            "end": 581,
-            "start": 521
-          },
-          "template_path": "charts/zalando-postgres-operator-ui/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.19-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.14-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "extensions/v1beta1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "networking.k8s.io/v1beta1",
-          "extensions/v1beta1"
-        ],
-        "kind": "Ingress"
-      },
-      "source_expr": "fullnameOverride",
-      "stringified": true
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
     },
     {
       "condition": [
@@ -128,170 +324,104 @@
             "type": "truthy"
           },
           {
-            "path": "ingress.hosts",
-            "type": "range"
-          },
-          {
-            "path": "ingress.hosts.*.paths",
-            "type": "range"
+            "path": "fullnameOverride",
+            "schema_type": "string",
+            "type": "type_is"
           }
         ]
       ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "rules[*]",
-        "http",
-        "paths[*]",
-        "backend",
-        "service",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "postgres-operator-ui.fullname"
-          ],
-          "span": {
-            "end": 581,
-            "start": 521
-          },
-          "template_path": "charts/zalando-postgres-operator-ui/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.19-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.14-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "extensions/v1beta1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "networking.k8s.io/v1beta1",
-          "extensions/v1beta1"
-        ],
-        "kind": "Ingress"
-      },
-      "source_expr": "fullnameOverride",
-      "stringified": true
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
     },
     {
       "condition": [
         [
           {
-            "path": "fullnameOverride",
+            "path": "ingress.enabled",
             "type": "truthy"
-          },
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "condition": [
+        [
           {
             "path": "ingress.enabled",
             "type": "truthy"
           },
           {
-            "path": "ingress.hosts",
-            "type": "range"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           },
           {
-            "path": "ingress.hosts.*.paths",
-            "type": "range"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "rules[*]",
-        "http",
-        "paths[*]",
-        "backend",
-        "serviceName"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "postgres-operator-ui.fullname"
-          ],
-          "span": {
-            "end": 581,
-            "start": 521
-          },
-          "template_path": "charts/zalando-postgres-operator-ui/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.19-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.14-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "extensions/v1beta1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "networking.k8s.io/v1beta1",
-          "extensions/v1beta1"
-        ],
-        "kind": "Ingress"
-      },
-      "source_expr": "fullnameOverride",
-      "stringified": true
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
     },
     {
       "condition": [
@@ -303,10 +433,70 @@
           {
             "path": "ingress.enabled",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [],
       "resource": null,
       "source_expr": "ingress.annotations"
@@ -321,57 +511,72 @@
           {
             "path": "ingress.enabled",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "YamlSerialized",
-      "path": [
-        "metadata",
-        "annotations"
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.19-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.14-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "extensions/v1beta1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "networking.k8s.io/v1beta1",
-          "extensions/v1beta1"
-        ],
-        "kind": "Ingress"
-      },
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
       "source_expr": "ingress.annotations"
     },
     {
@@ -380,10 +585,157 @@
           {
             "path": "ingress.enabled",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "ingress.annotations"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "ingress.annotations",
+            "type": "truthy"
+          },
+          {
+            "path": "ingress.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
+      "source_expr": "ingress.annotations"
+    },
+    {
+      "condition": [
+        []
+      ],
+      "kind": "WidenedDependency",
       "path": [],
       "resource": null,
       "source_expr": "ingress.enabled"
@@ -396,147 +748,72 @@
             "type": "truthy"
           },
           {
-            "path": "ingress.hosts",
-            "type": "range"
+            "path": "ingress.ingressClassName",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
       "kind": "Serialized",
-      "nil_omitting": true,
-      "path": [
-        "spec",
-        "rules[*]",
-        "host"
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.19-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.14-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "extensions/v1beta1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "networking.k8s.io/v1beta1",
-          "extensions/v1beta1"
-        ],
-        "kind": "Ingress"
-      },
-      "source_expr": "ingress.hosts.*.host"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "ingress.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "ingress.hosts",
-            "type": "range"
-          },
-          {
-            "path": "ingress.hosts.*.paths",
-            "type": "range"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "rules[*]",
-        "http",
-        "paths[*]",
-        "path"
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.19-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.14-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "extensions/v1beta1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "networking.k8s.io/v1beta1",
-          "extensions/v1beta1"
-        ],
-        "kind": "Ingress"
-      },
-      "source_expr": "ingress.hosts.*.paths.*"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "ingress.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "ingress.ingressClassName",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
       "path": [],
       "resource": null,
       "source_expr": "ingress.ingressClassName"
@@ -551,57 +828,224 @@
           {
             "path": "ingress.ingressClassName",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "ingressClassName"
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "api_version_branches": [
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "ingress.ingressClassName"
+    },
+    {
+      "condition": [
+        [
           {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.19-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
+            "path": "ingress.enabled",
+            "type": "truthy"
           },
           {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1beta1"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
               ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.14-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
+            ],
+            "type": "any_of"
           },
           {
-            "body": {
-              "type": "literals",
-              "values": [
-                "extensions/v1beta1"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
               ]
-            },
-            "guard": null
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
-        ],
-        "api_version_candidates": [
-          "networking.k8s.io/v1beta1",
-          "extensions/v1beta1"
-        ],
-        "kind": "Ingress"
-      },
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "ingress.ingressClassName"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "ingress.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "ingress.ingressClassName",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
       "source_expr": "ingress.ingressClassName"
     },
     {
@@ -614,10 +1058,70 @@
           {
             "path": "ingress.tls",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [],
       "resource": null,
       "source_expr": "ingress.tls"
@@ -634,65 +1138,145 @@
             "type": "truthy"
           },
           {
-            "path": "ingress.tls",
-            "type": "range"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           },
           {
-            "path": "ingress.tls.*.hosts",
-            "type": "range"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "tls[*]",
-        "hosts"
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "api_version_branches": [
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "ingress.tls"
+    },
+    {
+      "condition": [
+        [
           {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.19-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
+            "path": "ingress.enabled",
+            "type": "truthy"
           },
           {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1beta1"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
               ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.14-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
+            ],
+            "type": "any_of"
           },
           {
-            "body": {
-              "type": "literals",
-              "values": [
-                "extensions/v1beta1"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
               ]
-            },
-            "guard": null
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
-        ],
-        "api_version_candidates": [
-          "networking.k8s.io/v1beta1",
-          "extensions/v1beta1"
-        ],
-        "kind": "Ingress"
-      },
-      "source_expr": "ingress.tls.*.hosts"
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "ingress.tls"
     },
     {
       "condition": [
@@ -706,144 +1290,77 @@
             "type": "truthy"
           },
           {
-            "path": "ingress.tls",
-            "type": "range"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           },
           {
-            "path": "ingress.tls.*.hosts",
-            "type": "range"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Serialized",
-      "nil_omitting": true,
-      "path": [
-        "spec",
-        "tls[*]",
-        "hosts[*]"
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.19-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.14-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "extensions/v1beta1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "networking.k8s.io/v1beta1",
-          "extensions/v1beta1"
-        ],
-        "kind": "Ingress"
-      },
-      "source_expr": "ingress.tls.*.hosts.*"
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
+      "source_expr": "ingress.tls"
     },
     {
       "condition": [
         [
           {
             "path": "ingress.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "ingress.tls",
-            "type": "truthy"
-          },
-          {
-            "path": "ingress.tls",
-            "type": "range"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "tls[*]",
-        "secretName"
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.19-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.14-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "extensions/v1beta1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "networking.k8s.io/v1beta1",
-          "extensions/v1beta1"
-        ],
-        "kind": "Ingress"
-      },
-      "source_expr": "ingress.tls.*.secretName"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "ingress.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "nameOverride",
             "type": "truthy"
           },
           {
@@ -854,22 +1371,118 @@
             "path": "nameOverride",
             "type": "default"
           }
+        ],
+        [
+          {
+            "path": "ingress.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
         ]
       ],
       "kind": "Scalar",
       "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "postgres-operator-ui.fullname"
-          ],
-          "span": {
-            "end": 826,
-            "start": 756
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "ingress.enabled",
+            "type": "truthy"
           },
-          "template_path": "charts/zalando-postgres-operator-ui/templates/_helpers.tpl"
-        }
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
+      "kind": "Serialized",
+      "path": [],
       "resource": null,
       "source_expr": "nameOverride"
     },
@@ -885,406 +1498,364 @@
             "type": "truthy"
           },
           {
-            "path": "nameOverride",
-            "type": "default"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "metadata",
-        "labels",
-        "app.kubernetes.io/name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "postgres-operator-ui.name"
-          ],
-          "span": {
-            "end": 197,
-            "start": 121
-          },
-          "template_path": "charts/zalando-postgres-operator-ui/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.19-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.14-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "extensions/v1beta1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "networking.k8s.io/v1beta1",
-          "extensions/v1beta1"
-        ],
-        "kind": "Ingress"
-      },
-      "source_expr": "nameOverride",
-      "stringified": true
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "ingress.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "nameOverride",
-            "type": "truthy"
-          },
-          {
             "path": "fullnameOverride",
             "type": "not"
           },
           {
-            "path": "nameOverride",
-            "type": "default"
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Serialized",
-      "path": [
-        "metadata",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "postgres-operator-ui.fullname"
-          ],
-          "span": {
-            "end": 826,
-            "start": 756
-          },
-          "template_path": "charts/zalando-postgres-operator-ui/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.19-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.14-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "extensions/v1beta1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "networking.k8s.io/v1beta1",
-          "extensions/v1beta1"
-        ],
-        "kind": "Ingress"
-      },
-      "source_expr": "nameOverride",
-      "stringified": true
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "ingress.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "nameOverride",
-            "type": "truthy"
-          },
-          {
-            "path": "fullnameOverride",
-            "type": "not"
-          },
-          {
-            "path": "ingress.hosts",
-            "type": "range"
-          },
-          {
-            "path": "ingress.hosts.*.paths",
-            "type": "range"
-          },
-          {
-            "path": "nameOverride",
-            "type": "default"
-          }
-        ]
-      ],
-      "kind": "Serialized",
-      "path": [
-        "spec",
-        "rules[*]",
-        "http",
-        "paths[*]",
-        "backend",
-        "service",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "postgres-operator-ui.fullname"
-          ],
-          "span": {
-            "end": 826,
-            "start": 756
-          },
-          "template_path": "charts/zalando-postgres-operator-ui/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.19-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.14-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "extensions/v1beta1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "networking.k8s.io/v1beta1",
-          "extensions/v1beta1"
-        ],
-        "kind": "Ingress"
-      },
-      "source_expr": "nameOverride",
-      "stringified": true
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "ingress.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "nameOverride",
-            "type": "truthy"
-          },
-          {
-            "path": "fullnameOverride",
-            "type": "not"
-          },
-          {
-            "path": "ingress.hosts",
-            "type": "range"
-          },
-          {
-            "path": "ingress.hosts.*.paths",
-            "type": "range"
-          },
-          {
-            "path": "nameOverride",
-            "type": "default"
-          }
-        ]
-      ],
-      "kind": "Serialized",
-      "path": [
-        "spec",
-        "rules[*]",
-        "http",
-        "paths[*]",
-        "backend",
-        "serviceName"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "postgres-operator-ui.fullname"
-          ],
-          "span": {
-            "end": 826,
-            "start": 756
-          },
-          "template_path": "charts/zalando-postgres-operator-ui/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.19-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.14-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "extensions/v1beta1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "networking.k8s.io/v1beta1",
-          "extensions/v1beta1"
-        ],
-        "kind": "Ingress"
-      },
-      "source_expr": "nameOverride",
-      "stringified": true
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "ingress.enabled",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
+      "kind": "WidenedDependency",
       "path": [],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "api_version_branches": [
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
           {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.19-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
+            "path": "ingress.enabled",
+            "type": "truthy"
           },
           {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.14-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
+            "path": "nameOverride",
+            "type": "truthy"
           },
           {
-            "body": {
-              "type": "literals",
-              "values": [
-                "extensions/v1beta1"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
               ]
-            },
-            "guard": null
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "ingress.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "fullnameOverride",
+            "type": "not"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "ingress.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "ingress.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "nameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "fullnameOverride",
+            "type": "not"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ],
-        "api_version_candidates": [
-          "networking.k8s.io/v1beta1",
-          "extensions/v1beta1"
-        ],
-        "kind": "Ingress"
-      },
+        [
+          {
+            "path": "ingress.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "ingress.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "Serialized",
+      "path": [],
+      "resource": null,
       "source_expr": "service.port"
     },
     {
@@ -1295,69 +1866,52 @@
             "type": "truthy"
           },
           {
-            "path": "ingress.hosts",
-            "type": "range"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           },
           {
-            "path": "ingress.hosts.*.paths",
-            "type": "range"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "rules[*]",
-        "http",
-        "paths[*]",
-        "backend",
-        "service",
-        "port",
-        "number"
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.19-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.14-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "extensions/v1beta1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "networking.k8s.io/v1beta1",
-          "extensions/v1beta1"
-        ],
-        "kind": "Ingress"
-      },
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
       "source_expr": "service.port"
     },
     {
@@ -1368,67 +1922,70 @@
             "type": "truthy"
           },
           {
-            "path": "ingress.hosts",
-            "type": "range"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           },
           {
-            "path": "ingress.hosts.*.paths",
-            "type": "range"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "rules[*]",
-        "http",
-        "paths[*]",
-        "backend",
-        "servicePort"
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.19-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "networking.k8s.io/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \">=1.14-0\" .Capabilities.KubeVersion.GitVersion",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "extensions/v1beta1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "networking.k8s.io/v1beta1",
-          "extensions/v1beta1"
-        ],
-        "kind": "Ingress"
-      },
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
       "source_expr": "service.port"
     }
   ],

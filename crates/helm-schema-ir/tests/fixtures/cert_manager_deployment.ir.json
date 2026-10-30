@@ -4,368 +4,259 @@
       "condition": [
         [
           {
-            "path": "acmesolver.image",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "acmesolver.image"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "acmesolver.image",
-            "type": "truthy"
-          },
-          {
-            "path": "acmesolver.image.digest",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "acmesolver.image.digest"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "acmesolver.image",
-            "type": "truthy"
-          },
-          {
-            "path": "acmesolver.image.digest",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "PartialScalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "args[*]"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "acmesolver.image.digest"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "acmesolver.image",
-            "type": "truthy"
-          },
-          {
-            "path": "acmesolver.image.registry",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "acmesolver.image.registry"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "acmesolver.image",
-            "type": "truthy"
-          },
-          {
-            "path": "acmesolver.image.registry",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "PartialScalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "args[*]"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "acmesolver.image.registry"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "acmesolver.image",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "PartialScalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "args[*]"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "acmesolver.image.repository"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "acmesolver.image",
-            "type": "truthy"
-          },
-          {
-            "path": "acmesolver.image.tag",
-            "type": "truthy"
-          },
-          {
-            "path": "acmesolver.image.digest",
-            "type": "not"
-          },
-          {
-            "path": "acmesolver.image.tag",
-            "type": "default"
-          }
-        ]
-      ],
-      "kind": "PartialScalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "args[*]"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "acmesolver.image.tag"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "affinity",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "affinity"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "affinity",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "affinity"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "affinity"
-    },
-    {
-      "condition": [
-        []
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "automountServiceAccountToken"
-    },
-    {
-      "condition": [
-        []
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "automountServiceAccountToken"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "automountServiceAccountToken"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "clusterResourceNamespace",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "clusterResourceNamespace"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "clusterResourceNamespace",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "PartialScalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "args[*]"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "clusterResourceNamespace"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "config",
-            "type": "truthy"
-          }
-        ],
-        [
-          {
-            "paths": [
-              "config",
-              "volumeMounts"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
             ],
-            "type": "or"
-          }
-        ],
-        [
-          {
-            "paths": [
-              "config",
-              "volumes"
-            ],
-            "type": "or"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "config"
-    },
-    {
-      "condition": [
-        []
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "config"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "containerSecurityContext",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "containerSecurityContext"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "containerSecurityContext",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "securityContext"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "containerSecurityContext"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "creator",
-            "type": "eq",
-            "value": "helm"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "labels"
-          ],
-          "span": {
-            "end": 4925,
-            "start": 4782
+            "type": "any_of"
           },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        }
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "creator",
+                  "type": "eq",
+                  "value": null
+                }
+              ],
+              [
+                {
+                  "path": "creator",
+                  "type": "absent"
+                }
+              ],
+              [
+                {
+                  "path": "creator",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": ""
+    },
+    {
+      "condition": [
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "creator",
+                  "type": "eq",
+                  "value": null
+                }
+              ],
+              [
+                {
+                  "path": "creator",
+                  "type": "absent"
+                }
+              ],
+              [
+                {
+                  "path": "creator",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
+      "source_expr": ""
+    },
+    {
+      "condition": [
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
       "resource": null,
       "source_expr": "creator"
     },
@@ -375,10 +266,95 @@
           {
             "path": "deploymentAnnotations",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "creator",
+                  "type": "eq",
+                  "value": null
+                }
+              ],
+              [
+                {
+                  "path": "creator",
+                  "type": "absent"
+                }
+              ],
+              [
+                {
+                  "path": "creator",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [],
       "resource": null,
       "source_expr": "deploymentAnnotations"
@@ -389,260 +365,342 @@
           {
             "path": "deploymentAnnotations",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "creator",
+                  "type": "eq",
+                  "value": null
+                }
+              ],
+              [
+                {
+                  "path": "creator",
+                  "type": "absent"
+                }
+              ],
+              [
+                {
+                  "path": "creator",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "YamlSerialized",
-      "path": [
-        "metadata",
-        "annotations"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
       "source_expr": "deploymentAnnotations"
     },
     {
       "condition": [
         [
           {
-            "path": "disableAutoApproval",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "disableAutoApproval"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "dns01RecursiveNameservers",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "dns01RecursiveNameservers"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "dns01RecursiveNameservers",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "PartialScalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "args[*]"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "dns01RecursiveNameservers"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "dns01RecursiveNameserversOnly",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "dns01RecursiveNameserversOnly"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "enableCertificateOwnerRef",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "enableCertificateOwnerRef"
-    },
-    {
-      "condition": [
-        []
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "enableServiceLinks"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "enableServiceLinks"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "extraArgs",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "extraArgs"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "extraArgs",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "args"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "extraArgs"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "extraEnv",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "extraEnv"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "extraEnv",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "env"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "extraEnv"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "featureGates",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "featureGates"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "featureGates",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "PartialScalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "args[*]"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "featureGates"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "fullnameOverride",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "cert-manager.fullname"
-          ],
-          "span": {
-            "end": 766,
-            "start": 401
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "cert-manager.serviceAccountName"
-          ],
-          "span": {
-            "end": 1007,
-            "start": 930
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        }
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "creator",
+                  "type": "eq",
+                  "value": null
+                }
+              ],
+              [
+                {
+                  "path": "creator",
+                  "type": "absent"
+                }
+              ],
+              [
+                {
+                  "path": "creator",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "deploymentAnnotations"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "deploymentAnnotations",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "creator",
+                  "type": "eq",
+                  "value": null
+                }
+              ],
+              [
+                {
+                  "path": "creator",
+                  "type": "absent"
+                }
+              ],
+              [
+                {
+                  "path": "creator",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
+      "source_expr": "deploymentAnnotations"
+    },
+    {
+      "condition": [
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "Serialized",
+      "path": [],
       "resource": null,
       "source_expr": "fullnameOverride"
     },
@@ -655,147 +713,131 @@
           }
         ]
       ],
-      "kind": "Scalar",
-      "path": [
-        "metadata",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "cert-manager.fullname"
-          ],
-          "span": {
-            "end": 497,
-            "start": 437
-          },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "fullnameOverride",
-      "stringified": true
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "fullnameOverride",
-            "type": "truthy"
-          },
-          {
-            "path": "serviceAccount.create",
-            "type": "truthy"
-          },
-          {
-            "path": "serviceAccount.name",
-            "type": "not"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "serviceAccountName"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "cert-manager.fullname"
-          ],
-          "span": {
-            "end": 497,
-            "start": 437
-          },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "cert-manager.serviceAccountName"
-          ],
-          "span": {
-            "end": 1007,
-            "start": 930
-          },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "fullnameOverride",
-      "stringified": true
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "config",
-            "type": "truthy"
-          },
-          {
-            "path": "fullnameOverride",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "volumes[*]",
-        "configMap",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "cert-manager.fullname"
-          ],
-          "span": {
-            "end": 497,
-            "start": 437
-          },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "fullnameOverride",
-      "stringified": true
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "global.commonLabels",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
+      "kind": "WidenedDependency",
       "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "labels"
-          ],
-          "span": {
-            "end": 5014,
-            "start": 4926
+      "resource": null,
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "truthy"
           },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        }
+          {
+            "path": "fullnameOverride",
+            "schema_type": "string",
+            "type": "type_is"
+          }
+        ]
       ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "condition": [
+        []
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "creator",
+                  "type": "eq",
+                  "value": null
+                }
+              ],
+              [
+                {
+                  "path": "creator",
+                  "type": "absent"
+                }
+              ],
+              [
+                {
+                  "path": "creator",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "Serialized",
+      "path": [],
       "resource": null,
       "source_expr": "global.commonLabels"
     },
@@ -805,40 +847,193 @@
           {
             "path": "global.commonLabels",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "creator",
+                  "type": "eq",
+                  "value": null
+                }
+              ],
+              [
+                {
+                  "path": "creator",
+                  "type": "absent"
+                }
+              ],
+              [
+                {
+                  "path": "creator",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "YamlSerialized",
-      "path": [
-        "metadata",
-        "labels"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "labels"
-          ],
-          "span": {
-            "end": 5003,
-            "start": 4963
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "global.commonLabels"
+    },
+    {
+      "condition": [
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        }
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "creator",
+                  "type": "eq",
+                  "value": null
+                }
+              ],
+              [
+                {
+                  "path": "creator",
+                  "type": "absent"
+                }
+              ],
+              [
+                {
+                  "path": "creator",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "global.commonLabels",
-      "template_supplied_member_keys": [
-        "app",
-        "app.kubernetes.io/component",
-        "app.kubernetes.io/instance",
-        "app.kubernetes.io/managed-by",
-        "app.kubernetes.io/name",
-        "app.kubernetes.io/version",
-        "helm.sh/chart"
-      ]
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "global.commonLabels"
     },
     {
       "condition": [
@@ -846,1256 +1041,288 @@
           {
             "path": "global.commonLabels",
             "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "template",
-        "metadata",
-        "labels"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "labels"
-          ],
-          "span": {
-            "end": 5003,
-            "start": 4963
-          },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "global.commonLabels",
-      "template_supplied_member_keys": [
-        "app",
-        "app.kubernetes.io/component",
-        "app.kubernetes.io/instance",
-        "app.kubernetes.io/managed-by",
-        "app.kubernetes.io/name",
-        "app.kubernetes.io/version",
-        "helm.sh/chart"
-      ]
-    },
-    {
-      "condition": [
-        []
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "global.hostUsers"
-    },
-    {
-      "condition": [
-        []
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "hostUsers"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "global.hostUsers"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "global.imagePullSecrets",
-            "type": "truthy"
           },
           {
-            "path": "serviceAccount.create",
-            "type": "not"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "global.imagePullSecrets"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "global.imagePullSecrets",
-            "type": "truthy"
-          },
-          {
-            "path": "serviceAccount.create",
-            "type": "not"
-          }
-        ]
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "imagePullSecrets"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "global.imagePullSecrets"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "global.leaderElection",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "global.leaderElection"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "global.leaderElection",
-            "type": "truthy"
-          },
-          {
-            "path": "global.leaderElection.leaseDuration",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "global.leaderElection.leaseDuration"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "global.leaderElection",
-            "type": "truthy"
-          },
-          {
-            "path": "global.leaderElection.leaseDuration",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "PartialScalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "args[*]"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "global.leaderElection.leaseDuration"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "global.leaderElection",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "PartialScalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "args[*]"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "global.leaderElection.namespace"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "global.leaderElection",
-            "type": "truthy"
-          },
-          {
-            "path": "global.leaderElection.renewDeadline",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "global.leaderElection.renewDeadline"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "global.leaderElection",
-            "type": "truthy"
-          },
-          {
-            "path": "global.leaderElection.renewDeadline",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "PartialScalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "args[*]"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "global.leaderElection.renewDeadline"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "global.leaderElection",
-            "type": "truthy"
-          },
-          {
-            "path": "global.leaderElection.retryPeriod",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "global.leaderElection.retryPeriod"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "global.leaderElection",
-            "type": "truthy"
-          },
-          {
-            "path": "global.leaderElection.retryPeriod",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "PartialScalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "args[*]"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "global.leaderElection.retryPeriod"
-    },
-    {
-      "condition": [
-        []
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "global.logLevel"
-    },
-    {
-      "condition": [
-        []
-      ],
-      "kind": "PartialScalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "args[*]"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "global.logLevel"
-    },
-    {
-      "condition": [
-        [
-          {
-            "paths": [
-              "global.nodeSelector",
-              "nodeSelector"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
             ],
-            "type": "or"
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "creator",
+                  "type": "eq",
+                  "value": null
+                }
+              ],
+              [
+                {
+                  "path": "creator",
+                  "type": "absent"
+                }
+              ],
+              [
+                {
+                  "path": "creator",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "WidenedRegion",
       "path": [],
       "resource": null,
-      "source_expr": "global.nodeSelector"
+      "source_expr": "global.commonLabels"
     },
     {
       "condition": [
         [
           {
-            "path": "global.nodeSelector",
-            "type": "default"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "global.nodeSelector"
-    },
-    {
-      "condition": [
-        [
-          {
-            "paths": [
-              "global.nodeSelector",
-              "nodeSelector"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
             ],
-            "type": "or"
+            "type": "any_of"
           },
           {
-            "path": "global.nodeSelector",
-            "type": "range"
-          },
-          {
-            "path": "nodeSelector",
-            "type": "range"
-          }
-        ]
-      ],
-      "kind": "Fragment",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "nodeSelector"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "global.nodeSelector"
-    },
-    {
-      "condition": [
-        [
-          {
-            "paths": [
-              "global.nodeSelector",
-              "nodeSelector"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
             ],
-            "type": "or"
+            "type": "any_of"
           },
           {
-            "path": "global.nodeSelector",
-            "type": "range"
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           },
           {
-            "path": "nodeSelector",
-            "type": "range"
+            "alternatives": [
+              [
+                {
+                  "path": "creator",
+                  "type": "eq",
+                  "value": null
+                }
+              ],
+              [
+                {
+                  "path": "creator",
+                  "type": "absent"
+                }
+              ],
+              [
+                {
+                  "path": "creator",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Serialized",
-      "nil_omitting": true,
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "nodeSelector",
-        "{*}"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "global.nodeSelector.*"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "global.priorityClassName",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "global.priorityClassName"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "global.priorityClassName",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Serialized",
-      "nil_omitting": true,
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "priorityClassName"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "global.priorityClassName"
-    },
-    {
-      "condition": [
-        []
-      ],
-      "kind": "Scalar",
+      "kind": "WidenedDependency",
       "path": [],
       "resource": null,
       "source_expr": "global.revisionHistoryLimit"
     },
     {
       "condition": [
-        []
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "creator",
+                  "type": "eq",
+                  "value": null
+                }
+              ],
+              [
+                {
+                  "path": "creator",
+                  "type": "absent"
+                }
+              ],
+              [
+                {
+                  "path": "creator",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "revisionHistoryLimit"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
       "source_expr": "global.revisionHistoryLimit"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "hostAliases",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "hostAliases"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "hostAliases",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "hostAliases"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "hostAliases"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "http_proxy",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "http_proxy"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "http_proxy",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "env[*]",
-        "value"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "http_proxy"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "https_proxy",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "https_proxy"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "https_proxy",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "env[*]",
-        "value"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "https_proxy"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "image",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "image"
-          ],
-          "span": {
-            "end": 6110,
-            "start": 5859
-          },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        }
-      ],
-      "resource": null,
-      "source_expr": "image"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "image",
-            "type": "truthy"
-          },
-          {
-            "path": "image.digest",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "image"
-          ],
-          "span": {
-            "end": 6099,
-            "start": 5987
-          },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        }
-      ],
-      "resource": null,
-      "source_expr": "image.digest"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "image",
-            "type": "truthy"
-          },
-          {
-            "path": "image.digest",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Serialized",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "image"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "image"
-          ],
-          "span": {
-            "end": 6031,
-            "start": 6005
-          },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "image.digest",
-      "stringified": true
-    },
-    {
-      "condition": [
-        []
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "imagePullPolicy"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "image.pullPolicy"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "image",
-            "type": "truthy"
-          },
-          {
-            "path": "image.registry",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "image"
-          ],
-          "span": {
-            "end": 5986,
-            "start": 5882
-          },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        }
-      ],
-      "resource": null,
-      "source_expr": "image.registry"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "image",
-            "type": "truthy"
-          },
-          {
-            "path": "image.registry",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Serialized",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "image"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "image"
-          ],
-          "span": {
-            "end": 5944,
-            "start": 5902
-          },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "image.registry",
-      "stringified": true
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "image",
-            "type": "truthy"
-          },
-          {
-            "path": "image.registry",
-            "type": "not"
-          }
-        ]
-      ],
-      "kind": "PartialScalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "image"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "image"
-          ],
-          "span": {
-            "end": 5975,
-            "start": 5956
-          },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "image.repository",
-      "stringified": true
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "image",
-            "type": "truthy"
-          },
-          {
-            "path": "image.registry",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Serialized",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "image"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "image"
-          ],
-          "span": {
-            "end": 5944,
-            "start": 5902
-          },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "image.repository",
-      "stringified": true
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "image",
-            "type": "truthy"
-          },
-          {
-            "path": "image.tag",
-            "type": "truthy"
-          },
-          {
-            "path": "image.digest",
-            "type": "not"
-          },
-          {
-            "path": "image.tag",
-            "type": "default"
-          }
-        ]
-      ],
-      "kind": "Serialized",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "image"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "image"
-          ],
-          "span": {
-            "end": 6088,
-            "start": 6043
-          },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "image.tag",
-      "stringified": true
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "ingressShim",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "ingressShim"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "ingressShim",
-            "type": "truthy"
-          },
-          {
-            "path": "ingressShim.defaultIssuerGroup",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "ingressShim.defaultIssuerGroup"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "ingressShim",
-            "type": "truthy"
-          },
-          {
-            "path": "ingressShim.defaultIssuerGroup",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "PartialScalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "args[*]"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "ingressShim.defaultIssuerGroup"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "ingressShim",
-            "type": "truthy"
-          },
-          {
-            "path": "ingressShim.defaultIssuerKind",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "ingressShim.defaultIssuerKind"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "ingressShim",
-            "type": "truthy"
-          },
-          {
-            "path": "ingressShim.defaultIssuerKind",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "PartialScalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "args[*]"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "ingressShim.defaultIssuerKind"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "ingressShim",
-            "type": "truthy"
-          },
-          {
-            "path": "ingressShim.defaultIssuerName",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "ingressShim.defaultIssuerName"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "ingressShim",
-            "type": "truthy"
-          },
-          {
-            "path": "ingressShim.defaultIssuerName",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "PartialScalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "args[*]"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "ingressShim.defaultIssuerName"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "livenessProbe",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "livenessProbe"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "livenessProbe",
-            "type": "truthy"
-          },
-          {
-            "path": "livenessProbe.enabled",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "livenessProbe.enabled"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "livenessProbe",
-            "type": "truthy"
-          },
-          {
-            "path": "livenessProbe.enabled",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "livenessProbe",
-        "failureThreshold"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "livenessProbe.failureThreshold"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "livenessProbe",
-            "type": "truthy"
-          },
-          {
-            "path": "livenessProbe.enabled",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "livenessProbe",
-        "initialDelaySeconds"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "livenessProbe.initialDelaySeconds"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "livenessProbe",
-            "type": "truthy"
-          },
-          {
-            "path": "livenessProbe.enabled",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "livenessProbe",
-        "periodSeconds"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "livenessProbe.periodSeconds"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "livenessProbe",
-            "type": "truthy"
-          },
-          {
-            "path": "livenessProbe.enabled",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "livenessProbe",
-        "successThreshold"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "livenessProbe.successThreshold"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "livenessProbe",
-            "type": "truthy"
-          },
-          {
-            "path": "livenessProbe.enabled",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "livenessProbe",
-        "timeoutSeconds"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "livenessProbe.timeoutSeconds"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "maxConcurrentChallenges",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "maxConcurrentChallenges"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "maxConcurrentChallenges",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "PartialScalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "args[*]"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "maxConcurrentChallenges"
     },
     {
       "condition": [
@@ -2103,33 +1330,115 @@
           {
             "path": "fullnameOverride",
             "type": "not"
+          },
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ],
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "path": "nameOverride",
+            "type": "default"
           }
         ]
       ],
       "kind": "Scalar",
       "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "cert-manager.fullname"
-          ],
-          "span": {
-            "end": 754,
-            "start": 569
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "cert-manager.serviceAccountName"
-          ],
-          "span": {
-            "end": 1007,
-            "start": 930
-          },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        }
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
+      "kind": "Serialized",
+      "path": [],
       "resource": null,
       "source_expr": "nameOverride"
     },
@@ -2141,35 +1450,33 @@
             "type": "truthy"
           },
           {
-            "path": "nameOverride",
-            "type": "default"
+            "path": "fullnameOverride",
+            "type": "not"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
-      "path": [
-        "metadata",
-        "labels",
-        "app"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "cert-manager.name"
-          ],
-          "span": {
-            "end": 189,
-            "start": 113
-          },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "nameOverride",
-      "stringified": true
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
     },
     {
       "condition": [
@@ -2179,35 +1486,207 @@
             "type": "truthy"
           },
           {
-            "path": "nameOverride",
-            "type": "default"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
-      "path": [
-        "metadata",
-        "labels",
-        "app.kubernetes.io/name"
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "not"
+          }
+        ]
       ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "cert-manager.name"
-          ],
-          "span": {
-            "end": 189,
-            "start": 113
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        }
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "nameOverride",
-      "stringified": true
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
     },
     {
       "condition": [
@@ -2221,209 +1700,74 @@
             "type": "not"
           },
           {
-            "path": "nameOverride",
-            "type": "default"
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Serialized",
-      "path": [
-        "metadata",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "cert-manager.fullname"
-          ],
-          "span": {
-            "end": 742,
-            "start": 672
-          },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "nameOverride",
-      "stringified": true
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
     },
     {
       "condition": [
         [
           {
-            "path": "nameOverride",
-            "type": "truthy"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           },
           {
-            "path": "nameOverride",
-            "type": "default"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "selector",
-        "matchLabels",
-        "app.kubernetes.io/name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "cert-manager.name"
-          ],
-          "span": {
-            "end": 189,
-            "start": 113
-          },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "nameOverride",
-      "stringified": true
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "nameOverride",
-            "type": "truthy"
-          },
-          {
-            "path": "nameOverride",
-            "type": "default"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "metadata",
-        "labels",
-        "app"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "cert-manager.name"
-          ],
-          "span": {
-            "end": 189,
-            "start": 113
-          },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "nameOverride",
-      "stringified": true
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "nameOverride",
-            "type": "truthy"
-          },
-          {
-            "path": "nameOverride",
-            "type": "default"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "metadata",
-        "labels",
-        "app.kubernetes.io/name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "cert-manager.name"
-          ],
-          "span": {
-            "end": 189,
-            "start": 113
-          },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "nameOverride",
-      "stringified": true
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "config",
-            "type": "truthy"
-          },
-          {
-            "path": "nameOverride",
-            "type": "truthy"
-          },
-          {
-            "path": "fullnameOverride",
-            "type": "not"
-          },
-          {
-            "path": "nameOverride",
-            "type": "default"
-          }
-        ]
-      ],
-      "kind": "Serialized",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "volumes[*]",
-        "configMap",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "cert-manager.fullname"
-          ],
-          "span": {
-            "end": 742,
-            "start": 672
-          },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "nameOverride",
-      "stringified": true
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "namespace",
-            "type": "truthy"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           },
           {
             "path": "namespace",
@@ -2432,753 +1776,450 @@
         ]
       ],
       "kind": "Scalar",
-      "path": [
-        "metadata",
-        "namespace"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "cert-manager.namespace"
-          ],
-          "span": {
-            "end": 5420,
-            "start": 5368
-          },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "namespace",
-      "stringified": true
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "no_proxy",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
       "path": [],
       "resource": null,
-      "source_expr": "no_proxy"
+      "source_expr": "namespace"
     },
     {
       "condition": [
         [
           {
-            "path": "no_proxy",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "env[*]",
-        "value"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "no_proxy"
-    },
-    {
-      "condition": [
-        [
-          {
-            "paths": [
-              "global.nodeSelector",
-              "nodeSelector"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
             ],
-            "type": "or"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "nodeSelector"
-    },
-    {
-      "condition": [
-        [
+            "type": "any_of"
+          },
           {
-            "path": "nodeSelector",
-            "type": "default"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "nodeSelector"
-    },
-    {
-      "condition": [
-        [
-          {
-            "paths": [
-              "global.nodeSelector",
-              "nodeSelector"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
             ],
-            "type": "or"
-          },
-          {
-            "path": "global.nodeSelector",
-            "type": "range"
-          },
-          {
-            "path": "nodeSelector",
-            "type": "range"
-          }
-        ]
-      ],
-      "kind": "Fragment",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "nodeSelector"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "nodeSelector"
-    },
-    {
-      "condition": [
-        [
-          {
-            "paths": [
-              "global.nodeSelector",
-              "nodeSelector"
-            ],
-            "type": "or"
-          },
-          {
-            "path": "global.nodeSelector",
-            "type": "range"
-          },
-          {
-            "path": "nodeSelector",
-            "type": "range"
+            "type": "any_of"
           }
         ]
       ],
       "kind": "Serialized",
-      "nil_omitting": true,
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "nodeSelector",
-        "{*}"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "nodeSelector.*"
+      "path": [],
+      "resource": null,
+      "source_expr": "namespace"
     },
     {
       "condition": [
         [
           {
-            "path": "podAnnotations",
-            "type": "truthy"
-          }
-        ],
-        [
-          {
-            "path": "prometheus.enabled",
-            "type": "truthy"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           },
           {
-            "path": "podAnnotations",
-            "type": "not"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "namespace"
+    },
+    {
+      "condition": [
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           },
           {
-            "path": "prometheus.podmonitor.enabled",
-            "type": "not"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
+      "source_expr": "namespace"
+    },
+    {
+      "condition": [
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           },
           {
-            "path": "prometheus.servicemonitor.enabled",
-            "type": "not"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "podAnnotations"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "podAnnotations",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "template",
-        "metadata",
-        "annotations"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "podAnnotations",
-      "template_supplied_member_keys": [
-        "prometheus.io/path",
-        "prometheus.io/port",
-        "prometheus.io/scrape"
-      ]
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "podDnsConfig",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "podDnsConfig"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "podDnsConfig",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "dnsConfig"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "podDnsConfig"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "podDnsPolicy",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "podDnsPolicy"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "podDnsPolicy",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "dnsPolicy"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "podDnsPolicy"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "podLabels",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "podLabels"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "podLabels",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "template",
-        "metadata",
-        "labels"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "podLabels",
-      "template_supplied_member_keys": [
-        "app",
-        "app.kubernetes.io/component",
-        "app.kubernetes.io/instance",
-        "app.kubernetes.io/managed-by",
-        "app.kubernetes.io/name",
-        "app.kubernetes.io/version",
-        "helm.sh/chart"
-      ]
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "prometheus.enabled",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "prometheus.enabled"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "prometheus.enabled",
-            "type": "truthy"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           },
           {
-            "path": "prometheus.podmonitor.enabled",
-            "type": "not"
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "creator",
+                  "type": "eq",
+                  "value": null
+                }
+              ],
+              [
+                {
+                  "path": "creator",
+                  "type": "absent"
+                }
+              ],
+              [
+                {
+                  "path": "creator",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [],
       "resource": null,
-      "source_expr": "prometheus.podmonitor.enabled"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "prometheus.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "prometheus.podmonitor.enabled",
-            "type": "not"
-          },
-          {
-            "path": "prometheus.servicemonitor.enabled",
-            "type": "not"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "prometheus.servicemonitor.enabled"
-    },
-    {
-      "condition": [
-        []
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "replicas"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
       "source_expr": "replicaCount"
     },
     {
       "condition": [
         [
           {
-            "path": "resources",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "resources"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "resources",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "resources"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "resources"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "securityContext",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "securityContext"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "securityContext",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "securityContext"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "securityContext"
-    },
-    {
-      "condition": [
-        []
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "cert-manager.serviceAccountName"
-          ],
-          "span": {
-            "end": 1088,
-            "start": 885
-          },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        }
-      ],
-      "resource": null,
-      "source_expr": "serviceAccount.create"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "serviceAccount.name",
-            "type": "truthy"
-          },
-          {
-            "path": "serviceAccount.name",
-            "type": "default"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "serviceAccountName"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "cert-manager.serviceAccountName"
-          ],
-          "span": {
-            "end": 1007,
-            "start": 930
-          },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "cert-manager.serviceAccountName"
-          ],
-          "span": {
-            "end": 1076,
-            "start": 1025
-          },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "serviceAccount.name",
-      "stringified": true
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "strategy",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "strategy"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "strategy",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "strategy"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "strategy"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "tolerations",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "tolerations"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "tolerations",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "tolerations"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "tolerations"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "topologySpreadConstraints",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "topologySpreadConstraints"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "topologySpreadConstraints",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "topologySpreadConstraints"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "topologySpreadConstraints"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "volumeMounts",
-            "type": "truthy"
-          }
-        ],
-        [
-          {
-            "paths": [
-              "config",
-              "volumeMounts"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
             ],
-            "type": "or"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "volumeMounts"
-    },
-    {
-      "condition": [
-        [
+            "type": "any_of"
+          },
           {
-            "path": "volumeMounts",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "volumeMounts"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "volumeMounts"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "volumes",
-            "type": "truthy"
-          }
-        ],
-        [
-          {
-            "paths": [
-              "config",
-              "volumes"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
             ],
-            "type": "or"
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "creator",
+                  "type": "eq",
+                  "value": null
+                }
+              ],
+              [
+                {
+                  "path": "creator",
+                  "type": "absent"
+                }
+              ],
+              [
+                {
+                  "path": "creator",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "WidenedDependency",
       "path": [],
       "resource": null,
-      "source_expr": "volumes"
+      "source_expr": "replicaCount"
     },
     {
       "condition": [
         [
           {
-            "path": "volumes",
-            "type": "truthy"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "creator",
+                  "type": "eq",
+                  "value": null
+                }
+              ],
+              [
+                {
+                  "path": "creator",
+                  "type": "absent"
+                }
+              ],
+              [
+                {
+                  "path": "creator",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "volumes"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "volumes"
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
+      "source_expr": "replicaCount"
     }
   ],
   "version": 3

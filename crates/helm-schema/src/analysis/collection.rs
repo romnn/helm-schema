@@ -1,6 +1,7 @@
 use std::collections::BTreeSet;
 
 use helm_schema_ast::DefineIndex;
+use helm_schema_core::{Segment, ValuesPath};
 use helm_schema_ir::{
     ContractIr, DependencyValuesRoot, ParsedDefines, SymbolicIrContext, SymbolicPolicy,
 };
@@ -35,19 +36,7 @@ pub(crate) fn analyze_charts(
     let parsed_defines = ParsedDefines::new(defines);
     let mut contract = ContractIr::default();
     let mut local_schema_universe = collect_static_crd_universe(charts, corpus)?;
-    for chart in charts {
-        for path in chart
-            .dependency_activation_chain
-            .iter()
-            .flat_map(|level| level.condition_paths.iter().chain(level.tag_paths.iter()))
-        {
-            let path = path.trim();
-            if !path.is_empty() {
-                contract.add_type_hint(path.to_string(), "boolean");
-            }
-        }
-    }
-
+    seed_dependency_control_hints(charts, &mut contract);
     let define_corpus = DefineCorpus::build(charts, &parsed_defines);
     let dependency_global_ownership = chart::build_dependency_global_ownership(charts)?;
     for chart in charts {
@@ -103,6 +92,44 @@ pub(crate) fn analyze_charts(
 /// dependency's key aborts every render: Helm merges each active chart's
 /// defaults with its dependencies' tables after pruning. That is recorded as
 /// a terminal clause under the dependency's Helm enablement.
+fn seed_dependency_control_hints(charts: &[chart::ChartContext], contract: &mut ContractIr) {
+    // A control inside its dependency's values root can remain null in raw lint values,
+    // although rendering fills or prunes that dependency's own values tree.
+    // Activation metadata cannot impose one type across that uncertain boundary.
+    let mut self_scoped_control_paths = BTreeSet::<ValuesPath>::new();
+    for chart in charts {
+        if chart.values_prefix.is_empty() {
+            continue;
+        }
+        let prefix =
+            ValuesPath::from_segments(chart.values_prefix.iter().cloned().map(Segment::from));
+        for path in chart
+            .dependency_activation_chain
+            .iter()
+            .flat_map(|level| level.condition_paths.iter().chain(level.tag_paths.iter()))
+        {
+            let path = ValuesPath::parse(path.trim());
+            if path == prefix || path.is_descendant_of(&prefix) {
+                self_scoped_control_paths.insert(path);
+            }
+        }
+    }
+    // Retain external controls' authoring hints without letting another dependency edge
+    // reintroduce a hint for a control whose own dependency boundary must stay open.
+    for chart in charts {
+        for path in chart
+            .dependency_activation_chain
+            .iter()
+            .flat_map(|level| level.condition_paths.iter().chain(level.tag_paths.iter()))
+        {
+            let path = ValuesPath::parse(path.trim());
+            if path.segments().next().is_some() && !self_scoped_control_paths.contains(&path) {
+                contract.add_type_hint(path.encode(), "boolean");
+            }
+        }
+    }
+}
+
 fn dependency_values_roots(
     charts: &[chart::ChartContext],
     contract: &mut ContractIr,

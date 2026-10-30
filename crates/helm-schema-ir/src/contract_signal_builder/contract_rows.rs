@@ -501,6 +501,61 @@ pub(super) fn flattened_conjuncts(predicate: &Predicate) -> Vec<&Predicate> {
     }
 }
 
+// A default dependency records fallback tolerance, not a rendered sink obligation.
+// Its execution scope stays on the public row; actual consumers and abort captures own typing.
+fn record_default_dependency_metadata(
+    paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
+    contract_use: &ContractUse,
+    predicates: &[Predicate],
+) -> bool {
+    if contract_use.kind != ValueKind::Scalar
+        || !contract_use.path.0.is_empty()
+        || contract_use.source_expr.segments().next().is_none()
+    {
+        return false;
+    }
+    let default_paths = predicates
+        .iter()
+        .flat_map(flattened_conjuncts)
+        .filter_map(|predicate| match predicate.kind() {
+            helm_schema_core::PredicateKind::Guard(Guard::Default { path }) => Some(path.clone()),
+            _ => None,
+        })
+        .collect::<BTreeSet<_>>();
+    if !default_paths.contains(&contract_use.source_expr) {
+        return false;
+    }
+    for path in predicates.iter().flat_map(Predicate::value_paths) {
+        path_accumulator(paths, &path).referenced = true;
+    }
+    for path in predicates
+        .iter()
+        .flat_map(Predicate::conditionally_optional_paths)
+    {
+        path_accumulator(paths, &path)
+            .requiredness
+            .is_conditionally_optional = true;
+    }
+    for path in default_paths {
+        path_accumulator(paths, &path)
+            .requiredness
+            .has_default_fallback = true;
+    }
+    let acc = path_accumulator(paths, &contract_use.source_expr);
+    acc.referenced = true;
+    let source_expr = contract_use.source_expr.encode();
+    acc.facts.record_facts(ContractValuePathFacts {
+        is_nullable: true,
+        used_as_serialized: contract_use.stringified
+            || predicates
+                .iter()
+                .any(|predicate| predicate_tests_source_type(predicate, &source_expr)),
+        ..ContractValuePathFacts::default()
+    });
+    acc.facts.record_nullable_observation(true);
+    true
+}
+
 #[expect(
     clippy::too_many_lines,
     reason = "keeping this semantic operation together makes its state transitions easier to audit"
@@ -517,6 +572,9 @@ pub(super) fn record_contract_use_conjunction(
     has_yaml_serialized_use: bool,
     predicate_memo: &helm_schema_core::PredicateMemo,
 ) {
+    if record_default_dependency_metadata(paths, contract_use, predicates) {
+        return;
+    }
     let source_path = contract_use.source_expr.clone();
     let source_expr = source_path.encode();
     let kind_resolved = kind_branch_resolved_use(contract_use, predicates);
@@ -879,7 +937,13 @@ pub(super) fn record_contract_use_conjunction(
         } else {
             None
         };
-        let source_null_tolerant = path_is_empty || has_matching_self_guard;
+        // A positive guard excluding null makes its consumer dormant for null, even
+        // when normalization factors that guard through every arm of a disjunction.
+        let source_null_tolerant = path_is_empty
+            || has_matching_self_guard
+            || predicates
+                .iter()
+                .any(|predicate| positive_source_guard_excludes_null(predicate, &source_path));
         let row_predicate = Predicate::all(predicates.to_vec());
         let matching_string_routes = string_requirement_routes
             .iter()
@@ -1199,4 +1263,27 @@ pub(super) fn remove_redundant_approximate_conditions(conjunction: &[Predicate])
         })
         .cloned()
         .collect()
+}
+
+fn positive_source_guard_excludes_null(predicate: &Predicate, source: &ValuesPath) -> bool {
+    match predicate.kind() {
+        helm_schema_core::PredicateKind::Guard(Guard::Truthy { path }) => path == source,
+        helm_schema_core::PredicateKind::Guard(Guard::TypeIs { path, schema_type }) => {
+            path == source && schema_type != "null"
+        }
+        helm_schema_core::PredicateKind::And(predicates) => predicates
+            .iter()
+            .any(|predicate| positive_source_guard_excludes_null(predicate, source)),
+        helm_schema_core::PredicateKind::Or(predicates) => {
+            !predicates.is_empty()
+                && predicates
+                    .iter()
+                    .all(|predicate| positive_source_guard_excludes_null(predicate, source))
+        }
+        helm_schema_core::PredicateKind::True
+        | helm_schema_core::PredicateKind::False
+        | helm_schema_core::PredicateKind::Approximate { .. }
+        | helm_schema_core::PredicateKind::Guard(_)
+        | helm_schema_core::PredicateKind::Not(_) => false,
+    }
 }

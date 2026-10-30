@@ -59,6 +59,41 @@ fn insertion_and_union_match_complete_sorted_read_sets_and_avl_invariants() {
     let reverse = right.union(&left);
     sim_assert_eq!(have: union, want: reverse);
     sim_assert_eq!(have: union.iter().len(), want: 257);
+
+    let coverages = [
+        ReadCoverage::ExactPath,
+        ReadCoverage::UnknownRegion,
+        ReadCoverage::DefaultFallback,
+        ReadCoverage::RootMergeFallback,
+        ReadCoverage::OpaqueValuesRoot,
+        ReadCoverage::SerializedInfluence,
+        ReadCoverage::MemberHost { allows_nil: false },
+        ReadCoverage::MemberHost { allows_nil: true },
+        ReadCoverage::MapArgument { allows_nil: false },
+        ReadCoverage::MapArgument { allows_nil: true },
+    ];
+    let mut mixed = ReadSet::default();
+    for index in (0..257).map(|index| (index * 73) % 257) {
+        let mut entry = read(index);
+        entry.coverage = coverages[index % coverages.len()];
+        mixed.insert(entry);
+    }
+    let original_addresses = addresses(&mixed);
+    for coverage in coverages {
+        let filtered = mixed.without_coverage(coverage);
+        invariant(&filtered.root);
+        let expected = mixed
+            .iter()
+            .filter(|read| read.coverage != coverage)
+            .cloned()
+            .collect::<BTreeSet<_>>();
+        sim_assert_eq!(have: filtered.iter().cloned().collect::<BTreeSet<_>>(), want: expected);
+        for (entry, address) in addresses(&filtered) {
+            sim_assert_eq!(have: original_addresses.get(&entry), want: Some(&address));
+        }
+        let unchanged = filtered.without_coverage(coverage);
+        assert!(super::same_link(&filtered.root, &unchanged.root));
+    }
 }
 
 #[test]

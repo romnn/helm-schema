@@ -21,6 +21,7 @@ mod site_index;
 mod state;
 mod text;
 mod window_exits;
+mod write_footprint;
 pub(crate) mod yaml;
 pub(crate) use session::project_documents;
 pub(crate) use site_index::Observation;
@@ -216,6 +217,7 @@ struct Arena {
     input_paths: RefCell<BTreeMap<ObjectId, ValuesPath>>,
     /// The analysis's Boolean normalization cache; results equal uncached normalization.
     predicate_memo: Rc<helm_schema_core::PredicateMemo>,
+    exported_paths: RefCell<AHashMap<*const Vec<DecisionEdge>, query::PathPredicateCache>>,
 }
 
 #[derive(Clone, Debug)]
@@ -476,12 +478,6 @@ enum TextPart {
         no: Rc<TextBuffer>,
     },
 }
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct RawFormatInput {
-    condition: Predicate,
-    path: ValuesPath,
-}
-
 #[derive(Clone, Debug)]
 pub(crate) struct ExecutedSite {
     program: u64,
@@ -494,7 +490,6 @@ pub(crate) struct ExecutedSite {
     source_path: Option<String>,
     condition: output::RuntimeCondition,
     value: FrozenValue,
-    raw_format_inputs: Vec<RawFormatInput>,
     plain_scalar_placement: helm_schema_core::PlainScalarPlacement,
     rendered: bool,
 }
@@ -646,6 +641,14 @@ enum BoundReason {
 enum ReadCoverage {
     ExactPath,
     UnknownRegion,
+    /// An executed fallback accepts an empty or nil input.
+    DefaultFallback,
+    /// An executed root rewrite installs a fallback merge result.
+    RootMergeFallback,
+    /// An opaque installed values map leaves its input key domain unresolved.
+    OpaqueValuesRoot,
+    /// A derived rendered value retains only its input influences.
+    SerializedInfluence,
     /// An input receiver of an executed, operation-compatible member access.
     MemberHost {
         allows_nil: bool,
@@ -700,6 +703,7 @@ struct CompletedExecution {
     invocation: Invocation,
     execution: Execution,
     helper_return: Option<HelperReturn>,
+    values_fallback_source: Option<crate::ValuesDefaultSource>,
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct ExecutedInvocationRecord {
@@ -709,7 +713,13 @@ pub(crate) struct ExecutedInvocationRecord {
     site: u64,
     function: String,
     wrapper: Option<ProgramWrapperMetadata>,
+    values_fallback: Option<Rc<ExecutedValuesFallback>>,
     condition: output::RuntimeCondition,
+}
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct ExecutedValuesFallback {
+    result: BTreeMap<ObjectId, SnapshotId>,
+    source: crate::ValuesDefaultSource,
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct ProgramWrapperMetadata {

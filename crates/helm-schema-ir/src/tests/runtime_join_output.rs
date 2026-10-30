@@ -246,6 +246,7 @@ fn invocation_union_admits_a_suffix_only_on_branches_with_capacity() -> eyre::Re
                 site: invocation,
                 function: "print".to_owned(),
                 wrapper: None,
+                values_fallback: None,
             });
         }
     }

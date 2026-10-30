@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use color_eyre::eyre::{self, OptionExt as _};
-use helm_schema_core::Predicate;
+use helm_schema_core::{Predicate, PredicateKind};
 use test_util::prelude::sim_assert_eq;
 
 use super::{Admission, BranchCounts, RuntimeCondition};
@@ -85,6 +85,42 @@ fn retained_ambient_edges_survive_later_state_mutation() {
     Rc::make_mut(&mut state.active).clear();
     sim_assert_eq!(have: condition.predicate(), want: predicate);
     sim_assert_eq!(have: state.path_predicate(), want: Predicate::True);
+
+    let first = Predicate::truthy_path("cached-first");
+    let second = Predicate::truthy_path("cached-second");
+    state.active = Rc::new(vec![
+        DecisionEdge {
+            test: state
+                .heap
+                .arena
+                .decision(first.clone(), first.negated(), Coverage::Exact),
+            taken: true,
+        },
+        DecisionEdge {
+            test: state
+                .heap
+                .arena
+                .decision(second.clone(), second.negated(), Coverage::Exact),
+            taken: true,
+        },
+    ]);
+    let cached = state.path_predicate();
+    let cached_condition = RuntimeCondition {
+        arena: Rc::clone(&state.heap.arena),
+        admitted: state.heap.arena.runtime_path(&state.active),
+        ambient: Rc::clone(&state.active),
+        admission: Admission::All,
+    };
+    let shared = cached_condition.predicate();
+    sim_assert_eq!(have: shared.clone(), want: Predicate::all(vec![first.clone(), second]));
+    assert!(
+        matches!((cached.kind(), shared.kind()), (PredicateKind::And(left), PredicateKind::And(right)) if std::ptr::eq(left, right))
+    );
+    drop(cached_condition);
+    let old_active = Rc::downgrade(&state.active);
+    Rc::make_mut(&mut state.active).truncate(1);
+    assert!(old_active.upgrade().is_none());
+    sim_assert_eq!(have: state.path_predicate(), want: first);
 }
 
 #[test]

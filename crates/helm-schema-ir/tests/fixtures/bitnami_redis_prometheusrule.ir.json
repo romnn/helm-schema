@@ -4,96 +4,97 @@
       "condition": [
         [
           {
-            "path": "commonAnnotations",
-            "type": "truthy"
-          },
-          {
             "path": "metrics.enabled",
             "type": "truthy"
           },
           {
             "path": "metrics.prometheusRule.enabled",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "WidenedDependency",
       "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 828,
-            "start": 550
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        }
-      ],
       "resource": null,
-      "source_expr": "commonAnnotations"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "commonAnnotations",
-            "type": "truthy"
-          },
-          {
-            "path": "metrics.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "metrics.prometheusRule.enabled",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "metadata",
-        "annotations"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 729,
-            "start": 615
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 774,
-            "start": 748
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 817,
-            "start": 804
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "PrometheusRule"
-      },
-      "source_expr": "commonAnnotations",
-      "stringified": true
+      "source_expr": ""
     },
     {
       "condition": [
@@ -105,83 +106,618 @@
           {
             "path": "metrics.prometheusRule.enabled",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "WidenedDependency",
       "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.labels.standard"
-          ],
-          "span": {
-            "end": 830,
-            "start": 726
+      "resource": null,
+      "source_expr": ""
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
           },
-          "template_path": "charts/common/templates/_labels.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 828,
-            "start": 550
+          {
+            "path": "metrics.prometheusRule.enabled",
+            "type": "truthy"
           },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 729,
-            "start": 615
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 774,
-            "start": 748
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 817,
-            "start": 804
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.merge"
-          ],
-          "span": {
-            "end": 1375,
-            "start": 1216
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.merge"
-          ],
-          "span": {
-            "end": 1363,
-            "start": 1238
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        }
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": ""
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "metrics.prometheusRule.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ],
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.prometheusRule.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.prometheusRule.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.prometheusRule.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.prometheusRule.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "metrics.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.prometheusRule.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "metrics.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.prometheusRule.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "metrics.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.prometheusRule.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "metrics.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.prometheusRule.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "metrics.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.prometheusRule.enabled",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "metrics.enabled",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
+      "source_expr": ""
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "metrics.prometheusRule.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "Serialized",
+      "path": [],
       "resource": null,
       "source_expr": "commonLabels"
     },
@@ -195,83 +731,100 @@
           {
             "path": "metrics.prometheusRule.enabled",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "path": "commonLabels",
+            "schema_type": "string",
+            "type": "type_is"
           }
         ]
       ],
-      "kind": "YamlSerialized",
-      "path": [
-        "metadata",
-        "labels"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.labels.standard"
-          ],
-          "span": {
-            "end": 830,
-            "start": 726
-          },
-          "template_path": "charts/common/templates/_labels.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 729,
-            "start": 615
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 774,
-            "start": 748
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 817,
-            "start": 804
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.merge"
-          ],
-          "span": {
-            "end": 1395,
-            "start": 1376
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "PrometheusRule"
-      },
-      "source_expr": "commonLabels",
-      "stringified": true,
-      "template_supplied_member_keys": [
-        "app.kubernetes.io/name"
-      ]
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "commonLabels"
     },
     {
       "condition": [
         [
-          {
-            "path": "fullnameOverride",
-            "type": "truthy"
-          },
           {
             "path": "metrics.enabled",
             "type": "truthy"
@@ -279,23 +832,683 @@
           {
             "path": "metrics.prometheusRule.enabled",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "path": "commonLabels",
+            "schema_type": "string",
+            "type": "not_type_is"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "WidenedDependency",
       "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 1225,
-            "start": 775
+      "resource": null,
+      "source_expr": "commonLabels"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
           },
-          "template_path": "charts/common/templates/_names.tpl"
-        }
+          {
+            "path": "metrics.prometheusRule.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "commonLabels"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "metrics.prometheusRule.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "commonLabels"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "metrics.prometheusRule.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ],
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.prometheusRule.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.prometheusRule.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.prometheusRule.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.prometheusRule.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "metrics.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.prometheusRule.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "metrics.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.prometheusRule.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "metrics.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.prometheusRule.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "metrics.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.prometheusRule.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "metrics.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.prometheusRule.enabled",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "metrics.enabled",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
+      "source_expr": "commonLabels"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "metrics.prometheusRule.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "Serialized",
+      "path": [],
       "resource": null,
       "source_expr": "fullnameOverride"
     },
@@ -316,29 +1529,10 @@
           }
         ]
       ],
-      "kind": "Scalar",
-      "path": [
-        "metadata",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 871,
-            "start": 811
-          },
-          "template_path": "charts/common/templates/_names.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "PrometheusRule"
-      },
-      "source_expr": "fullnameOverride",
-      "stringified": true
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
     },
     {
       "condition": [
@@ -354,33 +1548,18 @@
           {
             "path": "metrics.prometheusRule.enabled",
             "type": "truthy"
+          },
+          {
+            "path": "fullnameOverride",
+            "schema_type": "string",
+            "type": "type_is"
           }
         ]
       ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "groups[*]",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 871,
-            "start": 811
-          },
-          "template_path": "charts/common/templates/_names.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "PrometheusRule"
-      },
-      "source_expr": "fullnameOverride",
-      "stringified": true
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
     },
     {
       "condition": [
@@ -388,10 +1567,23 @@
           {
             "path": "metrics.enabled",
             "type": "truthy"
+          },
+          {
+            "path": "metrics.prometheusRule.enabled",
+            "type": "truthy"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "condition": [
+        []
+      ],
+      "kind": "WidenedDependency",
       "path": [],
       "resource": null,
       "source_expr": "metrics.enabled"
@@ -402,111 +1594,10 @@
           {
             "path": "metrics.enabled",
             "type": "truthy"
-          },
-          {
-            "path": "metrics.prometheusRule.additionalLabels",
-            "type": "truthy"
-          },
-          {
-            "path": "metrics.prometheusRule.enabled",
-            "type": "truthy"
           }
         ]
       ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 828,
-            "start": 550
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        }
-      ],
-      "resource": null,
-      "source_expr": "metrics.prometheusRule.additionalLabels"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "metrics.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "metrics.prometheusRule.additionalLabels",
-            "type": "truthy"
-          },
-          {
-            "path": "metrics.prometheusRule.enabled",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "metadata",
-        "labels"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 729,
-            "start": 615
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 774,
-            "start": 748
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 817,
-            "start": 804
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "PrometheusRule"
-      },
-      "source_expr": "metrics.prometheusRule.additionalLabels",
-      "template_supplied_member_keys": [
-        "app.kubernetes.io/name"
-      ]
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "metrics.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "metrics.prometheusRule.enabled",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
+      "kind": "WidenedDependency",
       "path": [],
       "resource": null,
       "source_expr": "metrics.prometheusRule.enabled"
@@ -523,8 +1614,64 @@
             "type": "truthy"
           },
           {
-            "path": "metrics.prometheusRule.namespace",
-            "type": "truthy"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           },
           {
             "path": "metrics.prometheusRule.namespace",
@@ -532,16 +1679,9 @@
           }
         ]
       ],
-      "kind": "Serialized",
-      "nil_omitting": true,
-      "path": [
-        "metadata",
-        "namespace"
-      ],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "PrometheusRule"
-      },
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
       "source_expr": "metrics.prometheusRule.namespace"
     },
     {
@@ -556,29 +1696,71 @@
             "type": "truthy"
           },
           {
-            "path": "metrics.prometheusRule.rules",
-            "pattern": "\\{\\{",
-            "templated": false,
-            "type": "matches_pattern"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 828,
-            "start": 550
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        }
-      ],
       "resource": null,
-      "source_expr": "metrics.prometheusRule.rules"
+      "source_expr": "metrics.prometheusRule.namespace"
     },
     {
       "condition": [
@@ -590,53 +1772,77 @@
           {
             "path": "metrics.prometheusRule.enabled",
             "type": "truthy"
+          },
+          {
+            "path": "metrics.prometheusRule.namespace",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "groups[*]",
-        "rules"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 729,
-            "start": 615
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 774,
-            "start": 748
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 817,
-            "start": 804
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "PrometheusRule"
-      },
-      "source_expr": "metrics.prometheusRule.rules",
-      "stringified": true
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "metrics.prometheusRule.namespace"
     },
     {
       "condition": [
@@ -648,10 +1854,244 @@
           {
             "path": "metrics.prometheusRule.enabled",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "metrics.prometheusRule.namespace"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "metrics.prometheusRule.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "metrics.prometheusRule.namespace",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
+      "source_expr": "metrics.prometheusRule.namespace"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "metrics.prometheusRule.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "fullnameOverride",
+            "type": "not"
           },
           {
             "path": "nameOverride",
+            "type": "default"
+          }
+        ],
+        [
+          {
+            "path": "metrics.enabled",
             "type": "truthy"
+          },
+          {
+            "path": "metrics.prometheusRule.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           },
           {
             "path": "nameOverride",
@@ -661,78 +2101,66 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.labels.standard"
-          ],
-          "span": {
-            "end": 617,
-            "start": 366
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
           },
-          "template_path": "charts/common/templates/_labels.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.labels.standard"
-          ],
-          "span": {
-            "end": 830,
-            "start": 726
+          {
+            "path": "metrics.prometheusRule.enabled",
+            "type": "truthy"
           },
-          "template_path": "charts/common/templates/_labels.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.names.name"
-          ],
-          "span": {
-            "end": 282,
-            "start": 206
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           },
-          "template_path": "charts/common/templates/_names.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 729,
-            "start": 615
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 774,
-            "start": 748
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 817,
-            "start": 804
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.merge"
-          ],
-          "span": {
-            "end": 1363,
-            "start": 1238
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        }
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
+      "kind": "Serialized",
+      "path": [],
       "resource": null,
       "source_expr": "nameOverride"
     },
@@ -752,85 +2180,329 @@
             "type": "truthy"
           },
           {
-            "path": "nameOverride",
-            "type": "default"
+            "path": "fullnameOverride",
+            "type": "not"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "YamlSerialized",
-      "path": [
-        "metadata",
-        "labels",
-        "app.kubernetes.io/name"
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "metrics.prometheusRule.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "nameOverride",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.labels.standard"
-          ],
-          "span": {
-            "end": 830,
-            "start": 726
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
           },
-          "template_path": "charts/common/templates/_labels.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.names.name"
-          ],
-          "span": {
-            "end": 282,
-            "start": 206
+          {
+            "path": "metrics.prometheusRule.enabled",
+            "type": "truthy"
           },
-          "template_path": "charts/common/templates/_names.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 729,
-            "start": 615
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 774,
-            "start": 748
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 817,
-            "start": 804
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.merge"
-          ],
-          "span": {
-            "end": 1395,
-            "start": 1376
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        }
+          {
+            "path": "fullnameOverride",
+            "type": "not"
+          }
+        ]
       ],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "PrometheusRule"
-      },
-      "source_expr": "nameOverride",
-      "stringified": true
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "metrics.prometheusRule.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "metrics.prometheusRule.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
     },
     {
       "condition": [
@@ -852,34 +2524,376 @@
             "type": "not"
           },
           {
-            "path": "nameOverride",
-            "type": "default"
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ],
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "metrics.prometheusRule.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ],
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.prometheusRule.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.prometheusRule.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.prometheusRule.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.prometheusRule.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "metrics.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.prometheusRule.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "metrics.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.prometheusRule.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "metrics.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.prometheusRule.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "metrics.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.prometheusRule.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "metrics.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "metrics.prometheusRule.enabled",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "metrics.enabled",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Serialized",
-      "path": [
-        "metadata",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 1201,
-            "start": 1132
-          },
-          "template_path": "charts/common/templates/_names.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "PrometheusRule"
-      },
-      "source_expr": "nameOverride",
-      "stringified": true
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
     },
     {
       "condition": [
@@ -893,43 +2907,135 @@
             "type": "truthy"
           },
           {
-            "path": "nameOverride",
-            "type": "truthy"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           },
           {
-            "path": "fullnameOverride",
-            "type": "not"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           },
           {
-            "path": "nameOverride",
+            "path": "namespaceOverride",
             "type": "default"
           }
         ]
       ],
-      "kind": "Serialized",
-      "path": [
-        "spec",
-        "groups[*]",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 1201,
-            "start": 1132
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "namespaceOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
           },
-          "template_path": "charts/common/templates/_names.tpl"
-        }
+          {
+            "path": "metrics.prometheusRule.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "PrometheusRule"
-      },
-      "source_expr": "nameOverride",
-      "stringified": true
+      "kind": "Serialized",
+      "path": [],
+      "resource": null,
+      "source_expr": "namespaceOverride"
     },
     {
       "condition": [
@@ -944,6 +3050,84 @@
           },
           {
             "path": "namespaceOverride",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "namespaceOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "metrics.prometheusRule.enabled",
             "type": "truthy"
           },
           {
@@ -951,35 +3135,209 @@
             "type": "not"
           },
           {
-            "path": "namespaceOverride",
-            "type": "default"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Serialized",
-      "nil_omitting": true,
-      "path": [
-        "metadata",
-        "namespace"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.namespace"
-          ],
-          "span": {
-            "end": 2325,
-            "start": 2237
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "namespaceOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
           },
-          "template_path": "charts/common/templates/_names.tpl"
-        }
+          {
+            "path": "metrics.prometheusRule.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "PrometheusRule"
-      },
-      "source_expr": "namespaceOverride",
-      "stringified": true
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "namespaceOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "metrics.prometheusRule.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "namespaceOverride"
     }
   ],
   "version": 3

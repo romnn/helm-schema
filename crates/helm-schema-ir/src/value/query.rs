@@ -5,7 +5,49 @@ use super::{
 };
 use helm_schema_core::{Guard, GuardValue, Predicate, ValuesPath};
 use std::collections::{BTreeMap, BTreeSet};
-use std::rc::Rc;
+use std::rc::{Rc, Weak};
+
+#[derive(Clone, Debug)]
+pub(super) struct PathPredicateCache {
+    active: Weak<Vec<super::DecisionEdge>>,
+    predicate: Predicate,
+}
+
+const EXPORTED_PATH_CACHE_CAPACITY: usize = 4096;
+
+impl super::Arena {
+    pub(super) fn exported_path_predicate(
+        &self,
+        active: &Rc<Vec<super::DecisionEdge>>,
+    ) -> Predicate {
+        let key = Rc::as_ptr(active);
+        if let Some(PathPredicateCache { active, predicate }) =
+            self.exported_paths.borrow().get(&key)
+            && std::ptr::eq(active.as_ptr(), key)
+        {
+            return predicate.clone();
+        }
+        let predicate = Predicate::all(
+            active
+                .iter()
+                .map(|edge| edge.test.possible_predicate(edge.taken))
+                .collect(),
+        );
+        let mut cache = self.exported_paths.borrow_mut();
+        if cache.len() >= EXPORTED_PATH_CACHE_CAPACITY {
+            cache.clear();
+        }
+        // Weak keys preserve allocation identity without retaining execution handles.
+        cache.insert(
+            key,
+            PathPredicateCache {
+                active: Rc::downgrade(active),
+                predicate: predicate.clone(),
+            },
+        );
+        predicate
+    }
+}
 
 #[derive(Clone, Copy)]
 pub(super) enum MemberAccess {
@@ -221,6 +263,15 @@ impl Value {
 impl State {
     pub(super) fn record_value_read(&mut self, value: &Value, coverage: super::ReadCoverage) {
         let condition = self.path_predicate();
+        self.record_value_read_under(value, coverage, &condition);
+    }
+
+    fn record_value_read_under(
+        &mut self,
+        value: &Value,
+        coverage: super::ReadCoverage,
+        condition: &Predicate,
+    ) {
         for path in self.heap.freeze(value).inputs() {
             // A summarized member read does not prove a visit or a non-null collection.
             // The collection read owns authoring openness; member obligations own narrowing.
@@ -263,6 +314,7 @@ impl State {
         }
     }
 
+    #[tracing::instrument(skip_all)]
     pub(super) fn record_invocation_reads(&mut self, invocation: &super::Invocation) {
         use crate::function_semantics::InputRead;
         let semantics = invocation.callee.semantics();
@@ -273,11 +325,32 @@ impl State {
                 descriptor: _,
             } => Some(receiver),
         };
-        if let Some(receiver) = receiver {
-            self.record_value_read(receiver, super::ReadCoverage::ExactPath);
+        let condition =
+            (receiver.is_some() || !invocation.operands.is_empty()).then(|| self.path_predicate());
+        if let Some(condition) = &condition {
+            if let Some(receiver) = receiver {
+                self.record_value_read_under(receiver, super::ReadCoverage::ExactPath, condition);
+            }
+            for operand in &invocation.operands {
+                self.record_value_read_under(
+                    &operand.value,
+                    super::ReadCoverage::ExactPath,
+                    condition,
+                );
+            }
         }
-        for operand in &invocation.operands {
-            self.record_value_read(&operand.value, super::ReadCoverage::ExactPath);
+        self.record_root_fallback_read(invocation);
+        if semantics.heap_effect != crate::function_semantics::HeapEffect::ReadOnly
+            && self.has_pending_values_fallback()
+        {
+            // A nested alias may change without changing the returned map's own revision.
+            // Keep completed invocation history but expire pending install correlations.
+            for record in &mut self.invocations {
+                record.values_fallback = None;
+            }
+        }
+        if let Some(condition) = &condition {
+            self.record_default_fallback_reads(invocation, condition);
         }
         match semantics.input_read {
             InputRead::Value => {}
@@ -303,26 +376,153 @@ impl State {
         }
     }
 
+    fn record_root_fallback_read(&mut self, invocation: &super::Invocation) {
+        if invocation.callee.function_name() != Some("set") {
+            return;
+        }
+        let [target, key, installed] = invocation.operands.as_slice() else {
+            return;
+        };
+        if key.value.constant() != Some(&GuardValue::String("Values".to_owned())) {
+            return;
+        }
+        let Some(target_object) = map_object_id(&target.value) else {
+            return;
+        };
+        // The first frame's dot retains the document context even when `$` is rebound.
+        // Helper-local contexts must not withdraw the original document's key closure.
+        let original_root = self.frames.first().and_then(|frame| frame.dot.as_ref());
+        if original_root.and_then(map_object_id) != Some(target_object) {
+            return;
+        }
+        let opaque_unknown = matches!(
+            installed.value.node.as_ref(),
+            ValueNode::Leaf(Leaf {
+                datum: Datum::Unknown(super::UnknownValue {
+                    types: super::TypeCoverage::Unresolved | super::TypeCoverage::Map(_),
+                    aliases: _,
+                }),
+                origin: super::Origin {
+                    identity: None,
+                    influences: _
+                },
+            })
+        );
+        let opaque_map = map_object_id(&installed.value)
+            .and_then(|object| self.heap.version.object(object))
+            .is_some_and(|object| {
+                matches!(
+                    &object.data,
+                    ObjectData::Widened { inputs: _ }
+                        | ObjectData::Map {
+                            fields: _,
+                            remainder: super::Remainder::Open
+                        }
+                )
+            });
+        if opaque_unknown || opaque_map {
+            for path in self.heap.freeze(&installed.value).inputs() {
+                self.reads.insert(super::RuntimeRead {
+                    coverage: super::ReadCoverage::OpaqueValuesRoot,
+                    path,
+                    condition: self.path_predicate(),
+                });
+            }
+        }
+        let Some(installed_object) = map_object_id(&installed.value) else {
+            return;
+        };
+        if !self.calls.is_empty() || self.read_root().and_then(map_object_id) != Some(target_object)
+        {
+            return;
+        }
+        let sources = self
+            .invocations
+            .iter()
+            .filter_map(|record| record.values_fallback.as_ref())
+            .filter(|fallback| {
+                fallback
+                    .result
+                    .get(installed_object)
+                    .is_some_and(|revision| {
+                        self.heap
+                            .version
+                            .object(installed_object)
+                            .is_some_and(|object| &object.revision == revision)
+                    })
+            })
+            .map(|fallback| fallback.source.source_path.clone())
+            .collect::<BTreeSet<_>>();
+        for path in sources {
+            self.reads.insert(super::RuntimeRead {
+                coverage: super::ReadCoverage::RootMergeFallback,
+                path,
+                condition: self.path_predicate(),
+            });
+        }
+    }
+
+    #[tracing::instrument(skip_all, fields(records = self.invocations.len()))]
+    fn has_pending_values_fallback(&self) -> bool {
+        for index in (0..self.invocations.len()).rev() {
+            let Some(record) = self.invocations.get(index) else {
+                continue;
+            };
+            if record.values_fallback.is_some() {
+                return true;
+            }
+            // A joined or incomplete history cannot make a branch-local writer a barrier.
+            // Shared ambient identity proves the expiry happened on this continuation.
+            if self.invocation_records_complete
+                && record.condition.shares_ambient(&self.active)
+                && crate::function_semantics::function_semantics(&record.function).heap_effect
+                    == crate::function_semantics::HeapEffect::Operands
+            {
+                return false;
+            }
+        }
+        false
+    }
+
+    fn record_default_fallback_reads(
+        &mut self,
+        invocation: &super::Invocation,
+        condition: &Predicate,
+    ) {
+        let fallback_operands = match invocation.callee.function_name() {
+            Some("default") => invocation.operands.get(1..2).unwrap_or(&[]),
+            Some("coalesce") => invocation
+                .operands
+                .get(..invocation.operands.len().saturating_sub(1))
+                .unwrap_or(&[]),
+            Some(_) | None => return,
+        };
+        for operand in fallback_operands {
+            if let Some(path) = operand.value.identity() {
+                self.reads.insert(super::RuntimeRead {
+                    coverage: super::ReadCoverage::DefaultFallback,
+                    path: path.clone(),
+                    condition: condition.clone(),
+                });
+            }
+        }
+    }
+
     /// Whether [`Self::path_predicate`] normalizes to `false`, decided through the analysis-wide
     /// predicate memo.
     pub(super) fn path_is_infeasible(&self) -> bool {
-        self.heap
+        !self
+            .heap
             .arena
             .predicate_memo
-            .normalize(self.path_predicate())
-            == Predicate::False
+            .may_be_true(self.path_predicate())
     }
 
     pub(super) fn path_predicate(&self) -> Predicate {
         if self.heap.arena.runtime_path(&self.active).is_impossible() {
             return Predicate::False;
         }
-        Predicate::all(
-            self.active
-                .iter()
-                .map(|edge| edge.test.possible_predicate(edge.taken))
-                .collect(),
-        )
+        self.heap.arena.exported_path_predicate(&self.active)
     }
     pub(super) fn consumed(&self, value: &Value) -> Value {
         let value = self.heap.version.consume(value);
@@ -773,7 +973,10 @@ impl State {
                 origin: _,
             }) => {
                 let path = self.heap.arena.input_paths.borrow().get(id).cloned();
-                let unknown = self.unknown_child_value(Some(id), path.as_ref(), key);
+                let mut unknown = self.unknown_child_value(Some(id), path.as_ref(), key);
+                if path.is_none() {
+                    unknown = Value::with_influences(unknown, value.inputs());
+                }
                 self.consumed(&field_value(
                     self.heap.version.field(id, key),
                     &unknown,
@@ -1098,6 +1301,17 @@ fn truth_test(state: &State, value: &Value, budget: &mut TruthBudget<'_>) -> Rc<
                 .decision(condition.clone(), condition.negated(), Coverage::Exact)
         }
     }
+}
+
+fn map_object_id(value: &Value) -> Option<&super::ObjectId> {
+    let ValueNode::Leaf(Leaf {
+        datum: Datum::Map { target, view: _ },
+        origin: _,
+    }) = value.node.as_ref()
+    else {
+        return None;
+    };
+    target.as_ref()
 }
 
 fn field_value(field: Field, unknown: &Value, absent: &Value) -> Value {
@@ -1489,6 +1703,12 @@ impl State {
                 {
                     let path = self.heap.arena.input_paths.borrow().get(id).cloned();
                     let child = self.unknown_child_value(Some(id), path.as_ref(), key);
+                    let mut child = child;
+                    if path.is_none() {
+                        let mut inputs = child.inputs();
+                        inputs.extend(value.inputs());
+                        child = child.with_influences(inputs);
+                    }
                     {
                         let missing =
                             Value::scalar(ScalarType::String, None).with_influences(child.inputs());

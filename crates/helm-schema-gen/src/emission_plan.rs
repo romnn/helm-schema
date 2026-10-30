@@ -767,9 +767,17 @@ fn materialize_base_document(
     usize,
     BTreeMap<helm_schema_core::ValuesPath, BaseOwnerDecision>,
 ) {
-    // Root closure is caller-selected authoring policy (ADR 0042), independent
-    // of inference coverage in unknown read regions.
+    // An opaque rebind cannot name every raw key. Withdraw only the authoring
+    // closure before adding actual contracts, which retain their own closures.
     let mut document = SchemaDocument::new_root_object(authoring_policy.root);
+    let raw_root = helm_schema_core::ValuesPath::default();
+    if authoring_policy.root == crate::RootPolicy::Closed
+        && contract_schema_signals
+            .opaque_values_root_paths()
+            .contains(&raw_root)
+    {
+        document.open_values_root(&raw_root);
+    }
     let mut insertion_abstentions = 0;
     let mut base_owners = BTreeMap::new();
     let base_span = tracing::info_span!("base_path_insertion").entered();

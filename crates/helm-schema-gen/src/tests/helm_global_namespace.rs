@@ -100,6 +100,19 @@ fn consumed_global_member_keeps_its_contract_and_admits_shared_members() {
     let schema = schema_for_values_yaml(parse_ir(REGISTRY_CONSUMER), Some(DECLARED_GLOBAL));
     sim_assert_eq!(have: &schema, want: &serde_json::json!({
         "$defs": {
+            "helm-condition-0": {
+                "not": {
+                    "properties": {
+                        "imageRegistry": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "imageRegistry"
+                    ],
+                    "type": "object"
+                }
+            },
             "t": {
                 "anyOf": [
                     {
@@ -129,43 +142,6 @@ fn consumed_global_member_keeps_its_contract_and_admits_shared_members() {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
         "allOf": [
-            {
-                "if": {
-                    "properties": {
-                        "global": {
-                            "properties": {
-                                "imageRegistry": {
-                                    "$ref": "#/$defs/t"
-                                }
-                            },
-                            "required": [
-                                "imageRegistry"
-                            ],
-                            "type": "object"
-                        }
-                    },
-                    "required": [
-                        "global"
-                    ],
-                    "type": "object"
-                },
-                "then": {
-                    "additionalProperties": {},
-                    "properties": {
-                        "global": {
-                            "additionalProperties": {},
-                            "properties": {
-                                "imageRegistry": {
-                                    "type": [
-                                        "null",
-                                        "string"
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                }
-            },
             {
                 "if": {
                     "anyOf": [
@@ -201,6 +177,29 @@ fn consumed_global_member_keeps_its_contract_and_admits_shared_members() {
         "properties": {
             "global": {
                 "additionalProperties": {},
+                "allOf": [
+                    {
+                        "if": {
+                            "allOf": [
+                                {
+                                    "properties": {
+                                        "imageRegistry": {
+                                            "$ref": "#/$defs/t"
+                                        }
+                                    },
+                                    "required": [
+                                        "imageRegistry"
+                                    ],
+                                    "type": "object"
+                                },
+                                {
+                                    "$ref": "#/$defs/helm-condition-0"
+                                }
+                            ]
+                        },
+                        "then": false
+                    }
+                ],
                 "properties": {
                     "imageRegistry": {}
                 },
@@ -230,6 +229,19 @@ fn guarded_global_reads_keep_their_guards() {
     let schema = schema_for_values_yaml(parse_ir(GUARDED_CONSUMER), None);
     sim_assert_eq!(have: schema, want: serde_json::json!({
         "$defs": {
+            "helm-condition-0": {
+                "not": {
+                    "properties": {
+                        "imageRegistry": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "imageRegistry"
+                    ],
+                    "type": "object"
+                }
+            },
             "t": {
                 "anyOf": [
                     {
@@ -259,43 +271,6 @@ fn guarded_global_reads_keep_their_guards() {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
         "allOf": [
-            {
-                "if": {
-                    "properties": {
-                        "global": {
-                            "properties": {
-                                "enabled": {
-                                    "$ref": "#/$defs/t"
-                                }
-                            },
-                            "required": [
-                                "enabled"
-                            ],
-                            "type": "object"
-                        }
-                    },
-                    "required": [
-                        "global"
-                    ],
-                    "type": "object"
-                },
-                "then": {
-                    "additionalProperties": {},
-                    "properties": {
-                        "global": {
-                            "additionalProperties": {},
-                            "properties": {
-                                "imageRegistry": {
-                                    "type": [
-                                        "null",
-                                        "string"
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                }
-            },
             {
                 "if": {
                     "anyOf": [
@@ -347,32 +322,7 @@ fn guarded_global_reads_keep_their_guards() {
                                     "type": "object"
                                 },
                                 {
-                                    "anyOf": [
-                                        {
-                                            "not": {
-                                                "properties": {
-                                                    "imageRegistry": {}
-                                                },
-                                                "required": [
-                                                    "imageRegistry"
-                                                ],
-                                                "type": "object"
-                                            }
-                                        },
-                                        {
-                                            "properties": {
-                                                "imageRegistry": {
-                                                    "enum": [
-                                                        null
-                                                    ]
-                                                }
-                                            },
-                                            "required": [
-                                                "imageRegistry"
-                                            ],
-                                            "type": "object"
-                                        }
-                                    ]
+                                    "$ref": "#/$defs/helm-condition-0"
                                 }
                             ]
                         },

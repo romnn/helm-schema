@@ -1,5 +1,65 @@
 {
   "$defs": {
+    "helm-condition-0": {
+      "not": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "ingress": {}
+              },
+              "required": [
+                "ingress"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "ingress": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          }
+        ]
+      }
+    },
+    "helm-condition-1": {
+      "not": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "ingress": {}
+              },
+              "required": [
+                "ingress"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "ingress": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          }
+        ]
+      }
+    },
     "t": {
       "anyOf": [
         {
@@ -31,99 +91,30 @@
   "allOf": [
     {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "allOf": [
-              {
-                "properties": {
-                  "ingress": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/$defs/t"
-                      }
-                    ]
-                  }
-                },
-                "required": [
-                  "ingress"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "ingress": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/t"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
+            "properties": {
+              "ingress": {
+                "anyOf": [
+                  {
                     "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/t"
                   }
-                },
-                "required": [
-                  "ingress"
-                ],
-                "type": "object"
+                ]
               }
-            ]
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
           },
           {
-            "allOf": [
-              {
-                "properties": {
-                  "ingress": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/$defs/t"
-                      }
-                    ]
-                  }
-                },
-                "required": [
-                  "ingress"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "properties": {
-                          "ingress": {}
-                        },
-                        "required": [
-                          "ingress"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    {
-                      "properties": {
-                        "ingress": {
-                          "enum": [
-                            null
-                          ]
-                        }
-                      },
-                      "required": [
-                        "ingress"
-                      ],
-                      "type": "object"
-                    }
-                  ]
-                }
-              }
-            ]
+            "$ref": "#/$defs/helm-condition-0"
+          },
+          {
+            "$ref": "#/$defs/helm-condition-1"
           }
         ]
       },
@@ -141,190 +132,6 @@
     "global": {},
     "ingress": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/t"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "className": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {
-                      "anyOf": [
-                        {
-                          "type": "boolean"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        },
-                        {
-                          "type": "number"
-                        },
-                        {
-                          "allOf": [
-                            {
-                              "not": {
-                                "pattern": ":[ \\t]|:$"
-                              }
-                            },
-                            {
-                              "not": {
-                                "pattern": "[ \\t]#"
-                              }
-                            },
-                            {
-                              "not": {
-                                "pattern": "[\\r\\n]"
-                              }
-                            }
-                          ],
-                          "type": "string"
-                        },
-                        {
-                          "maxItems": 0,
-                          "type": "array"
-                        },
-                        {
-                          "maxProperties": 0,
-                          "type": "object"
-                        }
-                      ]
-                    },
-                    "propertyNames": {
-                      "allOf": [
-                        {
-                          "not": {
-                            "pattern": ":[ \\t]|:$"
-                          }
-                        },
-                        {
-                          "not": {
-                            "pattern": "[ \\t]#"
-                          }
-                        },
-                        {
-                          "not": {
-                            "pattern": "[\\r\\n]"
-                          }
-                        }
-                      ],
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "not": {
-                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^[-?:]([ \\t]|$)"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": ":[ \\t]|:$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[ \\t]#"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[\\r\\n]"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(|~|null|Null|NULL)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                        }
-                      }
-                    ],
-                    "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
-                    "type": "string"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(null|Null|NULL)[ \\t]+#"
-                        }
-                      }
-                    ],
-                    "type": "string"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/t"
-                    }
-                  }
-                ]
-              }
-            }
-          }
-        }
-      ],
       "properties": {
         "className": {},
         "enabled": {}

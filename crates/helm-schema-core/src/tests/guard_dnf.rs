@@ -46,6 +46,19 @@ fn single_conjunction_union_matches_full_normalization_exhaustively() {
             sim_assert_eq!(have: actual, want: expected);
         }
     }
+
+    // Read-only copies share their formula; editing either copy preserves its sibling.
+    let original = GuardDnf::from_conjunction([truthy("a")]);
+    let mut fork = original.clone();
+    assert!(std::ptr::eq(original.disjuncts(), fork.disjuncts()));
+    fork.union_absorbing(GuardDnf::from_conjunction([truthy("b")]));
+    sim_assert_eq!(have: fork.clone(), want: GuardDnf::from_disjunction([[truthy("a")], [truthy("b")]]));
+    sim_assert_eq!(have: original.clone(), want: GuardDnf::from_conjunction([truthy("a")]));
+    assert!(!std::ptr::eq(original.disjuncts(), fork.disjuncts()));
+    let mut mapped = original.clone();
+    mapped.map_value_paths(&mut |_| path("nested.a"));
+    sim_assert_eq!(have: mapped, want: GuardDnf::from_conjunction([truthy("nested.a")]));
+    sim_assert_eq!(have: original, want: GuardDnf::from_conjunction([truthy("a")]));
 }
 
 #[test]

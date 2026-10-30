@@ -1,404 +1,36 @@
 {
   "$defs": {
-    "constrains/alertmanagerconfigs+alertmanagerconfigs=null": {
-      "allOf": [
-        {
-          "anyOf": [
-            {
-              "not": {
-                "properties": {
-                  "alertmanagerconfigs": {}
-                },
-                "required": [
-                  "alertmanagerconfigs"
-                ],
-                "type": "object"
-              }
-            },
-            {
-              "properties": {
-                "alertmanagerconfigs": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "alertmanagerconfigs"
-              ],
-              "type": "object"
-            }
-          ]
-        },
-        {
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/alertmanagers+alertmanagers=null": {
-      "allOf": [
-        {
-          "anyOf": [
-            {
-              "not": {
-                "properties": {
-                  "alertmanagers": {}
-                },
-                "required": [
-                  "alertmanagers"
-                ],
-                "type": "object"
-              }
-            },
-            {
-              "properties": {
-                "alertmanagers": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "alertmanagers"
-              ],
-              "type": "object"
-            }
-          ]
-        },
-        {
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/crds": {
-      "not": {
-        "properties": {
-          "crds": {
-            "type": "object"
-          }
-        },
-        "required": [
-          "crds"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/crds+crds=null": {
+    "helm-marker-free": {
       "anyOf": [
         {
-          "not": {
-            "properties": {
-              "crds": {}
-            },
-            "required": [
-              "crds"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "crds": {
-              "enum": [
-                null
-              ]
+          "additionalProperties": {
+            "$ref": "#/$defs/helm-marker-free"
+          },
+          "propertyNames": {
+            "not": {
+              "pattern": "<no value>"
             }
           },
-          "required": [
-            "crds"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/enabled:t": {
-      "properties": {
-        "enabled": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
-    "constrains/podmonitors+podmonitors=null": {
-      "allOf": [
-        {
           "type": "object"
         },
         {
-          "anyOf": [
-            {
-              "not": {
-                "properties": {
-                  "podmonitors": {}
-                },
-                "required": [
-                  "podmonitors"
-                ],
-                "type": "object"
-              }
-            },
-            {
-              "properties": {
-                "podmonitors": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "podmonitors"
-              ],
-              "type": "object"
-            }
-          ]
-        }
-      ]
-    },
-    "constrains/probes+probes=null": {
-      "allOf": [
-        {
-          "anyOf": [
-            {
-              "properties": {
-                "probes": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "probes"
-              ],
-              "type": "object"
-            },
-            {
-              "not": {
-                "properties": {
-                  "probes": {}
-                },
-                "required": [
-                  "probes"
-                ],
-                "type": "object"
-              }
-            }
+          "type": [
+            "null",
+            "boolean",
+            "number"
           ]
         },
         {
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/prometheusagents+prometheusagents=null": {
-      "allOf": [
-        {
-          "type": "object"
+          "items": {
+            "$ref": "#/$defs/helm-marker-free"
+          },
+          "type": "array"
         },
         {
-          "anyOf": [
-            {
-              "not": {
-                "properties": {
-                  "prometheusagents": {}
-                },
-                "required": [
-                  "prometheusagents"
-                ],
-                "type": "object"
-              }
-            },
-            {
-              "properties": {
-                "prometheusagents": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "prometheusagents"
-              ],
-              "type": "object"
-            }
-          ]
-        }
-      ]
-    },
-    "constrains/prometheuses+prometheuses=null": {
-      "allOf": [
-        {
-          "type": "object"
-        },
-        {
-          "anyOf": [
-            {
-              "properties": {
-                "prometheuses": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "prometheuses"
-              ],
-              "type": "object"
-            },
-            {
-              "not": {
-                "properties": {
-                  "prometheuses": {}
-                },
-                "required": [
-                  "prometheuses"
-                ],
-                "type": "object"
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "constrains/prometheusrules+prometheusrules=null": {
-      "allOf": [
-        {
-          "type": "object"
-        },
-        {
-          "anyOf": [
-            {
-              "properties": {
-                "prometheusrules": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "prometheusrules"
-              ],
-              "type": "object"
-            },
-            {
-              "not": {
-                "properties": {
-                  "prometheusrules": {}
-                },
-                "required": [
-                  "prometheusrules"
-                ],
-                "type": "object"
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "constrains/scrapeconfigs+scrapeconfigs=null": {
-      "allOf": [
-        {
-          "anyOf": [
-            {
-              "not": {
-                "properties": {
-                  "scrapeconfigs": {}
-                },
-                "required": [
-                  "scrapeconfigs"
-                ],
-                "type": "object"
-              }
-            },
-            {
-              "properties": {
-                "scrapeconfigs": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "scrapeconfigs"
-              ],
-              "type": "object"
-            }
-          ]
-        },
-        {
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/servicemonitors+servicemonitors=null": {
-      "allOf": [
-        {
-          "type": "object"
-        },
-        {
-          "anyOf": [
-            {
-              "not": {
-                "properties": {
-                  "servicemonitors": {}
-                },
-                "required": [
-                  "servicemonitors"
-                ],
-                "type": "object"
-              }
-            },
-            {
-              "properties": {
-                "servicemonitors": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "servicemonitors"
-              ],
-              "type": "object"
-            }
-          ]
-        }
-      ]
-    },
-    "constrains/thanosrulers+thanosrulers=null": {
-      "allOf": [
-        {
-          "type": "object"
-        },
-        {
-          "anyOf": [
-            {
-              "not": {
-                "properties": {
-                  "thanosrulers": {}
-                },
-                "required": [
-                  "thanosrulers"
-                ],
-                "type": "object"
-              }
-            },
-            {
-              "properties": {
-                "thanosrulers": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "thanosrulers"
-              ],
-              "type": "object"
-            }
-          ]
+          "not": {
+            "pattern": "<no value>"
+          },
+          "type": "string"
         }
       ]
     },
@@ -434,454 +66,29 @@
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
-  "allOf": [
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1crds+crds=null"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/constrains~1crds"
-              },
-              {
-                "properties": {
-                  "crds": {
-                    "$ref": "#/$defs/constrains~1alertmanagerconfigs+alertmanagerconfigs=null"
-                  }
-                },
-                "required": [
-                  "crds"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1crds+crds=null"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/constrains~1crds"
-              },
-              {
-                "properties": {
-                  "crds": {
-                    "$ref": "#/$defs/constrains~1probes+probes=null"
-                  }
-                },
-                "required": [
-                  "crds"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1crds+crds=null"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/constrains~1crds"
-              },
-              {
-                "properties": {
-                  "crds": {
-                    "$ref": "#/$defs/constrains~1servicemonitors+servicemonitors=null"
-                  }
-                },
-                "required": [
-                  "crds"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1crds+crds=null"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "crds": {
-                    "$ref": "#/$defs/constrains~1thanosrulers+thanosrulers=null"
-                  }
-                },
-                "required": [
-                  "crds"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/constrains~1crds"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1crds+crds=null"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/constrains~1crds"
-              },
-              {
-                "properties": {
-                  "crds": {
-                    "$ref": "#/$defs/constrains~1prometheuses+prometheuses=null"
-                  }
-                },
-                "required": [
-                  "crds"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1crds+crds=null"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "crds": {
-                    "$ref": "#/$defs/constrains~1prometheusagents+prometheusagents=null"
-                  }
-                },
-                "required": [
-                  "crds"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/constrains~1crds"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1crds+crds=null"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "crds": {
-                    "$ref": "#/$defs/constrains~1prometheusrules+prometheusrules=null"
-                  }
-                },
-                "required": [
-                  "crds"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/constrains~1crds"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1crds+crds=null"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/constrains~1crds"
-              },
-              {
-                "properties": {
-                  "crds": {
-                    "$ref": "#/$defs/constrains~1scrapeconfigs+scrapeconfigs=null"
-                  }
-                },
-                "required": [
-                  "crds"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1crds"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1crds+crds=null"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/constrains~1crds"
-              },
-              {
-                "properties": {
-                  "crds": {
-                    "$ref": "#/$defs/constrains~1podmonitors+podmonitors=null"
-                  }
-                },
-                "required": [
-                  "crds"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1crds+crds=null"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/constrains~1crds"
-              },
-              {
-                "properties": {
-                  "crds": {
-                    "$ref": "#/$defs/constrains~1alertmanagers+alertmanagers=null"
-                  }
-                },
-                "required": [
-                  "crds"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    }
-  ],
   "properties": {
     "crds": {
       "additionalProperties": {},
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/constrains~1alertmanagers+alertmanagers=null"
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "$ref": "#/$defs/constrains~1podmonitors+podmonitors=null"
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "$ref": "#/$defs/constrains~1servicemonitors+servicemonitors=null"
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "$ref": "#/$defs/constrains~1probes+probes=null"
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "$ref": "#/$defs/constrains~1scrapeconfigs+scrapeconfigs=null"
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "$ref": "#/$defs/constrains~1alertmanagerconfigs+alertmanagerconfigs=null"
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "$ref": "#/$defs/constrains~1thanosrulers+thanosrulers=null"
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
+            "properties": {
+              "prometheusrules": {
                 "properties": {
-                  "prometheusagents": {
-                    "$ref": "#/$defs/constrains~1enabled:t"
+                  "enabled": {
+                    "$ref": "#/$defs/t"
                   }
                 },
                 "required": [
-                  "prometheusagents"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "prometheuses": {
-                    "$ref": "#/$defs/constrains~1enabled:t"
-                  }
-                },
-                "required": [
-                  "prometheuses"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "thanosrulers": {
-                    "$ref": "#/$defs/constrains~1enabled:t"
-                  }
-                },
-                "required": [
-                  "thanosrulers"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "servicemonitors": {
-                    "$ref": "#/$defs/constrains~1enabled:t"
-                  }
-                },
-                "required": [
-                  "servicemonitors"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "podmonitors": {
-                    "$ref": "#/$defs/constrains~1enabled:t"
-                  }
-                },
-                "required": [
-                  "podmonitors"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "scrapeconfigs": {
-                    "$ref": "#/$defs/constrains~1enabled:t"
-                  }
-                },
-                "required": [
-                  "scrapeconfigs"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "prometheusrules": {
-                    "$ref": "#/$defs/constrains~1enabled:t"
-                  }
-                },
-                "required": [
-                  "prometheusrules"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "alertmanagerconfigs": {
-                    "$ref": "#/$defs/constrains~1enabled:t"
-                  }
-                },
-                "required": [
-                  "alertmanagerconfigs"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "probes": {
-                    "$ref": "#/$defs/constrains~1enabled:t"
-                  }
-                },
-                "required": [
-                  "probes"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "alertmanagers": {
-                    "$ref": "#/$defs/constrains~1enabled:t"
-                  }
-                },
-                "required": [
-                  "alertmanagers"
+                  "enabled"
                 ],
                 "type": "object"
               }
-            ]
+            },
+            "required": [
+              "prometheusrules"
+            ],
+            "type": "object"
           },
           "then": {
             "additionalProperties": {},
@@ -895,33 +102,30 @@
                   },
                   {
                     "additionalProperties": {
-                      "type": "string"
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     },
-                    "type": "object"
+                    "properties": {
+                      "controller-gen.kubebuilder.io/version": {},
+                      "operator.prometheus.io/version": {}
+                    },
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-marker-free"
+                    }
                   }
                 ],
                 "description": "annotations add additional annotations to all CRDs"
               }
             }
           }
-        },
-        {
-          "if": {
-            "$ref": "#/$defs/constrains~1prometheusrules+prometheusrules=null"
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "$ref": "#/$defs/constrains~1prometheusagents+prometheusagents=null"
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "$ref": "#/$defs/constrains~1prometheuses+prometheuses=null"
-          },
-          "then": false
         }
       ],
       "description": "Settings for CRDs",

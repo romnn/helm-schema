@@ -2,14 +2,9 @@
   "uses": [
     {
       "condition": [
-        [
-          {
-            "path": "autoscaling.enabled",
-            "type": "truthy"
-          }
-        ]
+        []
       ],
-      "kind": "Scalar",
+      "kind": "WidenedDependency",
       "path": [],
       "resource": null,
       "source_expr": "autoscaling.enabled"
@@ -20,18 +15,72 @@
           {
             "path": "autoscaling.enabled",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "maxReplicas"
-      ],
-      "resource": {
-        "api_version": "autoscaling/v2beta1",
-        "kind": "HorizontalPodAutoscaler"
-      },
+      "kind": "Serialized",
+      "path": [],
+      "resource": null,
       "source_expr": "autoscaling.maxReplicas"
     },
     {
@@ -40,18 +89,368 @@
           {
             "path": "autoscaling.enabled",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "minReplicas"
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "autoscaling.maxReplicas"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "autoscaling.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
-      "resource": {
-        "api_version": "autoscaling/v2beta1",
-        "kind": "HorizontalPodAutoscaler"
-      },
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
+      "source_expr": "autoscaling.maxReplicas"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "autoscaling.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "Serialized",
+      "path": [],
+      "resource": null,
+      "source_expr": "autoscaling.minReplicas"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "autoscaling.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "autoscaling.minReplicas"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "autoscaling.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
       "source_expr": "autoscaling.minReplicas"
     },
     {
@@ -64,10 +463,70 @@
           {
             "path": "autoscaling.targetCPUUtilizationPercentage",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [],
       "resource": null,
       "source_expr": "autoscaling.targetCPUUtilizationPercentage"
@@ -82,20 +541,224 @@
           {
             "path": "autoscaling.targetCPUUtilizationPercentage",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "metrics[*]",
-        "resource",
-        "targetAverageUtilization"
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "autoscaling.targetCPUUtilizationPercentage"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "autoscaling.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
-      "resource": {
-        "api_version": "autoscaling/v2beta1",
-        "kind": "HorizontalPodAutoscaler"
-      },
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "autoscaling.targetCPUUtilizationPercentage"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "autoscaling.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "autoscaling.targetCPUUtilizationPercentage",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
       "source_expr": "autoscaling.targetCPUUtilizationPercentage"
     },
     {
@@ -108,10 +771,70 @@
           {
             "path": "autoscaling.targetMemoryUtilizationPercentage",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [],
       "resource": null,
       "source_expr": "autoscaling.targetMemoryUtilizationPercentage"
@@ -126,20 +849,72 @@
           {
             "path": "autoscaling.targetMemoryUtilizationPercentage",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "metrics[*]",
-        "resource",
-        "targetAverageUtilization"
-      ],
-      "resource": {
-        "api_version": "autoscaling/v2beta1",
-        "kind": "HorizontalPodAutoscaler"
-      },
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
       "source_expr": "autoscaling.targetMemoryUtilizationPercentage"
     },
     {
@@ -150,25 +925,217 @@
             "type": "truthy"
           },
           {
-            "path": "fullnameOverride",
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "autoscaling.targetMemoryUtilizationPercentage"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "autoscaling.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "autoscaling.targetMemoryUtilizationPercentage",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
+      "source_expr": "autoscaling.targetMemoryUtilizationPercentage"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "autoscaling.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "Serialized",
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "autoscaling.enabled",
             "type": "truthy"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "WidenedDependency",
       "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "surveyor.fullname"
-          ],
-          "span": {
-            "end": 776,
-            "start": 421
-          },
-          "template_path": "charts/surveyor/templates/_helpers.tpl"
-        }
-      ],
       "resource": null,
       "source_expr": "fullnameOverride"
     },
@@ -185,29 +1152,10 @@
           }
         ]
       ],
-      "kind": "Scalar",
-      "path": [
-        "metadata",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "surveyor.fullname"
-          ],
-          "span": {
-            "end": 515,
-            "start": 456
-          },
-          "template_path": "charts/surveyor/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "autoscaling/v2beta1",
-        "kind": "HorizontalPodAutoscaler"
-      },
-      "source_expr": "fullnameOverride",
-      "stringified": true
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
     },
     {
       "condition": [
@@ -219,33 +1167,18 @@
           {
             "path": "fullnameOverride",
             "type": "truthy"
+          },
+          {
+            "path": "fullnameOverride",
+            "schema_type": "string",
+            "type": "type_is"
           }
         ]
       ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "scaleTargetRef",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "surveyor.fullname"
-          ],
-          "span": {
-            "end": 515,
-            "start": 456
-          },
-          "template_path": "charts/surveyor/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "autoscaling/v2beta1",
-        "kind": "HorizontalPodAutoscaler"
-      },
-      "source_expr": "fullnameOverride",
-      "stringified": true
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
     },
     {
       "condition": [
@@ -255,25 +1188,271 @@
             "type": "truthy"
           },
           {
-            "path": "global.labels",
+            "path": "fullnameOverride",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "WidenedDependency",
       "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "surveyor.labels"
-          ],
-          "span": {
-            "end": 1357,
-            "start": 1294
+      "resource": null,
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "autoscaling.enabled",
+            "type": "truthy"
           },
-          "template_path": "charts/surveyor/templates/_helpers.tpl"
-        }
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "autoscaling.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "global"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "autoscaling.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "Serialized",
+      "path": [],
       "resource": null,
       "source_expr": "global.labels"
     },
@@ -287,38 +1466,235 @@
           {
             "path": "global.labels",
             "type": "truthy"
+          },
+          {
+            "path": "global",
+            "type": "not_eq",
+            "value": null
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "YamlSerialized",
-      "path": [
-        "metadata",
-        "labels"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "surveyor.labels"
-          ],
-          "span": {
-            "end": 1346,
-            "start": 1332
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "global.labels"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "autoscaling.enabled",
+            "type": "truthy"
           },
-          "template_path": "charts/surveyor/templates/_helpers.tpl"
-        }
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
-      "resource": {
-        "api_version": "autoscaling/v2beta1",
-        "kind": "HorizontalPodAutoscaler"
-      },
-      "source_expr": "global.labels",
-      "template_supplied_member_keys": [
-        "app.kubernetes.io/instance",
-        "app.kubernetes.io/managed-by",
-        "app.kubernetes.io/name",
-        "app.kubernetes.io/version",
-        "helm.sh/chart"
-      ]
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "global.labels"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "autoscaling.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "global.labels",
+            "type": "truthy"
+          },
+          {
+            "path": "global",
+            "type": "not_eq",
+            "value": null
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
+      "source_expr": "global.labels"
     },
     {
       "condition": [
@@ -330,23 +1706,123 @@
           {
             "path": "fullnameOverride",
             "type": "not"
+          },
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ],
+        [
+          {
+            "path": "autoscaling.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "path": "nameOverride",
+            "type": "default"
           }
         ]
       ],
       "kind": "Scalar",
       "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "surveyor.fullname"
-          ],
-          "span": {
-            "end": 765,
-            "start": 585
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "autoscaling.enabled",
+            "type": "truthy"
           },
-          "template_path": "charts/surveyor/templates/_helpers.tpl"
-        }
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
+      "kind": "Serialized",
+      "path": [],
       "resource": null,
       "source_expr": "nameOverride"
     },
@@ -362,55 +1838,57 @@
             "type": "truthy"
           },
           {
-            "path": "nameOverride",
-            "type": "default"
+            "path": "fullnameOverride",
+            "type": "not"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
-      "path": [
-        "metadata",
-        "labels",
-        "app.kubernetes.io/name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "surveyor.name"
-          ],
-          "span": {
-            "end": 146,
-            "start": 71
-          },
-          "template_path": "charts/surveyor/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "surveyor.labels"
-          ],
-          "span": {
-            "end": 1142,
-            "start": 1101
-          },
-          "template_path": "charts/surveyor/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "surveyor.selectorLabels"
-          ],
-          "span": {
-            "end": 1492,
-            "start": 1461
-          },
-          "template_path": "charts/surveyor/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "autoscaling/v2beta1",
-        "kind": "HorizontalPodAutoscaler"
-      },
-      "source_expr": "nameOverride",
-      "stringified": true
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
     },
     {
       "condition": [
@@ -428,34 +1906,315 @@
             "type": "not"
           },
           {
-            "path": "nameOverride",
-            "type": "default"
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Serialized",
-      "path": [
-        "metadata",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "surveyor.fullname"
-          ],
-          "span": {
-            "end": 754,
-            "start": 685
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "autoscaling.enabled",
+            "type": "truthy"
           },
-          "template_path": "charts/surveyor/templates/_helpers.tpl"
-        }
+          {
+            "path": "nameOverride",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
-      "resource": {
-        "api_version": "autoscaling/v2beta1",
-        "kind": "HorizontalPodAutoscaler"
-      },
-      "source_expr": "nameOverride",
-      "stringified": true
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "autoscaling.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "fullnameOverride",
+            "type": "not"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "autoscaling.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "fullnameOverride",
+            "type": "not"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "autoscaling.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "autoscaling.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
     },
     {
       "condition": [
@@ -473,35 +2232,29 @@
             "type": "not"
           },
           {
-            "path": "nameOverride",
-            "type": "default"
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Serialized",
-      "path": [
-        "spec",
-        "scaleTargetRef",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "surveyor.fullname"
-          ],
-          "span": {
-            "end": 754,
-            "start": 685
-          },
-          "template_path": "charts/surveyor/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "autoscaling/v2beta1",
-        "kind": "HorizontalPodAutoscaler"
-      },
-      "source_expr": "nameOverride",
-      "stringified": true
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
     }
   ],
   "version": 3

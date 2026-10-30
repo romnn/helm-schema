@@ -1,5 +1,326 @@
 {
   "$defs": {
+    "helm-condition-0": {
+      "not": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/t"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      }
+    },
+    "helm-condition-1": {
+      "anyOf": [
+        {
+          "properties": {
+            "fullnameOverride": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "fullnameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "nameOverride": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "nameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/helm-condition-0"
+        }
+      ]
+    },
+    "helm-condition-10": {
+      "not": {
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
+      }
+    },
+    "helm-condition-11": {
+      "allOf": [
+        {
+          "properties": {
+            "fullnameOverride": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "fullnameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "ingress": {
+              "properties": {
+                "enabled": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "enabled"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "ingress"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/helm-condition-10"
+        }
+      ]
+    },
+    "helm-condition-12": {
+      "allOf": [
+        {
+          "properties": {
+            "ingress": {
+              "properties": {
+                "enabled": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "enabled"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "ingress"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "nameOverride": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "nameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/helm-condition-6"
+        },
+        {
+          "$ref": "#/$defs/helm-condition-8"
+        }
+      ]
+    },
+    "helm-condition-13": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/helm-condition-9"
+        },
+        {
+          "$ref": "#/$defs/helm-condition-11"
+        },
+        {
+          "$ref": "#/$defs/helm-condition-12"
+        }
+      ]
+    },
+    "helm-condition-2": {
+      "not": {
+        "properties": {
+          "fullnameOverride": {
+            "$ref": "#/$defs/t"
+          }
+        },
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
+      }
+    },
+    "helm-condition-3": {
+      "anyOf": [
+        {
+          "properties": {
+            "fullnameOverride": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "fullnameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/helm-condition-2"
+        }
+      ]
+    },
+    "helm-condition-4": {
+      "not": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/t"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      }
+    },
+    "helm-condition-5": {
+      "anyOf": [
+        {
+          "properties": {
+            "fullnameOverride": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "fullnameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "nameOverride": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "nameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/helm-condition-4"
+        }
+      ]
+    },
+    "helm-condition-6": {
+      "not": {
+        "properties": {
+          "fullnameOverride": {
+            "$ref": "#/$defs/t"
+          }
+        },
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
+      }
+    },
+    "helm-condition-7": {
+      "anyOf": [
+        {
+          "properties": {
+            "fullnameOverride": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "fullnameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/helm-condition-6"
+        }
+      ]
+    },
+    "helm-condition-8": {
+      "not": {
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      }
+    },
+    "helm-condition-9": {
+      "allOf": [
+        {
+          "properties": {
+            "fullnameOverride": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "fullnameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "ingress": {
+              "properties": {
+                "enabled": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "enabled"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "ingress"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "nameOverride": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "nameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "fullnameOverride": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "fullnameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/helm-condition-8"
+        }
+      ]
+    },
     "t": {
       "anyOf": [
         {
@@ -34,17 +355,6 @@
         "allOf": [
           {
             "properties": {
-              "fullnameOverride": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "fullnameOverride"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
               "ingress": {
                 "properties": {
                   "enabled": {
@@ -61,699 +371,20 @@
               "ingress"
             ],
             "type": "object"
+          },
+          {
+            "$ref": "#/$defs/helm-condition-1"
+          },
+          {
+            "$ref": "#/$defs/helm-condition-3"
           }
         ]
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "fullnameOverride": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "ingress": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
+          "service": {
             "type": "object"
-          }
-        },
-        "required": [
-          "ingress"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "ingress": {
-                "additionalProperties": {},
-                "properties": {
-                  "hosts": {
-                    "additionalProperties": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "paths": {
-                          "type": [
-                            "array",
-                            "integer",
-                            "null",
-                            "object"
-                          ]
-                        }
-                      }
-                    },
-                    "items": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "paths": {
-                          "type": [
-                            "array",
-                            "integer",
-                            "null",
-                            "object"
-                          ]
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "ingress": {
-                "additionalProperties": {},
-                "properties": {
-                  "hosts": {
-                    "anyOf": [
-                      {
-                        "items": {
-                          "additionalProperties": {},
-                          "properties": {
-                            "host": {},
-                            "paths": {
-                              "anyOf": [
-                                {
-                                  "items": {},
-                                  "type": "array"
-                                },
-                                {
-                                  "additionalProperties": {},
-                                  "type": "object"
-                                }
-                              ]
-                            }
-                          },
-                          "type": "object"
-                        },
-                        "type": "array"
-                      },
-                      {
-                        "additionalProperties": {
-                          "additionalProperties": {},
-                          "properties": {
-                            "host": {},
-                            "paths": {
-                              "anyOf": [
-                                {
-                                  "items": {},
-                                  "type": "array"
-                                },
-                                {
-                                  "additionalProperties": {},
-                                  "type": "object"
-                                }
-                              ]
-                            }
-                          },
-                          "type": "object"
-                        },
-                        "type": "object"
-                      },
-                      {
-                        "maximum": 0,
-                        "type": "integer"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "ingress": {
-                "additionalProperties": {},
-                "properties": {
-                  "hosts": {
-                    "anyOf": [
-                      {
-                        "items": {
-                          "allOf": [
-                            {
-                              "properties": {
-                                "host": {
-                                  "not": {
-                                    "type": "null"
-                                  }
-                                }
-                              },
-                              "required": [
-                                "host"
-                              ],
-                              "type": "object"
-                            },
-                            {
-                              "additionalProperties": {},
-                              "properties": {
-                                "host": {},
-                                "paths": {
-                                  "anyOf": [
-                                    {
-                                      "items": {},
-                                      "type": "array"
-                                    },
-                                    {
-                                      "additionalProperties": {},
-                                      "type": "object"
-                                    }
-                                  ]
-                                }
-                              }
-                            }
-                          ]
-                        },
-                        "type": "array"
-                      },
-                      {
-                        "additionalProperties": {
-                          "allOf": [
-                            {
-                              "properties": {
-                                "host": {
-                                  "not": {
-                                    "type": "null"
-                                  }
-                                }
-                              },
-                              "required": [
-                                "host"
-                              ],
-                              "type": "object"
-                            },
-                            {
-                              "additionalProperties": {},
-                              "properties": {
-                                "host": {},
-                                "paths": {
-                                  "anyOf": [
-                                    {
-                                      "items": {},
-                                      "type": "array"
-                                    },
-                                    {
-                                      "additionalProperties": {},
-                                      "type": "object"
-                                    }
-                                  ]
-                                }
-                              }
-                            }
-                          ]
-                        },
-                        "type": "object"
-                      },
-                      {
-                        "maximum": 0,
-                        "type": "integer"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "ingress": {
-                "additionalProperties": {},
-                "properties": {
-                  "tls": {
-                    "additionalProperties": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "hosts": {
-                          "type": [
-                            "array",
-                            "integer",
-                            "null",
-                            "object"
-                          ]
-                        }
-                      }
-                    },
-                    "items": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "hosts": {
-                          "type": [
-                            "array",
-                            "integer",
-                            "null",
-                            "object"
-                          ]
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "nameOverride": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {
-                      "anyOf": [
-                        {
-                          "type": "boolean"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        },
-                        {
-                          "type": "number"
-                        },
-                        {
-                          "allOf": [
-                            {
-                              "not": {
-                                "pattern": ":[ \\t]|:$"
-                              }
-                            },
-                            {
-                              "not": {
-                                "pattern": "[ \\t]#"
-                              }
-                            },
-                            {
-                              "not": {
-                                "pattern": "[\\r\\n]"
-                              }
-                            }
-                          ],
-                          "type": "string"
-                        },
-                        {
-                          "maxItems": 0,
-                          "type": "array"
-                        },
-                        {
-                          "maxProperties": 0,
-                          "type": "object"
-                        }
-                      ]
-                    },
-                    "propertyNames": {
-                      "allOf": [
-                        {
-                          "not": {
-                            "pattern": ":[ \\t]|:$"
-                          }
-                        },
-                        {
-                          "not": {
-                            "pattern": "[ \\t]#"
-                          }
-                        },
-                        {
-                          "not": {
-                            "pattern": "[\\r\\n]"
-                          }
-                        }
-                      ],
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "not": {
-                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^[-?:]([ \\t]|$)"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": ":[ \\t]|:$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[ \\t]#"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[\\r\\n]"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(|~|null|Null|NULL)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                        }
-                      }
-                    ],
-                    "type": "string"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(null|Null|NULL)[ \\t]+#"
-                        }
-                      }
-                    ],
-                    "type": "string"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/t"
-                    }
-                  }
-                ]
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "service": {
-                "type": "object"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "ingress": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "ingress"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "ingress": {
-                "properties": {
-                  "tls": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "ingress"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "ingress": {
-                "additionalProperties": {},
-                "properties": {
-                  "tls": {
-                    "anyOf": [
-                      {
-                        "items": {
-                          "additionalProperties": {},
-                          "properties": {
-                            "hosts": {
-                              "anyOf": [
-                                {
-                                  "items": {},
-                                  "type": "array"
-                                },
-                                {
-                                  "additionalProperties": {},
-                                  "type": "object"
-                                }
-                              ]
-                            },
-                            "secretName": {}
-                          },
-                          "type": "object"
-                        },
-                        "type": "array"
-                      },
-                      {
-                        "additionalProperties": {
-                          "additionalProperties": {},
-                          "properties": {
-                            "hosts": {
-                              "anyOf": [
-                                {
-                                  "items": {},
-                                  "type": "array"
-                                },
-                                {
-                                  "additionalProperties": {},
-                                  "type": "object"
-                                }
-                              ]
-                            },
-                            "secretName": {}
-                          },
-                          "type": "object"
-                        },
-                        "type": "object"
-                      },
-                      {
-                        "maximum": 0,
-                        "type": "integer"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "ingress": {
-                "additionalProperties": {},
-                "properties": {
-                  "tls": {
-                    "anyOf": [
-                      {
-                        "items": {
-                          "allOf": [
-                            {
-                              "properties": {
-                                "secretName": {
-                                  "not": {
-                                    "type": "null"
-                                  }
-                                }
-                              },
-                              "required": [
-                                "secretName"
-                              ],
-                              "type": "object"
-                            },
-                            {
-                              "additionalProperties": {},
-                              "properties": {
-                                "hosts": {
-                                  "anyOf": [
-                                    {
-                                      "items": {},
-                                      "type": "array"
-                                    },
-                                    {
-                                      "additionalProperties": {},
-                                      "type": "object"
-                                    }
-                                  ]
-                                },
-                                "secretName": {}
-                              }
-                            }
-                          ]
-                        },
-                        "type": "array"
-                      },
-                      {
-                        "additionalProperties": {
-                          "allOf": [
-                            {
-                              "properties": {
-                                "secretName": {
-                                  "not": {
-                                    "type": "null"
-                                  }
-                                }
-                              },
-                              "required": [
-                                "secretName"
-                              ],
-                              "type": "object"
-                            },
-                            {
-                              "additionalProperties": {},
-                              "properties": {
-                                "hosts": {
-                                  "anyOf": [
-                                    {
-                                      "items": {},
-                                      "type": "array"
-                                    },
-                                    {
-                                      "additionalProperties": {},
-                                      "type": "object"
-                                    }
-                                  ]
-                                },
-                                "secretName": {}
-                              }
-                            }
-                          ]
-                        },
-                        "type": "object"
-                      },
-                      {
-                        "maximum": 0,
-                        "type": "integer"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "ingress": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "ingress"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "nameOverride": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "nameOverride"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "type": [
-              "null",
-              "string"
-            ]
           }
         }
       }
@@ -807,6 +438,12 @@
                 "type": "object"
               }
             ]
+          },
+          {
+            "$ref": "#/$defs/helm-condition-5"
+          },
+          {
+            "$ref": "#/$defs/helm-condition-7"
           }
         ]
       },
@@ -842,6 +479,12 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/helm-condition-13"
+      },
+      "then": false
     }
   ],
   "properties": {
@@ -853,1286 +496,9 @@
     "image": {},
     "ingress": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "allOf": [
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "annotations": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
-                        "type": "object"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/$defs/t"
-                        }
-                      }
-                    ]
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "hosts": {
-                    "additionalProperties": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "paths": {
-                          "additionalProperties": {
-                            "anyOf": [
-                              {
-                                "additionalProperties": {
-                                  "anyOf": [
-                                    {
-                                      "type": "boolean"
-                                    },
-                                    {
-                                      "type": "integer"
-                                    },
-                                    {
-                                      "type": "null"
-                                    },
-                                    {
-                                      "type": "number"
-                                    },
-                                    {
-                                      "allOf": [
-                                        {
-                                          "not": {
-                                            "pattern": ":[ \\t]|:$"
-                                          }
-                                        },
-                                        {
-                                          "not": {
-                                            "pattern": "[ \\t]#"
-                                          }
-                                        },
-                                        {
-                                          "not": {
-                                            "pattern": "[\\r\\n]"
-                                          }
-                                        }
-                                      ],
-                                      "type": "string"
-                                    },
-                                    {
-                                      "maxItems": 0,
-                                      "type": "array"
-                                    },
-                                    {
-                                      "maxProperties": 0,
-                                      "type": "object"
-                                    }
-                                  ]
-                                },
-                                "propertyNames": {
-                                  "allOf": [
-                                    {
-                                      "not": {
-                                        "pattern": ":[ \\t]|:$"
-                                      }
-                                    },
-                                    {
-                                      "not": {
-                                        "pattern": "[ \\t]#"
-                                      }
-                                    },
-                                    {
-                                      "not": {
-                                        "pattern": "[\\r\\n]"
-                                      }
-                                    }
-                                  ],
-                                  "type": "string"
-                                },
-                                "type": "object"
-                              },
-                              {
-                                "allOf": [
-                                  {
-                                    "not": {
-                                      "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "^[-?:]([ \\t]|$)"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": ":[ \\t]|:$"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "[ \\t]#"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "[\\r\\n]"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "^(|~|null|Null|NULL)$"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                                    }
-                                  }
-                                ],
-                                "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
-                                "type": "string"
-                              },
-                              {
-                                "allOf": [
-                                  {
-                                    "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "^(null|Null|NULL)[ \\t]+#"
-                                    }
-                                  }
-                                ],
-                                "type": "string"
-                              }
-                            ]
-                          },
-                          "items": {
-                            "anyOf": [
-                              {
-                                "additionalProperties": {
-                                  "anyOf": [
-                                    {
-                                      "type": "boolean"
-                                    },
-                                    {
-                                      "type": "integer"
-                                    },
-                                    {
-                                      "type": "null"
-                                    },
-                                    {
-                                      "type": "number"
-                                    },
-                                    {
-                                      "allOf": [
-                                        {
-                                          "not": {
-                                            "pattern": ":[ \\t]|:$"
-                                          }
-                                        },
-                                        {
-                                          "not": {
-                                            "pattern": "[ \\t]#"
-                                          }
-                                        },
-                                        {
-                                          "not": {
-                                            "pattern": "[\\r\\n]"
-                                          }
-                                        }
-                                      ],
-                                      "type": "string"
-                                    },
-                                    {
-                                      "maxItems": 0,
-                                      "type": "array"
-                                    },
-                                    {
-                                      "maxProperties": 0,
-                                      "type": "object"
-                                    }
-                                  ]
-                                },
-                                "propertyNames": {
-                                  "allOf": [
-                                    {
-                                      "not": {
-                                        "pattern": ":[ \\t]|:$"
-                                      }
-                                    },
-                                    {
-                                      "not": {
-                                        "pattern": "[ \\t]#"
-                                      }
-                                    },
-                                    {
-                                      "not": {
-                                        "pattern": "[\\r\\n]"
-                                      }
-                                    }
-                                  ],
-                                  "type": "string"
-                                },
-                                "type": "object"
-                              },
-                              {
-                                "allOf": [
-                                  {
-                                    "not": {
-                                      "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "^[-?:]([ \\t]|$)"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": ":[ \\t]|:$"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "[ \\t]#"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "[\\r\\n]"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "^(|~|null|Null|NULL)$"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                                    }
-                                  }
-                                ],
-                                "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
-                                "type": "string"
-                              },
-                              {
-                                "allOf": [
-                                  {
-                                    "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "^(null|Null|NULL)[ \\t]+#"
-                                    }
-                                  }
-                                ],
-                                "type": "string"
-                              }
-                            ]
-                          }
-                        }
-                      }
-                    },
-                    "items": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "paths": {
-                          "additionalProperties": {
-                            "anyOf": [
-                              {
-                                "additionalProperties": {
-                                  "anyOf": [
-                                    {
-                                      "type": "boolean"
-                                    },
-                                    {
-                                      "type": "integer"
-                                    },
-                                    {
-                                      "type": "null"
-                                    },
-                                    {
-                                      "type": "number"
-                                    },
-                                    {
-                                      "allOf": [
-                                        {
-                                          "not": {
-                                            "pattern": ":[ \\t]|:$"
-                                          }
-                                        },
-                                        {
-                                          "not": {
-                                            "pattern": "[ \\t]#"
-                                          }
-                                        },
-                                        {
-                                          "not": {
-                                            "pattern": "[\\r\\n]"
-                                          }
-                                        }
-                                      ],
-                                      "type": "string"
-                                    },
-                                    {
-                                      "maxItems": 0,
-                                      "type": "array"
-                                    },
-                                    {
-                                      "maxProperties": 0,
-                                      "type": "object"
-                                    }
-                                  ]
-                                },
-                                "propertyNames": {
-                                  "allOf": [
-                                    {
-                                      "not": {
-                                        "pattern": ":[ \\t]|:$"
-                                      }
-                                    },
-                                    {
-                                      "not": {
-                                        "pattern": "[ \\t]#"
-                                      }
-                                    },
-                                    {
-                                      "not": {
-                                        "pattern": "[\\r\\n]"
-                                      }
-                                    }
-                                  ],
-                                  "type": "string"
-                                },
-                                "type": "object"
-                              },
-                              {
-                                "allOf": [
-                                  {
-                                    "not": {
-                                      "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "^[-?:]([ \\t]|$)"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": ":[ \\t]|:$"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "[ \\t]#"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "[\\r\\n]"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "^(|~|null|Null|NULL)$"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                                    }
-                                  }
-                                ],
-                                "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
-                                "type": "string"
-                              },
-                              {
-                                "allOf": [
-                                  {
-                                    "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "^(null|Null|NULL)[ \\t]+#"
-                                    }
-                                  }
-                                ],
-                                "type": "string"
-                              }
-                            ]
-                          },
-                          "items": {
-                            "anyOf": [
-                              {
-                                "additionalProperties": {
-                                  "anyOf": [
-                                    {
-                                      "type": "boolean"
-                                    },
-                                    {
-                                      "type": "integer"
-                                    },
-                                    {
-                                      "type": "null"
-                                    },
-                                    {
-                                      "type": "number"
-                                    },
-                                    {
-                                      "allOf": [
-                                        {
-                                          "not": {
-                                            "pattern": ":[ \\t]|:$"
-                                          }
-                                        },
-                                        {
-                                          "not": {
-                                            "pattern": "[ \\t]#"
-                                          }
-                                        },
-                                        {
-                                          "not": {
-                                            "pattern": "[\\r\\n]"
-                                          }
-                                        }
-                                      ],
-                                      "type": "string"
-                                    },
-                                    {
-                                      "maxItems": 0,
-                                      "type": "array"
-                                    },
-                                    {
-                                      "maxProperties": 0,
-                                      "type": "object"
-                                    }
-                                  ]
-                                },
-                                "propertyNames": {
-                                  "allOf": [
-                                    {
-                                      "not": {
-                                        "pattern": ":[ \\t]|:$"
-                                      }
-                                    },
-                                    {
-                                      "not": {
-                                        "pattern": "[ \\t]#"
-                                      }
-                                    },
-                                    {
-                                      "not": {
-                                        "pattern": "[\\r\\n]"
-                                      }
-                                    }
-                                  ],
-                                  "type": "string"
-                                },
-                                "type": "object"
-                              },
-                              {
-                                "allOf": [
-                                  {
-                                    "not": {
-                                      "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "^[-?:]([ \\t]|$)"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": ":[ \\t]|:$"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "[ \\t]#"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "[\\r\\n]"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "^(|~|null|Null|NULL)$"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                                    }
-                                  }
-                                ],
-                                "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
-                                "type": "string"
-                              },
-                              {
-                                "allOf": [
-                                  {
-                                    "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "^(null|Null|NULL)[ \\t]+#"
-                                    }
-                                  }
-                                ],
-                                "type": "string"
-                              }
-                            ]
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "hosts": {
-                    "additionalProperties": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "paths": {
-                          "type": [
-                            "array",
-                            "integer",
-                            "null",
-                            "object"
-                          ]
-                        }
-                      }
-                    },
-                    "items": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "paths": {
-                          "type": [
-                            "array",
-                            "integer",
-                            "null",
-                            "object"
-                          ]
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "ingressClassName": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {
-                          "anyOf": [
-                            {
-                              "type": "boolean"
-                            },
-                            {
-                              "type": "integer"
-                            },
-                            {
-                              "type": "null"
-                            },
-                            {
-                              "type": "number"
-                            },
-                            {
-                              "allOf": [
-                                {
-                                  "not": {
-                                    "pattern": ":[ \\t]|:$"
-                                  }
-                                },
-                                {
-                                  "not": {
-                                    "pattern": "[ \\t]#"
-                                  }
-                                },
-                                {
-                                  "not": {
-                                    "pattern": "[\\r\\n]"
-                                  }
-                                }
-                              ],
-                              "type": "string"
-                            },
-                            {
-                              "maxItems": 0,
-                              "type": "array"
-                            },
-                            {
-                              "maxProperties": 0,
-                              "type": "object"
-                            }
-                          ]
-                        },
-                        "propertyNames": {
-                          "allOf": [
-                            {
-                              "not": {
-                                "pattern": ":[ \\t]|:$"
-                              }
-                            },
-                            {
-                              "not": {
-                                "pattern": "[ \\t]#"
-                              }
-                            },
-                            {
-                              "not": {
-                                "pattern": "[\\r\\n]"
-                              }
-                            }
-                          ],
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "not": {
-                              "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^[-?:]([ \\t]|$)"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": ":[ \\t]|:$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "[ \\t]#"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "[\\r\\n]"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^(|~|null|Null|NULL)$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                            }
-                          }
-                        ],
-                        "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
-                        "type": "string"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-                          },
-                          {
-                            "not": {
-                              "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^(null|Null|NULL)[ \\t]+#"
-                            }
-                          }
-                        ],
-                        "type": "string"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/$defs/t"
-                        }
-                      }
-                    ]
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "tls": {
-                    "additionalProperties": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "hosts": {
-                          "type": [
-                            "array",
-                            "integer",
-                            "null",
-                            "object"
-                          ]
-                        }
-                      }
-                    },
-                    "items": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "hosts": {
-                          "type": [
-                            "array",
-                            "integer",
-                            "null",
-                            "object"
-                          ]
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            ]
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "tls": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "allOf": [
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "tls": {
-                    "additionalProperties": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "hosts": {
-                          "anyOf": [
-                            {
-                              "description": "hosts is a list of hosts included in the TLS certificate. The values in this list must match the name/s used in the tlsSecret. Defaults to the wildcard host setting for the loadbalancer controller fulfilling this Ingress, if left unspecified.",
-                              "items": {
-                                "type": "string"
-                              },
-                              "type": "array",
-                              "x-kubernetes-list-type": "atomic"
-                            },
-                            {
-                              "not": {
-                                "$ref": "#/$defs/t"
-                              }
-                            },
-                            {
-                              "type": "array"
-                            },
-                            {
-                              "type": "integer"
-                            },
-                            {
-                              "type": "null"
-                            },
-                            {
-                              "type": "object"
-                            }
-                          ]
-                        }
-                      }
-                    },
-                    "items": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "hosts": {
-                          "anyOf": [
-                            {
-                              "description": "hosts is a list of hosts included in the TLS certificate. The values in this list must match the name/s used in the tlsSecret. Defaults to the wildcard host setting for the loadbalancer controller fulfilling this Ingress, if left unspecified.",
-                              "items": {
-                                "type": "string"
-                              },
-                              "type": "array",
-                              "x-kubernetes-list-type": "atomic"
-                            },
-                            {
-                              "not": {
-                                "$ref": "#/$defs/t"
-                              }
-                            },
-                            {
-                              "type": "array"
-                            },
-                            {
-                              "type": "integer"
-                            },
-                            {
-                              "type": "null"
-                            },
-                            {
-                              "type": "object"
-                            }
-                          ]
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "tls": {
-                    "additionalProperties": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "secretName": {
-                          "anyOf": [
-                            {
-                              "additionalProperties": {
-                                "anyOf": [
-                                  {
-                                    "type": "boolean"
-                                  },
-                                  {
-                                    "type": "integer"
-                                  },
-                                  {
-                                    "type": "null"
-                                  },
-                                  {
-                                    "type": "number"
-                                  },
-                                  {
-                                    "allOf": [
-                                      {
-                                        "not": {
-                                          "pattern": ":[ \\t]|:$"
-                                        }
-                                      },
-                                      {
-                                        "not": {
-                                          "pattern": "[ \\t]#"
-                                        }
-                                      },
-                                      {
-                                        "not": {
-                                          "pattern": "[\\r\\n]"
-                                        }
-                                      }
-                                    ],
-                                    "type": "string"
-                                  },
-                                  {
-                                    "maxItems": 0,
-                                    "type": "array"
-                                  },
-                                  {
-                                    "maxProperties": 0,
-                                    "type": "object"
-                                  }
-                                ]
-                              },
-                              "propertyNames": {
-                                "allOf": [
-                                  {
-                                    "not": {
-                                      "pattern": ":[ \\t]|:$"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "[ \\t]#"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "[\\r\\n]"
-                                    }
-                                  }
-                                ],
-                                "type": "string"
-                              },
-                              "type": "object"
-                            },
-                            {
-                              "allOf": [
-                                {
-                                  "not": {
-                                    "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                                  }
-                                },
-                                {
-                                  "not": {
-                                    "pattern": "^[-?:]([ \\t]|$)"
-                                  }
-                                },
-                                {
-                                  "not": {
-                                    "pattern": ":[ \\t]|:$"
-                                  }
-                                },
-                                {
-                                  "not": {
-                                    "pattern": "[ \\t]#"
-                                  }
-                                },
-                                {
-                                  "not": {
-                                    "pattern": "[\\r\\n]"
-                                  }
-                                },
-                                {
-                                  "not": {
-                                    "pattern": "^(|~|null|Null|NULL)$"
-                                  }
-                                },
-                                {
-                                  "not": {
-                                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                                  }
-                                },
-                                {
-                                  "not": {
-                                    "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                                  }
-                                },
-                                {
-                                  "not": {
-                                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-                                  }
-                                },
-                                {
-                                  "not": {
-                                    "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                                  }
-                                }
-                              ],
-                              "description": "secretName is the name of the secret used to terminate TLS traffic on port 443. Field is left optional to allow TLS routing based on SNI hostname alone. If the SNI host in a listener conflicts with the \"Host\" header field used by an IngressRule, the SNI host is used for termination and value of the \"Host\" header is used for routing.",
-                              "type": "string"
-                            },
-                            {
-                              "allOf": [
-                                {
-                                  "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-                                },
-                                {
-                                  "not": {
-                                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-                                  }
-                                },
-                                {
-                                  "not": {
-                                    "pattern": "^(null|Null|NULL)[ \\t]+#"
-                                  }
-                                }
-                              ],
-                              "type": "string"
-                            }
-                          ]
-                        }
-                      }
-                    },
-                    "items": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "secretName": {
-                          "anyOf": [
-                            {
-                              "additionalProperties": {
-                                "anyOf": [
-                                  {
-                                    "type": "boolean"
-                                  },
-                                  {
-                                    "type": "integer"
-                                  },
-                                  {
-                                    "type": "null"
-                                  },
-                                  {
-                                    "type": "number"
-                                  },
-                                  {
-                                    "allOf": [
-                                      {
-                                        "not": {
-                                          "pattern": ":[ \\t]|:$"
-                                        }
-                                      },
-                                      {
-                                        "not": {
-                                          "pattern": "[ \\t]#"
-                                        }
-                                      },
-                                      {
-                                        "not": {
-                                          "pattern": "[\\r\\n]"
-                                        }
-                                      }
-                                    ],
-                                    "type": "string"
-                                  },
-                                  {
-                                    "maxItems": 0,
-                                    "type": "array"
-                                  },
-                                  {
-                                    "maxProperties": 0,
-                                    "type": "object"
-                                  }
-                                ]
-                              },
-                              "propertyNames": {
-                                "allOf": [
-                                  {
-                                    "not": {
-                                      "pattern": ":[ \\t]|:$"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "[ \\t]#"
-                                    }
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "[\\r\\n]"
-                                    }
-                                  }
-                                ],
-                                "type": "string"
-                              },
-                              "type": "object"
-                            },
-                            {
-                              "allOf": [
-                                {
-                                  "not": {
-                                    "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                                  }
-                                },
-                                {
-                                  "not": {
-                                    "pattern": "^[-?:]([ \\t]|$)"
-                                  }
-                                },
-                                {
-                                  "not": {
-                                    "pattern": ":[ \\t]|:$"
-                                  }
-                                },
-                                {
-                                  "not": {
-                                    "pattern": "[ \\t]#"
-                                  }
-                                },
-                                {
-                                  "not": {
-                                    "pattern": "[\\r\\n]"
-                                  }
-                                },
-                                {
-                                  "not": {
-                                    "pattern": "^(|~|null|Null|NULL)$"
-                                  }
-                                },
-                                {
-                                  "not": {
-                                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                                  }
-                                },
-                                {
-                                  "not": {
-                                    "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                                  }
-                                },
-                                {
-                                  "not": {
-                                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-                                  }
-                                },
-                                {
-                                  "not": {
-                                    "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                                  }
-                                }
-                              ],
-                              "description": "secretName is the name of the secret used to terminate TLS traffic on port 443. Field is left optional to allow TLS routing based on SNI hostname alone. If the SNI host in a listener conflicts with the \"Host\" header field used by an IngressRule, the SNI host is used for termination and value of the \"Host\" header is used for routing.",
-                              "type": "string"
-                            },
-                            {
-                              "allOf": [
-                                {
-                                  "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-                                },
-                                {
-                                  "not": {
-                                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-                                  }
-                                },
-                                {
-                                  "not": {
-                                    "pattern": "^(null|Null|NULL)[ \\t]+#"
-                                  }
-                                }
-                              ],
-                              "type": "string"
-                            }
-                          ]
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            ]
-          }
-        }
-      ],
       "properties": {
         "annotations": {},
         "enabled": {},
-        "hosts": {},
         "ingressClassName": {},
         "tls": {}
       },

@@ -8,107 +8,181 @@
             "type": "truthy"
           },
           {
-            "path": "networkPolicy.allowExternalEgress",
-            "type": "not"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           },
           {
-            "path": "architecture",
-            "type": "eq",
-            "value": "replication"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "WidenedDependency",
       "path": [],
       "resource": null,
-      "source_expr": "architecture"
+      "source_expr": ""
     },
     {
       "condition": [
         [
           {
-            "path": "commonAnnotations",
+            "path": "networkPolicy.enabled",
             "type": "truthy"
           },
           {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "WidenedDependency",
       "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 828,
-            "start": 550
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        }
-      ],
       "resource": null,
-      "source_expr": "commonAnnotations"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "commonAnnotations",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "metadata",
-        "annotations"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 729,
-            "start": 615
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 774,
-            "start": 748
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 817,
-            "start": 804
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "commonAnnotations",
-      "stringified": true
+      "source_expr": ""
     },
     {
       "condition": [
@@ -116,93 +190,684 @@
           {
             "path": "networkPolicy.enabled",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "WidenedDependency",
       "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.labels.standard"
-          ],
-          "span": {
-            "end": 830,
-            "start": 726
+      "resource": null,
+      "source_expr": ""
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
           },
-          "template_path": "charts/common/templates/_labels.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.labels.matchLabels"
-          ],
-          "span": {
-            "end": 2042,
-            "start": 1743
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           },
-          "template_path": "charts/common/templates/_labels.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 828,
-            "start": 550
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 729,
-            "start": 615
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 774,
-            "start": 748
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 817,
-            "start": 804
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.merge"
-          ],
-          "span": {
-            "end": 1375,
-            "start": 1216
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.merge"
-          ],
-          "span": {
-            "end": 1363,
-            "start": 1238
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        }
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ],
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "alternatives": [
+                    [
+                      {
+                        "path": "namespaceOverride",
+                        "type": "truthy"
+                      },
+                      {
+                        "path": "networkPolicy.enabled",
+                        "type": "not"
+                      }
+                    ],
+                    [
+                      {
+                        "path": "namespaceOverride",
+                        "type": "not"
+                      },
+                      {
+                        "alternatives": [
+                          [
+                            {
+                              "alternatives": [
+                                [
+                                  {
+                                    "path": "nameOverride",
+                                    "type": "truthy"
+                                  },
+                                  {
+                                    "path": "networkPolicy.enabled",
+                                    "type": "not"
+                                  }
+                                ],
+                                [
+                                  {
+                                    "path": "nameOverride",
+                                    "type": "not"
+                                  },
+                                  {
+                                    "alternatives": [
+                                      [
+                                        {
+                                          "path": "fullnameOverride",
+                                          "type": "not"
+                                        }
+                                      ],
+                                      [
+                                        {
+                                          "path": "networkPolicy.enabled",
+                                          "type": "not"
+                                        }
+                                      ],
+                                      [
+                                        {
+                                          "path": "fullnameOverride",
+                                          "schema_type": "string",
+                                          "type": "type_is"
+                                        }
+                                      ]
+                                    ],
+                                    "type": "any_of"
+                                  }
+                                ]
+                              ],
+                              "type": "any_of"
+                            },
+                            {
+                              "path": "nameOverride",
+                              "schema_type": "string",
+                              "type": "not_type_is"
+                            }
+                          ],
+                          [
+                            {
+                              "alternatives": [
+                                [
+                                  {
+                                    "path": "fullnameOverride",
+                                    "type": "not"
+                                  }
+                                ],
+                                [
+                                  {
+                                    "path": "networkPolicy.enabled",
+                                    "type": "not"
+                                  }
+                                ],
+                                [
+                                  {
+                                    "path": "fullnameOverride",
+                                    "schema_type": "string",
+                                    "type": "type_is"
+                                  }
+                                ]
+                              ],
+                              "type": "any_of"
+                            },
+                            {
+                              "path": "nameOverride",
+                              "schema_type": "string",
+                              "type": "type_is"
+                            }
+                          ]
+                        ],
+                        "type": "any_of"
+                      }
+                    ]
+                  ],
+                  "type": "any_of"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "not_type_is"
+                }
+              ],
+              [
+                {
+                  "alternatives": [
+                    [
+                      {
+                        "alternatives": [
+                          [
+                            {
+                              "path": "nameOverride",
+                              "type": "truthy"
+                            },
+                            {
+                              "path": "networkPolicy.enabled",
+                              "type": "not"
+                            }
+                          ],
+                          [
+                            {
+                              "path": "nameOverride",
+                              "type": "not"
+                            },
+                            {
+                              "alternatives": [
+                                [
+                                  {
+                                    "path": "fullnameOverride",
+                                    "type": "not"
+                                  }
+                                ],
+                                [
+                                  {
+                                    "path": "networkPolicy.enabled",
+                                    "type": "not"
+                                  }
+                                ],
+                                [
+                                  {
+                                    "path": "fullnameOverride",
+                                    "schema_type": "string",
+                                    "type": "type_is"
+                                  }
+                                ]
+                              ],
+                              "type": "any_of"
+                            }
+                          ]
+                        ],
+                        "type": "any_of"
+                      },
+                      {
+                        "path": "nameOverride",
+                        "schema_type": "string",
+                        "type": "not_type_is"
+                      }
+                    ],
+                    [
+                      {
+                        "alternatives": [
+                          [
+                            {
+                              "path": "fullnameOverride",
+                              "type": "not"
+                            }
+                          ],
+                          [
+                            {
+                              "path": "networkPolicy.enabled",
+                              "type": "not"
+                            }
+                          ],
+                          [
+                            {
+                              "path": "fullnameOverride",
+                              "schema_type": "string",
+                              "type": "type_is"
+                            }
+                          ]
+                        ],
+                        "type": "any_of"
+                      },
+                      {
+                        "path": "nameOverride",
+                        "schema_type": "string",
+                        "type": "type_is"
+                      }
+                    ]
+                  ],
+                  "type": "any_of"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
+      "source_expr": ""
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ],
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "networkPolicy.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "networkPolicy.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "networkPolicy.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "networkPolicy.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "networkPolicy.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "networkPolicy.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "networkPolicy.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "networkPolicy.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "Serialized",
+      "path": [],
       "resource": null,
       "source_expr": "commonLabels"
     },
@@ -212,778 +877,193 @@
           {
             "path": "networkPolicy.enabled",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "path": "commonLabels",
+            "schema_type": "string",
+            "type": "type_is"
           }
         ]
       ],
-      "kind": "YamlSerialized",
-      "path": [
-        "metadata",
-        "labels"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.labels.standard"
-          ],
-          "span": {
-            "end": 830,
-            "start": 726
-          },
-          "template_path": "charts/common/templates/_labels.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 729,
-            "start": 615
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 774,
-            "start": 748
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 817,
-            "start": 804
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.merge"
-          ],
-          "span": {
-            "end": 1395,
-            "start": 1376
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "commonLabels",
-      "stringified": true,
-      "template_supplied_member_keys": [
-        "app.kubernetes.io/name"
-      ]
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.allowExternalEgress",
-            "type": "not"
-          },
-          {
-            "path": "architecture",
-            "type": "eq",
-            "value": "replication"
-          }
-        ]
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "egress[*]",
-        "to[*]",
-        "podSelector",
-        "matchLabels",
-        "app.kubernetes.io/instance"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.labels.matchLabels"
-          ],
-          "span": {
-            "end": 2042,
-            "start": 1743
-          },
-          "template_path": "charts/common/templates/_labels.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 729,
-            "start": 615
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 774,
-            "start": 748
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 817,
-            "start": 804
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "commonLabels.app\\.kubernetes\\.io/instance",
-      "stringified": true
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.allowExternal",
-            "type": "not"
-          }
-        ]
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "ingress[*]",
-        "from[*]",
-        "podSelector",
-        "matchLabels",
-        "app.kubernetes.io/instance"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.labels.matchLabels"
-          ],
-          "span": {
-            "end": 2042,
-            "start": 1743
-          },
-          "template_path": "charts/common/templates/_labels.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 729,
-            "start": 615
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 774,
-            "start": 748
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 817,
-            "start": 804
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "commonLabels.app\\.kubernetes\\.io/instance",
-      "stringified": true
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "podSelector",
-        "matchLabels",
-        "app.kubernetes.io/instance"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.labels.matchLabels"
-          ],
-          "span": {
-            "end": 2042,
-            "start": 1743
-          },
-          "template_path": "charts/common/templates/_labels.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 729,
-            "start": 615
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 774,
-            "start": 748
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 817,
-            "start": 804
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "commonLabels.app\\.kubernetes\\.io/instance",
-      "stringified": true
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.allowExternalEgress",
-            "type": "not"
-          },
-          {
-            "path": "architecture",
-            "type": "eq",
-            "value": "replication"
-          }
-        ]
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "egress[*]",
-        "to[*]",
-        "podSelector",
-        "matchLabels",
-        "app.kubernetes.io/name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.labels.matchLabels"
-          ],
-          "span": {
-            "end": 2042,
-            "start": 1743
-          },
-          "template_path": "charts/common/templates/_labels.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 729,
-            "start": 615
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 774,
-            "start": 748
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 817,
-            "start": 804
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "commonLabels.app\\.kubernetes\\.io/name",
-      "stringified": true
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.allowExternal",
-            "type": "not"
-          }
-        ]
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "ingress[*]",
-        "from[*]",
-        "podSelector",
-        "matchLabels",
-        "app.kubernetes.io/name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.labels.matchLabels"
-          ],
-          "span": {
-            "end": 2042,
-            "start": 1743
-          },
-          "template_path": "charts/common/templates/_labels.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 729,
-            "start": 615
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 774,
-            "start": 748
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 817,
-            "start": 804
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "commonLabels.app\\.kubernetes\\.io/name",
-      "stringified": true
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "podSelector",
-        "matchLabels",
-        "app.kubernetes.io/name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.labels.matchLabels"
-          ],
-          "span": {
-            "end": 2042,
-            "start": 1743
-          },
-          "template_path": "charts/common/templates/_labels.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 729,
-            "start": 615
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 774,
-            "start": 748
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 817,
-            "start": 804
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "commonLabels.app\\.kubernetes\\.io/name",
-      "stringified": true
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "fullnameOverride",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 1225,
-            "start": 775
-          },
-          "template_path": "charts/common/templates/_names.tpl"
-        }
-      ],
-      "resource": null,
-      "source_expr": "fullnameOverride"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.allowExternal",
-            "type": "not"
-          }
-        ]
-      ],
-      "kind": "PartialScalar",
-      "path": [],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "fullnameOverride"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "fullnameOverride",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "metadata",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 871,
-            "start": 811
-          },
-          "template_path": "charts/common/templates/_names.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "fullnameOverride",
-      "stringified": true
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.allowExternalEgress",
-            "type": "not"
-          },
-          {
-            "path": "architecture",
-            "type": "eq",
-            "value": "replication"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "egress[*]",
-        "ports[*]",
-        "port"
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "master.containerPorts.redis"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "ingress[*]",
-        "ports[*]",
-        "port"
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "master.containerPorts.redis"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "metrics.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "ingress[*]",
-        "ports[*]",
-        "port"
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "metrics.containerPorts.http"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "metrics.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
+      "kind": "WidenedDependency",
       "path": [],
       "resource": null,
-      "source_expr": "metrics.enabled"
+      "source_expr": "commonLabels"
     },
     {
       "condition": [
         [
           {
-            "path": "nameOverride",
-            "type": "truthy"
-          },
-          {
             "path": "networkPolicy.enabled",
             "type": "truthy"
           },
           {
-            "path": "nameOverride",
-            "type": "default"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "path": "commonLabels",
+            "schema_type": "string",
+            "type": "not_type_is"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "WidenedDependency",
       "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.labels.standard"
-          ],
-          "span": {
-            "end": 617,
-            "start": 366
-          },
-          "template_path": "charts/common/templates/_labels.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.labels.standard"
-          ],
-          "span": {
-            "end": 830,
-            "start": 726
-          },
-          "template_path": "charts/common/templates/_labels.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.names.name"
-          ],
-          "span": {
-            "end": 282,
-            "start": 206
-          },
-          "template_path": "charts/common/templates/_names.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 729,
-            "start": 615
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 774,
-            "start": 748
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 817,
-            "start": 804
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.merge"
-          ],
-          "span": {
-            "end": 1363,
-            "start": 1238
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        }
-      ],
       "resource": null,
-      "source_expr": "nameOverride"
+      "source_expr": "commonLabels"
     },
     {
       "condition": [
@@ -993,229 +1073,553 @@
             "type": "truthy"
           },
           {
-            "path": "networkPolicy.allowExternal",
-            "type": "not"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           },
           {
-            "path": "nameOverride",
-            "type": "default"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "PartialScalar",
+      "kind": "WidenedDependency",
       "path": [],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "nameOverride"
+      "resource": null,
+      "source_expr": "commonLabels"
     },
     {
       "condition": [
         [
           {
-            "path": "nameOverride",
-            "type": "truthy"
-          },
-          {
             "path": "networkPolicy.enabled",
             "type": "truthy"
           },
           {
-            "path": "nameOverride",
-            "type": "default"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "YamlSerialized",
-      "path": [
-        "metadata",
-        "labels",
-        "app.kubernetes.io/name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.labels.standard"
-          ],
-          "span": {
-            "end": 830,
-            "start": 726
-          },
-          "template_path": "charts/common/templates/_labels.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.names.name"
-          ],
-          "span": {
-            "end": 282,
-            "start": 206
-          },
-          "template_path": "charts/common/templates/_names.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 729,
-            "start": 615
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 774,
-            "start": 748
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 817,
-            "start": 804
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.merge"
-          ],
-          "span": {
-            "end": 1395,
-            "start": 1376
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "nameOverride",
-      "stringified": true
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "commonLabels"
     },
     {
       "condition": [
         [
           {
-            "path": "nameOverride",
+            "path": "networkPolicy.enabled",
             "type": "truthy"
           },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ],
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "alternatives": [
+                    [
+                      {
+                        "path": "namespaceOverride",
+                        "type": "truthy"
+                      },
+                      {
+                        "path": "networkPolicy.enabled",
+                        "type": "not"
+                      }
+                    ],
+                    [
+                      {
+                        "path": "namespaceOverride",
+                        "type": "not"
+                      },
+                      {
+                        "alternatives": [
+                          [
+                            {
+                              "alternatives": [
+                                [
+                                  {
+                                    "path": "nameOverride",
+                                    "type": "truthy"
+                                  },
+                                  {
+                                    "path": "networkPolicy.enabled",
+                                    "type": "not"
+                                  }
+                                ],
+                                [
+                                  {
+                                    "path": "nameOverride",
+                                    "type": "not"
+                                  },
+                                  {
+                                    "alternatives": [
+                                      [
+                                        {
+                                          "path": "fullnameOverride",
+                                          "type": "not"
+                                        }
+                                      ],
+                                      [
+                                        {
+                                          "path": "networkPolicy.enabled",
+                                          "type": "not"
+                                        }
+                                      ],
+                                      [
+                                        {
+                                          "path": "fullnameOverride",
+                                          "schema_type": "string",
+                                          "type": "type_is"
+                                        }
+                                      ]
+                                    ],
+                                    "type": "any_of"
+                                  }
+                                ]
+                              ],
+                              "type": "any_of"
+                            },
+                            {
+                              "path": "nameOverride",
+                              "schema_type": "string",
+                              "type": "not_type_is"
+                            }
+                          ],
+                          [
+                            {
+                              "alternatives": [
+                                [
+                                  {
+                                    "path": "fullnameOverride",
+                                    "type": "not"
+                                  }
+                                ],
+                                [
+                                  {
+                                    "path": "networkPolicy.enabled",
+                                    "type": "not"
+                                  }
+                                ],
+                                [
+                                  {
+                                    "path": "fullnameOverride",
+                                    "schema_type": "string",
+                                    "type": "type_is"
+                                  }
+                                ]
+                              ],
+                              "type": "any_of"
+                            },
+                            {
+                              "path": "nameOverride",
+                              "schema_type": "string",
+                              "type": "type_is"
+                            }
+                          ]
+                        ],
+                        "type": "any_of"
+                      }
+                    ]
+                  ],
+                  "type": "any_of"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "not_type_is"
+                }
+              ],
+              [
+                {
+                  "alternatives": [
+                    [
+                      {
+                        "alternatives": [
+                          [
+                            {
+                              "path": "nameOverride",
+                              "type": "truthy"
+                            },
+                            {
+                              "path": "networkPolicy.enabled",
+                              "type": "not"
+                            }
+                          ],
+                          [
+                            {
+                              "path": "nameOverride",
+                              "type": "not"
+                            },
+                            {
+                              "alternatives": [
+                                [
+                                  {
+                                    "path": "fullnameOverride",
+                                    "type": "not"
+                                  }
+                                ],
+                                [
+                                  {
+                                    "path": "networkPolicy.enabled",
+                                    "type": "not"
+                                  }
+                                ],
+                                [
+                                  {
+                                    "path": "fullnameOverride",
+                                    "schema_type": "string",
+                                    "type": "type_is"
+                                  }
+                                ]
+                              ],
+                              "type": "any_of"
+                            }
+                          ]
+                        ],
+                        "type": "any_of"
+                      },
+                      {
+                        "path": "nameOverride",
+                        "schema_type": "string",
+                        "type": "not_type_is"
+                      }
+                    ],
+                    [
+                      {
+                        "alternatives": [
+                          [
+                            {
+                              "path": "fullnameOverride",
+                              "type": "not"
+                            }
+                          ],
+                          [
+                            {
+                              "path": "networkPolicy.enabled",
+                              "type": "not"
+                            }
+                          ],
+                          [
+                            {
+                              "path": "fullnameOverride",
+                              "schema_type": "string",
+                              "type": "type_is"
+                            }
+                          ]
+                        ],
+                        "type": "any_of"
+                      },
+                      {
+                        "path": "nameOverride",
+                        "schema_type": "string",
+                        "type": "type_is"
+                      }
+                    ]
+                  ],
+                  "type": "any_of"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
+      "source_expr": "commonLabels"
+    },
+    {
+      "condition": [
+        [
           {
             "path": "networkPolicy.enabled",
             "type": "truthy"
           },
           {
-            "path": "fullnameOverride",
-            "type": "not"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           },
           {
-            "path": "nameOverride",
-            "type": "default"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
       "kind": "Serialized",
-      "path": [
-        "metadata",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 1201,
-            "start": 1132
-          },
-          "template_path": "charts/common/templates/_names.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "nameOverride",
-      "stringified": true
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
     },
     {
       "condition": [
         [
           {
-            "path": "nameOverride",
+            "path": "fullnameOverride",
             "type": "truthy"
           },
           {
             "path": "networkPolicy.enabled",
             "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.allowExternalEgress",
-            "type": "not"
-          },
-          {
-            "path": "architecture",
-            "type": "eq",
-            "value": "replication"
-          },
-          {
-            "path": "nameOverride",
-            "type": "default"
           }
         ]
       ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "egress[*]",
-        "to[*]",
-        "podSelector",
-        "matchLabels",
-        "app.kubernetes.io/name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.labels.matchLabels"
-          ],
-          "span": {
-            "end": 2042,
-            "start": 1743
-          },
-          "template_path": "charts/common/templates/_labels.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.names.name"
-          ],
-          "span": {
-            "end": 282,
-            "start": 206
-          },
-          "template_path": "charts/common/templates/_names.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "nameOverride",
-      "stringified": true
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
     },
     {
       "condition": [
         [
           {
-            "path": "nameOverride",
+            "path": "fullnameOverride",
             "type": "truthy"
           },
           {
@@ -1223,52 +1627,389 @@
             "type": "truthy"
           },
           {
-            "path": "networkPolicy.allowExternal",
+            "path": "fullnameOverride",
+            "schema_type": "string",
+            "type": "type_is"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "fullnameOverride",
             "type": "not"
           },
           {
             "path": "nameOverride",
             "type": "default"
           }
+        ],
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
         ]
       ],
       "kind": "Scalar",
-      "path": [
-        "spec",
-        "ingress[*]",
-        "from[*]",
-        "podSelector",
-        "matchLabels",
-        "app.kubernetes.io/name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.labels.matchLabels"
-          ],
-          "span": {
-            "end": 2042,
-            "start": 1743
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
           },
-          "template_path": "charts/common/templates/_labels.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.names.name"
-          ],
-          "span": {
-            "end": 282,
-            "start": 206
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           },
-          "template_path": "charts/common/templates/_names.tpl"
-        }
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ],
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "networkPolicy.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "networkPolicy.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "networkPolicy.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "networkPolicy.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "networkPolicy.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "networkPolicy.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "networkPolicy.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "networkPolicy.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "nameOverride",
-      "stringified": true
+      "kind": "Serialized",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
     },
     {
       "condition": [
@@ -1282,46 +2023,789 @@
             "type": "truthy"
           },
           {
+            "path": "fullnameOverride",
+            "type": "not"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
             "path": "nameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "fullnameOverride",
+            "type": "not"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "nameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "fullnameOverride",
+            "type": "not"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ],
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ],
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "alternatives": [
+                    [
+                      {
+                        "path": "namespaceOverride",
+                        "type": "truthy"
+                      },
+                      {
+                        "path": "networkPolicy.enabled",
+                        "type": "not"
+                      }
+                    ],
+                    [
+                      {
+                        "path": "namespaceOverride",
+                        "type": "not"
+                      },
+                      {
+                        "alternatives": [
+                          [
+                            {
+                              "alternatives": [
+                                [
+                                  {
+                                    "path": "nameOverride",
+                                    "type": "truthy"
+                                  },
+                                  {
+                                    "path": "networkPolicy.enabled",
+                                    "type": "not"
+                                  }
+                                ],
+                                [
+                                  {
+                                    "path": "nameOverride",
+                                    "type": "not"
+                                  },
+                                  {
+                                    "alternatives": [
+                                      [
+                                        {
+                                          "path": "fullnameOverride",
+                                          "type": "not"
+                                        }
+                                      ],
+                                      [
+                                        {
+                                          "path": "networkPolicy.enabled",
+                                          "type": "not"
+                                        }
+                                      ],
+                                      [
+                                        {
+                                          "path": "fullnameOverride",
+                                          "schema_type": "string",
+                                          "type": "type_is"
+                                        }
+                                      ]
+                                    ],
+                                    "type": "any_of"
+                                  }
+                                ]
+                              ],
+                              "type": "any_of"
+                            },
+                            {
+                              "path": "nameOverride",
+                              "schema_type": "string",
+                              "type": "not_type_is"
+                            }
+                          ],
+                          [
+                            {
+                              "alternatives": [
+                                [
+                                  {
+                                    "path": "fullnameOverride",
+                                    "type": "not"
+                                  }
+                                ],
+                                [
+                                  {
+                                    "path": "networkPolicy.enabled",
+                                    "type": "not"
+                                  }
+                                ],
+                                [
+                                  {
+                                    "path": "fullnameOverride",
+                                    "schema_type": "string",
+                                    "type": "type_is"
+                                  }
+                                ]
+                              ],
+                              "type": "any_of"
+                            },
+                            {
+                              "path": "nameOverride",
+                              "schema_type": "string",
+                              "type": "type_is"
+                            }
+                          ]
+                        ],
+                        "type": "any_of"
+                      }
+                    ]
+                  ],
+                  "type": "any_of"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "not_type_is"
+                }
+              ],
+              [
+                {
+                  "alternatives": [
+                    [
+                      {
+                        "alternatives": [
+                          [
+                            {
+                              "path": "nameOverride",
+                              "type": "truthy"
+                            },
+                            {
+                              "path": "networkPolicy.enabled",
+                              "type": "not"
+                            }
+                          ],
+                          [
+                            {
+                              "path": "nameOverride",
+                              "type": "not"
+                            },
+                            {
+                              "alternatives": [
+                                [
+                                  {
+                                    "path": "fullnameOverride",
+                                    "type": "not"
+                                  }
+                                ],
+                                [
+                                  {
+                                    "path": "networkPolicy.enabled",
+                                    "type": "not"
+                                  }
+                                ],
+                                [
+                                  {
+                                    "path": "fullnameOverride",
+                                    "schema_type": "string",
+                                    "type": "type_is"
+                                  }
+                                ]
+                              ],
+                              "type": "any_of"
+                            }
+                          ]
+                        ],
+                        "type": "any_of"
+                      },
+                      {
+                        "path": "nameOverride",
+                        "schema_type": "string",
+                        "type": "not_type_is"
+                      }
+                    ],
+                    [
+                      {
+                        "alternatives": [
+                          [
+                            {
+                              "path": "fullnameOverride",
+                              "type": "not"
+                            }
+                          ],
+                          [
+                            {
+                              "path": "networkPolicy.enabled",
+                              "type": "not"
+                            }
+                          ],
+                          [
+                            {
+                              "path": "fullnameOverride",
+                              "schema_type": "string",
+                              "type": "type_is"
+                            }
+                          ]
+                        ],
+                        "type": "any_of"
+                      },
+                      {
+                        "path": "nameOverride",
+                        "schema_type": "string",
+                        "type": "type_is"
+                      }
+                    ]
+                  ],
+                  "type": "any_of"
+                },
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "path": "namespaceOverride",
             "type": "default"
           }
         ]
       ],
       "kind": "Scalar",
-      "path": [
-        "spec",
-        "podSelector",
-        "matchLabels",
-        "app.kubernetes.io/name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.labels.matchLabels"
-          ],
-          "span": {
-            "end": 2042,
-            "start": 1743
+      "path": [],
+      "resource": null,
+      "source_expr": "namespaceOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
           },
-          "template_path": "charts/common/templates/_labels.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.names.name"
-          ],
-          "span": {
-            "end": 282,
-            "start": 206
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           },
-          "template_path": "charts/common/templates/_names.tpl"
-        }
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "nameOverride",
-      "stringified": true
+      "kind": "Serialized",
+      "path": [],
+      "resource": null,
+      "source_expr": "namespaceOverride"
     },
     {
       "condition": [
@@ -1335,71 +2819,127 @@
             "type": "truthy"
           },
           {
-            "path": "namespaceOverride",
-            "type": "default"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Serialized",
-      "nil_omitting": true,
-      "path": [
-        "metadata",
-        "namespace"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.namespace"
-          ],
-          "span": {
-            "end": 2325,
-            "start": 2237
-          },
-          "template_path": "charts/common/templates/_names.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "namespaceOverride",
-      "stringified": true
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.allowExternal",
-            "type": "not"
-          }
-        ]
-      ],
-      "kind": "Scalar",
+      "kind": "WidenedDependency",
       "path": [],
       "resource": null,
-      "source_expr": "networkPolicy.allowExternal"
+      "source_expr": "namespaceOverride"
     },
     {
       "condition": [
         [
           {
-            "path": "networkPolicy.allowExternalEgress",
+            "path": "networkPolicy.enabled",
             "type": "truthy"
           },
           {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "WidenedDependency",
       "path": [],
       "resource": null,
-      "source_expr": "networkPolicy.allowExternalEgress"
+      "source_expr": "namespaceOverride"
     },
     {
       "condition": [
@@ -1407,770 +2947,82 @@
           {
             "path": "networkPolicy.enabled",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "namespaceOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "namespaceOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "namespaceOverride"
+    },
+    {
+      "condition": [
+        []
+      ],
+      "kind": "WidenedDependency",
       "path": [],
       "resource": null,
       "source_expr": "networkPolicy.enabled"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.extraEgress",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.allowExternalEgress",
-            "type": "not"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 828,
-            "start": 550
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        }
-      ],
-      "resource": null,
-      "source_expr": "networkPolicy.extraEgress"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.extraEgress",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.allowExternalEgress",
-            "type": "not"
-          }
-        ]
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "egress"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 729,
-            "start": 615
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 774,
-            "start": 748
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 817,
-            "start": 804
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "networkPolicy.extraEgress"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.extraIngress",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 828,
-            "start": 550
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        }
-      ],
-      "resource": null,
-      "source_expr": "networkPolicy.extraIngress"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.extraIngress",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "ingress"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 729,
-            "start": 615
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 774,
-            "start": 748
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 817,
-            "start": 804
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "networkPolicy.extraIngress"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.ingressNSMatchLabels",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.allowExternal",
-            "type": "not"
-          }
-        ],
-        [
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.allowExternal",
-            "type": "not"
-          },
-          {
-            "paths": [
-              "networkPolicy.ingressNSMatchLabels",
-              "networkPolicy.ingressNSPodMatchLabels"
-            ],
-            "type": "or"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "networkPolicy.ingressNSMatchLabels"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.ingressNSMatchLabels",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.allowExternal",
-            "type": "not"
-          },
-          {
-            "path": "networkPolicy.ingressNSMatchLabels",
-            "type": "range"
-          }
-        ]
-      ],
-      "kind": "Fragment",
-      "path": [
-        "spec",
-        "ingress[*]",
-        "from[*]",
-        "namespaceSelector",
-        "matchLabels"
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "networkPolicy.ingressNSMatchLabels"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.ingressNSMatchLabels",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.allowExternal",
-            "type": "not"
-          },
-          {
-            "path": "networkPolicy.ingressNSMatchLabels",
-            "type": "range"
-          }
-        ]
-      ],
-      "kind": "Serialized",
-      "nil_omitting": true,
-      "path": [
-        "spec",
-        "ingress[*]",
-        "from[*]",
-        "namespaceSelector",
-        "matchLabels",
-        "{*}"
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "networkPolicy.ingressNSMatchLabels.*"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.ingressNSPodMatchLabels",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.allowExternal",
-            "type": "not"
-          }
-        ],
-        [
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.allowExternal",
-            "type": "not"
-          },
-          {
-            "paths": [
-              "networkPolicy.ingressNSMatchLabels",
-              "networkPolicy.ingressNSPodMatchLabels"
-            ],
-            "type": "or"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "networkPolicy.ingressNSPodMatchLabels"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.ingressNSPodMatchLabels",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.allowExternal",
-            "type": "not"
-          },
-          {
-            "path": "networkPolicy.ingressNSPodMatchLabels",
-            "type": "range"
-          }
-        ]
-      ],
-      "kind": "Fragment",
-      "path": [
-        "spec",
-        "ingress[*]",
-        "from[*]",
-        "podSelector",
-        "matchLabels"
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "networkPolicy.ingressNSPodMatchLabels"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.ingressNSPodMatchLabels",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.allowExternal",
-            "type": "not"
-          },
-          {
-            "path": "networkPolicy.ingressNSPodMatchLabels",
-            "type": "range"
-          }
-        ]
-      ],
-      "kind": "Serialized",
-      "nil_omitting": true,
-      "path": [
-        "spec",
-        "ingress[*]",
-        "from[*]",
-        "podSelector",
-        "matchLabels",
-        "{*}"
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "networkPolicy.ingressNSPodMatchLabels.*"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "metrics.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.metrics.allowExternal",
-            "type": "not"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "networkPolicy.metrics.allowExternal"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "metrics.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.metrics.ingressNSMatchLabels",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.metrics.allowExternal",
-            "type": "not"
-          }
-        ],
-        [
-          {
-            "path": "metrics.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.metrics.allowExternal",
-            "type": "not"
-          },
-          {
-            "paths": [
-              "networkPolicy.metrics.ingressNSMatchLabels",
-              "networkPolicy.metrics.ingressNSPodMatchLabels"
-            ],
-            "type": "or"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "networkPolicy.metrics.ingressNSMatchLabels"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "metrics.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.metrics.ingressNSMatchLabels",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.metrics.allowExternal",
-            "type": "not"
-          },
-          {
-            "path": "networkPolicy.metrics.ingressNSMatchLabels",
-            "type": "range"
-          }
-        ]
-      ],
-      "kind": "Fragment",
-      "path": [
-        "spec",
-        "ingress[*]",
-        "from[*]",
-        "namespaceSelector",
-        "matchLabels"
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "networkPolicy.metrics.ingressNSMatchLabels"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "metrics.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.metrics.ingressNSMatchLabels",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.metrics.allowExternal",
-            "type": "not"
-          },
-          {
-            "path": "networkPolicy.metrics.ingressNSMatchLabels",
-            "type": "range"
-          }
-        ]
-      ],
-      "kind": "Serialized",
-      "nil_omitting": true,
-      "path": [
-        "spec",
-        "ingress[*]",
-        "from[*]",
-        "namespaceSelector",
-        "matchLabels",
-        "{*}"
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "networkPolicy.metrics.ingressNSMatchLabels.*"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "metrics.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.metrics.ingressNSPodMatchLabels",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.metrics.allowExternal",
-            "type": "not"
-          }
-        ],
-        [
-          {
-            "path": "metrics.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.metrics.allowExternal",
-            "type": "not"
-          },
-          {
-            "paths": [
-              "networkPolicy.metrics.ingressNSMatchLabels",
-              "networkPolicy.metrics.ingressNSPodMatchLabels"
-            ],
-            "type": "or"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "networkPolicy.metrics.ingressNSPodMatchLabels"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "metrics.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.metrics.ingressNSPodMatchLabels",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.metrics.allowExternal",
-            "type": "not"
-          },
-          {
-            "path": "networkPolicy.metrics.ingressNSPodMatchLabels",
-            "type": "range"
-          }
-        ]
-      ],
-      "kind": "Fragment",
-      "path": [
-        "spec",
-        "ingress[*]",
-        "from[*]",
-        "podSelector",
-        "matchLabels"
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "networkPolicy.metrics.ingressNSPodMatchLabels"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "metrics.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.metrics.ingressNSPodMatchLabels",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.metrics.allowExternal",
-            "type": "not"
-          },
-          {
-            "path": "networkPolicy.metrics.ingressNSPodMatchLabels",
-            "type": "range"
-          }
-        ]
-      ],
-      "kind": "Serialized",
-      "nil_omitting": true,
-      "path": [
-        "spec",
-        "ingress[*]",
-        "from[*]",
-        "podSelector",
-        "matchLabels",
-        "{*}"
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "networkPolicy.metrics.ingressNSPodMatchLabels.*"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "sentinel.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.allowExternalEgress",
-            "type": "not"
-          },
-          {
-            "path": "architecture",
-            "type": "eq",
-            "value": "replication"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "egress[*]",
-        "ports[*]",
-        "port"
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "sentinel.containerPorts.sentinel"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "sentinel.enabled",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "ingress[*]",
-        "ports[*]",
-        "port"
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "sentinel.containerPorts.sentinel"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "sentinel.enabled",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "sentinel.enabled"
     }
   ],
   "version": 3

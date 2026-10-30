@@ -8,204 +8,6 @@
         }
       }
     },
-    "constrains/configMap.name": {
-      "additionalProperties": {},
-      "properties": {
-        "configMap": {
-          "additionalProperties": {},
-          "properties": {
-            "name": {
-              "$ref": "#/$defs/constrains~1configMap.name~1anyOf~1null;name-of-the-referent+object+string+string;name-of-the-referent+3more"
-            }
-          }
-        }
-      }
-    },
-    "constrains/configMap.name/anyOf/null;name-of-the-referent+object+string+string;name-of-the-referent+3more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1configMap.name~1string@2"
-        },
-        {
-          "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-          "type": "null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-a-za-z0-9-t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1configMap.name~1object"
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@9"
-            },
-            {
-              "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@3"
-            },
-            {
-              "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@8"
-            },
-            {
-              "not": {
-                "pattern": "[ \\t]#"
-              }
-            },
-            {
-              "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@4"
-            },
-            {
-              "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@6"
-            },
-            {
-              "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@7"
-            },
-            {
-              "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern"
-            },
-            {
-              "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@2"
-            },
-            {
-              "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@5"
-            }
-          ],
-          "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-          "type": "string"
-        },
-        {
-          "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-null-null-null"
-        }
-      ]
-    },
-    "constrains/configMap.name/not/keywords/pattern": {
-      "not": {
-        "pattern": ":[ \\t]|:$"
-      }
-    },
-    "constrains/configMap.name/not/keywords/pattern@2": {
-      "not": {
-        "pattern": "[\\r\\n]"
-      }
-    },
-    "constrains/configMap.name/not/keywords/pattern@3": {
-      "not": {
-        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-      }
-    },
-    "constrains/configMap.name/not/keywords/pattern@4": {
-      "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-      }
-    },
-    "constrains/configMap.name/not/keywords/pattern@5": {
-      "not": {
-        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-      }
-    },
-    "constrains/configMap.name/not/keywords/pattern@6": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
-    },
-    "constrains/configMap.name/not/keywords/pattern@7": {
-      "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
-    },
-    "constrains/configMap.name/not/keywords/pattern@8": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
-    },
-    "constrains/configMap.name/not/keywords/pattern@9": {
-      "not": {
-        "pattern": "^[-?:]([ \\t]|$)"
-      }
-    },
-    "constrains/configMap.name/object": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "maxItems": 0,
-            "type": "array"
-          },
-          {
-            "type": "integer"
-          },
-          {
-            "$ref": "#/$defs/constrains~1configMap.name~1string"
-          },
-          {
-            "type": "number"
-          },
-          {
-            "type": "null"
-          },
-          {
-            "type": "boolean"
-          },
-          {
-            "maxProperties": 0,
-            "type": "object"
-          }
-        ]
-      },
-      "propertyNames": {
-        "$ref": "#/$defs/constrains~1configMap.name~1string"
-      },
-      "type": "object"
-    },
-    "constrains/configMap.name/string": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern"
-        },
-        {
-          "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@2"
-        }
-      ],
-      "type": "string"
-    },
-    "constrains/configMap.name/string;pattern-a-za-z0-9-t": {
-      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "constrains/configMap.name/string;pattern-null-null-null": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
-    },
-    "constrains/configMap.name/string;pattern-t": {
-      "pattern": "^[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "constrains/configMap.name/string@2": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^(null|Null|NULL)[ \\t]+#"
-          }
-        },
-        {
-          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-          }
-        }
-      ],
-      "type": "string"
-    },
     "constrains/configMap=null": {
       "properties": {
         "configMap": {
@@ -229,33 +31,47 @@
       "type": "object"
     },
     "constrains/nats+nats=null": {
-      "not": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "nats": {}
-              },
-              "required": [
-                "nats"
-              ],
-              "type": "object"
-            }
-          },
-          {
+      "$ref": "#/$defs/constrains~1nats+nats=null@3"
+    },
+    "constrains/nats+nats=null@2": {
+      "$ref": "#/$defs/constrains~1nats+nats=null@3"
+    },
+    "constrains/nats+nats=null@3": {
+      "anyOf": [
+        {
+          "not": {
             "properties": {
-              "nats": {
-                "enum": [
-                  null
-                ]
-              }
+              "nats": {}
             },
             "required": [
               "nats"
             ],
             "type": "object"
           }
-        ]
+        },
+        {
+          "properties": {
+            "nats": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "nats"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/nats+nats=null@4": {
+      "not": {
+        "$ref": "#/$defs/constrains~1nats+nats=null"
+      }
+    },
+    "constrains/nats+nats=null@5": {
+      "not": {
+        "$ref": "#/$defs/constrains~1nats+nats=null@2"
       }
     },
     "constrains/nats:t": {
@@ -269,111 +85,155 @@
       ],
       "type": "object"
     },
-    "constrains/operator+operator.operatorjwt+operator.operatorjwt:t+operator.operatorjwt=null+2more": {
+    "constrains/operator+operator.operatorjwt+operator.operatorjwt:t+operator.operatorjwt=null+5more": {
       "anyOf": [
         {
-          "allOf": [
-            {
-              "$ref": "#/$defs/constrains~1operator+operator=null"
-            },
-            {
-              "$ref": "#/$defs/constrains~1operator:t"
-            }
-          ]
+          "$ref": "#/$defs/constrains~1operator.operatorjwt+operator.operatorjwt:t+operator.operatorjwt=null+operator:t+3more"
         },
         {
-          "allOf": [
-            {
-              "properties": {
-                "operator": {
-                  "$ref": "#/$defs/constrains~1operatorjwt:t"
-                }
-              },
-              "required": [
-                "operator"
-              ],
-              "type": "object"
-            },
-            {
-              "not": {
-                "$ref": "#/$defs/constrains~1operator.operatorjwt+operator.operatorjwt=null"
-              }
-            },
-            {
-              "$ref": "#/$defs/constrains~1operator:t"
-            }
-          ]
+          "$ref": "#/$defs/constrains~1operator+operator:t+operator=null+store+store.type+store.type=null"
         }
       ]
     },
-    "constrains/operator+operator.systemaccountjwt+operator.systemaccountjwt:t+3more": {
+    "constrains/operator+operator.operatorjwt+operator.operatorjwt:t+operator.operatorjwt=null+5more@2": {
       "anyOf": [
         {
-          "allOf": [
-            {
-              "$ref": "#/$defs/constrains~1operator+operator=null"
-            },
-            {
-              "$ref": "#/$defs/constrains~1operator:t"
-            }
-          ]
+          "$ref": "#/$defs/constrains~1operator+operator:t+operator=null+store+store.type+store.type=null@2"
         },
         {
-          "allOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/constrains~1operator.systemaccountjwt+operator.systemaccountjwt=null"
-              }
-            },
-            {
-              "properties": {
-                "operator": {
-                  "$ref": "#/$defs/constrains~1systemaccountjwt:t"
-                }
-              },
-              "required": [
-                "operator"
-              ],
-              "type": "object"
-            },
-            {
-              "$ref": "#/$defs/constrains~1operator:t"
-            }
-          ]
+          "$ref": "#/$defs/constrains~1operator.operatorjwt+operator.operatorjwt:t+operator.operatorjwt=null+operator:t+3more@2"
+        }
+      ]
+    },
+    "constrains/operator+operator.systemaccountjwt+operator.systemaccountjwt:t+6more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1operator.systemaccountjwt+operator.systemaccountjwt:t+5more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator+operator:t+operator=null+store+store.type+store.type=null@2"
+        }
+      ]
+    },
+    "constrains/operator+operator.systemaccountjwt+operator.systemaccountjwt:t+6more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1operator.systemaccountjwt+operator.systemaccountjwt:t+5more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator+operator:t+operator=null+store+store.type+store.type=null"
+        }
+      ]
+    },
+    "constrains/operator+operator:t+operator=null+store+store.type+store.type=null": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1store+store.type+store.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator+operator=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator:t"
+        }
+      ]
+    },
+    "constrains/operator+operator:t+operator=null+store+store.type+store.type=null@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1store+store.type+store.type=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator+operator=null@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator:t"
         }
       ]
     },
     "constrains/operator+operator=null": {
-      "not": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "operator": {}
-              },
-              "required": [
-                "operator"
-              ],
-              "type": "object"
-            }
-          },
-          {
+      "$ref": "#/$defs/constrains~1operator+operator=null@3"
+    },
+    "constrains/operator+operator=null@2": {
+      "$ref": "#/$defs/constrains~1operator+operator=null@3"
+    },
+    "constrains/operator+operator=null@3": {
+      "anyOf": [
+        {
+          "not": {
             "properties": {
-              "operator": {
-                "enum": [
-                  null
-                ]
-              }
+              "operator": {}
             },
             "required": [
               "operator"
             ],
             "type": "object"
           }
-        ]
+        },
+        {
+          "properties": {
+            "operator": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "operator"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/operator+operator=null@4": {
+      "not": {
+        "$ref": "#/$defs/constrains~1operator+operator=null"
       }
     },
+    "constrains/operator+operator=null@5": {
+      "not": {
+        "$ref": "#/$defs/constrains~1operator+operator=null@2"
+      }
+    },
+    "constrains/operator.operatorjwt+operator.operatorjwt:t+operator.operatorjwt=null+operator:t+3more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1operator.operatorjwt+operator.operatorjwt=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1store+store.type+store.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.operatorjwt:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator:t"
+        }
+      ]
+    },
+    "constrains/operator.operatorjwt+operator.operatorjwt:t+operator.operatorjwt=null+operator:t+3more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1operator.operatorjwt:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1store+store.type+store.type=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.operatorjwt+operator.operatorjwt=null@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator:t"
+        }
+      ]
+    },
     "constrains/operator.operatorjwt+operator.operatorjwt=null": {
+      "$ref": "#/$defs/constrains~1operator.operatorjwt+operator.operatorjwt=null@3"
+    },
+    "constrains/operator.operatorjwt+operator.operatorjwt=null@2": {
+      "$ref": "#/$defs/constrains~1operator.operatorjwt+operator.operatorjwt=null@3"
+    },
+    "constrains/operator.operatorjwt+operator.operatorjwt=null@3": {
       "anyOf": [
         {
           "not": {
@@ -417,7 +277,74 @@
         }
       ]
     },
+    "constrains/operator.operatorjwt+operator.operatorjwt=null@4": {
+      "not": {
+        "$ref": "#/$defs/constrains~1operator.operatorjwt+operator.operatorjwt=null"
+      }
+    },
+    "constrains/operator.operatorjwt+operator.operatorjwt=null@5": {
+      "not": {
+        "$ref": "#/$defs/constrains~1operator.operatorjwt+operator.operatorjwt=null@2"
+      }
+    },
+    "constrains/operator.operatorjwt:t": {
+      "properties": {
+        "operator": {
+          "properties": {
+            "operatorjwt": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "operatorjwt"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "operator"
+      ],
+      "type": "object"
+    },
+    "constrains/operator.systemaccountjwt+operator.systemaccountjwt:t+5more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1operator.systemaccountjwt+operator.systemaccountjwt=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.systemaccountjwt:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1store+store.type+store.type=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator:t"
+        }
+      ]
+    },
+    "constrains/operator.systemaccountjwt+operator.systemaccountjwt:t+5more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1operator.systemaccountjwt+operator.systemaccountjwt=null@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1store+store.type+store.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.systemaccountjwt:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator:t"
+        }
+      ]
+    },
     "constrains/operator.systemaccountjwt+operator.systemaccountjwt=null": {
+      "$ref": "#/$defs/constrains~1operator.systemaccountjwt+operator.systemaccountjwt=null@3"
+    },
+    "constrains/operator.systemaccountjwt+operator.systemaccountjwt=null@2": {
+      "$ref": "#/$defs/constrains~1operator.systemaccountjwt+operator.systemaccountjwt=null@3"
+    },
+    "constrains/operator.systemaccountjwt+operator.systemaccountjwt=null@3": {
       "anyOf": [
         {
           "not": {
@@ -461,6 +388,35 @@
         }
       ]
     },
+    "constrains/operator.systemaccountjwt+operator.systemaccountjwt=null@4": {
+      "not": {
+        "$ref": "#/$defs/constrains~1operator.systemaccountjwt+operator.systemaccountjwt=null"
+      }
+    },
+    "constrains/operator.systemaccountjwt+operator.systemaccountjwt=null@5": {
+      "not": {
+        "$ref": "#/$defs/constrains~1operator.systemaccountjwt+operator.systemaccountjwt=null@2"
+      }
+    },
+    "constrains/operator.systemaccountjwt:t": {
+      "properties": {
+        "operator": {
+          "properties": {
+            "systemaccountjwt": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "systemaccountjwt"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "operator"
+      ],
+      "type": "object"
+    },
     "constrains/operator:t": {
       "properties": {
         "operator": {
@@ -472,33 +428,124 @@
       ],
       "type": "object"
     },
-    "constrains/operatorjwt:t": {
+    "constrains/store+store.type+store.type=null": {
+      "$ref": "#/$defs/constrains~1store+store.type+store.type=null@3"
+    },
+    "constrains/store+store.type+store.type=null@2": {
+      "$ref": "#/$defs/constrains~1store+store.type+store.type=null@4"
+    },
+    "constrains/store+store.type+store.type=null@3": {
+      "$ref": "#/$defs/constrains~1store+store.type+store.type=null@5"
+    },
+    "constrains/store+store.type+store.type=null@4": {
+      "$ref": "#/$defs/constrains~1store+store.type+store.type=null@5"
+    },
+    "constrains/store+store.type+store.type=null@5": {
+      "anyOf": [
+        {
+          "properties": {
+            "store": {
+              "$ref": "#/$defs/constrains~1type=null"
+            }
+          },
+          "required": [
+            "store"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "store": {
+              "$ref": "#/$defs/constrains~1type"
+            }
+          },
+          "required": [
+            "store"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "store": {
+                "properties": {
+                  "type": {}
+                },
+                "required": [
+                  "type"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "store"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "constrains/type": {
       "properties": {
-        "operatorjwt": {
-          "$ref": "#/$defs/t"
+        "type": {
+          "type": "string"
         }
       },
       "required": [
-        "operatorjwt"
+        "type"
       ],
       "type": "object"
     },
-    "constrains/systemaccountjwt:t": {
-      "properties": {
-        "systemaccountjwt": {
-          "$ref": "#/$defs/t"
+    "constrains/type+type=null": {
+      "$ref": "#/$defs/constrains~1type+type=null@3"
+    },
+    "constrains/type+type=null@2": {
+      "$ref": "#/$defs/constrains~1type+type=null@3"
+    },
+    "constrains/type+type=null@3": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "type": {}
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "$ref": "#/$defs/constrains~1type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1type"
         }
-      },
-      "required": [
-        "systemaccountjwt"
-      ],
-      "type": "object"
+      ]
+    },
+    "constrains/type+type=null@4": {
+      "not": {
+        "$ref": "#/$defs/constrains~1type+type=null@2"
+      }
     },
     "constrains/type=file": {
       "properties": {
         "type": {
           "enum": [
             "file"
+          ]
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "constrains/type=null": {
+      "properties": {
+        "type": {
+          "enum": [
+            null
           ]
         }
       },
@@ -532,22 +579,6 @@
         }
       ]
     },
-    "values/accountserver.resources.limits@additionalProperties": {
-      "oneOf": [
-        {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        {
-          "type": [
-            "number",
-            "null"
-          ]
-        }
-      ]
-    },
     "values/operator.operatorjwt": {
       "additionalProperties": {},
       "properties": {
@@ -564,6 +595,120 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1operator+operator.systemaccountjwt+operator.systemaccountjwt:t+6more"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "operator": {
+                "additionalProperties": {},
+                "properties": {
+                  "systemaccountjwt": {
+                    "$ref": "#/$defs/constrains~1configMap"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "operator": {
+                "additionalProperties": {},
+                "properties": {
+                  "systemaccountjwt": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1store+store.type+store.type=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1operator+operator=null@4"
+          },
+          {
+            "$ref": "#/$defs/constrains~1operator.operatorjwt+operator.operatorjwt=null@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1operator:t"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1nats:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1nats+nats=null@5"
+          },
+          {
+            "$ref": "#/$defs/constrains~1store+store.type+store.type=null"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "nats": {
+                    "properties": {
+                      "credentials": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "credentials"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "nats"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "nats": {
+                      "properties": {
+                        "credentials": {}
+                      },
+                      "required": [
+                        "credentials"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "nats"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
     {
       "if": {
         "allOf": [
@@ -631,7 +776,10 @@
             "$ref": "#/$defs/constrains~1nats:t"
           },
           {
-            "$ref": "#/$defs/constrains~1nats+nats=null"
+            "$ref": "#/$defs/constrains~1nats+nats=null@5"
+          },
+          {
+            "$ref": "#/$defs/constrains~1store+store.type+store.type=null"
           }
         ]
       },
@@ -639,20 +787,40 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1operator:t"
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1store+store.type+store.type=null@2"
+          },
+          {
+            "properties": {
+              "store": {
+                "$ref": "#/$defs/constrains~1type=file"
+              }
+            },
+            "required": [
+              "store"
+            ],
+            "type": "object"
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "operator": {
-            "type": "object"
+          "store": {
+            "additionalProperties": {},
+            "properties": {
+              "file": {
+                "type": "object"
+              }
+            }
           }
         }
       }
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1operator+operator.operatorjwt+operator.operatorjwt:t+operator.operatorjwt=null+2more"
+        "$ref": "#/$defs/constrains~1operator+operator.operatorjwt+operator.operatorjwt:t+operator.operatorjwt=null+5more@2"
       },
       "then": {
         "allOf": [
@@ -677,6 +845,149 @@
                 "properties": {
                   "operatorjwt": {
                     "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1operator+operator.operatorjwt+operator.operatorjwt:t+operator.operatorjwt=null+5more"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "operator": {
+                    "properties": {
+                      "operatorjwt": {
+                        "$ref": "#/$defs/constrains~1configMap=null"
+                      }
+                    },
+                    "required": [
+                      "operatorjwt"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "operator"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "operator": {
+                      "properties": {
+                        "operatorjwt": {
+                          "$ref": "#/$defs/constrains~1configMap@2"
+                        }
+                      },
+                      "required": [
+                        "operatorjwt"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "operator"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "store": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "store"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "store": {}
+              },
+              "required": [
+                "store"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1nats:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1store+store.type+store.type=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1nats+nats=null@4"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "nats": {
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "nats": {
+                "additionalProperties": {},
+                "properties": {
+                  "credentials": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "nats": {
+                "additionalProperties": {},
+                "properties": {
+                  "credentials": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "secret": {
+                        "type": "object"
+                      }
+                    }
                   }
                 }
               }
@@ -733,7 +1044,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/constrains~1operator+operator.systemaccountjwt+operator.systemaccountjwt:t+3more"
+            "$ref": "#/$defs/constrains~1operator+operator.systemaccountjwt+operator.systemaccountjwt:t+6more@2"
           }
         ]
       },
@@ -741,210 +1052,20 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1operator+operator.systemaccountjwt+operator.systemaccountjwt:t+3more"
-      },
-      "then": {
         "allOf": [
           {
-            "additionalProperties": {},
-            "properties": {
-              "operator": {
-                "additionalProperties": {},
-                "properties": {
-                  "systemaccountjwt": {
-                    "$ref": "#/$defs/constrains~1configMap"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "operator": {
-                "additionalProperties": {},
-                "properties": {
-                  "systemaccountjwt": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1nats:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nats+nats=null"
-          }
-        ]
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "nats": {
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "nats": {
-                "additionalProperties": {},
-                "properties": {
-                  "credentials": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "nats": {
-                "additionalProperties": {},
-                "properties": {
-                  "credentials": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "secret": {
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1operator+operator=null"
+            "$ref": "#/$defs/constrains~1store+store.type+store.type=null@2"
           },
           {
             "$ref": "#/$defs/constrains~1operator:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1operator.systemaccountjwt+operator.systemaccountjwt=null"
           }
         ]
       },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "store": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "store"
-            ],
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "operator": {
             "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "store": {}
-              },
-              "required": [
-                "store"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1nats:t"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "nats": {
-                    "properties": {
-                      "credentials": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "credentials"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "nats"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "nats": {
-                      "properties": {
-                        "credentials": {}
-                      },
-                      "required": [
-                        "credentials"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "nats"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1nats+nats=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "store": {
-          "additionalProperties": {},
-          "properties": {
-            "type": {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
           }
         }
       }
@@ -953,62 +1074,30 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1operator+operator=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1operator.operatorjwt+operator.operatorjwt=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1operator:t"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1operator+operator.operatorjwt+operator.operatorjwt:t+operator.operatorjwt=null+2more"
+            "$ref": "#/$defs/constrains~1store+store.type+store.type=null"
           },
           {
             "anyOf": [
               {
                 "properties": {
-                  "operator": {
-                    "properties": {
-                      "operatorjwt": {
-                        "$ref": "#/$defs/constrains~1configMap=null"
-                      }
-                    },
-                    "required": [
-                      "operatorjwt"
-                    ],
-                    "type": "object"
+                  "accountserver": {
+                    "enum": [
+                      null
+                    ]
                   }
                 },
                 "required": [
-                  "operator"
+                  "accountserver"
                 ],
                 "type": "object"
               },
               {
                 "not": {
                   "properties": {
-                    "operator": {
-                      "properties": {
-                        "operatorjwt": {
-                          "$ref": "#/$defs/constrains~1configMap@2"
-                        }
-                      },
-                      "required": [
-                        "operatorjwt"
-                      ],
-                      "type": "object"
-                    }
+                    "accountserver": {}
                   },
                   "required": [
-                    "operator"
+                    "accountserver"
                   ],
                   "type": "object"
                 }
@@ -1021,30 +1110,18 @@
     },
     {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "properties": {
-              "accountserver": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "accountserver"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/constrains~1store+store.type+store.type=null"
           },
           {
-            "not": {
-              "properties": {
-                "accountserver": {}
-              },
-              "required": [
-                "accountserver"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/constrains~1operator+operator=null@4"
+          },
+          {
+            "$ref": "#/$defs/constrains~1operator:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1operator.systemaccountjwt+operator.systemaccountjwt=null@3"
           }
         ]
       },
@@ -1052,68 +1129,16 @@
     },
     {
       "if": {
-        "properties": {
-          "store": {
-            "$ref": "#/$defs/constrains~1type=file"
-          }
-        },
-        "required": [
-          "store"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/constrains~1store+store.type+store.type=null@2"
       },
       "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "store": {
-                "additionalProperties": {},
-                "properties": {
-                  "file": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "store": {
-                "additionalProperties": {},
-                "properties": {
-                  "file": {
-                    "required": [
-                      "storageSize"
-                    ],
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "store": {
-                "additionalProperties": {},
-                "properties": {
-                  "file": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "storageSize": {
-                        "not": {
-                          "type": "null"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
+        "additionalProperties": {},
+        "properties": {
+          "accountserver": {
+            "description": "Copyright 2020 The NATS Authors\nLicensed under the Apache License, Version 2.0 (the \"License\");\nyou may not use this file except in compliance with the License.\nYou may obtain a copy of the License at\nhttp://www.apache.org/licenses/LICENSE-2.0\nUnless required by applicable law or agreed to in writing, software\ndistributed under the License is distributed on an \"AS IS\" BASIS,\nWITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\nSee the License for the specific language governing permissions and\nlimitations under the License.",
+            "type": "object"
           }
-        ]
+        }
       }
     }
   ],
@@ -1122,275 +1147,14 @@
       "additionalProperties": {},
       "description": "Copyright 2020 The NATS Authors\nLicensed under the Apache License, Version 2.0 (the \"License\");\nyou may not use this file except in compliance with the License.\nYou may obtain a copy of the License at\nhttp://www.apache.org/licenses/LICENSE-2.0\nUnless required by applicable law or agreed to in writing, software\ndistributed under the License is distributed on an \"AS IS\" BASIS,\nWITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\nSee the License for the specific language governing permissions and\nlimitations under the License.",
       "properties": {
-        "image": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/constrains~1configMap.name~1string@2"
-            },
-            {
-              "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
-              "type": "null"
-            },
-            {
-              "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-a-za-z0-9-t"
-            },
-            {
-              "$ref": "#/$defs/constrains~1configMap.name~1object"
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@9"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@3"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@8"
-                },
-                {
-                  "not": {
-                    "pattern": "[ \\t]#"
-                  }
-                },
-                {
-                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@4"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@6"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@7"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@2"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@5"
-                }
-              ],
-              "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
-              "type": "string"
-            },
-            {
-              "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-t"
-            },
-            {
-              "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-null-null-null"
-            }
-          ]
-        },
-        "pullPolicy": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/constrains~1configMap.name~1string@2"
-            },
-            {
-              "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
-              "type": "null"
-            },
-            {
-              "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-a-za-z0-9-t"
-            },
-            {
-              "$ref": "#/$defs/constrains~1configMap.name~1object"
-            },
-            {
-              "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-t"
-            },
-            {
-              "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-null-null-null"
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@9"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@3"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@8"
-                },
-                {
-                  "not": {
-                    "pattern": "[ \\t]#"
-                  }
-                },
-                {
-                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@4"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@6"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@7"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@2"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@5"
-                }
-              ],
-              "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
-              "type": "string"
-            }
-          ]
-        },
-        "resources": {
-          "additionalProperties": false,
-          "description": "ResourceRequirements describes the compute resource requirements.",
-          "properties": {
-            "claims": {
-              "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
-              "items": {
-                "additionalProperties": false,
-                "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-                "properties": {
-                  "name": {
-                    "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "name"
-                ],
-                "type": [
-                  "object",
-                  "null"
-                ]
-              },
-              "type": [
-                "array",
-                "null"
-              ],
-              "x-kubernetes-list-map-keys": [
-                "name"
-              ],
-              "x-kubernetes-list-type": "map"
-            },
-            "limits": {
-              "additionalProperties": {
-                "$ref": "#/$defs/values~1accountserver.resources.limits@additionalProperties"
-              },
-              "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
-              "type": [
-                "object",
-                "null"
-              ]
-            },
-            "requests": {
-              "additionalProperties": {
-                "$ref": "#/$defs/values~1accountserver.resources.limits@additionalProperties"
-              },
-              "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
-              "type": [
-                "object",
-                "null"
-              ]
-            }
-          },
-          "type": [
-            "object",
-            "null"
-          ]
-        }
-      },
-      "type": "object"
+        "image": {},
+        "pullPolicy": {},
+        "resources": {}
+      }
     },
     "global": {},
     "nats": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "$ref": "#/$defs/t"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "credentials": {
-                "additionalProperties": {},
-                "properties": {
-                  "secret": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "name": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/constrains~1configMap.name~1string@2"
-                          },
-                          {
-                            "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
-                            "type": "null"
-                          },
-                          {
-                            "allOf": [
-                              {
-                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@9"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@3"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@8"
-                              },
-                              {
-                                "not": {
-                                  "pattern": "[ \\t]#"
-                                }
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@4"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@6"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@7"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@2"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@5"
-                              }
-                            ],
-                            "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
-                            "type": "string"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-a-za-z0-9-t"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1configMap.name~1object"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-t"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-null-null-null"
-                          }
-                        ]
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      ],
       "properties": {
         "credentials": {
           "additionalProperties": {},
@@ -1409,48 +1173,6 @@
     },
     "operator": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1systemaccountjwt:t"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "systemaccountjwt": {
-                "$ref": "#/$defs/constrains~1configMap.name"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1operatorjwt:t"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "operatorjwt": {
-                "$ref": "#/$defs/constrains~1configMap.name"
-              }
-            }
-          }
-        }
-      ],
       "properties": {
         "operatorjwt": {
           "$ref": "#/$defs/values~1operator.operatorjwt"
@@ -1466,6 +1188,9 @@
         {
           "if": {
             "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1type+type=null"
+              },
               {
                 "anyOf": [
                   {
@@ -1503,104 +1228,9 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/constrains~1type=file"
+            "$ref": "#/$defs/constrains~1type+type=null@4"
           },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "file": {
-                "additionalProperties": {},
-                "properties": {
-                  "storageSize": {
-                    "oneOf": [
-                      {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/constrains~1configMap.name~1string@2"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-a-za-z0-9-t"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1configMap.name~1object"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-t"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-null-null-null"
-                          },
-                          {
-                            "type": "null"
-                          },
-                          {
-                            "allOf": [
-                              {
-                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@9"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@3"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@8"
-                              },
-                              {
-                                "not": {
-                                  "pattern": "[ \\t]#"
-                                }
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@4"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@6"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@7"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@2"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@5"
-                              }
-                            ],
-                            "type": "string"
-                          }
-                        ]
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-a-za-z0-9-t"
-                          },
-                          {
-                            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$",
-                            "type": "string"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-t"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-null-null-null"
-                          },
-                          {
-                            "type": "number"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          }
+          "then": false
         }
       ],
       "properties": {

@@ -112,6 +112,24 @@ fn unknown_range_keeps_zero_exit_and_terminal_body_flow() {
     );
     sim_assert_eq!(have: exits.iter().filter(|exit| matches!(exit.flow, Flow::Normal(_))).count(), want: 1);
     sim_assert_eq!(have: exits.iter().filter(|exit| matches!(exit.flow, Flow::Abort(AbortReason::Fail))).count(), want: 1);
+
+    // Fresh local allocation does not write caller state; both zero and normal
+    // exits still restore the outer scope.
+    let exits = Executor { db: &db }.body(
+        indoc! {r#"
+            {{ $outer := "kept" }}
+            {{ range . }}{{ $local := dict }}{{ else }}zero{{ end }}
+            {{ if ne $outer "kept" }}{{ fail "outer scope changed" }}{{ end }}
+        "#},
+        None,
+        State::new(Value::unknown()),
+    );
+    assert!(
+        exits
+            .iter()
+            .any(|exit| matches!(exit.flow, Flow::Normal(_)))
+    );
+    sim_assert_eq!(have: exits.iter().filter(|exit| matches!(exit.flow, Flow::Abort(AbortReason::Fail))).count(), want: 0);
 }
 
 #[test]

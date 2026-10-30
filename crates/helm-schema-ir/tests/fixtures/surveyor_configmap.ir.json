@@ -8,12 +8,232 @@
             "type": "truthy"
           },
           {
-            "path": "config.jetstream.accounts",
-            "type": "range"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ],
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "alternatives": [
+                    [
+                      {
+                        "path": "nameOverride",
+                        "type": "truthy"
+                      },
+                      {
+                        "path": "config.jetstream.enabled",
+                        "type": "not"
+                      }
+                    ],
+                    [
+                      {
+                        "path": "nameOverride",
+                        "type": "not"
+                      },
+                      {
+                        "alternatives": [
+                          [
+                            {
+                              "path": "config.jetstream.enabled",
+                              "type": "not"
+                            }
+                          ],
+                          [
+                            {
+                              "path": "fullnameOverride",
+                              "type": "not"
+                            }
+                          ],
+                          [
+                            {
+                              "path": "fullnameOverride",
+                              "schema_type": "string",
+                              "type": "type_is"
+                            }
+                          ]
+                        ],
+                        "type": "any_of"
+                      }
+                    ]
+                  ],
+                  "type": "any_of"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "not_type_is"
+                }
+              ],
+              [
+                {
+                  "alternatives": [
+                    [
+                      {
+                        "path": "config.jetstream.enabled",
+                        "type": "not"
+                      }
+                    ],
+                    [
+                      {
+                        "path": "fullnameOverride",
+                        "type": "not"
+                      }
+                    ],
+                    [
+                      {
+                        "path": "fullnameOverride",
+                        "schema_type": "string",
+                        "type": "type_is"
+                      }
+                    ]
+                  ],
+                  "type": "any_of"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
+      "source_expr": ""
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "config.jetstream.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "Serialized",
       "path": [],
       "resource": null,
       "source_expr": "config.jetstream.accounts"
@@ -26,228 +246,241 @@
             "type": "truthy"
           },
           {
-            "path": "config.jetstream.accounts",
-            "type": "range"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Serialized",
-      "merge_operand": true,
-      "omitted_members": {
-        "tls": []
-      },
-      "path": [],
-      "resource": {
-        "api_version": "v1",
-        "kind": "ConfigMap"
-      },
-      "source_expr": "config.jetstream.accounts.*"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "config.jetstream.accounts.*.tls",
-            "type": "truthy"
-          },
-          {
-            "path": "config.jetstream.accounts.*.tls.ca",
-            "type": "truthy"
-          },
-          {
-            "path": "config.jetstream.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "config.jetstream.accounts",
-            "type": "range"
-          }
-        ],
-        [
-          {
-            "path": "config.jetstream.accounts.*.tls",
-            "type": "truthy"
-          },
-          {
-            "path": "config.jetstream.accounts.*.tls.cert",
-            "type": "truthy"
-          },
-          {
-            "path": "config.jetstream.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "config.jetstream.accounts",
-            "type": "range"
-          }
-        ],
-        [
-          {
-            "path": "config.jetstream.accounts.*.tls",
-            "type": "truthy"
-          },
-          {
-            "path": "config.jetstream.accounts.*.tls.key",
-            "type": "truthy"
-          },
-          {
-            "path": "config.jetstream.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "config.jetstream.accounts",
-            "type": "range"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "v1",
-        "kind": "ConfigMap"
-      },
-      "source_expr": "config.jetstream.accounts.*.name"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "config.jetstream.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "config.jetstream.accounts",
-            "type": "range"
-          }
-        ]
-      ],
-      "kind": "PartialScalar",
-      "path": [],
-      "resource": {
-        "api_version": "v1",
-        "kind": "ConfigMap"
-      },
-      "source_expr": "config.jetstream.accounts.*.name"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "config.jetstream.accounts.*.tls",
-            "type": "truthy"
-          },
-          {
-            "path": "config.jetstream.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "config.jetstream.accounts",
-            "type": "range"
-          }
-        ]
-      ],
-      "kind": "Scalar",
+      "kind": "WidenedDependency",
       "path": [],
       "resource": null,
-      "source_expr": "config.jetstream.accounts.*.tls"
+      "source_expr": "config.jetstream.accounts"
     },
     {
       "condition": [
         [
           {
-            "path": "config.jetstream.accounts.*.tls",
-            "type": "truthy"
-          },
-          {
-            "path": "config.jetstream.accounts.*.tls.ca",
-            "type": "truthy"
-          },
-          {
             "path": "config.jetstream.enabled",
             "type": "truthy"
           },
           {
-            "path": "config.jetstream.accounts",
-            "type": "range"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ],
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "alternatives": [
+                    [
+                      {
+                        "path": "nameOverride",
+                        "type": "truthy"
+                      },
+                      {
+                        "path": "config.jetstream.enabled",
+                        "type": "not"
+                      }
+                    ],
+                    [
+                      {
+                        "path": "nameOverride",
+                        "type": "not"
+                      },
+                      {
+                        "alternatives": [
+                          [
+                            {
+                              "path": "config.jetstream.enabled",
+                              "type": "not"
+                            }
+                          ],
+                          [
+                            {
+                              "path": "fullnameOverride",
+                              "type": "not"
+                            }
+                          ],
+                          [
+                            {
+                              "path": "fullnameOverride",
+                              "schema_type": "string",
+                              "type": "type_is"
+                            }
+                          ]
+                        ],
+                        "type": "any_of"
+                      }
+                    ]
+                  ],
+                  "type": "any_of"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "not_type_is"
+                }
+              ],
+              [
+                {
+                  "alternatives": [
+                    [
+                      {
+                        "path": "config.jetstream.enabled",
+                        "type": "not"
+                      }
+                    ],
+                    [
+                      {
+                        "path": "fullnameOverride",
+                        "type": "not"
+                      }
+                    ],
+                    [
+                      {
+                        "path": "fullnameOverride",
+                        "schema_type": "string",
+                        "type": "type_is"
+                      }
+                    ]
+                  ],
+                  "type": "any_of"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "WidenedRegion",
       "path": [],
-      "resource": {
-        "api_version": "v1",
-        "kind": "ConfigMap"
-      },
-      "source_expr": "config.jetstream.accounts.*.tls.ca"
+      "resource": null,
+      "source_expr": "config.jetstream.accounts"
     },
     {
       "condition": [
-        [
-          {
-            "path": "config.jetstream.accounts.*.tls",
-            "type": "truthy"
-          },
-          {
-            "path": "config.jetstream.accounts.*.tls.cert",
-            "type": "truthy"
-          },
-          {
-            "path": "config.jetstream.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "config.jetstream.accounts",
-            "type": "range"
-          }
-        ]
+        []
       ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "v1",
-        "kind": "ConfigMap"
-      },
-      "source_expr": "config.jetstream.accounts.*.tls.cert"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "config.jetstream.accounts.*.tls",
-            "type": "truthy"
-          },
-          {
-            "path": "config.jetstream.accounts.*.tls.key",
-            "type": "truthy"
-          },
-          {
-            "path": "config.jetstream.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "config.jetstream.accounts",
-            "type": "range"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "v1",
-        "kind": "ConfigMap"
-      },
-      "source_expr": "config.jetstream.accounts.*.tls.key"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "config.jetstream.enabled",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
+      "kind": "WidenedDependency",
       "path": [],
       "resource": null,
       "source_expr": "config.jetstream.enabled"
@@ -260,25 +493,65 @@
             "type": "truthy"
           },
           {
-            "path": "fullnameOverride",
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "Serialized",
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "config.jetstream.enabled",
             "type": "truthy"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "WidenedDependency",
       "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "surveyor.fullname"
-          ],
-          "span": {
-            "end": 776,
-            "start": 421
-          },
-          "template_path": "charts/surveyor/templates/_helpers.tpl"
-        }
-      ],
       "resource": null,
       "source_expr": "fullnameOverride"
     },
@@ -295,29 +568,10 @@
           }
         ]
       ],
-      "kind": "PartialScalar",
-      "path": [
-        "metadata",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "surveyor.fullname"
-          ],
-          "span": {
-            "end": 515,
-            "start": 456
-          },
-          "template_path": "charts/surveyor/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "v1",
-        "kind": "ConfigMap"
-      },
-      "source_expr": "fullnameOverride",
-      "stringified": true
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
     },
     {
       "condition": [
@@ -327,25 +581,166 @@
             "type": "truthy"
           },
           {
-            "path": "global.labels",
+            "path": "fullnameOverride",
             "type": "truthy"
+          },
+          {
+            "path": "fullnameOverride",
+            "schema_type": "string",
+            "type": "type_is"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "WidenedDependency",
       "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "surveyor.labels"
-          ],
-          "span": {
-            "end": 1357,
-            "start": 1294
+      "resource": null,
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "config.jetstream.enabled",
+            "type": "truthy"
           },
-          "template_path": "charts/surveyor/templates/_helpers.tpl"
-        }
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "global"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "config.jetstream.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "Serialized",
+      "path": [],
       "resource": null,
       "source_expr": "global.labels"
     },
@@ -359,38 +754,235 @@
           {
             "path": "global.labels",
             "type": "truthy"
+          },
+          {
+            "path": "global",
+            "type": "not_eq",
+            "value": null
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "YamlSerialized",
-      "path": [
-        "metadata",
-        "labels"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "surveyor.labels"
-          ],
-          "span": {
-            "end": 1346,
-            "start": 1332
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "global.labels"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "config.jetstream.enabled",
+            "type": "truthy"
           },
-          "template_path": "charts/surveyor/templates/_helpers.tpl"
-        }
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
-      "resource": {
-        "api_version": "v1",
-        "kind": "ConfigMap"
-      },
-      "source_expr": "global.labels",
-      "template_supplied_member_keys": [
-        "app.kubernetes.io/instance",
-        "app.kubernetes.io/managed-by",
-        "app.kubernetes.io/name",
-        "app.kubernetes.io/version",
-        "helm.sh/chart"
-      ]
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "global.labels"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "config.jetstream.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "global.labels",
+            "type": "truthy"
+          },
+          {
+            "path": "global",
+            "type": "not_eq",
+            "value": null
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
+      "source_expr": "global.labels"
     },
     {
       "condition": [
@@ -402,23 +994,123 @@
           {
             "path": "fullnameOverride",
             "type": "not"
+          },
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ],
+        [
+          {
+            "path": "config.jetstream.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "path": "nameOverride",
+            "type": "default"
           }
         ]
       ],
       "kind": "Scalar",
       "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "surveyor.fullname"
-          ],
-          "span": {
-            "end": 765,
-            "start": 585
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "config.jetstream.enabled",
+            "type": "truthy"
           },
-          "template_path": "charts/surveyor/templates/_helpers.tpl"
-        }
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
+      "kind": "Serialized",
+      "path": [],
       "resource": null,
       "source_expr": "nameOverride"
     },
@@ -434,55 +1126,259 @@
             "type": "truthy"
           },
           {
-            "path": "nameOverride",
-            "type": "default"
+            "path": "fullnameOverride",
+            "type": "not"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
-      "path": [
-        "metadata",
-        "labels",
-        "app.kubernetes.io/name"
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "config.jetstream.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "nameOverride",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "surveyor.name"
-          ],
-          "span": {
-            "end": 146,
-            "start": 71
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "config.jetstream.enabled",
+            "type": "truthy"
           },
-          "template_path": "charts/surveyor/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "surveyor.labels"
-          ],
-          "span": {
-            "end": 1142,
-            "start": 1101
-          },
-          "template_path": "charts/surveyor/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "surveyor.selectorLabels"
-          ],
-          "span": {
-            "end": 1492,
-            "start": 1461
-          },
-          "template_path": "charts/surveyor/templates/_helpers.tpl"
-        }
+          {
+            "path": "fullnameOverride",
+            "type": "not"
+          }
+        ]
       ],
-      "resource": {
-        "api_version": "v1",
-        "kind": "ConfigMap"
-      },
-      "source_expr": "nameOverride",
-      "stringified": true
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "config.jetstream.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "config.jetstream.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
     },
     {
       "condition": [
@@ -500,34 +1396,29 @@
             "type": "not"
           },
           {
-            "path": "nameOverride",
-            "type": "default"
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Serialized",
-      "path": [
-        "metadata",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "surveyor.fullname"
-          ],
-          "span": {
-            "end": 754,
-            "start": 685
-          },
-          "template_path": "charts/surveyor/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "v1",
-        "kind": "ConfigMap"
-      },
-      "source_expr": "nameOverride",
-      "stringified": true
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
     }
   ],
   "version": 3

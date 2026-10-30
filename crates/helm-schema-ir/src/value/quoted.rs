@@ -9,7 +9,7 @@ use helm_schema_core::{
     ValuesPath,
 };
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub(super) enum LexicalState {
     PlainStart,
     Plain,

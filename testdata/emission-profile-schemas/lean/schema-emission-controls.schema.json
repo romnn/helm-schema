@@ -1,5 +1,140 @@
 {
   "$defs": {
+    "constrains/enabled+enabled=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "enabled": {}
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "enabled": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/enabled:t": {
+      "properties": {
+        "enabled": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/replicas": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1replicas@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1replicas@7"
+        }
+      ]
+    },
+    "constrains/replicas@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1replicas"
+        },
+        {
+          "$ref": "#/$defs/constrains~1replicas@7"
+        }
+      ]
+    },
+    "constrains/replicas@3": {
+      "anyOf": [
+        {
+          "properties": {
+            "replicas": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "replicas"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "replicas": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "replicas"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1replicas@2"
+        }
+      ]
+    },
+    "constrains/replicas@4": {
+      "not": {
+        "properties": {
+          "replicas": {
+            "pattern": "<$|<n$|<no $|<no v$|<no va$|<no val$|<no valu$|<no value$|<no value>|<no$|^ $|^ v$|^ va$|^ val$|^ valu$|^ value$|^ value>|^ value>$|^$|^<$|^<n$|^<no $|^<no v$|^<no va$|^<no val$|^<no valu$|^<no value$|^<no value>$|^<no$|^>|^>$|^a$|^al$|^alu$|^alue$|^alue>|^alue>$|^e$|^e>|^e>$|^l$|^lu$|^lue$|^lue>|^lue>$|^n$|^no $|^no v$|^no va$|^no val$|^no valu$|^no value$|^no value>|^no value>$|^no$|^o $|^o v$|^o va$|^o val$|^o valu$|^o value$|^o value>|^o value>$|^o$|^u$|^ue$|^ue>|^ue>$|^v$|^va$|^val$|^valu$|^value$|^value>|^value>$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "replicas"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/replicas@5": {
+      "properties": {
+        "replicas": {
+          "type": "array"
+        }
+      },
+      "required": [
+        "replicas"
+      ],
+      "type": "object"
+    },
+    "constrains/replicas@6": {
+      "properties": {
+        "replicas": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "replicas"
+      ],
+      "type": "object"
+    },
+    "constrains/replicas@7": {
+      "properties": {
+        "replicas": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "replicas"
+      ],
+      "type": "object"
+    },
     "t": {
       "anyOf": [
         {
@@ -25,65 +160,59 @@
         }
       ]
     },
-    "values/replicas": {
+    "values/worker/anyOf/array+null,boolean,number+object+string": {
       "anyOf": [
         {
-          "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
-          "format": "int32",
-          "type": "integer"
+          "additionalProperties": {
+            "$ref": "#/$defs/values~1worker~1anyOf~1null,boolean,number+string"
+          },
+          "propertyNames": {
+            "$ref": "#/$defs/values~1worker~1string"
+          },
+          "type": "object"
         },
         {
-          "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
-          "format": "int32",
-          "type": "null"
+          "type": [
+            "null",
+            "boolean",
+            "number"
+          ]
         },
         {
-          "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-          "type": "string"
+          "items": {
+            "$ref": "#/$defs/values~1worker~1anyOf~1null,boolean,number+string"
+          },
+          "type": "array"
         },
         {
-          "pattern": "^[ \\t]*(#.*)?$",
-          "type": "string"
-        },
-        {
-          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
-          "type": "string"
-        },
-        {
-          "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-          "type": "string"
+          "$ref": "#/$defs/values~1worker~1string"
         }
       ]
+    },
+    "values/worker/anyOf/null,boolean,number+string": {
+      "anyOf": [
+        {
+          "type": [
+            "null",
+            "boolean",
+            "number"
+          ]
+        },
+        {
+          "$ref": "#/$defs/values~1worker~1string"
+        }
+      ]
+    },
+    "values/worker/string": {
+      "not": {
+        "pattern": "[^A-Za-z0-9_./+-]"
+      },
+      "type": "string"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
-    {
-      "additionalProperties": {},
-      "properties": {
-        "local": {
-          "additionalProperties": {},
-          "properties": {
-            "kind": {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "version": {
-          "pattern": "^v[0-9]+\\.[0-9]+$",
-          "type": "string"
-        }
-      }
-    },
     {
       "additionalProperties": {},
       "properties": {
@@ -100,9 +229,7 @@
     "dynamic": {
       "additionalProperties": {},
       "properties": {
-        "kind": {
-          "type": "string"
-        }
+        "kind": {}
       },
       "type": "object"
     },
@@ -122,9 +249,11 @@
           "additionalProperties": {},
           "properties": {
             "value": {}
-          }
+          },
+          "type": "object"
         }
-      }
+      },
+      "type": "object"
     },
     "local": {
       "additionalProperties": {},
@@ -153,13 +282,9 @@
       },
       "type": "object"
     },
-    "replicas": {
-      "$ref": "#/$defs/values~1replicas"
-    },
+    "replicas": {},
     "requiredText": {},
-    "version": {
-      "type": "string"
-    },
+    "version": {},
     "worker": {
       "additionalProperties": {},
       "allOf": [
@@ -169,48 +294,25 @@
               {
                 "allOf": [
                   {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "enabled": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    ]
+                    "$ref": "#/$defs/constrains~1enabled+enabled=null"
                   },
                   {
                     "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1replicas@3"
                   }
                 ]
               },
               {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/t"
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1enabled:t"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1replicas@3"
                   }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
+                ]
               }
             ]
           },
@@ -218,16 +320,160 @@
             "additionalProperties": {},
             "properties": {
               "replicas": {
-                "$ref": "#/$defs/values~1replicas"
+                "anyOf": [
+                  {
+                    "not": {
+                      "pattern": "^[A-Za-z]+\\n[A-Za-z]+$"
+                    },
+                    "pattern": "[\\r\\n]",
+                    "type": "string"
+                  },
+                  {
+                    "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
+                    "format": "int32",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
+                    "format": "int32",
+                    "type": "null"
+                  },
+                  {
+                    "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "pattern": "^[ \\t]*(#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
+                    "type": "string"
+                  },
+                  {
+                    "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1replicas@5"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1enabled:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1replicas@5"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1enabled+enabled=null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "replicas": {
+                "not": {
+                  "items": {
+                    "$ref": "#/$defs/values~1worker~1anyOf~1array+null,boolean,number+object+string"
+                  },
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1replicas@6"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1enabled+enabled=null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1replicas@6"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1enabled:t"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "replicas": {
+                "allOf": [
+                  {
+                    "not": {
+                      "additionalProperties": {
+                        "$ref": "#/$defs/values~1worker~1anyOf~1array+null,boolean,number+object+string"
+                      },
+                      "propertyNames": {
+                        "$ref": "#/$defs/values~1worker~1string"
+                      },
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "not": {
+                      "additionalProperties": {
+                        "not": {
+                          "pattern": "[^A-Za-z0-9_.$/+: \t-]"
+                        },
+                        "pattern": "^[A-Za-z0-9_.$/+-]+:[ \t]+[A-Za-z0-9_.$/+-]+$",
+                        "type": "string"
+                      },
+                      "maxProperties": 1,
+                      "minProperties": 1,
+                      "propertyNames": {
+                        "minLength": 1,
+                        "not": {
+                          "pattern": "[^A-Za-z0-9_.$/+-]"
+                        },
+                        "type": "string"
+                      },
+                      "type": "object"
+                    }
+                  }
+                ]
               }
             }
           }
         }
       ],
       "properties": {
-        "enabled": {
-          "type": "boolean"
-        },
+        "enabled": {},
         "global": {},
         "replicas": {}
       }

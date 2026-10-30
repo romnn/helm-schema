@@ -64,6 +64,13 @@ impl Arena {
 }
 
 impl Namespace {
+    pub(super) fn program_source(&self, name: &str) -> Option<&str> {
+        (!self.unknown_sources)
+            .then(|| self.definitions.get(name))
+            .flatten()
+            .map(|program| program.source())
+    }
+
     pub(super) fn id(&self) -> NamespaceId {
         self.id
     }

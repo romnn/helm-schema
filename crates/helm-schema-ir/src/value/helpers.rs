@@ -197,7 +197,20 @@ impl Executor<'_> {
             HelperTarget::Program(_) | HelperTarget::Unknown => {
                 let influences = super::operations::inputs(arguments, &state);
                 state.mark_invocation_incomplete();
-                super::operations::invalidate(&mut state);
+                let read_only_inputs = match &target {
+                    HelperTarget::Program(program) => program.syntax().is_some_and(|syntax| {
+                        super::write_footprint::local_targets(
+                            program.source(),
+                            syntax,
+                            &state.namespace,
+                        )
+                        .is_some()
+                    }),
+                    HelperTarget::Abort(_) | HelperTarget::Unknown => false,
+                };
+                if !read_only_inputs {
+                    super::operations::invalidate(&mut state);
+                }
                 let value = unknown_helper_text(influences);
                 state.output.emit(state.heap.freeze(&value));
                 wrappers.push(None);

@@ -73,7 +73,6 @@ impl SiteIndex {
                     source_path: _,
                     condition: _,
                     value: _,
-                    raw_format_inputs: _,
                     plain_scalar_placement: _,
                     rendered: _,
                 } = site;

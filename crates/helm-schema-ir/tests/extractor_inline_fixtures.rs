@@ -15,7 +15,7 @@
 //!     second selector segment, not the root.
 
 use helm_schema_ast::DefineIndex;
-use helm_schema_ir::{ContractUse, Guard, GuardValue, SymbolicIrContext};
+use helm_schema_ir::{ContractUse, Guard, GuardValue, SymbolicIrContext, ValueKind};
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
@@ -831,10 +831,22 @@ fn helper_context_chain_dot_context_values_path_surfaces_as_use() {
         .iter()
         .filter(|u| u.source_expr == helm_schema_core::ValuesPath::parse("deeplyNested.fieldName"))
         .collect();
+    // Read coverage and rendered scalar alternatives retain the same source.
+    let lanes: Vec<_> = target_uses
+        .iter()
+        .map(|use_| (use_.kind, use_.path.0.clone()))
+        .collect();
     sim_assert_eq!(
-        have: target_uses.len(),
-        want: 1,
-        "expected exactly one `deeplyNested.fieldName` use; got: {ir:#?}",
+        have: lanes,
+        want: vec![
+            (ValueKind::Serialized, Vec::<String>::new()),
+            (ValueKind::WidenedDependency, Vec::<String>::new()),
+            (ValueKind::WidenedRegion, Vec::<String>::new()),
+            (ValueKind::Scalar, vec!["data".to_string(), "field".to_string()]),
+            (ValueKind::GoFormattedMap, vec!["data".to_string(), "field".to_string()]),
+            (ValueKind::GoFormattedSequence, vec!["data".to_string(), "field".to_string()]),
+        ],
+        "helper-context source coverage and all rendered alternatives: {ir:#?}",
     );
 
     // The loose path search must NOT additionally surface phantom
@@ -1271,15 +1283,11 @@ fn helper_context_chain_in_condition_surfaces_referenced_value() {
         "expected exactly one `featureFlag` use from the helper-context \
          condition; got: {ir:#?}",
     );
-    // The condition's source use carries its own decoded condition, the
-    // same convention document-level condition reads always had (the
-    // summary lane used to flatten these to unconditional reads).
+    // Evaluating the condition reads its source before selecting a branch.
     sim_assert_eq!(
         have: flag_uses[0].single_guard_conjunction(),
-        want: vec![helm_schema_ir::Guard::Truthy {
-            path: helm_schema_core::ValuesPath::parse("featureFlag")
-        }],
-        "helper-context condition source use keeps its own condition",
+        want: Vec::<Guard>::new(),
+        "the helper-context condition source is read unconditionally",
     );
 
     // Same absence guarantee as the unconditional helper-context test:

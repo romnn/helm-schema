@@ -416,181 +416,559 @@ const MODE_TEMPLATE: &str = indoc! {r#"
       mode: {{ .Values.mode | quote }}
 "#};
 
-/// The root-anchored `mode` clause, conditioned on `kid.mode` being present.
-fn mode_root_clause() -> serde_json::Value {
+/// The complete dependency-mode schema, including its shared failure predicates.
+#[expect(
+    clippy::too_many_lines,
+    reason = "the complete reviewed schema and its shared failure predicates form one explicit equality fixture"
+)]
+fn expected_mode_schema() -> serde_json::Value {
     serde_json::json!({
-        "if": {
-            "allOf": [
-                {
+        "$defs": {
+            "helm-condition-0": {
+                "not": {
                     "anyOf": [
                         {
                             "not": {
                                 "properties": {
-                                    "kid": {
-                                        "properties": { "mode": {} },
-                                        "required": ["mode"],
-                                        "type": "object",
-                                    },
+                                    "mode": {}
                                 },
-                                "required": ["kid"],
-                                "type": "object",
-                            },
+                                "required": [
+                                    "mode"
+                                ],
+                                "type": "object"
+                            }
                         },
                         {
                             "properties": {
-                                "kid": {
-                                    "properties": { "mode": { "not": { "enum": ["all"] } } },
-                                    "required": ["mode"],
-                                    "type": "object",
-                                },
+                                "mode": {
+                                    "enum": [
+                                        null
+                                    ]
+                                }
                             },
-                            "required": ["kid"],
-                            "type": "object",
-                        },
-                    ],
-                },
-                {
-                    "anyOf": [
-                        {
-                            "not": {
-                                "properties": {
-                                    "kid": {
-                                        "properties": { "mode": {} },
-                                        "required": ["mode"],
-                                        "type": "object",
-                                    },
-                                },
-                                "required": ["kid"],
-                                "type": "object",
-                            },
-                        },
-                        {
-                            "properties": {
-                                "kid": {
-                                    "properties": { "mode": { "not": { "enum": ["auto"] } } },
-                                    "required": ["mode"],
-                                    "type": "object",
-                                },
-                            },
-                            "required": ["kid"],
-                            "type": "object",
-                        },
-                    ],
-                },
-                {
-                    "anyOf": [
-                        {
-                            "not": {
-                                "properties": { "kid": {} },
-                                "required": ["kid"],
-                                "type": "object",
-                            },
-                        },
-                        {
-                            "properties": { "kid": { "enum": [null] } },
-                            "required": ["kid"],
-                            "type": "object",
-                        },
-                    ],
-                },
-            ],
-        },
-        "then": {
-            "if": {
-                "properties": {
-                    "kid": {
-                        "properties": { "mode": { "not": { "enum": [null] } } },
-                        "required": ["mode"],
-                        "type": "object",
-                    },
-                },
-                "required": ["kid"],
-                "type": "object",
+                            "required": [
+                                "mode"
+                            ],
+                            "type": "object"
+                        }
+                    ]
+                }
             },
-            "then": false,
+            "helm-condition-1": {
+                "not": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        },
+                        {
+                            "anyOf": [
+                                {
+                                    "not": {
+                                        "properties": {
+                                            "mode": {}
+                                        },
+                                        "required": [
+                                            "mode"
+                                        ],
+                                        "type": "object"
+                                    }
+                                },
+                                {
+                                    "properties": {
+                                        "mode": {
+                                            "enum": [
+                                                null
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "mode"
+                                    ],
+                                    "type": "object"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            },
+            "helm-condition-10": {
+                "not": {
+                    "properties": {
+                        "kid": {
+                            "allOf": [
+                                {
+                                    "type": "object"
+                                },
+                                {
+                                    "anyOf": [
+                                        {
+                                            "not": {
+                                                "properties": {
+                                                    "mode": {}
+                                                },
+                                                "required": [
+                                                    "mode"
+                                                ],
+                                                "type": "object"
+                                            }
+                                        },
+                                        {
+                                            "properties": {
+                                                "mode": {
+                                                    "enum": [
+                                                        null
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "mode"
+                                            ],
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    "required": [
+                        "kid"
+                    ],
+                    "type": "object"
+                }
+            },
+            "helm-condition-11": {
+                "not": {
+                    "properties": {
+                        "kid": {
+                            "properties": {
+                                "mode": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "mode"
+                            ],
+                            "type": "object"
+                        }
+                    },
+                    "required": [
+                        "kid"
+                    ],
+                    "type": "object"
+                }
+            },
+            "helm-condition-12": {
+                "allOf": [
+                    {
+                        "properties": {
+                            "kid": {
+                                "properties": {
+                                    "mode": {
+                                        "enum": [
+                                            "all"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "mode"
+                                ],
+                                "type": "object"
+                            }
+                        },
+                        "required": [
+                            "kid"
+                        ],
+                        "type": "object"
+                    },
+                    {
+                        "$ref": "#/$defs/helm-condition-9"
+                    },
+                    {
+                        "$ref": "#/$defs/helm-condition-10"
+                    },
+                    {
+                        "$ref": "#/$defs/helm-condition-11"
+                    }
+                ]
+            },
+            "helm-condition-13": {
+                "not": {
+                    "properties": {
+                        "kid": {
+                            "properties": {
+                                "mode": {
+                                    "enum": [
+                                        "all"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "mode"
+                            ],
+                            "type": "object"
+                        }
+                    },
+                    "required": [
+                        "kid"
+                    ],
+                    "type": "object"
+                }
+            },
+            "helm-condition-14": {
+                "allOf": [
+                    {
+                        "properties": {
+                            "kid": {
+                                "properties": {
+                                    "mode": {
+                                        "enum": [
+                                            "auto"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "mode"
+                                ],
+                                "type": "object"
+                            }
+                        },
+                        "required": [
+                            "kid"
+                        ],
+                        "type": "object"
+                    },
+                    {
+                        "$ref": "#/$defs/helm-condition-13"
+                    },
+                    {
+                        "$ref": "#/$defs/helm-condition-9"
+                    },
+                    {
+                        "$ref": "#/$defs/helm-condition-10"
+                    },
+                    {
+                        "$ref": "#/$defs/helm-condition-11"
+                    }
+                ]
+            },
+            "helm-condition-15": {
+                "not": {
+                    "properties": {
+                        "kid": {
+                            "properties": {
+                                "mode": {
+                                    "enum": [
+                                        "auto"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "mode"
+                            ],
+                            "type": "object"
+                        }
+                    },
+                    "required": [
+                        "kid"
+                    ],
+                    "type": "object"
+                }
+            },
+            "helm-condition-16": {
+                "allOf": [
+                    {
+                        "$ref": "#/$defs/helm-condition-13"
+                    },
+                    {
+                        "$ref": "#/$defs/helm-condition-15"
+                    }
+                ]
+            },
+            "helm-condition-17": {
+                "anyOf": [
+                    {
+                        "$ref": "#/$defs/helm-condition-12"
+                    },
+                    {
+                        "$ref": "#/$defs/helm-condition-14"
+                    },
+                    {
+                        "$ref": "#/$defs/helm-condition-16"
+                    }
+                ]
+            },
+            "helm-condition-2": {
+                "not": {
+                    "properties": {
+                        "mode": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "mode"
+                    ],
+                    "type": "object"
+                }
+            },
+            "helm-condition-3": {
+                "allOf": [
+                    {
+                        "properties": {
+                            "mode": {
+                                "enum": [
+                                    "all"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "mode"
+                        ],
+                        "type": "object"
+                    },
+                    {
+                        "$ref": "#/$defs/helm-condition-0"
+                    },
+                    {
+                        "$ref": "#/$defs/helm-condition-1"
+                    },
+                    {
+                        "$ref": "#/$defs/helm-condition-2"
+                    }
+                ]
+            },
+            "helm-condition-4": {
+                "not": {
+                    "properties": {
+                        "mode": {
+                            "enum": [
+                                "all"
+                            ]
+                        }
+                    },
+                    "required": [
+                        "mode"
+                    ],
+                    "type": "object"
+                }
+            },
+            "helm-condition-5": {
+                "allOf": [
+                    {
+                        "properties": {
+                            "mode": {
+                                "enum": [
+                                    "auto"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "mode"
+                        ],
+                        "type": "object"
+                    },
+                    {
+                        "$ref": "#/$defs/helm-condition-4"
+                    },
+                    {
+                        "$ref": "#/$defs/helm-condition-0"
+                    },
+                    {
+                        "$ref": "#/$defs/helm-condition-1"
+                    },
+                    {
+                        "$ref": "#/$defs/helm-condition-2"
+                    }
+                ]
+            },
+            "helm-condition-6": {
+                "not": {
+                    "properties": {
+                        "mode": {
+                            "enum": [
+                                "auto"
+                            ]
+                        }
+                    },
+                    "required": [
+                        "mode"
+                    ],
+                    "type": "object"
+                }
+            },
+            "helm-condition-7": {
+                "allOf": [
+                    {
+                        "$ref": "#/$defs/helm-condition-4"
+                    },
+                    {
+                        "$ref": "#/$defs/helm-condition-6"
+                    }
+                ]
+            },
+            "helm-condition-8": {
+                "anyOf": [
+                    {
+                        "$ref": "#/$defs/helm-condition-3"
+                    },
+                    {
+                        "$ref": "#/$defs/helm-condition-5"
+                    },
+                    {
+                        "$ref": "#/$defs/helm-condition-7"
+                    }
+                ]
+            },
+            "helm-condition-9": {
+                "not": {
+                    "anyOf": [
+                        {
+                            "not": {
+                                "properties": {
+                                    "kid": {
+                                        "properties": {
+                                            "mode": {}
+                                        },
+                                        "required": [
+                                            "mode"
+                                        ],
+                                        "type": "object"
+                                    }
+                                },
+                                "required": [
+                                    "kid"
+                                ],
+                                "type": "object"
+                            }
+                        },
+                        {
+                            "properties": {
+                                "kid": {
+                                    "properties": {
+                                        "mode": {
+                                            "enum": [
+                                                null
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "mode"
+                                    ],
+                                    "type": "object"
+                                }
+                            },
+                            "required": [
+                                "kid"
+                            ],
+                            "type": "object"
+                        }
+                    ]
+                }
+            }
         },
-    })
-}
-
-/// The `kid` property of the `mode` chart, with its own conditioned clause.
-fn mode_kid_schema() -> serde_json::Value {
-    serde_json::json!({
-        "additionalProperties": {},
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
         "allOf": [
             {
                 "if": {
                     "allOf": [
                         {
-                            "anyOf": [
-                                {
-                                    "not": {
-                                        "properties": { "mode": {} },
-                                        "required": ["mode"],
-                                        "type": "object",
-                                    },
-                                },
-                                {
-                                    "properties": { "mode": { "not": { "enum": ["all"] } } },
-                                    "required": ["mode"],
-                                    "type": "object",
-                                },
-                            ],
+                            "$ref": "#/$defs/helm-condition-17"
                         },
                         {
                             "anyOf": [
                                 {
                                     "not": {
-                                        "properties": { "mode": {} },
-                                        "required": ["mode"],
-                                        "type": "object",
-                                    },
+                                        "properties": {
+                                            "kid": {}
+                                        },
+                                        "required": [
+                                            "kid"
+                                        ],
+                                        "type": "object"
+                                    }
                                 },
                                 {
-                                    "properties": { "mode": { "not": { "enum": ["auto"] } } },
-                                    "required": ["mode"],
-                                    "type": "object",
-                                },
-                            ],
-                        },
-                    ],
+                                    "properties": {
+                                        "kid": {
+                                            "enum": [
+                                                null
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "kid"
+                                    ],
+                                    "type": "object"
+                                }
+                            ]
+                        }
+                    ]
                 },
                 "then": {
                     "if": {
-                        "properties": { "mode": { "not": { "enum": [null] } } },
-                        "required": ["mode"],
-                        "type": "object",
+                        "properties": {
+                            "kid": {
+                                "properties": {
+                                    "mode": {
+                                        "not": {
+                                            "enum": [
+                                                null
+                                            ]
+                                        }
+                                    }
+                                },
+                                "required": [
+                                    "mode"
+                                ],
+                                "type": "object"
+                            }
+                        },
+                        "required": [
+                            "kid"
+                        ],
+                        "type": "object"
                     },
-                    "then": false,
-                },
-            },
-        ],
-        "properties": { "global": {}, "mode": {} },
-        "type": "object",
-    })
-}
-
-/// The schema of the `mode` chart.
-fn expected_mode_schema() -> serde_json::Value {
-    serde_json::json!({
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "additionalProperties": false,
-        "allOf": [
-            {
-                "additionalProperties": {},
-                "properties": {
-                    "kid": {
-                        "additionalProperties": {},
-                        "properties": { "mode": { "type": ["null", "string"] } },
-                    },
-                },
-            },
-            mode_root_clause(),
+                    "then": false
+                }
+            }
         ],
         "properties": {
             "global": {},
-            "kid": mode_kid_schema(),
+            "kid": {
+                "additionalProperties": {},
+                "allOf": [
+                    {
+                        "if": {
+                            "$ref": "#/$defs/helm-condition-8"
+                        },
+                        "then": {
+                            "if": {
+                                "properties": {
+                                    "mode": {
+                                        "not": {
+                                            "enum": [
+                                                null
+                                            ]
+                                        }
+                                    }
+                                },
+                                "required": [
+                                    "mode"
+                                ],
+                                "type": "object"
+                            },
+                            "then": false
+                        }
+                    }
+                ],
+                "properties": {
+                    "global": {},
+                    "mode": {}
+                },
+                "type": "object"
+            }
         },
-        "type": "object",
+        "type": "object"
     })
 }
 

@@ -3,7 +3,8 @@ use super::{Datum, Exit, Flow, FrozenValue, Leaf, ObjectData, Value, ValueNode};
 use super::{
     DocumentExecution, ExecutedSite, ExecutedText, ObservationId, OutputNode, TextBuffer, TextPart,
 };
-use helm_schema_core::{GuardValue, Predicate};
+use ahash::AHashMap;
+use helm_schema_core::{GuardValue, Predicate, PredicateMemo, ValuesPath};
 use std::collections::{BTreeMap, BTreeSet};
 
 impl TextBuffer {
@@ -185,7 +186,7 @@ impl TextBuffer {
 // Overflow makes the complementary output unreachable; release its snapshots before storing it.
 #[derive(Default)]
 struct TextRetention {
-    buffers: BTreeMap<(*const TextBuffer, u64), std::rc::Rc<TextBuffer>>,
+    buffers: AHashMap<(*const TextBuffer, u64), std::rc::Rc<TextBuffer>>,
 }
 
 impl TextRetention {
@@ -244,10 +245,10 @@ impl TextRetention {
 // Each query visits the shared output graph, rather than re-expanding its execution paths.
 #[derive(Default)]
 pub(super) struct TextQuery {
-    uncertainty: BTreeMap<*const TextBuffer, bool>,
-    widening_domains: BTreeMap<*const TextBuffer, Option<super::guard::RuntimeGuard>>,
-    widened: BTreeMap<(*const TextBuffer, u64), bool>,
-    text: BTreeMap<*const TextBuffer, Option<String>>,
+    uncertainty: AHashMap<*const TextBuffer, bool>,
+    widening_domains: AHashMap<*const TextBuffer, Option<super::guard::RuntimeGuard>>,
+    widened: AHashMap<(*const TextBuffer, u64), bool>,
+    text: AHashMap<*const TextBuffer, Option<String>>,
 }
 
 impl TextQuery {
@@ -459,7 +460,6 @@ impl ExecutedSite {
             source_path,
             condition,
             value,
-            raw_format_inputs,
             plain_scalar_placement,
             rendered,
         } = self;
@@ -472,7 +472,6 @@ impl ExecutedSite {
             source_path: other_source,
             condition: other_condition,
             value: other_value,
-            raw_format_inputs: other_raw_format_inputs,
             plain_scalar_placement: other_plain_scalar_placement,
             rendered: other_rendered,
         } = other;
@@ -481,7 +480,6 @@ impl ExecutedSite {
             && ordinal == other_ordinal
             && span == other_span
             && source_path == other_source
-            && raw_format_inputs == other_raw_format_inputs
             && plain_scalar_placement == other_plain_scalar_placement
             && same_frozen_value(value, other_value)
             && rendered == other_rendered
@@ -519,6 +517,7 @@ impl ExecutedSite {
             Predicate::True,
             &mut arms,
             &mut remaining,
+            &self.condition.arena.predicate_memo,
         );
         (!arms.is_empty()).then(|| super::ScalarValueDispatch::bind_content(arms, complete))
     }
@@ -535,8 +534,13 @@ impl ExecutedSite {
         for (condition, content) in projected.content()?.arms() {
             if let ScalarContent::Identity(path) = content {
                 arms.push((
-                    Predicate::all(vec![condition.clone(), marker_preserving_scalar(path)])
-                        .normalize_boolean(),
+                    self.condition
+                        .arena
+                        .predicate_memo
+                        .normalize(Predicate::all(vec![
+                            condition.clone(),
+                            marker_preserving_scalar(path, &self.condition.arena.predicate_memo),
+                        ])),
                     content.clone(),
                 ));
             }
@@ -549,20 +553,25 @@ impl ExecutedSite {
         if !self.rendered || !self.coverage_exact() {
             return uses;
         }
-        for super::RawFormatInput { condition, path } in &self.raw_format_inputs {
+        let inputs = self.condition.arena.input_objects.borrow();
+        let raw_inputs = PayloadQuery::new(&inputs).raw_format_inputs(&self.value);
+        for RawFormatInput { condition, path } in &raw_inputs {
             for (schema_type, kind) in [
                 ("object", crate::ValueKind::GoFormattedMap),
                 ("array", crate::ValueKind::GoFormattedSequence),
             ] {
                 uses.push(super::RenderedContainerUse {
-                    condition: Predicate::all(vec![
-                        condition.clone(),
-                        Predicate::from(helm_schema_core::Guard::TypeIs {
-                            path: path.clone(),
-                            schema_type: schema_type.to_owned(),
-                        }),
-                    ])
-                    .normalize_boolean(),
+                    condition: self
+                        .condition
+                        .arena
+                        .predicate_memo
+                        .normalize(Predicate::all(vec![
+                            condition.clone(),
+                            Predicate::from(helm_schema_core::Guard::TypeIs {
+                                path: path.clone(),
+                                schema_type: schema_type.to_owned(),
+                            }),
+                        ])),
                     path: path.clone(),
                     kind,
                 });
@@ -572,7 +581,10 @@ impl ExecutedSite {
     }
 }
 
-fn marker_preserving_scalar(path: &helm_schema_core::ValuesPath) -> Predicate {
+fn marker_preserving_scalar(
+    path: &helm_schema_core::ValuesPath,
+    memo: &PredicateMemo,
+) -> Predicate {
     use helm_schema_core::Guard;
     let type_is = |schema_type: &str| {
         Predicate::from(Guard::TypeIs {
@@ -580,7 +592,7 @@ fn marker_preserving_scalar(path: &helm_schema_core::ValuesPath) -> Predicate {
             schema_type: schema_type.to_owned(),
         })
     };
-    Predicate::Or(vec![
+    memo.normalize(Predicate::Or(vec![
         type_is("boolean"),
         type_is("number"),
         Predicate::all(vec![
@@ -590,8 +602,7 @@ fn marker_preserving_scalar(path: &helm_schema_core::ValuesPath) -> Predicate {
                 pattern: marker_overlap_pattern().to_owned(),
             }),
         ]),
-    ])
-    .normalize_boolean()
+    ]))
 }
 
 fn marker_overlap_pattern() -> &'static str {
@@ -624,6 +635,7 @@ fn collect_scalar_projection(
     condition: Predicate,
     arms: &mut Vec<(Predicate, ScalarContent)>,
     remaining: &mut usize,
+    memo: &PredicateMemo,
 ) -> bool {
     if condition == Predicate::False {
         return true;
@@ -638,16 +650,20 @@ fn collect_scalar_projection(
             }
             let yes_complete = collect_scalar_projection(
                 yes,
-                Predicate::all(vec![condition.clone(), decision.when_true.clone()])
-                    .normalize_boolean(),
+                memo.normalize(Predicate::all(vec![
+                    condition.clone(),
+                    decision.when_true.clone(),
+                ])),
                 arms,
                 remaining,
+                memo,
             );
             let no_complete = collect_scalar_projection(
                 no,
-                Predicate::all(vec![condition, decision.when_false.clone()]).normalize_boolean(),
+                memo.normalize(Predicate::all(vec![condition, decision.when_false.clone()])),
                 arms,
                 remaining,
+                memo,
             );
             yes_complete && no_complete
         }
@@ -763,7 +779,7 @@ impl CountExpression {
 }
 
 struct CountThreshold {
-    results: BTreeMap<(*const CountExpression, usize), super::guard::RuntimeGuard>,
+    results: AHashMap<(*const CountExpression, usize), super::guard::RuntimeGuard>,
     remaining: usize,
     guards: super::guard::GuardWorkBudget,
 }
@@ -777,7 +793,7 @@ impl Default for CountThreshold {
 impl CountThreshold {
     fn new(nodes: usize, guards: usize) -> Self {
         Self {
-            results: BTreeMap::new(),
+            results: AHashMap::new(),
             remaining: nodes,
             guards: super::guard::GuardWorkBudget::new(guards),
         }
@@ -1104,6 +1120,10 @@ impl PartialEq for RuntimeCondition {
 impl Eq for RuntimeCondition {}
 
 impl RuntimeCondition {
+    pub(super) fn shares_ambient(&self, active: &std::rc::Rc<Vec<super::DecisionEdge>>) -> bool {
+        std::rc::Rc::ptr_eq(&self.ambient, active)
+    }
+
     fn restricted_test(&self) -> Option<std::rc::Rc<super::FrozenTest>> {
         match &self.admission {
             Admission::All => None,
@@ -1122,12 +1142,7 @@ impl RuntimeCondition {
             return Predicate::False;
         }
         // Preserve each frozen test's partial-coverage envelope at the observation boundary.
-        let domain = Predicate::all(
-            self.ambient
-                .iter()
-                .map(|edge| edge.test.possible_predicate(edge.taken))
-                .collect(),
-        );
+        let domain = self.arena.exported_path_predicate(&self.ambient);
         match self.restricted_test() {
             None => domain,
             Some(admitted) => self.arena.predicate_memo.normalize(Predicate::all(vec![
@@ -1345,7 +1360,6 @@ impl super::State {
             self.record_container_read(value);
         }
         let value = self.heap.freeze(&self.consumed(value));
-        let raw_format_inputs = raw_format_inputs(&value.value, self);
         let slots = self.reserve_observation();
         if rendered {
             self.output.push(OutputNode {
@@ -1379,7 +1393,6 @@ impl super::State {
                 source_path: source_path.map(str::to_owned),
                 condition: slot.condition,
                 value: value.clone(),
-                raw_format_inputs: raw_format_inputs.clone(),
                 plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
                 rendered,
             });
@@ -1500,6 +1513,48 @@ fn capture_member_host(
     });
 }
 
+fn always_installed_root_fallbacks(exits: &[Exit]) -> BTreeSet<helm_schema_core::ValuesPath> {
+    let root_fallback_sources = exits
+        .iter()
+        .flat_map(|exit| exit.state.reads.iter())
+        .filter(|read| read.coverage == super::ReadCoverage::RootMergeFallback)
+        .map(|read| read.path.clone())
+        .collect::<BTreeSet<_>>();
+    root_fallback_sources
+        .into_iter()
+        .filter(|path| {
+            let mut saw_normal = false;
+            for exit in exits {
+                if !matches!(exit.flow, Flow::Normal(_)) {
+                    continue;
+                }
+                saw_normal = true;
+                let installed = Predicate::Or(
+                    exit.state
+                        .reads
+                        .iter()
+                        .filter(|read| {
+                            read.coverage == super::ReadCoverage::RootMergeFallback
+                                && &read.path == path
+                        })
+                        .map(|read| read.condition.clone())
+                        .collect(),
+                );
+                if !exit
+                    .state
+                    .heap
+                    .arena
+                    .predicate_memo
+                    .exactly_implies(&exit.state.path_predicate(), &installed)
+                {
+                    return false;
+                }
+            }
+            saw_normal
+        })
+        .collect()
+}
+
 impl DocumentExecution {
     pub(super) fn new(mut exits: Vec<Exit>, output: super::FileOutput) -> Self {
         let site_index = super::site_index::SiteIndex::new(&exits);
@@ -1514,41 +1569,7 @@ impl DocumentExecution {
             observed_facts: crate::observed_facts::ObservedFacts::default(),
             placement,
         };
-        let mut observed_type_failures = Vec::new();
-        let mut map_arguments: BTreeMap<_, Vec<_>> = BTreeMap::new();
-        for read in execution
-            .exits
-            .iter()
-            .flat_map(|exit| exit.state.reads.iter())
-        {
-            let allows_nil = match read.coverage {
-                super::ReadCoverage::MemberHost { allows_nil } => allows_nil,
-                super::ReadCoverage::MapArgument { allows_nil } => {
-                    map_arguments
-                        .entry((read.path.clone(), allows_nil))
-                        .or_default()
-                        .push(read.condition.clone());
-                    continue;
-                }
-                super::ReadCoverage::ExactPath | super::ReadCoverage::UnknownRegion => continue,
-            };
-            capture_member_host(read, allows_nil, &mut execution.observed_facts);
-        }
-        for ((path, allows_nil), conditions) in map_arguments {
-            let read = super::RuntimeRead {
-                path,
-                condition: Predicate::Or(conditions).normalize_boolean(),
-                coverage: super::ReadCoverage::MapArgument { allows_nil },
-            };
-            if !capture_map_argument(
-                &read,
-                allows_nil,
-                &mut execution.observed_facts,
-                &mut observed_type_failures,
-            ) {
-                capture_member_host(&read, allows_nil, &mut execution.observed_facts);
-            }
-        }
+        let observed_type_failures = execution.capture_read_facts();
         let aborted = execution.abort_predicate();
         let aborted = execution.exits.first().map_or(aborted.clone(), |exit| {
             exit.state
@@ -1572,6 +1593,77 @@ impl DocumentExecution {
         }
         execution
     }
+    fn capture_read_facts(&mut self) -> Vec<Predicate> {
+        let mut observed_type_failures = Vec::new();
+        let mut map_arguments: BTreeMap<_, Vec<_>> = BTreeMap::new();
+        let always_installed_sources = always_installed_root_fallbacks(&self.exits);
+        for read in self.exits.iter().flat_map(|exit| exit.state.reads.iter()) {
+            if read.coverage == super::ReadCoverage::OpaqueValuesRoot {
+                self.observed_facts
+                    .opaque_values_root_paths
+                    .insert(read.path.clone());
+                continue;
+            }
+            if read.coverage == super::ReadCoverage::RootMergeFallback {
+                let source = crate::ValuesDefaultSource {
+                    target_path: helm_schema_core::ValuesPath::default(),
+                    source_path: read.path.clone(),
+                };
+                if always_installed_sources.contains(&read.path)
+                    || read.condition == Predicate::True
+                {
+                    self.observed_facts.values_default_sources.insert(source);
+                } else if !read.condition.contains_approximation() {
+                    for guards in
+                        helm_schema_core::GuardDnf::from_conjunction([read.condition.clone()])
+                            .guard_conjunctions()
+                    {
+                        self.observed_facts.activated_values_default_sources.insert(
+                            crate::observed_facts::ActivatedValuesDefaultSource {
+                                guards,
+                                source: source.clone(),
+                            },
+                        );
+                    }
+                }
+                continue;
+            }
+            let allows_nil = match read.coverage {
+                super::ReadCoverage::MemberHost { allows_nil } => allows_nil,
+                super::ReadCoverage::MapArgument { allows_nil } => {
+                    map_arguments
+                        .entry((read.path.clone(), allows_nil))
+                        .or_default()
+                        .push(read.condition.clone());
+                    continue;
+                }
+                super::ReadCoverage::ExactPath
+                | super::ReadCoverage::UnknownRegion
+                | super::ReadCoverage::DefaultFallback
+                | super::ReadCoverage::RootMergeFallback
+                | super::ReadCoverage::OpaqueValuesRoot
+                | super::ReadCoverage::SerializedInfluence => continue,
+            };
+            capture_member_host(read, allows_nil, &mut self.observed_facts);
+        }
+        for ((path, allows_nil), conditions) in map_arguments {
+            let read = super::RuntimeRead {
+                path,
+                condition: Predicate::Or(conditions).normalize_boolean(),
+                coverage: super::ReadCoverage::MapArgument { allows_nil },
+            };
+            if !capture_map_argument(
+                &read,
+                allows_nil,
+                &mut self.observed_facts,
+                &mut observed_type_failures,
+            ) {
+                capture_member_host(&read, allows_nil, &mut self.observed_facts);
+            }
+        }
+        observed_type_failures
+    }
+
     pub(crate) fn unknown_read_regions(
         &self,
     ) -> impl Iterator<Item = &helm_schema_core::ValuesPath> {
@@ -1589,15 +1681,27 @@ impl DocumentExecution {
                 let kind = match read.coverage {
                     super::ReadCoverage::ExactPath => crate::ValueKind::WidenedDependency,
                     super::ReadCoverage::UnknownRegion => crate::ValueKind::WidenedRegion,
+                    super::ReadCoverage::DefaultFallback => crate::ValueKind::Scalar,
+                    super::ReadCoverage::SerializedInfluence => crate::ValueKind::Serialized,
                     super::ReadCoverage::MemberHost { .. }
-                    | super::ReadCoverage::MapArgument { .. } => return None,
+                    | super::ReadCoverage::MapArgument { .. }
+                    | super::ReadCoverage::RootMergeFallback
+                    | super::ReadCoverage::OpaqueValuesRoot => {
+                        return None;
+                    }
                 };
                 Some(crate::fragment_eval::ValueRead {
                     values_path: read.path.clone(),
                     kind,
-                    condition: helm_schema_core::GuardDnf::from_conjunction([read
-                        .condition
-                        .clone()]),
+                    condition: helm_schema_core::GuardDnf::from_conjunction(
+                        std::iter::once(read.condition.clone()).chain(
+                            (read.coverage == super::ReadCoverage::DefaultFallback).then(|| {
+                                Predicate::from(helm_schema_core::Guard::Default {
+                                    path: read.path.clone(),
+                                })
+                            }),
+                        ),
+                    ),
                     resource: None,
                     provenance: Vec::new(),
                     dependency: true,
@@ -1983,187 +2087,6 @@ struct RawFormatArm<'value> {
     value: &'value Value,
 }
 
-fn raw_format_inputs(value: &Value, state: &super::State) -> Vec<super::RawFormatInput> {
-    let mut pending = vec![RawFormatArm {
-        condition: Predicate::True,
-        value,
-    }];
-    let mut inputs = Vec::new();
-    let mut proofs = BTreeMap::new();
-    let mut remaining = super::MAX_SCALAR_DISPATCH_STATES;
-    while let Some(RawFormatArm { condition, value }) = pending.pop() {
-        if condition == Predicate::False {
-            continue;
-        }
-        match value.node.as_ref() {
-            ValueNode::Select { decision, yes, no } => {
-                if decision.coverage != super::Coverage::Exact
-                    || decision.when_true.contains_approximation()
-                    || decision.when_false.contains_approximation()
-                {
-                    return Vec::new();
-                }
-                pending.push(RawFormatArm {
-                    condition: Predicate::all(vec![condition.clone(), decision.when_false.clone()])
-                        .normalize_boolean(),
-                    value: no,
-                });
-                pending.push(RawFormatArm {
-                    condition: Predicate::all(vec![condition, decision.when_true.clone()])
-                        .normalize_boolean(),
-                    value: yes,
-                });
-            }
-            ValueNode::Leaf(Leaf { datum, origin }) => {
-                if remaining == 0 {
-                    return Vec::new();
-                }
-                remaining -= 1;
-                let path = original_identity_path(datum, origin, state);
-                if let Some(path) = path {
-                    let unchanged = *proofs
-                        .entry(path.clone())
-                        .or_insert_with(|| original_input_is_unchanged(&path, state));
-                    if unchanged {
-                        inputs.push(super::RawFormatInput { condition, path });
-                    }
-                }
-            }
-        }
-    }
-    inputs
-}
-
-fn original_identity_path(
-    datum: &Datum,
-    origin: &super::Origin,
-    state: &super::State,
-) -> Option<helm_schema_core::ValuesPath> {
-    match datum {
-        Datum::Scalar {
-            go_type: _,
-            content: Some(ScalarContent::Identity(path)),
-        } => Some(path.clone()),
-        Datum::Map {
-            view: _,
-            target: Some(object),
-        } => state
-            .heap
-            .arena
-            .input_paths
-            .borrow()
-            .get(object)
-            .filter(|path| {
-                state
-                    .heap
-                    .arena
-                    .input_objects
-                    .borrow()
-                    .get(*path)
-                    .is_some_and(|backing| backing.object == *object)
-            })
-            .cloned(),
-        Datum::Scalar {
-            go_type: _,
-            content: None,
-        }
-        | Datum::Map {
-            view: _,
-            target: None,
-        }
-        | Datum::Unknown(super::UnknownValue {
-            types: _,
-            aliases: _,
-        }) => origin.identity.clone(),
-        Datum::Text(_)
-        | Datum::Scalar {
-            go_type: _,
-            content:
-                Some(
-                    ScalarContent::Literal(_)
-                    | ScalarContent::Rendered(_)
-                    | ScalarContent::PrintfStringIdentity(_)
-                    | ScalarContent::SplitLength {
-                        value: _,
-                        separator: _,
-                    }
-                    | ScalarContent::Length(_),
-                ),
-        }
-        | Datum::Sequence(_)
-        | Datum::Strings(_)
-        | Datum::Slot {
-            backing: _,
-            index: _,
-        } => None,
-    }
-}
-
-fn original_input_is_unchanged(path: &helm_schema_core::ValuesPath, state: &super::State) -> bool {
-    let inputs = state.heap.arena.input_objects.borrow();
-    let root = helm_schema_core::ValuesPath::default();
-    if inputs
-        .get(&root)
-        .and_then(|backing| state.heap.version.object(&backing.object))
-        .is_none()
-    {
-        return false;
-    }
-    let mut prefix = root;
-    for segment in path.segments() {
-        let helm_schema_core::Segment::Literal(key) = segment else {
-            return false;
-        };
-        if let Some(object) = inputs
-            .get(&prefix)
-            .and_then(|backing| state.heap.version.object(&backing.object))
-        {
-            let super::ObjectVersion {
-                revision: _,
-                multiplicity,
-                data,
-            } = object;
-            if *multiplicity != super::Multiplicity::Singleton {
-                return false;
-            }
-            match data {
-                ObjectData::Map {
-                    fields,
-                    remainder: super::Remainder::Input,
-                } if !fields.contains_key(key) => {}
-                ObjectData::Map {
-                    fields: _,
-                    remainder: _,
-                }
-                | ObjectData::Strings(_)
-                | ObjectData::Opaque { reachable: _ }
-                | ObjectData::Widened { inputs: _ } => return false,
-            }
-        }
-        prefix.push(key.clone());
-    }
-    if inputs
-        .get(path)
-        .and_then(|backing| state.heap.version.object(&backing.object))
-        .is_some_and(|object| !pristine_input_backing(object))
-    {
-        return false;
-    }
-    // ValuesPath orders encoded keys; starting below the first child skips interleaved siblings.
-    let mut first_child = path.clone();
-    first_child.push("\0");
-    inputs
-        .range(first_child..)
-        .take_while(|(candidate, _)| candidate.is_descendant_of(path))
-        .all(|(_, backing)| {
-            state
-                .heap
-                .version
-                .object(&backing.object)
-                .is_none_or(pristine_input_backing)
-        })
-}
-
 fn pristine_input_backing(object: &super::ObjectVersion) -> bool {
     matches!(object, super::ObjectVersion {
         revision: _, multiplicity: _,
@@ -2288,6 +2211,12 @@ pub(crate) enum PayloadShape {
     Sequence,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct RawFormatInput {
+    condition: Predicate,
+    path: ValuesPath,
+}
+
 pub(super) struct PayloadQuery<'a, 'inputs> {
     inputs: &'inputs BTreeMap<helm_schema_core::ValuesPath, super::InputBacking>,
     values: BTreeMap<(*const super::HeapVersion, *const ValueNode), PayloadView<'a>>,
@@ -2299,6 +2228,180 @@ pub(super) struct PayloadQuery<'a, 'inputs> {
 }
 
 impl<'a, 'inputs> PayloadQuery<'a, 'inputs> {
+    pub(super) fn raw_format_inputs(&self, frozen: &FrozenValue) -> Vec<RawFormatInput> {
+        let FrozenValue { value, heap } = frozen;
+        let mut pending = vec![RawFormatArm {
+            condition: Predicate::True,
+            value,
+        }];
+        let mut inputs = Vec::new();
+        let mut proofs = BTreeMap::new();
+        let mut remaining = super::MAX_SCALAR_DISPATCH_STATES;
+        while let Some(RawFormatArm { condition, value }) = pending.pop() {
+            if condition == Predicate::False {
+                continue;
+            }
+            match value.node.as_ref() {
+                ValueNode::Select { decision, yes, no } => {
+                    if decision.coverage != super::Coverage::Exact
+                        || decision.when_true.contains_approximation()
+                        || decision.when_false.contains_approximation()
+                    {
+                        return Vec::new();
+                    }
+                    pending.push(RawFormatArm {
+                        condition: self.predicates.normalize(Predicate::all(vec![
+                            condition.clone(),
+                            decision.when_false.clone(),
+                        ])),
+                        value: no,
+                    });
+                    pending.push(RawFormatArm {
+                        condition: self
+                            .predicates
+                            .normalize(Predicate::all(vec![condition, decision.when_true.clone()])),
+                        value: yes,
+                    });
+                }
+                ValueNode::Leaf(Leaf { datum, origin }) => {
+                    if remaining == 0 {
+                        return Vec::new();
+                    }
+                    remaining -= 1;
+                    let path = self.original_identity_path(datum, origin);
+                    if let Some(path) = path {
+                        let unchanged = *proofs
+                            .entry(path.clone())
+                            .or_insert_with(|| self.original_input_is_unchanged(&path, heap));
+                        if unchanged {
+                            inputs.push(RawFormatInput { condition, path });
+                        }
+                    }
+                }
+            }
+        }
+        inputs
+    }
+
+    fn original_identity_path(
+        &self,
+        datum: &Datum,
+        origin: &super::Origin,
+    ) -> Option<helm_schema_core::ValuesPath> {
+        match datum {
+            Datum::Scalar {
+                go_type: _,
+                content: Some(ScalarContent::Identity(path)),
+            } => Some(path.clone()),
+            Datum::Map {
+                view: _,
+                target: Some(object),
+            } => self
+                .inputs
+                .iter()
+                .find_map(|(path, backing)| (backing.object == *object).then(|| path.clone())),
+            Datum::Scalar {
+                go_type: _,
+                content: None,
+            }
+            | Datum::Map {
+                view: _,
+                target: None,
+            }
+            | Datum::Unknown(super::UnknownValue {
+                types: _,
+                aliases: _,
+            }) => origin.identity.clone(),
+            Datum::Text(_)
+            | Datum::Scalar {
+                go_type: _,
+                content:
+                    Some(
+                        ScalarContent::Literal(_)
+                        | ScalarContent::Rendered(_)
+                        | ScalarContent::PrintfStringIdentity(_)
+                        | ScalarContent::SplitLength {
+                            value: _,
+                            separator: _,
+                        }
+                        | ScalarContent::Length(_),
+                    ),
+            }
+            | Datum::Sequence(_)
+            | Datum::Strings(_)
+            | Datum::Slot {
+                backing: _,
+                index: _,
+            } => None,
+        }
+    }
+
+    fn original_input_is_unchanged(
+        &self,
+        path: &helm_schema_core::ValuesPath,
+        heap: &super::HeapVersion,
+    ) -> bool {
+        let inputs = self.inputs;
+        let root = helm_schema_core::ValuesPath::default();
+        if inputs
+            .get(&root)
+            .and_then(|backing| heap.object(&backing.object))
+            .is_none()
+        {
+            return false;
+        }
+        let mut prefix = root;
+        for segment in path.segments() {
+            let helm_schema_core::Segment::Literal(key) = segment else {
+                return false;
+            };
+            if let Some(object) = inputs
+                .get(&prefix)
+                .and_then(|backing| heap.object(&backing.object))
+            {
+                let super::ObjectVersion {
+                    revision: _,
+                    multiplicity,
+                    data,
+                } = object;
+                if *multiplicity != super::Multiplicity::Singleton {
+                    return false;
+                }
+                match data {
+                    ObjectData::Map {
+                        fields,
+                        remainder: super::Remainder::Input,
+                    } if !fields.contains_key(key) => {}
+                    ObjectData::Map {
+                        fields: _,
+                        remainder: _,
+                    }
+                    | ObjectData::Strings(_)
+                    | ObjectData::Opaque { reachable: _ }
+                    | ObjectData::Widened { inputs: _ } => return false,
+                }
+            }
+            prefix.push(key.clone());
+        }
+        if inputs
+            .get(path)
+            .and_then(|backing| heap.object(&backing.object))
+            .is_some_and(|object| !pristine_input_backing(object))
+        {
+            return false;
+        }
+        // ValuesPath orders encoded keys; starting below the first child skips interleaved siblings.
+        let mut first_child = path.clone();
+        first_child.push("\0");
+        inputs
+            .range(first_child..)
+            .take_while(|(candidate, _)| candidate.is_descendant_of(path))
+            .all(|(_, backing)| {
+                heap.object(&backing.object)
+                    .is_none_or(pristine_input_backing)
+            })
+    }
+
     pub(super) fn new(
         inputs: &'inputs BTreeMap<helm_schema_core::ValuesPath, super::InputBacking>,
     ) -> Self {

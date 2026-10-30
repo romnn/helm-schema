@@ -4,6 +4,7 @@ use std::borrow::Cow;
 use std::collections::{BTreeMap, BTreeSet};
 use std::rc::Rc;
 
+use ahash::AHashMap;
 use helm_schema_core::{
     CollectionDomain, CollectionQuantifier, Guard, PlainScalarPlacement, Predicate, PredicateMemo,
     ValuesPath,
@@ -561,14 +562,15 @@ impl FilePlacement {
             }
             outputs.push(placement);
         }
-        Self {
-            outputs,
-            abort: Predicate::all(vec![
-                Predicate::Or(failures),
-                Predicate::Or(survivors).negated(),
-            ])
-            .normalize_boolean(),
-        }
+        let abort = Predicate::all(vec![
+            Predicate::Or(failures),
+            Predicate::Or(survivors).negated(),
+        ]);
+        let abort = match exits.first() {
+            Some(exit) => exit.state.heap.arena.predicate_memo.normalize(abort),
+            None => abort.normalize_boolean(),
+        };
+        Self { outputs, abort }
     }
 
     pub(super) fn certify_sites(&self, exits: &mut [Exit]) {
@@ -858,8 +860,7 @@ impl LayoutBuilder<'_> {
 
     fn feasible(&self, ambient: &Predicate, condition: &Predicate) -> bool {
         self.memo
-            .normalize(Predicate::all(vec![ambient.clone(), condition.clone()]))
-            != Predicate::False
+            .may_be_true(Predicate::all(vec![ambient.clone(), condition.clone()]))
     }
 
     fn active(&self, contexts: &LayoutContexts, ambient: &Predicate) -> Predicate {
@@ -1832,8 +1833,8 @@ fn rendered_parts(parts: &[ScalarRenderPart], mut states: States, memo: &Predica
 }
 
 struct LexicalTransfers<'a> {
-    values: BTreeMap<(*const super::HeapVersion, *const ValueNode, LexicalState), States>,
-    buffers: BTreeMap<(*const TextBuffer, LexicalState), States>,
+    values: AHashMap<(*const super::HeapVersion, *const ValueNode, LexicalState), States>,
+    buffers: AHashMap<(*const TextBuffer, LexicalState), States>,
     remaining: usize,
     input_paths: &'a BTreeMap<super::ObjectId, ValuesPath>,
     map_depth: usize,
@@ -1842,8 +1843,8 @@ struct LexicalTransfers<'a> {
 impl<'a> LexicalTransfers<'a> {
     fn new(input_paths: &'a BTreeMap<super::ObjectId, ValuesPath>) -> Self {
         Self {
-            values: BTreeMap::new(),
-            buffers: BTreeMap::new(),
+            values: AHashMap::new(),
+            buffers: AHashMap::new(),
             remaining: 4096,
             input_paths,
             map_depth: 0,

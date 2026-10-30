@@ -40,6 +40,18 @@ impl ReadSet {
         }
     }
 
+    pub(super) fn without_coverage(&self, coverage: super::ReadCoverage) -> Self {
+        if !contains_coverage(&self.root, coverage) {
+            return self.clone();
+        }
+        Self {
+            root: union(
+                &before_coverage(&self.root, coverage),
+                &after_coverage(&self.root, coverage),
+            ),
+        }
+    }
+
     pub(super) fn iter(&self) -> ReadIter<'_> {
         let mut result = ReadIter {
             pending: Vec::new(),
@@ -114,6 +126,51 @@ fn height(link: &Link) -> usize {
 
 fn length(link: &Link) -> usize {
     link.as_ref().map_or(0, |node| node.length)
+}
+
+// Coverage is the leading sort key, so filtering cuts two search boundaries.
+fn contains_coverage(root: &Link, coverage: super::ReadCoverage) -> bool {
+    let mut current = root.as_ref();
+    while let Some(node) = current {
+        match node.entry.coverage.cmp(&coverage) {
+            Ordering::Less => current = node.right.as_ref(),
+            Ordering::Greater => current = node.left.as_ref(),
+            Ordering::Equal => return true,
+        }
+    }
+    false
+}
+
+fn before_coverage(root: &Link, coverage: super::ReadCoverage) -> Link {
+    let root = root.as_ref()?;
+    if root.entry.coverage >= coverage {
+        return before_coverage(&root.left, coverage);
+    }
+    let right = before_coverage(&root.right, coverage);
+    if same_link(&root.right, &right) {
+        return Some(Rc::clone(root));
+    }
+    Some(join(Rc::clone(&root.entry), root.left.clone(), right))
+}
+
+fn after_coverage(root: &Link, coverage: super::ReadCoverage) -> Link {
+    let root = root.as_ref()?;
+    if root.entry.coverage <= coverage {
+        return after_coverage(&root.right, coverage);
+    }
+    let left = after_coverage(&root.left, coverage);
+    if same_link(&root.left, &left) {
+        return Some(Rc::clone(root));
+    }
+    Some(join(Rc::clone(&root.entry), left, root.right.clone()))
+}
+
+fn same_link(left: &Link, right: &Link) -> bool {
+    match (left, right) {
+        (None, None) => true,
+        (Some(left), Some(right)) => Rc::ptr_eq(left, right),
+        (None, Some(_)) | (Some(_), None) => false,
+    }
 }
 
 fn node(entry: Rc<RuntimeRead>, left: Link, right: Link) -> Rc<Node> {

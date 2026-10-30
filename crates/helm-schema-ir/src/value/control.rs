@@ -1,4 +1,5 @@
 use super::eval::{Executor, local_name, normal};
+use super::write_footprint::widen_targets;
 use super::{
     Coverage, Datum, Exit, Flow, Leaf, Normal, ObjectData, Remainder, State, Value, ValueNode,
 };
@@ -514,6 +515,8 @@ impl Executor<'_> {
             path.push_each_member();
             member = Value::input(path);
         }
+        let local_targets =
+            super::write_footprint::local_targets(program.source, program.syntax, &state.namespace);
         let mut exits = Vec::new();
         let mut state = if nonempty {
             state.clone()
@@ -555,34 +558,32 @@ impl Executor<'_> {
         };
         // The first possible iteration can read named inputs before loop-carried
         // writes erase their provenance.
-        // Retain only its widening reads; output and narrowing evidence belong
-        // to the summary over all iterations below.
-        let first_reads = self
-            .window(
+        // A writer requires separate summary execution; only widening reads
+        // from this initial execution survive that replacement.
+        let prior_sites = state.sites.clone();
+        let first_exits = self.window(
+            program,
+            bindings.body,
+            normal(iteration(state.clone()), Value::nil()),
+        );
+        let first_reads = first_exits
+            .iter()
+            .map(|exit| first_iteration_reads(&exit.state, &prior_sites))
+            .fold(super::read_set::ReadSet::default(), |reads, next| {
+                reads.union(&next)
+            });
+        let mut body_exits = if local_targets.as_ref().is_some_and(BTreeSet::is_empty) {
+            // With no loop-carried writes, the initial execution already used
+            // the summary's exact start state.
+            first_exits
+        } else {
+            widen_targets(&mut state, local_targets.as_ref(), &value.inputs());
+            self.window(
                 program,
                 bindings.body,
-                normal(iteration(state.clone()), Value::nil()),
+                normal(iteration(state), Value::nil()),
             )
-            .into_iter()
-            .flat_map(|exit| {
-                exit.state
-                    .reads
-                    .iter()
-                    .filter(|read| !read.coverage.is_requirement())
-                    .cloned()
-                    .collect::<Vec<_>>()
-            })
-            .collect();
-        super::operations::invalidate(&mut state);
-        let state = iteration(state);
-        let mut body_exits = self.window(
-            program,
-            Window {
-                start: bindings.body.start,
-                end: bindings.body.end,
-            },
-            normal(state, Value::nil()),
-        );
+        };
         for exit in &mut body_exits {
             exit.state.reads = exit.state.reads.union(&first_reads);
             if id.is_some() {
@@ -594,7 +595,7 @@ impl Executor<'_> {
                 Flow::Normal(_) => {}
                 Flow::Abort(_) | Flow::Break(_) | Flow::Continue(_) => continue,
             }
-            super::operations::invalidate(&mut exit.state);
+            widen_targets(&mut exit.state, local_targets.as_ref(), &value.inputs());
             exit.flow = Flow::Normal(Normal {
                 value: Value::unknown(),
             });
@@ -628,6 +629,36 @@ impl Executor<'_> {
         }
     }
 }
+
+fn first_iteration_reads(
+    state: &State,
+    prior_sites: &super::history::History<super::ExecutedSite>,
+) -> super::read_set::ReadSet {
+    let mut reads = state
+        .reads
+        .without_coverage(super::ReadCoverage::MemberHost { allows_nil: false })
+        .without_coverage(super::ReadCoverage::MemberHost { allows_nil: true })
+        .without_coverage(super::ReadCoverage::MapArgument { allows_nil: false })
+        .without_coverage(super::ReadCoverage::MapArgument { allows_nil: true });
+    for site in state
+        .sites
+        .since(prior_sites)
+        .filter(|site| site.rendered && site.value.value.identity().is_none())
+    {
+        let condition = site.condition();
+        for path in site.value.inputs() {
+            if path.segments().next().is_some() {
+                reads.insert(super::RuntimeRead {
+                    coverage: super::ReadCoverage::SerializedInfluence,
+                    path,
+                    condition: condition.clone(),
+                });
+            }
+        }
+    }
+    reads
+}
+
 fn literal_span(program: &Program<'_>, next: usize, span: Span) -> Span {
     let previous = next
         .checked_sub(1)

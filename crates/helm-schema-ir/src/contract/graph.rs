@@ -558,7 +558,11 @@ fn project_global_fail_captures(
     let mut projected = BTreeSet::new();
     for dependency_capture in std::mem::take(captures) {
         let Some(source_path) = dependency_capture.kind.sole_value_path() else {
-            projected.insert(dependency_capture);
+            if let Some(capture) =
+                project_pathless_global_failure(dependency_capture, global_sources)
+            {
+                projected.insert(capture);
+            }
             continue;
         };
         if source_path != &dependency_global_path
@@ -637,6 +641,290 @@ fn project_global_fail_captures(
         }
     }
     *captures = projected;
+}
+
+fn project_pathless_global_failure(
+    capture: crate::observed_facts::FailCapture,
+    global_sources: &[String],
+) -> Option<crate::observed_facts::FailCapture> {
+    let crate::observed_facts::FailCapture {
+        conjunction,
+        ranged,
+        kind,
+    } = capture;
+    let mut budget = 4096;
+    let domain = global_failure_non_map_domain(&conjunction, global_sources, &mut budget)?;
+    let mut conjunction = conjunction
+        .iter()
+        .map(|predicate| {
+            project_global_failure_predicate(predicate, global_sources, &mut budget, false)
+        })
+        .collect::<Option<helm_schema_core::Conjunction>>()?;
+    conjunction.extend(domain);
+    Some(crate::observed_facts::FailCapture {
+        conjunction,
+        ranged,
+        kind,
+    })
+}
+
+// Helm recursively merges global tables and can retain a scalar beneath a parent table.
+// Scalar source selection is exact only while every candidate member stays outside that case.
+fn global_failure_non_map_domain(
+    conjunction: &helm_schema_core::Conjunction,
+    global_sources: &[String],
+    budget: &mut usize,
+) -> Option<BTreeSet<helm_schema_core::Predicate>> {
+    use helm_schema_core::{Predicate, PredicateKind, Segment, ValuesPath};
+
+    let dependency_path = ValuesPath::parse(global_sources.last()?);
+    let mut paths = BTreeSet::new();
+    let mut predicates = conjunction.iter().collect::<Vec<_>>();
+    while let Some(predicate) = predicates.pop() {
+        *budget = budget.checked_sub(1)?;
+        match predicate.kind() {
+            PredicateKind::True | PredicateKind::False => {}
+            PredicateKind::Not(inner) => predicates.push(inner),
+            PredicateKind::And(parts) | PredicateKind::Or(parts) => predicates.extend(parts),
+            PredicateKind::Approximate {
+                marker: _,
+                paths: mentioned,
+                role: _,
+                sound_subset,
+            } => {
+                paths.extend(mentioned.iter().cloned());
+                predicates.extend(sound_subset);
+            }
+            PredicateKind::Guard(guard) => {
+                let mut guards = vec![guard];
+                while let Some(guard) = guards.pop() {
+                    *budget = budget.checked_sub(1)?;
+                    match guard {
+                        Guard::AnyOf { alternatives } => {
+                            guards.extend(alternatives.iter().flatten());
+                        }
+                        Guard::HasKey { path, key } | Guard::NotHasKey { path, key } => {
+                            paths.insert(ValuesPath::from_segments(
+                                path.segments()
+                                    .cloned()
+                                    .chain([Segment::from(key.as_str())]),
+                            ));
+                        }
+                        _ => paths.extend(guard.value_paths()),
+                    }
+                }
+            }
+        }
+    }
+    let mut domain = BTreeSet::new();
+    for path in paths {
+        if !path.is_descendant_of(&dependency_path) {
+            continue;
+        }
+        let relative = path
+            .segments()
+            .skip(dependency_path.segments().len())
+            .map(Segment::encode_component)
+            .collect::<Vec<_>>();
+        let Some((selection_relative, _)) = global_selection_path(&relative) else {
+            continue;
+        };
+        for global_source in global_sources {
+            // An intermediate table also changes recursive coalescing before the tested leaf.
+            for member_len in 1..=selection_relative.len() {
+                *budget = budget.checked_sub(1)?;
+                let member = helm_schema_core::join_encoded_value_path(
+                    helm_schema_core::split_value_path(global_source)
+                        .into_iter()
+                        .chain(selection_relative.iter().take(member_len).cloned()),
+                );
+                domain.insert(Predicate::Not(Box::new(Predicate::from(Guard::TypeIs {
+                    path: ValuesPath::parse(&member),
+                    schema_type: "object".to_owned(),
+                }))));
+            }
+        }
+    }
+    Some(domain)
+}
+
+// A collapsed abort can test several global members with independent parent selections.
+// Pull back each atom before Boolean composition so negation preserves that partition.
+fn project_global_failure_predicate(
+    predicate: &helm_schema_core::Predicate,
+    global_sources: &[String],
+    budget: &mut usize,
+    require_exact: bool,
+) -> Option<helm_schema_core::Predicate> {
+    use helm_schema_core::{Predicate, PredicateKind};
+
+    *budget = budget.checked_sub(1)?;
+    match predicate.kind() {
+        PredicateKind::True | PredicateKind::False => Some(predicate.clone()),
+        PredicateKind::Guard(guard) => {
+            project_global_failure_guard(guard, global_sources, budget, require_exact)
+        }
+        PredicateKind::Not(inner) => Some(Predicate::Not(Box::new(
+            project_global_failure_predicate(inner, global_sources, budget, true)?,
+        ))),
+        PredicateKind::And(parts) => Some(Predicate::And(
+            parts
+                .iter()
+                .map(|part| {
+                    project_global_failure_predicate(part, global_sources, budget, require_exact)
+                })
+                .collect::<Option<_>>()?,
+        )),
+        PredicateKind::Or(parts) => global_failure_disjunction(
+            parts.iter().map(|part| {
+                project_global_failure_predicate(part, global_sources, budget, require_exact)
+            }),
+            require_exact,
+        ),
+        PredicateKind::Approximate {
+            marker,
+            paths,
+            role,
+            sound_subset,
+        } if !require_exact => Some(Predicate::Approximate(
+            marker.to_owned(),
+            paths.clone(),
+            role,
+            match sound_subset {
+                Some(subset) => Some(Box::new(project_global_failure_predicate(
+                    subset,
+                    global_sources,
+                    budget,
+                    false,
+                )?)),
+                None => None,
+            },
+        )),
+        PredicateKind::Approximate {
+            marker: _,
+            paths: _,
+            role: _,
+            sound_subset: _,
+        } => None,
+    }
+}
+
+// An unknown positive failure alternative can be omitted; negation needs every alternative.
+fn global_failure_disjunction(
+    alternatives: impl Iterator<Item = Option<helm_schema_core::Predicate>>,
+    require_exact: bool,
+) -> Option<helm_schema_core::Predicate> {
+    let mut projected = Vec::new();
+    for alternative in alternatives {
+        match alternative {
+            Some(predicate) => projected.push(predicate),
+            None if require_exact => return None,
+            None => {}
+        }
+    }
+    Some(helm_schema_core::Predicate::Or(projected))
+}
+
+fn project_global_failure_guard(
+    guard: &Guard,
+    global_sources: &[String],
+    budget: &mut usize,
+    require_exact: bool,
+) -> Option<helm_schema_core::Predicate> {
+    use helm_schema_core::{Predicate, Segment, ValuesPath};
+
+    match guard {
+        Guard::AnyOf { alternatives } => {
+            return global_failure_disjunction(
+                alternatives.iter().map(|alternative| {
+                    Some(Predicate::And(
+                        alternative
+                            .iter()
+                            .map(|guard| {
+                                project_global_failure_guard(
+                                    guard,
+                                    global_sources,
+                                    budget,
+                                    require_exact,
+                                )
+                            })
+                            .collect::<Option<_>>()?,
+                    ))
+                }),
+                require_exact,
+            );
+        }
+        Guard::Or { paths } => {
+            return global_failure_disjunction(
+                paths.iter().map(|path| {
+                    project_global_failure_guard(
+                        &Guard::Truthy { path: path.clone() },
+                        global_sources,
+                        budget,
+                        require_exact,
+                    )
+                }),
+                require_exact,
+            );
+        }
+        _ => {}
+    }
+    let dependency_global = global_sources.last()?;
+    let dependency_path = ValuesPath::parse(dependency_global);
+    let paths = match guard {
+        Guard::HasKey { path, key } | Guard::NotHasKey { path, key } => {
+            vec![ValuesPath::from_segments(
+                path.segments()
+                    .cloned()
+                    .chain([Segment::from(key.as_str())]),
+            )]
+        }
+        _ => guard.value_paths(),
+    };
+    let paths = paths.into_iter().collect::<BTreeSet<_>>();
+    let mut paths = paths.iter();
+    let Some(path) = paths.next() else {
+        return Some(Predicate::from(guard.clone()));
+    };
+    if paths.next().is_some() {
+        return None;
+    }
+    if path == &dependency_path {
+        return None;
+    }
+    if !path.is_descendant_of(&dependency_path) {
+        return Some(Predicate::from(guard.clone()));
+    }
+    let relative = path
+        .segments()
+        .skip(dependency_path.segments().len())
+        .map(Segment::encode_component)
+        .collect::<Vec<_>>();
+    let (selection_relative, key) = global_selection_path(&relative)?;
+    let mut alternatives = Vec::new();
+    for (source_index, global_source) in global_sources.iter().enumerate() {
+        *budget = budget.checked_sub(1)?;
+        let selection_source = helm_schema_core::join_encoded_value_path(
+            helm_schema_core::split_value_path(global_source)
+                .into_iter()
+                .chain(selection_relative.iter().cloned()),
+        );
+        let mut conjunction = global_source_selection_guards(
+            global_sources,
+            selection_relative,
+            source_index,
+            &selection_source,
+            key,
+        )
+        .into_iter()
+        .map(Predicate::from)
+        .collect::<Vec<_>>();
+        conjunction.push(Predicate::from(guard.clone().map_value_paths(
+            &mut |path| replace_value_path_prefix(path, dependency_global, global_source),
+        )));
+        alternatives.push(Predicate::And(conjunction));
+    }
+    Some(Predicate::Or(alternatives))
 }
 
 fn project_global_range_modes(

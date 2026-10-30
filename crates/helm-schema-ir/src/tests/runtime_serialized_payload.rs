@@ -152,7 +152,14 @@ fn independent_guarded_serializers_keep_every_destination() -> eyre::Result<()> 
 
     use helm_schema_core::{Guard, Predicate};
 
-    let mut source = "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: test\ndata:\n".to_owned();
+    let mut source = indoc! {"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+    "}
+    .to_owned();
     for index in 0..12 {
         writeln!(
             source,

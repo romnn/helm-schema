@@ -50,6 +50,30 @@ impl crate::value::DocumentExecution {
         .normalize_boolean()
     }
 
+    pub(crate) fn observed_marker_sufficient_condition(
+        &self,
+        span: helm_schema_syntax::Span,
+    ) -> Predicate {
+        Predicate::Or(
+            self.text_sites()
+                .filter(|site| site.span().start < span.end && span.start < site.span().end)
+                .map(|site| {
+                    let condition = &site.condition;
+                    let ambient = condition
+                        .arena
+                        .budget_test(condition.arena.runtime_path(&condition.ambient));
+                    Predicate::all(vec![
+                        ambient.when_true.clone(),
+                        condition
+                            .restricted_test()
+                            .map_or(Predicate::True, |test| test.when_true.clone()),
+                    ])
+                })
+                .collect(),
+        )
+        .normalize_boolean()
+    }
+
     pub(crate) fn observed_marker_complete(&self, span: helm_schema_syntax::Span) -> bool {
         self.exits
             .iter()
@@ -87,7 +111,6 @@ fn site(state: &State, value: &Value) -> ExecutedSite {
         source_path: None,
         condition: Predicate::True.into(),
         value: state.heap.freeze(value),
-        raw_format_inputs: Vec::new(),
         plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
         rendered: true,
     }
@@ -192,7 +215,10 @@ fn changed_output_keeps_only_marker_safe_scalar_placement() {
     sim_assert_eq!(
         have: output.rendered_scalar(),
         want: Some(crate::value::ScalarValueDispatch::bind_content(
-            vec![(super::marker_preserving_scalar(&path), ScalarContent::Identity(path))],
+            vec![(
+                super::marker_preserving_scalar(&path, &state.heap.arena.predicate_memo),
+                ScalarContent::Identity(path),
+            )],
             false,
         )),
     );

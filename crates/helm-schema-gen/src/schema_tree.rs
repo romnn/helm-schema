@@ -90,6 +90,18 @@ impl SchemaDocument {
         }
     }
 
+    /// Withdraws only object key closure at the input to an executed values-root boundary.
+    pub(crate) fn open_values_root(&mut self, path: &ValuesPath) {
+        let Some(segments) = path
+            .segments()
+            .map(|segment| segment.literal().map(str::to_owned))
+            .collect::<Option<Vec<_>>>()
+        else {
+            return;
+        };
+        visit_schema_nodes_at_path_mut(&mut self.root, &segments, &mut SchemaNode::open_object);
+    }
+
     pub(crate) fn replace_values_path_schema(
         &mut self,
         value_path: &ValuesPath,

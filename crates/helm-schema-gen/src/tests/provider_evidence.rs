@@ -2985,31 +2985,23 @@ fn unrelated_default_inside_set_does_not_mark_target_as_defaulted() {
           name: {{ .Values.serviceAccount.name | quote }}
     "#};
 
-    let ir = parse_ir_with_helpers(src, helpers);
-    let projection = ir.clone().finalize();
-    let guarded_target_uses: Vec<_> = projection
+    let projection = parse_ir_with_helpers(src, helpers).finalize();
+    let rendered_uses = projection
         .uses()
         .iter()
-        .filter(|use_| {
-            use_.source_expr == helm_schema_core::ValuesPath::parse("serviceAccount.name")
-                && use_.path.0 == ["metadata".to_string(), "name".to_string()]
+        .filter(|use_| use_.path.0 == ["metadata".to_string(), "name".to_string()])
+        .cloned()
+        .collect::<Vec<_>>();
+    sim_assert_eq!(have: rendered_uses, want: Vec::<ContractUse>::new());
+    let target_default_guards = projection
+        .uses()
+        .iter()
+        .flat_map(ContractUse::single_guard_conjunction)
+        .filter(|guard| {
+            matches!(guard, Guard::Default { path } if path.encode() == "serviceAccount.name")
         })
-        .collect();
-    assert!(
-        !guarded_target_uses.is_empty(),
-        "expected a rendered use for serviceAccount.name, got {ir:?}"
-    );
-    assert!(
-        guarded_target_uses.iter().all(|use_| {
-            !use_.single_guard_conjunction().iter().any(|guard| {
-                matches!(
-                    guard,
-                    Guard::Default { path } if path.encode() == "serviceAccount.name"
-                )
-            })
-        }),
-        "unrelated default must not mark serviceAccount.name as defaulted: {guarded_target_uses:#?}"
-    );
+        .collect::<Vec<_>>();
+    sim_assert_eq!(have: target_default_guards, want: Vec::<Guard>::new());
 }
 
 #[test]

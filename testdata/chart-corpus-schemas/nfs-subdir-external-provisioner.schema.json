@@ -1,496 +1,313 @@
 {
   "$defs": {
-    "constrains/@items.key+@items.operator+@items.values": {
-      "description": "A list of node selector requirements by node's fields.",
-      "items": {
-        "$ref": "#/$defs/constrains~1key+operator+values"
-      },
-      "type": [
-        "array",
-        "null"
-      ]
-    },
-    "constrains/@items.key+@items.operator+@items.values@2": {
-      "description": "A list of node selector requirements by node's labels.",
-      "items": {
-        "$ref": "#/$defs/constrains~1key+operator+values"
-      },
-      "type": [
-        "array",
-        "null"
-      ]
-    },
-    "constrains/buildMode:t+nfs.mountOptions:t": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/constrains~1nfs.mountOptions:t"
-          }
-        },
-        {
-          "not": {
-            "properties": {
-              "buildMode": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "buildMode"
-            ],
-            "type": "object"
-          }
-        }
-      ]
-    },
-    "constrains/create:t": {
-      "properties": {
-        "create": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "create"
-      ],
-      "type": "object"
-    },
-    "constrains/enabled:t": {
-      "properties": {
-        "enabled": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
-    "constrains/key+operator+values": {
-      "additionalProperties": false,
-      "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-      "properties": {
-        "key": {
-          "description": "The label key that the selector applies to.",
-          "type": "string"
-        },
-        "operator": {
-          "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
-          "type": "string"
-        },
-        "values": {
-          "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
-          "items": {
-            "$ref": "#/$defs/values~1securityContext.capabilities.add@items"
-          },
-          "type": [
-            "array",
-            "null"
-          ]
-        }
-      },
-      "required": [
-        "key",
-        "operator"
-      ],
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "constrains/labelSelector.matchExpressions@items.key+8more": {
-      "additionalProperties": false,
-      "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
-      "properties": {
-        "labelSelector": {
-          "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more"
-        },
-        "matchLabelKeys": {
-          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;matchlabelkeys-is-a-set"
-        },
-        "mismatchLabelKeys": {
-          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;mismatchlabelkeys-is-a-set"
-        },
-        "namespaceSelector": {
-          "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more"
-        },
-        "namespaces": {
-          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;namespaces-specifies-a-static"
-        },
-        "topologyKey": {
-          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1string;this-pod-should-be"
-        }
-      },
-      "required": [
-        "topologyKey"
-      ],
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "constrains/labelSelector.matchExpressions@items.key+8more/array,null;matchlabelkeys-is-a-set": {
-      "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
-      "items": {
-        "$ref": "#/$defs/values~1securityContext.capabilities.add@items"
-      },
-      "type": [
-        "array",
-        "null"
-      ],
-      "x-kubernetes-list-type": "atomic"
-    },
-    "constrains/labelSelector.matchExpressions@items.key+8more/array,null;mismatchlabelkeys-is-a-set": {
-      "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
-      "items": {
-        "$ref": "#/$defs/values~1securityContext.capabilities.add@items"
-      },
-      "type": [
-        "array",
-        "null"
-      ],
-      "x-kubernetes-list-type": "atomic"
-    },
-    "constrains/labelSelector.matchExpressions@items.key+8more/array,null;namespaces-specifies-a-static": {
-      "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
-      "items": {
-        "$ref": "#/$defs/values~1securityContext.capabilities.add@items"
-      },
-      "type": [
-        "array",
-        "null"
-      ]
-    },
-    "constrains/labelSelector.matchExpressions@items.key+8more/string;this-pod-should-be": {
-      "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
-      "type": "string"
-    },
-    "constrains/matchExpressions@items.key+matchExpressions@items.operator+2more": {
-      "additionalProperties": false,
-      "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
-      "properties": {
-        "matchExpressions": {
-          "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
-          "items": {
-            "additionalProperties": false,
-            "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-            "properties": {
-              "key": {
-                "description": "key is the label key that the selector applies to.",
-                "type": "string"
-              },
-              "operator": {
-                "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
-                "type": "string"
-              },
-              "values": {
-                "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
-                "items": {
-                  "$ref": "#/$defs/values~1securityContext.capabilities.add@items"
-                },
-                "type": [
-                  "array",
-                  "null"
-                ]
-              }
-            },
-            "required": [
-              "key",
-              "operator"
-            ],
-            "type": [
-              "object",
-              "null"
-            ]
-          },
-          "type": [
-            "array",
-            "null"
-          ]
-        },
-        "matchLabels": {
-          "additionalProperties": {
-            "$ref": "#/$defs/values~1securityContext.capabilities.add@items"
-          },
-          "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
-          "type": [
-            "object",
-            "null"
-          ]
-        }
-      },
-      "type": [
-        "object",
-        "null"
-      ],
-      "x-kubernetes-map-type": "atomic"
-    },
-    "constrains/mountOptions:t": {
-      "properties": {
-        "mountOptions": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "mountOptions"
-      ],
-      "type": "object"
-    },
-    "constrains/nfs.mountOptions:t": {
-      "properties": {
-        "nfs": {
-          "$ref": "#/$defs/constrains~1mountOptions:t"
-        }
-      },
-      "required": [
-        "nfs"
-      ],
-      "type": "object"
-    },
-    "constrains/path": {
-      "additionalProperties": {},
-      "properties": {
-        "path": {
-          "$ref": "#/$defs/constrains~1path~1anyOf~1object+string+string;path-that-is-exported"
-        }
+    "constrains/fullnameOverride": {
+      "not": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@2"
       }
     },
-    "constrains/path/anyOf/object+string+string;path-that-is-exported": {
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+2more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1storageClass.provisionerName:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1storageClass.create:t"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+3more": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1path~1string@2"
+          "$ref": "#/$defs/constrains~1nameOverride:t+storageClass.create:t+storageClass.provisionerName+1more"
         },
         {
-          "$ref": "#/$defs/constrains~1path~1object"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+storageClass.create:t+storageClass.provisionerName+1more"
         },
         {
-          "allOf": [
-            {
-              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@10"
-            },
-            {
-              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@4"
-            },
-            {
-              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@9"
-            },
-            {
-              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@2"
-            },
-            {
-              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@5"
-            },
-            {
-              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@7"
-            },
-            {
-              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@8"
-            },
-            {
-              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern"
-            },
-            {
-              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@3"
-            },
-            {
-              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@6"
-            }
-          ],
-          "description": "path that is exported by the NFS server. More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs",
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+storageClass.create:t+storageClass.provisionerName:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+storageClass.create:t+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+storageClass.create:t+1more"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+storageClass.create:t+1more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1storageClass.provisionerName:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1storageClass.create:t"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+storageClass.provisionerName+1more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+storageClass.provisionerName:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+storageClass.provisionerName:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1storageClass.provisionerName+storageClass.provisionerName:t"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+storageClass.provisionerName+1more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+storageClass.provisionerName:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+storageClass.provisionerName:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1storageClass.provisionerName+storageClass.provisionerName:t@2"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+storageClass.provisionerName:t": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1storageClass.provisionerName:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+storageClass.provisionerName:t@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1storageClass.provisionerName:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+        }
+      ]
+    },
+    "constrains/fullnameOverride:t": {
+      "not": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      }
+    },
+    "constrains/fullnameOverride:t+nameOverride+nameOverride:t+storageClass.create:t+1more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1storageClass.provisionerName:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1storageClass.create:t"
+        }
+      ]
+    },
+    "constrains/fullnameOverride:t+storageClass.provisionerName:t": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1storageClass.provisionerName:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        }
+      ]
+    },
+    "constrains/fullnameOverride:t+storageClass.provisionerName:t@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1storageClass.provisionerName:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
+        }
+      ]
+    },
+    "constrains/fullnameOverride:t@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      }
+    },
+    "constrains/fullnameOverride:t@3": {
+      "properties": {
+        "fullnameOverride": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/fullnameOverride@2": {
+      "properties": {
+        "fullnameOverride": {
           "type": "string"
         }
-      ]
-    },
-    "constrains/path/not/keywords/pattern": {
-      "not": {
-        "pattern": ":[ \\t]|:$"
-      }
-    },
-    "constrains/path/not/keywords/pattern@10": {
-      "not": {
-        "pattern": "^[-?:]([ \\t]|$)"
-      }
-    },
-    "constrains/path/not/keywords/pattern@2": {
-      "not": {
-        "pattern": "[ \\t]#"
-      }
-    },
-    "constrains/path/not/keywords/pattern@3": {
-      "not": {
-        "pattern": "[\\r\\n]"
-      }
-    },
-    "constrains/path/not/keywords/pattern@4": {
-      "not": {
-        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-      }
-    },
-    "constrains/path/not/keywords/pattern@5": {
-      "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-      }
-    },
-    "constrains/path/not/keywords/pattern@6": {
-      "not": {
-        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-      }
-    },
-    "constrains/path/not/keywords/pattern@7": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
-    },
-    "constrains/path/not/keywords/pattern@8": {
-      "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
-    },
-    "constrains/path/not/keywords/pattern@9": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
-    },
-    "constrains/path/object": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "maxItems": 0,
-            "type": "array"
-          },
-          {
-            "type": "integer"
-          },
-          {
-            "$ref": "#/$defs/constrains~1path~1string"
-          },
-          {
-            "type": "number"
-          },
-          {
-            "type": "null"
-          },
-          {
-            "type": "boolean"
-          },
-          {
-            "maxProperties": 0,
-            "type": "object"
-          }
-        ]
-      },
-      "propertyNames": {
-        "$ref": "#/$defs/constrains~1path~1string"
-      },
-      "type": "object"
-    },
-    "constrains/path/string": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern"
-        },
-        {
-          "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@3"
-        }
-      ],
-      "type": "string"
-    },
-    "constrains/path/string@2": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^(null|Null|NULL)[ \\t]+#"
-          }
-        },
-        {
-          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-          }
-        }
-      ],
-      "type": "string"
-    },
-    "constrains/podAffinityTerm.labelSelector.matchExpressions@items.key+9more": {
-      "additionalProperties": false,
-      "description": "The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)",
-      "properties": {
-        "podAffinityTerm": {
-          "additionalProperties": false,
-          "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
-          "properties": {
-            "labelSelector": {
-              "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more"
-            },
-            "matchLabelKeys": {
-              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;matchlabelkeys-is-a-set"
-            },
-            "mismatchLabelKeys": {
-              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;mismatchlabelkeys-is-a-set"
-            },
-            "namespaceSelector": {
-              "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more"
-            },
-            "namespaces": {
-              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;namespaces-specifies-a-static"
-            },
-            "topologyKey": {
-              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1string;this-pod-should-be"
-            }
-          },
-          "required": [
-            "topologyKey"
-          ],
-          "type": "object"
-        },
-        "weight": {
-          "description": "weight associated with matching the corresponding podAffinityTerm, in the range 1-100.",
-          "format": "int32",
-          "type": "integer"
-        }
       },
       "required": [
-        "weight",
-        "podAffinityTerm"
-      ],
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "constrains/rbac.create:t": {
-      "properties": {
-        "rbac": {
-          "$ref": "#/$defs/constrains~1create:t"
-        }
-      },
-      "required": [
-        "rbac"
+        "fullnameOverride"
       ],
       "type": "object"
     },
-    "constrains/server!=null": {
+    "constrains/nameOverride": {
+      "not": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
+    },
+    "constrains/nameOverride+nameOverride:t": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        }
+      ]
+    },
+    "constrains/nameOverride+nameOverride:t+storageClass.create:t+storageClass.provisionerName+1more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1storageClass.provisionerName"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1storageClass.provisionerName:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1storageClass.create:t"
+        }
+      ]
+    },
+    "constrains/nameOverride+nameOverride:t+storageClass.create:t+storageClass.provisionerName:t": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1storageClass.provisionerName:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1storageClass.create:t"
+        }
+      ]
+    },
+    "constrains/nameOverride+nameOverride:t@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+        }
+      ]
+    },
+    "constrains/nameOverride:t": {
+      "not": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      }
+    },
+    "constrains/nameOverride:t+storageClass.create:t+storageClass.provisionerName+1more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1storageClass.provisionerName"
+        },
+        {
+          "$ref": "#/$defs/constrains~1storageClass.provisionerName:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1storageClass.create:t"
+        }
+      ]
+    },
+    "constrains/nameOverride:t@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      }
+    },
+    "constrains/nameOverride:t@3": {
       "properties": {
-        "server": {
-          "not": {
-            "enum": [
-              null
-            ]
-          }
+        "nameOverride": {
+          "$ref": "#/$defs/t"
         }
       },
       "required": [
-        "server"
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride@2": {
+      "properties": {
+        "nameOverride": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "nameOverride"
       ],
       "type": "object"
     },
     "constrains/storageClass.create:t": {
       "properties": {
         "storageClass": {
-          "$ref": "#/$defs/constrains~1create:t"
+          "properties": {
+            "create": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "create"
+          ],
+          "type": "object"
         }
       },
       "required": [
@@ -498,39 +315,81 @@
       ],
       "type": "object"
     },
-    "helm-double-quoted-safe": {
-      "anyOf": [
+    "constrains/storageClass.provisionerName": {
+      "not": {
+        "$ref": "#/$defs/constrains~1storageClass.provisionerName@2"
+      }
+    },
+    "constrains/storageClass.provisionerName+storageClass.provisionerName:t": {
+      "allOf": [
         {
-          "type": [
-            "boolean",
-            "integer",
-            "null",
-            "number"
-          ]
+          "$ref": "#/$defs/constrains~1storageClass.provisionerName:t@4"
         },
         {
-          "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
-          "type": "string"
-        },
-        {
-          "additionalProperties": {
-            "$ref": "#/$defs/helm-double-quoted-safe~1:helm-double-quoted-safe"
-          },
-          "propertyNames": {
-            "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$"
-          },
-          "type": "object"
-        },
-        {
-          "items": {
-            "$ref": "#/$defs/helm-double-quoted-safe~1:helm-double-quoted-safe"
-          },
-          "type": "array"
+          "$ref": "#/$defs/constrains~1storageClass.provisionerName@2"
         }
       ]
     },
-    "helm-double-quoted-safe/:helm-double-quoted-safe": {
-      "$ref": "#/$defs/helm-double-quoted-safe"
+    "constrains/storageClass.provisionerName+storageClass.provisionerName:t@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1storageClass.provisionerName:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1storageClass.provisionerName@2"
+        }
+      ]
+    },
+    "constrains/storageClass.provisionerName:t": {
+      "$ref": "#/$defs/constrains~1storageClass.provisionerName:t@2"
+    },
+    "constrains/storageClass.provisionerName:t@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1storageClass.provisionerName:t@4"
+      }
+    },
+    "constrains/storageClass.provisionerName:t@3": {
+      "not": {
+        "$ref": "#/$defs/constrains~1storageClass.provisionerName:t@4"
+      }
+    },
+    "constrains/storageClass.provisionerName:t@4": {
+      "properties": {
+        "storageClass": {
+          "properties": {
+            "provisionerName": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "provisionerName"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "storageClass"
+      ],
+      "type": "object"
+    },
+    "constrains/storageClass.provisionerName@2": {
+      "properties": {
+        "storageClass": {
+          "properties": {
+            "provisionerName": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "provisionerName"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "storageClass"
+      ],
+      "type": "object"
     },
     "t": {
       "anyOf": [
@@ -556,380 +415,6 @@
           "const": true
         }
       ]
-    },
-    "values/affinity/object": {
-      "additionalProperties": false,
-      "maxProperties": 0,
-      "properties": {},
-      "type": "object"
-    },
-    "values/allOf/object+object,null;map-of-string-keys": {
-      "allOf": [
-        {
-          "additionalProperties": {
-            "$ref": "#/$defs/values~1securityContext.capabilities.add@items"
-          },
-          "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
-          "type": [
-            "object",
-            "null"
-          ]
-        },
-        {
-          "$ref": "#/$defs/values~1object"
-        }
-      ]
-    },
-    "values/anyOf/null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more": {
-      "$ref": "#/$defs/values~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more@2"
-    },
-    "values/anyOf/null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1path~1string@2"
-        },
-        {
-          "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1path~1object"
-        },
-        {
-          "$ref": "#/$defs/values~1string;pattern-t"
-        },
-        {
-          "$ref": "#/$defs/values~1string;pattern-null-null-null"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "$ref": "#/$defs/values~1string"
-        }
-      ]
-    },
-    "values/anyOf/null;variable-references-var-name-are+object+string+string;pattern-a-za-z0-9-t+3more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1path~1string@2"
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@10"
-            },
-            {
-              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@4"
-            },
-            {
-              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@9"
-            },
-            {
-              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@2"
-            },
-            {
-              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@5"
-            },
-            {
-              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@7"
-            },
-            {
-              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@8"
-            },
-            {
-              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern"
-            },
-            {
-              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@3"
-            },
-            {
-              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@6"
-            }
-          ],
-          "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-          "type": "string"
-        },
-        {
-          "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1path~1object"
-        },
-        {
-          "$ref": "#/$defs/values~1string;pattern-t"
-        },
-        {
-          "$ref": "#/$defs/values~1string;pattern-null-null-null"
-        },
-        {
-          "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-          "type": "null"
-        }
-      ]
-    },
-    "values/nameOverride": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1path~1string@2"
-        },
-        {
-          "$ref": "#/$defs/values~1not~1:t"
-        },
-        {
-          "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1path~1object"
-        },
-        {
-          "$ref": "#/$defs/values~1string;pattern-t"
-        },
-        {
-          "$ref": "#/$defs/values~1string;pattern-null-null-null"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "$ref": "#/$defs/values~1string"
-        }
-      ]
-    },
-    "values/nfs.path/anyOf/null;variable-references-var-name-are+object+string+string;pattern-a-za-z0-9-t+3more": {
-      "$ref": "#/$defs/values~1anyOf~1null;variable-references-var-name-are+object+string+string;pattern-a-za-z0-9-t+3more"
-    },
-    "values/not/:t": {
-      "not": {
-        "$ref": "#/$defs/t"
-      }
-    },
-    "values/object": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
-    },
-    "values/podAnnotations/allOf/object+object,null;annotations-is-an-unstructured": {
-      "allOf": [
-        {
-          "additionalProperties": {
-            "$ref": "#/$defs/values~1securityContext.capabilities.add@items"
-          },
-          "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
-          "type": [
-            "object",
-            "null"
-          ]
-        },
-        {
-          "$ref": "#/$defs/values~1object"
-        }
-      ]
-    },
-    "values/podDisruptionBudget/string;pattern-0-1-9": {
-      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
-      "type": "string"
-    },
-    "values/podSecurityContext.seLinuxOptions": {
-      "additionalProperties": false,
-      "description": "SELinuxOptions are the labels to be applied to the container",
-      "properties": {
-        "level": {
-          "description": "Level is SELinux level label that applies to the container.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "role": {
-          "description": "Role is a SELinux role label that applies to the container.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "type": {
-          "description": "Type is a SELinux type label that applies to the container.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "user": {
-          "description": "User is a SELinux user label that applies to the container.",
-          "type": [
-            "string",
-            "null"
-          ]
-        }
-      },
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "values/podSecurityContext.seccompProfile": {
-      "additionalProperties": false,
-      "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
-      "properties": {
-        "localhostProfile": {
-          "description": "localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is \"Localhost\". Must NOT be set for any other type.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "type": {
-          "description": "type indicates which kind of seccomp profile will be applied. Valid options are:\n\nLocalhost - a profile defined in a file on the node should be used. RuntimeDefault - the container runtime default profile should be used. Unconfined - no profile should be applied.",
-          "type": "string"
-        }
-      },
-      "required": [
-        "type"
-      ],
-      "type": [
-        "object",
-        "null"
-      ],
-      "x-kubernetes-unions": [
-        {
-          "discriminator": "type",
-          "fields-to-discriminateBy": {
-            "localhostProfile": "LocalhostProfile"
-          }
-        }
-      ]
-    },
-    "values/podSecurityContext.windowsOptions": {
-      "additionalProperties": false,
-      "description": "WindowsSecurityContextOptions contain Windows-specific options and credentials.",
-      "properties": {
-        "gmsaCredentialSpec": {
-          "description": "GMSACredentialSpec is where the GMSA admission webhook (https://github.com/kubernetes-sigs/windows-gmsa) inlines the contents of the GMSA credential spec named by the GMSACredentialSpecName field.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "gmsaCredentialSpecName": {
-          "description": "GMSACredentialSpecName is the name of the GMSA credential spec to use.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "hostProcess": {
-          "description": "HostProcess determines if a container should be run as a 'Host Process' container. All of a Pod's containers must have the same effective HostProcess value (it is not allowed to have a mix of HostProcess containers and non-HostProcess containers). In addition, if HostProcess is true then HostNetwork must also be set to true.",
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
-        "runAsUserName": {
-          "description": "The UserName in Windows to run the entrypoint of the container process. Defaults to the user specified in image metadata if unspecified. May also be set in PodSecurityContext. If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
-          "type": [
-            "string",
-            "null"
-          ]
-        }
-      },
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "values/securityContext.capabilities.add@items": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "values/serviceAccount/null;name-must-be-unique": {
-      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-      "type": "null"
-    },
-    "values/serviceAccount/string;name-must-be-unique": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@10"
-        },
-        {
-          "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@8"
-        },
-        {
-          "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern"
-        },
-        {
-          "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@6"
-        }
-      ],
-      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-      "type": "string"
-    },
-    "values/string": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@10"
-        },
-        {
-          "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@8"
-        },
-        {
-          "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern"
-        },
-        {
-          "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@6"
-        }
-      ],
-      "type": "string"
-    },
-    "values/string;pattern-a-za-z0-9-t": {
-      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "values/string;pattern-null-null-null": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
-    },
-    "values/string;pattern-t": {
-      "pattern": "^[ \\t]*(#.*)?$",
-      "type": "string"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -968,9 +453,62 @@
     },
     {
       "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+3more"
+      },
+      "then": false
+    },
+    {
+      "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1nfs.mountOptions:t"
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+storageClass.provisionerName+1more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "nfs": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "nfs"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "nfs": {}
+                  },
+                  "required": [
+                    "nfs"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1storageClass.create:t"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+storageClass.provisionerName+1more@2"
           },
           {
             "$ref": "#/$defs/constrains~1storageClass.create:t"
@@ -981,2194 +519,54 @@
         "additionalProperties": {},
         "properties": {
           "nfs": {
-            "additionalProperties": {},
-            "properties": {
-              "mountOptions": {
-                "additionalProperties": {
-                  "$ref": "#/$defs/values~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
-                },
-                "items": {
-                  "$ref": "#/$defs/values~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "storageClass": {
-            "properties": {
-              "provisionerName": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "provisionerName"
-            ],
             "type": "object"
-          }
-        },
-        "required": [
-          "storageClass"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "storageClass": {
-            "additionalProperties": {},
-            "description": "For creating the StorageClass automatically:",
-            "properties": {
-              "provisionerName": {
-                "type": [
-                  "null",
-                  "string"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "rbac": {}
-              },
-              "required": [
-                "rbac"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "rbac": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "rbac"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1nfs.mountOptions:t"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "nfs": {
-                "additionalProperties": {},
-                "properties": {
-                  "mountOptions": {
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "storageClass": {
-                "additionalProperties": {},
-                "description": "For creating the StorageClass automatically:",
-                "properties": {
-                  "accessModes": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1path~1string@2"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1path~1object"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1string;pattern-t"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1string;pattern-null-null-null"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1string"
-                      }
-                    ],
-                    "description": "Set access mode - ReadWriteOnce, ReadOnlyMany or ReadWriteMany"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "nfs": {
-                "required": [
-                  "server"
-                ],
-                "type": "object"
-              }
-            }
-          },
-          {
-            "if": {
-              "properties": {
-                "nfs": {
-                  "$ref": "#/$defs/constrains~1server!=null"
-                }
-              },
-              "required": [
-                "nfs"
-              ],
-              "type": "object"
-            },
-            "then": {
-              "additionalProperties": {},
-              "properties": {
-                "nfs": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "server": {
-                      "not": {
-                        "type": "null"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "podDisruptionBudget": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "podDisruptionBudget"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "podDisruptionBudget": {}
-              },
-              "required": [
-                "podDisruptionBudget"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "storageClass": {
-                "properties": {
-                  "pathPattern": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "pathPattern"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "storageClass"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/$defs/constrains~1storageClass.create:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "storageClass": {
-            "additionalProperties": {},
-            "description": "For creating the StorageClass automatically:",
-            "properties": {
-              "pathPattern": {
-                "$ref": "#/$defs/helm-double-quoted-safe",
-                "description": "Specifies a template for creating a directory path via PVC metadata's such as labels, annotations, name or namespace.\nIgnored if value not set."
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "serviceAccount": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "serviceAccount"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "serviceAccount": {}
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "properties": {
-          "podSecurityPolicy": {
-            "$ref": "#/$defs/constrains~1enabled:t"
-          }
-        },
-        "required": [
-          "podSecurityPolicy"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "labels": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/values~1not~1:t"
-              },
-              {
-                "$ref": "#/$defs/values~1object"
-              }
-            ],
-            "description": "Additional labels for any resource created"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1nfs.mountOptions:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1buildMode:t+nfs.mountOptions:t"
-          }
-        ]
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "nfs": {
-                "required": [
-                  "path"
-                ],
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "nfs": {
-                "additionalProperties": {},
-                "properties": {
-                  "path": {
-                    "not": {
-                      "type": "null"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "image": {
-          "additionalProperties": {},
-          "properties": {
-            "repository": {
-              "$ref": "#/$defs/helm-double-quoted-safe~1:helm-double-quoted-safe"
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "podSecurityPolicy": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "podSecurityPolicy"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "podSecurityPolicy": {}
-              },
-              "required": [
-                "podSecurityPolicy"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "image": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "image"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "image": {}
-              },
-              "required": [
-                "image"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "properties": {
-          "fullnameOverride": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "fullnameOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "leaderElection": {}
-              },
-              "required": [
-                "leaderElection"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "leaderElection": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "leaderElection"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "storageClass": {
-                "properties": {
-                  "onDelete": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "onDelete"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "storageClass"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/$defs/constrains~1storageClass.create:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "storageClass": {
-            "additionalProperties": {},
-            "description": "For creating the StorageClass automatically:",
-            "properties": {
-              "onDelete": {
-                "$ref": "#/$defs/helm-double-quoted-safe",
-                "description": "If it exists and has 'delete' value, delete the directory. If it exists and has 'retain' value, save the directory.\nOverrides archiveOnDelete.\nIgnored if value not set."
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "nfs": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "nfs"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "nfs": {}
-              },
-              "required": [
-                "nfs"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1nfs.mountOptions:t"
-          },
-          {
-            "properties": {
-              "serviceAccount": {
-                "$ref": "#/$defs/constrains~1create:t"
-              }
-            },
-            "required": [
-              "serviceAccount"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/$defs/constrains~1rbac.create:t"
-          },
-          {
-            "properties": {
-              "podDisruptionBudget": {
-                "$ref": "#/$defs/constrains~1enabled:t"
-              }
-            },
-            "required": [
-              "podDisruptionBudget"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/$defs/constrains~1storageClass.create:t"
-          }
-        ]
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "labels": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/values~1not~1:t"
-                  },
-                  {
-                    "$ref": "#/$defs/values~1allOf~1object+object,null;map-of-string-keys"
-                  }
-                ],
-                "description": "Additional labels for any resource created"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "nameOverride": {
-                "$ref": "#/$defs/values~1nameOverride"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "image": {
-          "additionalProperties": {},
-          "properties": {
-            "tag": {
-              "$ref": "#/$defs/helm-double-quoted-safe~1:helm-double-quoted-safe"
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1storageClass.create:t"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "nfs": {
-                "additionalProperties": {},
-                "properties": {
-                  "mountOptions": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "items": {},
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1not~1:t"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "description": "mountOptions controls the mountOptions for dynamically provisioned PersistentVolumes of this storage class. e.g. [\"ro\", \"soft\"]. Not validated - mount of the PVs will simply fail if one is invalid.",
-                        "items": {
-                          "$ref": "#/$defs/values~1securityContext.capabilities.add@items"
-                        },
-                        "type": "array"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "additionalProperties": {},
-                        "items": {},
-                        "type": "array"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "storageClass": {
-                "additionalProperties": {},
-                "description": "For creating the StorageClass automatically:",
-                "properties": {
-                  "archiveOnDelete": {
-                    "$ref": "#/$defs/helm-double-quoted-safe",
-                    "description": "When set to false your PVs will not be archived by the provisioner upon deletion of the PVC."
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1buildMode:t+nfs.mountOptions:t"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "nfs": {
-                "additionalProperties": {},
-                "properties": {
-                  "server": {
-                    "$ref": "#/$defs/values~1anyOf~1null;variable-references-var-name-are+object+string+string;pattern-a-za-z0-9-t+3more"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "nfs": {
-                "$ref": "#/$defs/constrains~1path"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "leaderElection": {
-          "additionalProperties": {},
-          "properties": {
-            "enabled": {
-              "description": "When set to false leader election will be disabled",
-              "type": [
-                "boolean",
-                "null"
-              ]
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "nameOverride": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1rbac.create:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceAccount": {
-            "additionalProperties": {},
-            "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/constrains~1path~1string@2"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@10"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@4"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@9"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@2"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@5"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@7"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@8"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@3"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@6"
-                      }
-                    ],
-                    "description": "Name of the object being referenced.",
-                    "type": "string"
-                  },
-                  {
-                    "$ref": "#/$defs/values~1not~1:t"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1path~1object"
-                  }
-                ],
-                "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
-              }
-            }
           }
         }
       }
     }
   ],
   "properties": {
-    "affinity": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/values~1not~1:t"
-        },
-        {
-          "additionalProperties": false,
-          "description": "Affinity is a group of affinity scheduling rules.",
-          "properties": {
-            "nodeAffinity": {
-              "additionalProperties": false,
-              "description": "Node affinity is a group of node affinity scheduling rules.",
-              "properties": {
-                "preferredDuringSchedulingIgnoredDuringExecution": {
-                  "description": "The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node matches the corresponding matchExpressions; the node(s) with the highest sum are the most preferred.",
-                  "items": {
-                    "additionalProperties": false,
-                    "description": "An empty preferred scheduling term matches all objects with implicit weight 0 (i.e. it's a no-op). A null preferred scheduling term matches no objects (i.e. is also a no-op).",
-                    "properties": {
-                      "preference": {
-                        "additionalProperties": false,
-                        "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
-                        "properties": {
-                          "matchExpressions": {
-                            "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values@2"
-                          },
-                          "matchFields": {
-                            "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values"
-                          }
-                        },
-                        "type": "object",
-                        "x-kubernetes-map-type": "atomic"
-                      },
-                      "weight": {
-                        "description": "Weight associated with matching the corresponding nodeSelectorTerm, in the range 1-100.",
-                        "format": "int32",
-                        "type": "integer"
-                      }
-                    },
-                    "required": [
-                      "weight",
-                      "preference"
-                    ],
-                    "type": [
-                      "object",
-                      "null"
-                    ]
-                  },
-                  "type": [
-                    "array",
-                    "null"
-                  ]
-                },
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                  "additionalProperties": false,
-                  "description": "A node selector represents the union of the results of one or more label queries over a set of nodes; that is, it represents the OR of the selectors represented by the node selector terms.",
-                  "properties": {
-                    "nodeSelectorTerms": {
-                      "description": "Required. A list of node selector terms. The terms are ORed.",
-                      "items": {
-                        "additionalProperties": false,
-                        "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
-                        "properties": {
-                          "matchExpressions": {
-                            "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values@2"
-                          },
-                          "matchFields": {
-                            "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values"
-                          }
-                        },
-                        "type": [
-                          "object",
-                          "null"
-                        ],
-                        "x-kubernetes-map-type": "atomic"
-                      },
-                      "type": "array"
-                    }
-                  },
-                  "required": [
-                    "nodeSelectorTerms"
-                  ],
-                  "type": [
-                    "object",
-                    "null"
-                  ],
-                  "x-kubernetes-map-type": "atomic"
-                }
-              },
-              "type": [
-                "object",
-                "null"
-              ]
-            },
-            "podAffinity": {
-              "additionalProperties": false,
-              "description": "Pod affinity is a group of inter pod affinity scheduling rules.",
-              "properties": {
-                "preferredDuringSchedulingIgnoredDuringExecution": {
-                  "description": "The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
-                  "items": {
-                    "$ref": "#/$defs/constrains~1podAffinityTerm.labelSelector.matchExpressions@items.key+9more"
-                  },
-                  "type": [
-                    "array",
-                    "null"
-                  ]
-                },
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                  "description": "If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
-                  "items": {
-                    "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more"
-                  },
-                  "type": [
-                    "array",
-                    "null"
-                  ]
-                }
-              },
-              "type": [
-                "object",
-                "null"
-              ]
-            },
-            "podAntiAffinity": {
-              "additionalProperties": false,
-              "description": "Pod anti affinity is a group of inter pod anti affinity scheduling rules.",
-              "properties": {
-                "preferredDuringSchedulingIgnoredDuringExecution": {
-                  "description": "The scheduler will prefer to schedule pods to nodes that satisfy the anti-affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling anti-affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
-                  "items": {
-                    "$ref": "#/$defs/constrains~1podAffinityTerm.labelSelector.matchExpressions@items.key+9more"
-                  },
-                  "type": [
-                    "array",
-                    "null"
-                  ]
-                },
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                  "description": "If the anti-affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the anti-affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
-                  "items": {
-                    "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more"
-                  },
-                  "type": [
-                    "array",
-                    "null"
-                  ]
-                }
-              },
-              "type": [
-                "object",
-                "null"
-              ]
-            }
-          },
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/values~1affinity~1object"
-        },
-        {
-          "type": "null"
-        }
-      ]
-    },
-    "buildMode": {},
+    "affinity": {},
     "fullnameOverride": {},
     "global": {},
-    "image": {
-      "additionalProperties": {},
-      "properties": {
-        "pullPolicy": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/constrains~1path~1string@2"
-            },
-            {
-              "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
-              "type": "null"
-            },
-            {
-              "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
-            },
-            {
-              "$ref": "#/$defs/constrains~1path~1object"
-            },
-            {
-              "$ref": "#/$defs/values~1string;pattern-t"
-            },
-            {
-              "$ref": "#/$defs/values~1string;pattern-null-null-null"
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@10"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@4"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@9"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@2"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@5"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@7"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@8"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@3"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@6"
-                }
-              ],
-              "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
-              "type": "string"
-            }
-          ]
-        },
-        "repository": {},
-        "tag": {}
-      },
-      "type": "object"
-    },
-    "imagePullSecrets": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/values~1not~1:t"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "description": "ImagePullSecrets is an optional list of references to secrets in the same namespace to use for pulling any of the images used by this PodSpec. If specified, these secrets will be passed to individual puller implementations for them to use. More info: https://kubernetes.io/docs/concepts/containers/images#specifying-imagepullsecrets-on-a-pod",
-          "items": {
-            "additionalProperties": false,
-            "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
-            "properties": {
-              "name": {
-                "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                "type": [
-                  "string",
-                  "null"
-                ]
-              }
-            },
-            "type": [
-              "object",
-              "null"
-            ],
-            "x-kubernetes-map-type": "atomic"
-          },
-          "type": "array",
-          "x-kubernetes-patch-merge-key": "name",
-          "x-kubernetes-patch-strategy": "merge"
-        }
-      ]
-    },
+    "image": {},
+    "imagePullSecrets": {},
     "labels": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/values~1not~1:t"
-        },
-        {
-          "$ref": "#/$defs/values~1allOf~1object+object,null;map-of-string-keys"
-        },
-        {
-          "$ref": "#/$defs/values~1affinity~1object"
-        }
-      ],
       "description": "Additional labels for any resource created"
     },
-    "leaderElection": {
-      "additionalProperties": {},
-      "properties": {
-        "enabled": {
-          "anyOf": [
-            {
-              "enum": [
-                false
-              ]
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "boolean"
-            }
-          ],
-          "description": "When set to false leader election will be disabled"
-        }
-      },
-      "type": "object"
-    },
-    "nameOverride": {
-      "$ref": "#/$defs/values~1nameOverride"
-    },
+    "leaderElection": {},
+    "nameOverride": {},
     "nfs": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "$ref": "#/$defs/constrains~1mountOptions:t"
-          },
-          "then": {
-            "allOf": [
-              {
-                "if": {
-                  "$ref": "#/$defs/constrains~1server!=null"
-                },
-                "then": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "server": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/$defs/constrains~1path~1string@2"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1path~1object"
-                        },
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@10"
-                            },
-                            {
-                              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@4"
-                            },
-                            {
-                              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@9"
-                            },
-                            {
-                              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@2"
-                            },
-                            {
-                              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@5"
-                            },
-                            {
-                              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@7"
-                            },
-                            {
-                              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@8"
-                            },
-                            {
-                              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern"
-                            },
-                            {
-                              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@3"
-                            },
-                            {
-                              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@6"
-                            }
-                          ],
-                          "description": "server is the hostname or IP address of the NFS server. More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs",
-                          "type": "string"
-                        }
-                      ]
-                    }
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "reclaimPolicy": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1path~1string@2"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1path~1object"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1string;pattern-t"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1string;pattern-null-null-null"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@10"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@4"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@9"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@2"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@5"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@7"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@8"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@3"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@6"
-                          }
-                        ],
-                        "description": "persistentVolumeReclaimPolicy defines what happens to a persistent volume when released from its claim. Valid options are Retain (default for manually created PersistentVolumes), Delete (default for dynamically provisioned PersistentVolumes), and Recycle (deprecated). Recycle must be supported by the volume plugin underlying this PersistentVolume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#reclaiming",
-                        "type": "string"
-                      },
-                      {
-                        "description": "persistentVolumeReclaimPolicy defines what happens to a persistent volume when released from its claim. Valid options are Retain (default for manually created PersistentVolumes), Delete (default for dynamically provisioned PersistentVolumes), and Recycle (deprecated). Recycle must be supported by the volume plugin underlying this PersistentVolume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#reclaiming",
-                        "type": "null"
-                      }
-                    ],
-                    "description": "Reclaim policy for the main nfs volume"
-                  }
-                }
-              },
-              {
-                "$ref": "#/$defs/constrains~1path"
-              }
-            ]
-          }
-        }
-      ],
       "properties": {
-        "mountOptions": {
-          "anyOf": [
-            {
-              "const": null
-            },
-            {
-              "$ref": "#/$defs/values~1not~1:t"
-            },
-            {
-              "type": "object"
-            },
-            {
-              "description": "mountOptions is the list of mount options, e.g. [\"ro\", \"soft\"]. Not validated - mount will simply fail if one is invalid. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes/#mount-options",
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "path": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/values~1nfs.path~1anyOf~1null;variable-references-var-name-are+object+string+string;pattern-a-za-z0-9-t+3more"
-            },
-            {
-              "const": "/nfs-storage"
-            }
-          ]
-        },
-        "reclaimPolicy": {
-          "description": "Reclaim policy for the main nfs volume"
-        },
-        "server": {
-          "anyOf": [
-            {
-              "const": null
-            },
-            {
-              "$ref": "#/$defs/values~1nfs.path~1anyOf~1null;variable-references-var-name-are+object+string+string;pattern-a-za-z0-9-t+3more"
-            }
-          ]
-        },
-        "volumeName": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/constrains~1path~1string@2"
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@10"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@4"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@9"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@2"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@5"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@7"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@8"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@3"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@6"
-                }
-              ],
-              "description": "This must match the Name of a Volume.",
-              "type": "string"
-            },
-            {
-              "$ref": "#/$defs/constrains~1path~1object"
-            }
-          ]
-        }
-      },
-      "required": [
-        "volumeName"
-      ],
-      "type": "object"
+        "mountOptions": {}
+      }
     },
-    "nodeSelector": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/values~1not~1:t"
-        },
-        {
-          "additionalProperties": {
-            "$ref": "#/$defs/values~1securityContext.capabilities.add@items"
-          },
-          "description": "NodeSelector is a selector which must be true for the pod to fit on a node. Selector which must match a node's labels for the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/",
-          "type": "object",
-          "x-kubernetes-map-type": "atomic"
-        },
-        {
-          "$ref": "#/$defs/values~1affinity~1object"
-        },
-        {
-          "type": "null"
-        }
-      ]
-    },
+    "nodeSelector": {},
     "podAnnotations": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/values~1not~1:t"
-        },
-        {
-          "$ref": "#/$defs/values~1affinity~1object"
-        },
-        {
-          "$ref": "#/$defs/values~1podAnnotations~1allOf~1object+object,null;annotations-is-an-unstructured"
-        }
-      ],
       "description": "Deployment pod annotations"
     },
-    "podDisruptionBudget": {
-      "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "$ref": "#/$defs/constrains~1enabled:t"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "maxUnavailable": {
-                "anyOf": [
-                  {
-                    "oneOf": [
-                      {
-                        "$ref": "#/$defs/values~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more@2"
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
-                          },
-                          {
-                            "type": "integer"
-                          },
-                          {
-                            "$ref": "#/$defs/values~1string;pattern-t"
-                          },
-                          {
-                            "$ref": "#/$defs/values~1podDisruptionBudget~1string;pattern-0-1-9"
-                          },
-                          {
-                            "$ref": "#/$defs/values~1string;pattern-null-null-null"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/$defs/values~1not~1:t"
-                  }
-                ]
-              }
-            }
-          }
-        }
-      ],
-      "properties": {
-        "enabled": {},
-        "maxUnavailable": {}
-      },
-      "type": "object"
-    },
-    "podSecurityContext": {
-      "additionalProperties": false,
-      "description": "PodSecurityContext holds pod-level security attributes and common container settings. Some fields are also present in container.securityContext.  Field values of container.securityContext take precedence over field values of PodSecurityContext.",
-      "properties": {
-        "fsGroup": {
-          "description": "A special supplemental group that applies to all containers in a pod. Some volume types allow the Kubelet to change the ownership of that volume to be owned by the pod:\n\n1. The owning GID will be the FSGroup 2. The setgid bit is set (new files created in the volume will be owned by FSGroup) 3. The permission bits are OR'd with rw-rw----\n\nIf unset, the Kubelet will not modify the ownership and permissions of any volume. Note that this field cannot be set when spec.os.name is windows.",
-          "format": "int64",
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "fsGroupChangePolicy": {
-          "description": "fsGroupChangePolicy defines behavior of changing ownership and permission of the volume before being exposed inside Pod. This field will only apply to volume types which support fsGroup based ownership(and permissions). It will have no effect on ephemeral volume types such as: secret, configmaps and emptydir. Valid values are \"OnRootMismatch\" and \"Always\". If not specified, \"Always\" is used. Note that this field cannot be set when spec.os.name is windows.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "runAsGroup": {
-          "description": "The GID to run the entrypoint of the container process. Uses runtime default if unset. May also be set in SecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence for that container. Note that this field cannot be set when spec.os.name is windows.",
-          "format": "int64",
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "runAsNonRoot": {
-          "description": "Indicates that the container must run as a non-root user. If true, the Kubelet will validate the image at runtime to ensure that it does not run as UID 0 (root) and fail to start the container if it does. If unset or false, no such validation will be performed. May also be set in SecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
-        "runAsUser": {
-          "description": "The UID to run the entrypoint of the container process. Defaults to user specified in image metadata if unspecified. May also be set in SecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence for that container. Note that this field cannot be set when spec.os.name is windows.",
-          "format": "int64",
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "seLinuxOptions": {
-          "$ref": "#/$defs/values~1podSecurityContext.seLinuxOptions"
-        },
-        "seccompProfile": {
-          "$ref": "#/$defs/values~1podSecurityContext.seccompProfile"
-        },
-        "supplementalGroups": {
-          "description": "A list of groups applied to the first process run in each container, in addition to the container's primary GID, the fsGroup (if specified), and group memberships defined in the container image for the uid of the container process. If unspecified, no additional groups are added to any container. Note that group memberships defined in the container image for the uid of the container process are still effective, even if they are not included in this list. Note that this field cannot be set when spec.os.name is windows.",
-          "items": {
-            "format": "int64",
-            "type": [
-              "integer",
-              "null"
-            ]
-          },
-          "type": [
-            "array",
-            "null"
-          ]
-        },
-        "sysctls": {
-          "description": "Sysctls hold a list of namespaced sysctls used for the pod. Pods with unsupported sysctls (by the container runtime) might fail to launch. Note that this field cannot be set when spec.os.name is windows.",
-          "items": {
-            "additionalProperties": false,
-            "description": "Sysctl defines a kernel parameter to be set",
-            "properties": {
-              "name": {
-                "description": "Name of a property to set",
-                "type": "string"
-              },
-              "value": {
-                "description": "Value of a property to set",
-                "type": "string"
-              }
-            },
-            "required": [
-              "name",
-              "value"
-            ],
-            "type": [
-              "object",
-              "null"
-            ]
-          },
-          "type": [
-            "array",
-            "null"
-          ]
-        },
-        "windowsOptions": {
-          "$ref": "#/$defs/values~1podSecurityContext.windowsOptions"
-        }
-      },
-      "type": [
-        "object",
-        "null"
-      ]
-    },
+    "podDisruptionBudget": {},
+    "podSecurityContext": {},
     "podSecurityPolicy": {
-      "additionalProperties": {},
-      "description": "If true, create & use Pod Security Policy resources\nhttps://kubernetes.io/docs/concepts/policy/pod-security-policy/",
-      "properties": {
-        "enabled": {}
-      },
-      "type": "object"
+      "description": "If true, create & use Pod Security Policy resources\nhttps://kubernetes.io/docs/concepts/policy/pod-security-policy/"
     },
-    "priorityClassName": {},
     "rbac": {
-      "additionalProperties": {},
-      "description": "For RBAC support:",
-      "properties": {
-        "create": {
-          "description": "Specifies whether RBAC resources should be created"
-        }
-      },
-      "type": "object"
+      "description": "For RBAC support:"
     },
-    "replicaCount": {
-      "anyOf": [
-        {
-          "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
-          "format": "int32",
-          "type": "integer"
-        },
-        {
-          "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
-          "format": "int32",
-          "type": "null"
-        },
-        {
-          "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
-        },
-        {
-          "$ref": "#/$defs/values~1string;pattern-t"
-        },
-        {
-          "$ref": "#/$defs/values~1podDisruptionBudget~1string;pattern-0-1-9"
-        },
-        {
-          "$ref": "#/$defs/values~1string;pattern-null-null-null"
-        }
-      ]
-    },
+    "replicaCount": {},
     "resources": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/values~1not~1:t"
-        },
-        {
-          "$ref": "#/$defs/values~1affinity~1object"
-        },
-        {
-          "additionalProperties": false,
-          "description": "ResourceRequirements describes the compute resource requirements.",
-          "properties": {
-            "claims": {
-              "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
-              "items": {
-                "additionalProperties": false,
-                "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-                "properties": {
-                  "name": {
-                    "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "name"
-                ],
-                "type": [
-                  "object",
-                  "null"
-                ]
-              },
-              "type": [
-                "array",
-                "null"
-              ],
-              "x-kubernetes-list-map-keys": [
-                "name"
-              ],
-              "x-kubernetes-list-type": "map"
-            },
-            "limits": {
-              "additionalProperties": {
-                "oneOf": [
-                  {
-                    "$ref": "#/$defs/values~1securityContext.capabilities.add@items"
-                  },
-                  {
-                    "type": [
-                      "number",
-                      "null"
-                    ]
-                  }
-                ]
-              },
-              "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
-              "type": [
-                "object",
-                "null"
-              ]
-            },
-            "requests": {
-              "additionalProperties": {
-                "oneOf": [
-                  {
-                    "$ref": "#/$defs/values~1securityContext.capabilities.add@items"
-                  },
-                  {
-                    "type": [
-                      "number",
-                      "null"
-                    ]
-                  }
-                ]
-              },
-              "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
-              "type": [
-                "object",
-                "null"
-              ]
-            }
-          },
-          "type": "object"
-        },
-        {
-          "type": "null"
-        }
-      ],
       "description": "limits:\ncpu: 100m\nmemory: 128Mi\nrequests:\ncpu: 100m\nmemory: 128Mi"
     },
-    "securityContext": {
-      "additionalProperties": false,
-      "description": "SecurityContext holds security configuration that will be applied to a container. Some fields are present in both SecurityContext and PodSecurityContext.  When both are set, the values in SecurityContext take precedence.",
-      "properties": {
-        "allowPrivilegeEscalation": {
-          "description": "AllowPrivilegeEscalation controls whether a process can gain more privileges than its parent process. This bool directly controls if the no_new_privs flag will be set on the container process. AllowPrivilegeEscalation is true always when the container is: 1) run as Privileged 2) has CAP_SYS_ADMIN Note that this field cannot be set when spec.os.name is windows.",
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
-        "capabilities": {
-          "additionalProperties": false,
-          "description": "Adds and removes POSIX capabilities from running containers.",
-          "properties": {
-            "add": {
-              "description": "Added capabilities",
-              "items": {
-                "$ref": "#/$defs/values~1securityContext.capabilities.add@items"
-              },
-              "type": [
-                "array",
-                "null"
-              ]
-            },
-            "drop": {
-              "description": "Removed capabilities",
-              "items": {
-                "$ref": "#/$defs/values~1securityContext.capabilities.add@items"
-              },
-              "type": [
-                "array",
-                "null"
-              ]
-            }
-          },
-          "type": [
-            "object",
-            "null"
-          ]
-        },
-        "privileged": {
-          "description": "Run container in privileged mode. Processes in privileged containers are essentially equivalent to root on the host. Defaults to false. Note that this field cannot be set when spec.os.name is windows.",
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
-        "procMount": {
-          "description": "procMount denotes the type of proc mount to use for the containers. The default is DefaultProcMount which uses the container runtime defaults for readonly paths and masked paths. This requires the ProcMountType feature flag to be enabled. Note that this field cannot be set when spec.os.name is windows.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "readOnlyRootFilesystem": {
-          "description": "Whether this container has a read-only root filesystem. Default is false. Note that this field cannot be set when spec.os.name is windows.",
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
-        "runAsGroup": {
-          "description": "The GID to run the entrypoint of the container process. Uses runtime default if unset. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence. Note that this field cannot be set when spec.os.name is windows.",
-          "format": "int64",
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "runAsNonRoot": {
-          "description": "Indicates that the container must run as a non-root user. If true, the Kubelet will validate the image at runtime to ensure that it does not run as UID 0 (root) and fail to start the container if it does. If unset or false, no such validation will be performed. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
-        "runAsUser": {
-          "description": "The UID to run the entrypoint of the container process. Defaults to user specified in image metadata if unspecified. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence. Note that this field cannot be set when spec.os.name is windows.",
-          "format": "int64",
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "seLinuxOptions": {
-          "$ref": "#/$defs/values~1podSecurityContext.seLinuxOptions"
-        },
-        "seccompProfile": {
-          "$ref": "#/$defs/values~1podSecurityContext.seccompProfile"
-        },
-        "windowsOptions": {
-          "$ref": "#/$defs/values~1podSecurityContext.windowsOptions"
-        }
-      },
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "serviceAccount": {
-      "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "$ref": "#/$defs/constrains~1create:t"
-          },
-          "then": {
-            "allOf": [
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "name": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/values~1serviceAccount~1string;name-must-be-unique"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1path~1string@2"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1not~1:t"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1path~1object"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1string;pattern-t"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1serviceAccount~1null;name-must-be-unique"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1string;pattern-null-null-null"
-                      }
-                    ],
-                    "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "annotations": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/values~1not~1:t"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1podAnnotations~1allOf~1object+object,null;annotations-is-an-unstructured"
-                      }
-                    ],
-                    "description": "Annotations to add to the service account"
-                  }
-                }
-              }
-            ]
-          }
-        }
-      ],
-      "properties": {
-        "annotations": {
-          "description": "Annotations to add to the service account"
-        },
-        "create": {
-          "description": "Specifies whether a ServiceAccount should be created"
-        },
-        "name": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/constrains~1path~1string@2"
-            },
-            {
-              "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
-              "type": "null"
-            },
-            {
-              "$ref": "#/$defs/values~1not~1:t"
-            },
-            {
-              "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
-            },
-            {
-              "$ref": "#/$defs/constrains~1path~1object"
-            },
-            {
-              "$ref": "#/$defs/values~1string;pattern-t"
-            },
-            {
-              "$ref": "#/$defs/values~1string;pattern-null-null-null"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@10"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@4"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@9"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@2"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@5"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@7"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@8"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@3"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@6"
-                }
-              ],
-              "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
-              "type": "string"
-            }
-          ],
-          "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
-        }
-      },
-      "type": "object"
-    },
+    "securityContext": {},
+    "serviceAccount": {},
     "storageClass": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "$ref": "#/$defs/constrains~1create:t"
-          },
-          "then": {
-            "allOf": [
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "annotations": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/values~1not~1:t"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1podAnnotations~1allOf~1object+object,null;annotations-is-an-unstructured"
-                      }
-                    ],
-                    "description": "Storage class annotations"
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "name": {
-                    "allOf": [
-                      {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/values~1serviceAccount~1string;name-must-be-unique"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1path~1string@2"
-                          },
-                          {
-                            "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1path~1object"
-                          },
-                          {
-                            "$ref": "#/$defs/values~1string;pattern-t"
-                          },
-                          {
-                            "$ref": "#/$defs/values~1serviceAccount~1null;name-must-be-unique"
-                          },
-                          {
-                            "$ref": "#/$defs/values~1string;pattern-null-null-null"
-                          }
-                        ]
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Set a StorageClass name\nIgnored if storageClass.create is false"
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "reclaimPolicy": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1path~1string@2"
-                      },
-                      {
-                        "description": "reclaimPolicy controls the reclaimPolicy for dynamically provisioned PersistentVolumes of this storage class. Defaults to Delete.",
-                        "type": "null"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1path~1object"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1string;pattern-t"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1string;pattern-null-null-null"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@10"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@4"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@9"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@2"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@5"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@7"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@8"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@3"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@6"
-                          }
-                        ],
-                        "description": "reclaimPolicy controls the reclaimPolicy for dynamically provisioned PersistentVolumes of this storage class. Defaults to Delete.",
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Method used to reclaim an obsoleted volume"
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "allowVolumeExpansion": {
-                    "anyOf": [
-                      {
-                        "description": "allowVolumeExpansion shows whether the storage class allow volume expand.",
-                        "type": "null"
-                      },
-                      {
-                        "description": "allowVolumeExpansion shows whether the storage class allow volume expand.",
-                        "type": "boolean"
-                      },
-                      {
-                        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
-                        "type": "string"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1string;pattern-t"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1string;pattern-null-null-null"
-                      }
-                    ],
-                    "description": "Allow volume to be expanded dynamically"
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "volumeBindingMode": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1path~1string@2"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
-                      },
-                      {
-                        "description": "volumeBindingMode indicates how PersistentVolumeClaims should be provisioned and bound.  When unset, VolumeBindingImmediate is used. This field is only honored by servers that enable the VolumeScheduling feature.",
-                        "type": "null"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1path~1object"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@10"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@4"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@9"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@2"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@5"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@7"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@8"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@3"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@6"
-                          }
-                        ],
-                        "description": "volumeBindingMode indicates how PersistentVolumeClaims should be provisioned and bound.  When unset, VolumeBindingImmediate is used. This field is only honored by servers that enable the VolumeScheduling feature.",
-                        "type": "string"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1string;pattern-t"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1string;pattern-null-null-null"
-                      }
-                    ],
-                    "description": "Set volume bindinng mode - Immediate or WaitForFirstConsumer"
-                  }
-                }
-              }
-            ]
-          }
-        }
-      ],
       "description": "For creating the StorageClass automatically:",
       "properties": {
         "accessModes": {
-          "description": "Set access mode - ReadWriteOnce, ReadOnlyMany or ReadWriteMany"
+          "description": "Set access mode - ReadWriteOnce, ReadOnlyMany or ReadWriteMany",
+          "type": "string"
         },
         "allowVolumeExpansion": {
           "description": "Allow volume to be expanded dynamically"
@@ -3202,125 +600,8 @@
       },
       "type": "object"
     },
-    "strategyType": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1path~1string@2"
-        },
-        {
-          "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@10"
-            },
-            {
-              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@4"
-            },
-            {
-              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@9"
-            },
-            {
-              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@2"
-            },
-            {
-              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@5"
-            },
-            {
-              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@7"
-            },
-            {
-              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@8"
-            },
-            {
-              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern"
-            },
-            {
-              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@3"
-            },
-            {
-              "$ref": "#/$defs/constrains~1path~1not~1keywords~1pattern@6"
-            }
-          ],
-          "description": "Type of deployment. Can be \"Recreate\" or \"RollingUpdate\". Default is RollingUpdate.",
-          "type": "string"
-        },
-        {
-          "$ref": "#/$defs/constrains~1path~1object"
-        },
-        {
-          "description": "Type of deployment. Can be \"Recreate\" or \"RollingUpdate\". Default is RollingUpdate.",
-          "type": "null"
-        },
-        {
-          "$ref": "#/$defs/values~1string;pattern-t"
-        },
-        {
-          "$ref": "#/$defs/values~1string;pattern-null-null-null"
-        }
-      ]
-    },
-    "tolerations": {
-      "anyOf": [
-        {
-          "description": "If specified, the pod's tolerations.",
-          "items": {
-            "additionalProperties": false,
-            "description": "The pod this Toleration is attached to tolerates any taint that matches the triple <key,value,effect> using the matching operator <operator>.",
-            "properties": {
-              "effect": {
-                "description": "Effect indicates the taint effect to match. Empty means match all taint effects. When specified, allowed values are NoSchedule, PreferNoSchedule and NoExecute.",
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "key": {
-                "description": "Key is the taint key that the toleration applies to. Empty means match all taint keys. If the key is empty, operator must be Exists; this combination means to match all values and all keys.",
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "operator": {
-                "description": "Operator represents a key's relationship to the value. Valid operators are Exists and Equal. Defaults to Equal. Exists is equivalent to wildcard for value, so that a pod can tolerate all taints of a particular category.",
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "tolerationSeconds": {
-                "description": "TolerationSeconds represents the period of time the toleration (which must be of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default, it is not set, which means tolerate the taint forever (do not evict). Zero and negative values will be treated as 0 (evict immediately) by the system.",
-                "format": "int64",
-                "type": [
-                  "integer",
-                  "null"
-                ]
-              },
-              "value": {
-                "description": "Value is the taint value the toleration matches to. If the operator is Exists, the value should be empty, otherwise just a regular string.",
-                "type": [
-                  "string",
-                  "null"
-                ]
-              }
-            },
-            "type": [
-              "object",
-              "null"
-            ]
-          },
-          "type": "array"
-        },
-        {
-          "$ref": "#/$defs/values~1not~1:t"
-        },
-        {
-          "type": "null"
-        }
-      ]
-    }
+    "strategyType": {},
+    "tolerations": {}
   },
   "type": "object"
 }

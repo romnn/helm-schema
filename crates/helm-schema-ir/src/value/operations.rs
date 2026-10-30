@@ -290,7 +290,7 @@ fn transfer_write_map(input: TransferInput<'_>, state: &mut State) -> Result<Val
     let TransferInput {
         function,
         arguments,
-        influences: _,
+        influences,
         first,
         last: _,
     } = input;
@@ -305,8 +305,12 @@ fn transfer_write_map(input: TransferInput<'_>, state: &mut State) -> Result<Val
             }
         })
     else {
+        if let Some(target) = state.map_target(&first) {
+            widen_map(&target, &influences, state);
+            return Ok(Value::with_influences(first, influences));
+        }
         invalidate(state);
-        return Ok(Value::influenced(first.inputs()));
+        return Ok(Value::influenced(influences));
     };
     let Some(id) = state.map_target(&first) else {
         return if matches!(
@@ -1135,6 +1139,46 @@ pub(super) fn inputs(arguments: &[Value], state: &State) -> BTreeSet<helm_schema
         .flat_map(|value| state.heap.freeze(value).inputs())
         .collect()
 }
+
+pub(super) fn widen_map(
+    target: &super::ObjectId,
+    influences: &BTreeSet<helm_schema_core::ValuesPath>,
+    state: &mut State,
+) {
+    let input_path = state.heap.arena.input_paths.borrow().get(target).cloned();
+    if let Some(path) = input_path {
+        state.reads.insert(super::RuntimeRead {
+            path,
+            condition: state.path_predicate(),
+            coverage: super::ReadCoverage::UnknownRegion,
+        });
+    }
+    let value = Value::leaf(Datum::Map {
+        view: MapType::Interface,
+        target: Some(target.clone()),
+    });
+    let inputs = state
+        .heap
+        .freeze(&value)
+        .inputs()
+        .union(influences)
+        .cloned()
+        .collect();
+    let Some(object) = state.heap.version.object(target) else {
+        return;
+    };
+    let multiplicity = object.multiplicity;
+    state.heap.install(
+        target.clone(),
+        ObjectVersion {
+            revision: state.heap.arena.snapshot(),
+            multiplicity,
+            data: ObjectData::Widened {
+                inputs: Rc::new(inputs),
+            },
+        },
+    );
+}
 pub(super) fn invalidate(state: &mut State) {
     let input_regions = Rc::new(state.heap.freeze(&Value::unknown()).reachable_inputs());
     for path in input_regions.iter() {
@@ -1426,13 +1470,7 @@ fn copy(
                 }
                 | Datum::Unknown(_),
             origin: _,
-        }) => {
-            if value.identity().is_some() {
-                Value::influenced(influences.clone())
-            } else {
-                state.consumed(value)
-            }
-        }
+        }) => copy_unstructured(value, state, &influences),
         ValueNode::Select { decision, yes, no } => Value::select(
             Rc::clone(decision),
             copy(yes, state, &mut seen.clone(), depth + 1),
@@ -1440,6 +1478,34 @@ fn copy(
         ),
     };
     Value::with_influences(copied, influences)
+}
+
+fn copy_unstructured(
+    value: &Value,
+    state: &mut State,
+    influences: &BTreeSet<helm_schema_core::ValuesPath>,
+) -> Value {
+    if value.identity().is_some() {
+        if matches!(
+            value.node.as_ref(),
+            ValueNode::Leaf(Leaf {
+                datum: Datum::Unknown(super::UnknownValue {
+                    types: super::TypeCoverage::Map(_),
+                    aliases: _
+                }),
+                origin: _,
+            })
+        ) || value
+            .identity()
+            .is_some_and(|path| path.segments().next().is_none())
+        {
+            state.heap.map(Remainder::Open)
+        } else {
+            Value::influenced(influences.clone())
+        }
+    } else {
+        state.consumed(value)
+    }
 }
 
 fn copy_field(

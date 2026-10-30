@@ -2,57 +2,340 @@
   "uses": [
     {
       "condition": [
-        []
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "affinity"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "affinity"
-    },
-    {
-      "condition": [
         [
           {
-            "path": "readinessProbe",
-            "type": "truthy"
+            "path": "configTarget",
+            "type": "eq",
+            "value": "ConfigMap"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "configTarget",
+                  "type": "eq",
+                  "value": null
+                }
+              ],
+              [
+                {
+                  "path": "configTarget",
+                  "type": "absent"
+                }
+              ],
+              [
+                {
+                  "path": "configTarget",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "readinessProbe",
-        "httpGet",
-        "port"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "configLoggingRestApi.api_port"
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": ""
     },
     {
       "condition": [
         [
           {
             "path": "configTarget",
-            "type": "eq",
+            "type": "not_eq",
             "value": "ConfigMap"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "configTarget",
+                  "type": "eq",
+                  "value": null
+                }
+              ],
+              [
+                {
+                  "path": "configTarget",
+                  "type": "absent"
+                }
+              ],
+              [
+                {
+                  "path": "configTarget",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": ""
+    },
+    {
+      "condition": [
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "configTarget",
+                  "type": "eq",
+                  "value": null
+                }
+              ],
+              [
+                {
+                  "path": "configTarget",
+                  "type": "absent"
+                }
+              ],
+              [
+                {
+                  "path": "configTarget",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": ""
+    },
+    {
+      "condition": [
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "configTarget",
+                  "type": "eq",
+                  "value": null
+                }
+              ],
+              [
+                {
+                  "path": "configTarget",
+                  "type": "absent"
+                }
+              ],
+              [
+                {
+                  "path": "configTarget",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
+      "source_expr": ""
+    },
+    {
+      "condition": [
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
       "path": [],
       "resource": null,
       "source_expr": "configTarget"
@@ -61,155 +344,45 @@
       "condition": [
         [
           {
-            "path": "controllerID.create",
-            "type": "truthy"
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [],
-      "resource": null,
-      "source_expr": "controllerID.create"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "controllerID.create",
-            "type": "truthy"
-          },
-          {
-            "path": "controllerID.name",
-            "type": "truthy"
-          },
-          {
-            "path": "controllerID.name",
-            "type": "default"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "env[*]",
-        "value"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "postgres-operator.controllerID"
-          ],
-          "span": {
-            "end": 1644,
-            "start": 1564
-          },
-          "template_path": "charts/zalando-postgres-operator/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "controllerID.name",
-      "stringified": true
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "enableJsonLogging",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "enableJsonLogging"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "extraEnvs",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "extraEnvs"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "extraEnvs",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "env"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "extraEnvs"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "fullnameOverride",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "postgres-operator.fullname"
-          ],
-          "span": {
-            "end": 844,
-            "start": 479
-          },
-          "template_path": "charts/zalando-postgres-operator/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "postgres-operator.serviceAccountName"
-          ],
-          "span": {
-            "end": 1035,
-            "start": 953
-          },
-          "template_path": "charts/zalando-postgres-operator/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "postgres-operator.controllerID"
-          ],
-          "span": {
-            "end": 1644,
-            "start": 1564
-          },
-          "template_path": "charts/zalando-postgres-operator/templates/_helpers.tpl"
-        }
-      ],
       "resource": null,
       "source_expr": "fullnameOverride"
     },
@@ -219,79 +392,36 @@
           {
             "path": "fullnameOverride",
             "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "metadata",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "postgres-operator.fullname"
-          ],
-          "span": {
-            "end": 575,
-            "start": 515
           },
-          "template_path": "charts/zalando-postgres-operator/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "fullnameOverride",
-      "stringified": true
-    },
-    {
-      "condition": [
-        [
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
           {
             "path": "fullnameOverride",
-            "type": "truthy"
+            "schema_type": "string",
+            "type": "type_is"
           }
         ]
       ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "env[*]",
-        "value"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "postgres-operator.fullname"
-          ],
-          "span": {
-            "end": 575,
-            "start": 515
-          },
-          "template_path": "charts/zalando-postgres-operator/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "postgres-operator.controllerID"
-          ],
-          "span": {
-            "end": 1644,
-            "start": 1564
-          },
-          "template_path": "charts/zalando-postgres-operator/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "fullnameOverride",
-      "stringified": true
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
     },
     {
       "condition": [
@@ -301,198 +431,97 @@
             "type": "truthy"
           },
           {
-            "path": "serviceAccount.name",
-            "type": "not"
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "serviceAccountName"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "postgres-operator.fullname"
-          ],
-          "span": {
-            "end": 575,
-            "start": 515
-          },
-          "template_path": "charts/zalando-postgres-operator/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "postgres-operator.serviceAccountName"
-          ],
-          "span": {
-            "end": 1035,
-            "start": 953
-          },
-          "template_path": "charts/zalando-postgres-operator/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "fullnameOverride",
-      "stringified": true
-    },
-    {
-      "condition": [
-        []
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "imagePullPolicy"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "image.pullPolicy"
-    },
-    {
-      "condition": [
-        []
-      ],
-      "kind": "PartialScalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "image"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "image.registry"
-    },
-    {
-      "condition": [
-        []
-      ],
-      "kind": "PartialScalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "image"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "image.repository"
-    },
-    {
-      "condition": [
-        []
-      ],
-      "kind": "PartialScalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "image"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "image.tag"
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
     },
     {
       "condition": [
         [
           {
-            "path": "imagePullSecrets",
-            "type": "truthy"
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "fullnameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "nameOverride",
+            "type": "default"
           }
         ]
       ],
       "kind": "Scalar",
       "path": [],
       "resource": null,
-      "source_expr": "imagePullSecrets"
+      "source_expr": "nameOverride"
     },
     {
       "condition": [
         [
           {
-            "path": "imagePullSecrets",
-            "type": "truthy"
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "imagePullSecrets"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "imagePullSecrets"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "fullnameOverride",
-            "type": "not"
-          }
-        ]
-      ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "postgres-operator.fullname"
-          ],
-          "span": {
-            "end": 832,
-            "start": 647
-          },
-          "template_path": "charts/zalando-postgres-operator/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "postgres-operator.serviceAccountName"
-          ],
-          "span": {
-            "end": 1035,
-            "start": 953
-          },
-          "template_path": "charts/zalando-postgres-operator/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "postgres-operator.controllerID"
-          ],
-          "span": {
-            "end": 1644,
-            "start": 1564
-          },
-          "template_path": "charts/zalando-postgres-operator/templates/_helpers.tpl"
-        }
-      ],
       "resource": null,
       "source_expr": "nameOverride"
     },
@@ -504,35 +533,193 @@
             "type": "truthy"
           },
           {
-            "path": "nameOverride",
-            "type": "default"
+            "path": "fullnameOverride",
+            "type": "not"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Scalar",
-      "path": [
-        "metadata",
-        "labels",
-        "app.kubernetes.io/name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "postgres-operator.name"
-          ],
-          "span": {
-            "end": 194,
-            "start": 118
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "nameOverride",
+            "type": "truthy"
           },
-          "template_path": "charts/zalando-postgres-operator/templates/_helpers.tpl"
-        }
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "nameOverride",
-      "stringified": true
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "nameOverride",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "not"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
     },
     {
       "condition": [
@@ -546,444 +733,38 @@
             "type": "not"
           },
           {
-            "path": "nameOverride",
-            "type": "default"
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
-      "kind": "Serialized",
-      "path": [
-        "metadata",
-        "name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "postgres-operator.fullname"
-          ],
-          "span": {
-            "end": 820,
-            "start": 750
-          },
-          "template_path": "charts/zalando-postgres-operator/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "nameOverride",
-      "stringified": true
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "nameOverride",
-            "type": "truthy"
-          },
-          {
-            "path": "nameOverride",
-            "type": "default"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "selector",
-        "matchLabels",
-        "app.kubernetes.io/name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "postgres-operator.name"
-          ],
-          "span": {
-            "end": 194,
-            "start": 118
-          },
-          "template_path": "charts/zalando-postgres-operator/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "nameOverride",
-      "stringified": true
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "nameOverride",
-            "type": "truthy"
-          },
-          {
-            "path": "nameOverride",
-            "type": "default"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "metadata",
-        "labels",
-        "app.kubernetes.io/name"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "postgres-operator.name"
-          ],
-          "span": {
-            "end": 194,
-            "start": 118
-          },
-          "template_path": "charts/zalando-postgres-operator/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "nameOverride",
-      "stringified": true
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "nameOverride",
-            "type": "truthy"
-          },
-          {
-            "path": "fullnameOverride",
-            "type": "not"
-          },
-          {
-            "path": "nameOverride",
-            "type": "default"
-          }
-        ]
-      ],
-      "kind": "Serialized",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "env[*]",
-        "value"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "postgres-operator.fullname"
-          ],
-          "span": {
-            "end": 820,
-            "start": 750
-          },
-          "template_path": "charts/zalando-postgres-operator/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "nameOverride",
-      "stringified": true
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
+      "source_expr": "nameOverride"
     },
     {
       "condition": [
         []
       ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "nodeSelector"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "nodeSelector"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "podAnnotations",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
+      "kind": "WidenedDependency",
       "path": [],
       "resource": null,
-      "source_expr": "podAnnotations"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "podAnnotations",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "template",
-        "metadata",
-        "annotations"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "podAnnotations",
-      "template_supplied_member_keys": [
-        "checksum/config"
-      ]
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "podLabels",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "podLabels"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "podLabels",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "template",
-        "metadata",
-        "labels"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "podLabels",
-      "template_supplied_member_keys": [
-        "app.kubernetes.io/instance",
-        "app.kubernetes.io/name"
-      ]
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "priorityClassName",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "priorityClassName"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "priorityClassName",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "priorityClassName"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "priorityClassName"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "readinessProbe",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": null,
-      "source_expr": "readinessProbe"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "readinessProbe",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "readinessProbe",
-        "initialDelaySeconds"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "readinessProbe.initialDelaySeconds"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "readinessProbe",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "readinessProbe",
-        "periodSeconds"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "readinessProbe.periodSeconds"
-    },
-    {
-      "condition": [
-        []
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "resources"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "resources"
-    },
-    {
-      "condition": [
-        []
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "securityContext"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "securityContext"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "serviceAccount.name",
-            "type": "truthy"
-          },
-          {
-            "path": "serviceAccount.name",
-            "type": "default"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "serviceAccountName"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "postgres-operator.serviceAccountName"
-          ],
-          "span": {
-            "end": 1035,
-            "start": 953
-          },
-          "template_path": "charts/zalando-postgres-operator/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "serviceAccount.name",
-      "stringified": true
-    },
-    {
-      "condition": [
-        []
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "tolerations"
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "tolerations"
+      "source_expr": "nameOverride"
     }
   ],
   "version": 3

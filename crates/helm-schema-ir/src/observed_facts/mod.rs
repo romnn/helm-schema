@@ -95,6 +95,7 @@ pub(crate) struct ObservedFacts {
     pub(crate) type_hints: BTreeMap<HintGrade, TypeHints>,
     pub(crate) shape_erased_paths: BTreeSet<ValuesPath>,
     pub(crate) range_modes: crate::range_modes::RangeModes,
+    pub(crate) opaque_values_root_paths: BTreeSet<ValuesPath>,
     pub(crate) values_default_sources: BTreeSet<crate::ValuesDefaultSource>,
     pub(crate) activated_values_default_sources: BTreeSet<ActivatedValuesDefaultSource>,
     pub(crate) values_root_overlays: BTreeSet<ValuesRootOverlay>,
@@ -159,6 +160,7 @@ impl ObservedFacts {
             resources,
             shape_erased_paths,
             range_modes,
+            opaque_values_root_paths,
             values_default_sources,
             activated_values_default_sources,
             values_root_overlays,
@@ -185,6 +187,10 @@ impl ObservedFacts {
             .map(&mut *map)
             .collect();
         range_modes.map_value_paths(map);
+        *opaque_values_root_paths = std::mem::take(opaque_values_root_paths)
+            .into_iter()
+            .map(&mut *map)
+            .collect();
         *values_default_sources = std::mem::take(values_default_sources)
             .into_iter()
             .map(|source| crate::ValuesDefaultSource {
@@ -246,6 +252,7 @@ impl ObservedFacts {
             resources,
             shape_erased_paths,
             range_modes,
+            opaque_values_root_paths,
             values_default_sources,
             activated_values_default_sources,
             values_root_overlays,
@@ -262,6 +269,8 @@ impl ObservedFacts {
         self.shape_erased_paths
             .extend(shape_erased_paths.iter().cloned());
         self.range_modes.merge(range_modes);
+        self.opaque_values_root_paths
+            .extend(opaque_values_root_paths.iter().cloned());
         self.values_default_sources
             .extend(values_default_sources.iter().cloned());
         self.activated_values_default_sources

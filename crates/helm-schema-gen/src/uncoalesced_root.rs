@@ -68,6 +68,10 @@ struct LintConstraint {
 ///
 /// A constraint the coalesced defaults violate too is kept: the chart's own
 /// defaults are rejected either way.
+/// Terminal failures additionally require the dependency roots they read and
+/// the dependency-supplied members absent from the raw defaults to be supplied.
+/// An arbitrary override can delete a root or activate a dormant dependency;
+/// judging only the default documents cannot establish its render-time guard.
 pub(crate) struct UncoalescedRootGate<'a> {
     uncoalesced_root: Option<&'a Value>,
     lint_floor: Option<(Value, YamlValue)>,
@@ -173,8 +177,12 @@ impl<'a> UncoalescedRootGate<'a> {
             ancestor_segments,
             &mut coalesced_instances,
         );
-        let mut document = None;
-        let mut deciding_paths = BTreeSet::new();
+        let mut deciding_paths = if then_value == Value::Bool(false) {
+            self.dependency_boundary_paths(guards, encoding.absence)
+        } else {
+            BTreeSet::new()
+        };
+        let mut document = (!deciding_paths.is_empty()).then_some(LintDocument::Floor);
         if self.fails_only_lint(&instances, &coalesced_instances, &constraint, &then_value) {
             document = Some(LintDocument::Root);
             self.collect_deciding_paths(
@@ -240,6 +248,54 @@ impl<'a> UncoalescedRootGate<'a> {
             outcome,
         });
         kept
+    }
+
+    /// The inputs whose absence can select a dependency refill or a default
+    /// omitted from raw lint values, independently of the defaults' liveness.
+    fn dependency_boundary_paths(
+        &self,
+        guards: &[ConditionalGuard],
+        absence: AbsenceDefaults<'_>,
+    ) -> BTreeSet<ValuesPath> {
+        let mut candidates = BTreeSet::new();
+        for guard in guards {
+            candidates.extend(guard.value_paths());
+            collect_tested_keys(guard, &mut candidates);
+        }
+        let mut boundaries = BTreeSet::new();
+        let Some(raw) = self.uncoalesced_root else {
+            return boundaries;
+        };
+        for path in candidates {
+            let segments = path.segments().collect::<Vec<_>>();
+            for root in absence.dependency_roots {
+                let root_path = ValuesPath::from_segments(root.iter().cloned().map(Segment::from));
+                if path != root_path && !path.is_descendant_of(&root_path) {
+                    continue;
+                }
+                // A supplied table is observed directly; a missing or null
+                // dependency root can be recreated before template execution.
+                boundaries.insert(root_path);
+                if presence_at(raw, &segments) != Presence::Value
+                    && presence_at(self.coalesced_defaults, &segments) == Presence::Value
+                {
+                    boundaries.insert(path.clone());
+                }
+            }
+        }
+        // A supplied descendant already requires every table above it.
+        // Structural path order places each ancestor immediately before its descendants.
+        let mut ordered = boundaries.into_iter().peekable();
+        let mut leaves = BTreeSet::new();
+        while let Some(path) = ordered.next() {
+            if ordered
+                .peek()
+                .is_none_or(|next| !next.is_descendant_of(&path))
+            {
+                leaves.insert(path);
+            }
+        }
+        leaves
     }
 
     /// Adds the constraint's paths whose presence differs between `judged`

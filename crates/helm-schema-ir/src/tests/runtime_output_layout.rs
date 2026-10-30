@@ -39,7 +39,6 @@ fn fixture(prefix: &str, suffix: &str) -> Fixture {
         source_path: None,
         condition: Predicate::True.into(),
         value,
-        raw_format_inputs: Vec::new(),
         rendered: true,
     };
     Fixture {

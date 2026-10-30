@@ -11,12 +11,23 @@ use crate::analysis_db::IrAnalysisDb;
 use crate::observed_facts::CaptureKind;
 use test_util::prelude::sim_assert_eq;
 
-#[derive(Debug)]
 struct ExecutedObservation {
     execution: crate::value::DocumentExecution,
     value_span: helm_schema_syntax::Span,
     truth_span: helm_schema_syntax::Span,
     rendered: Vec<crate::ContractUse>,
+}
+
+impl std::fmt::Debug for ExecutedObservation {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("ExecutedObservation")
+            .field("value_span", &self.value_span)
+            .field("truth_span", &self.truth_span)
+            .field("rendered", &self.rendered)
+            .field("observed_facts", self.execution.observed_facts())
+            .finish()
+    }
 }
 
 impl ExecutedObservation {
@@ -86,7 +97,8 @@ impl ExecutedObservation {
     }
 
     fn when_true(&self) -> Predicate {
-        self.execution.observed_marker_condition(self.truth_span)
+        self.execution
+            .observed_marker_sufficient_condition(self.truth_span)
     }
 
     fn output_paths(&self) -> BTreeSet<ValuesPath> {
@@ -678,10 +690,14 @@ fn defaulted_helper_output_keeps_its_stringified_identity() {
             contract_use.source_expr == conditional_path("master.serviceAccount.name")
                 && contract_use.path == crate::YamlPath(vec!["metadata".into(), "name".into()])
         })
-        .map(|contract_use| contract_use.stringified)
+        .map(|contract_use| (contract_use.kind, contract_use.stringified))
         .collect::<Vec<_>>();
 
-    sim_assert_eq!(have: name_rows, want: vec![true]);
+    sim_assert_eq!(have: name_rows, want: vec![
+        (crate::ValueKind::Scalar, true),
+        (crate::ValueKind::GoFormattedMap, false),
+        (crate::ValueKind::GoFormattedSequence, false),
+    ]);
 }
 
 #[test]

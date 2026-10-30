@@ -1,33 +1,40 @@
 {
   "$defs": {
-    "constrains/enabled:t": {
-      "properties": {
-        "enabled": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
+    "constrains/ingress+ingress=null": {
+      "$ref": "#/$defs/constrains~1ingress+ingress=null@3"
     },
-    "constrains/ingress:t": {
-      "properties": {
-        "ingress": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/t"
-            },
-            {
+    "constrains/ingress+ingress=null@2": {
+      "$ref": "#/$defs/constrains~1ingress+ingress=null@3"
+    },
+    "constrains/ingress+ingress=null@3": {
+      "not": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "ingress": {}
+              },
+              "required": [
+                "ingress"
+              ],
               "type": "object"
             }
-          ]
-        }
-      },
-      "required": [
-        "ingress"
-      ],
-      "type": "object"
+          },
+          {
+            "properties": {
+              "ingress": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          }
+        ]
+      }
     },
     "t": {
       "anyOf": [
@@ -51,208 +58,6 @@
         },
         {
           "const": true
-        }
-      ]
-    },
-    "values/ingress/not/keywords/pattern": {
-      "not": {
-        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-      }
-    },
-    "values/ingress/not/keywords/pattern@2": {
-      "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-      }
-    },
-    "values/ingress/not/keywords/pattern@3": {
-      "not": {
-        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-      }
-    },
-    "values/ingress/not/keywords/pattern@4": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
-    },
-    "values/ingress/object": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "maxItems": 0,
-            "type": "array"
-          },
-          {
-            "type": "integer"
-          },
-          {
-            "$ref": "#/$defs/values~1ingress~1string"
-          },
-          {
-            "type": "number"
-          },
-          {
-            "type": "null"
-          },
-          {
-            "type": "boolean"
-          },
-          {
-            "maxProperties": 0,
-            "type": "object"
-          }
-        ]
-      },
-      "propertyNames": {
-        "$ref": "#/$defs/values~1ingress~1string"
-      },
-      "type": "object"
-    },
-    "values/ingress/string": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
-        }
-      ],
-      "type": "string"
-    },
-    "values/ingress/string;pattern-a-za-z0-9-t": {
-      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "values/ingress/string;pattern-null-null-null": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
-    },
-    "values/ingress/string;pattern-t": {
-      "pattern": "^[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "values/ingress/string@2": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^(null|Null|NULL)[ \\t]+#"
-          }
-        },
-        {
-          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-          }
-        }
-      ],
-      "type": "string"
-    },
-    "values/podDisruptionBudget/oneOf/anyOf/integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more": {
-      "$ref": "#/$defs/values~1podDisruptionBudget~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more@2"
-    },
-    "values/podDisruptionBudget/oneOf/anyOf/integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more@2": {
-      "oneOf": [
-        {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/values~1ingress~1string@2"
-            },
-            {
-              "$ref": "#/$defs/values~1ingress~1string;pattern-a-za-z0-9-t"
-            },
-            {
-              "$ref": "#/$defs/values~1ingress~1object"
-            },
-            {
-              "$ref": "#/$defs/values~1ingress~1string;pattern-t"
-            },
-            {
-              "$ref": "#/$defs/values~1ingress~1string;pattern-null-null-null"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "allOf": [
-                {
-                  "not": {
-                    "pattern": "^[-?:]([ \\t]|$)"
-                  }
-                },
-                {
-                  "$ref": "#/$defs/values~1ingress~1not~1keywords~1pattern"
-                },
-                {
-                  "not": {
-                    "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "[ \\t]#"
-                  }
-                },
-                {
-                  "$ref": "#/$defs/values~1ingress~1not~1keywords~1pattern@2"
-                },
-                {
-                  "$ref": "#/$defs/values~1ingress~1not~1keywords~1pattern@4"
-                },
-                {
-                  "not": {
-                    "pattern": "^(|~|null|Null|NULL)$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": ":[ \\t]|:$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "[\\r\\n]"
-                  }
-                },
-                {
-                  "$ref": "#/$defs/values~1ingress~1not~1keywords~1pattern@3"
-                }
-              ],
-              "type": "string"
-            }
-          ]
-        },
-        {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/values~1ingress~1string;pattern-a-za-z0-9-t"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "$ref": "#/$defs/values~1ingress~1string;pattern-t"
-            },
-            {
-              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
-              "type": "string"
-            },
-            {
-              "$ref": "#/$defs/values~1ingress~1string;pattern-null-null-null"
-            },
-            {
-              "type": "null"
-            }
-          ]
         }
       ]
     }
@@ -293,104 +98,30 @@
     },
     {
       "if": {
-        "properties": {
-          "podDisruptionBudget": {
-            "$ref": "#/$defs/constrains~1enabled:t"
-          }
-        },
-        "required": [
-          "podDisruptionBudget"
-        ],
-        "type": "object"
-      },
-      "then": {
         "allOf": [
           {
-            "additionalProperties": {},
-            "properties": {
-              "podDisruptionBudget": {
-                "required": [
-                  "minAvailable"
-                ],
-                "type": "object"
-              }
-            }
+            "$ref": "#/$defs/constrains~1ingress+ingress=null@2"
           },
           {
-            "additionalProperties": {},
-            "properties": {
-              "podDisruptionBudget": {
-                "additionalProperties": {},
-                "properties": {
-                  "minAvailable": {
-                    "not": {
-                      "type": "null"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "ingress": {
-                    "$ref": "#/$defs/constrains~1enabled:t"
-                  }
-                },
-                "required": [
-                  "ingress"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ingress:t"
-              }
-            ]
+            "$ref": "#/$defs/constrains~1ingress+ingress=null"
           },
           {
-            "allOf": [
-              {
-                "not": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "properties": {
-                          "ingress": {}
-                        },
-                        "required": [
-                          "ingress"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    {
-                      "properties": {
-                        "ingress": {
-                          "enum": [
-                            null
-                          ]
-                        }
-                      },
-                      "required": [
-                        "ingress"
-                      ],
-                      "type": "object"
-                    }
-                  ]
-                }
-              },
-              {
-                "$ref": "#/$defs/constrains~1ingress:t"
+            "properties": {
+              "ingress": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/t"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
               }
-            ]
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
           }
         ]
       },
@@ -408,108 +139,6 @@
     "global": {},
     "ingress": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1enabled:t"
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/t"
-                  },
-                  {
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "className": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/values~1ingress~1string@2"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  {
-                    "$ref": "#/$defs/values~1ingress~1string;pattern-a-za-z0-9-t"
-                  },
-                  {
-                    "$ref": "#/$defs/values~1ingress~1object"
-                  },
-                  {
-                    "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
-                    "type": "null"
-                  },
-                  {
-                    "$ref": "#/$defs/values~1ingress~1string;pattern-t"
-                  },
-                  {
-                    "$ref": "#/$defs/values~1ingress~1string;pattern-null-null-null"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "not": {
-                          "pattern": "^[-?:]([ \\t]|$)"
-                        }
-                      },
-                      {
-                        "$ref": "#/$defs/values~1ingress~1not~1keywords~1pattern"
-                      },
-                      {
-                        "not": {
-                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[ \\t]#"
-                        }
-                      },
-                      {
-                        "$ref": "#/$defs/values~1ingress~1not~1keywords~1pattern@2"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1ingress~1not~1keywords~1pattern@4"
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(|~|null|Null|NULL)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": ":[ \\t]|:$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[\\r\\n]"
-                        }
-                      },
-                      {
-                        "$ref": "#/$defs/values~1ingress~1not~1keywords~1pattern@3"
-                      }
-                    ],
-                    "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
-                    "type": "string"
-                  }
-                ]
-              }
-            }
-          }
-        }
-      ],
       "properties": {
         "className": {},
         "enabled": {}
@@ -517,42 +146,6 @@
     },
     "podDisruptionBudget": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "$ref": "#/$defs/constrains~1enabled:t"
-          },
-          "then": {
-            "allOf": [
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "maxUnavailable": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/values~1podDisruptionBudget~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more@2"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/$defs/t"
-                        }
-                      }
-                    ]
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "minAvailable": {
-                    "$ref": "#/$defs/values~1podDisruptionBudget~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more"
-                  }
-                }
-              }
-            ]
-          }
-        }
-      ],
       "properties": {
         "enabled": {},
         "maxUnavailable": {},

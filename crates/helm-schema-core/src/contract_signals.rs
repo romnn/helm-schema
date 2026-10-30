@@ -1132,6 +1132,7 @@ pub struct ContractSchemaSignals {
     pruned_parent_value_paths: BTreeSet<crate::ValuesPath>,
     unconditionally_omitted_value_paths: BTreeSet<crate::ValuesPath>,
     direct_ranged_value_paths: BTreeSet<crate::ValuesPath>,
+    opaque_values_root_paths: BTreeSet<crate::ValuesPath>,
     values_default_sources: BTreeSet<ValuesDefaultSource>,
     guarded_values_default_sources: BTreeSet<GuardedValuesDefaultSource>,
     values_program_wrappers: BTreeSet<ValuesProgramWrapper>,
@@ -1214,6 +1215,7 @@ impl ContractSchemaSignals {
             pruned_parent_value_paths,
             unconditionally_omitted_value_paths,
             direct_ranged_value_paths,
+            opaque_values_root_paths: BTreeSet::new(),
             values_default_sources: BTreeSet::new(),
             guarded_values_default_sources: BTreeSet::new(),
             values_program_wrappers: BTreeSet::new(),
@@ -1236,6 +1238,22 @@ impl ContractSchemaSignals {
     #[must_use]
     pub fn observed_resources(&self) -> &BTreeSet<crate::ResourceRef> {
         &self.observed_resources
+    }
+
+    /// Attaches input regions feeding values-root replacements with unresolved key domains.
+    #[must_use]
+    pub fn with_opaque_values_root_paths(
+        mut self,
+        paths: impl IntoIterator<Item = crate::ValuesPath>,
+    ) -> Self {
+        self.opaque_values_root_paths.extend(paths);
+        self
+    }
+
+    /// Input containers whose key closure is unknown across an executed values-root replacement.
+    #[must_use]
+    pub fn opaque_values_root_paths(&self) -> &BTreeSet<crate::ValuesPath> {
+        &self.opaque_values_root_paths
     }
 
     /// Attaches chart subtrees that supply runtime defaults to effective values paths.

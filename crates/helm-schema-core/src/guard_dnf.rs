@@ -1,4 +1,5 @@
 use std::collections::BTreeSet;
+use std::sync::Arc;
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
@@ -10,7 +11,7 @@ use crate::{ConditionalGuard, Guard, Predicate, PredicateKind};
 /// Construction removes impossible conjunctions and normalizes exact
 /// complementary resolution, absorption, and deduplication.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct GuardDnf(BTreeSet<BTreeSet<Predicate>>);
+pub struct GuardDnf(Arc<BTreeSet<BTreeSet<Predicate>>>);
 
 impl Default for GuardDnf {
     fn default() -> Self {
@@ -22,13 +23,13 @@ impl GuardDnf {
     /// Returns the formula that accepts every input.
     #[must_use]
     pub fn unconditional() -> Self {
-        Self(BTreeSet::from([BTreeSet::new()]))
+        Self(Arc::new(BTreeSet::from([BTreeSet::new()])))
     }
 
     /// Returns the formula that accepts no input.
     #[must_use]
     pub fn never() -> Self {
-        Self(BTreeSet::new())
+        Self(Arc::default())
     }
 
     /// Builds a normalized DNF from one predicate conjunction.
@@ -84,11 +85,11 @@ impl GuardDnf {
             .filter_map(normalize_conjunction)
             .collect::<Vec<_>>();
         let keys = minimize_disjunction_by(keys, predicates_are_complementary);
-        Self(
+        Self(Arc::new(
             keys.into_iter()
                 .map(|key| key.into_iter().collect())
                 .collect(),
-        )
+        ))
     }
 
     /// Reports whether the formula accepts every input.
@@ -114,7 +115,7 @@ impl GuardDnf {
     pub fn guard_conjunctions(&self) -> Vec<Vec<Guard>> {
         let mut seen = BTreeSet::new();
         let mut projected = Vec::new();
-        for conjunction in &self.0 {
+        for conjunction in self.0.iter() {
             // Approximate predicates remain in the in-memory DNF consumed by
             // schema inference, where they force abstention. The serialized
             // inspection format cannot represent them, but it can retain the
@@ -158,7 +159,7 @@ impl GuardDnf {
     /// Union conditions after their evidence payloads are known to be equal,
     /// re-normalizing so duplicate and subsumed disjuncts are absorbed.
     pub fn union_absorbing(&mut self, other: Self) {
-        let mut other_disjuncts = other.0;
+        let mut other_disjuncts = Arc::unwrap_or_clone(other.0);
         let Some(incoming) = other_disjuncts.pop_first() else {
             return;
         };
@@ -169,7 +170,7 @@ impl GuardDnf {
                 .any(|existing| conjunctions_resolve_complementary(existing, &incoming))
         {
             *self = Self::from_disjunction(
-                std::mem::take(&mut self.0)
+                Arc::unwrap_or_clone(std::mem::take(&mut self.0))
                     .into_iter()
                     .chain(std::iter::once(incoming))
                     .chain(other_disjuncts),
@@ -179,8 +180,9 @@ impl GuardDnf {
         if self.0.iter().any(|existing| existing.is_subset(&incoming)) {
             return;
         }
-        self.0.retain(|existing| !incoming.is_subset(existing));
-        self.0.insert(incoming);
+        let disjuncts = Arc::make_mut(&mut self.0);
+        disjuncts.retain(|existing| !incoming.is_subset(existing));
+        disjuncts.insert(incoming);
     }
 
     /// Rewrites every values path and re-normalizes the formula.
@@ -188,13 +190,16 @@ impl GuardDnf {
     where
         F: FnMut(crate::ValuesPath) -> crate::ValuesPath,
     {
-        *self =
-            Self::from_disjunction(std::mem::take(&mut self.0).into_iter().map(|conjunction| {
-                conjunction
-                    .into_iter()
-                    .map(|predicate| predicate.map_value_paths(map))
-                    .collect::<Vec<_>>()
-            }));
+        *self = Self::from_disjunction(
+            Arc::unwrap_or_clone(std::mem::take(&mut self.0))
+                .into_iter()
+                .map(|conjunction| {
+                    conjunction
+                        .into_iter()
+                        .map(|predicate| predicate.map_value_paths(map))
+                        .collect::<Vec<_>>()
+                }),
+        );
     }
 }
 

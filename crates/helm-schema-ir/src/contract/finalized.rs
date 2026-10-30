@@ -104,6 +104,7 @@ impl FinalizedContract {
             dependency_values_roots,
             predicate_memo,
         )
+        .with_opaque_values_root_paths(observed_facts.opaque_values_root_paths.clone())
         .with_values_default_sources(observed_facts.values_default_sources.clone())
         .with_guarded_values_default_sources(guarded_values_default_sources)
         .with_scoped_guarded_root_overlay_requirement_implications(guarded_root_overlays)

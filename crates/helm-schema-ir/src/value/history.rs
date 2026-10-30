@@ -69,6 +69,10 @@ impl<T> History<T> {
         }
     }
 
+    pub(super) fn since(&self, prefix: &Self) -> impl Iterator<Item = &T> {
+        self.suffix(self.shared_prefix(prefix))
+    }
+
     fn shared_prefix(&self, other: &Self) -> usize {
         let (mut left, mut right) = (&self.prefix, &other.prefix);
         let mut length = self.length.min(other.length);

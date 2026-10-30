@@ -5,11 +5,16 @@ use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_core::{Predicate, ValuesPath};
 use test_util::prelude::sim_assert_eq;
 
-use super::raw_format_inputs;
+use super::{PayloadQuery, RawFormatInput};
 use crate::value::{
-    AliasSet, Coverage, Datum, Field, Leaf, MapType, ObjectId, Origin, RawFormatInput, State,
-    TypeCoverage, UnknownValue, Value, ValueNode,
+    AliasSet, Coverage, Datum, Field, Leaf, MapType, ObjectId, Origin, State, TypeCoverage,
+    UnknownValue, Value, ValueNode,
 };
+
+fn raw_format_inputs(value: &Value, state: &State) -> Vec<RawFormatInput> {
+    PayloadQuery::new(&state.heap.arena.input_objects.borrow())
+        .raw_format_inputs(&state.heap.freeze(value))
+}
 
 fn input_state() -> eyre::Result<State> {
     let mut state = State::new(Value::nil());
@@ -57,15 +62,15 @@ fn raw_format_capture_keeps_exact_selected_paths_and_snapshot_proofs() -> eyre::
         .iter()
         .next()
         .ok_or_eyre("observation missing")?;
-    sim_assert_eq!(have: captured.raw_format_inputs.clone(), want: vec![RawFormatInput { condition: condition.clone(), path: ValuesPath::parse("x") }, RawFormatInput { condition: condition.negated(), path: ValuesPath::parse("y") }]);
-    let before = captured.raw_format_inputs.clone();
+    sim_assert_eq!(have: raw_format_inputs(&captured.value.value, &state), want: vec![RawFormatInput { condition: condition.clone(), path: ValuesPath::parse("x") }, RawFormatInput { condition: condition.negated(), path: ValuesPath::parse("y") }]);
+    let before = raw_format_inputs(&captured.value.value, &state);
     let root = state
         .map_target(&Value::input(ValuesPath::default()))
         .ok_or_eyre("root backing missing")?;
     state
         .heap
         .write(&root, "x", Field::Present(Value::string("replacement")));
-    sim_assert_eq!(have: state.sites.iter().next().ok_or_eyre("frozen observation missing")?.raw_format_inputs.clone(), want: before);
+    sim_assert_eq!(have: { let captured = state.sites.iter().next().ok_or_eyre("frozen observation missing")?; PayloadQuery::new(&state.heap.arena.input_objects.borrow()).raw_format_inputs(&captured.value) }, want: before);
     sim_assert_eq!(have: raw_format_inputs(&Value::input(ValuesPath::parse("x")), &state), want: Vec::<RawFormatInput>::new());
     Ok(())
 }
