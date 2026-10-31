@@ -145,7 +145,7 @@ impl SymbolicIrContext {
                     execution,
                 );
                 if let Some(contract) = contracts.get_mut(index) {
-                    contract.append(Self::contract_from_document(&document));
+                    contract.append(document);
                 }
             },
         );
@@ -179,16 +179,8 @@ impl SymbolicIrContext {
                     &self.analysis_db,
                     execution,
                 );
-                contract.append(Self::contract_from_document(&document));
+                contract.append(document);
             },
-        );
-        contract
-    }
-
-    fn contract_from_document(document: &crate::fragment_eval::EvaluatedDocument) -> ContractIr {
-        let mut contract = crate::fragment_eval::contract_ir_from_document(document);
-        contract.extend_values_program_wrapper_exclusions(
-            document.pre_rewrite_strict_paths.iter().cloned(),
         );
         contract
     }

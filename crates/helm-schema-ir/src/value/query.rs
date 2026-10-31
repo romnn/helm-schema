@@ -131,17 +131,7 @@ impl Value {
                 origin: _,
             }) => match content {
                 Some(ScalarContent::Literal(value)) => Some(value),
-                Some(
-                    ScalarContent::Identity(_)
-                    | ScalarContent::Rendered(_)
-                    | ScalarContent::PrintfStringIdentity(_)
-                    | ScalarContent::SplitLength {
-                        value: _,
-                        separator: _,
-                    }
-                    | ScalarContent::Length(_),
-                )
-                | None => None,
+                Some(ScalarContent::Identity(_)) | None => None,
             },
             ValueNode::Leaf(Leaf {
                 datum: Datum::Text(text),

@@ -8,11 +8,11 @@ use crate::{Guard, ValueKind};
 use helm_schema_core::Predicate;
 
 use super::domain::{AbstractFragment, AbstractString, EntryKey, Guarded, Splice, StringPart};
-use super::eval::EvaluatedDocument;
 
 /// Render an evaluated document as a deterministic dump.
 #[must_use]
-pub(crate) fn dump_document(document: &EvaluatedDocument) -> String {
+pub(crate) fn dump_document(document: &crate::tests::support::EvaluatedDocument) -> String {
+    let document = &document.inspection;
     let mut out = String::new();
     dump_guarded(&document.root, 0, &mut out);
     if !document.reads.is_empty() {

@@ -548,6 +548,7 @@ fn exhausted_shared_occurrence_queries_remain_unknown() {
         start: 0,
         indentation: 0,
         context: Rc::new(Vec::new()),
+        serializer: None,
     };
     let term = super::PlacedTerm {
         range: Span::new(0, 8),

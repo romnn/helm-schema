@@ -2992,7 +2992,30 @@ fn unrelated_default_inside_set_does_not_mark_target_as_defaulted() {
         .filter(|use_| use_.path.0 == ["metadata".to_string(), "name".to_string()])
         .cloned()
         .collect::<Vec<_>>();
-    sim_assert_eq!(have: rendered_uses, want: Vec::<ContractUse>::new());
+    // The original target survives only where the helper's `with` did not execute.
+    // Its placed row must not acquire the unrelated default on `other`.
+    let mut retained = ContractUse::new(
+        helm_schema_core::ValuesPath::parse("serviceAccount.name"),
+        YamlPath(vec!["metadata".to_owned(), "name".to_owned()]),
+        ValueKind::Serialized,
+        vec![
+            Guard::TypeIs {
+                path: helm_schema_core::ValuesPath::parse("serviceAccount"),
+                schema_type: "object".to_owned(),
+            },
+            Guard::Not {
+                path: helm_schema_core::ValuesPath::default(),
+            },
+        ],
+        Some(ResourceRef::concrete(
+            "v1".to_owned(),
+            "ServiceAccount".to_owned(),
+        )),
+    );
+    retained.stringified = true;
+    retained.nil_omitting = true;
+    retained.plain_scalar_placement = helm_schema_core::PlainScalarPlacement::BlockValue;
+    sim_assert_eq!(have: rendered_uses, want: vec![retained]);
     let target_default_guards = projection
         .uses()
         .iter()
@@ -3308,6 +3331,22 @@ fn schema_has_format(schema: &Value, format: &str) -> bool {
         .any(|variant| schema_has_format(variant, format))
 }
 
+fn property_schema_has_format(schema: &Value, property: &str, format: &str) -> bool {
+    schema
+        .get("properties")
+        .and_then(|properties| properties.get(property))
+        .is_some_and(|value| schema_has_format(value, format))
+        || ["anyOf", "oneOf", "allOf"]
+            .into_iter()
+            .filter_map(|key| schema.get(key).and_then(Value::as_array))
+            .flatten()
+            .any(|child| property_schema_has_format(child, property, format))
+        || ["then", "else"]
+            .into_iter()
+            .filter_map(|key| schema.get(key))
+            .any(|child| property_schema_has_format(child, property, format))
+}
+
 #[test]
 fn base64_encoded_secret_data_does_not_inherit_rendered_byte_format() {
     let src = indoc! {r"
@@ -3371,14 +3410,7 @@ fn included_encoded_secret_data_preserves_nullable_source_without_byte_format() 
     "#};
 
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
-    let password = schema
-        .pointer("/properties/password")
-        .expect("password present");
-
-    assert!(
-        !schema_has_format(password, "byte"),
-        "pre-encoded helper input must not inherit rendered Secret.data byte format, got {password}; schema={schema}"
-    );
+    assert!(!property_schema_has_format(&schema, "password", "byte"));
     for (instance, want, label) in [
         (serde_json::json!({ "password": null }), true, "null"),
         (serde_json::json!({ "password": {} }), true, "empty object"),
@@ -3396,13 +3428,7 @@ fn included_encoded_secret_data_preserves_nullable_source_without_byte_format() 
         );
     }
 
-    let raw = schema
-        .pointer("/properties/rawSecretData")
-        .expect("rawSecretData present");
-    assert!(
-        schema_has_format(raw, "byte"),
-        "unencoded sibling helper input should still inherit Secret.data byte format, got {raw}; schema={schema}"
-    );
+    assert!(property_schema_has_format(&schema, "rawSecretData", "byte"));
 }
 
 /// `tpl (toYaml .Values.X) .` re-renders the serialized fragment,

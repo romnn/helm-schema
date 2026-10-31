@@ -923,25 +923,7 @@ fn step_fragment_open_string_map_stays_open() {
     "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
-    // The self-guarded map also accepts explicit null (helm
-    // null-deletion); the string-map shape rides the non-null arm.
-    let pod_labels = schema
-        .pointer("/properties/podLabels/anyOf/0")
-        .expect("podLabels present");
-    sim_assert_eq!(
-        have: pod_labels
-            .get("additionalProperties")
-            .and_then(Value::as_object)
-            .and_then(|obj| obj.get("type"))
-            .and_then(Value::as_str),
-        want: Some("string"),
-        "podLabels should stay an open string map, got {pod_labels}"
-    );
-    assert_ne!(
-        pod_labels.get("additionalProperties"),
-        Some(&Value::Bool(false)),
-        "podLabels should not be closed to values.yaml keys, got {pod_labels}"
-    );
+    sim_assert_eq!(have: open_string_map_contract_mismatches(&schema, "podLabels"), want: Vec::<Value>::new());
 }
 
 /// An empty-map placeholder in `values.yaml` (`annotations: {}`) still carries

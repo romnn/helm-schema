@@ -5,15 +5,20 @@ use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_core::{Predicate, ValuesPath};
 use test_util::prelude::sim_assert_eq;
 
-use super::{PayloadQuery, RawFormatInput};
+use crate::value::RawFormatInput;
+
 use crate::value::{
     AliasSet, Coverage, Datum, Field, Leaf, MapType, ObjectId, Origin, State, TypeCoverage,
     UnknownValue, Value, ValueNode,
 };
 
 fn raw_format_inputs(value: &Value, state: &State) -> Vec<RawFormatInput> {
-    PayloadQuery::new(&state.heap.arena.input_objects.borrow())
-        .raw_format_inputs(&state.heap.freeze(value))
+    frozen_format_inputs(&state.heap.freeze(value), state)
+}
+
+fn frozen_format_inputs(value: &crate::value::FrozenValue, state: &State) -> Vec<RawFormatInput> {
+    let inputs = state.heap.arena.input_objects.borrow();
+    crate::value::relationship::RelationshipQuery::new(&inputs, 1024).raw_format_inputs(value)
 }
 
 fn input_state() -> eyre::Result<State> {
@@ -63,15 +68,15 @@ fn raw_format_capture_keeps_exact_selected_paths_and_snapshot_proofs() -> eyre::
         .iter()
         .next()
         .ok_or_eyre("observation missing")?;
-    sim_assert_eq!(have: raw_format_inputs(&captured.value.value, &state), want: vec![RawFormatInput { condition: condition.clone(), path: ValuesPath::parse("x") }, RawFormatInput { condition: condition.negated(), path: ValuesPath::parse("y") }]);
-    let before = raw_format_inputs(&captured.value.value, &state);
+    sim_assert_eq!(have: frozen_format_inputs(&captured.value, &state), want: vec![RawFormatInput { condition: condition.clone(), path: ValuesPath::parse("x") }, RawFormatInput { condition: condition.negated(), path: ValuesPath::parse("y") }]);
+    let before = frozen_format_inputs(&captured.value, &state);
     let root = state
         .map_target(&Value::input(ValuesPath::default()))
         .ok_or_eyre("root backing missing")?;
     state
         .heap
         .write(&root, "x", Field::Present(Value::string("replacement")));
-    sim_assert_eq!(have: { let captured = state.sites.iter().next().ok_or_eyre("frozen observation missing")?; PayloadQuery::new(&state.heap.arena.input_objects.borrow()).raw_format_inputs(&captured.value) }, want: before);
+    sim_assert_eq!(have: frozen_format_inputs(&state.sites.iter().next().ok_or_eyre("frozen observation missing")?.value, &state), want: before);
     sim_assert_eq!(have: raw_format_inputs(&Value::input(ValuesPath::parse("x")), &state), want: Vec::<RawFormatInput>::new());
     Ok(())
 }
@@ -140,16 +145,15 @@ fn conditional_and_unknown_writers_never_keep_original_input_proofs() -> eyre::R
 #[test]
 fn derived_or_partial_values_do_not_claim_original_format_inputs() -> eyre::Result<()> {
     let state = input_state()?;
-    let rendered = Value::scalar(
-        crate::value::ScalarType::String,
-        Some(crate::value::scalar_value::ScalarContent::Rendered(vec![
-            crate::value::scalar_value::ScalarRenderPart::Identity {
-                path: ValuesPath::parse("x"),
-                stringified: true,
-                lexical_escapes: BTreeSet::new(),
-            },
-        ])),
-    );
+    let db = crate::analysis_db::IrAnalysisDb::new(&helm_schema_ast::DefineIndex::new());
+    let execution = crate::value::tests::execute_document("{{ .Values.x | toString }}", None, &db);
+    let rendered = execution
+        .sites()
+        .find(|site| site.rendered())
+        .ok_or_eyre("rendered conversion missing")?
+        .value()
+        .value
+        .clone();
     sim_assert_eq!(have: raw_format_inputs(&rendered, &state), want: Vec::<RawFormatInput>::new());
     let decision = state
         .heap

@@ -184,7 +184,7 @@ fn helper_result_from_expr_with_fragment_locals(
     }
     let execution = crate::value::tests::execute_document(&source, None, db);
     let document = crate::tests::support::project_execution(&source, None, db, &execution);
-    let contract = crate::fragment_eval::contract_ir_from_document(&document).finalize();
+    let contract = document.contract.clone().finalize();
     let rendered = contract
         .uses()
         .iter()
@@ -1841,12 +1841,7 @@ fn helper_conditions_preserve_stringified_trimmed_local_values() {
         context,
         &mut seen,
     );
-    let pattern = crate::helper_meta::pattern_with_lexical_escapes(
-        "^7$",
-        &BTreeSet::from([crate::helper_meta::LexicalEscape::TrimSuffix(
-            "-jmx".to_string(),
-        )]),
-    );
+    let pattern = r"^(?:7)(?:-jmx)?$".to_owned();
 
     sim_assert_eq!(
         have: result.exact_truth(),
@@ -1907,41 +1902,29 @@ fn helper_output_equality_decodes_a_versioned_boolean_dispatch() {
 
 #[test]
 fn helper_output_retains_a_token_initial_printf_argument() {
+    let helpers = indoc! {r#"
+        {{- define "image" -}}
+        {{- $repository := .Values.primary | default .Values.fallback -}}
+        {{- printf "%s:tag" $repository -}}
+        {{- end -}}
+    "#};
+    let source = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        data:
+          image: {{ include "image" . }}
+    "#};
     let mut defines = DefineIndex::new();
-    defines.add_file_source(
-        "<inline:0>",
-        indoc! {r#"
-            {{- define "image" -}}
-            {{- $repository := .Values.primary | default .Values.fallback -}}
-            {{- printf "%s:tag" $repository -}}
-            {{- end -}}
-        "#},
-    );
-    let analysis_db = IrAnalysisDb::new(&defines);
-    let context = helper_context(&analysis_db);
-    let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
-    let expr = single_expr(r#"include "image" ."#);
-    let mut seen = HashSet::new();
-
-    let result = helper_result_from_expr_with_fragment_locals(
-        &expr,
-        &HashMap::new(),
-        Some(&root_bindings),
-        None,
-        context,
-        &mut seen,
-    );
-    assert!(
-        result
-            .subject_sites()
-            .any(|site| site.projected_scalar().is_some_and(|scalar| scalar
-                .content()
-                .is_some_and(|view| view.arms().any(|(_, content)| matches!(
-                    content,
-                    crate::scalar_value::ScalarContent::PrintfStringIdentity(_)
-                ))))),
-        "the helper's complete printf output must retain its token-opening argument: {result:#?}"
-    );
+    defines.add_file_source("_helpers.tpl", helpers);
+    let contract = crate::SymbolicIrContext::new(&defines)
+        .generate_contract_ir(source)
+        .finalize();
+    for path in ["primary", "fallback"] {
+        assert!(contract.uses().iter().any(|row| row.source_expr
+            == helm_schema_core::ValuesPath::parse(path)
+            && row.path.0 == ["data", "image"]
+            && row.kind == crate::ValueKind::PartialScalar));
+    }
 }
 
 #[test]
@@ -2902,20 +2885,16 @@ fn captured_boolean_truth_requires_the_whole_normal_execution_region() {
 }
 
 #[test]
-fn trim_prefix_capture_preimage_strips_at_most_one_token() -> eyre::Result<()> {
-    let pattern = crate::helper_meta::pattern_with_lexical_escapes(
-        r"^1\.2\.3$",
-        &BTreeSet::from([crate::helper_meta::LexicalEscape::TrimPrefix(
-            "v".to_owned(),
-        )]),
-    );
-    let matcher = regex::Regex::new(&pattern)?;
-    for text in ["1.2.3", "v1.2.3"] {
-        assert!(matcher.is_match(text), "capture must admit {text:?}");
+fn unmodeled_prefix_trimming_retains_its_input_dependency() {
+    let db = IrAnalysisDb::new(&DefineIndex::new());
+    for prefix in ["v", "-/x.y"] {
+        let source = format!("{{{{ trimPrefix {prefix:?} .Values.input }}}}");
+        let execution = crate::value::tests::execute_document(&source, None, &db);
+        let inputs = execution
+            .sites()
+            .filter(|site| site.rendered())
+            .flat_map(|site| site.value().inputs())
+            .collect::<BTreeSet<_>>();
+        sim_assert_eq!(have: inputs, want: BTreeSet::from([ValuesPath::parse("input")]));
     }
-    // A second leading token survives trimPrefix and must fail the capture.
-    for text in ["vv1.2.3", "v1.2.4", "x1.2.3", "v1.2.3suffix"] {
-        assert!(!matcher.is_match(text), "capture must reject {text:?}");
-    }
-    Ok(())
 }

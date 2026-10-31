@@ -4,7 +4,7 @@ impl super::SymbolicIrContext {
     pub(crate) fn eval_document_fragment(
         &self,
         src: &str,
-    ) -> crate::fragment_eval::EvaluatedDocument {
+    ) -> crate::tests::support::EvaluatedDocument {
         crate::tests::support::eval_document(src, None, &self.analysis_db)
     }
 }

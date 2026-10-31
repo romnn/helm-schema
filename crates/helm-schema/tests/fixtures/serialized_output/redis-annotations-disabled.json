@@ -1,0 +1,452 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "global": {},
+    "commonAnnotations": {
+      "allOf": [
+        {
+          "if": {
+            "$ref": "#/$defs/values~1commonAnnotations~1anyOf~1allOf~1:helm-no-template-actions+:t+not~1=null+not~1string+1more"
+          },
+          "then": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-marker-free"
+                }
+              },
+              {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "additionalProperties": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "Q": {
+      "anyOf": [
+        {
+          "type": [
+            "null",
+            "boolean",
+            "number"
+          ]
+        },
+        {
+          "type": "string",
+          "not": {
+            "pattern": "\\{\\{|<no value>"
+          }
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Q"
+          }
+        },
+        {
+          "type": "object",
+          "propertyNames": {
+            "not": {
+              "pattern": "\\{\\{|<no value>"
+            }
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/Q"
+          }
+        }
+      ]
+    },
+    "t": {
+      "anyOf": [
+        {
+          "const": true
+        },
+        {
+          "type": "number",
+          "not": {
+            "const": 0
+          }
+        },
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "array",
+          "minItems": 1
+        },
+        {
+          "type": "object",
+          "minProperties": 1
+        }
+      ]
+    },
+    "helm-marker-free": {
+      "anyOf": [
+        {
+          "type": [
+            "null",
+            "boolean",
+            "number"
+          ]
+        },
+        {
+          "type": "string",
+          "not": {
+            "pattern": "<no value>"
+          }
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/helm-marker-free"
+          }
+        },
+        {
+          "type": "object",
+          "propertyNames": {
+            "not": {
+              "pattern": "<no value>"
+            }
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/helm-marker-free"
+          }
+        }
+      ]
+    },
+    "helm-no-template-actions": {
+      "anyOf": [
+        {
+          "type": [
+            "null",
+            "boolean",
+            "number"
+          ]
+        },
+        {
+          "type": "string",
+          "not": {
+            "pattern": "\\{\\{"
+          }
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/helm-no-template-actions"
+          }
+        },
+        {
+          "type": "object",
+          "propertyNames": {
+            "not": {
+              "pattern": "\\{\\{"
+            }
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/helm-no-template-actions"
+          }
+        }
+      ]
+    },
+    "values/commonAnnotations/not/string": {
+      "not": {
+        "type": "string"
+      }
+    },
+    "values/commonAnnotations/not/=null": {
+      "not": {
+        "enum": [
+          null
+        ]
+      }
+    },
+    "values/commonAnnotations/allOf/:helm-no-template-actions+:t+not/=null+not/string": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/t"
+        },
+        {
+          "$ref": "#/$defs/helm-no-template-actions"
+        },
+        {
+          "$ref": "#/$defs/values~1commonAnnotations~1not~1=null"
+        },
+        {
+          "$ref": "#/$defs/values~1commonAnnotations~1not~1string"
+        }
+      ]
+    },
+    "values/commonAnnotations/allOf/:t+=null+not/string": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/t"
+        },
+        {
+          "enum": [
+            null
+          ]
+        },
+        {
+          "$ref": "#/$defs/values~1commonAnnotations~1not~1string"
+        }
+      ]
+    },
+    "values/commonAnnotations/anyOf/allOf/:helm-no-template-actions+:t+not/=null+not/string+1more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/values~1commonAnnotations~1allOf~1:t+=null+not~1string"
+        },
+        {
+          "$ref": "#/$defs/values~1commonAnnotations~1allOf~1:helm-no-template-actions+:t+not~1=null+not~1string"
+        }
+      ]
+    },
+    "constrains/commonAnnotations": {
+      "not": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "commonAnnotations": {}
+              },
+              "required": [
+                "commonAnnotations"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "commonAnnotations": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "commonAnnotations"
+            ],
+            "type": "object"
+          }
+        ]
+      }
+    },
+    "constrains/commonAnnotations+commonAnnotations=null": {
+      "not": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "commonAnnotations": {}
+              },
+              "required": [
+                "commonAnnotations"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "commonAnnotations": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "commonAnnotations"
+            ],
+            "type": "object"
+          }
+        ]
+      }
+    },
+    "constrains/commonAnnotations@2": {
+      "not": {
+        "properties": {
+          "commonAnnotations": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "required": [
+          "commonAnnotations"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/commonAnnotations:helm-no-template-actions": {
+      "not": {
+        "properties": {
+          "commonAnnotations": {
+            "$ref": "#/$defs/helm-no-template-actions"
+          }
+        },
+        "required": [
+          "commonAnnotations"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/commonAnnotations@3": {
+      "not": {
+        "properties": {
+          "commonAnnotations": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "commonAnnotations"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/commonAnnotations+commonAnnotations:Q+commonAnnotations:helm-no-template-actions+1more": {
+      "allOf": [
+        {
+          "properties": {
+            "commonAnnotations": {
+              "$ref": "#/$defs/Q"
+            }
+          },
+          "required": [
+            "commonAnnotations"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:helm-no-template-actions"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations@2"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:helm-marker-free+2more": {
+      "allOf": [
+        {
+          "properties": {
+            "commonAnnotations": {
+              "$ref": "#/$defs/helm-no-template-actions"
+            }
+          },
+          "required": [
+            "commonAnnotations"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "commonAnnotations": {
+              "$ref": "#/$defs/helm-marker-free"
+            }
+          },
+          "required": [
+            "commonAnnotations"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations@2"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:Q+commonAnnotations:helm-marker-free+2more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:Q+commonAnnotations:helm-no-template-actions+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:helm-marker-free+2more"
+        }
+      ]
+    }
+  },
+  "x-helm-schema-generated": true,
+  "x-helm-schema-policy": {
+    "annotation-format-version": 1,
+    "requested-profile": "full",
+    "policy-vocabulary-version": 2,
+    "resolved": {
+      "root-anchored-conditionals": true,
+      "local-conditionals": true,
+      "terminal-clauses": true,
+      "kind-partitions": true
+    },
+    "authoring": {
+      "root": "closed",
+      "declared-types": "annotate"
+    },
+    "narrowing": [],
+    "modifiers": {
+      "overrides": {
+        "count": 0,
+        "digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "reference-mode": "bundled"
+    },
+    "policy-fingerprint": "b28fd01d710d87673d204ba4cdf8333388b4a8086cba088db9d9751d42e7c9cf"
+  },
+  "allOf": [
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "commonAnnotations": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            "required": [
+              "commonAnnotations"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/constrains~1commonAnnotations@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:Q+commonAnnotations:helm-marker-free+2more"
+          }
+        ]
+      },
+      "then": false
+    }
+  ]
+}

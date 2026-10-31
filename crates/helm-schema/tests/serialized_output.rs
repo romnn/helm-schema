@@ -207,7 +207,10 @@ fn redis_common_annotations_records_helm_decode_failure() -> eyre::Result<()> {
     // Evaluate both modes before asserting so the red run records independent failure coverage.
     let without_provider = generate(template, "commonAnnotations: null\n", false)?;
     let with_provider = generate(template, "commonAnnotations: null\n", true)?;
-    sim_assert_eq!(have: [&without_provider, &with_provider], want: [&want, &want]);
+    let without_provider_want: Value = serde_json::from_str(include_str!(
+        "fixtures/serialized_output/redis-annotations-disabled.json"
+    ))?;
+    sim_assert_eq!(have: [&without_provider, &with_provider], want: [&without_provider_want, &want]);
     Ok(())
 }
 

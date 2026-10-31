@@ -164,15 +164,6 @@ fn every_scalar_content_variant_survives_projection() {
     for content in [
         ScalarContent::Literal(GuardValue::String("x".to_owned())),
         ScalarContent::Identity(path.clone()),
-        ScalarContent::Rendered(vec![crate::value::scalar_value::ScalarRenderPart::Text(
-            "x".to_owned(),
-        )]),
-        ScalarContent::PrintfStringIdentity(path.clone()),
-        ScalarContent::SplitLength {
-            value: Box::new(ScalarContent::Identity(path.clone())),
-            separator: ":".to_owned(),
-        },
-        ScalarContent::Length(Box::new(ScalarContent::Identity(path))),
     ] {
         let value = Value::scalar(ScalarType::String, Some(content.clone()));
         sim_assert_eq!(have: site(&state, &value).projected_scalar(), want: Some(crate::value::ScalarValueDispatch::bind_content(vec![(Predicate::True, content)], true)));

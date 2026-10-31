@@ -227,7 +227,7 @@ fn observe_with_db(prefix: &str, expression: &str, db: &IrAnalysisDb) -> Observa
     source.push_str("{{ end }}");
     let execution = crate::value::tests::execute_document(&source, None, db);
     let projected = crate::tests::support::project_execution(&source, None, db, &execution);
-    let contract = crate::fragment_eval::contract_ir_from_document(&projected).finalize();
+    let contract = projected.contract.clone().finalize();
     let rows = contract
         .uses()
         .iter()
@@ -758,15 +758,10 @@ fn go_regex_literal_escaping_leaves_re2_hyphens_bare() {
 }
 
 #[test]
-fn lexical_escape_patterns_use_the_shared_go_regex_quoting() {
-    let pattern = crate::helper_meta::pattern_with_lexical_escapes(
-        "^value$",
-        &BTreeSet::from([crate::helper_meta::LexicalEscape::TrimSuffix(
-            "-/x.y".to_string(),
-        )]),
-    );
-
-    sim_assert_eq!(have: pattern, want: r"^(?:value)(?:-/x\.y)?$");
+fn unmodeled_suffix_trimming_retains_its_input_dependency() {
+    let result = observe("", r#"trimSuffix "-/x.y" .Values.input"#);
+    sim_assert_eq!(have: result.paths(), want: BTreeSet::from([ValuesPath::parse("input")]));
+    sim_assert_eq!(have: result.literals(), want: BTreeSet::new());
 }
 
 #[test]
@@ -1180,12 +1175,7 @@ fn stringified_trimmed_equality_uses_the_transformed_scalar_value() {
         "",
         r#"eq (.Values.image.tag | toString | trimSuffix "-jmx") "7""#,
     );
-    let pattern = crate::helper_meta::pattern_with_lexical_escapes(
-        "^7$",
-        &BTreeSet::from([crate::helper_meta::LexicalEscape::TrimSuffix(
-            "-jmx".to_owned(),
-        )]),
-    );
+    let pattern = r"^(?:7)(?:-jmx)?$".to_owned();
     sim_assert_eq!(have: result.truth(), want: Some(Predicate::Or(vec![
     Predicate::from(Guard::Eq { path: ValuesPath::parse("image.tag"), value: GuardValue::Int(7) }),
     Predicate::from(Guard::MatchesPattern { path: ValuesPath::parse("image.tag"), pattern, templated: false }),

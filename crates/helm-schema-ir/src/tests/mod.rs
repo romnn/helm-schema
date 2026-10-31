@@ -1009,3 +1009,5 @@ fn checksum_include_rows_stay_serialized_at_the_annotation_slot() {
         "the checksum include must still attribute its file's paths"
     );
 }
+
+pub(crate) mod fragment_inspection;

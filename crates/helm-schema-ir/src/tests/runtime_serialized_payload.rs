@@ -13,12 +13,21 @@ impl crate::value::DocumentExecution {
     fn serialized_payload<'a>(
         &self,
         value: &'a crate::value::FrozenValue,
-    ) -> crate::value::output::PayloadView<'a> {
-        self.bounded_serialized_payload(
-            value,
-            crate::value::output::PayloadShape::Mapping,
-            &mut 1024,
-        )
+    ) -> Vec<crate::value::use_policy::RelationshipUse<'a>> {
+        self.relationships(value, &[], 1024)
+            .known
+            .into_iter()
+            .filter_map(crate::value::relationship::Relationship::destination)
+            .filter(|payload| {
+                payload.capture.is_none()
+                    && payload.output_path.is_empty()
+                    && matches!(
+                        payload.kind,
+                        crate::ValueKind::YamlSerialized
+                            | crate::ValueKind::TemplatedYamlSerialized
+                    )
+            })
+            .collect()
     }
 }
 
@@ -33,10 +42,9 @@ fn payload_origins(source: &str, helpers: &str) -> BTreeSet<ValuesPath> {
         .flat_map(|site| {
             execution
                 .serialized_payload(site.value())
-                .known
                 .into_iter()
                 .filter(|payload| payload.omitted_members.is_empty())
-                .map(|payload| payload.path.clone())
+                .map(|payload| payload.source.into_owned())
         })
         .collect()
 }
@@ -194,12 +202,12 @@ fn omitted_map_keeps_later_alias_exclusions() -> eyre::Result<()> {
         .sites()
         .find(|site| site.rendered())
         .ok_or_eyre("omitted map output missing")?;
-    let view = execution.serialized_payload(site.value());
+    let view = execution.relationships(site.value(), &[], 1024);
     let arm = view
         .known
         .first()
         .ok_or_eyre("remaining input region missing")?;
-    sim_assert_eq!(have: arm.path, want: &ValuesPath::parse("payload"));
+    sim_assert_eq!(have: arm.source.as_ref(), want: &ValuesPath::parse("payload"));
     sim_assert_eq!(have: &arm.omitted_members, want: &BTreeSet::from(["nested".to_owned(), "removed".to_owned()]));
     Ok(())
 }
@@ -412,11 +420,11 @@ fn one_frozen_payload_keeps_both_output_occurrences() {
     let execution = execute_document(source, None, &db);
     let mut occurrences = BTreeMap::<_, BTreeSet<_>>::new();
     for site in execution.sites().filter(|site| site.rendered()) {
-        for payload in execution.serialized_payload(site.value()).known {
+        for payload in execution.serialized_payload(site.value()) {
             occurrences
                 .entry(site.span().start)
                 .or_default()
-                .insert(payload.path.clone());
+                .insert(payload.source.into_owned());
         }
     }
     sim_assert_eq!(have: occurrences.len(), want: 2);
@@ -647,8 +655,8 @@ fn modified_payload_keeps_only_surviving_input_members() {
         let execution = execute_document(&source, None, &db);
         let mut claims = BTreeSet::new();
         for site in execution.sites().filter(|site| site.rendered()) {
-            for payload in execution.serialized_payload(site.value()).known {
-                claims.insert((payload.path.clone(), payload.omitted_members));
+            for payload in execution.serialized_payload(site.value()) {
+                claims.insert((payload.source.into_owned(), payload.omitted_members));
             }
         }
         sim_assert_eq!(
@@ -699,7 +707,7 @@ fn later_yaml_member_withdraws_original_member_typing() -> eyre::Result<()> {
 /// Cache hits agree with fresh queries and consume the same finite allowance as emitted claims.
 #[test]
 fn borrowed_query_cache_preserves_guard_correlation() {
-    use crate::value::output::{PayloadQuery, PayloadShape};
+    use crate::value::relationship::RelationshipQuery;
     use crate::value::text::TextTerm;
     use crate::value::{Coverage, State, Value};
     use helm_schema_core::Predicate;
@@ -726,13 +734,13 @@ fn borrowed_query_cache_preserves_guard_correlation() {
         serialize("right"),
     ));
     let inputs = state.heap.arena.input_objects.borrow();
-    let mut query = PayloadQuery::new(&inputs);
-    let first = query.value(&frozen);
+    let mut query = RelationshipQuery::new(&inputs, 1024);
+    let first = query.value(&frozen, &[]);
     sim_assert_eq!(have: first.unknown.clone(), want: Predicate::False);
     sim_assert_eq!(have: first.known.len(), want: 2);
     for _ in 0..128 {
-        let uncached = PayloadQuery::with_shape(&inputs, PayloadShape::Mapping).value(&frozen);
-        sim_assert_eq!(have: query.value(&frozen), want: uncached);
+        let uncached = RelationshipQuery::new(&inputs, 1024).value(&frozen, &[]);
+        sim_assert_eq!(have: query.value(&frozen, &[]), want: uncached);
     }
     assert!(query.work() <= 1024);
 }
@@ -740,7 +748,7 @@ fn borrowed_query_cache_preserves_guard_correlation() {
 /// Small allowances cannot turn a truncated alternative set into complete provenance.
 #[test]
 fn exhausted_payload_queries_retain_unknown_coverage() {
-    use crate::value::output::{PayloadQuery, PayloadShape};
+    use crate::value::relationship::RelationshipQuery;
     use crate::value::text::TextTerm;
     use crate::value::{Coverage, State, Value};
     use helm_schema_core::Predicate;
@@ -769,8 +777,8 @@ fn exhausted_payload_queries_retain_unknown_coverage() {
         let frozen = state.heap.freeze(&value);
         let inputs = state.heap.arena.input_objects.borrow();
         for limit in [0, 1, 8, 32] {
-            let mut query = PayloadQuery::with_limit(&inputs, PayloadShape::Mapping, limit);
-            let view = query.value(&frozen);
+            let mut query = RelationshipQuery::new(&inputs, limit);
+            let view = query.value(&frozen, &[]);
             assert!(query.work() <= limit);
             // The final opaque alternative remains possible at every width, even before overflow.
             assert_ne!(view.unknown, Predicate::False);
@@ -781,7 +789,7 @@ fn exhausted_payload_queries_retain_unknown_coverage() {
                 .map(|index| ValuesPath::parse(&format!("source{index}")))
                 .collect::<BTreeSet<_>>();
             for claim in view.known {
-                assert!(sources.contains(claim.path));
+                assert!(sources.contains(claim.source.as_ref()));
             }
         }
     }
@@ -790,7 +798,7 @@ fn exhausted_payload_queries_retain_unknown_coverage() {
 /// Unrelated later heap versions do not increase the work of querying an already frozen source.
 #[test]
 fn payload_query_work_is_independent_of_later_heap_history() -> eyre::Result<()> {
-    use crate::value::output::PayloadQuery;
+    use crate::value::relationship::RelationshipQuery;
     use crate::value::text::TextTerm;
     use crate::value::{Field, Remainder, State, Value};
 
@@ -819,8 +827,8 @@ fn payload_query_work_is_independent_of_later_heap_history() -> eyre::Result<()>
             );
         }
         let inputs = state.heap.arena.input_objects.borrow();
-        let mut query = PayloadQuery::new(&inputs);
-        let view = query.value(&frozen);
+        let mut query = RelationshipQuery::new(&inputs, 1024);
+        let view = query.value(&frozen, &[]);
         let have = (view, query.work());
         if let Some(want) = &expected {
             sim_assert_eq!(have: &have, want: want);
@@ -834,7 +842,7 @@ fn payload_query_work_is_independent_of_later_heap_history() -> eyre::Result<()>
 /// Shared helper branches grow query work with graph depth, rather than their expanded path count.
 #[test]
 fn shared_capture_depth_has_bounded_query_work() {
-    use crate::value::output::PayloadQuery;
+    use crate::value::relationship::RelationshipQuery;
     use crate::value::text::TextTerm;
     use crate::value::{Coverage, OutputNode, State, TextBuffer, TextPart, Value};
     use helm_schema_core::Predicate;
@@ -885,8 +893,8 @@ fn shared_capture_depth_has_bounded_query_work() {
         );
         frozen = state.heap.freeze(&value);
         let inputs = state.heap.arena.input_objects.borrow();
-        let mut query = PayloadQuery::new(&inputs);
-        let view = query.value(&frozen);
+        let mut query = RelationshipQuery::new(&inputs, 1024);
+        let view = query.value(&frozen, &[]);
         assert!(query.work() <= (48 * depth + 16).min(1024));
         if depth <= 16 {
             sim_assert_eq!(have: view.unknown, want: Predicate::False);
@@ -898,7 +906,7 @@ fn shared_capture_depth_has_bounded_query_work() {
 /// A changed nested alias is omitted even when the queried parent has its own input backing.
 #[test]
 fn modified_descendant_members_are_not_claimed_unchanged() -> eyre::Result<()> {
-    use crate::value::output::PayloadQuery;
+    use crate::value::relationship::RelationshipQuery;
     use crate::value::text::TextTerm;
     use crate::value::{
         AliasSet, Datum, Field, Leaf, MapType, Origin, State, TypeCoverage, UnknownValue, Value,
@@ -941,7 +949,9 @@ fn modified_descendant_members_are_not_claimed_unchanged() -> eyre::Result<()> {
     );
     let frozen = state.heap.freeze(&serialized);
     let inputs = state.heap.arena.input_objects.borrow();
-    let claims = PayloadQuery::new(&inputs).value(&frozen).known;
+    let claims = RelationshipQuery::new(&inputs, 1024)
+        .value(&frozen, &[])
+        .known;
     sim_assert_eq!(have: claims.len(), want: 1);
     sim_assert_eq!(have: &claims.first().ok_or_eyre("root partial claim missing")?.omitted_members, want: &BTreeSet::from(["nested".to_owned()]));
     Ok(())

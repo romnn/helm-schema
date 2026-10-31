@@ -1,7 +1,7 @@
 //! Whole-chart semantic pins for runtime contracts found by the chart-corpus re-audit.
 //!
-//! Every case composes a sparse override over the vendored chart defaults. Rejected cases exercise
-//! a Helm operation that terminates or emits invalid YAML, while accepted siblings keep the nearby
+//! Every case composes a sparse override over the vendored chart defaults. Rejected cases pin a
+//! Helm failure or a rendered value refused by its Kubernetes schema. Accepted siblings keep the
 //! supported lane open so a broad type restriction cannot masquerade as a fix.
 //!
 //! A case is compared with the same chart's composed-default validation errors. This keeps an
@@ -20,6 +20,7 @@ use test_util::prelude::sim_assert_eq;
 #[path = "common/chart_instances.rs"]
 mod chart_instances;
 
+#[derive(Clone)]
 struct SemanticCase {
     label: &'static str,
     overrides: Value,
@@ -5135,6 +5136,148 @@ fn chart_authored_tpl_programs_keep_their_selected_dependencies() -> eyre::Resul
                     },
                     "route": null,
                 }),
+            ),
+        ],
+    )
+}
+
+fn assert_semantic_schema_cases(
+    chart: &str,
+    schema: &Value,
+    cases: Vec<SemanticCase>,
+) -> eyre::Result<()> {
+    let validator = jsonschema::validator_for(schema)
+        .map_err(|err| eyre::eyre!("compile {chart} schema: {err}"))?;
+    let validation_errors = |instance: &Value| {
+        validator
+            .iter_errors(instance)
+            .map(|err| ValidationFailure {
+                instance_path: err.instance_path().to_string(),
+                message: err.to_string(),
+            })
+            .collect::<BTreeSet<_>>()
+    };
+    let defaults = chart_instances::with_override(chart, json!({}))?;
+    let baseline = validation_errors(&defaults);
+    let mut failures = Vec::new();
+    for SemanticCase {
+        label,
+        overrides,
+        accepted,
+        rejected_path: _,
+        quarantined: _,
+    } in cases
+    {
+        let instance = chart_instances::with_override(chart, overrides)?;
+        let errors = validation_errors(&instance);
+        let additional = errors.difference(&baseline).collect::<Vec<_>>();
+        if additional.is_empty() != accepted {
+            failures.push(format!(
+                "{label}: expected accepted={accepted}; new errors: {additional:#?}"
+            ));
+        }
+    }
+    if failures.is_empty() {
+        Ok(())
+    } else {
+        Err(eyre::eyre!("{chart}: {}", failures.join("\n")))
+    }
+}
+
+fn assert_placement_chart_cases(chart: &str, cases: Vec<SemanticCase>) -> eyre::Result<()> {
+    use helm_schema::generation::DeclaredTypes;
+    use helm_schema_test_support::registry::GenerationRecipe;
+
+    let chart_id = ChartId::from_relative_path(chart).ok_or_eyre("registered chart")?;
+    let GenerationRecipe::Chart(mut recipe) = ArtifactId::Chart(chart_id).spec().recipe else {
+        eyre::bail!("whole-chart recipe required");
+    };
+    let registered_schema = helm_schema_test_support::consume(ArtifactId::Chart(chart_id))?;
+    let registered = assert_semantic_schema_cases(chart, &registered_schema, cases.clone());
+    // Provider recovery must survive without chart-declared type assertions.
+    recipe.authoring.declared_types = DeclaredTypes::Annotate;
+    let structural = helm_schema_test_support::generate::chart_schema(&recipe)?;
+    let annotated = assert_semantic_schema_cases(chart, &structural, cases);
+    let mut failures = Vec::new();
+    if let Err(err) = registered {
+        failures.push(format!("registered recipe: {err}"));
+    }
+    if let Err(err) = annotated {
+        failures.push(format!("annotate control: {err}"));
+    }
+    if failures.is_empty() {
+        Ok(())
+    } else {
+        Err(eyre::eyre!("{}", failures.join("\n")))
+    }
+}
+
+#[test]
+fn corpus_c06b_c2_cilium_affinity_keeps_the_daemonset_provider_contract() -> eyre::Result<()> {
+    assert_placement_chart_cases(
+        "cilium",
+        vec![
+            SemanticCase::accepted("chart defaults", json!({})),
+            SemanticCase::accepted("object affinity", json!({"affinity": {"nodeAffinity": {}}})),
+            SemanticCase::rejected(
+                "C2 boolean affinity",
+                "/affinity",
+                json!({"affinity": true}),
+            ),
+        ],
+    )
+}
+
+#[test]
+fn corpus_c06b_f2_airflow_worker_resources_keep_the_container_provider_contract() -> eyre::Result<()>
+{
+    assert_placement_chart_cases(
+        "airflow",
+        vec![
+            SemanticCase::accepted("chart defaults", json!({})),
+            SemanticCase::accepted(
+                "object worker resources",
+                json!({"workers": {"resources": {"requests": {"cpu": "100m"}}}}),
+            ),
+            SemanticCase::rejected(
+                "F2 boolean worker resources",
+                "/workers/resources",
+                json!({"workers": {"resources": true}}),
+            ),
+        ],
+    )
+}
+
+#[test]
+fn corpus_c06b_f3_airflow_worker_args_keep_the_container_provider_contract() -> eyre::Result<()> {
+    assert_placement_chart_cases(
+        "airflow",
+        vec![
+            SemanticCase::accepted("chart defaults", json!({})),
+            SemanticCase::accepted(
+                "array worker args",
+                json!({"workers": {"args": ["worker"]}}),
+            ),
+            SemanticCase::rejected(
+                "F3 boolean worker args",
+                "/workers/args",
+                json!({"workers": {"args": true}}),
+            ),
+        ],
+    )
+}
+
+#[test]
+fn corpus_c06b_f4_airflow_affinity_keeps_the_selected_pod_provider_contract() -> eyre::Result<()> {
+    assert_placement_chart_cases(
+        "airflow",
+        vec![
+            SemanticCase::accepted("chart defaults", json!({})),
+            SemanticCase::accepted("object affinity", json!({"affinity": {"nodeAffinity": {}}})),
+            SemanticCase::rejected(
+                "F4 boolean affinity",
+                "/affinity",
+                json!({"affinity": true}),
             ),
         ],
     )

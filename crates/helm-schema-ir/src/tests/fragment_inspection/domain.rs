@@ -262,10 +262,6 @@ pub(crate) struct SpliceMeta {
     pub omitted_members: std::collections::BTreeMap<String, Vec<helm_schema_core::Guard>>,
     /// Executed-output layout certificate for this whole scalar occurrence.
     pub plain_scalar_placement: helm_schema_core::PlainScalarPlacement,
-    /// Lexical divergences between the raw string and the rendered value
-    /// (`replace`/split-prefix chains, trim affixes); lexical captures
-    /// project their language through them.
-    pub lexical_escapes: BTreeSet<crate::helper_meta::LexicalEscape>,
     /// The render site the splice materializes at.
     pub site: Option<Rc<SiteFacts>>,
 }
@@ -278,10 +274,9 @@ impl SpliceMeta {
             strip_marker: _,
             omitted_members: _,
             plain_scalar_placement: _,
-            lexical_escapes,
             site: _,
         } = self;
-        *input_identity && !stringified && lexical_escapes.is_empty()
+        *input_identity && !stringified
     }
 }
 

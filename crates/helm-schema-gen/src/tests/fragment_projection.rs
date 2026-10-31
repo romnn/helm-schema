@@ -337,13 +337,7 @@ fn direct_rendered_annotations_helper_keeps_open_string_map() {
 
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
-    let pod_annotations = schema
-        .pointer("/properties/podAnnotations")
-        .expect("podAnnotations present");
-    assert_open_string_map_or_templated_string(
-        pod_annotations,
-        "podAnnotations rendered through common.tplvalues.render",
-    );
+    sim_assert_eq!(have: open_string_map_contract_mismatches(&schema, "podAnnotations"), want: Vec::<Value>::new());
 }
 
 #[test]
@@ -374,13 +368,7 @@ fn direct_rendered_annotations_helper_with_empty_default_keeps_open_string_map()
 
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
-    let pod_annotations = schema
-        .pointer("/properties/podAnnotations")
-        .expect("podAnnotations present");
-    assert_open_string_map_or_templated_string(
-        pod_annotations,
-        "empty-map podAnnotations rendered through common.tplvalues.render",
-    );
+    sim_assert_eq!(have: open_string_map_contract_mismatches(&schema, "podAnnotations"), want: Vec::<Value>::new());
 }
 
 #[test]

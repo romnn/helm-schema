@@ -22,16 +22,16 @@ struct NamedValue {
 
 #[derive(Default)]
 struct HeaderNodes {
-    kind: Option<usize>,
-    api_version: Option<usize>,
-    items: Option<usize>,
+    kind: Vec<usize>,
+    api_version: Vec<usize>,
+    items: Vec<usize>,
 }
 
 pub(crate) fn placed_resources(
     document: &PlacedDocument<'_>,
-    _execution: &DocumentExecution,
+    execution: &DocumentExecution,
 ) -> Vec<PlacedResource> {
-    let projection = ResourceProjection::new(document);
+    let projection = ResourceProjection::new(document, execution);
     let mut resources = Vec::new();
     for index in projection.roots() {
         projection.mapping(index, &document.condition, &[], &mut resources);
@@ -41,21 +41,15 @@ pub(crate) fn placed_resources(
 
 struct ResourceProjection<'a, 'b> {
     document: &'a PlacedDocument<'b>,
-    children: Vec<Vec<usize>>,
+    execution: &'a DocumentExecution,
     memo: PredicateMemo,
 }
 
 impl<'a, 'b> ResourceProjection<'a, 'b> {
-    fn new(document: &'a PlacedDocument<'b>) -> Self {
-        let mut children = vec![Vec::new(); document.ownership.nodes.len()];
-        for (index, node) in document.ownership.nodes.iter().enumerate() {
-            if let Some(parent) = node.parent.and_then(|parent| children.get_mut(parent)) {
-                parent.push(index);
-            }
-        }
+    fn new(document: &'a PlacedDocument<'b>, execution: &'a DocumentExecution) -> Self {
         Self {
             document,
-            children,
+            execution,
             memo: PredicateMemo::new(),
         }
     }
@@ -78,21 +72,18 @@ impl<'a, 'b> ResourceProjection<'a, 'b> {
 
     fn headers(&self, mapping: usize) -> HeaderNodes {
         let mut headers = HeaderNodes::default();
-        for pair in self.children.get(mapping).into_iter().flatten() {
-            let Some(children) = self.children.get(*pair) else {
+        for pair in self.document.children(mapping) {
+            let children = self.document.children(*pair);
+            let Some(key) = children.iter().copied().find(|index| {
+                self.document
+                    .ownership
+                    .nodes
+                    .get(*index)
+                    .is_some_and(|node| node.key)
+            }) else {
                 continue;
             };
-            let Some(key) = children
-                .iter()
-                .filter_map(|index| self.document.ownership.nodes.get(*index))
-                .find(|node| node.key)
-            else {
-                continue;
-            };
-            if self.document.terms(key.span).any(|term| term.placeholder) {
-                continue;
-            }
-            let Some(key) = literal_key(self.document, key.span) else {
+            let Some(key) = self.document.literal_key(key) else {
                 continue;
             };
             let value = children.iter().copied().find(|index| {
@@ -102,10 +93,10 @@ impl<'a, 'b> ResourceProjection<'a, 'b> {
                     .get(*index)
                     .is_some_and(|node| !node.key)
             });
-            match key.as_str() {
-                "kind" if headers.kind.is_none() => headers.kind = value,
-                "apiVersion" if headers.api_version.is_none() => headers.api_version = value,
-                "items" if headers.items.is_none() => headers.items = value,
+            match key {
+                "kind" => headers.kind.extend(value),
+                "apiVersion" => headers.api_version.extend(value),
+                "items" => headers.items.extend(value),
                 _ => {}
             }
         }
@@ -127,27 +118,14 @@ impl<'a, 'b> ResourceProjection<'a, 'b> {
             api_version,
             items,
         } = self.headers(index);
-        let Some(kind) = kind else {
-            return;
-        };
-        let Some(kinds) = self.names(kind) else {
-            return;
-        };
-        let versions = api_version
-            .and_then(|index| self.names(index))
-            .unwrap_or_else(|| {
-                vec![NamedValue {
-                    condition: Predicate::True,
-                    text: String::new(),
-                }]
+        let kinds = self.selected_names(&kind);
+        let mut versions = self.selected_names(&api_version);
+        if versions.is_empty() {
+            versions.push(NamedValue {
+                condition: Predicate::True,
+                text: String::new(),
             });
-        let placement = self.document.placement_guard(
-            self.document
-                .ownership
-                .nodes
-                .get(kind)
-                .map_or(mapping.span, |node| node.span),
-        );
+        }
         for NamedValue {
             condition: kind_condition,
             text: kind,
@@ -163,7 +141,6 @@ impl<'a, 'b> ResourceProjection<'a, 'b> {
             {
                 let condition = self.memo.normalize(Predicate::all(vec![
                     ambient.clone(),
-                    placement.clone(),
                     kind_condition.clone(),
                     version_condition.clone(),
                 ]));
@@ -171,8 +148,23 @@ impl<'a, 'b> ResourceProjection<'a, 'b> {
                     continue;
                 }
                 if kind == "List" && version == "v1" {
-                    if let Some(items) = items {
-                        self.list_items(items, &condition, path_prefix, resources);
+                    for items in &items {
+                        let selected = self
+                            .document
+                            .ownership
+                            .nodes
+                            .get(*items)
+                            .map_or(Predicate::False, |node| {
+                                self.document.placement_guard(node.span)
+                            });
+                        self.list_items(
+                            *items,
+                            &self
+                                .memo
+                                .normalize(Predicate::all(vec![condition.clone(), selected])),
+                            path_prefix,
+                            resources,
+                        );
                     }
                     continue;
                 }
@@ -212,12 +204,12 @@ impl<'a, 'b> ResourceProjection<'a, 'b> {
     ) {
         let mut prefix = path_prefix.to_vec();
         prefix.push("items[*]".to_owned());
-        for item in self.children.get(items).into_iter().flatten() {
+        for item in self.document.children(items) {
             if self.mapping_node(*item) {
                 self.mapping(*item, condition, &prefix, resources);
                 continue;
             }
-            for child in self.children.get(*item).into_iter().flatten() {
+            for child in self.document.children(*item) {
                 if self.mapping_node(*child) {
                     self.mapping(*child, condition, &prefix, resources);
                 }
@@ -235,12 +227,39 @@ impl<'a, 'b> ResourceProjection<'a, 'b> {
             })
     }
 
+    fn selected_names(&self, indices: &[usize]) -> Vec<NamedValue> {
+        let mut names = Vec::new();
+        let mut remaining = Predicate::True;
+        for index in indices.iter().rev().take(128) {
+            let Some(node) = self.document.ownership.nodes.get(*index) else {
+                continue;
+            };
+            let active = self.document.selection_guard(node.span);
+            for mut name in self.names(*index).unwrap_or_default() {
+                name.condition = self.memo.normalize(Predicate::all(vec![
+                    name.condition,
+                    remaining.clone(),
+                    active.clone(),
+                    self.document.placement_guard(node.span),
+                ]));
+                if name.condition != Predicate::False {
+                    names.push(name);
+                }
+            }
+            remaining = self
+                .memo
+                .normalize(Predicate::all(vec![remaining, active.negated()]));
+        }
+        names.reverse();
+        names
+    }
+
     fn names(&self, index: usize) -> Option<Vec<NamedValue>> {
         let node = self.document.ownership.nodes.get(index)?;
         if !matches!(node.kind, YamlNodeKind::Scalar(_)) {
             return None;
         }
-        scalar_names(self.document, node.span, &self.memo)
+        scalar_names(self.document, self.execution, node.span, &self.memo)
     }
 }
 
@@ -281,6 +300,7 @@ fn selector_path(predicate: &Predicate, kind: &str, memo: &PredicateMemo) -> Opt
 
 fn scalar_names(
     document: &PlacedDocument<'_>,
+    execution: &DocumentExecution,
     span: Span,
     memo: &PredicateMemo,
 ) -> Option<Vec<NamedValue>> {
@@ -323,7 +343,17 @@ fn scalar_names(
             if !alternative.coverage_exact() {
                 return None;
             }
-            let text = alternative.value().exact_text()?;
+            let Some(text) = alternative.value().exact_text() else {
+                names.extend(relationship_names(
+                    alternative.value(),
+                    execution,
+                    &before,
+                    &after,
+                    &condition,
+                    memo,
+                ));
+                continue;
+            };
             let text = decoded_name(&format!("{before}{text}{after}"))?;
             names.push(NamedValue { condition, text });
         }
@@ -331,21 +361,114 @@ fn scalar_names(
     Some(names)
 }
 
-fn decoded_name(text: &str) -> Option<String> {
-    if text.trim().is_empty() {
-        return Some(String::new());
+fn relationship_names(
+    value: &crate::value::FrozenValue,
+    execution: &DocumentExecution,
+    before: &str,
+    after: &str,
+    ambient: &Predicate,
+    memo: &PredicateMemo,
+) -> Vec<NamedValue> {
+    let mut result = Vec::new();
+    let mut remaining = 1024_usize;
+    for relationship in execution.relationships(value, &[], remaining).known {
+        let Some(policy) = relationship.destination() else {
+            continue;
+        };
+        if policy.kind != crate::ValueKind::Scalar
+            || policy.stringified
+            || policy.digest
+            || policy.nil_omitting
+            || policy.capture.is_some()
+            || !policy.output_path.is_empty()
+        {
+            continue;
+        }
+        let mut candidates = std::collections::BTreeSet::new();
+        let mut pending = execution
+            .sites()
+            .map(crate::value::ExecutedSite::condition)
+            .collect::<Vec<_>>();
+        while let Some(predicate) = pending.pop() {
+            let Some(rest) = remaining.checked_sub(1) else {
+                break;
+            };
+            remaining = rest;
+            match predicate.kind() {
+                PredicateKind::Guard(Guard::Eq {
+                    path,
+                    value: GuardValue::String(text),
+                }) if path == policy.source.as_ref() => {
+                    candidates.insert(text.clone());
+                }
+                PredicateKind::And(parts) | PredicateKind::Or(parts) => {
+                    pending.extend(parts.iter().cloned());
+                }
+                PredicateKind::Not(inner) => pending.push(inner.clone()),
+                PredicateKind::True
+                | PredicateKind::False
+                | PredicateKind::Guard(_)
+                | PredicateKind::Approximate {
+                    marker: _,
+                    paths: _,
+                    role: _,
+                    sound_subset: _,
+                } => {}
+            }
+        }
+        for candidate in candidates {
+            let Some(text) = decoded_name(&format!("{before}{candidate}{after}")) else {
+                continue;
+            };
+            result.push(NamedValue {
+                condition: memo.normalize(Predicate::all(vec![
+                    ambient.clone(),
+                    policy.condition.clone(),
+                    Predicate::from(Guard::Eq {
+                        path: policy.source.as_ref().clone(),
+                        value: GuardValue::String(candidate),
+                    }),
+                ])),
+                text,
+            });
+        }
     }
-    serde_yaml::from_str::<serde_json::Value>(text)
-        .ok()?
-        .as_str()
-        .map(str::to_owned)
+    result
+}
+
+#[derive(Default)]
+struct LiteralNames {
+    values: std::collections::BTreeMap<String, Option<String>>,
+    bytes: usize,
+}
+
+thread_local! {
+    static LITERAL_NAMES: std::cell::RefCell<LiteralNames> = std::cell::RefCell::default();
+}
+
+fn decoded_name(text: &str) -> Option<String> {
+    LITERAL_NAMES.with_borrow_mut(|cache| {
+        if let Some(name) = cache.values.get(text) {
+            return name.clone();
+        }
+        let name = if text.trim().is_empty() {
+            Some(String::new())
+        } else {
+            serde_yaml::from_str::<serde_json::Value>(text)
+                .ok()
+                .and_then(|value| value.as_str().map(str::to_owned))
+        };
+        let cost = text
+            .len()
+            .saturating_add(name.as_ref().map_or(0, String::len));
+        if cache.values.len() < 1024 && cache.bytes.saturating_add(cost) <= 1024 * 1024 {
+            cache.bytes += cost;
+            cache.values.insert(text.to_owned(), name.clone());
+        }
+        name
+    })
 }
 
 #[cfg(test)]
 #[path = "tests/resource_identity_compat.rs"]
 pub(crate) mod test_support;
-
-pub(crate) fn literal_key(document: &PlacedDocument<'_>, span: Span) -> Option<String> {
-    let text = document.ownership.skeleton.text.get(span.start..span.end)?;
-    helm_schema_syntax::parse_yaml_key(&format!("{text}:"))
-}

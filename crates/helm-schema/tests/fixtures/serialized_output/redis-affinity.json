@@ -9,1004 +9,1211 @@
       "additionalProperties": {},
       "properties": {
         "affinity": {
-          "anyOf": [
+          "allOf": [
             {
-              "enum": [
-                null,
-                false,
-                0,
-                "",
-                [],
-                {}
-              ]
-            },
-            {
-              "type": "string"
-            },
-            {
-              "anyOf": [
-                {
-                  "not": {
-                    "$ref": "#/$defs/Q"
+              "if": {
+                "allOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/values~1replica.affinity~1anyOf~1:helm-no-template-actions+=null"
                   }
-                },
-                {
-                  "properties": {
-                    "nodeAffinity": {
-                      "properties": {
-                        "preferredDuringSchedulingIgnoredDuringExecution": {
-                          "items": {
-                            "properties": {
-                              "preference": {
-                                "properties": {
-                                  "matchExpressions": {
-                                    "items": {
-                                      "properties": {
-                                        "key": {
-                                          "type": "string"
-                                        },
-                                        "operator": {
-                                          "type": "string"
-                                        },
-                                        "values": {
-                                          "items": {
-                                            "type": [
-                                              "string",
-                                              "null"
-                                            ]
-                                          },
-                                          "type": [
-                                            "array",
-                                            "null"
-                                          ]
-                                        }
-                                      },
-                                      "required": [
-                                        "key",
-                                        "operator"
-                                      ],
-                                      "type": [
-                                        "object",
-                                        "null"
-                                      ],
-                                      "additionalProperties": false
-                                    },
-                                    "type": [
-                                      "array",
-                                      "null"
-                                    ]
-                                  },
-                                  "matchFields": {
-                                    "items": {
-                                      "properties": {
-                                        "key": {
-                                          "type": "string"
-                                        },
-                                        "operator": {
-                                          "type": "string"
-                                        },
-                                        "values": {
-                                          "items": {
-                                            "type": [
-                                              "string",
-                                              "null"
-                                            ]
-                                          },
-                                          "type": [
-                                            "array",
-                                            "null"
-                                          ]
-                                        }
-                                      },
-                                      "required": [
-                                        "key",
-                                        "operator"
-                                      ],
-                                      "type": [
-                                        "object",
-                                        "null"
-                                      ],
-                                      "additionalProperties": false
-                                    },
-                                    "type": [
-                                      "array",
-                                      "null"
-                                    ]
-                                  }
-                                },
-                                "type": "object",
-                                "x-kubernetes-map-type": "atomic",
-                                "additionalProperties": false
-                              },
-                              "weight": {
-                                "format": "int32",
-                                "type": "integer"
-                              }
-                            },
-                            "required": [
-                              "weight",
-                              "preference"
-                            ],
-                            "type": [
-                              "object",
-                              "null"
-                            ],
-                            "additionalProperties": false
-                          },
-                          "type": [
-                            "array",
-                            "null"
-                          ]
-                        },
-                        "requiredDuringSchedulingIgnoredDuringExecution": {
-                          "properties": {
-                            "nodeSelectorTerms": {
-                              "items": {
-                                "properties": {
-                                  "matchExpressions": {
-                                    "items": {
-                                      "properties": {
-                                        "key": {
-                                          "type": "string"
-                                        },
-                                        "operator": {
-                                          "type": "string"
-                                        },
-                                        "values": {
-                                          "items": {
-                                            "type": [
-                                              "string",
-                                              "null"
-                                            ]
-                                          },
-                                          "type": [
-                                            "array",
-                                            "null"
-                                          ]
-                                        }
-                                      },
-                                      "required": [
-                                        "key",
-                                        "operator"
-                                      ],
-                                      "type": [
-                                        "object",
-                                        "null"
-                                      ],
-                                      "additionalProperties": false
-                                    },
-                                    "type": [
-                                      "array",
-                                      "null"
-                                    ]
-                                  },
-                                  "matchFields": {
-                                    "items": {
-                                      "properties": {
-                                        "key": {
-                                          "type": "string"
-                                        },
-                                        "operator": {
-                                          "type": "string"
-                                        },
-                                        "values": {
-                                          "items": {
-                                            "type": [
-                                              "string",
-                                              "null"
-                                            ]
-                                          },
-                                          "type": [
-                                            "array",
-                                            "null"
-                                          ]
-                                        }
-                                      },
-                                      "required": [
-                                        "key",
-                                        "operator"
-                                      ],
-                                      "type": [
-                                        "object",
-                                        "null"
-                                      ],
-                                      "additionalProperties": false
-                                    },
-                                    "type": [
-                                      "array",
-                                      "null"
-                                    ]
-                                  }
-                                },
-                                "type": [
-                                  "object",
-                                  "null"
-                                ],
-                                "x-kubernetes-map-type": "atomic",
-                                "additionalProperties": false
-                              },
-                              "type": "array"
+                ]
+              },
+              "then": {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string",
+                            "not": {
+                              "pattern": "[^A-Za-z0-9_./+-]"
                             }
                           },
-                          "required": [
-                            "nodeSelectorTerms"
-                          ],
-                          "type": [
-                            "object",
-                            "null"
-                          ],
-                          "x-kubernetes-map-type": "atomic",
-                          "additionalProperties": false
-                        }
-                      },
-                      "type": [
-                        "object",
-                        "null"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "podAffinity": {
-                      "properties": {
-                        "preferredDuringSchedulingIgnoredDuringExecution": {
-                          "items": {
-                            "properties": {
-                              "podAffinityTerm": {
-                                "properties": {
-                                  "labelSelector": {
-                                    "properties": {
-                                      "matchExpressions": {
-                                        "items": {
-                                          "properties": {
-                                            "key": {
-                                              "type": "string"
-                                            },
-                                            "operator": {
-                                              "type": "string"
-                                            },
-                                            "values": {
-                                              "items": {
-                                                "type": [
-                                                  "string",
-                                                  "null"
-                                                ]
-                                              },
-                                              "type": [
-                                                "array",
-                                                "null"
-                                              ]
-                                            }
-                                          },
-                                          "required": [
-                                            "key",
-                                            "operator"
-                                          ],
-                                          "type": [
-                                            "object",
-                                            "null"
-                                          ],
-                                          "additionalProperties": false
-                                        },
-                                        "type": [
-                                          "array",
-                                          "null"
-                                        ]
-                                      },
-                                      "matchLabels": {
-                                        "additionalProperties": {
-                                          "type": [
-                                            "string",
-                                            "null"
-                                          ]
-                                        },
-                                        "type": [
-                                          "object",
-                                          "null"
-                                        ]
-                                      }
-                                    },
-                                    "type": [
-                                      "object",
-                                      "null"
-                                    ],
-                                    "x-kubernetes-map-type": "atomic",
-                                    "additionalProperties": false
-                                  },
-                                  "matchLabelKeys": {
-                                    "items": {
-                                      "type": [
-                                        "string",
-                                        "null"
-                                      ]
-                                    },
-                                    "type": [
-                                      "array",
-                                      "null"
-                                    ],
-                                    "x-kubernetes-list-type": "atomic"
-                                  },
-                                  "mismatchLabelKeys": {
-                                    "items": {
-                                      "type": [
-                                        "string",
-                                        "null"
-                                      ]
-                                    },
-                                    "type": [
-                                      "array",
-                                      "null"
-                                    ],
-                                    "x-kubernetes-list-type": "atomic"
-                                  },
-                                  "namespaceSelector": {
-                                    "properties": {
-                                      "matchExpressions": {
-                                        "items": {
-                                          "properties": {
-                                            "key": {
-                                              "type": "string"
-                                            },
-                                            "operator": {
-                                              "type": "string"
-                                            },
-                                            "values": {
-                                              "items": {
-                                                "type": [
-                                                  "string",
-                                                  "null"
-                                                ]
-                                              },
-                                              "type": [
-                                                "array",
-                                                "null"
-                                              ]
-                                            }
-                                          },
-                                          "required": [
-                                            "key",
-                                            "operator"
-                                          ],
-                                          "type": [
-                                            "object",
-                                            "null"
-                                          ],
-                                          "additionalProperties": false
-                                        },
-                                        "type": [
-                                          "array",
-                                          "null"
-                                        ]
-                                      },
-                                      "matchLabels": {
-                                        "additionalProperties": {
-                                          "type": [
-                                            "string",
-                                            "null"
-                                          ]
-                                        },
-                                        "type": [
-                                          "object",
-                                          "null"
-                                        ]
-                                      }
-                                    },
-                                    "type": [
-                                      "object",
-                                      "null"
-                                    ],
-                                    "x-kubernetes-map-type": "atomic",
-                                    "additionalProperties": false
-                                  },
-                                  "namespaces": {
-                                    "items": {
-                                      "type": [
-                                        "string",
-                                        "null"
-                                      ]
-                                    },
-                                    "type": [
-                                      "array",
-                                      "null"
-                                    ]
-                                  },
-                                  "topologyKey": {
-                                    "type": "string"
-                                  }
-                                },
-                                "required": [
-                                  "topologyKey"
-                                ],
-                                "type": "object",
-                                "additionalProperties": false
-                              },
-                              "weight": {
-                                "format": "int32",
-                                "type": "integer"
-                              }
-                            },
-                            "required": [
-                              "weight",
-                              "podAffinityTerm"
-                            ],
-                            "type": [
-                              "object",
-                              "null"
-                            ],
-                            "additionalProperties": false
-                          },
-                          "type": [
-                            "array",
-                            "null"
-                          ]
-                        },
-                        "requiredDuringSchedulingIgnoredDuringExecution": {
-                          "items": {
-                            "properties": {
-                              "labelSelector": {
-                                "properties": {
-                                  "matchExpressions": {
-                                    "items": {
-                                      "properties": {
-                                        "key": {
-                                          "type": "string"
-                                        },
-                                        "operator": {
-                                          "type": "string"
-                                        },
-                                        "values": {
-                                          "items": {
-                                            "type": [
-                                              "string",
-                                              "null"
-                                            ]
-                                          },
-                                          "type": [
-                                            "array",
-                                            "null"
-                                          ]
-                                        }
-                                      },
-                                      "required": [
-                                        "key",
-                                        "operator"
-                                      ],
-                                      "type": [
-                                        "object",
-                                        "null"
-                                      ],
-                                      "additionalProperties": false
-                                    },
-                                    "type": [
-                                      "array",
-                                      "null"
-                                    ]
-                                  },
-                                  "matchLabels": {
-                                    "additionalProperties": {
-                                      "type": [
-                                        "string",
-                                        "null"
-                                      ]
-                                    },
-                                    "type": [
-                                      "object",
-                                      "null"
-                                    ]
-                                  }
-                                },
+                          "additionalProperties": {
+                            "anyOf": [
+                              {
                                 "type": [
-                                  "object",
-                                  "null"
-                                ],
-                                "x-kubernetes-map-type": "atomic",
-                                "additionalProperties": false
-                              },
-                              "matchLabelKeys": {
-                                "items": {
-                                  "type": [
-                                    "string",
-                                    "null"
-                                  ]
-                                },
-                                "type": [
-                                  "array",
-                                  "null"
-                                ],
-                                "x-kubernetes-list-type": "atomic"
-                              },
-                              "mismatchLabelKeys": {
-                                "items": {
-                                  "type": [
-                                    "string",
-                                    "null"
-                                  ]
-                                },
-                                "type": [
-                                  "array",
-                                  "null"
-                                ],
-                                "x-kubernetes-list-type": "atomic"
-                              },
-                              "namespaceSelector": {
-                                "properties": {
-                                  "matchExpressions": {
-                                    "items": {
-                                      "properties": {
-                                        "key": {
-                                          "type": "string"
-                                        },
-                                        "operator": {
-                                          "type": "string"
-                                        },
-                                        "values": {
-                                          "items": {
-                                            "type": [
-                                              "string",
-                                              "null"
-                                            ]
-                                          },
-                                          "type": [
-                                            "array",
-                                            "null"
-                                          ]
-                                        }
-                                      },
-                                      "required": [
-                                        "key",
-                                        "operator"
-                                      ],
-                                      "type": [
-                                        "object",
-                                        "null"
-                                      ],
-                                      "additionalProperties": false
-                                    },
-                                    "type": [
-                                      "array",
-                                      "null"
-                                    ]
-                                  },
-                                  "matchLabels": {
-                                    "additionalProperties": {
-                                      "type": [
-                                        "string",
-                                        "null"
-                                      ]
-                                    },
-                                    "type": [
-                                      "object",
-                                      "null"
-                                    ]
-                                  }
-                                },
-                                "type": [
-                                  "object",
-                                  "null"
-                                ],
-                                "x-kubernetes-map-type": "atomic",
-                                "additionalProperties": false
-                              },
-                              "namespaces": {
-                                "items": {
-                                  "type": [
-                                    "string",
-                                    "null"
-                                  ]
-                                },
-                                "type": [
-                                  "array",
-                                  "null"
+                                  "null",
+                                  "boolean",
+                                  "number"
                                 ]
                               },
-                              "topologyKey": {
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "topologyKey"
-                            ],
-                            "type": [
-                              "object",
-                              "null"
-                            ],
-                            "additionalProperties": false
-                          },
-                          "type": [
-                            "array",
-                            "null"
-                          ]
-                        }
-                      },
-                      "type": [
-                        "object",
-                        "null"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "podAntiAffinity": {
-                      "properties": {
-                        "preferredDuringSchedulingIgnoredDuringExecution": {
-                          "items": {
-                            "properties": {
-                              "podAffinityTerm": {
-                                "properties": {
-                                  "labelSelector": {
-                                    "properties": {
-                                      "matchExpressions": {
-                                        "items": {
-                                          "properties": {
-                                            "key": {
-                                              "type": "string"
-                                            },
-                                            "operator": {
-                                              "type": "string"
-                                            },
-                                            "values": {
-                                              "items": {
-                                                "type": [
-                                                  "string",
-                                                  "null"
-                                                ]
-                                              },
-                                              "type": [
-                                                "array",
-                                                "null"
-                                              ]
-                                            }
-                                          },
-                                          "required": [
-                                            "key",
-                                            "operator"
-                                          ],
-                                          "type": [
-                                            "object",
-                                            "null"
-                                          ],
-                                          "additionalProperties": false
-                                        },
-                                        "type": [
-                                          "array",
-                                          "null"
-                                        ]
-                                      },
-                                      "matchLabels": {
-                                        "additionalProperties": {
-                                          "type": [
-                                            "string",
-                                            "null"
-                                          ]
-                                        },
-                                        "type": [
-                                          "object",
-                                          "null"
-                                        ]
-                                      }
-                                    },
-                                    "type": [
-                                      "object",
-                                      "null"
-                                    ],
-                                    "x-kubernetes-map-type": "atomic",
-                                    "additionalProperties": false
-                                  },
-                                  "matchLabelKeys": {
-                                    "items": {
-                                      "type": [
-                                        "string",
-                                        "null"
-                                      ]
-                                    },
-                                    "type": [
-                                      "array",
-                                      "null"
-                                    ],
-                                    "x-kubernetes-list-type": "atomic"
-                                  },
-                                  "mismatchLabelKeys": {
-                                    "items": {
-                                      "type": [
-                                        "string",
-                                        "null"
-                                      ]
-                                    },
-                                    "type": [
-                                      "array",
-                                      "null"
-                                    ],
-                                    "x-kubernetes-list-type": "atomic"
-                                  },
-                                  "namespaceSelector": {
-                                    "properties": {
-                                      "matchExpressions": {
-                                        "items": {
-                                          "properties": {
-                                            "key": {
-                                              "type": "string"
-                                            },
-                                            "operator": {
-                                              "type": "string"
-                                            },
-                                            "values": {
-                                              "items": {
-                                                "type": [
-                                                  "string",
-                                                  "null"
-                                                ]
-                                              },
-                                              "type": [
-                                                "array",
-                                                "null"
-                                              ]
-                                            }
-                                          },
-                                          "required": [
-                                            "key",
-                                            "operator"
-                                          ],
-                                          "type": [
-                                            "object",
-                                            "null"
-                                          ],
-                                          "additionalProperties": false
-                                        },
-                                        "type": [
-                                          "array",
-                                          "null"
-                                        ]
-                                      },
-                                      "matchLabels": {
-                                        "additionalProperties": {
-                                          "type": [
-                                            "string",
-                                            "null"
-                                          ]
-                                        },
-                                        "type": [
-                                          "object",
-                                          "null"
-                                        ]
-                                      }
-                                    },
-                                    "type": [
-                                      "object",
-                                      "null"
-                                    ],
-                                    "x-kubernetes-map-type": "atomic",
-                                    "additionalProperties": false
-                                  },
-                                  "namespaces": {
-                                    "items": {
-                                      "type": [
-                                        "string",
-                                        "null"
-                                      ]
-                                    },
-                                    "type": [
-                                      "array",
-                                      "null"
-                                    ]
-                                  },
-                                  "topologyKey": {
-                                    "type": "string"
-                                  }
-                                },
-                                "required": [
-                                  "topologyKey"
-                                ],
+                              {
+                                "type": "string",
+                                "not": {
+                                  "pattern": "[^A-Za-z0-9_./+-]"
+                                }
+                              },
+                              {
                                 "type": "object",
-                                "additionalProperties": false
-                              },
-                              "weight": {
-                                "format": "int32",
-                                "type": "integer"
-                              }
-                            },
-                            "required": [
-                              "weight",
-                              "podAffinityTerm"
-                            ],
-                            "type": [
-                              "object",
-                              "null"
-                            ],
-                            "additionalProperties": false
-                          },
-                          "type": [
-                            "array",
-                            "null"
-                          ]
-                        },
-                        "requiredDuringSchedulingIgnoredDuringExecution": {
-                          "items": {
-                            "properties": {
-                              "labelSelector": {
-                                "properties": {
-                                  "matchExpressions": {
-                                    "items": {
-                                      "properties": {
-                                        "key": {
-                                          "type": "string"
-                                        },
-                                        "operator": {
-                                          "type": "string"
-                                        },
-                                        "values": {
-                                          "items": {
-                                            "type": [
-                                              "string",
-                                              "null"
-                                            ]
-                                          },
-                                          "type": [
-                                            "array",
-                                            "null"
-                                          ]
-                                        }
-                                      },
-                                      "required": [
-                                        "key",
-                                        "operator"
-                                      ],
-                                      "type": [
-                                        "object",
-                                        "null"
-                                      ],
-                                      "additionalProperties": false
-                                    },
-                                    "type": [
-                                      "array",
-                                      "null"
-                                    ]
-                                  },
-                                  "matchLabels": {
-                                    "additionalProperties": {
-                                      "type": [
-                                        "string",
-                                        "null"
-                                      ]
-                                    },
-                                    "type": [
-                                      "object",
-                                      "null"
-                                    ]
+                                "propertyNames": {
+                                  "type": "string",
+                                  "not": {
+                                    "pattern": "[^A-Za-z0-9_./+-]"
                                   }
                                 },
-                                "type": [
-                                  "object",
-                                  "null"
-                                ],
-                                "x-kubernetes-map-type": "atomic",
-                                "additionalProperties": false
-                              },
-                              "matchLabelKeys": {
-                                "items": {
-                                  "type": [
-                                    "string",
-                                    "null"
-                                  ]
-                                },
-                                "type": [
-                                  "array",
-                                  "null"
-                                ],
-                                "x-kubernetes-list-type": "atomic"
-                              },
-                              "mismatchLabelKeys": {
-                                "items": {
-                                  "type": [
-                                    "string",
-                                    "null"
-                                  ]
-                                },
-                                "type": [
-                                  "array",
-                                  "null"
-                                ],
-                                "x-kubernetes-list-type": "atomic"
-                              },
-                              "namespaceSelector": {
-                                "properties": {
-                                  "matchExpressions": {
-                                    "items": {
-                                      "properties": {
-                                        "key": {
-                                          "type": "string"
-                                        },
-                                        "operator": {
-                                          "type": "string"
-                                        },
-                                        "values": {
-                                          "items": {
-                                            "type": [
-                                              "string",
-                                              "null"
-                                            ]
-                                          },
-                                          "type": [
-                                            "array",
-                                            "null"
-                                          ]
-                                        }
-                                      },
-                                      "required": [
-                                        "key",
-                                        "operator"
-                                      ],
+                                "additionalProperties": {
+                                  "anyOf": [
+                                    {
                                       "type": [
-                                        "object",
-                                        "null"
-                                      ],
-                                      "additionalProperties": false
-                                    },
-                                    "type": [
-                                      "array",
-                                      "null"
-                                    ]
-                                  },
-                                  "matchLabels": {
-                                    "additionalProperties": {
-                                      "type": [
-                                        "string",
-                                        "null"
+                                        "null",
+                                        "boolean",
+                                        "number"
                                       ]
                                     },
-                                    "type": [
-                                      "object",
-                                      "null"
-                                    ]
-                                  }
-                                },
-                                "type": [
-                                  "object",
-                                  "null"
-                                ],
-                                "x-kubernetes-map-type": "atomic",
-                                "additionalProperties": false
-                              },
-                              "namespaces": {
-                                "items": {
-                                  "type": [
-                                    "string",
-                                    "null"
+                                    {
+                                      "type": "string",
+                                      "not": {
+                                        "pattern": "[^A-Za-z0-9_./+-]"
+                                      }
+                                    }
                                   ]
-                                },
-                                "type": [
-                                  "array",
-                                  "null"
-                                ]
+                                }
                               },
-                              "topologyKey": {
-                                "type": "string"
+                              {
+                                "type": "array",
+                                "items": {
+                                  "anyOf": [
+                                    {
+                                      "type": [
+                                        "null",
+                                        "boolean",
+                                        "number"
+                                      ]
+                                    },
+                                    {
+                                      "type": "string",
+                                      "not": {
+                                        "pattern": "[^A-Za-z0-9_./+-]"
+                                      }
+                                    }
+                                  ]
+                                }
                               }
-                            },
-                            "required": [
-                              "topologyKey"
-                            ],
-                            "type": [
-                              "object",
-                              "null"
-                            ],
-                            "additionalProperties": false
-                          },
-                          "type": [
-                            "array",
-                            "null"
-                          ]
+                            ]
+                          }
                         }
                       },
-                      "type": [
-                        "object",
-                        "null"
-                      ],
-                      "additionalProperties": false
+                      {
+                        "not": {
+                          "additionalProperties": {
+                            "not": {
+                              "pattern": "[^A-Za-z0-9_.$/+: \t-]"
+                            },
+                            "pattern": "^[A-Za-z0-9_.$/+-]+:[ \t]+[A-Za-z0-9_.$/+-]+$",
+                            "type": "string"
+                          },
+                          "maxProperties": 1,
+                          "minProperties": 1,
+                          "propertyNames": {
+                            "minLength": 1,
+                            "not": {
+                              "pattern": "[^A-Za-z0-9_.$/+-]"
+                            },
+                            "type": "string"
+                          },
+                          "type": "object"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/t"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "if": {
+                "$ref": "#/$defs/values~1replica.affinity~1anyOf~1allOf~1:helm-no-template-actions+:t+not~1=null+not~1string+1more"
+              },
+              "then": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-marker-free"
                     }
                   },
-                  "type": [
-                    "object",
-                    "null"
-                  ],
-                  "additionalProperties": false
-                }
-              ]
+                  {
+                    "properties": {
+                      "nodeAffinity": {
+                        "properties": {
+                          "preferredDuringSchedulingIgnoredDuringExecution": {
+                            "items": {
+                              "properties": {
+                                "preference": {
+                                  "properties": {
+                                    "matchExpressions": {
+                                      "items": {
+                                        "properties": {
+                                          "key": {
+                                            "type": "string"
+                                          },
+                                          "operator": {
+                                            "type": "string"
+                                          },
+                                          "values": {
+                                            "items": {
+                                              "type": [
+                                                "string",
+                                                "null"
+                                              ]
+                                            },
+                                            "type": [
+                                              "array",
+                                              "null"
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "key",
+                                          "operator"
+                                        ],
+                                        "type": [
+                                          "object",
+                                          "null"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      "type": [
+                                        "array",
+                                        "null"
+                                      ]
+                                    },
+                                    "matchFields": {
+                                      "items": {
+                                        "properties": {
+                                          "key": {
+                                            "type": "string"
+                                          },
+                                          "operator": {
+                                            "type": "string"
+                                          },
+                                          "values": {
+                                            "items": {
+                                              "type": [
+                                                "string",
+                                                "null"
+                                              ]
+                                            },
+                                            "type": [
+                                              "array",
+                                              "null"
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "key",
+                                          "operator"
+                                        ],
+                                        "type": [
+                                          "object",
+                                          "null"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      "type": [
+                                        "array",
+                                        "null"
+                                      ]
+                                    }
+                                  },
+                                  "type": "object",
+                                  "x-kubernetes-map-type": "atomic",
+                                  "additionalProperties": false
+                                },
+                                "weight": {
+                                  "format": "int32",
+                                  "type": "integer"
+                                }
+                              },
+                              "required": [
+                                "weight",
+                                "preference"
+                              ],
+                              "type": [
+                                "object",
+                                "null"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "type": [
+                              "array",
+                              "null"
+                            ]
+                          },
+                          "requiredDuringSchedulingIgnoredDuringExecution": {
+                            "properties": {
+                              "nodeSelectorTerms": {
+                                "items": {
+                                  "properties": {
+                                    "matchExpressions": {
+                                      "items": {
+                                        "properties": {
+                                          "key": {
+                                            "type": "string"
+                                          },
+                                          "operator": {
+                                            "type": "string"
+                                          },
+                                          "values": {
+                                            "items": {
+                                              "type": [
+                                                "string",
+                                                "null"
+                                              ]
+                                            },
+                                            "type": [
+                                              "array",
+                                              "null"
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "key",
+                                          "operator"
+                                        ],
+                                        "type": [
+                                          "object",
+                                          "null"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      "type": [
+                                        "array",
+                                        "null"
+                                      ]
+                                    },
+                                    "matchFields": {
+                                      "items": {
+                                        "properties": {
+                                          "key": {
+                                            "type": "string"
+                                          },
+                                          "operator": {
+                                            "type": "string"
+                                          },
+                                          "values": {
+                                            "items": {
+                                              "type": [
+                                                "string",
+                                                "null"
+                                              ]
+                                            },
+                                            "type": [
+                                              "array",
+                                              "null"
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "key",
+                                          "operator"
+                                        ],
+                                        "type": [
+                                          "object",
+                                          "null"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      "type": [
+                                        "array",
+                                        "null"
+                                      ]
+                                    }
+                                  },
+                                  "type": [
+                                    "object",
+                                    "null"
+                                  ],
+                                  "x-kubernetes-map-type": "atomic",
+                                  "additionalProperties": false
+                                },
+                                "type": "array"
+                              }
+                            },
+                            "required": [
+                              "nodeSelectorTerms"
+                            ],
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "x-kubernetes-map-type": "atomic",
+                            "additionalProperties": false
+                          }
+                        },
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "podAffinity": {
+                        "properties": {
+                          "preferredDuringSchedulingIgnoredDuringExecution": {
+                            "items": {
+                              "properties": {
+                                "podAffinityTerm": {
+                                  "properties": {
+                                    "labelSelector": {
+                                      "properties": {
+                                        "matchExpressions": {
+                                          "items": {
+                                            "properties": {
+                                              "key": {
+                                                "type": "string"
+                                              },
+                                              "operator": {
+                                                "type": "string"
+                                              },
+                                              "values": {
+                                                "items": {
+                                                  "type": [
+                                                    "string",
+                                                    "null"
+                                                  ]
+                                                },
+                                                "type": [
+                                                  "array",
+                                                  "null"
+                                                ]
+                                              }
+                                            },
+                                            "required": [
+                                              "key",
+                                              "operator"
+                                            ],
+                                            "type": [
+                                              "object",
+                                              "null"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          "type": [
+                                            "array",
+                                            "null"
+                                          ]
+                                        },
+                                        "matchLabels": {
+                                          "additionalProperties": {
+                                            "type": [
+                                              "string",
+                                              "null"
+                                            ]
+                                          },
+                                          "type": [
+                                            "object",
+                                            "null"
+                                          ]
+                                        }
+                                      },
+                                      "type": [
+                                        "object",
+                                        "null"
+                                      ],
+                                      "x-kubernetes-map-type": "atomic",
+                                      "additionalProperties": false
+                                    },
+                                    "matchLabelKeys": {
+                                      "items": {
+                                        "type": [
+                                          "string",
+                                          "null"
+                                        ]
+                                      },
+                                      "type": [
+                                        "array",
+                                        "null"
+                                      ],
+                                      "x-kubernetes-list-type": "atomic"
+                                    },
+                                    "mismatchLabelKeys": {
+                                      "items": {
+                                        "type": [
+                                          "string",
+                                          "null"
+                                        ]
+                                      },
+                                      "type": [
+                                        "array",
+                                        "null"
+                                      ],
+                                      "x-kubernetes-list-type": "atomic"
+                                    },
+                                    "namespaceSelector": {
+                                      "properties": {
+                                        "matchExpressions": {
+                                          "items": {
+                                            "properties": {
+                                              "key": {
+                                                "type": "string"
+                                              },
+                                              "operator": {
+                                                "type": "string"
+                                              },
+                                              "values": {
+                                                "items": {
+                                                  "type": [
+                                                    "string",
+                                                    "null"
+                                                  ]
+                                                },
+                                                "type": [
+                                                  "array",
+                                                  "null"
+                                                ]
+                                              }
+                                            },
+                                            "required": [
+                                              "key",
+                                              "operator"
+                                            ],
+                                            "type": [
+                                              "object",
+                                              "null"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          "type": [
+                                            "array",
+                                            "null"
+                                          ]
+                                        },
+                                        "matchLabels": {
+                                          "additionalProperties": {
+                                            "type": [
+                                              "string",
+                                              "null"
+                                            ]
+                                          },
+                                          "type": [
+                                            "object",
+                                            "null"
+                                          ]
+                                        }
+                                      },
+                                      "type": [
+                                        "object",
+                                        "null"
+                                      ],
+                                      "x-kubernetes-map-type": "atomic",
+                                      "additionalProperties": false
+                                    },
+                                    "namespaces": {
+                                      "items": {
+                                        "type": [
+                                          "string",
+                                          "null"
+                                        ]
+                                      },
+                                      "type": [
+                                        "array",
+                                        "null"
+                                      ]
+                                    },
+                                    "topologyKey": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "topologyKey"
+                                  ],
+                                  "type": "object",
+                                  "additionalProperties": false
+                                },
+                                "weight": {
+                                  "format": "int32",
+                                  "type": "integer"
+                                }
+                              },
+                              "required": [
+                                "weight",
+                                "podAffinityTerm"
+                              ],
+                              "type": [
+                                "object",
+                                "null"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "type": [
+                              "array",
+                              "null"
+                            ]
+                          },
+                          "requiredDuringSchedulingIgnoredDuringExecution": {
+                            "items": {
+                              "properties": {
+                                "labelSelector": {
+                                  "properties": {
+                                    "matchExpressions": {
+                                      "items": {
+                                        "properties": {
+                                          "key": {
+                                            "type": "string"
+                                          },
+                                          "operator": {
+                                            "type": "string"
+                                          },
+                                          "values": {
+                                            "items": {
+                                              "type": [
+                                                "string",
+                                                "null"
+                                              ]
+                                            },
+                                            "type": [
+                                              "array",
+                                              "null"
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "key",
+                                          "operator"
+                                        ],
+                                        "type": [
+                                          "object",
+                                          "null"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      "type": [
+                                        "array",
+                                        "null"
+                                      ]
+                                    },
+                                    "matchLabels": {
+                                      "additionalProperties": {
+                                        "type": [
+                                          "string",
+                                          "null"
+                                        ]
+                                      },
+                                      "type": [
+                                        "object",
+                                        "null"
+                                      ]
+                                    }
+                                  },
+                                  "type": [
+                                    "object",
+                                    "null"
+                                  ],
+                                  "x-kubernetes-map-type": "atomic",
+                                  "additionalProperties": false
+                                },
+                                "matchLabelKeys": {
+                                  "items": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ]
+                                  },
+                                  "type": [
+                                    "array",
+                                    "null"
+                                  ],
+                                  "x-kubernetes-list-type": "atomic"
+                                },
+                                "mismatchLabelKeys": {
+                                  "items": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ]
+                                  },
+                                  "type": [
+                                    "array",
+                                    "null"
+                                  ],
+                                  "x-kubernetes-list-type": "atomic"
+                                },
+                                "namespaceSelector": {
+                                  "properties": {
+                                    "matchExpressions": {
+                                      "items": {
+                                        "properties": {
+                                          "key": {
+                                            "type": "string"
+                                          },
+                                          "operator": {
+                                            "type": "string"
+                                          },
+                                          "values": {
+                                            "items": {
+                                              "type": [
+                                                "string",
+                                                "null"
+                                              ]
+                                            },
+                                            "type": [
+                                              "array",
+                                              "null"
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "key",
+                                          "operator"
+                                        ],
+                                        "type": [
+                                          "object",
+                                          "null"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      "type": [
+                                        "array",
+                                        "null"
+                                      ]
+                                    },
+                                    "matchLabels": {
+                                      "additionalProperties": {
+                                        "type": [
+                                          "string",
+                                          "null"
+                                        ]
+                                      },
+                                      "type": [
+                                        "object",
+                                        "null"
+                                      ]
+                                    }
+                                  },
+                                  "type": [
+                                    "object",
+                                    "null"
+                                  ],
+                                  "x-kubernetes-map-type": "atomic",
+                                  "additionalProperties": false
+                                },
+                                "namespaces": {
+                                  "items": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ]
+                                  },
+                                  "type": [
+                                    "array",
+                                    "null"
+                                  ]
+                                },
+                                "topologyKey": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "topologyKey"
+                              ],
+                              "type": [
+                                "object",
+                                "null"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "type": [
+                              "array",
+                              "null"
+                            ]
+                          }
+                        },
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "podAntiAffinity": {
+                        "properties": {
+                          "preferredDuringSchedulingIgnoredDuringExecution": {
+                            "items": {
+                              "properties": {
+                                "podAffinityTerm": {
+                                  "properties": {
+                                    "labelSelector": {
+                                      "properties": {
+                                        "matchExpressions": {
+                                          "items": {
+                                            "properties": {
+                                              "key": {
+                                                "type": "string"
+                                              },
+                                              "operator": {
+                                                "type": "string"
+                                              },
+                                              "values": {
+                                                "items": {
+                                                  "type": [
+                                                    "string",
+                                                    "null"
+                                                  ]
+                                                },
+                                                "type": [
+                                                  "array",
+                                                  "null"
+                                                ]
+                                              }
+                                            },
+                                            "required": [
+                                              "key",
+                                              "operator"
+                                            ],
+                                            "type": [
+                                              "object",
+                                              "null"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          "type": [
+                                            "array",
+                                            "null"
+                                          ]
+                                        },
+                                        "matchLabels": {
+                                          "additionalProperties": {
+                                            "type": [
+                                              "string",
+                                              "null"
+                                            ]
+                                          },
+                                          "type": [
+                                            "object",
+                                            "null"
+                                          ]
+                                        }
+                                      },
+                                      "type": [
+                                        "object",
+                                        "null"
+                                      ],
+                                      "x-kubernetes-map-type": "atomic",
+                                      "additionalProperties": false
+                                    },
+                                    "matchLabelKeys": {
+                                      "items": {
+                                        "type": [
+                                          "string",
+                                          "null"
+                                        ]
+                                      },
+                                      "type": [
+                                        "array",
+                                        "null"
+                                      ],
+                                      "x-kubernetes-list-type": "atomic"
+                                    },
+                                    "mismatchLabelKeys": {
+                                      "items": {
+                                        "type": [
+                                          "string",
+                                          "null"
+                                        ]
+                                      },
+                                      "type": [
+                                        "array",
+                                        "null"
+                                      ],
+                                      "x-kubernetes-list-type": "atomic"
+                                    },
+                                    "namespaceSelector": {
+                                      "properties": {
+                                        "matchExpressions": {
+                                          "items": {
+                                            "properties": {
+                                              "key": {
+                                                "type": "string"
+                                              },
+                                              "operator": {
+                                                "type": "string"
+                                              },
+                                              "values": {
+                                                "items": {
+                                                  "type": [
+                                                    "string",
+                                                    "null"
+                                                  ]
+                                                },
+                                                "type": [
+                                                  "array",
+                                                  "null"
+                                                ]
+                                              }
+                                            },
+                                            "required": [
+                                              "key",
+                                              "operator"
+                                            ],
+                                            "type": [
+                                              "object",
+                                              "null"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          "type": [
+                                            "array",
+                                            "null"
+                                          ]
+                                        },
+                                        "matchLabels": {
+                                          "additionalProperties": {
+                                            "type": [
+                                              "string",
+                                              "null"
+                                            ]
+                                          },
+                                          "type": [
+                                            "object",
+                                            "null"
+                                          ]
+                                        }
+                                      },
+                                      "type": [
+                                        "object",
+                                        "null"
+                                      ],
+                                      "x-kubernetes-map-type": "atomic",
+                                      "additionalProperties": false
+                                    },
+                                    "namespaces": {
+                                      "items": {
+                                        "type": [
+                                          "string",
+                                          "null"
+                                        ]
+                                      },
+                                      "type": [
+                                        "array",
+                                        "null"
+                                      ]
+                                    },
+                                    "topologyKey": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "topologyKey"
+                                  ],
+                                  "type": "object",
+                                  "additionalProperties": false
+                                },
+                                "weight": {
+                                  "format": "int32",
+                                  "type": "integer"
+                                }
+                              },
+                              "required": [
+                                "weight",
+                                "podAffinityTerm"
+                              ],
+                              "type": [
+                                "object",
+                                "null"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "type": [
+                              "array",
+                              "null"
+                            ]
+                          },
+                          "requiredDuringSchedulingIgnoredDuringExecution": {
+                            "items": {
+                              "properties": {
+                                "labelSelector": {
+                                  "properties": {
+                                    "matchExpressions": {
+                                      "items": {
+                                        "properties": {
+                                          "key": {
+                                            "type": "string"
+                                          },
+                                          "operator": {
+                                            "type": "string"
+                                          },
+                                          "values": {
+                                            "items": {
+                                              "type": [
+                                                "string",
+                                                "null"
+                                              ]
+                                            },
+                                            "type": [
+                                              "array",
+                                              "null"
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "key",
+                                          "operator"
+                                        ],
+                                        "type": [
+                                          "object",
+                                          "null"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      "type": [
+                                        "array",
+                                        "null"
+                                      ]
+                                    },
+                                    "matchLabels": {
+                                      "additionalProperties": {
+                                        "type": [
+                                          "string",
+                                          "null"
+                                        ]
+                                      },
+                                      "type": [
+                                        "object",
+                                        "null"
+                                      ]
+                                    }
+                                  },
+                                  "type": [
+                                    "object",
+                                    "null"
+                                  ],
+                                  "x-kubernetes-map-type": "atomic",
+                                  "additionalProperties": false
+                                },
+                                "matchLabelKeys": {
+                                  "items": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ]
+                                  },
+                                  "type": [
+                                    "array",
+                                    "null"
+                                  ],
+                                  "x-kubernetes-list-type": "atomic"
+                                },
+                                "mismatchLabelKeys": {
+                                  "items": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ]
+                                  },
+                                  "type": [
+                                    "array",
+                                    "null"
+                                  ],
+                                  "x-kubernetes-list-type": "atomic"
+                                },
+                                "namespaceSelector": {
+                                  "properties": {
+                                    "matchExpressions": {
+                                      "items": {
+                                        "properties": {
+                                          "key": {
+                                            "type": "string"
+                                          },
+                                          "operator": {
+                                            "type": "string"
+                                          },
+                                          "values": {
+                                            "items": {
+                                              "type": [
+                                                "string",
+                                                "null"
+                                              ]
+                                            },
+                                            "type": [
+                                              "array",
+                                              "null"
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "key",
+                                          "operator"
+                                        ],
+                                        "type": [
+                                          "object",
+                                          "null"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      "type": [
+                                        "array",
+                                        "null"
+                                      ]
+                                    },
+                                    "matchLabels": {
+                                      "additionalProperties": {
+                                        "type": [
+                                          "string",
+                                          "null"
+                                        ]
+                                      },
+                                      "type": [
+                                        "object",
+                                        "null"
+                                      ]
+                                    }
+                                  },
+                                  "type": [
+                                    "object",
+                                    "null"
+                                  ],
+                                  "x-kubernetes-map-type": "atomic",
+                                  "additionalProperties": false
+                                },
+                                "namespaces": {
+                                  "items": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ]
+                                  },
+                                  "type": [
+                                    "array",
+                                    "null"
+                                  ]
+                                },
+                                "topologyKey": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "topologyKey"
+                              ],
+                              "type": [
+                                "object",
+                                "null"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "type": [
+                              "array",
+                              "null"
+                            ]
+                          }
+                        },
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/values~1replica.affinity~1anyOf~1:helm-no-template-actions+=null"
+                  }
+                ]
+              },
+              "then": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/t"
+                    }
+                  },
+                  {
+                    "not": {
+                      "type": "array",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "type": [
+                              "null",
+                              "boolean",
+                              "number"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "not": {
+                              "pattern": "[^A-Za-z0-9_./+-]"
+                            }
+                          },
+                          {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string",
+                              "not": {
+                                "pattern": "[^A-Za-z0-9_./+-]"
+                              }
+                            },
+                            "additionalProperties": {
+                              "anyOf": [
+                                {
+                                  "type": [
+                                    "null",
+                                    "boolean",
+                                    "number"
+                                  ]
+                                },
+                                {
+                                  "type": "string",
+                                  "not": {
+                                    "pattern": "[^A-Za-z0-9_./+-]"
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "type": "array",
+                            "items": {
+                              "anyOf": [
+                                {
+                                  "type": [
+                                    "null",
+                                    "boolean",
+                                    "number"
+                                  ]
+                                },
+                                {
+                                  "type": "string",
+                                  "not": {
+                                    "pattern": "[^A-Za-z0-9_./+-]"
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
             }
           ]
         }
@@ -1014,7 +1221,32 @@
     }
   },
   "$defs": {
-    "Q": {
+    "t": {
+      "anyOf": [
+        {
+          "const": true
+        },
+        {
+          "type": "number",
+          "not": {
+            "const": 0
+          }
+        },
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "array",
+          "minItems": 1
+        },
+        {
+          "type": "object",
+          "minProperties": 1
+        }
+      ]
+    },
+    "helm-marker-free": {
       "anyOf": [
         {
           "type": [
@@ -1026,25 +1258,124 @@
         {
           "type": "string",
           "not": {
-            "pattern": "\\{\\{|<no value>"
+            "pattern": "<no value>"
           }
         },
         {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/Q"
+            "$ref": "#/$defs/helm-marker-free"
           }
         },
         {
           "type": "object",
           "propertyNames": {
             "not": {
-              "pattern": "\\{\\{|<no value>"
+              "pattern": "<no value>"
             }
           },
           "additionalProperties": {
-            "$ref": "#/$defs/Q"
+            "$ref": "#/$defs/helm-marker-free"
           }
+        }
+      ]
+    },
+    "helm-no-template-actions": {
+      "anyOf": [
+        {
+          "type": [
+            "null",
+            "boolean",
+            "number"
+          ]
+        },
+        {
+          "type": "string",
+          "not": {
+            "pattern": "\\{\\{"
+          }
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/helm-no-template-actions"
+          }
+        },
+        {
+          "type": "object",
+          "propertyNames": {
+            "not": {
+              "pattern": "\\{\\{"
+            }
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/helm-no-template-actions"
+          }
+        }
+      ]
+    },
+    "values/replica.affinity/not/string": {
+      "not": {
+        "type": "string"
+      }
+    },
+    "values/replica.affinity/not/=null": {
+      "not": {
+        "enum": [
+          null
+        ]
+      }
+    },
+    "values/replica.affinity/allOf/:helm-no-template-actions+:t+not/=null+not/string": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/t"
+        },
+        {
+          "$ref": "#/$defs/helm-no-template-actions"
+        },
+        {
+          "$ref": "#/$defs/values~1replica.affinity~1not~1=null"
+        },
+        {
+          "$ref": "#/$defs/values~1replica.affinity~1not~1string"
+        }
+      ]
+    },
+    "values/replica.affinity/allOf/:t+=null+not/string": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/t"
+        },
+        {
+          "enum": [
+            null
+          ]
+        },
+        {
+          "$ref": "#/$defs/values~1replica.affinity~1not~1string"
+        }
+      ]
+    },
+    "values/replica.affinity/anyOf/allOf/:helm-no-template-actions+:t+not/=null+not/string+1more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/values~1replica.affinity~1allOf~1:t+=null+not~1string"
+        },
+        {
+          "$ref": "#/$defs/values~1replica.affinity~1allOf~1:helm-no-template-actions+:t+not~1=null+not~1string"
+        }
+      ]
+    },
+    "values/replica.affinity/anyOf/:helm-no-template-actions+=null": {
+      "anyOf": [
+        {
+          "enum": [
+            null
+          ]
+        },
+        {
+          "$ref": "#/$defs/helm-no-template-actions"
         }
       ]
     }

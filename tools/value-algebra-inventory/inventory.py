@@ -39,7 +39,8 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 HERE = ROOT / "plan/value-algebra-r0-inventory"
 SRC = "crates/helm-schema-ir/src"
 BASE = {"Predicate", "TruthCondition", "ScalarValueDispatch", "ScalarValue", "AbstractValue", "ValuesPath",
-        "HelperOutputMeta", "GoType", "IrAnalysisDb", "Namespace", "OutputBehavior"}
+        "HelperOutputMeta", "GoType", "IrAnalysisDb", "Namespace", "OutputBehavior",
+        "HintScope", "PayloadShape", "NodeKey", "IndexedNode"}
 ALL_VARIANTS = {"AbstractValue", "ScalarValue", "ScalarContent", "GoType"}
 # Semantic landings use the admission ratchet rather than consolidation-only producer counts.
 SEMANTIC_STAGES = {"R3b"}
@@ -353,6 +354,13 @@ def self_test(found, rows, baseline):
     assert not check(admitted, context_rows, context_rows, set(), []), "context fixture failed"
     assert any("unclassified candidate" in e for e in check(admitted, [], [], set(), []))
     print("self-test: syntax cache, context, namespace and helper execution stay inventoried", file=sys.stderr)
+
+    fixture = "tools/value-algebra-inventory/fixtures/placement-admission.rs"
+    expected = {f"field:{fixture}:Spelling.shape", f"field:{fixture}:Layout.spellings",
+                f"field:{fixture}:HintGrade.scope"}
+    assert set(candidates(fixture)) == expected, "placement carriers must not depend on retired type-name collisions"
+    print("self-test: surviving placement and hint carriers stay inventoried", file=sys.stderr)
+
 
 
 

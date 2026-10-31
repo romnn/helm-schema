@@ -21,6 +21,7 @@ mod shape_summary;
 mod site_index;
 mod state;
 mod text;
+pub(crate) mod use_policy;
 mod window_exits;
 mod write_footprint;
 pub(crate) mod yaml;
@@ -37,6 +38,7 @@ use ahash::AHashMap;
 use helm_schema_core::{Predicate, ValuesPath};
 
 use crate::value::scalar_value::ScalarContent;
+use relationship::RawFormatInput;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct Value {
@@ -916,3 +918,7 @@ mod host_tests;
 #[cfg(test)]
 #[path = "../tests/runtime_delta_joins.rs"]
 mod delta_join_tests;
+
+#[cfg(test)]
+#[path = "../tests/runtime_relationship_join.rs"]
+mod relationship_join_tests;

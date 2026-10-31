@@ -686,6 +686,27 @@ fn assert_open_string_map_or_templated_string(schema: &Value, label: &str) {
     );
 }
 
+fn open_string_map_contract_mismatches(schema: &Value, property: &str) -> Vec<Value> {
+    let mut mismatches = Vec::new();
+    for (value, accepted) in [
+        (serde_json::json!({ "custom-key": "x" }), true),
+        (serde_json::json!({ "not-in-defaults": "x" }), true),
+        (serde_json::json!({ "custom-key": 5 }), false),
+        (serde_json::json!({ "custom-key": false }), false),
+        (
+            serde_json::json!({ "custom-key": { "nested": "x" } }),
+            false,
+        ),
+        (serde_json::json!({}), true),
+    ] {
+        let instance = serde_json::json!({ (property): value });
+        if schema_accepts_instance(schema, &instance) != accepted {
+            mismatches.push(instance);
+        }
+    }
+    mismatches
+}
+
 #[derive(Debug)]
 struct SharedObjectProvider;
 

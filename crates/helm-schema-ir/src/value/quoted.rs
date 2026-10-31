@@ -274,6 +274,49 @@ pub(super) fn formatted_input(
         .into_iter()
         .filter(|(state, _)| !state.is_absorbing())
     {
+        let absent_or_null = Predicate::Or(vec![
+            Predicate::from(Guard::Absent { path: path.clone() }),
+            Predicate::from(Guard::TypeIs {
+                path: path.clone(),
+                schema_type: "null".to_owned(),
+            }),
+        ]);
+        merge(
+            &mut result,
+            incoming,
+            Predicate::all(vec![condition.clone(), absent_or_null]),
+            memo,
+        );
+        for boolean in [false, true] {
+            let guard = Predicate::all(vec![
+                condition.clone(),
+                Predicate::from(Guard::Eq {
+                    path: path.clone(),
+                    value: helm_schema_core::GuardValue::Bool(boolean),
+                }),
+            ]);
+            for (end, selected) in literal(
+                BTreeMap::from([(incoming, guard)]),
+                &boolean.to_string(),
+                memo,
+            ) {
+                merge(&mut result, end, selected, memo);
+            }
+        }
+        if let Some(end) = number_boundary(incoming) {
+            merge(
+                &mut result,
+                end,
+                Predicate::all(vec![
+                    condition.clone(),
+                    Predicate::from(Guard::TypeIs {
+                        path: path.clone(),
+                        schema_type: "number".to_owned(),
+                    }),
+                ]),
+                memo,
+            );
+        }
         map_input(&mut result, incoming, &condition, path, memo);
         for (end, pattern) in array_patterns(incoming, "", 2) {
             merge(
@@ -291,6 +334,36 @@ pub(super) fn formatted_input(
         }
     }
     result
+}
+
+// Every finite Go numeric spelling preserves these boundaries; escape tails remain unknown.
+fn number_boundary(state: LexicalState) -> Option<LexicalState> {
+    match state {
+        LexicalState::PlainStart | LexicalState::Plain => Some(LexicalState::Plain),
+        LexicalState::Double | LexicalState::FoldedDouble => Some(LexicalState::Double),
+        LexicalState::Single => Some(LexicalState::Single),
+        LexicalState::SingleEnd | LexicalState::Closed | LexicalState::Separated => {
+            Some(LexicalState::Invalid)
+        }
+        LexicalState::ClosedCollection | LexicalState::FlowEnd => {
+            Some(LexicalState::CollectionInvalid)
+        }
+        LexicalState::Invalid | LexicalState::BlockInvalid | LexicalState::CollectionInvalid => {
+            Some(state)
+        }
+        LexicalState::Escape
+        | LexicalState::Hex1
+        | LexicalState::Hex2
+        | LexicalState::Hex3
+        | LexicalState::Hex4
+        | LexicalState::Unicode4
+        | LexicalState::Unicode5
+        | LexicalState::Unicode5Max
+        | LexicalState::Unicode6
+        | LexicalState::Unicode7
+        | LexicalState::Unicode8
+        | LexicalState::Surrogate3 => None,
+    }
 }
 
 fn map_input(
@@ -411,7 +484,9 @@ fn array_patterns(
         {
             result.entry(end).or_default().push(ValuePattern::Array {
                 prefix: Vec::new(),
-                items: None,
+                items: Some(Box::new(ValuePattern::String {
+                    pattern: "^[A-Za-z0-9_./+-]*$".to_owned(),
+                })),
             });
         }
         return result

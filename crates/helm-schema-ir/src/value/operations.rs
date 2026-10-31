@@ -853,12 +853,8 @@ fn json_source_contains(
         );
     }
     let inputs = state.heap.arena.input_objects.borrow();
-    let mut query = super::output::PayloadQuery::with_limit(
-        &inputs,
-        super::output::PayloadShape::Mapping,
-        *remaining,
-    );
-    let view = query.json_source(source);
+    let mut query = super::relationship::RelationshipQuery::new(&inputs, *remaining);
+    let view = query.value(source, &[]);
     *remaining = remaining.saturating_sub(query.work());
     if view.unknown != Predicate::False {
         return Value::influenced(influences.clone());
@@ -866,15 +862,19 @@ fn json_source_contains(
     let [payload] = view.known.as_slice() else {
         return Value::influenced(influences.clone());
     };
-    if payload.condition != Predicate::True {
+    if payload.condition != Predicate::True
+        || !payload.output_path.is_empty()
+        || payload.capture.is_some()
+        || !super::relationship::structural_preimage(&payload.preimage)
+    {
         return Value::influenced(influences.clone());
     }
     let predicate = Predicate::Or(vec![
         Predicate::from(Guard::Absent {
-            path: payload.path.clone(),
+            path: payload.source.as_ref().clone(),
         }),
         Predicate::from(Guard::MatchesValue {
-            path: payload.path.clone(),
+            path: payload.source.as_ref().clone(),
             pattern: ValuePattern::TemplateActionFree,
         }),
     ])

@@ -26,11 +26,11 @@ pub(crate) fn collect_resource_spans(
     let mut groups: Vec<ResourceGroup> = Vec::new();
     let mut unresolved = Vec::new();
     for document in execution.placed_documents() {
-        let projection = ResourceProjection::new(&document);
+        let projection = ResourceProjection::new(&document, execution);
         for index in projection.roots() {
             let headers = projection.headers(index);
-            if let Some(kind) = headers.kind
-                && projection.names(kind).is_none()
+            if let Some(kind) = headers.kind.last().copied()
+                && projection.names(kind).is_none_or(|names| names.is_empty())
                 && let Some(mapping) = document.ownership.nodes.get(index)
                 && let Some(span) = source_span(&document, mapping.span, execution, source_path)
             {
@@ -50,7 +50,7 @@ pub(crate) fn collect_resource_spans(
                 .iter()
                 .enumerate()
                 .filter(|(_, node)| node.span == span)
-                .filter_map(|(index, _)| projection.headers(index).kind)
+                .flat_map(|(index, _)| projection.headers(index).kind)
                 .filter_map(|index| document.ownership.nodes.get(index))
                 .flat_map(|node| document.terms(node.span))
                 .filter(|term| term.frozen_alternatives().is_some())
@@ -313,7 +313,8 @@ pub(crate) fn executed_scalar_body(
             if source.start < span.start || span.end < source.end {
                 continue;
             }
-            let Some(arms) = scalar_names(&document, node.span, &PredicateMemo::new()) else {
+            let Some(arms) = scalar_names(&document, execution, node.span, &PredicateMemo::new())
+            else {
                 return HelperBranchBody::literals(Vec::new());
             };
             for NamedValue { condition: _, text } in arms {

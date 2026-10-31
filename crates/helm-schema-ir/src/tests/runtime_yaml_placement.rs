@@ -57,6 +57,14 @@ fn matches(predicate: &Predicate, values: &Value) -> eyre::Result<bool> {
             quantifier,
             pattern,
         }) => collection_matches(at(values, path), *domain, *quantifier, pattern)?,
+        PredicateKind::Guard(Guard::MinMembers { path, bound }) => {
+            at(values, path).is_some_and(|value| match value {
+                Value::Object(fields) => {
+                    *bound <= 0 || usize::try_from(*bound).is_ok_and(|bound| fields.len() >= bound)
+                }
+                _ => false,
+            })
+        }
         PredicateKind::Guard(Guard::AtMostOneMember { path }) => {
             at(values, path).is_some_and(|value| match value {
                 Value::Array(items) => items.len() <= 1,
@@ -71,10 +79,9 @@ fn matches(predicate: &Predicate, values: &Value) -> eyre::Result<bool> {
                 .is_some_and(|text| pattern.find(text).is_none())
         }
         PredicateKind::Guard(Guard::Absent { path }) => at(values, path).is_none(),
-        PredicateKind::Guard(Guard::Eq {
-            path,
-            value: helm_schema_core::GuardValue::Null,
-        }) => at(values, path) == Some(&Value::Null),
+        PredicateKind::Guard(Guard::Eq { path, value }) => {
+            at(values, path) == Some(&serde_json::to_value(value)?)
+        }
         PredicateKind::Guard(Guard::Truthy { path }) => {
             at(values, path).is_some_and(|value| match value {
                 Value::Null => false,
@@ -92,6 +99,7 @@ fn matches(predicate: &Predicate, values: &Value) -> eyre::Result<bool> {
             let value = at(values, path);
             match schema_type.as_str() {
                 "object" => value.is_some_and(Value::is_object),
+                "null" => value.is_some_and(Value::is_null),
                 "string" => value.is_some_and(Value::is_string),
                 "array" => value.is_some_and(Value::is_array),
                 "boolean" => value.is_some_and(Value::is_boolean),
@@ -779,7 +787,7 @@ fn shared_scalar_slots_retain_each_emission_source_span() {
         })
         .collect::<BTreeSet<_>>();
     let projected = crate::tests::support::project_execution(source, path, &db, &execution);
-    let contract = crate::fragment_eval::contract_ir_from_document(&projected).finalize();
+    let contract = projected.contract.clone().finalize();
     let actual = contract
         .uses()
         .iter()
@@ -843,4 +851,190 @@ fn collection_matches(
         CollectionQuantifier::All => items.into_iter().all(|matched| matched),
         CollectionQuantifier::Any => items.into_iter().any(|matched| matched),
     }))
+}
+
+/// A serialized contribution needs its container kind only while another member coexecutes.
+#[test]
+fn coexecuting_structural_contributions_keep_their_own_presence_domain() -> eyre::Result<()> {
+    for sequence in [false, true] {
+        let member = if sequence {
+            "    - name: fixed\n"
+        } else {
+            "    fixed: true\n"
+        };
+        for before in [false, true] {
+            let sibling = indoc::formatdoc! {r"
+                {{{{- if .Values.enabled }}}}
+                {member}{{{{- end }}}}
+            "};
+            let source = indoc::formatdoc! {r"
+                apiVersion: v1
+                kind: ConfigMap
+                metadata:
+                  name: witness
+                spec:
+                  slot:
+                {before_text}{{{{ toYaml .Values.payload | nindent 4 }}}}
+                {after_text}
+            ", before_text = if before { sibling.as_str() } else { "" }, after_text = if before { "" } else { sibling.as_str() }};
+            for enabled in [false, true] {
+                for payload in [
+                    Value::Null,
+                    json!(false),
+                    json!(0),
+                    json!(""),
+                    json!([]),
+                    json!({}),
+                    json!(["value"]),
+                    json!({"key":"value"}),
+                ] {
+                    let valid = !enabled
+                        || if sequence {
+                            payload.is_array()
+                                && payload.as_array().is_some_and(|items| !items.is_empty())
+                        } else {
+                            payload.is_object()
+                                && payload.as_object().is_some_and(|fields| !fields.is_empty())
+                        };
+                    let values = json!({"enabled":enabled,"payload":payload});
+                    sim_assert_eq!(have: rejection(&source, &values)?, want: !valid,
+                        "sequence={sequence} before={before} values={values}");
+                }
+                sim_assert_eq!(have: rejection(&source, &json!({"enabled":enabled}))?, want: enabled,
+                    "absent source: sequence={sequence} before={before}");
+            }
+        }
+    }
+    Ok(())
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+struct LiveOutputClaim {
+    input: String,
+    output: Vec<String>,
+}
+
+fn live_output_claims(source: &str, values: &Value) -> eyre::Result<BTreeSet<LiveOutputClaim>> {
+    let defines = DefineIndex::new();
+    let contract = crate::SymbolicIrContext::new(&defines)
+        .generate_contract_ir(source)
+        .finalize();
+    let mut claims = BTreeSet::new();
+    for row in contract.uses().iter().filter(|row| !row.path.0.is_empty()) {
+        let guard = Predicate::Or(
+            row.condition
+                .disjuncts()
+                .iter()
+                .map(|conjunction| Predicate::all(conjunction.iter().cloned().collect()))
+                .collect(),
+        );
+        if matches(&guard, values)? {
+            claims.insert(LiveOutputClaim {
+                input: row.source_expr.encode(),
+                output: row.path.0.clone(),
+            });
+        }
+    }
+    Ok(claims)
+}
+
+/// A local choice owns only its selected contribution and keeps the shared continuation.
+#[test]
+fn local_continuations_keep_every_selected_owner_and_guard() -> eyre::Result<()> {
+    let source = indoc::indoc! {r"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: witness
+        spec:
+          {{- if .Values.a }}
+          nodeSelector:
+            {{- toYaml .Values.first | nindent 4 }}
+          {{- else if .Values.b }}
+          nodeSelector:
+            {{- toYaml .Values.second | nindent 4 }}
+          {{- else if .Values.c }}
+          nodeSelector:
+            {{- toYaml .Values.third | nindent 4 }}
+          {{- end }}
+          priorityClassName: {{ .Values.last }}
+    "};
+    for mask in 0..8 {
+        let a = mask & 1 != 0;
+        let b = mask & 2 != 0;
+        let c = mask & 4 != 0;
+        let values = json!({"a":a,"b":b,"c":c,"first":{"key":"one"},"second":{"key":"two"},"third":{"key":"three"},"last":"priority"});
+        let mut want = BTreeSet::from([LiveOutputClaim {
+            input: "last".to_owned(),
+            output: vec!["spec".to_owned(), "priorityClassName".to_owned()],
+        }]);
+        if let Some(selected) = if a {
+            Some("first")
+        } else if b {
+            Some("second")
+        } else if c {
+            Some("third")
+        } else {
+            None
+        } {
+            want.insert(LiveOutputClaim {
+                input: selected.to_owned(),
+                output: vec!["spec".to_owned(), "nodeSelector".to_owned()],
+            });
+        }
+        sim_assert_eq!(have: live_output_claims(source, &values)?, want: want, "selection mask {mask}");
+    }
+    Ok(())
+}
+
+/// A later mapping member replaces the earlier value only under its own execution guard.
+#[test]
+fn ordered_mapping_contributions_withdraw_only_the_overwritten_occurrence() -> eyre::Result<()> {
+    let source = indoc::indoc! {r"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: witness
+        spec:
+          nodeSelector:
+            {{- toYaml .Values.before | nindent 4 }}
+          {{- if .Values.replace }}
+          nodeSelector:
+            {{- toYaml .Values.after | nindent 4 }}
+          {{- end }}
+    "};
+    for replace in [false, true] {
+        let values = json!({"replace":replace,"before":{"key":"one"},"after":{"key":"two"}});
+        let want = BTreeSet::from([LiveOutputClaim {
+            input: if replace { "after" } else { "before" }.to_owned(),
+            output: vec!["spec".to_owned(), "nodeSelector".to_owned()],
+        }]);
+        sim_assert_eq!(have: live_output_claims(source, &values)?, want: want);
+    }
+    Ok(())
+}
+
+/// A following plain sequence spelling can fold into the preceding serialized scalar.
+#[test]
+fn scalar_folding_remains_a_survivor_beside_a_sequence_spelling() -> eyre::Result<()> {
+    let source = indoc::indoc! {r"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: witness
+        spec:
+          slot:
+        {{ toYaml .Values.payload | nindent 4 }}
+            - fixed
+    "};
+    for payload in [
+        Value::Null,
+        json!(false),
+        json!(0),
+        json!("word"),
+        json!(["value"]),
+    ] {
+        sim_assert_eq!(have: rejection(source, &json!({"payload":payload}))?, want: false);
+    }
+    Ok(())
 }

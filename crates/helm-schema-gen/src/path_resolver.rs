@@ -420,51 +420,77 @@ fn metadata_field_schema(field: MetadataFieldKind) -> Value {
 }
 
 fn metadata_schema(evidence: &ContractPathSchemaEvidence) -> Value {
-    let field_kinds = &evidence.metadata_field_kinds;
-    if field_kinds.is_empty() {
-        empty_schema()
-    } else {
-        let schema = intersect_schema_list(
-            field_kinds
-                .iter()
-                .copied()
-                .map(|field| {
-                    let mut schema = if field == MetadataFieldKind::StringMap
+    intersect_schema_list(
+        evidence
+            .metadata_field_kinds
+            .iter()
+            .copied()
+            .map(|field| {
+                let mut occurrences = Vec::new();
+                for use_ in &evidence.provider_schema_uses {
+                    if metadata_role(&use_.path) != Some(field) {
+                        continue;
+                    }
+                    let serialized = matches!(
+                        use_.kind,
+                        helm_schema_core::ValueKind::YamlSerialized
+                            | helm_schema_core::ValueKind::TemplatedYamlSerialized
+                    );
+                    let schema = if field == MetadataFieldKind::StringMap && serialized {
+                        serialized_string_map_schema()
+                    } else {
+                        metadata_field_schema(field)
+                    };
+                    let policy = crate::resolve_policy::ProviderValueUsePolicy::new(
+                        use_.kind,
+                        use_.stringified,
+                        use_.is_self_range_collection,
+                        use_.template_supplied_member_keys.clone(),
+                        use_.split_segment.clone(),
+                        use_.omitted_members.clone(),
+                    )
+                    .with_plain_scalar_placement(use_.plain_scalar_placement)
+                    .with_strip_marker(use_.strip_marker);
+                    occurrences.push(
+                        ResolvePolicy::provider_schema_for_value_use(&schema, &policy)
+                            .unwrap_or(schema),
+                    );
+                }
+                if occurrences.is_empty() {
+                    let schema = if field == MetadataFieldKind::StringMap
                         && evidence.facts.used_as_yaml_serialized
                     {
                         serialized_string_map_schema()
                     } else {
                         metadata_field_schema(field)
                     };
-                    if field == MetadataFieldKind::StringMap
-                        && !evidence.metadata_omitted_members.is_empty()
-                        && let Some(object) = schema.as_object_mut()
-                    {
-                        let properties = object
-                            .entry("properties")
-                            .or_insert_with(|| serde_json::json!({}));
-                        if let Some(properties) = properties.as_object_mut() {
-                            for key in &evidence.metadata_omitted_members {
-                                properties.insert(key.clone(), empty_schema());
-                            }
-                        }
+                    if evidence.facts.used_as_yaml_serialized {
+                        crate::resolve_policy::scalar_preimage::serialized_yaml_provider_preimage(
+                            schema, false,
+                        )
+                    } else {
+                        schema
                     }
-                    schema
-                })
-                .collect(),
-        );
-        let templated = !evidence.provider_schema_uses.is_empty()
-            && evidence
-                .provider_schema_uses
-                .iter()
-                .all(|site| site.kind == helm_schema_core::ValueKind::TemplatedYamlSerialized);
-        if evidence.facts.used_as_yaml_serialized || templated {
-            crate::resolve_policy::scalar_preimage::serialized_yaml_provider_preimage(
-                schema, templated,
-            )
-        } else {
-            schema
-        }
+                } else {
+                    intersect_schema_list(occurrences)
+                }
+            })
+            .collect(),
+    )
+}
+
+fn metadata_role(path: &helm_schema_core::YamlPath) -> Option<MetadataFieldKind> {
+    let [.., parent, field] = path.0.as_slice() else {
+        return None;
+    };
+    if parent != "metadata" {
+        return None;
+    }
+    match field.as_str() {
+        "annotations" | "labels" => Some(MetadataFieldKind::StringMap),
+        "name" => Some(MetadataFieldKind::Name),
+        "namespace" => Some(MetadataFieldKind::Namespace),
+        _ => None,
     }
 }
 

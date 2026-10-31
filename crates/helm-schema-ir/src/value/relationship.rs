@@ -9,11 +9,9 @@ use std::rc::Rc;
 
 use helm_schema_core::{Guard, GuardValue, Predicate, PredicateMemo, ValuesPath};
 
-use super::scalar_value::ScalarContent;
-
 use super::{
     Coverage, Datum, Field, FrozenValue, HeapVersion, InputBacking, Leaf, ObjectData, Remainder,
-    Value, ValueNode,
+    Value, ValueNode, scalar_value::ScalarContent,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -164,9 +162,20 @@ struct NodeKey {
     decisions: Vec<SelectedDecision>,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct RawFormatInput {
+    pub(crate) condition: Predicate,
+    pub(crate) path: ValuesPath,
+}
+
+struct RawFormatArm<'value> {
+    condition: Predicate,
+    value: &'value Value,
+}
+
 /// Queries share a work budget across captures, branches, heap fields and claims.
 /// No heap or derivation is copied into an independent provenance store.
-pub(super) struct RelationshipQuery<'a, 'inputs> {
+pub(crate) struct RelationshipQuery<'a, 'inputs> {
     inputs: &'inputs BTreeMap<ValuesPath, InputBacking>,
     remaining: usize,
     limit: usize,
@@ -174,6 +183,7 @@ pub(super) struct RelationshipQuery<'a, 'inputs> {
     decisions: BTreeMap<u64, bool>,
     omission_depth: usize,
     nodes: BTreeMap<NodeKey, Relationships<'a>>,
+    members: BTreeMap<MemberKey, MemberPresence>,
 }
 
 impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
@@ -187,8 +197,64 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
             decisions: BTreeMap::new(),
             omission_depth: 0,
             nodes: BTreeMap::new(),
+            members: BTreeMap::new(),
         }
     }
+    pub(super) fn raw_format_inputs(&mut self, frozen: &FrozenValue) -> Vec<RawFormatInput> {
+        let FrozenValue { value, heap } = frozen;
+        let mut pending = vec![RawFormatArm {
+            condition: Predicate::True,
+            value,
+        }];
+        let mut inputs = Vec::new();
+        let mut proofs = BTreeMap::new();
+        let mut remaining = super::MAX_SCALAR_DISPATCH_STATES;
+        while let Some(RawFormatArm { condition, value }) = pending.pop() {
+            if condition == Predicate::False {
+                continue;
+            }
+            match value.node.as_ref() {
+                ValueNode::Select { decision, yes, no } => {
+                    if decision.coverage != super::Coverage::Exact
+                        || decision.when_true.contains_approximation()
+                        || decision.when_false.contains_approximation()
+                    {
+                        return Vec::new();
+                    }
+                    pending.push(RawFormatArm {
+                        condition: self.predicates.normalize(Predicate::all(vec![
+                            condition.clone(),
+                            decision.when_false.clone(),
+                        ])),
+                        value: no,
+                    });
+                    pending.push(RawFormatArm {
+                        condition: self
+                            .predicates
+                            .normalize(Predicate::all(vec![condition, decision.when_true.clone()])),
+                        value: yes,
+                    });
+                }
+                ValueNode::Leaf(Leaf { datum, origin }) => {
+                    if remaining == 0 {
+                        return Vec::new();
+                    }
+                    remaining -= 1;
+                    let path = self.direct_input_path(datum, origin);
+                    if let Some(path) = path {
+                        let unchanged = *proofs
+                            .entry(path.clone())
+                            .or_insert_with(|| self.original_unchanged(&path, heap));
+                        if unchanged {
+                            inputs.push(RawFormatInput { condition, path });
+                        }
+                    }
+                }
+            }
+        }
+        inputs
+    }
+
     pub(super) fn fallback_source_path(
         &self,
         value: &Value,
@@ -253,17 +319,7 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
             Datum::Text(_)
             | Datum::Scalar {
                 go_type: _,
-                content:
-                    Some(
-                        ScalarContent::Literal(_)
-                        | ScalarContent::Rendered(_)
-                        | ScalarContent::PrintfStringIdentity(_)
-                        | ScalarContent::SplitLength {
-                            value: _,
-                            separator: _,
-                        }
-                        | ScalarContent::Length(_),
-                    ),
+                content: Some(ScalarContent::Literal(_)),
             }
             | Datum::Sequence(_)
             | Datum::Strings(_)
@@ -309,6 +365,18 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
         }
         self.unchanged(path, heap)
     }
+    pub(crate) fn bounded<T>(
+        &mut self,
+        remaining: &mut usize,
+        consume: impl FnOnce(&mut Self) -> T,
+    ) -> T {
+        self.remaining = self.remaining.min(*remaining);
+        let before = self.remaining;
+        let result = consume(self);
+        *remaining = remaining.saturating_sub(before - self.remaining);
+        result
+    }
+
     pub(super) fn work(&self) -> usize {
         self.limit - self.remaining
     }
@@ -332,7 +400,7 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
     }
     /// An empty member path requests the whole payload, including explicit surviving fields.
     #[tracing::instrument(skip_all, level = "debug", name = "input_relationship")]
-    pub(super) fn value(
+    pub(crate) fn value(
         &mut self,
         frozen: &'a FrozenValue,
         members: &[String],
@@ -353,22 +421,10 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
                 .map(|key| 1 + key.len().div_ceil(64))
                 .sum::<usize>()
             + 1;
-        if depth >= 32 || !self.charge(key_cost) {
+        if depth >= 128 || !self.charge(key_cost) {
             return Relationships::unknown();
         }
-        let key = NodeKey {
-            heap: std::ptr::from_ref(heap),
-            value: Rc::as_ptr(&value.node),
-            members: members.to_vec(),
-            decisions: self
-                .decisions
-                .iter()
-                .map(|(id, taken)| SelectedDecision {
-                    id: *id,
-                    taken: *taken,
-                })
-                .collect(),
-        };
+        let key = self.node_key(value, heap, members);
         if let Some(view) = self.nodes.get(&key) {
             let cost = Self::copy_work(view);
             if !self.charge(cost) {
@@ -410,10 +466,15 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
         members: &[String],
         depth: usize,
     ) -> Relationships<'a> {
-        if depth >= 32 || !self.charge(1) {
+        if depth >= 128 || !self.charge(1) {
             return Relationships::unknown();
         }
         match value.node.as_ref() {
+            ValueNode::Select {
+                decision: _,
+                yes,
+                no,
+            } if Rc::ptr_eq(&yes.node, &no.node) => self.node(yes, heap, members, depth + 1),
             ValueNode::Select { decision, yes, no } => self.choice(
                 decision,
                 |query| query.node(yes, heap, members, depth + 1),
@@ -469,7 +530,15 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
                 return Relationships::unknown();
             }
             for arm in &mut view.known {
-                arm.preimage.insert(0, Preimage::Text(text));
+                let repeated_capture = arm.capture.is_none()
+                    && matches!(
+                        (text.term(), arm.preimage.first()),
+                        (super::text::TextTerm::Capture { graph: _, strip_marker: outer }, Some(Preimage::Text(inner)))
+                            if matches!(inner.term(), super::text::TextTerm::Capture { graph: _, strip_marker: inner } if outer == inner)
+                    );
+                if !repeated_capture {
+                    arm.preimage.insert(0, Preimage::Text(text));
+                }
             }
             return view;
         }
@@ -836,7 +905,7 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
         members: &[String],
         depth: usize,
     ) -> Relationships<'a> {
-        if depth >= 32 || !self.charge(1) {
+        if depth >= 128 || !self.charge(1) {
             return Relationships::unknown();
         }
         match field {
@@ -943,7 +1012,7 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
         depth: usize,
     ) -> Relationships<'a> {
         use super::text::TextTerm;
-        if depth >= 32 || !self.charge(1) {
+        if depth >= 128 || !self.charge(1) {
             return Relationships::unknown();
         }
         match term {
@@ -998,7 +1067,7 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
         depth: usize,
         whole: bool,
     ) -> Relationships<'a> {
-        if depth >= 32 {
+        if depth >= 128 {
             return Relationships::unknown();
         }
         let mut significant = 0_usize;
@@ -1046,6 +1115,11 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
                     }
                     payload
                 }
+                super::TextPart::Select {
+                    decision: _,
+                    yes,
+                    no,
+                } if Rc::ptr_eq(yes, no) => self.capture_parts(yes, members, depth + 1, whole),
                 super::TextPart::Select { decision, yes, no } => self.choice(
                     decision,
                     |query| query.capture_parts(yes, members, depth + 1, whole),
@@ -1079,7 +1153,7 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
         path: &helm_schema_core::ValuesPath,
         heap: &super::HeapVersion,
     ) -> Option<BTreeSet<String>> {
-        if self.omission_depth >= 32 {
+        if self.omission_depth >= 128 {
             return None;
         }
         self.omission_depth += 1;
@@ -1327,6 +1401,35 @@ pub(super) fn structural_preimage(preimage: &[Preimage<'_>]) -> bool {
 }
 
 impl super::DocumentExecution {
+    #[cfg(test)]
+    pub(crate) fn member_relationships<'a>(
+        &self,
+        value: &'a FrozenValue,
+        members: &[String],
+        remaining: &mut usize,
+    ) -> MemberView<'a> {
+        let Some(exit) = self.exits.first() else {
+            return MemberView {
+                relationships: Relationships::unknown(),
+                presence: MemberPresence::unknown(),
+            };
+        };
+        let inputs = exit.state.heap.arena.input_objects.borrow();
+        let mut query = RelationshipQuery::new(&inputs, *remaining);
+        let view = query.member(value, members);
+        *remaining = remaining.saturating_sub(query.work());
+        view
+    }
+
+    pub(crate) fn with_relationship_query<'values, T>(
+        &self,
+        budget: usize,
+        consume: impl FnOnce(RelationshipQuery<'values, '_>) -> T,
+    ) -> Option<T> {
+        let inputs = self.exits.first()?.state.heap.arena.input_objects.borrow();
+        Some(consume(RelationshipQuery::new(&inputs, budget)))
+    }
+
     /// Queries whole payloads or relative members at the value's frozen execution snapshot.
     /// A single budget covers all returned claims; unknown coverage must remain open.
     pub(crate) fn relationships<'a>(
@@ -1348,6 +1451,388 @@ fn same_capture(left: Option<&FrozenValue>, right: Option<&FrozenValue>) -> bool
         (Some(left), Some(right)) => std::ptr::eq(left, right),
         (None, None) => true,
         (Some(_), None) | (None, Some(_)) => false,
+    }
+}
+
+/// Membership is separate from whether a present member has an input origin.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct MemberPresence {
+    pub(crate) present: Predicate,
+    pub(crate) absent: Predicate,
+    pub(crate) unknown: Predicate,
+}
+impl MemberPresence {
+    fn unknown() -> Self {
+        Self {
+            present: Predicate::False,
+            absent: Predicate::False,
+            unknown: Predicate::True,
+        }
+    }
+    fn constant(present: bool) -> Self {
+        Self {
+            present: if present {
+                Predicate::True
+            } else {
+                Predicate::False
+            },
+            absent: if present {
+                Predicate::False
+            } else {
+                Predicate::True
+            },
+            unknown: Predicate::False,
+        }
+    }
+}
+
+pub(crate) struct MemberView<'a> {
+    pub(crate) relationships: Relationships<'a>,
+    pub(crate) presence: MemberPresence,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+struct MemberKey {
+    node: NodeKey,
+    marker: bool,
+    text_only: bool,
+}
+
+impl<'a> RelationshipQuery<'a, '_> {
+    pub(crate) fn member(&mut self, value: &'a FrozenValue, members: &[String]) -> MemberView<'a> {
+        let relationships = self.value(value, members);
+        let presence = self.presence_node(&value.value, &value.heap, members, false, false, 0);
+        MemberView {
+            relationships,
+            presence,
+        }
+    }
+
+    fn node_key(&self, value: &Value, heap: &HeapVersion, members: &[String]) -> NodeKey {
+        NodeKey {
+            heap: std::ptr::from_ref(heap),
+            value: Rc::as_ptr(&value.node),
+            members: members.to_vec(),
+            decisions: self
+                .decisions
+                .iter()
+                .map(|(id, taken)| SelectedDecision {
+                    id: *id,
+                    taken: *taken,
+                })
+                .collect(),
+        }
+    }
+
+    fn presence_node(
+        &mut self,
+        value: &'a Value,
+        heap: &'a HeapVersion,
+        members: &[String],
+        marker: bool,
+        text_only: bool,
+        depth: usize,
+    ) -> MemberPresence {
+        if members.is_empty() {
+            return MemberPresence::constant(true);
+        }
+        if depth >= 128 || !self.charge(1 + members.len() + self.decisions.len()) {
+            return MemberPresence::unknown();
+        }
+        let key = MemberKey {
+            node: self.node_key(value, heap, members),
+            marker,
+            text_only,
+        };
+        if let Some(cached) = self.members.get(&key) {
+            return cached.clone();
+        }
+        let result = match value.node.as_ref() {
+            ValueNode::Select { decision, yes, no } => self.presence_choice(
+                decision,
+                |query| query.presence_node(yes, heap, members, marker, text_only, depth + 1),
+                |query| query.presence_node(no, heap, members, marker, text_only, depth + 1),
+            ),
+            ValueNode::Leaf(Leaf {
+                datum: Datum::Text(text),
+                origin: _,
+            }) => self.presence_text(text.term(), members, depth + 1),
+            ValueNode::Leaf(Leaf {
+                datum: _,
+                origin: _,
+            }) if text_only => MemberPresence::unknown(),
+            ValueNode::Leaf(Leaf { datum, origin }) => {
+                self.presence_leaf(datum, origin, heap, members, marker, depth + 1)
+            }
+        };
+        if self.remaining != 0 {
+            self.members.insert(key, result.clone());
+        }
+        result
+    }
+
+    fn presence_leaf(
+        &mut self,
+        datum: &'a Datum,
+        origin: &'a super::Origin,
+        heap: &'a HeapVersion,
+        members: &[String],
+        marker: bool,
+        depth: usize,
+    ) -> MemberPresence {
+        let Some((key, rest)) = members.split_first() else {
+            return MemberPresence::constant(true);
+        };
+        if let Datum::Map {
+            target: Some(id),
+            view: _,
+        } = datum
+        {
+            let Some(object) = heap.object(id) else {
+                return MemberPresence::unknown();
+            };
+            let ObjectData::Map { fields, remainder } = &object.data else {
+                return MemberPresence::unknown();
+            };
+            if marker
+                && (fields.keys().any(|key| key.contains("<no value>"))
+                    || !rest.is_empty() && *remainder != Remainder::Closed)
+            {
+                return MemberPresence::unknown();
+            }
+            if let Some(field) = fields.get(key) {
+                return self.presence_field(field, heap, rest, marker, depth + 1);
+            }
+            if *remainder == Remainder::Closed {
+                return MemberPresence::constant(false);
+            }
+        }
+        if let Some(derivation) = &origin.derivation {
+            return match &derivation.operation {
+                Operation::Stringify
+                | Operation::Trim
+                | Operation::Numeric(_)
+                | Operation::Descriptor { kind_only: _ } => MemberPresence::constant(false),
+                Operation::Member(_)
+                | Operation::Copy
+                | Operation::Omit(_)
+                | Operation::Pick(_)
+                | Operation::Decode(_)
+                | Operation::Merge { overwrite: _ } => MemberPresence::unknown(),
+            };
+        }
+        if let Some(path) = self.input_path(datum, origin) {
+            let mut path = path.into_owned();
+            let root = path.clone();
+            let mut guards = Vec::new();
+            for key in members {
+                if !self.charge(1 + Self::path_work(&path)) {
+                    return MemberPresence::unknown();
+                }
+                guards.push(Predicate::from(helm_schema_core::Guard::HasKey {
+                    path: path.clone(),
+                    key: key.clone(),
+                }));
+                path.push(key.clone());
+            }
+            let present = self.predicates.normalize(Predicate::all(guards));
+            let absence = present.negated();
+            let guard = if marker {
+                Predicate::from(helm_schema_core::Guard::MatchesValue {
+                    path: root,
+                    pattern: helm_schema_core::ValuePattern::MarkerFree,
+                })
+            } else {
+                Predicate::True
+            };
+            return self.presence_under(
+                MemberPresence {
+                    present,
+                    absent: absence,
+                    unknown: Predicate::False,
+                },
+                &guard,
+            );
+        }
+        match datum {
+            Datum::Scalar {
+                go_type: _,
+                content: _,
+            }
+            | Datum::Map {
+                target: None,
+                view: _,
+            }
+            | Datum::Sequence(_)
+            | Datum::Strings(_) => MemberPresence::constant(false),
+            Datum::Map {
+                target: Some(_),
+                view: _,
+            }
+            | Datum::Text(_)
+            | Datum::Unknown(_)
+            | Datum::Slot {
+                backing: _,
+                index: _,
+            } => MemberPresence::unknown(),
+        }
+    }
+
+    fn presence_field(
+        &mut self,
+        field: &'a Field,
+        heap: &'a HeapVersion,
+        members: &[String],
+        marker: bool,
+        depth: usize,
+    ) -> MemberPresence {
+        if depth >= 128 || !self.charge(1) {
+            return MemberPresence::unknown();
+        }
+        match field {
+            Field::Absent => MemberPresence::constant(false),
+            Field::Unknown => MemberPresence::unknown(),
+            Field::Present(value) => {
+                self.presence_node(value, heap, members, marker, false, depth + 1)
+            }
+            Field::Select { decision, yes, no } => self.presence_choice(
+                decision,
+                |query| query.presence_field(yes, heap, members, marker, depth + 1),
+                |query| query.presence_field(no, heap, members, marker, depth + 1),
+            ),
+        }
+    }
+
+    fn presence_text(
+        &mut self,
+        term: &'a super::text::TextTerm,
+        members: &[String],
+        depth: usize,
+    ) -> MemberPresence {
+        use super::text::TextTerm;
+        if depth >= 128 || !self.charge(1) {
+            return MemberPresence::unknown();
+        }
+        match term {
+            TextTerm::Resolved { term, literal: _ } => self.presence_text(term, members, depth + 1),
+            TextTerm::Yaml { value, pretty: _ } => {
+                self.presence_node(&value.value, &value.heap, members, true, false, depth + 1)
+            }
+            TextTerm::Json {
+                value,
+                escape_html,
+                pretty: _,
+                literal: _,
+            } => self.presence_node(
+                &value.value,
+                &value.heap,
+                members,
+                !escape_html,
+                false,
+                depth + 1,
+            ),
+            TextTerm::Indent {
+                value,
+                width: _,
+                newline: _,
+            } => self.presence_node(&value.value, &value.heap, members, false, true, depth + 1),
+            TextTerm::Capture {
+                graph,
+                strip_marker: _,
+            } => {
+                let mut payload = None;
+                for part in &graph.parts {
+                    if !self.charge(1) {
+                        return MemberPresence::unknown();
+                    }
+                    match part.content() {
+                        super::TextPart::Bytes(bytes) if bytes.trim().is_empty() => {}
+                        super::TextPart::Frozen(value) if payload.is_none() => {
+                            payload = Some(value);
+                        }
+                        _ => return MemberPresence::unknown(),
+                    }
+                }
+                payload.map_or_else(MemberPresence::unknown, |value| {
+                    self.presence_node(&value.value, &value.heap, members, false, true, depth + 1)
+                })
+            }
+            TextTerm::Quote { value: _ }
+            | TextTerm::Encoded {
+                value: _,
+                alphabet: _,
+            } => MemberPresence::constant(false),
+            TextTerm::Tpl {
+                source: _,
+                result: _,
+            } => MemberPresence::unknown(),
+        }
+    }
+
+    fn presence_under(&self, presence: MemberPresence, guard: &Predicate) -> MemberPresence {
+        let MemberPresence {
+            present,
+            absent,
+            unknown,
+        } = presence;
+        MemberPresence {
+            present: self
+                .predicates
+                .normalize(Predicate::all(vec![guard.clone(), present])),
+            absent: self
+                .predicates
+                .normalize(Predicate::all(vec![guard.clone(), absent])),
+            unknown: self
+                .predicates
+                .normalize(Predicate::Or(vec![guard.negated(), unknown])),
+        }
+    }
+
+    fn presence_choice(
+        &mut self,
+        decision: &super::FrozenTest,
+        yes: impl FnOnce(&mut Self) -> MemberPresence,
+        no: impl FnOnce(&mut Self) -> MemberPresence,
+    ) -> MemberPresence {
+        if let Some(taken) = self.decisions.get(&decision.id) {
+            return if *taken { yes(self) } else { no(self) };
+        }
+        if !self.charge(3) {
+            return MemberPresence::unknown();
+        }
+        self.decisions.insert(decision.id, true);
+        let yes = yes(self);
+        self.decisions.insert(decision.id, false);
+        let no = no(self);
+        self.decisions.remove(&decision.id);
+        let (present, absent) = if decision.coverage == super::Coverage::Exact
+            && !decision.when_true.contains_approximation()
+            && !decision.when_false.contains_approximation()
+        {
+            let yes = self.presence_under(yes, &decision.when_true);
+            let no = self.presence_under(no, &decision.when_false);
+            (
+                self.predicates
+                    .normalize(Predicate::Or(vec![yes.present, no.present])),
+                self.predicates
+                    .normalize(Predicate::Or(vec![yes.absent, no.absent])),
+            )
+        } else {
+            (
+                self.predicates
+                    .normalize(Predicate::all(vec![yes.present, no.present])),
+                self.predicates
+                    .normalize(Predicate::all(vec![yes.absent, no.absent])),
+            )
+        };
+        let unknown = self
+            .predicates
+            .normalize(Predicate::Or(vec![present.clone(), absent.clone()]).negated());
+        MemberPresence {
+            present,
+            absent,
+            unknown,
+        }
     }
 }
 

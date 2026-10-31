@@ -4,9 +4,7 @@
 //! truthiness, equality, pattern matching, and semantic-version comparison
 //! all consume one typed representation.
 
-use std::collections::BTreeSet;
-
-use helm_schema_core::{Predicate, PredicateMemo};
+use helm_schema_core::PredicateMemo;
 
 /// Exact scalar content carried by a canonical value leaf.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -15,63 +13,6 @@ pub(crate) enum ScalarContent {
     Literal(helm_schema_core::GuardValue),
     /// A raw values-path identity before template rendering.
     Identity(helm_schema_core::ValuesPath),
-    /// Text already rendered by a helper body.
-    Rendered(Vec<ScalarRenderPart>),
-    /// Output of `printf "%s"` over one raw scalar identity.
-    ///
-    /// Non-string inputs render Go's non-empty format-mismatch spelling, so
-    /// only the empty-output preimage is exact without modeling that grammar.
-    PrintfStringIdentity(helm_schema_core::ValuesPath),
-    /// The number of segments produced by splitting one scalar value on a
-    /// literal separator.
-    SplitLength {
-        value: Box<ScalarContent>,
-        separator: String,
-    },
-    /// Go's `len` of one scalar value: the BYTE count of a string. JSON
-    /// Schema counts characters, so character and byte bounds differ.
-    Length(Box<ScalarContent>),
-}
-
-/// One exact contribution to helper-rendered scalar text.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub(crate) enum ScalarRenderPart {
-    Text(String),
-    Identity {
-        path: helm_schema_core::ValuesPath,
-        /// The text is Go's total scalar rendering of the raw value. When
-        /// false, an earlier string consumer has already restricted the
-        /// runtime input to strings.
-        stringified: bool,
-        lexical_escapes: BTreeSet<crate::helper_meta::LexicalEscape>,
-    },
-}
-
-impl ScalarContent {
-    fn rendered_parts(&self) -> Option<Vec<ScalarRenderPart>> {
-        let parts = match self {
-            Self::Literal(value) => {
-                let text = match value {
-                    helm_schema_core::GuardValue::String(text)
-                    | helm_schema_core::GuardValue::Float(text) => text.clone(),
-                    helm_schema_core::GuardValue::Bool(value) => value.to_string(),
-                    helm_schema_core::GuardValue::Int(value) => value.to_string(),
-                    helm_schema_core::GuardValue::Null => return None,
-                };
-                vec![ScalarRenderPart::Text(text)]
-            }
-            Self::Identity(path) => vec![ScalarRenderPart::Identity {
-                path: path.clone(),
-                stringified: true,
-                lexical_escapes: BTreeSet::new(),
-            }],
-            Self::Rendered(parts) => parts.clone(),
-            Self::PrintfStringIdentity(_) | Self::SplitLength { .. } | Self::Length(_) => {
-                return None;
-            }
-        };
-        Some(parts)
-    }
 }
 
 pub(crate) fn any_predicates_with_memo(
@@ -342,36 +283,4 @@ fn conjoin_many(
         condition = joined;
     }
     condition
-}
-
-/// Rendered scalar content read from one executed emission.
-pub(crate) struct ExecutedScalarView {
-    projection: super::ScalarValueDispatch,
-}
-
-impl super::ExecutedSite {
-    pub(crate) fn scalar_view(&self) -> Option<ExecutedScalarView> {
-        self.rendered_scalar()
-            .map(|projection| ExecutedScalarView { projection })
-    }
-}
-
-impl ExecutedScalarView {
-    /// Maps known renderable arms without asserting exhaustive coverage.
-    /// Returns `None` when a retained content term cannot be rendered.
-    pub(crate) fn map_rendered_arms<T>(
-        &self,
-        mut map: impl FnMut(&Predicate, &[ScalarRenderPart]) -> T,
-    ) -> Option<Vec<T>> {
-        let Self { projection } = self;
-        let content = projection.content()?;
-        let mut arms = Vec::with_capacity(content.arms().count());
-        for (condition, value) in content.arms() {
-            if *condition == Predicate::False {
-                continue;
-            }
-            arms.push(map(condition, &value.rendered_parts()?));
-        }
-        Some(arms)
-    }
 }

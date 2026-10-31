@@ -80,7 +80,6 @@ impl MemberAccessConditions {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(super) struct PathSchemaFactsAccumulator {
     pub(super) metadata_field_kinds: BTreeSet<MetadataFieldKind>,
-    pub(super) metadata_omitted_members: BTreeSet<String>,
     pub(super) provider_schema_uses: Vec<ProviderSchemaUse>,
     pub(super) facts: ContractValuePathFacts,
     pub(super) range_domain: Option<RangeDomain>,
@@ -91,7 +90,6 @@ impl Default for PathSchemaFactsAccumulator {
     fn default() -> Self {
         Self {
             metadata_field_kinds: BTreeSet::new(),
-            metadata_omitted_members: BTreeSet::new(),
             provider_schema_uses: Vec::new(),
             facts: ContractValuePathFacts::default(),
             range_domain: None,
@@ -105,29 +103,8 @@ impl PathSchemaFactsAccumulator {
         self.all_uses_nullable &= nullable;
     }
 
-    pub(super) fn record_metadata_field_kind(
-        &mut self,
-        field_kind: Option<MetadataFieldKind>,
-        omitted: &BTreeMap<String, Vec<Guard>>,
-    ) {
-        if let Some(field_kind) = field_kind {
-            if field_kind == MetadataFieldKind::StringMap {
-                self.record_metadata_omissions(omitted.keys().cloned().collect());
-            }
-            self.metadata_field_kinds.insert(field_kind);
-        }
-    }
-
-    fn record_metadata_omissions(&mut self, omitted: BTreeSet<String>) {
-        if self
-            .metadata_field_kinds
-            .contains(&MetadataFieldKind::StringMap)
-        {
-            self.metadata_omitted_members
-                .retain(|key| omitted.contains(key));
-        } else {
-            self.metadata_omitted_members = omitted;
-        }
+    pub(super) fn record_metadata_field_kind(&mut self, field_kind: Option<MetadataFieldKind>) {
+        self.metadata_field_kinds.extend(field_kind);
     }
 
     pub(super) fn record_facts(&mut self, facts: ContractValuePathFacts) {
@@ -209,12 +186,6 @@ impl PathSchemaFactsAccumulator {
         for provider_schema_use in other.provider_schema_uses {
             self.record_provider_schema_use(provider_schema_use);
         }
-        if other
-            .metadata_field_kinds
-            .contains(&MetadataFieldKind::StringMap)
-        {
-            self.record_metadata_omissions(other.metadata_omitted_members);
-        }
         self.metadata_field_kinds.extend(other.metadata_field_kinds);
         self.record_facts(other.facts);
         self.all_uses_nullable &= other.all_uses_nullable;
@@ -269,7 +240,6 @@ impl PathSchemaFactsAccumulator {
             facts,
             range_domain,
             metadata_field_kinds: self.metadata_field_kinds,
-            metadata_omitted_members: self.metadata_omitted_members,
             type_hints,
             provider_schema_uses: self.provider_schema_uses,
         }
@@ -1068,7 +1038,6 @@ pub(super) fn record_contract_use_conjunction(
                 lowerable_guards,
                 branch_provider_use,
                 metadata_field_kind,
-                &contract_use.omitted_members,
             );
         }
     }
