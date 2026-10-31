@@ -409,11 +409,11 @@ impl State {
             invocation_records_complete: true,
             loops: yes_loops.clone(),
         };
-        joined.record_join_widening(widened_inputs);
+        joined.observe_join_coverage(widened_inputs);
         joined.merge_observations(decision, yes, no);
         Some(joined)
     }
-    fn record_join_widening(
+    fn observe_join_coverage(
         &mut self,
         widened_inputs: std::collections::BTreeSet<helm_schema_core::ValuesPath>,
     ) {
@@ -425,59 +425,33 @@ impl State {
                 coverage: super::ReadCoverage::UnknownRegion,
             });
         }
-        let mut seen_input_sets = std::collections::BTreeSet::new();
-        for object in self
-            .heap
-            .version
-            .pages
-            .values()
-            .flat_map(|page| page.values())
-        {
-            if let super::ObjectData::Widened { inputs }
-            | super::ObjectData::Map {
-                fields: _,
-                remainder: super::Remainder::Unknown { inputs },
-            } = &object.data
-                && seen_input_sets.insert(Rc::as_ptr(inputs))
-            {
-                for path in inputs.iter() {
-                    self.reads.insert(super::RuntimeRead {
-                        path: path.clone(),
-                        condition: condition.clone(),
-                        coverage: super::ReadCoverage::UnknownRegion,
-                    });
-                }
-            }
-        }
-        for (id, path) in self.heap.arena.input_paths.borrow().iter() {
-            if matches!(
-                self.heap.version.object(id).map(|object| &object.data),
-                Some(
-                    super::ObjectData::Widened { inputs: _ }
-                        | super::ObjectData::Map {
-                            fields: _,
-                            remainder: super::Remainder::Open
-                                | super::Remainder::Unknown { inputs: _ }
-                        }
-                )
-            ) {
-                self.reads.insert(super::RuntimeRead {
-                    path: path.clone(),
-                    condition: condition.clone(),
-                    coverage: super::ReadCoverage::UnknownRegion,
-                });
-            }
-        }
+        self.reads
+            .observe_heap(Rc::clone(&self.heap.version), condition);
     }
 }
 
 pub(super) fn value_join_fits(yes: &Value, no: &Value) -> bool {
+    value_join_fits_with_budget(
+        yes,
+        no,
+        &mut super::heap_query::QueryBudget::new(usize::MAX),
+    )
+}
+
+pub(super) fn value_join_fits_with_budget(
+    yes: &Value,
+    no: &Value,
+    budget: &mut super::heap_query::QueryBudget,
+) -> bool {
     if Rc::ptr_eq(&yes.node, &no.node) {
         return true;
     }
     let mut pending = vec![yes, no];
     let mut leaves = 0;
     while let Some(value) = pending.pop() {
+        if !budget.charge(4) {
+            return false;
+        }
         match value.node.as_ref() {
             super::ValueNode::Leaf(super::Leaf {
                 datum: _,

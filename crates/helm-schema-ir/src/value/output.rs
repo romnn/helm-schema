@@ -8,7 +8,8 @@ use helm_schema_core::{GuardValue, Predicate, PredicateMemo};
 use std::collections::{BTreeMap, BTreeSet};
 
 impl TextBuffer {
-    fn immutable_text(parts: Vec<OutputNode>) -> Self {
+    /// Frozen text retains rendered parts without owning mutable budget accounting.
+    pub(super) fn immutable_text(parts: Vec<OutputNode>) -> Self {
         Self {
             parts,
             counts: BranchCounts::empty(),
@@ -1838,11 +1839,12 @@ fn json_string_slice(
     depth: usize,
     query: &mut JsonQuery<'_>,
 ) -> Option<serde_json::Value> {
+    let storage = heap.object(&slice.backing)?;
     let super::ObjectVersion {
         data: ObjectData::Strings(slots),
         revision: _,
         multiplicity: _,
-    } = heap.object(&slice.backing)?
+    } = storage.as_ref()
     else {
         return None;
     };
@@ -1862,6 +1864,7 @@ fn json_map(
     depth: usize,
     query: &mut JsonQuery<'_>,
 ) -> Option<serde_json::Value> {
+    let storage = heap.object(id)?;
     let super::ObjectVersion {
         data:
             ObjectData::Map {
@@ -1870,12 +1873,12 @@ fn json_map(
             },
         revision: _,
         multiplicity: _,
-    } = heap.object(id)?
+    } = storage.as_ref()
     else {
         return None;
     };
     let mut result = serde_json::Map::new();
-    for (key, field) in fields {
+    for (key, field) in fields.iter() {
         if let Some(remaining) = query.remaining.as_mut()
             && key.len() > 64 * 1024
         {

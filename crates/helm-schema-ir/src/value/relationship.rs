@@ -274,7 +274,7 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
         else {
             return None;
         };
-        if !matches!(heap.object(object), Some(super::ObjectVersion {
+        if !matches!(heap.borrowed_object(object), Some(super::ObjectVersion {
             multiplicity: super::Multiplicity::Singleton,
             data: super::ObjectData::Map { fields, remainder: super::Remainder::Input },
             revision: _,
@@ -335,7 +335,7 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
         if self
             .inputs
             .get(&root)
-            .and_then(|backing| heap.object(&backing.object))
+            .and_then(|backing| heap.borrowed_object(&backing.object))
             .is_none()
         {
             return false;
@@ -351,7 +351,7 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
             if let Some(object) = self
                 .inputs
                 .get(&prefix)
-                .and_then(|backing| heap.object(&backing.object))
+                .and_then(|backing| heap.borrowed_object(&backing.object))
             {
                 if object.multiplicity != super::Multiplicity::Singleton {
                     return false;
@@ -499,7 +499,7 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
             view: _,
         } = datum
             && !matches!(
-                heap.object(id).map(|object| &object.data),
+                heap.borrowed_object(id).map(|object| &object.data),
                 Some(ObjectData::Map {
                     fields: _,
                     remainder: Remainder::Closed | Remainder::Open | Remainder::Input
@@ -513,10 +513,10 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
             aliases: super::AliasSet::Known(objects),
         }) = datum
         {
-            for object in objects {
+            for object in objects.iter() {
                 if !self.charge(1)
                     || matches!(
-                        heap.object(object).map(|object| &object.data),
+                        heap.borrowed_object(object).map(|object| &object.data),
                         Some(ObjectData::Widened { inputs: _ })
                     )
                 {
@@ -546,7 +546,7 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
             target: Some(id),
             view: _,
         } = datum
-            && let Some(object) = heap.object(id)
+            && let Some(object) = heap.borrowed_object(id)
             && let ObjectData::Map { fields, remainder } = &object.data
             && let Some((key, rest)) = members.split_first()
         {
@@ -565,7 +565,7 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
             && let Some(object) = self
                 .inputs
                 .get(path)
-                .and_then(|backing| heap.object(&backing.object))
+                .and_then(|backing| heap.borrowed_object(&backing.object))
             && let ObjectData::Map {
                 fields,
                 remainder: _,
@@ -670,7 +670,7 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
                 target: Some(id),
                 view: _,
             } = datum
-            && let Some(object) = heap.object(id)
+            && let Some(object) = heap.borrowed_object(id)
             && let ObjectData::Map {
                 fields,
                 remainder: _,
@@ -718,7 +718,7 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
         else {
             return Relationships::unknown();
         };
-        let Some(object) = heap.object(id) else {
+        let Some(object) = heap.borrowed_object(id) else {
             return Relationships::unknown();
         };
         let ObjectData::Map {
@@ -842,7 +842,7 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
                 target: Some(id),
                 view: _,
             } = datum
-            && let Some(object) = heap.object(id)
+            && let Some(object) = heap.borrowed_object(id)
             && let ObjectData::Map { fields, remainder } = &object.data
         {
             if path.is_none() && *remainder != Remainder::Closed {
@@ -1172,7 +1172,7 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
             if self
                 .inputs
                 .get(&prefix)
-                .and_then(|backing| heap.object(&backing.object))
+                .and_then(|backing| heap.borrowed_object(&backing.object))
                 .is_some_and(|object| {
                     !matches!(
                         &object.data,
@@ -1192,7 +1192,7 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
                     if self
                         .inputs
                         .get(&prefix)
-                        .and_then(|backing| heap.object(&backing.object))
+                        .and_then(|backing| heap.borrowed_object(&backing.object))
                         .is_some_and(|object| !pristine_input_backing(object))
                     {
                         return None;
@@ -1214,7 +1214,7 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
         if let Some(object) = self
             .inputs
             .get(path)
-            .and_then(|backing| heap.object(&backing.object))
+            .and_then(|backing| heap.borrowed_object(&backing.object))
         {
             let super::ObjectVersion {
                 revision: _,
@@ -1228,7 +1228,7 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
             else {
                 return None;
             };
-            for (key, field) in fields {
+            for (key, field) in fields.iter() {
                 self.remaining = self.remaining.checked_sub(1)?;
                 if key.contains("<no value>") || !self.serializable_field(field, heap) {
                     return None;
@@ -1245,7 +1245,7 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
             .take_while(|(candidate, _)| candidate.is_descendant_of(path))
         {
             self.remaining = self.remaining.checked_sub(1)?;
-            let Some(object) = heap.object(&backing.object) else {
+            let Some(object) = heap.borrowed_object(&backing.object) else {
                 continue;
             };
             if pristine_input_backing(object) {
@@ -1263,7 +1263,7 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
             else {
                 return None;
             };
-            for (key, field) in fields {
+            for (key, field) in fields.iter() {
                 self.remaining = self.remaining.checked_sub(1)?;
                 if key.contains("<no value>") || !self.serializable_field(field, heap) {
                     return None;
@@ -1588,7 +1588,7 @@ impl<'a> RelationshipQuery<'a, '_> {
             view: _,
         } = datum
         {
-            let Some(object) = heap.object(id) else {
+            let Some(object) = heap.borrowed_object(id) else {
                 return MemberPresence::unknown();
             };
             let ObjectData::Map { fields, remainder } = &object.data else {

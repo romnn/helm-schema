@@ -237,7 +237,7 @@ pub(super) fn begin_file(
     let template_id = state.heap.allocate_at(
         Some(&occurrence.template),
         ObjectData::Map {
-            fields: std::collections::BTreeMap::from([
+            fields: Rc::new(std::collections::BTreeMap::from([
                 (
                     "Name".to_owned(),
                     Field::Present(Value::string(source_path)),
@@ -246,7 +246,7 @@ pub(super) fn begin_file(
                     "BasePath".to_owned(),
                     Field::Present(Value::string(&base_path)),
                 ),
-            ]),
+            ])),
             remainder: Remainder::Closed,
         },
         super::Multiplicity::Singleton,

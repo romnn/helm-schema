@@ -1237,30 +1237,8 @@ pub(super) fn invalidate(state: &mut State) {
             coverage: super::ReadCoverage::UnknownRegion,
         });
     }
-    let objects: Vec<_> = state
-        .heap
-        .version
-        .pages
-        .values()
-        .flat_map(|page| page.keys().cloned())
-        .collect();
-    for id in objects {
-        let Some(object) = state.heap.version.object(&id) else {
-            continue;
-        };
-        let multiplicity = object.multiplicity;
-        // An unknown writer can insert or delete keys as well as replace their contents.
-        state.heap.install(
-            id,
-            ObjectVersion {
-                revision: state.heap.arena.snapshot(),
-                multiplicity,
-                data: ObjectData::Widened {
-                    inputs: Rc::clone(&input_regions),
-                },
-            },
-        );
-    }
+    // An unknown writer can insert or delete keys as well as replace their contents.
+    state.heap.unknown_write(Rc::clone(&input_regions));
     for frame in &mut state.frames {
         let frame = Rc::make_mut(frame);
         for value in frame.bindings.values_mut() {
@@ -1459,17 +1437,22 @@ fn copy(
                 data: ObjectData::Map { fields, remainder },
                 revision: _,
                 multiplicity: _,
-            }) = state.heap.version.object(id).cloned()
+            }) = state.heap.version.object(id).as_deref().cloned()
             else {
                 return Value::influenced(influences);
             };
             let copied = fields
-                .into_iter()
-                .map(|(key, field)| (key, copy_field(field, state, seen, depth + 1)))
+                .iter()
+                .map(|(key, field)| {
+                    (
+                        key.clone(),
+                        copy_field(field.clone(), state, seen, depth + 1),
+                    )
+                })
                 .collect();
             let target = state.heap.allocate(
                 ObjectData::Map {
-                    fields: copied,
+                    fields: Rc::new(copied),
                     remainder,
                 },
                 super::Multiplicity::Singleton,
@@ -1587,8 +1570,8 @@ fn copy_field(
         Field::Present(value) => Field::Present(copy(&value, state, &mut seen.clone(), depth)),
         Field::Select { decision, yes, no } => Field::select(
             decision,
-            copy_field(*yes, state, &mut seen.clone(), depth + 1),
-            copy_field(*no, state, &mut seen.clone(), depth + 1),
+            copy_field(yes.as_ref().clone(), state, &mut seen.clone(), depth + 1),
+            copy_field(no.as_ref().clone(), state, &mut seen.clone(), depth + 1),
         ),
     }
 }
@@ -1653,11 +1636,12 @@ fn string_slice(function: &str, first: &Value, state: &mut State) -> Result<Valu
             origin: _,
         }) = value.node.as_ref()
     {
+        let storage = state.heap.version.object(&slice.backing);
         let Some(ObjectVersion {
             data: ObjectData::Strings(slots),
             revision: _,
             multiplicity: _,
-        }) = state.heap.version.object(&slice.backing)
+        }) = storage.as_deref()
         else {
             return Ok(value);
         };
@@ -1808,8 +1792,8 @@ fn sequence_items(value: &Value, state: &State) -> Option<Vec<Value>> {
             datum: Datum::Strings(slice),
             origin: _,
         }) => {
-            let ObjectData::Strings(slots) = &state.heap.version.object(&slice.backing)?.data
-            else {
+            let storage = state.heap.version.object(&slice.backing)?;
+            let ObjectData::Strings(slots) = &storage.data else {
                 return None;
             };
             Some(
@@ -1839,7 +1823,10 @@ fn fresh_map(
 ) -> Value {
     let MapFields { fields, remainder } = map;
     let target = state.heap.allocate(
-        ObjectData::Map { fields, remainder },
+        ObjectData::Map {
+            fields: Rc::new(fields),
+            remainder,
+        },
         super::Multiplicity::Singleton,
     );
     Value {
@@ -2171,7 +2158,10 @@ fn disjoint_map_keys(arguments: &[Value], state: &State) -> bool {
         if !objects.insert(id) {
             return false;
         }
-        let Some(ObjectVersion {
+        let Some(object) = state.heap.version.object(id) else {
+            return false;
+        };
+        let ObjectVersion {
             data:
                 ObjectData::Map {
                     fields,
@@ -2179,12 +2169,12 @@ fn disjoint_map_keys(arguments: &[Value], state: &State) -> bool {
                 },
             multiplicity: super::Multiplicity::Singleton,
             revision: _,
-        }) = state.heap.version.object(id)
+        } = object.as_ref()
         else {
             return false;
         };
-        for (key, field) in fields {
-            if !matches!(field, Field::Present(_) | Field::Absent) || !keys.insert(key) {
+        for (key, field) in fields.iter() {
+            if !matches!(field, Field::Present(_) | Field::Absent) || !keys.insert(key.clone()) {
                 return false;
             }
         }
@@ -2220,6 +2210,7 @@ fn disjoint_closed_graph(
                 if !objects.insert(id.clone()) {
                     return Ok(false);
                 }
+                let storage = state.heap.version.object(id);
                 let Some(ObjectVersion {
                     data:
                         ObjectData::Map {
@@ -2228,7 +2219,7 @@ fn disjoint_closed_graph(
                         },
                     revision: _,
                     multiplicity: super::Multiplicity::Singleton,
-                }) = state.heap.version.object(id)
+                }) = storage.as_deref()
                 else {
                     return Ok(false);
                 };
@@ -2308,7 +2299,11 @@ fn merge_maps(
             },
         revision: _,
         multiplicity: super::Multiplicity::Singleton,
-    }) = state.heap.version.object(target).cloned()
+    }) = state
+        .heap
+        .version
+        .object(target)
+        .map(|object| object.as_ref().clone())
     else {
         return false;
     };
@@ -2506,7 +2501,7 @@ fn unknown_decoded(
     }
     let region = state.heap.allocate(
         ObjectData::Opaque {
-            reachable: super::AliasSet::Known(BTreeSet::new()),
+            reachable: super::AliasSet::Known(Rc::new(BTreeSet::new())),
         },
         super::Multiplicity::Singleton,
     );
@@ -2518,7 +2513,7 @@ fn unknown_decoded(
                 } else {
                     super::TypeCoverage::Unresolved
                 },
-                aliases: super::AliasSet::Known(BTreeSet::from([region])),
+                aliases: super::AliasSet::Known(Rc::new(BTreeSet::from([region]))),
             }),
             origin: super::Origin {
                 derivation: None,
@@ -2530,7 +2525,7 @@ fn unknown_decoded(
 }
 
 fn closed_scalar_source(value: &Value, state: &State, remaining: &mut usize) -> bool {
-    let map = match value.node.as_ref() {
+    let storage = match value.node.as_ref() {
         ValueNode::Leaf(Leaf {
             datum: Datum::Map {
                 view: _,
@@ -2545,21 +2540,7 @@ fn closed_scalar_source(value: &Value, state: &State, remaining: &mut usize) -> 
                     target: Some(id),
                 },
             origin: _,
-        }) => {
-            let Some(ObjectVersion {
-                revision: _,
-                multiplicity: super::Multiplicity::Singleton,
-                data:
-                    ObjectData::Map {
-                        fields,
-                        remainder: Remainder::Closed,
-                    },
-            }) = state.heap.version.object(id)
-            else {
-                return false;
-            };
-            fields
-        }
+        }) => state.heap.version.object(id),
         ValueNode::Leaf(Leaf {
             datum: _,
             origin: _,
@@ -2570,7 +2551,19 @@ fn closed_scalar_source(value: &Value, state: &State, remaining: &mut usize) -> 
             no: _,
         } => return false,
     };
-    map.values().all(|field| match field {
+    let Some(ObjectVersion {
+        revision: _,
+        multiplicity: super::Multiplicity::Singleton,
+        data:
+            ObjectData::Map {
+                fields,
+                remainder: Remainder::Closed,
+            },
+    }) = storage.as_deref()
+    else {
+        return false;
+    };
+    fields.values().all(|field| match field {
         Field::Absent => true,
         Field::Present(value) => immutable_scalar(value, remaining),
         Field::Unknown
@@ -2679,7 +2672,10 @@ fn string_map(
     state: &mut State,
 ) -> Value {
     let target = state.heap.allocate(
-        ObjectData::Map { fields, remainder },
+        ObjectData::Map {
+            fields: Rc::new(fields),
+            remainder,
+        },
         super::Multiplicity::Singleton,
     );
     Value::with_influences(
@@ -2756,11 +2752,12 @@ fn copy_string_slice(
     state: &mut State,
     influences: BTreeSet<helm_schema_core::ValuesPath>,
 ) -> Value {
+    let storage = state.heap.version.object(&slice.backing);
     let Some(ObjectVersion {
         data: ObjectData::Strings(slots),
         revision: _,
         multiplicity: _,
-    }) = state.heap.version.object(&slice.backing)
+    }) = storage.as_deref()
     else {
         let backing = state.heap.allocate(
             ObjectData::Widened {
@@ -2978,7 +2975,7 @@ fn can_overwrite_scalar_sources(
         .identity()
         .is_some_and(|path| path.segments().next().is_none());
     let singleton_destination = matches!(
-        state.heap.version.object(target),
+        state.heap.version.object(target).as_deref(),
         Some(ObjectVersion {
             revision: _,
             multiplicity: super::Multiplicity::Singleton,

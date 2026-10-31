@@ -143,7 +143,7 @@ pub(super) fn capture(graph: &TextBuffer, strip_marker: bool) -> Value {
         return Value::frozen_text(
             TextTerm::Resolved {
                 term: Rc::new(TextTerm::Capture {
-                    graph: Rc::new(graph.clone()),
+                    graph: Rc::new(TextBuffer::immutable_text(graph.parts.clone())),
                     strip_marker,
                 }),
                 literal: helm_schema_core::GuardValue::String(text),
@@ -157,7 +157,7 @@ pub(super) fn capture(graph: &TextBuffer, strip_marker: bool) -> Value {
     }
     Value::frozen_text(
         TextTerm::Capture {
-            graph: Rc::new(graph.clone()),
+            graph: Rc::new(TextBuffer::immutable_text(graph.parts.clone())),
             strip_marker,
         },
         inputs,

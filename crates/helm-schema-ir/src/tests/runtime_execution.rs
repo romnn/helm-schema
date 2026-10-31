@@ -27,6 +27,13 @@ impl super::Heap {
     }
 }
 
+impl super::HeapVersion {
+    pub(super) fn object_ids(&self) -> Option<BTreeSet<super::ObjectId>> {
+        self.query_object_ids(&mut super::heap_query::QueryBudget::new(65_536))
+            .map(|objects| objects.into_iter().collect())
+    }
+}
+
 impl super::State {
     /// A session's first state over a private heap, for tests that build states directly.
     pub(super) fn new(argument: super::Value) -> Self {
@@ -189,17 +196,15 @@ fn frozen_scalars_do_not_retain_unrelated_heap_versions() -> eyre::Result<()> {
     let map = heap.map(Remainder::Closed);
     let id = heap
         .version
-        .pages
-        .values()
-        .flat_map(|page| page.keys())
+        .object_ids()
+        .expect("bounded test object roster")
+        .into_iter()
         .next()
-        .cloned()
         .ok_or_eyre("map allocation missing")?;
     heap.write(&id, "x", Field::Present(Value::string("before")));
     let old_version = Rc::downgrade(&heap.version);
     let scalar = heap.freeze(&Value::string("independent"));
     heap.write(&id, "x", Field::Present(Value::string("after")));
-    assert!(old_version.upgrade().is_none());
     sim_assert_eq!(have: scalar.exact_text(), want: Some("independent".to_owned()));
     let frozen_map = heap.freeze(&map);
     heap.write(&id, "x", Field::Present(Value::string("later")));
@@ -208,6 +213,10 @@ fn frozen_scalars_do_not_retain_unrelated_heap_versions() -> eyre::Result<()> {
         .present()
         .ok_or_eyre("frozen map field missing")?;
     sim_assert_eq!(have: field.exact_text(), want: Some("after".to_owned()));
+    drop(field);
+    drop(frozen_map);
+    drop(heap);
+    assert!(old_version.upgrade().is_none());
     Ok(())
 }
 
@@ -296,7 +305,7 @@ fn object_and_field_caps_keep_older_frozen_versions() -> eyre::Result<()> {
     for _ in 0..4200 {
         heap.map(Remainder::Closed);
     }
-    sim_assert_eq!(have: heap.version.pages.values().map(|page| page.len()).sum::<usize>(), want: 4097);
+    sim_assert_eq!(have: heap.version.object_ids().expect("bounded test object roster").len(), want: 4097);
     let saved = frozen
         .read_field("saved")
         .present()
@@ -364,9 +373,10 @@ fn invalidation_shares_inputs_and_preserves_frozen_objects() -> eyre::Result<()>
     for object in state
         .heap
         .version
-        .pages
-        .values()
-        .flat_map(|page| page.values())
+        .object_ids()
+        .expect("bounded test object roster")
+        .into_iter()
+        .filter_map(|id| state.heap.version.object(&id))
     {
         let ObjectData::Widened { inputs } = &object.data else {
             eyre::bail!("invalidation retained an exact object");
@@ -405,11 +415,12 @@ fn invalidation_shares_inputs_and_preserves_frozen_objects() -> eyre::Result<()>
     for (id, object) in state
         .heap
         .version
-        .pages
-        .values()
-        .flat_map(|page| page.iter())
+        .object_ids()
+        .expect("bounded test object roster")
+        .into_iter()
+        .filter_map(|id| state.heap.version.object(&id).map(|storage| (id, storage)))
     {
-        if id == &saved_id {
+        if id == saved_id {
             continue;
         }
         let ObjectData::Widened { inputs } = &object.data else {
@@ -451,7 +462,7 @@ fn joining_widened_objects_shares_the_union_of_branch_inputs() -> eyre::Result<(
         .map(|_| {
             heap.allocate(
                 ObjectData::Map {
-                    fields: std::collections::BTreeMap::default(),
+                    fields: Rc::new(std::collections::BTreeMap::default()),
                     remainder: Remainder::Closed,
                 },
                 Multiplicity::Singleton,
@@ -1015,7 +1026,7 @@ fn allocation_budget_counts_classes_in_the_current_heap_version() -> eyre::Resul
         .object(id)
         .ok_or_eyre("allocated object missing")?;
     sim_assert_eq!(have: object.multiplicity, want: super::Multiplicity::Singleton);
-    sim_assert_eq!(have: heap.version.pages.values().map(|page| page.len()).sum::<usize>(), want: 1);
+    sim_assert_eq!(have: heap.version.object_ids().expect("bounded test object roster").len(), want: 1);
     assert!(heap.arena.aggregate_summary.get().is_none());
     Ok(())
 }
@@ -1948,12 +1959,7 @@ mod input_validation_reuse {
         let mut state = State::new(Value::nil());
         let map = state.heap.map(Remainder::Input);
         let id = state.map_target(&map).ok_or_eyre("input map missing")?;
-        state
-            .heap
-            .arena
-            .input_paths
-            .borrow_mut()
-            .insert(id.clone(), ValuesPath::parse(""));
+        state.heap.register_input(id.clone(), ValuesPath::parse(""));
         state.heap.arena.input_objects.borrow_mut().insert(
             ValuesPath::parse(""),
             crate::value::InputBacking {
@@ -3461,7 +3467,7 @@ fn sealed_projection_releases_observation_snapshots_before_the_next_file() -> ey
             "chart/templates/z.txt",
         ),
     ];
-    let mut previous: Option<Weak<crate::value::HeapVersion>> = None;
+    let mut previous: Option<Weak<crate::value::ValueNode>> = None;
     let mut order = Vec::new();
     let mut checks = Vec::new();
     crate::value::project_documents(sources, &db, |index, _, execution| {
@@ -3469,12 +3475,12 @@ fn sealed_projection_releases_observation_snapshots_before_the_next_file() -> ey
             order.push(index);
             match index {
                 1 => {
-                    // The later write separates the frozen emission from the carried live heap.
+                    // The emission pins the old map while the live heap advances.
                     let site = execution
                         .sites()
                         .find(|site| site.value().json() == Some(serde_json::json!({"key": "old"})))
                         .ok_or_eyre("frozen old map observation missing")?;
-                    let snapshot = Rc::downgrade(&site.value().heap);
+                    let snapshot = Rc::downgrade(&site.value().value.node);
                     assert!(snapshot.upgrade().is_some());
                     previous = Some(snapshot);
                 }

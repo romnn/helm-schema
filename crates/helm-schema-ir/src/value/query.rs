@@ -3,6 +3,7 @@ use super::{
     Coverage, Datum, Field, FrozenTest, FrozenValue, Leaf, ObjectData, ScalarType, State, Value,
     ValueNode,
 };
+use ahash::AHashSet;
 use helm_schema_core::{Guard, GuardValue, Predicate, ValuesPath};
 use std::collections::{BTreeMap, BTreeSet};
 use std::rc::{Rc, Weak};
@@ -54,6 +55,16 @@ pub(super) enum MemberAccess {
     Selector,
     StringIndex,
     MapArgument { allows_nil: bool },
+}
+
+struct KnownInputObject {
+    object: super::ObjectId,
+    storage: Rc<super::ObjectVersion>,
+}
+
+enum InputRoot<'value> {
+    Value(&'value Value),
+    Object(KnownInputObject),
 }
 
 impl Value {
@@ -189,7 +200,7 @@ impl Value {
     pub(super) fn inputs(&self) -> BTreeSet<ValuesPath> {
         let mut inputs = BTreeSet::new();
         let mut pending = vec![self];
-        let mut seen = BTreeSet::new();
+        let mut seen = AHashSet::new();
         while let Some(value) = pending.pop() {
             if !seen.insert(Rc::as_ptr(&value.node)) {
                 continue;
@@ -561,8 +572,8 @@ impl State {
                     return value.clone();
                 };
                 let backing = self.heap.arena.input_objects.borrow().get(path).cloned();
-                let Some(backing) =
-                    backing.filter(|backing| self.heap.version.object(&backing.object).is_some())
+                let Some(backing) = backing
+                    .filter(|backing| self.heap.version.has_allocated_object(&backing.object))
                 else {
                     return value.clone();
                 };
@@ -752,7 +763,7 @@ impl State {
         allow_known_fields: bool,
     ) -> Option<ValuesPath> {
         if !matches!(
-            frozen.heap.object(id).map(|object| &object.data),
+            frozen.heap.object(id).as_deref().map(|object| &object.data),
             Some(ObjectData::Map {
                 fields,
                 remainder: super::Remainder::Input
@@ -818,8 +829,14 @@ impl State {
             && path.segments().next().is_none()
         {
             let mut members = Vec::new();
-            if let Some(field) = self.lookup_field(&value, key) {
-                field_inputs(&field, &mut members);
+            if let Some(field) = self.lookup_field(&value, key)
+                && !field_inputs_with_budget(
+                    &field,
+                    &mut members,
+                    &mut super::heap_query::QueryBudget::new(65_536),
+                )
+            {
+                return Value::influenced(value.inputs());
             }
             let erased = if members.is_empty() {
                 self.untouched_map_child_identity(&value, key).is_none()
@@ -954,14 +971,8 @@ impl State {
                     .borrow()
                     .get(path)
                     .map(|backing| backing.object.clone());
-                let unknown = self.unknown_child_value(id.as_ref(), Some(path), key);
-                id.map_or(unknown.clone(), |id| {
-                    self.consumed(&field_value(
-                        self.heap.version.field(&id, key),
-                        &unknown,
-                        &Value::nil(),
-                    ))
-                })
+                let (field, unknown) = self.read_field(id.as_ref(), Some(path), key);
+                self.consumed(&field_value(field, &unknown, &Value::nil()))
             }
             ValueNode::Leaf(Leaf {
                 datum:
@@ -971,12 +982,14 @@ impl State {
                     },
                 origin: _,
             }) => {
-                let unknown = self.unknown_map_child(&value, id, key);
-                self.consumed(&field_value(
-                    self.heap.version.field(id, key),
-                    &unknown,
-                    &Value::nil(),
-                ))
+                let path = self.heap.arena.input_paths.borrow().get(id).cloned();
+                let (field, unknown) = self.read_field(Some(id), path.as_ref(), key);
+                let unknown = if field_needs_unknown(&field) {
+                    self.unknown_map_child(&value, path.as_ref(), key, unknown)
+                } else {
+                    unknown
+                };
+                self.consumed(&field_value(field, &unknown, &Value::nil()))
             }
             ValueNode::Leaf(Leaf {
                 datum: _,
@@ -984,9 +997,13 @@ impl State {
             }) => Value::influenced(value.inputs()),
         })
     }
-    fn unknown_map_child(&self, value: &Value, id: &super::ObjectId, key: &str) -> Value {
-        let path = self.heap.arena.input_paths.borrow().get(id).cloned();
-        let mut unknown = self.unknown_child_value(Some(id), path.as_ref(), key);
+    fn unknown_map_child(
+        &self,
+        value: &Value,
+        path: Option<&ValuesPath>,
+        key: &str,
+        mut unknown: Value,
+    ) -> Value {
         if path.is_none() {
             unknown = Value::with_influences(unknown, value.inputs());
         }
@@ -1007,15 +1024,50 @@ impl State {
         path: Option<&ValuesPath>,
         key: &str,
     ) -> Value {
+        let object = id.and_then(|id| self.heap.version.object(id));
+        Self::unknown_child_in_storage(object.as_deref().map(|object| &object.data), path, key)
+    }
+
+    fn read_field(
+        &self,
+        id: Option<&super::ObjectId>,
+        path: Option<&ValuesPath>,
+        key: &str,
+    ) -> (Field, Value) {
+        let object = id.and_then(|id| self.heap.version.object(id));
+        let data = object.as_deref().map(|object| &object.data);
+        let field = match data {
+            Some(ObjectData::Map { fields, remainder }) => fields
+                .get(key)
+                .cloned()
+                .unwrap_or_else(|| remainder.missing()),
+            Some(
+                ObjectData::Strings(_)
+                | ObjectData::Opaque { reachable: _ }
+                | ObjectData::Widened { inputs: _ },
+            )
+            | None => Field::Unknown,
+        };
+        let unknown = if field_needs_unknown(&field) {
+            Self::unknown_child_in_storage(data, path, key)
+        } else {
+            Value::unknown()
+        };
+        (field, unknown)
+    }
+
+    fn unknown_child_in_storage(
+        data: Option<&ObjectData>,
+        path: Option<&ValuesPath>,
+        key: &str,
+    ) -> Value {
         if let Some(
             ObjectData::Widened { inputs }
             | ObjectData::Map {
                 fields: _,
                 remainder: super::Remainder::Unknown { inputs },
             },
-        ) = id
-            .and_then(|id| self.heap.version.object(id))
-            .map(|object| &object.data)
+        ) = data
         {
             return Value::influenced(inputs.as_ref().clone());
         }
@@ -1026,17 +1078,15 @@ impl State {
             return Value::influenced(BTreeSet::from([path]));
         }
         path.push(key);
-        let untouched = id
-            .and_then(|id| self.heap.version.object(id))
-            .is_none_or(|object| {
-                matches!(
-                    object.data,
-                    ObjectData::Map {
-                        remainder: super::Remainder::Input,
-                        ..
-                    }
-                )
-            });
+        let untouched = data.is_none_or(|data| {
+            matches!(
+                data,
+                ObjectData::Map {
+                    remainder: super::Remainder::Input,
+                    ..
+                }
+            )
+        });
         if untouched {
             Value::input(path)
         } else {
@@ -1162,14 +1212,14 @@ impl State {
                     .get(path)
                     .map(|backing| backing.object.clone());
                 if let Some(id) = existing {
-                    if self.heap.version.object(&id).is_none() {
+                    if !self.heap.version.has_allocated_object(&id) {
                         self.heap.install(
                             id.clone(),
                             super::ObjectVersion {
                                 revision: self.heap.arena.snapshot(),
                                 multiplicity: super::Multiplicity::Singleton,
                                 data: ObjectData::Map {
-                                    fields: BTreeMap::default(),
+                                    fields: Rc::new(BTreeMap::default()),
                                     remainder: super::Remainder::Input,
                                 },
                             },
@@ -1179,7 +1229,7 @@ impl State {
                 }
                 let id = self.heap.allocate(
                     ObjectData::Map {
-                        fields: BTreeMap::default(),
+                        fields: Rc::new(BTreeMap::default()),
                         remainder: super::Remainder::Input,
                     },
                     super::Multiplicity::Singleton,
@@ -1205,11 +1255,7 @@ impl State {
                         },
                     },
                 );
-                self.heap
-                    .arena
-                    .input_paths
-                    .borrow_mut()
-                    .insert(id.clone(), path.clone());
+                self.heap.register_input(id.clone(), path.clone());
                 Some(id)
             }
             ValueNode::Leaf(Leaf {
@@ -1327,6 +1373,18 @@ fn map_object_id(value: &Value) -> Option<&super::ObjectId> {
     target.as_ref()
 }
 
+fn field_needs_unknown(field: &Field) -> bool {
+    match field {
+        Field::Unknown => true,
+        Field::Absent | Field::Present(_) => false,
+        Field::Select {
+            decision: _,
+            yes,
+            no,
+        } => field_needs_unknown(yes) || field_needs_unknown(no),
+    }
+}
+
 fn field_value(field: Field, unknown: &Value, absent: &Value) -> Value {
     match field {
         Field::Present(value) => value,
@@ -1334,8 +1392,8 @@ fn field_value(field: Field, unknown: &Value, absent: &Value) -> Value {
         Field::Unknown => unknown.clone(),
         Field::Select { decision, yes, no } => Value::select(
             decision,
-            field_value(*yes, unknown, absent),
-            field_value(*no, unknown, absent),
+            field_value(yes.as_ref().clone(), unknown, absent),
+            field_value(no.as_ref().clone(), unknown, absent),
         ),
     }
 }
@@ -1356,36 +1414,205 @@ impl FrozenValue {
     }
 
     fn collect_inputs(&self, include_unknown_aliases: bool) -> BTreeSet<ValuesPath> {
+        self.collect_inputs_with_budget(
+            include_unknown_aliases,
+            &mut super::heap_query::QueryBudget::new(65_536),
+        )
+    }
+
+    pub(super) fn collect_inputs_with_budget(
+        &self,
+        include_unknown_aliases: bool,
+        budget: &mut super::heap_query::QueryBudget,
+    ) -> BTreeSet<ValuesPath> {
+        if let ValueNode::Leaf(Leaf { datum, origin }) = self.value.node.as_ref()
+            && (matches!(
+                datum,
+                Datum::Text(_)
+                    | Datum::Scalar {
+                        go_type: _,
+                        content: _
+                    }
+                    | Datum::Map {
+                        target: None,
+                        view: _
+                    }
+                    | Datum::Sequence(super::InterfaceSequence {
+                        storage: None,
+                        start: _,
+                        length: _,
+                        capacity: _
+                    })
+            ) || !include_unknown_aliases && matches!(datum, Datum::Unknown(_)))
+        {
+            if !budget.charge(1)
+                || !budget.charge(origin.influences.len() + usize::from(origin.identity.is_some()))
+                || budget.remaining == 0
+            {
+                budget.exhaust();
+                return BTreeSet::from([ValuesPath::default()]);
+            }
+            let mut inputs = origin.influences.clone();
+            inputs.extend(origin.identity.iter().cloned());
+            return inputs;
+        }
+        let cacheable = matches!(
+            self.value.node.as_ref(),
+            ValueNode::Leaf(Leaf {
+                datum: Datum::Map {
+                    target: Some(_),
+                    view: _
+                } | Datum::Strings(_)
+                    | Datum::Sequence(_),
+                origin: _,
+            })
+        );
+        let arena = if cacheable {
+            self.heap.arena.upgrade()
+        } else {
+            None
+        };
+        let key = super::heap_cache::InputQueryKey {
+            version: self.heap.id.ordinal,
+            value: Rc::as_ptr(&self.value.node),
+            include_unknown_aliases,
+        };
+        if let Some(arena) = &arena
+            && let Some(entry) = arena.input_queries.borrow_mut().get(&key)
+        {
+            return if budget.charge(entry.inputs.len() + 1) {
+                entry.inputs.clone()
+            } else {
+                BTreeSet::from([ValuesPath::default()])
+            };
+        }
+        let inputs = Self::collect_seeded_inputs(
+            &self.heap,
+            InputRoot::Value(&self.value),
+            include_unknown_aliases,
+            budget,
+        );
+        if !budget.is_exhausted()
+            && let Some(arena) = arena
+        {
+            arena
+                .input_queries
+                .borrow_mut()
+                .insert(key, &self.value.node, &inputs);
+        }
+        inputs
+    }
+
+    pub(super) fn object_inputs(
+        heap: &Rc<super::HeapVersion>,
+        object: &super::ObjectId,
+        storage: &Rc<super::ObjectVersion>,
+        budget: &mut super::heap_query::QueryBudget,
+    ) -> BTreeSet<ValuesPath> {
+        let terminal = match &storage.data {
+            ObjectData::Map { fields, remainder } if fields.is_empty() => match remainder {
+                super::Remainder::Unknown { inputs } => Some((Some(inputs), 2)),
+                super::Remainder::Closed | super::Remainder::Input | super::Remainder::Open => {
+                    Some((None, 2))
+                }
+            },
+            ObjectData::Strings(slots) if slots.is_empty() => Some((None, 2)),
+            ObjectData::Opaque {
+                reachable: super::AliasSet::Known(objects),
+            } if objects.is_empty() => Some((None, 2)),
+            ObjectData::Widened { inputs } => Some((Some(inputs), inputs.len().saturating_add(2))),
+            ObjectData::Map {
+                fields: _,
+                remainder: _,
+            }
+            | ObjectData::Strings(_)
+            | ObjectData::Opaque { reachable: _ } => None,
+        };
+        if let Some((inputs, work)) = terminal {
+            if !budget.charge(work) || budget.remaining == 0 {
+                budget.exhaust();
+                return BTreeSet::from([ValuesPath::default()]);
+            }
+            return inputs.map_or_else(BTreeSet::new, |inputs| inputs.as_ref().clone());
+        }
+        Self::collect_seeded_inputs(
+            heap,
+            InputRoot::Object(KnownInputObject {
+                object: object.clone(),
+                storage: Rc::clone(storage),
+            }),
+            true,
+            budget,
+        )
+    }
+
+    fn collect_seeded_inputs(
+        heap: &super::HeapVersion,
+        root: InputRoot<'_>,
+        include_unknown_aliases: bool,
+        budget: &mut super::heap_query::QueryBudget,
+    ) -> BTreeSet<ValuesPath> {
         let mut inputs = BTreeSet::new();
-        let mut values = vec![self.value.clone()];
+        let mut values = Vec::new();
         let mut objects = Vec::new();
-        let mut seen_objects = BTreeSet::new();
-        let mut seen_values = BTreeSet::new();
-        let mut seen_input_sets = BTreeSet::new();
+        let mut known = match root {
+            InputRoot::Value(value) => {
+                values.push(value.clone());
+                None
+            }
+            InputRoot::Object(known) => {
+                // Preserve the synthetic value-root charge without allocating a value.
+                if !budget.charge(1) {
+                    return BTreeSet::from([ValuesPath::default()]);
+                }
+                objects.push(known.object.clone());
+                Some(known)
+            }
+        };
+        let mut seen_objects = AHashSet::new();
+        let mut seen_values = AHashSet::new();
+        let mut seen_input_sets = AHashSet::new();
         let mut expanded_render_graph = false;
         while !values.is_empty() || !objects.is_empty() {
             while let Some(value) = values.pop() {
                 if !seen_values.insert(Rc::as_ptr(&value.node)) {
                     continue;
                 }
+                if !budget.charge(1) {
+                    return BTreeSet::from([ValuesPath::default()]);
+                }
                 if let ValueNode::Leaf(Leaf { datum: _, origin }) = value.node.as_ref() {
+                    if !budget
+                        .charge(origin.influences.len() + usize::from(origin.identity.is_some()))
+                    {
+                        return BTreeSet::from([ValuesPath::default()]);
+                    }
                     inputs.extend(origin.influences.iter().cloned());
                     inputs.extend(origin.identity.iter().cloned());
                 }
                 collect_value_children(
                     &value,
-                    &self.heap,
+                    heap,
                     include_unknown_aliases,
                     &mut values,
                     &mut objects,
                     &mut expanded_render_graph,
+                    budget,
                 );
             }
             while let Some(id) = objects.pop() {
-                if !seen_objects.insert(id.clone()) {
+                if !seen_objects.insert(id.ordinal) {
                     continue;
                 }
-                let Some(object) = self.heap.object(&id) else {
+                if !budget.charge(1) {
+                    return BTreeSet::from([ValuesPath::default()]);
+                }
+                let storage = if known.as_ref().is_some_and(|known| known.object == id) {
+                    known.take().map(|known| known.storage)
+                } else {
+                    heap.query_object(&id, budget)
+                };
+                let Some(object) = storage else {
                     continue;
                 };
                 match &object.data {
@@ -1396,23 +1623,33 @@ impl FrozenValue {
                             inputs.extend(known.iter().cloned());
                         }
                         for field in fields.values() {
-                            field_inputs(field, &mut values);
+                            if !field_inputs_with_budget(field, &mut values, budget) {
+                                return BTreeSet::from([ValuesPath::default()]);
+                            }
                         }
                     }
                     ObjectData::Strings(slots) => values.extend(slots.iter().cloned()),
                     ObjectData::Widened { inputs: known } => {
                         if seen_input_sets.insert(Rc::as_ptr(known)) {
+                            if !budget.charge(known.len()) {
+                                return BTreeSet::from([ValuesPath::default()]);
+                            }
                             inputs.extend(known.iter().cloned());
                         }
                     }
                     ObjectData::Opaque { reachable } => extend_aliases(
                         reachable,
-                        &self.heap,
+                        heap,
                         &mut objects,
                         &mut expanded_render_graph,
+                        budget,
                     ),
                 }
             }
+        }
+        if budget.remaining == 0 {
+            budget.exhaust();
+            return BTreeSet::from([ValuesPath::default()]);
         }
         inputs
     }
@@ -1687,6 +1924,43 @@ impl State {
     }
     pub(super) fn get_field(&mut self, value: &Value, key: &str) -> Value {
         let value = self.consumed(value);
+        let stored = matches!(value.node.as_ref(), ValueNode::Leaf(_))
+            .then(|| self.lookup_field(&value, key))
+            .flatten();
+        if let Some(field) = &stored
+            && !field_needs_unknown(field)
+        {
+            if key.is_empty()
+                && matches!(
+                    value.node.as_ref(),
+                    ValueNode::Leaf(
+                        Leaf {
+                            datum: Datum::Map {
+                                target: Some(_),
+                                view: _
+                            },
+                            origin: _,
+                        } | Leaf {
+                            datum: _,
+                            origin: super::Origin {
+                                derivation: _,
+                                identity: Some(_),
+                                influences: _
+                            }
+                        }
+                    )
+                )
+            {
+                self.record_container_read(&value);
+            }
+            let result = self.consumed(&field_value(
+                field.clone(),
+                &Value::unknown(),
+                &Value::string(""),
+            ));
+            self.record_value_read(&result, super::ReadCoverage::ExactPath);
+            return result;
+        }
         let result = match value.node.as_ref() {
             ValueNode::Select { decision, yes, no } => Value::select(
                 Rc::clone(decision),
@@ -1731,10 +2005,9 @@ impl State {
                 } else {
                     Value::influenced(self.heap.freeze(&value).inputs())
                 };
-                self.lookup_field(&value, key)
-                    .map_or(unknown.clone(), |field| {
-                        self.consumed(&field_value(field, &unknown, &Value::string("")))
-                    })
+                stored.map_or(unknown.clone(), |field| {
+                    self.consumed(&field_value(field, &unknown, &Value::string("")))
+                })
             }
         };
         self.record_value_read(&result, super::ReadCoverage::ExactPath);
@@ -1846,7 +2119,11 @@ impl State {
             return None;
         };
         if !matches!(
-            self.heap.version.object(id).map(|object| &object.data),
+            self.heap
+                .version
+                .object(id)
+                .as_deref()
+                .map(|object| &object.data),
             Some(ObjectData::Map {
                 remainder: super::Remainder::Input,
                 ..
@@ -1867,8 +2144,8 @@ fn field_presence_value(field: Field, unknown: &Value) -> Value {
         Field::Unknown => unknown.clone(),
         Field::Select { decision, yes, no } => Value::select(
             decision,
-            field_presence_value(*yes, unknown),
-            field_presence_value(*no, unknown),
+            field_presence_value(yes.as_ref().clone(), unknown),
+            field_presence_value(no.as_ref().clone(), unknown),
         ),
     }
 }
@@ -1878,30 +2155,62 @@ fn extend_aliases(
     heap: &super::HeapVersion,
     objects: &mut Vec<super::ObjectId>,
     expanded_render_graph: &mut bool,
+    budget: &mut super::heap_query::QueryBudget,
 ) {
     match aliases {
         super::AliasSet::Known(ids) => objects.extend(ids.iter().cloned()),
         super::AliasSet::RenderGraph => {
             if !*expanded_render_graph {
                 *expanded_render_graph = true;
-                objects.extend(heap.pages.values().flat_map(|page| page.keys().cloned()));
+                if let Some(ids) = heap.query_object_ids(budget) {
+                    objects.extend(ids);
+                } else {
+                    budget.exhaust();
+                }
             }
         }
     }
 }
-fn field_inputs(field: &Field, values: &mut Vec<Value>) {
+fn field_inputs_with_budget(
+    field: &Field,
+    values: &mut Vec<Value>,
+    budget: &mut super::heap_query::QueryBudget,
+) -> bool {
     match field {
-        Field::Present(value) => values.push(value.clone()),
+        Field::Present(value) => {
+            if !budget.charge(1) {
+                return false;
+            }
+            values.push(value.clone());
+            return true;
+        }
+        Field::Absent | Field::Unknown => return budget.charge(1),
         Field::Select {
             decision: _,
-            yes,
-            no,
-        } => {
-            field_inputs(yes, values);
-            field_inputs(no, values);
-        }
-        Field::Absent | Field::Unknown => {}
+            yes: _,
+            no: _,
+        } => {}
     }
+    let mut pending = vec![field];
+    let mut seen = AHashSet::new();
+    while let Some(field) = pending.pop() {
+        if !seen.insert(std::ptr::from_ref(field)) {
+            continue;
+        }
+        if !budget.charge(1) {
+            return false;
+        }
+        match field {
+            Field::Present(value) => values.push(value.clone()),
+            Field::Select {
+                decision: _,
+                yes,
+                no,
+            } => pending.extend([yes.as_ref(), no.as_ref()]),
+            Field::Unknown | Field::Absent => {}
+        }
+    }
+    true
 }
 
 impl State {
@@ -1937,10 +2246,11 @@ impl State {
                     },
                 origin: _,
             }) => {
+                let storage = self.heap.version.object(id)?;
                 let ObjectData::Map {
                     fields,
                     remainder: super::Remainder::Closed,
-                } = &self.heap.version.object(id)?.data
+                } = &storage.data
                 else {
                     return None;
                 };
@@ -2033,6 +2343,7 @@ fn collect_value_children(
     values: &mut Vec<Value>,
     objects: &mut Vec<super::ObjectId>,
     expanded_render_graph: &mut bool,
+    budget: &mut super::heap_query::QueryBudget,
 ) {
     match value.node.as_ref() {
         ValueNode::Select {
@@ -2071,7 +2382,7 @@ fn collect_value_children(
             Datum::Unknown(super::UnknownValue { types: _, aliases }) => {
                 // Mutation reachability does not describe the value's input provenance.
                 if include_unknown_aliases {
-                    extend_aliases(aliases, heap, objects, expanded_render_graph);
+                    extend_aliases(aliases, heap, objects, expanded_render_graph, budget);
                 }
             }
             Datum::Text(_)

@@ -1,14 +1,15 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::cell::RefCell;
+use std::collections::{BTreeMap, BTreeSet, VecDeque};
+use std::hash::{Hash, Hasher};
 
+use ahash::{AHashMap, AHashSet};
 use helm_schema_core::ValuesPath;
 use std::rc::Rc;
 
 use super::{
-    Arena, Datum, Field, FrozenTest, FrozenValue, Heap, HeapVersion, Leaf, MapType, Multiplicity,
-    ObjectData, ObjectId, ObjectVersion, Remainder, SnapshotId, Value, ValueNode,
+    Arena, Datum, Field, FrozenTest, FrozenValue, Heap, HeapNode, HeapVersion, Leaf, MapType,
+    Multiplicity, ObjectData, ObjectId, ObjectVersion, Remainder, SnapshotId, Value, ValueNode,
 };
-
-const OBJECTS_PER_PAGE: u64 = 64;
 
 impl Arena {
     pub(super) fn object(&self) -> ObjectId {
@@ -24,6 +25,17 @@ impl Arena {
     }
 }
 
+impl Multiplicity {
+    pub(super) fn join(self, other: Self) -> Self {
+        match (self, other) {
+            (Self::Singleton, Self::Singleton) => Self::Singleton,
+            (Self::Summary, Self::Singleton | Self::Summary) | (Self::Singleton, Self::Summary) => {
+                Self::Summary
+            }
+        }
+    }
+}
+
 impl Heap {
     /// A heap whose session normalizes predicates through `predicate_memo`.
     pub(super) fn with_predicate_memo(predicate_memo: Rc<helm_schema_core::PredicateMemo>) -> Self {
@@ -31,10 +43,17 @@ impl Heap {
             predicate_memo,
             ..Arena::default()
         });
+        let id = arena.snapshot();
+        let input_paths = Rc::clone(&arena.input_paths.borrow());
         Self {
             version: Rc::new(HeapVersion {
-                id: arena.snapshot(),
-                pages: BTreeMap::new(),
+                id,
+                allocations: super::heap_headers::AllocationIndex::default(),
+                arena: Rc::downgrade(&arena),
+                input_paths,
+                node: HeapNode::Empty,
+                index: super::heap_index::HeapIndex::default(),
+                borrowed_objects: super::heap_query::BorrowedObjects::default(),
             }),
             arena,
         }
@@ -43,7 +62,7 @@ impl Heap {
     #[tracing::instrument(skip_all)]
     pub(super) fn fork(&self) -> Self {
         Self {
-            version: Rc::new(self.version.as_ref().clone()),
+            version: Rc::clone(&self.version),
             arena: Rc::clone(&self.arena),
         }
     }
@@ -83,13 +102,8 @@ impl Heap {
         } else {
             data
         };
-        let classes = self
-            .version
-            .pages
-            .values()
-            .map(|page| page.len())
-            .sum::<usize>();
-        let existing = occurrence.is_some_and(|id| self.version.object(id).is_some());
+        let classes = self.version.object_count();
+        let existing = occurrence.is_some_and(|id| self.version.has_allocated_object(id));
         if !existing && classes >= 4096 {
             tracing::debug!(reason = ?super::BoundReason::ObjectClasses, "widen allocation");
             let ordinal = if let Some(ordinal) = self.arena.aggregate_summary.get() {
@@ -105,7 +119,7 @@ impl Heap {
             if let Some(ObjectVersion {
                 data: ObjectData::Widened { inputs: old },
                 ..
-            }) = self.version.object(&id)
+            }) = self.version.object(&id).as_deref()
             {
                 inputs.extend(old.iter().cloned());
             }
@@ -136,7 +150,7 @@ impl Heap {
     pub(super) fn map(&mut self, remainder: Remainder) -> Value {
         let target = self.allocate(
             ObjectData::Map {
-                fields: BTreeMap::new(),
+                fields: Rc::new(BTreeMap::new()),
                 remainder,
             },
             Multiplicity::Singleton,
@@ -147,60 +161,77 @@ impl Heap {
         })
     }
 
+    fn advance(&mut self, node: HeapNode) {
+        let id = self.arena.snapshot();
+        let allocations = super::heap_headers::AllocationIndex::for_node(&node);
+        let index = super::heap_index::HeapIndex::for_node(&node);
+        self.version = Rc::new(HeapVersion {
+            id,
+            allocations,
+            arena: Rc::downgrade(&self.arena),
+            input_paths: Rc::clone(&self.arena.input_paths.borrow()),
+            node,
+            index,
+            borrowed_objects: super::heap_query::BorrowedObjects::default(),
+        });
+    }
+
+    pub(super) fn register_input(&mut self, object: ObjectId, path: ValuesPath) {
+        let mut paths = self.arena.input_paths.borrow_mut();
+        if paths.get(&object) != Some(&path) {
+            Rc::make_mut(&mut paths).insert(object, path);
+        }
+        drop(paths);
+        self.refresh_input_paths();
+    }
+
+    fn refresh_input_paths(&mut self) {
+        self.version = self.input_snapshot();
+    }
+
+    fn input_snapshot(&self) -> Rc<HeapVersion> {
+        let paths = Rc::clone(&self.arena.input_paths.borrow());
+        if Rc::ptr_eq(&paths, &self.version.input_paths) {
+            return Rc::clone(&self.version);
+        }
+        let node = HeapNode::Input {
+            parent: Rc::clone(&self.version),
+        };
+        let id = self.arena.snapshot();
+        let index = super::heap_index::HeapIndex::for_node(&node);
+        Rc::new(HeapVersion {
+            id,
+            allocations: self.version.allocations.clone(),
+            arena: Rc::downgrade(&self.arena),
+            input_paths: paths,
+            node,
+            index,
+            borrowed_objects: super::heap_query::BorrowedObjects::default(),
+        })
+    }
+
     pub(super) fn install(&mut self, id: ObjectId, object: ObjectVersion) {
-        let version = Rc::make_mut(&mut self.version);
-        version.id = self.arena.snapshot();
-        let page = version
-            .pages
-            .entry(id.ordinal / OBJECTS_PER_PAGE)
-            .or_default();
-        Rc::make_mut(page).insert(id, Rc::new(object));
+        self.advance(HeapNode::Install {
+            parent: Rc::clone(&self.version),
+            object: id,
+            storage: Rc::new(object),
+        });
     }
 
     pub(super) fn write(&mut self, id: &ObjectId, key: &str, value: Field) -> bool {
         let Some(object) = self.version.object(id) else {
             return false;
         };
-        if let ObjectData::Widened { inputs } = &object.data {
-            let multiplicity = object.multiplicity;
-            let inputs = Rc::clone(inputs);
-            let mut fields = BTreeMap::new();
-            let value = match multiplicity {
-                Multiplicity::Singleton => value,
-                Multiplicity::Summary => Field::select(
-                    self.arena.decision(
-                        helm_schema_core::Predicate::False,
-                        helm_schema_core::Predicate::False,
-                        super::Coverage::Partial,
-                    ),
-                    value,
-                    Field::Unknown,
-                ),
-            };
-            fields.insert(key.to_owned(), value);
-            self.install(
-                id.clone(),
-                ObjectVersion {
-                    revision: self.arena.snapshot(),
-                    multiplicity,
-                    data: ObjectData::Map {
-                        fields,
-                        remainder: Remainder::Unknown { inputs },
-                    },
-                },
-            );
-            return true;
-        }
-        let ObjectVersion {
-            revision: _,
-            multiplicity,
-            data,
-        } = object;
-        let ObjectData::Map { fields, remainder } = data else {
+        if !matches!(
+            object.data,
+            ObjectData::Map {
+                fields: _,
+                remainder: _
+            } | ObjectData::Widened { inputs: _ }
+        ) {
             return false;
-        };
-        let mut fields = fields.clone();
-        let value = match multiplicity {
+        }
+        let field = match object.multiplicity {
             Multiplicity::Singleton => value,
             Multiplicity::Summary => Field::select(
                 self.arena.decision(
@@ -209,41 +240,15 @@ impl Heap {
                     super::Coverage::Partial,
                 ),
                 value,
-                fields
-                    .get(key)
-                    .cloned()
-                    .unwrap_or_else(|| remainder.missing()),
+                self.version.field(id, key),
             ),
         };
-        fields.insert(key.to_owned(), value);
-        if fields.len() > 128 {
-            tracing::debug!(reason = ?super::BoundReason::ObjectFields, "widen map write");
-            let inputs = self.data_inputs(&ObjectData::Map {
-                fields,
-                remainder: remainder.clone(),
-            });
-            let multiplicity = *multiplicity;
-            self.install(
-                id.clone(),
-                ObjectVersion {
-                    revision: self.arena.snapshot(),
-                    multiplicity,
-                    data: ObjectData::Widened {
-                        inputs: Rc::new(inputs),
-                    },
-                },
-            );
-            return true;
-        }
-        let object = ObjectVersion {
-            revision: self.arena.snapshot(),
-            multiplicity: *multiplicity,
-            data: ObjectData::Map {
-                fields,
-                remainder: remainder.clone(),
-            },
-        };
-        self.install(id.clone(), object);
+        self.advance(HeapNode::Write {
+            parent: Rc::clone(&self.version),
+            object: id.clone(),
+            key: key.to_owned(),
+            field,
+        });
         true
     }
 
@@ -251,19 +256,13 @@ impl Heap {
         let Some(object) = self.version.object(id) else {
             return false;
         };
-        let ObjectVersion {
-            revision: _,
-            multiplicity,
-            data,
-        } = object;
-        let ObjectData::Strings(slots) = data else {
+        let ObjectData::Strings(slots) = &object.data else {
             return false;
         };
-        let mut slots = slots.clone();
-        let Some(slot) = slots.get_mut(index) else {
+        let Some(slot) = slots.get(index) else {
             return false;
         };
-        *slot = match multiplicity {
+        let value = match object.multiplicity {
             Multiplicity::Singleton => value,
             Multiplicity::Summary => Value::select(
                 self.arena.decision(
@@ -275,48 +274,70 @@ impl Heap {
                 slot.clone(),
             ),
         };
-        self.install(
-            id.clone(),
-            ObjectVersion {
-                revision: self.arena.snapshot(),
-                multiplicity: *multiplicity,
-                data: ObjectData::Strings(slots),
-            },
-        );
+        self.advance(HeapNode::WriteSlot {
+            parent: Rc::clone(&self.version),
+            object: id.clone(),
+            index,
+            value,
+        });
         true
+    }
+
+    pub(super) fn unknown_write(&mut self, inputs: Rc<BTreeSet<ValuesPath>>) {
+        let objects = super::AliasSet::RenderGraph;
+        self.advance(HeapNode::UnknownWrite {
+            parent: Rc::clone(&self.version),
+            objects,
+            inputs,
+        });
     }
 
     #[tracing::instrument(skip_all)]
     pub(super) fn freeze(&self, value: &Value) -> FrozenValue {
         let value = self.version.consume(value);
         let heap = if value.depends_on_heap() {
-            Rc::clone(&self.version)
+            self.input_snapshot()
         } else {
             Rc::clone(self.arena.empty_snapshot.get_or_init(|| {
+                let id = self.arena.snapshot();
                 Rc::new(HeapVersion {
-                    id: self.arena.snapshot(),
-                    pages: BTreeMap::new(),
+                    id,
+                    allocations: super::heap_headers::AllocationIndex::default(),
+                    arena: Rc::downgrade(&self.arena),
+                    input_paths: Rc::clone(&self.arena.input_paths.borrow()),
+                    node: HeapNode::Empty,
+                    index: super::heap_index::HeapIndex::default(),
+                    borrowed_objects: super::heap_query::BorrowedObjects::default(),
                 })
             }))
         };
-        FrozenValue { heap, value }
+        FrozenValue::at(heap, value)
+    }
+}
+
+impl FrozenValue {
+    pub(super) fn at(heap: Rc<HeapVersion>, value: Value) -> Self {
+        Self { heap, value }
     }
 }
 
 impl Value {
     fn depends_on_heap(&self) -> bool {
-        let mut pending = vec![self];
-        let mut seen = BTreeSet::new();
-        while let Some(value) = pending.pop() {
-            if !seen.insert(Rc::as_ptr(&value.node)) {
-                continue;
-            }
+        let mut pending = Vec::new();
+        let mut next = Some(self);
+        let mut seen = AHashSet::new();
+        while let Some(value) = next.take().or_else(|| pending.pop()) {
             match value.node.as_ref() {
                 ValueNode::Select {
                     decision: _,
                     yes,
                     no,
-                } => pending.extend([yes, no]),
+                } => {
+                    if seen.insert(Rc::as_ptr(&value.node)) {
+                        next = Some(yes);
+                        pending.push(no);
+                    }
+                }
                 ValueNode::Leaf(Leaf { datum, origin: _ }) => match datum {
                     Datum::Text(_)
                     | Datum::Scalar {
@@ -333,7 +354,9 @@ impl Value {
                         length: _,
                         capacity: _,
                     }) => {
-                        if let Some(storage) = storage {
+                        if let Some(storage) = storage
+                            && seen.insert(Rc::as_ptr(&value.node))
+                        {
                             pending.extend(storage.iter());
                         }
                     }
@@ -358,15 +381,8 @@ impl Value {
 }
 
 impl HeapVersion {
-    pub(super) fn object(&self, id: &ObjectId) -> Option<&ObjectVersion> {
-        self.pages
-            .get(&(id.ordinal / OBJECTS_PER_PAGE))?
-            .get(id)
-            .map(Rc::as_ref)
-    }
-
     pub(super) fn field(&self, id: &ObjectId, key: &str) -> Field {
-        match self.object(id) {
+        match self.object(id).as_deref() {
             Some(ObjectVersion {
                 revision: _,
                 multiplicity: _,
@@ -384,73 +400,6 @@ impl HeapVersion {
                     | ObjectData::Widened { inputs: _ },
             })
             | None => Field::Unknown,
-        }
-    }
-
-    pub(super) fn consume(&self, value: &Value) -> Value {
-        match value.node.as_ref() {
-            ValueNode::Select { decision, yes, no } => {
-                let consumed_yes = self.consume(yes);
-                let consumed_no = self.consume(no);
-                if Rc::ptr_eq(&yes.node, &consumed_yes.node)
-                    && Rc::ptr_eq(&no.node, &consumed_no.node)
-                {
-                    value.clone()
-                } else {
-                    Value::select(Rc::clone(decision), consumed_yes, consumed_no)
-                }
-            }
-            ValueNode::Leaf(Leaf {
-                datum: Datum::Slot { backing, index },
-                origin: _,
-            }) => match self.object(backing) {
-                Some(ObjectVersion {
-                    revision: _,
-                    multiplicity: _,
-                    data: ObjectData::Strings(slots),
-                }) => slots.get(*index).cloned().unwrap_or_else(Value::unknown),
-                Some(ObjectVersion {
-                    revision: _,
-                    multiplicity: _,
-                    data: ObjectData::Widened { inputs },
-                }) => Value {
-                    node: Rc::new(ValueNode::Leaf(Leaf {
-                        datum: Datum::Scalar {
-                            go_type: super::ScalarType::String,
-                            content: None,
-                        },
-                        origin: super::Origin {
-                            derivation: None,
-                            identity: None,
-                            influences: inputs.as_ref().clone(),
-                        },
-                    })),
-                },
-                Some(ObjectVersion {
-                    revision: _,
-                    multiplicity: _,
-                    data:
-                        ObjectData::Map {
-                            fields: _,
-                            remainder: _,
-                        }
-                        | ObjectData::Opaque { reachable: _ },
-                })
-                | None => Value::unknown(),
-            },
-            ValueNode::Leaf(Leaf {
-                datum:
-                    Datum::Text(_)
-                    | Datum::Scalar {
-                        go_type: _,
-                        content: _,
-                    }
-                    | Datum::Map { view: _, target: _ }
-                    | Datum::Sequence(_)
-                    | Datum::Strings(_)
-                    | Datum::Unknown(_),
-                origin: _,
-            }) => value.clone(),
         }
     }
 }
@@ -472,162 +421,20 @@ impl Heap {
         yes: &Self,
         no: &Self,
     ) -> Result<(), JoinError> {
-        let Heap {
-            version: yes_version,
-            arena: yes_arena,
-        } = yes;
-        let Heap {
-            version: no_version,
-            arena: no_arena,
-        } = no;
-        let HeapVersion {
-            id: yes_id,
-            pages: yes_pages,
-        } = yes_version.as_ref();
-        let HeapVersion {
-            id: no_id,
-            pages: no_pages,
-        } = no_version.as_ref();
-        let Heap {
-            version: _,
-            arena: target_arena,
-        } = &*self;
-        if !Rc::ptr_eq(target_arena, yes_arena) || !Rc::ptr_eq(target_arena, no_arena) {
+        if !Rc::ptr_eq(&self.arena, &yes.arena) || !Rc::ptr_eq(&self.arena, &no.arena) {
             return Err(JoinError::DifferentSessions);
         }
-        if yes_id == no_id {
-            self.version = Rc::clone(yes_version);
-            return Ok(());
+        if Rc::ptr_eq(&yes.version, &no.version) {
+            self.version = Rc::clone(&yes.version);
+        } else {
+            self.advance(HeapNode::Join {
+                decision: Rc::clone(decision),
+                yes: Rc::clone(&yes.version),
+                no: Rc::clone(&no.version),
+            });
         }
-        let page_ids = yes_pages
-            .keys()
-            .chain(no_pages.keys())
-            .copied()
-            .collect::<std::collections::BTreeSet<_>>();
-        let mut input_unions = BTreeMap::new();
-        for page_id in page_ids {
-            if yes_pages
-                .get(&page_id)
-                .zip(no_pages.get(&page_id))
-                .is_some_and(|(yes, no)| Rc::ptr_eq(yes, no))
-            {
-                continue;
-            }
-            let ids = yes_pages
-                .get(&page_id)
-                .into_iter()
-                .chain(no_pages.get(&page_id))
-                .flat_map(|page| page.keys().cloned())
-                .collect::<std::collections::BTreeSet<_>>();
-            for id in ids {
-                if yes
-                    .version
-                    .object(&id)
-                    .zip(no.version.object(&id))
-                    .is_some_and(|(yes, no)| std::ptr::eq(yes, no))
-                {
-                    continue;
-                }
-                let Some(object) = self.join_object(decision, &id, yes, no, &mut input_unions)?
-                else {
-                    continue;
-                };
-                if self.version.object(&id) != Some(&object) {
-                    self.install(id, object);
-                }
-            }
-        }
+        self.refresh_input_paths();
         Ok(())
-    }
-    fn join_object(
-        &self,
-        decision: &Rc<FrozenTest>,
-        id: &ObjectId,
-        yes: &Self,
-        no: &Self,
-        input_unions: &mut BTreeMap<InputPair, Rc<BTreeSet<ValuesPath>>>,
-    ) -> Result<Option<ObjectVersion>, JoinError> {
-        let input_path = self.arena.input_paths.borrow().get(id).cloned();
-        let baseline = ObjectVersion {
-            revision: self.arena.snapshot(),
-            multiplicity: Multiplicity::Singleton,
-            data: ObjectData::Map {
-                fields: BTreeMap::new(),
-                remainder: Remainder::Input,
-            },
-        };
-        let yes_object = yes
-            .version
-            .object(id)
-            .or_else(|| input_path.as_ref().map(|_| &baseline));
-        let no_object = no
-            .version
-            .object(id)
-            .or_else(|| input_path.as_ref().map(|_| &baseline));
-        let object = match (yes_object, no_object) {
-            (Some(yes), Some(no)) if std::ptr::eq(yes, no) || yes == no => yes.clone(),
-            (Some(yes_object), Some(no_object)) => {
-                let ObjectVersion {
-                    revision: _,
-                    multiplicity: yes_multiplicity,
-                    data: yes_data,
-                } = yes_object;
-                let ObjectVersion {
-                    revision: _,
-                    multiplicity: no_multiplicity,
-                    data: no_data,
-                } = no_object;
-                let mut data = join_data(decision, yes_data, no_data, input_unions)?;
-                if let ObjectData::Widened { inputs } = &mut data {
-                    let mut added = BTreeSet::new();
-                    for branch in [yes, no] {
-                        match branch.version.object(id).map(|object| &object.data) {
-                            Some(ObjectData::Widened { inputs: _ }) | None => {}
-                            Some(
-                                ObjectData::Map {
-                                    fields: _,
-                                    remainder: _,
-                                }
-                                | ObjectData::Strings(_)
-                                | ObjectData::Opaque { reachable: _ },
-                            ) => {
-                                added.extend(branch.object_inputs(id));
-                            }
-                        }
-                    }
-                    added.extend(input_path.iter().cloned());
-                    if !added.is_subset(inputs) {
-                        Rc::make_mut(inputs).extend(added);
-                    }
-                }
-                if matches!(&data, ObjectData::Map { fields, remainder: _ } if fields.len() > 128) {
-                    let mut inputs = yes.object_inputs(id);
-                    inputs.extend(no.object_inputs(id));
-                    inputs.extend(input_path.iter().cloned());
-                    data = ObjectData::Widened {
-                        inputs: Rc::new(inputs),
-                    };
-                    tracing::debug!(reason = ?super::BoundReason::ObjectFields, "widen joined map");
-                }
-                ObjectVersion {
-                    revision: self.arena.snapshot(),
-                    multiplicity: match (*yes_multiplicity, *no_multiplicity) {
-                        (Multiplicity::Singleton, Multiplicity::Singleton) => {
-                            Multiplicity::Singleton
-                        }
-                        (
-                            Multiplicity::Summary,
-                            Multiplicity::Singleton | Multiplicity::Summary,
-                        )
-                        | (Multiplicity::Singleton, Multiplicity::Summary) => Multiplicity::Summary,
-                    },
-                    data,
-                }
-            }
-            (Some(object), None) | (None, Some(object)) => object.clone(),
-            (None, None) => return Ok(None),
-        };
-        Ok(Some(object))
     }
 }
 
@@ -639,17 +446,92 @@ pub(super) enum JoinError {
     StorageChanged,
 }
 
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone)]
 struct InputPair {
-    yes: *const BTreeSet<ValuesPath>,
-    no: *const BTreeSet<ValuesPath>,
+    yes: Rc<BTreeSet<ValuesPath>>,
+    no: Rc<BTreeSet<ValuesPath>>,
 }
 
-fn join_data(
+impl PartialEq for InputPair {
+    fn eq(&self, other: &Self) -> bool {
+        let Self { yes, no } = self;
+        let Self {
+            yes: other_yes,
+            no: other_no,
+        } = other;
+        Rc::ptr_eq(yes, other_yes) && Rc::ptr_eq(no, other_no)
+    }
+}
+
+impl Eq for InputPair {}
+
+impl Hash for InputPair {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        let Self { yes, no } = self;
+        Rc::as_ptr(yes).hash(state);
+        Rc::as_ptr(no).hash(state);
+    }
+}
+
+#[derive(Default)]
+pub(super) struct InputUnions {
+    entries: AHashMap<InputPair, std::rc::Weak<BTreeSet<ValuesPath>>>,
+    order: VecDeque<InputPair>,
+    payload: usize,
+}
+
+impl std::fmt::Debug for InputUnions {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("InputUnions")
+            .field("entries", &self.entries.len())
+            .field("payload", &self.payload)
+            .finish_non_exhaustive()
+    }
+}
+
+impl InputUnions {
+    fn union(
+        &mut self,
+        yes: &Rc<BTreeSet<ValuesPath>>,
+        no: &Rc<BTreeSet<ValuesPath>>,
+    ) -> Rc<BTreeSet<ValuesPath>> {
+        let key = InputPair {
+            yes: Rc::clone(yes),
+            no: Rc::clone(no),
+        };
+        if let Some(entry) = self.entries.get_mut(&key) {
+            if let Some(value) = entry.upgrade() {
+                return value;
+            }
+            let value = union_inputs(yes, no);
+            *entry = Rc::downgrade(&value);
+            return value;
+        }
+        let weight = yes.len() + no.len();
+        let value = union_inputs(yes, no);
+        if weight <= 262_144 {
+            while self.entries.len() >= 4096 || self.payload + weight > 262_144 {
+                let Some(key) = self.order.pop_front() else {
+                    break;
+                };
+                self.entries.remove(&key);
+                self.payload -= key.yes.len() + key.no.len();
+            }
+            self.payload += weight;
+            self.entries.insert(key.clone(), Rc::downgrade(&value));
+            self.order.push_back(key);
+        }
+        value
+    }
+}
+
+pub(super) fn join_data(
     decision: &Rc<FrozenTest>,
     yes: &ObjectData,
     no: &ObjectData,
-    input_unions: &mut BTreeMap<InputPair, Rc<BTreeSet<ValuesPath>>>,
+    input_unions: Option<&RefCell<InputUnions>>,
+    budget: &mut super::heap_query::QueryBudget,
 ) -> Result<ObjectData, JoinError> {
     match (yes, no) {
         (
@@ -667,12 +549,13 @@ fn join_data(
             yes_remainder.clone(),
             no,
             no_remainder.clone(),
+            budget,
         )),
         (ObjectData::Strings(yes), ObjectData::Strings(no)) if yes.len() == no.len() => {
             if yes
                 .iter()
                 .zip(no)
-                .any(|(yes, no)| !super::state::value_join_fits(yes, no))
+                .any(|(yes, no)| !super::state::value_join_fits_with_budget(yes, no, budget))
             {
                 return Ok(ObjectData::Widened {
                     inputs: Rc::default(),
@@ -687,7 +570,7 @@ fn join_data(
         }
         (ObjectData::Widened { inputs: yes }, ObjectData::Widened { inputs: no }) => {
             Ok(ObjectData::Widened {
-                inputs: join_input_sets(yes, no, input_unions),
+                inputs: join_input_sets(yes, no, input_unions, budget),
             })
         }
         (
@@ -714,7 +597,7 @@ fn join_data(
             Ok(ObjectData::Opaque {
                 reachable: match (yes, no) {
                     (super::AliasSet::Known(yes), super::AliasSet::Known(no)) => {
-                        super::AliasSet::Known(yes.union(no).cloned().collect())
+                        super::AliasSet::Known(Rc::new(yes.union(no).cloned().collect()))
                     }
                     (
                         super::AliasSet::RenderGraph,
@@ -752,25 +635,35 @@ fn join_data(
     }
 }
 
-fn join_input_sets(
+pub(super) fn join_input_sets(
     yes: &Rc<BTreeSet<ValuesPath>>,
     no: &Rc<BTreeSet<ValuesPath>>,
-    input_unions: &mut BTreeMap<InputPair, Rc<BTreeSet<ValuesPath>>>,
+    input_unions: Option<&RefCell<InputUnions>>,
+    budget: &mut super::heap_query::QueryBudget,
 ) -> Rc<BTreeSet<ValuesPath>> {
-    if Rc::ptr_eq(yes, no) || no.is_subset(yes) {
+    if Rc::ptr_eq(yes, no) {
+        return Rc::clone(yes);
+    }
+    if !budget.charge(yes.len() + no.len()) {
+        return Rc::new(BTreeSet::from([ValuesPath::default()]));
+    }
+    if let Some(input_unions) = input_unions {
+        input_unions.borrow_mut().union(yes, no)
+    } else {
+        union_inputs(yes, no)
+    }
+}
+
+fn union_inputs(
+    yes: &Rc<BTreeSet<ValuesPath>>,
+    no: &Rc<BTreeSet<ValuesPath>>,
+) -> Rc<BTreeSet<ValuesPath>> {
+    if no.is_subset(yes) {
         Rc::clone(yes)
     } else if yes.is_subset(no) {
         Rc::clone(no)
     } else {
-        let key = InputPair {
-            yes: Rc::as_ptr(yes),
-            no: Rc::as_ptr(no),
-        };
-        Rc::clone(
-            input_unions
-                .entry(key)
-                .or_insert_with(|| Rc::new(yes.union(no).cloned().collect())),
-        )
+        Rc::new(yes.union(no).cloned().collect())
     }
 }
 
@@ -780,6 +673,7 @@ fn join_map_data(
     yes_remainder: Remainder,
     no: &BTreeMap<String, Field>,
     no_remainder: Remainder,
+    budget: &mut super::heap_query::QueryBudget,
 ) -> ObjectData {
     let keys = yes
         .keys()
@@ -800,7 +694,7 @@ fn join_map_data(
             .get(key)
             .cloned()
             .unwrap_or_else(|| no_remainder.missing());
-        if !field_join_fits(&yes_field, &no_field) {
+        if !field_join_fits(&yes_field, &no_field, budget) {
             return ObjectData::Widened {
                 inputs: Rc::default(),
             };
@@ -827,74 +721,19 @@ fn join_map_data(
         | (Remainder::Input, Remainder::Closed)
         | (Remainder::Closed, Remainder::Input) => Remainder::Open,
     };
-    ObjectData::Map { fields, remainder }
-}
-
-impl Heap {
-    fn data_inputs(
-        &self,
-        data: &ObjectData,
-    ) -> std::collections::BTreeSet<helm_schema_core::ValuesPath> {
-        let mut inputs = std::collections::BTreeSet::new();
-        match data {
-            ObjectData::Map { fields, remainder } => {
-                if let Remainder::Unknown { inputs: known } = remainder {
-                    inputs.extend(known.iter().cloned());
-                }
-                for field in fields.values() {
-                    collect_field_inputs(self, field, &mut inputs);
-                }
-            }
-            ObjectData::Strings(slots) => {
-                for value in slots {
-                    inputs.extend(self.freeze(value).inputs());
-                }
-            }
-            ObjectData::Opaque { reachable } => {
-                let reference = Value::leaf(Datum::Unknown(super::UnknownValue {
-                    types: super::TypeCoverage::Unresolved,
-                    aliases: reachable.clone(),
-                }));
-                inputs.extend(self.freeze(&reference).reachable_inputs());
-            }
-            ObjectData::Widened { inputs: known } => inputs.extend(known.iter().cloned()),
-        }
-        inputs
-    }
-}
-fn collect_field_inputs(
-    heap: &Heap,
-    field: &Field,
-    inputs: &mut std::collections::BTreeSet<helm_schema_core::ValuesPath>,
-) {
-    match field {
-        Field::Present(value) => inputs.extend(heap.freeze(value).inputs()),
-        Field::Select {
-            decision: _,
-            yes,
-            no,
-        } => {
-            collect_field_inputs(heap, yes, inputs);
-            collect_field_inputs(heap, no, inputs);
-        }
-        Field::Absent | Field::Unknown => {}
+    ObjectData::Map {
+        fields: Rc::new(fields),
+        remainder,
     }
 }
 
 impl Heap {
-    fn object_inputs(
-        &self,
-        id: &ObjectId,
-    ) -> std::collections::BTreeSet<helm_schema_core::ValuesPath> {
-        let reference = Value::leaf(Datum::Unknown(super::UnknownValue {
-            types: super::TypeCoverage::Unresolved,
-            aliases: super::AliasSet::Known(std::collections::BTreeSet::from([id.clone()])),
-        }));
-        self.freeze(&reference).reachable_inputs()
+    pub(super) fn data_inputs(&self, data: &ObjectData) -> BTreeSet<ValuesPath> {
+        super::heap_query::data_inputs(&self.version, data)
     }
 }
 
-fn field_join_fits(yes: &Field, no: &Field) -> bool {
+fn field_join_fits(yes: &Field, no: &Field, budget: &mut super::heap_query::QueryBudget) -> bool {
     if let (Field::Present(yes), Field::Present(no)) = (yes, no)
         && Rc::ptr_eq(&yes.node, &no.node)
     {
@@ -903,6 +742,9 @@ fn field_join_fits(yes: &Field, no: &Field) -> bool {
     let mut pending = vec![yes, no];
     let mut leaves = 0;
     while let Some(field) = pending.pop() {
+        if !budget.charge(4) {
+            return false;
+        }
         match field {
             Field::Absent | Field::Unknown => {
                 leaves += 1;
@@ -921,6 +763,9 @@ fn field_join_fits(yes: &Field, no: &Field) -> bool {
             Field::Present(value) => {
                 let mut values = vec![value];
                 while let Some(value) = values.pop() {
+                    if !budget.charge(4) {
+                        return false;
+                    }
                     match value.node.as_ref() {
                         ValueNode::Leaf(Leaf {
                             datum: _,

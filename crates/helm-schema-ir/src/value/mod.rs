@@ -3,9 +3,15 @@ mod control;
 mod eval;
 mod guard;
 mod heap;
+mod heap_cache;
+mod heap_coverage;
+mod heap_headers;
+mod heap_index;
+mod heap_query;
 mod helpers;
 mod history;
 mod hosts;
+mod input_paths;
 mod invoke;
 pub(crate) mod kinds;
 mod namespace;
@@ -307,7 +313,7 @@ enum MapType {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum AliasSet {
-    Known(BTreeSet<ObjectId>),
+    Known(Rc<BTreeSet<ObjectId>>),
     RenderGraph,
 }
 
@@ -355,6 +361,12 @@ struct Arena {
     frames: RefCell<BTreeMap<state::FrameLayout, u64>>,
     exact_decisions: RefCell<AHashMap<guard::ExactDecisionKey, std::rc::Weak<FrozenTest>>>,
     empty_snapshot: std::cell::OnceCell<Rc<HeapVersion>>,
+    heap_queries: RefCell<heap_cache::ObjectCache>,
+    object_answers: RefCell<heap_query::ObjectAnswers>,
+    input_queries: RefCell<heap_cache::InputCache>,
+    widened_queries: RefCell<heap_cache::WidenedCache>,
+    input_unions: RefCell<heap::InputUnions>,
+    coverage_queries: RefCell<heap_coverage::CoverageProjection>,
     next_object: Cell<u64>,
     next_snapshot: Cell<u64>,
     next_decision: Cell<u64>,
@@ -364,7 +376,7 @@ struct Arena {
     next_invocation: Cell<u64>,
     aggregate_summary: Cell<Option<u64>>,
     input_objects: RefCell<BTreeMap<ValuesPath, InputBacking>>,
-    input_paths: RefCell<BTreeMap<ObjectId, ValuesPath>>,
+    input_paths: RefCell<Rc<input_paths::InputPaths>>,
     /// The analysis's Boolean normalization cache; results equal uncached normalization.
     predicate_memo: Rc<helm_schema_core::PredicateMemo>,
     exported_paths: RefCell<AHashMap<*const Vec<DecisionEdge>, query::PathPredicateCache>>,
@@ -376,13 +388,50 @@ struct Heap {
     arena: Rc<Arena>,
 }
 
-#[derive(Clone, Debug)]
 struct HeapVersion {
     id: SnapshotId,
-    pages: BTreeMap<u64, Rc<ObjectPage>>,
+    allocations: heap_headers::AllocationIndex,
+    arena: std::rc::Weak<Arena>,
+    input_paths: Rc<input_paths::InputPaths>,
+    node: HeapNode,
+    index: heap_index::HeapIndex,
+    borrowed_objects: heap_query::BorrowedObjects,
 }
 
-type ObjectPage = BTreeMap<ObjectId, Rc<ObjectVersion>>;
+#[derive(Debug)]
+enum HeapNode {
+    Empty,
+    Input {
+        parent: Rc<HeapVersion>,
+    },
+    Install {
+        parent: Rc<HeapVersion>,
+        object: ObjectId,
+        storage: Rc<ObjectVersion>,
+    },
+    Write {
+        parent: Rc<HeapVersion>,
+        object: ObjectId,
+        key: String,
+        field: Field,
+    },
+    WriteSlot {
+        parent: Rc<HeapVersion>,
+        object: ObjectId,
+        index: usize,
+        value: Value,
+    },
+    UnknownWrite {
+        parent: Rc<HeapVersion>,
+        objects: AliasSet,
+        inputs: Rc<BTreeSet<ValuesPath>>,
+    },
+    Join {
+        decision: Rc<FrozenTest>,
+        yes: Rc<HeapVersion>,
+        no: Rc<HeapVersion>,
+    },
+}
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct ObjectVersion {
@@ -400,7 +449,7 @@ enum Multiplicity {
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum ObjectData {
     Map {
-        fields: BTreeMap<String, Field>,
+        fields: Rc<BTreeMap<String, Field>>,
         remainder: Remainder,
     },
     Strings(Vec<Value>),
@@ -418,8 +467,8 @@ enum Field {
     Present(Value),
     Select {
         decision: Rc<FrozenTest>,
-        yes: Box<Field>,
-        no: Box<Field>,
+        yes: Rc<Field>,
+        no: Rc<Field>,
     },
     Unknown,
 }

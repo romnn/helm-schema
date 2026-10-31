@@ -276,10 +276,9 @@ fn independent_numeric_comparisons_keep_one_normal_continuation() -> eyre::Resul
         .state
         .heap
         .version
-        .pages
-        .values()
-        .map(|page| page.len())
-        .sum();
+        .object_ids()
+        .expect("bounded test object roster")
+        .len();
     for count in [1, 2, 4, 8, 16] {
         let mut source = "before".to_owned();
         for ordinal in 0..count {
@@ -301,10 +300,9 @@ fn independent_numeric_comparisons_keep_one_normal_continuation() -> eyre::Resul
             .state
             .heap
             .version
-            .pages
-            .values()
-            .map(|page| page.len())
-            .sum();
+            .object_ids()
+            .expect("bounded test object roster")
+            .len();
         sim_assert_eq!(have: objects, want: baseline_objects);
         sim_assert_eq!(have: normal.state.output.exact_text(), want: Some("before".to_owned()));
     }

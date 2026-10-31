@@ -696,7 +696,7 @@ fn uniform_member_path(
             .input_objects
             .borrow()
             .get(path)
-            .is_some_and(|backing| state.heap.version.object(&backing.object).is_some())
+            .is_some_and(|backing| state.heap.version.has_allocated_object(&backing.object))
         || !uniform_member_body(program, bindings.body)
     {
         return None;
@@ -903,10 +903,11 @@ fn entries(state: &State, value: &Value) -> Option<Vec<RangeEntry>> {
                 },
             origin: _,
         }) => {
+            let storage = state.heap.version.object(id)?;
             let ObjectData::Map {
                 fields,
                 remainder: Remainder::Closed,
-            } = &state.heap.version.object(id)?.data
+            } = &storage.data
             else {
                 return None;
             };

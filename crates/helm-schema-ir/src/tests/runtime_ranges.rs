@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::analysis_db::IrAnalysisDb;
 use crate::value::tests::execute_document;
 use crate::value::{AbortReason, Flow, State, Value, eval::Executor};
@@ -286,7 +288,10 @@ fn allocation_collapse_preserves_a_reserved_occurrence_and_its_snapshots() -> ey
     let installed = state.heap.allocate_at(
         Some(&id),
         ObjectData::Map {
-            fields: BTreeMap::from([("new".to_owned(), Field::Present(Value::string("current")))]),
+            fields: Rc::new(BTreeMap::from([(
+                "new".to_owned(),
+                Field::Present(Value::string("current")),
+            )])),
             remainder: Remainder::Closed,
         },
         Multiplicity::Singleton,
@@ -339,7 +344,10 @@ fn allocation_collapse_keeps_aliases_in_the_unknown_write_region() -> eyre::Resu
         }
         let parent_id = state.heap.allocate(
             ObjectData::Map {
-                fields: BTreeMap::from([("child".to_owned(), Field::Present(child.clone()))]),
+                fields: Rc::new(BTreeMap::from([(
+                    "child".to_owned(),
+                    Field::Present(child.clone()),
+                )])),
                 remainder: Remainder::Closed,
             },
             Multiplicity::Singleton,

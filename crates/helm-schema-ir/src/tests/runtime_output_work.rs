@@ -4,6 +4,59 @@ use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_core::{Predicate, ValuesPath};
 use test_util::prelude::sim_assert_eq;
 
+#[test]
+fn frozen_capture_releases_execution_accounting_and_keeps_rendered_parts() -> eyre::Result<()> {
+    let mut state = State::new(Value::nil());
+    let owner = std::rc::Rc::downgrade(&state.heap.arena);
+    let mut graph = TextBuffer::default();
+    graph.restrict_budget(&crate::value::guard::RuntimeGuard::True, &state.heap.arena);
+    graph.bytes("before:");
+    graph.emit(
+        state
+            .heap
+            .freeze(&Value::input(ValuesPath::parse("payload"))),
+    );
+    graph.bytes(":after");
+    let captured = crate::value::text::capture(&graph, false);
+    let crate::value::ValueNode::Leaf(crate::value::Leaf {
+        datum: crate::value::Datum::Text(text),
+        origin: _,
+    }) = captured.node.as_ref()
+    else {
+        eyre::bail!("expected structured frozen text");
+    };
+    let crate::value::text::TextTerm::Capture {
+        graph: frozen,
+        strip_marker: false,
+    } = text.0.as_ref()
+    else {
+        eyre::bail!("expected a capture without marker stripping");
+    };
+    sim_assert_eq!(have: frozen.parts.len(), want: 3);
+    sim_assert_eq!(have: frozen.counts.is_empty(), want: true);
+    sim_assert_eq!(have: frozen.arena.is_none(), want: true);
+    sim_assert_eq!(have: graph.counts.is_empty(), want: false);
+
+    // A cached object containing captured text must not keep the query arena alive.
+    let map = state.heap.map(crate::value::Remainder::Closed);
+    let target = state.map_target(&map).ok_or_eyre("map target missing")?;
+    state.heap.write(
+        &target,
+        "text",
+        crate::value::Field::Present(captured.clone()),
+    );
+    let _view = state
+        .heap
+        .version
+        .object(&target)
+        .ok_or_eyre("object missing")?;
+    drop(graph);
+    drop(state);
+    sim_assert_eq!(have: owner.upgrade().is_none(), want: true);
+    sim_assert_eq!(have: captured.inputs(), want: std::collections::BTreeSet::from([ValuesPath::parse("payload")]));
+    Ok(())
+}
+
 impl TextBuffer {
     pub(in crate::value) fn as_value(&self) -> Value {
         let original = crate::value::text::capture(self, false);
@@ -134,15 +187,23 @@ fn repeated_output_overflow_releases_unreachable_frozen_heap_snapshots() -> eyre
         let object = state
             .map_target(&map)
             .ok_or_eyre("mutable output map missing")?;
+        // Output owns each captured value; live history separately owns its ancestors.
         let mut snapshots = Vec::new();
+        let mut histories = Vec::new();
         for index in 1..=385 {
             state.heap.write(
                 &object,
                 "value",
                 Field::Present(Value::string(&index.to_string())),
             );
-            snapshots.push(Rc::downgrade(&state.heap.version));
-            state.output.emit(state.heap.freeze(&map));
+            let observed = Value {
+                node: Rc::new(map.node.as_ref().clone()),
+            };
+            let frozen = state.heap.freeze(&observed);
+            snapshots.push(Rc::downgrade(&frozen.value.node));
+            histories.push(Rc::downgrade(&frozen.heap));
+            drop(observed);
+            state.output.emit(frozen);
             if [129, 257, 385].contains(&index) {
                 sim_assert_eq!(have: state.output.parts.len(), want: 1);
                 assert!(matches!(
@@ -169,6 +230,12 @@ fn repeated_output_overflow_releases_unreachable_frozen_heap_snapshots() -> eyre
                 .iter()
                 .all(|snapshot| snapshot.upgrade().is_none()),
             "selected={selected}"
+        );
+        drop(state);
+        assert!(
+            histories
+                .iter()
+                .all(|snapshot| snapshot.upgrade().is_none())
         );
     }
     Ok(())
@@ -197,15 +264,23 @@ fn phase_offset_overflows_release_snapshots_after_both_paths_widen() -> eyre::Re
     let object = state
         .map_target(&map)
         .ok_or_eyre("mutable phase output map missing")?;
+    // Output owns each captured value; live history separately owns its ancestors.
     let mut snapshots = Vec::new();
+    let mut histories = Vec::new();
     for index in 1..=385 {
         state.heap.write(
             &object,
             "value",
             Field::Present(Value::string(&index.to_string())),
         );
-        snapshots.push(Rc::downgrade(&state.heap.version));
-        state.output.emit(state.heap.freeze(&map));
+        let observed = Value {
+            node: Rc::new(map.node.as_ref().clone()),
+        };
+        let frozen = state.heap.freeze(&observed);
+        snapshots.push(Rc::downgrade(&frozen.value.node));
+        histories.push(Rc::downgrade(&frozen.heap));
+        drop(observed);
+        state.output.emit(frozen);
         if [129, 257, 385].contains(&index) {
             assert!(
                 snapshots
@@ -216,6 +291,17 @@ fn phase_offset_overflows_release_snapshots_after_both_paths_widen() -> eyre::Re
             );
         }
     }
+    drop(state);
+    assert!(
+        snapshots
+            .iter()
+            .all(|snapshot| snapshot.upgrade().is_none())
+    );
+    assert!(
+        histories
+            .iter()
+            .all(|snapshot| snapshot.upgrade().is_none())
+    );
     Ok(())
 }
 

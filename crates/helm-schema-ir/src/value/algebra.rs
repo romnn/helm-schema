@@ -189,8 +189,8 @@ impl Field {
             }
             (yes, no) => Self::Select {
                 decision,
-                yes: Box::new(yes),
-                no: Box::new(no),
+                yes: Rc::new(yes),
+                no: Rc::new(no),
             },
         }
     }

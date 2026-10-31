@@ -485,7 +485,7 @@ impl OutputPlacement {
         memo: &PredicateMemo,
         output: FileOutput,
         syntax: &mut SyntaxContexts,
-        input_paths: &BTreeMap<super::ObjectId, ValuesPath>,
+        input_paths: &super::input_paths::InputPaths,
         input_objects: &BTreeMap<ValuesPath, super::InputBacking>,
     ) -> Self {
         let mut remaining = 1024;
@@ -516,7 +516,7 @@ impl OutputPlacement {
         memo: &PredicateMemo,
         output: FileOutput,
         syntax: &mut SyntaxContexts,
-        input_paths: &BTreeMap<super::ObjectId, ValuesPath>,
+        input_paths: &super::input_paths::InputPaths,
         input_objects: &BTreeMap<ValuesPath, super::InputBacking>,
         remaining: &mut usize,
     ) -> Self {
@@ -2431,12 +2431,12 @@ struct LexicalTransfers<'a> {
     values: AHashMap<(*const super::HeapVersion, *const ValueNode, LexicalState), States>,
     buffers: AHashMap<(*const TextBuffer, LexicalState), States>,
     remaining: usize,
-    input_paths: &'a BTreeMap<super::ObjectId, ValuesPath>,
+    input_paths: &'a super::input_paths::InputPaths,
     map_depth: usize,
 }
 
 impl<'a> LexicalTransfers<'a> {
-    fn new(input_paths: &'a BTreeMap<super::ObjectId, ValuesPath>) -> Self {
+    fn new(input_paths: &'a super::input_paths::InputPaths) -> Self {
         Self {
             values: AHashMap::new(),
             buffers: AHashMap::new(),
@@ -2532,11 +2532,12 @@ impl<'a> LexicalTransfers<'a> {
         if self.map_depth == 32 {
             return States::new();
         }
+        let storage = value.heap.object(target);
         let Some(super::ObjectVersion {
             revision: _,
             multiplicity,
             data,
-        }) = value.heap.object(target)
+        }) = storage.as_deref()
         else {
             return States::new();
         };
@@ -2556,7 +2557,7 @@ impl<'a> LexicalTransfers<'a> {
         self.map_depth += 1;
         let mut states = quoted::literal(BTreeMap::from([(state, guard)]), "map[", memo);
         let mut emitted = false;
-        for (key, field) in fields {
+        for (key, field) in fields.iter() {
             let child = match field {
                 super::Field::Present(child) => child,
                 super::Field::Absent => continue,

@@ -99,48 +99,7 @@ pub(super) fn transfer(invocation: &Invocation, state: &mut State) -> Value {
         | Method::KubeVersionString => BTreeSet::new(),
     };
     match descriptor {
-        Method::ValuesAsMap => {
-            let target = state.map_target(receiver);
-            let nonempty = target.as_ref().is_some_and(|target| {
-                match state.heap.version.object(target).map(|object| &object.data) {
-                    Some(ObjectData::Map {
-                        fields,
-                        remainder: _,
-                    }) => fields
-                        .values()
-                        .any(|field| matches!(state.consumed_field(field), Field::Present(_))),
-                    Some(
-                        ObjectData::Strings(_)
-                        | ObjectData::Opaque { reachable: _ }
-                        | ObjectData::Widened { inputs: _ },
-                    )
-                    | None => false,
-                }
-            });
-            let converted = match target {
-                Some(target) => Value::with_influences(
-                    Value::leaf(Datum::Map {
-                        view: MapType::Interface,
-                        target: Some(target),
-                    }),
-                    inputs.clone(),
-                ),
-                None => unknown_map(MapType::Interface, inputs.clone()),
-            };
-            match if nonempty {
-                Some(true)
-            } else {
-                state.truth(receiver)
-            } {
-                Some(true) => converted,
-                Some(false) => Value::with_influences(state.heap.map(Remainder::Closed), inputs),
-                None => {
-                    let decision = state.test(receiver);
-                    let empty = Value::with_influences(state.heap.map(Remainder::Closed), inputs);
-                    Value::select(decision, converted, empty)
-                }
-            }
-        }
+        Method::ValuesAsMap => values_as_map(receiver, inputs, state),
         Method::ValuesTable => unknown_map(MapType::Values, inputs),
         Method::ValuesYaml => {
             Value::with_influences(Value::scalar(ScalarType::String, None), inputs)
@@ -175,6 +134,59 @@ pub(super) fn transfer(invocation: &Invocation, state: &mut State) -> Value {
     }
 }
 
+fn values_as_map(
+    receiver: &Value,
+    inputs: BTreeSet<helm_schema_core::ValuesPath>,
+    state: &mut State,
+) -> Value {
+    let target = state.map_target(receiver);
+    let nonempty = target.as_ref().is_some_and(|target| {
+        match state
+            .heap
+            .version
+            .object(target)
+            .as_deref()
+            .map(|object| &object.data)
+        {
+            Some(ObjectData::Map {
+                fields,
+                remainder: _,
+            }) => fields
+                .values()
+                .any(|field| matches!(state.consumed_field(field), Field::Present(_))),
+            Some(
+                ObjectData::Strings(_)
+                | ObjectData::Opaque { reachable: _ }
+                | ObjectData::Widened { inputs: _ },
+            )
+            | None => false,
+        }
+    });
+    let converted = match target {
+        Some(target) => Value::with_influences(
+            Value::leaf(Datum::Map {
+                view: MapType::Interface,
+                target: Some(target),
+            }),
+            inputs.clone(),
+        ),
+        None => unknown_map(MapType::Interface, inputs.clone()),
+    };
+    match if nonempty {
+        Some(true)
+    } else {
+        state.truth(receiver)
+    } {
+        Some(true) => converted,
+        Some(false) => Value::with_influences(state.heap.map(Remainder::Closed), inputs),
+        None => {
+            let decision = state.test(receiver);
+            let empty = Value::with_influences(state.heap.map(Remainder::Closed), inputs);
+            Value::select(decision, converted, empty)
+        }
+    }
+}
+
 fn unknown_map(
     view: MapType,
     inputs: std::collections::BTreeSet<helm_schema_core::ValuesPath>,
@@ -197,7 +209,7 @@ fn unknown_map(
 fn readonly_unknown(types: TypeCoverage) -> Value {
     Value::leaf(Datum::Unknown(UnknownValue {
         types,
-        aliases: AliasSet::Known(BTreeSet::new()),
+        aliases: AliasSet::Known(Rc::new(BTreeSet::new())),
     }))
 }
 
@@ -291,7 +303,7 @@ fn catalog(receiver: &Value, state: &mut State) -> Option<BTreeMap<String, Value
         return None;
     };
     let mut files = BTreeMap::new();
-    for (name, field) in fields {
+    for (name, field) in fields.iter() {
         match state.consumed_field(field) {
             Field::Present(value) => {
                 files.insert(name.clone(), value);

@@ -94,20 +94,23 @@ impl FrozenValue {
             ValueNode::Leaf(Leaf {
                 datum: Datum::Sequence(sequence),
                 origin: _,
-            }) => sequence.items()?,
+            }) => sequence.items()?.to_vec(),
             ValueNode::Leaf(Leaf {
                 datum: Datum::Strings(slice),
                 origin: _,
             }) => {
+                let storage = self.heap.object(&slice.backing)?;
                 let super::ObjectVersion {
                     data: ObjectData::Strings(slots),
                     revision: _,
                     multiplicity: _,
-                } = self.heap.object(&slice.backing)?
+                } = storage.as_ref()
                 else {
                     return None;
                 };
-                slots.get(slice.start..slice.start.checked_add(slice.length)?)?
+                slots
+                    .get(slice.start..slice.start.checked_add(slice.length)?)?
+                    .to_vec()
             }
             ValueNode::Leaf(Leaf {
                 datum:
