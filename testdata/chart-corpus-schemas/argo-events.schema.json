@@ -5,7 +5,6 @@
         {
           "properties": {
             "annotations": {
-              "minProperties": 1,
               "type": "object"
             }
           },
@@ -17,7 +16,8 @@
         {
           "properties": {
             "annotations": {
-              "$ref": "#/$defs/constrains~1annotations~1object,null"
+              "minProperties": 1,
+              "type": "object"
             }
           },
           "required": [
@@ -27,63 +27,57 @@
         }
       ]
     },
-    "constrains/annotations+annotations:helm-marker-free+annotations:t+annotations=null": {
+    "constrains/annotations+annotations:helm-marker-free+annotations=null": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1annotations:t"
+          "$ref": "#/$defs/constrains~1annotations+annotations:helm-marker-free+annotations=null@2"
         },
         {
-          "$ref": "#/$defs/constrains~1annotations+annotations:helm-marker-free+annotations=null"
+          "$ref": "#/$defs/constrains~1annotations+annotations=null@2"
+        }
+      ]
+    },
+    "constrains/annotations+annotations:helm-marker-free+annotations=null+install:t+keep:t": {
+      "allOf": [
+        {
+          "properties": {
+            "keep": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "keep"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1annotations+annotations:helm-marker-free+annotations=null@2"
         },
         {
           "$ref": "#/$defs/constrains~1annotations@2"
-        }
-      ]
-    },
-    "constrains/annotations+annotations:helm-marker-free+annotations:t+annotations=null+1more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1annotations+annotations:helm-marker-free+annotations:t+annotations=null@2"
         },
-        {
-          "$ref": "#/$defs/constrains~1install:t@2"
-        }
-      ]
-    },
-    "constrains/annotations+annotations:helm-marker-free+annotations:t+annotations=null+1more@2": {
-      "anyOf": [
         {
           "$ref": "#/$defs/constrains~1install:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1annotations+annotations:helm-marker-free+annotations:t+annotations=null+1more"
         }
       ]
     },
-    "constrains/annotations+annotations:helm-marker-free+annotations:t+annotations=null+1more@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1annotations+annotations:helm-marker-free+annotations:t+annotations=null+1more@2"
-      }
-    },
-    "constrains/annotations+annotations:helm-marker-free+annotations:t+annotations=null@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1annotations+annotations:helm-marker-free+annotations:t+annotations=null"
-      }
-    },
-    "constrains/annotations+annotations:helm-marker-free+annotations=null": {
+    "constrains/annotations+annotations:helm-marker-free+annotations=null+install:t+keep:t@2": {
       "anyOf": [
         {
-          "properties": {
-            "annotations": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "annotations"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/constrains~1annotations+annotations:helm-marker-free+annotations=null+install:t+keep:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1annotations+annotations:helm-marker-free+annotations=null"
+        }
+      ]
+    },
+    "constrains/annotations+annotations:helm-marker-free+annotations=null/:helm-marker-free": {
+      "$ref": "#/$defs/helm-marker-free"
+    },
+    "constrains/annotations+annotations:helm-marker-free+annotations=null@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1annotations=null"
         },
         {
           "properties": {
@@ -97,22 +91,43 @@
           "type": "object"
         },
         {
-          "not": {
-            "properties": {
-              "annotations": {}
-            },
-            "required": [
-              "annotations"
-            ],
-            "type": "object"
-          }
+          "$ref": "#/$defs/constrains~1annotations@3"
         }
       ]
     },
-    "constrains/annotations+annotations:helm-marker-free+annotations=null/:helm-marker-free": {
-      "$ref": "#/$defs/helm-marker-free"
+    "constrains/annotations+annotations=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "annotations": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "annotations"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1annotations=null"
+        },
+        {
+          "properties": {
+            "annotations": {
+              "$ref": "#/$defs/constrains~1annotations+annotations=null~1object,null"
+            }
+          },
+          "required": [
+            "annotations"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1annotations@3"
+        }
+      ]
     },
-    "constrains/annotations/object,null": {
+    "constrains/annotations+annotations=null/object,null": {
       "additionalProperties": {
         "type": [
           "string",
@@ -124,10 +139,17 @@
         "null"
       ]
     },
-    "constrains/annotations:t": {
+    "constrains/annotations+annotations=null@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1annotations+annotations=null"
+      }
+    },
+    "constrains/annotations=null": {
       "properties": {
         "annotations": {
-          "$ref": "#/$defs/t"
+          "enum": [
+            null
+          ]
         }
       },
       "required": [
@@ -138,6 +160,17 @@
     "constrains/annotations@2": {
       "not": {
         "$ref": "#/$defs/constrains~1annotations"
+      }
+    },
+    "constrains/annotations@3": {
+      "not": {
+        "properties": {
+          "annotations": {}
+        },
+        "required": [
+          "annotations"
+        ],
+        "type": "object"
       }
     },
     "constrains/controller.rbac.namespaced:t": {
@@ -162,13 +195,13 @@
     "constrains/controller.rbac.namespaced:t+fullnameOverride+fullnameOverride:t+3more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        },
-        {
           "$ref": "#/$defs/constrains~1fullnameOverride@2"
         },
         {
           "$ref": "#/$defs/constrains~1namespaceOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride"
         },
         {
           "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t"
@@ -203,10 +236,10 @@
     "constrains/controller.rbac.namespaced:t+fullnameOverride:t+nameOverride+nameOverride:t+1more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1nameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t@2"
@@ -225,9 +258,6 @@
           "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        },
-        {
           "$ref": "#/$defs/constrains~1nameOverride:t@2"
         },
         {
@@ -235,6 +265,9 @@
         },
         {
           "$ref": "#/$defs/constrains~1namespaceOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride"
         },
         {
           "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t"
@@ -247,16 +280,16 @@
     "constrains/controller.rbac.namespaced:t+fullnameOverride:t+nameOverride:t+namespaceOverride+2more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        },
-        {
           "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
           "$ref": "#/$defs/constrains~1namespaceOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride"
         },
         {
           "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t"
@@ -328,11 +361,6 @@
       "type": "object"
     },
     "constrains/install:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1install:t@2"
-      }
-    },
-    "constrains/install:t@2": {
       "properties": {
         "install": {
           "$ref": "#/$defs/t"
@@ -541,12 +569,6 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t+fullnameOverride+fullnameOverride:t+nameOverride+4more"
-      },
-      "then": false
-    },
-    {
-      "if": {
         "$ref": "#/$defs/constrains~1webhook+webhook=null"
       },
       "then": false
@@ -743,6 +765,12 @@
           }
         ]
       }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t+fullnameOverride+fullnameOverride:t+nameOverride+4more"
+      },
+      "then": false
     }
   ],
   "properties": {
@@ -770,19 +798,21 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1annotations:t"
+                "properties": {
+                  "annotations": {
+                    "$ref": "#/$defs/t"
+                  }
+                },
+                "required": [
+                  "annotations"
+                ],
+                "type": "object"
               },
               {
-                "$ref": "#/$defs/constrains~1annotations+annotations:helm-marker-free+annotations:t+annotations=null+1more@3"
+                "$ref": "#/$defs/constrains~1annotations+annotations:helm-marker-free+annotations=null+install:t+keep:t@2"
               },
               {
-                "$ref": "#/$defs/constrains~1annotations+annotations:helm-marker-free+annotations=null"
-              },
-              {
-                "$ref": "#/$defs/constrains~1annotations@2"
-              },
-              {
-                "$ref": "#/$defs/constrains~1install:t@2"
+                "$ref": "#/$defs/constrains~1install:t"
               }
             ]
           },
@@ -790,7 +820,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/constrains~1install:t@2"
+            "$ref": "#/$defs/constrains~1install:t"
           },
           "then": {
             "additionalProperties": {},
@@ -803,7 +833,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/constrains~1annotations~1object,null"
+                    "$ref": "#/$defs/constrains~1annotations+annotations=null~1object,null"
                   },
                   {
                     "not": {

@@ -3,6 +3,36 @@
     "constrains/global+global.rbac+global.rbac!=null": {
       "$ref": "#/$defs/constrains~1global+global.rbac+global.rbac!=null@3"
     },
+    "constrains/global+global.rbac+global.rbac!=null+global.rbac=null+operator": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1global+global.rbac+global.rbac!=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac+global.rbac=null+global.rbac?+operator.global.rbac"
+        }
+      ]
+    },
+    "constrains/global+global.rbac+global.rbac!=null+global.rbac=null+operator@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1global+global.rbac+global.rbac!=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac+global.rbac=null+global.rbac?+operator.global.rbac@2"
+        }
+      ]
+    },
+    "constrains/global+global.rbac+global.rbac!=null+global.rbac=null+operator@3": {
+      "not": {
+        "$ref": "#/$defs/constrains~1global+global.rbac+global.rbac!=null+global.rbac=null+operator"
+      }
+    },
+    "constrains/global+global.rbac+global.rbac!=null+global.rbac=null+operator@4": {
+      "not": {
+        "$ref": "#/$defs/constrains~1global+global.rbac+global.rbac!=null+global.rbac=null+operator@2"
+      }
+    },
     "constrains/global+global.rbac+global.rbac!=null@2": {
       "$ref": "#/$defs/constrains~1global+global.rbac+global.rbac!=null@3"
     },
@@ -39,90 +69,124 @@
         }
       ]
     },
-    "constrains/global+global.rbac+global.rbac.create+global.rbac.create!=null+19more": {
+    "constrains/global+global.rbac+global.rbac.create+global.rbac.create!=null+27more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.create+global.rbac.create!=null+global.rbac.create=null+10more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.create+global.rbac.create!=null+global.rbac.create=null+15more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+3more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+3more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+3more@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+3more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+3more@4"
+        }
+      ]
+    },
+    "constrains/global+global.rbac+global.rbac.create+global.rbac.create!=null+33more": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+3more@2"
+          "$ref": "#/$defs/constrains~1global+global.rbac+global.rbac.create+global.rbac.create!=null+27more"
         },
         {
-          "$ref": "#/$defs/constrains~1global+global.rbac+global.rbac.create+global.rbac.create!=null+20more"
+          "$ref": "#/$defs/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+27more"
         }
       ]
     },
-    "constrains/global+global.rbac+global.rbac.create+global.rbac.create!=null+19more@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1global+global.rbac+global.rbac.create+global.rbac.create!=null+19more"
-      }
-    },
-    "constrains/global+global.rbac+global.rbac.create+global.rbac.create!=null+20more": {
-      "allOf": [
+    "constrains/global+global.rbac+global.rbac.create:t+global.rbac.serviceAccount+6more": {
+      "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1global.rbac.create+global.rbac.create!=null+global.rbac.create=null+2more"
+          "$ref": "#/$defs/constrains~1global.rbac.create:t+starrocksOperator.enabled:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t"
+          "$ref": "#/$defs/constrains~1global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.name+2more"
         },
         {
-          "$ref": "#/$defs/constrains~1global+global.rbac+global.rbac.serviceAccount+15more@2"
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name=true"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name=false"
         }
       ]
     },
-    "constrains/global+global.rbac+global.rbac.serviceAccount+15more": {
-      "allOf": [
+    "constrains/global+global.rbac+global.rbac.create:t+global.rbac.serviceAccount+7more": {
+      "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+4more@3"
+          "$ref": "#/$defs/constrains~1global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.name+2more"
         },
         {
-          "$ref": "#/$defs/constrains~1global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.name+5more"
+          "$ref": "#/$defs/constrains~1global.rbac.create:t+starrocksOperator.enabled:t+1more@3"
         },
         {
-          "$ref": "#/$defs/constrains~1operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+1more"
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name:t"
         },
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations+5more"
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name=true"
         },
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+4more"
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name=false"
         }
       ]
     },
-    "constrains/global+global.rbac+global.rbac.serviceAccount+15more@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1global+global.rbac+global.rbac.serviceAccount+15more"
-      }
+    "constrains/global+global.rbac+global.rbac.create:t+global.rbac.serviceAccount+7more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.create:t+starrocksOperator.enabled:t+1more@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.name+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name=true"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name=false"
+        }
+      ]
     },
     "constrains/global.rbac": {
-      "$ref": "#/$defs/constrains~1global.rbac@2"
-    },
-    "constrains/global.rbac+global.rbac!=null+global.rbac=null+global.rbac?+operator.global.rbac": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1global.rbac+global.rbac=null+global.rbac?+operator.global.rbac"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global+global.rbac+global.rbac!=null"
-        }
-      ]
-    },
-    "constrains/global.rbac+global.rbac!=null+global.rbac=null+global.rbac?+operator.global.rbac@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1global.rbac+global.rbac=null+global.rbac?+operator.global.rbac@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global+global.rbac+global.rbac!=null@2"
-        }
-      ]
-    },
-    "constrains/global.rbac+global.rbac!=null+global.rbac=null+global.rbac?+operator.global.rbac@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1global.rbac+global.rbac!=null+global.rbac=null+global.rbac?+operator.global.rbac"
-      }
-    },
-    "constrains/global.rbac+global.rbac!=null+global.rbac=null+global.rbac?+operator.global.rbac@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1global.rbac+global.rbac!=null+global.rbac=null+global.rbac?+operator.global.rbac@2"
-      }
+      "$ref": "#/$defs/constrains~1global.rbac@3"
     },
     "constrains/global.rbac+global.rbac.create!=null+global.rbac.create:t": {
       "$ref": "#/$defs/constrains~1global.rbac+global.rbac.create!=null+global.rbac.create:t@3"
@@ -164,10 +228,41 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1global.rbac.create:t"
+          "$ref": "#/$defs/constrains~1global.rbac.create:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1global.rbac.create?@3"
+        }
+      ]
+    },
+    "constrains/global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+27more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.create+global.rbac.create!=null+global.rbac.create=null+10more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.create+global.rbac.create!=null+global.rbac.create=null+15more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels+global.rbac.serviceAccount.labels!=null+4more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels+global.rbac.serviceAccount.labels!=null+3more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.labels+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels+global.rbac.serviceAccount.labels!=null+3more@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels+global.rbac.serviceAccount.labels!=null+4more@2"
         }
       ]
     },
@@ -184,32 +279,7 @@
         }
       ]
     },
-    "constrains/global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+3more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t"
-        }
-      ]
-    },
-    "constrains/global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+3more@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+3more"
-      }
-    },
     "constrains/global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount!=null+3more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount!=null+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount=null+2more"
-        }
-      ]
-    },
-    "constrains/global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount!=null+3more@2": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount!=null+1more@2"
@@ -219,26 +289,95 @@
         }
       ]
     },
-    "constrains/global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount!=null+3more@3": {
+    "constrains/global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount!=null+3more@2": {
       "not": {
         "$ref": "#/$defs/constrains~1global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount!=null+3more"
       }
     },
-    "constrains/global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount!=null+3more@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount!=null+3more@2"
-      }
+    "constrains/global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+1more": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations@5"
+              }
+            },
+            {
+              "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations@3"
+            }
+          ]
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations?@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations!=null"
+        }
+      ]
     },
-    "constrains/global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.name+5more": {
+    "constrains/global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+3more": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+3more@2"
+          "$ref": "#/$defs/constrains~1global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+1more"
         },
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+4more"
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations+4more"
+        }
+      ]
+    },
+    "constrains/global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+3more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+1more"
         },
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+4more@2"
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations+3more"
+        }
+      ]
+    },
+    "constrains/global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+3more@3": {
+      "not": {
+        "$ref": "#/$defs/constrains~1global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+3more"
+      }
+    },
+    "constrains/global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+3more@4": {
+      "not": {
+        "$ref": "#/$defs/constrains~1global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+3more@2"
+      }
+    },
+    "constrains/global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name@3"
+        },
+        {
+          "allOf": [
+            {
+              "type": "object"
+            },
+            {
+              "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null"
+            }
+          ]
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name@4"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name@7"
+          }
+        }
+      ]
+    },
+    "constrains/global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.name+2more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name:t@2"
         }
       ]
     },
@@ -291,6 +430,53 @@
     "constrains/global.rbac.create": {
       "$ref": "#/$defs/constrains~1global.rbac.create@3"
     },
+    "constrains/global.rbac.create+global.rbac.create!=null+global.rbac.create=null+10more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1operator+operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.create+global.rbac.create!=null+global.rbac.create=null+3more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+3more"
+        }
+      ]
+    },
+    "constrains/global.rbac.create+global.rbac.create!=null+global.rbac.create=null+15more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+3more@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+3more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.create+global.rbac.create!=null+global.rbac.create=null+2more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+4more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+4more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+3more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+4more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+3more@3"
+        }
+      ]
+    },
     "constrains/global.rbac.create+global.rbac.create!=null+global.rbac.create=null+2more": {
       "anyOf": [
         {
@@ -300,6 +486,26 @@
           "$ref": "#/$defs/constrains~1global.rbac+global.rbac.create!=null+global.rbac.create:t"
         }
       ]
+    },
+    "constrains/global.rbac.create+global.rbac.create!=null+global.rbac.create=null+2more@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1global.rbac.create+global.rbac.create!=null+global.rbac.create=null+2more"
+      }
+    },
+    "constrains/global.rbac.create+global.rbac.create!=null+global.rbac.create=null+3more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.create+global.rbac.create!=null+global.rbac.create=null+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t@3"
+        }
+      ]
+    },
+    "constrains/global.rbac.create+global.rbac.create!=null+global.rbac.create=null+3more@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1global.rbac.create+global.rbac.create!=null+global.rbac.create=null+3more"
+      }
     },
     "constrains/global.rbac.create+global.rbac.create=null+global.rbac.create?": {
       "anyOf": [
@@ -320,7 +526,7 @@
           "$ref": "#/$defs/constrains~1global.rbac.create+global.rbac.create=null+global.rbac.create?"
         },
         {
-          "$ref": "#/$defs/constrains~1operator.global.rbac.create:t"
+          "$ref": "#/$defs/constrains~1operator.global.rbac.create:t@2"
         }
       ]
     },
@@ -330,7 +536,7 @@
           "$ref": "#/$defs/constrains~1global.rbac.create+global.rbac.create=null+global.rbac.create?@2"
         },
         {
-          "$ref": "#/$defs/constrains~1operator.global.rbac.create:t"
+          "$ref": "#/$defs/constrains~1operator.global.rbac.create:t@2"
         }
       ]
     },
@@ -348,6 +554,138 @@
       ]
     },
     "constrains/global.rbac.create:t": {
+      "not": {
+        "$ref": "#/$defs/constrains~1global.rbac.create:t@2"
+      }
+    },
+    "constrains/global.rbac.create:t+nameOverride+nameOverride:t+nameOverride=false+3more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1starrocksOperator.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride=true"
+        },
+        {
+          "$ref": "#/$defs/constrains~1starrocksOperator.watchNamespace:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride=false"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride"
+        }
+      ]
+    },
+    "constrains/global.rbac.create:t+nameOverride+nameOverride:t+nameOverride=false+3more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.create:t+starrocksOperator.enabled:t+1more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride=true"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride=false"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride"
+        }
+      ]
+    },
+    "constrains/global.rbac.create:t+starrocksOperator+starrocksOperator.enabled:t+5more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.create:t+starrocksOperator.enabled:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1starrocksOperator+starrocksOperator.namespaceOverride+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1starrocksOperator+starrocksOperator.namespaceOverride+2more"
+        }
+      ]
+    },
+    "constrains/global.rbac.create:t+starrocksOperator+starrocksOperator.enabled:t+6more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.create:t+starrocksOperator.enabled:t+1more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1starrocksOperator+starrocksOperator.namespaceOverride+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1starrocksOperator+starrocksOperator.namespaceOverride+2more"
+        }
+      ]
+    },
+    "constrains/global.rbac.create:t+starrocksOperator.enabled:t": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1starrocksOperator.enabled:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.create:t@2"
+        }
+      ]
+    },
+    "constrains/global.rbac.create:t+starrocksOperator.enabled:t+1more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1starrocksOperator.enabled:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.create:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1starrocksOperator.watchNamespace:t@3"
+        }
+      ]
+    },
+    "constrains/global.rbac.create:t+starrocksOperator.enabled:t+1more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1starrocksOperator.watchNamespace:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1starrocksOperator.enabled:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.create:t@2"
+        }
+      ]
+    },
+    "constrains/global.rbac.create:t+starrocksOperator.enabled:t+1more@3": {
+      "not": {
+        "$ref": "#/$defs/constrains~1global.rbac.create:t+starrocksOperator.enabled:t+1more"
+      }
+    },
+    "constrains/global.rbac.create:t+starrocksOperator.enabled:t+1more@4": {
+      "not": {
+        "$ref": "#/$defs/constrains~1global.rbac.create:t+starrocksOperator.enabled:t+1more@2"
+      }
+    },
+    "constrains/global.rbac.create:t+starrocksOperator.enabled:t@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1global.rbac.create:t+starrocksOperator.enabled:t"
+      }
+    },
+    "constrains/global.rbac.create:t@2": {
       "properties": {
         "global": {
           "properties": {
@@ -551,10 +889,25 @@
         }
       ]
     },
+    "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount!=null+3more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount=null+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount!=null+1more"
+        }
+      ]
+    },
+    "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount!=null+3more@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount!=null+3more"
+      }
+    },
     "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+1more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations@3"
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations@2"
         },
         {
           "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations?@3"
@@ -567,20 +920,9 @@
     "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+1more@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations?"
-        }
-      ]
-    },
-    "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+1more@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations@2"
+          "not": {
+            "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations@5"
+          }
         },
         {
           "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations=null"
@@ -591,25 +933,9 @@
       ]
     },
     "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+2more": {
-      "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+2more@6"
-    },
-    "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+2more@2": {
-      "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+2more@6"
-    },
-    "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+2more@3": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+1more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1operator.global.rbac.serviceAccount.annotations+1more"
-        }
-      ]
-    },
-    "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+2more@4": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+1more@3"
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+1more@2"
         },
         {
           "properties": {
@@ -624,30 +950,14 @@
         }
       ]
     },
-    "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+2more@5": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+1more@2"
-        },
-        {
-          "properties": {
-            "operator": {
-              "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations@3"
-            }
-          },
-          "required": [
-            "operator"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+2more@6": {
+    "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+2more@2": {
       "allOf": [
         {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations@2"
+              "not": {
+                "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations@5"
+              }
             },
             {
               "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations=null"
@@ -662,7 +972,7 @@
         }
       ]
     },
-    "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+2more@7": {
+    "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+2more@3": {
       "allOf": [
         {
           "properties": {
@@ -676,24 +986,24 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+1more@3"
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+1more@2"
         }
       ]
     },
     "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+3more": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+2more"
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+2more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+2more@3"
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations+3more@2"
         }
       ]
     },
     "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+3more@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+2more@4"
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+2more@3"
         },
         {
           "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations!=null+2more"
@@ -703,149 +1013,165 @@
     "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+3more@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+2more@5"
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+2more"
         },
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+1more"
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations!=null+2more@2"
         }
       ]
     },
-    "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+4more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+3more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+3more@2"
-        }
-      ]
-    },
-    "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+4more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+3more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations!=null+3more"
-        }
-      ]
-    },
-    "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+4more@3": {
+    "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+3more@4": {
       "not": {
-        "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+4more@2"
+        "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+3more"
       }
     },
     "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.labels+1more": {
       "anyOf": [
         {
           "not": {
-            "properties": {
-              "global": {
-                "properties": {
-                  "rbac": {
-                    "properties": {
-                      "serviceAccount": {
-                        "properties": {
-                          "labels": {}
-                        },
-                        "required": [
-                          "labels"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "serviceAccount"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "rbac"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "global"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels@5"
           }
         },
         {
           "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels?"
         },
         {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels=null"
+        }
+      ]
+    },
+    "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.labels+2more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels?@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels!=null"
+        },
+        {
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels@5"
+              }
+            },
+            {
+              "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels@3"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.labels+2more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.labels+1more"
+        },
+        {
           "properties": {
-            "global": {
-              "properties": {
-                "rbac": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "labels": {
-                          "enum": [
-                            null
-                          ]
-                        }
-                      },
-                      "required": [
-                        "labels"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "rbac"
-              ],
-              "type": "object"
+            "operator": {
+              "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels:t"
             }
           },
           "required": [
-            "global"
+            "operator"
           ],
           "type": "object"
         }
       ]
     },
+    "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.labels+2more@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.labels+1more"
+        },
+        {
+          "properties": {
+            "operator": {
+              "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels:helm-marker-free"
+            }
+          },
+          "required": [
+            "operator"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.labels+3more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.labels+2more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels!=null+2more"
+        }
+      ]
+    },
     "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more": {
+      "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more@2"
+    },
+    "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name:t"
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name=null"
         },
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name:t"
+          "not": {
+            "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name@7"
+          }
         },
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name@3"
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name?"
         }
       ]
     },
-    "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.name+4more": {
-      "anyOf": [
+    "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.name+2more": {
+      "allOf": [
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+1more"
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
         },
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null+2more@2"
+          "$ref": "#/$defs/constrains~1operator.global.rbac.serviceAccount.name:t@2"
         }
       ]
     },
-    "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.name+4more@2": {
-      "anyOf": [
+    "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.name+2more@2": {
+      "allOf": [
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+1more@2"
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name?@3"
         },
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null+2more@3"
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name@4"
+            },
+            {
+              "not": {
+                "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name@7"
+              }
+            }
+          ]
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name!=null"
         }
       ]
+    },
+    "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.name+3more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name!=null+global.rbac.serviceAccount.name:t+1more"
+        }
+      ]
+    },
+    "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.name+3more@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+3more"
+      }
     },
     "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount=null+1more": {
       "anyOf": [
@@ -943,7 +1269,7 @@
           "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations?@3"
         },
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations:helm-marker-free"
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations:t"
         },
         {
           "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations!=null"
@@ -956,31 +1282,128 @@
           "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations?@3"
         },
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations:t"
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations:helm-marker-free"
         },
         {
           "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations!=null"
         }
       ]
     },
-    "constrains/global.rbac.serviceAccount.annotations!=null+3more": {
+    "constrains/global.rbac.serviceAccount.annotations+2more": {
+      "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations+2more@2"
+    },
+    "constrains/global.rbac.serviceAccount.annotations+2more@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations?+2more"
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations?"
         },
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+2more@2"
+          "not": {
+            "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations@5"
+          }
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations=null"
         }
       ]
     },
-    "constrains/global.rbac.serviceAccount.annotations+5more": {
-      "anyOf": [
+    "constrains/global.rbac.serviceAccount.annotations+3more": {
+      "allOf": [
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations!=null+2more@2"
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations+2more"
         },
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+2more@7"
+          "properties": {
+            "operator": {
+              "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations@2"
+            }
+          },
+          "required": [
+            "operator"
+          ],
+          "type": "object"
         }
+      ]
+    },
+    "constrains/global.rbac.serviceAccount.annotations+3more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations+2more"
+        },
+        {
+          "properties": {
+            "operator": {
+              "allOf": [
+                {
+                  "type": "object"
+                },
+                {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations@5"
+                      }
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations=null"
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "required": [
+            "operator"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/global.rbac.serviceAccount.annotations+4more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations+2more"
+        },
+        {
+          "anyOf": [
+            {
+              "not": {
+                "properties": {
+                  "operator": {
+                    "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations@5"
+                  }
+                },
+                "required": [
+                  "operator"
+                ],
+                "type": "object"
+              }
+            },
+            {
+              "properties": {
+                "operator": {
+                  "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations@3"
+                }
+              },
+              "required": [
+                "operator"
+              ],
+              "type": "object"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/global.rbac.serviceAccount.annotations/object,null": {
+      "additionalProperties": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "type": [
+        "object",
+        "null"
       ]
     },
     "constrains/global.rbac.serviceAccount.annotations:helm-marker-free": {
@@ -1098,16 +1521,6 @@
         "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations?@3"
       }
     },
-    "constrains/global.rbac.serviceAccount.annotations?+2more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1operator.global.rbac.serviceAccount.annotations+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+1more@2"
-        }
-      ]
-    },
     "constrains/global.rbac.serviceAccount.annotations?@2": {
       "not": {
         "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations?@3"
@@ -1144,39 +1557,39 @@
       "type": "object"
     },
     "constrains/global.rbac.serviceAccount.annotations@2": {
-      "not": {
-        "properties": {
-          "global": {
-            "properties": {
-              "rbac": {
-                "properties": {
-                  "serviceAccount": {
-                    "properties": {
-                      "annotations": {}
-                    },
-                    "required": [
-                      "annotations"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "serviceAccount"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "rbac"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "global"
-        ],
-        "type": "object"
-      }
+      "properties": {
+        "global": {
+          "properties": {
+            "rbac": {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "annotations": {
+                      "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations~1object,null"
+                    }
+                  },
+                  "required": [
+                    "annotations"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "rbac"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
     },
     "constrains/global.rbac.serviceAccount.annotations@3": {
       "properties": {
@@ -1187,16 +1600,7 @@
                 "serviceAccount": {
                   "properties": {
                     "annotations": {
-                      "additionalProperties": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      "type": [
-                        "object",
-                        "null"
-                      ]
+                      "type": "null"
                     }
                   },
                   "required": [
@@ -1257,41 +1661,592 @@
       ],
       "type": "object"
     },
-    "constrains/global.rbac.serviceAccount.labels?": {
+    "constrains/global.rbac.serviceAccount.annotations@5": {
+      "properties": {
+        "global": {
+          "properties": {
+            "rbac": {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "annotations": {}
+                  },
+                  "required": [
+                    "annotations"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "rbac"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
+    },
+    "constrains/global.rbac.serviceAccount.labels": {
       "not": {
-        "properties": {
-          "global": {
-            "properties": {
-              "rbac": {
+        "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels@4"
+      }
+    },
+    "constrains/global.rbac.serviceAccount.labels!=null": {
+      "properties": {
+        "global": {
+          "properties": {
+            "rbac": {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "labels": {
+                      "not": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "labels"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "rbac"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
+    },
+    "constrains/global.rbac.serviceAccount.labels!=null+2more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels?@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels!=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels:helm-marker-free"
+        }
+      ]
+    },
+    "constrains/global.rbac.serviceAccount.labels!=null+global.rbac.serviceAccount.labels:t+1more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels?@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels!=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels:t"
+        }
+      ]
+    },
+    "constrains/global.rbac.serviceAccount.labels+global.rbac.serviceAccount.labels!=null+1more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels?@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels!=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels@2"
+        }
+      ]
+    },
+    "constrains/global.rbac.serviceAccount.labels+global.rbac.serviceAccount.labels!=null+2more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels?@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels!=null"
+        },
+        {
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels@5"
+              }
+            },
+            {
+              "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels=null"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/global.rbac.serviceAccount.labels+global.rbac.serviceAccount.labels!=null+3more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels+global.rbac.serviceAccount.labels!=null+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels+global.rbac.serviceAccount.labels=null+2more@2"
+        }
+      ]
+    },
+    "constrains/global.rbac.serviceAccount.labels+global.rbac.serviceAccount.labels!=null+3more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels+global.rbac.serviceAccount.labels=null+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels+global.rbac.serviceAccount.labels!=null+1more"
+        }
+      ]
+    },
+    "constrains/global.rbac.serviceAccount.labels+global.rbac.serviceAccount.labels!=null+3more@3": {
+      "not": {
+        "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels+global.rbac.serviceAccount.labels!=null+3more"
+      }
+    },
+    "constrains/global.rbac.serviceAccount.labels+global.rbac.serviceAccount.labels!=null+3more@4": {
+      "not": {
+        "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels+global.rbac.serviceAccount.labels!=null+3more@2"
+      }
+    },
+    "constrains/global.rbac.serviceAccount.labels+global.rbac.serviceAccount.labels!=null+4more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels+global.rbac.serviceAccount.labels=null+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.labels+2more"
+        }
+      ]
+    },
+    "constrains/global.rbac.serviceAccount.labels+global.rbac.serviceAccount.labels!=null+4more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels!=null+global.rbac.serviceAccount.labels:t+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.labels+2more@2"
+        }
+      ]
+    },
+    "constrains/global.rbac.serviceAccount.labels+global.rbac.serviceAccount.labels!=null+4more@3": {
+      "not": {
+        "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels+global.rbac.serviceAccount.labels!=null+4more"
+      }
+    },
+    "constrains/global.rbac.serviceAccount.labels+global.rbac.serviceAccount.labels=null+1more": {
+      "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels+global.rbac.serviceAccount.labels=null+1more@2"
+    },
+    "constrains/global.rbac.serviceAccount.labels+global.rbac.serviceAccount.labels=null+1more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels?@2"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels@5"
+          }
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels=null"
+        }
+      ]
+    },
+    "constrains/global.rbac.serviceAccount.labels+global.rbac.serviceAccount.labels=null+2more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels+global.rbac.serviceAccount.labels=null+1more"
+        },
+        {
+          "properties": {
+            "operator": {
+              "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels@2"
+            }
+          },
+          "required": [
+            "operator"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/global.rbac.serviceAccount.labels+global.rbac.serviceAccount.labels=null+2more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels+global.rbac.serviceAccount.labels=null+1more"
+        },
+        {
+          "properties": {
+            "operator": {
+              "allOf": [
+                {
+                  "type": "object"
+                },
+                {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels@5"
+                      }
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels=null"
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "required": [
+            "operator"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/global.rbac.serviceAccount.labels+global.rbac.serviceAccount.labels=null+3more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels+global.rbac.serviceAccount.labels=null+1more"
+        },
+        {
+          "anyOf": [
+            {
+              "not": {
                 "properties": {
-                  "serviceAccount": {
-                    "required": [
-                      "labels"
-                    ],
-                    "type": "object"
+                  "operator": {
+                    "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels@5"
                   }
                 },
                 "required": [
-                  "serviceAccount"
+                  "operator"
                 ],
                 "type": "object"
               }
             },
-            "required": [
-              "rbac"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "global"
-        ],
-        "type": "object"
+            {
+              "properties": {
+                "operator": {
+                  "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels@3"
+                }
+              },
+              "required": [
+                "operator"
+              ],
+              "type": "object"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/global.rbac.serviceAccount.labels:helm-marker-free": {
+      "properties": {
+        "global": {
+          "properties": {
+            "rbac": {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "labels": {
+                      "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations:helm-marker-free~1:helm-marker-free"
+                    }
+                  },
+                  "required": [
+                    "labels"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "rbac"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
+    },
+    "constrains/global.rbac.serviceAccount.labels:t": {
+      "properties": {
+        "global": {
+          "properties": {
+            "rbac": {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "labels": {
+                      "$ref": "#/$defs/t"
+                    }
+                  },
+                  "required": [
+                    "labels"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "rbac"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
+    },
+    "constrains/global.rbac.serviceAccount.labels=null": {
+      "properties": {
+        "global": {
+          "properties": {
+            "rbac": {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "labels": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "labels"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "rbac"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
+    },
+    "constrains/global.rbac.serviceAccount.labels?": {
+      "not": {
+        "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels?@3"
       }
+    },
+    "constrains/global.rbac.serviceAccount.labels?@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels?@3"
+      }
+    },
+    "constrains/global.rbac.serviceAccount.labels?@3": {
+      "properties": {
+        "global": {
+          "properties": {
+            "rbac": {
+              "properties": {
+                "serviceAccount": {
+                  "required": [
+                    "labels"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "rbac"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
+    },
+    "constrains/global.rbac.serviceAccount.labels@2": {
+      "properties": {
+        "global": {
+          "properties": {
+            "rbac": {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "labels": {
+                      "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations~1object,null"
+                    }
+                  },
+                  "required": [
+                    "labels"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "rbac"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
+    },
+    "constrains/global.rbac.serviceAccount.labels@3": {
+      "properties": {
+        "global": {
+          "properties": {
+            "rbac": {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "labels": {
+                      "type": "null"
+                    }
+                  },
+                  "required": [
+                    "labels"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "rbac"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
+    },
+    "constrains/global.rbac.serviceAccount.labels@4": {
+      "properties": {
+        "global": {
+          "properties": {
+            "rbac": {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "labels": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "labels"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "rbac"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
+    },
+    "constrains/global.rbac.serviceAccount.labels@5": {
+      "properties": {
+        "global": {
+          "properties": {
+            "rbac": {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "labels": {}
+                  },
+                  "required": [
+                    "labels"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "rbac"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
     },
     "constrains/global.rbac.serviceAccount.name": {
       "not": {
-        "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name@5"
+        "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name@6"
       }
     },
     "constrains/global.rbac.serviceAccount.name!=null": {
@@ -1346,13 +2301,39 @@
         }
       ]
     },
+    "constrains/global.rbac.serviceAccount.name!=null+global.rbac.serviceAccount.name=false+1more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name?@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name!=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name=false"
+        }
+      ]
+    },
+    "constrains/global.rbac.serviceAccount.name!=null+global.rbac.serviceAccount.name=true+1more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name?@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name=true"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name!=null"
+        }
+      ]
+    },
     "constrains/global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+1more": {
       "allOf": [
         {
           "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name?@3"
         },
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name@4"
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name@5"
         },
         {
           "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name!=null"
@@ -1365,50 +2346,123 @@
           "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name?@3"
         },
         {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name!=null"
+        }
+      ]
+    },
+    "constrains/global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+1more@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name?@3"
+        },
+        {
           "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name!=null"
         },
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name@3"
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name@2"
+        }
+      ]
+    },
+    "constrains/global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+2more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name?@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name!=null"
         }
       ]
     },
     "constrains/global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+3more": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null+2more"
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null+2more@3"
         },
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name!=null+global.rbac.serviceAccount.name:t+1more"
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+2more"
         }
       ]
     },
     "constrains/global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+3more@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+3more"
-      }
-    },
-    "constrains/global.rbac.serviceAccount.name+global.rbac.serviceAccount.name:t": {
-      "allOf": [
+      "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name@4"
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null+2more@4"
         },
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name:t@2"
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+1more"
         }
       ]
     },
-    "constrains/global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null+1more": {
+    "constrains/global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+3more@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name?"
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null+2more@5"
         },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+1more@2"
+        }
+      ]
+    },
+    "constrains/global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+3more@4": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null+2more@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+1more@3"
+        }
+      ]
+    },
+    "constrains/global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+4more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name!=null+global.rbac.serviceAccount.name=false+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null+2more"
+        }
+      ]
+    },
+    "constrains/global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+4more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name!=null+global.rbac.serviceAccount.name=true+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null+2more@2"
+        }
+      ]
+    },
+    "constrains/global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+4more@3": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+2more@2"
+        }
+      ]
+    },
+    "constrains/global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null": {
+      "anyOf": [
         {
           "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name=null"
         },
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name@2"
+          "not": {
+            "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name@7"
+          }
         }
       ]
+    },
+    "constrains/global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null+1more": {
+      "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null+1more@2"
     },
     "constrains/global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null+1more@2": {
       "anyOf": [
@@ -1419,7 +2473,9 @@
           "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name=null"
         },
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name@2"
+          "not": {
+            "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name@7"
+          }
         }
       ]
     },
@@ -1429,27 +2485,74 @@
           "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null+1more"
         },
         {
-          "$ref": "#/$defs/constrains~1operator.global.rbac.serviceAccount.name:t@2"
+          "$ref": "#/$defs/constrains~1operator.global.rbac.serviceAccount.name=false"
         }
       ]
     },
     "constrains/global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null+2more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null+1more@2"
+          "$ref": "#/$defs/constrains~1operator.global.rbac.serviceAccount.name=true"
         },
         {
-          "$ref": "#/$defs/constrains~1operator.global.rbac.serviceAccount.name@3"
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null+1more"
         }
       ]
     },
     "constrains/global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null+2more@3": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null+1more@2"
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null+1more"
         },
         {
-          "$ref": "#/$defs/constrains~1operator.global.rbac.serviceAccount.name@2"
+          "$ref": "#/$defs/constrains~1operator.global.rbac.serviceAccount.name+1more"
+        }
+      ]
+    },
+    "constrains/global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null+2more@4": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.global.rbac.serviceAccount.name@5"
+        }
+      ]
+    },
+    "constrains/global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null+2more@5": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1operator.global.rbac.serviceAccount.name@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null+1more"
+        }
+      ]
+    },
+    "constrains/global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null+2more@6": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.global.rbac.serviceAccount.name@3"
+        }
+      ]
+    },
+    "constrains/global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null+3more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null+1more"
+        },
+        {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1operator.global.rbac.serviceAccount.name"
+            },
+            {
+              "$ref": "#/$defs/constrains~1operator.global.rbac.serviceAccount.name@6"
+            }
+          ]
         }
       ]
     },
@@ -1497,6 +2600,43 @@
       ],
       "type": "object"
     },
+    "constrains/global.rbac.serviceAccount.name=false": {
+      "properties": {
+        "global": {
+          "properties": {
+            "rbac": {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "name": {
+                      "enum": [
+                        false
+                      ]
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "rbac"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
+    },
     "constrains/global.rbac.serviceAccount.name=null": {
       "properties": {
         "global": {
@@ -1508,6 +2648,43 @@
                     "name": {
                       "enum": [
                         null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "rbac"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
+    },
+    "constrains/global.rbac.serviceAccount.name=true": {
+      "properties": {
+        "global": {
+          "properties": {
+            "rbac": {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "name": {
+                      "enum": [
+                        true
                       ]
                     }
                   },
@@ -1575,41 +2752,6 @@
       "type": "object"
     },
     "constrains/global.rbac.serviceAccount.name@2": {
-      "not": {
-        "properties": {
-          "global": {
-            "properties": {
-              "rbac": {
-                "properties": {
-                  "serviceAccount": {
-                    "properties": {
-                      "name": {}
-                    },
-                    "required": [
-                      "name"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "serviceAccount"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "rbac"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "global"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/global.rbac.serviceAccount.name@3": {
       "properties": {
         "global": {
           "properties": {
@@ -1644,7 +2786,7 @@
       ],
       "type": "object"
     },
-    "constrains/global.rbac.serviceAccount.name@4": {
+    "constrains/global.rbac.serviceAccount.name@3": {
       "properties": {
         "global": {
           "properties": {
@@ -1680,7 +2822,77 @@
       ],
       "type": "object"
     },
+    "constrains/global.rbac.serviceAccount.name@4": {
+      "properties": {
+        "global": {
+          "properties": {
+            "rbac": {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "name": {
+                      "type": "null"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "rbac"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
+    },
     "constrains/global.rbac.serviceAccount.name@5": {
+      "properties": {
+        "global": {
+          "properties": {
+            "rbac": {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "name": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "rbac"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
+    },
+    "constrains/global.rbac.serviceAccount.name@6": {
       "properties": {
         "global": {
           "properties": {
@@ -1691,6 +2903,39 @@
                     "name": {
                       "type": "object"
                     }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "rbac"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
+    },
+    "constrains/global.rbac.serviceAccount.name@7": {
+      "properties": {
+        "global": {
+          "properties": {
+            "rbac": {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "name": {}
                   },
                   "required": [
                     "name"
@@ -1928,23 +3173,16 @@
       ],
       "type": "object"
     },
-    "constrains/nameOverride+nameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "properties": {
-            "nameOverride": {
-              "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name~1string;pattern-x20-x30"
-            }
-          },
-          "required": [
-            "nameOverride"
-          ],
-          "type": "object"
+    "constrains/nameOverride": {
+      "properties": {
+        "nameOverride": {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name~1string;pattern-x20-x30"
         }
-      ]
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
     },
     "constrains/nameOverride:t": {
       "not": {
@@ -1961,6 +3199,232 @@
         "nameOverride"
       ],
       "type": "object"
+    },
+    "constrains/nameOverride=false": {
+      "properties": {
+        "nameOverride": {
+          "enum": [
+            false
+          ]
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride=true": {
+      "properties": {
+        "nameOverride": {
+          "enum": [
+            true
+          ]
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride@2": {
+      "properties": {
+        "nameOverride": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/operator+operator.global+operator.global.rbac+operator.global.rbac.create:t+7more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1operator.global.rbac.serviceAccount.name:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.global.rbac.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.global.rbac.serviceAccount.name=true"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.global.rbac.serviceAccount.name@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.global.rbac.serviceAccount.name@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.global.rbac.serviceAccount.name+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.global.rbac.serviceAccount.name"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.global.rbac.serviceAccount.name@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.global.rbac.serviceAccount.name=false"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.global.rbac.serviceAccount.name@6"
+        }
+      ]
+    },
+    "constrains/operator+operator.global.rbac.create:t+operator.nameOverride+5more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.global.rbac.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.starrocksOperator.watchNamespace:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.nameOverride=false"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.nameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.nameOverride=true"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.nameOverride@2"
+        }
+      ]
+    },
+    "constrains/operator+operator.global.rbac.create:t+operator.nameOverride+5more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1operator.nameOverride=false"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.global.rbac.create:t+operator.starrocksOperator.enabled:t+1more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.nameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.nameOverride=true"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.nameOverride@2"
+        }
+      ]
+    },
+    "constrains/operator+operator.global.rbac.create:t+operator.starrocksOperator+6more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1operator.global.rbac.create:t+operator.starrocksOperator.enabled:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator+operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+2more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+3more@2"
+        }
+      ]
+    },
+    "constrains/operator+operator.global.rbac.create:t+operator.starrocksOperator+7more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1operator+operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+2more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+3more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.global.rbac.create:t+operator.starrocksOperator.enabled:t+1more@2"
+        }
+      ]
+    },
+    "constrains/operator+operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+1more": {
+      "$ref": "#/$defs/constrains~1operator+operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+1more@3"
+    },
+    "constrains/operator+operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+1more@2": {
+      "$ref": "#/$defs/constrains~1operator+operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+1more@3"
+    },
+    "constrains/operator+operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+1more@3": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "operator": {
+                "$ref": "#/$defs/constrains~1starrocksOperator.namespaceOverride@5"
+              }
+            },
+            "required": [
+              "operator"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "operator": {
+              "$ref": "#/$defs/constrains~1starrocksOperator.namespaceOverride@2"
+            }
+          },
+          "required": [
+            "operator"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "operator": {
+              "$ref": "#/$defs/constrains~1starrocksOperator.namespaceOverride+starrocksOperator.namespaceOverride=null"
+            }
+          },
+          "required": [
+            "operator"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "operator": {
+              "$ref": "#/$defs/constrains~1starrocksOperator.namespaceOverride@3"
+            }
+          },
+          "required": [
+            "operator"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/operator+operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+2more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1operator+operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.starrocksOperator.namespaceOverride:t"
+        }
+      ]
+    },
+    "constrains/operator+operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+2more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1operator.starrocksOperator.namespaceOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator+operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+1more@2"
+        }
+      ]
     },
     "constrains/operator.global.rbac": {
       "$ref": "#/$defs/constrains~1operator.global.rbac@3"
@@ -1979,9 +3443,47 @@
       }
     },
     "constrains/operator.global.rbac.create:t": {
+      "not": {
+        "$ref": "#/$defs/constrains~1operator.global.rbac.create:t@2"
+      }
+    },
+    "constrains/operator.global.rbac.create:t+operator.starrocksOperator.enabled:t": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.global.rbac.create:t@2"
+        }
+      ]
+    },
+    "constrains/operator.global.rbac.create:t+operator.starrocksOperator.enabled:t+1more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.starrocksOperator.watchNamespace:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.global.rbac.create:t@2"
+        }
+      ]
+    },
+    "constrains/operator.global.rbac.create:t+operator.starrocksOperator.enabled:t+1more@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1operator.global.rbac.create:t+operator.starrocksOperator.enabled:t+1more"
+      }
+    },
+    "constrains/operator.global.rbac.create:t+operator.starrocksOperator.enabled:t@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1operator.global.rbac.create:t+operator.starrocksOperator.enabled:t"
+      }
+    },
+    "constrains/operator.global.rbac.create:t@2": {
       "properties": {
         "operator": {
-          "$ref": "#/$defs/constrains~1global.rbac.create:t"
+          "$ref": "#/$defs/constrains~1global.rbac.create:t@2"
         }
       },
       "required": [
@@ -1993,19 +3495,6 @@
       "not": {
         "$ref": "#/$defs/constrains~1operator.global.rbac.serviceAccount@2"
       }
-    },
-    "constrains/operator.global.rbac.serviceAccount+operator.global.rbac.serviceAccount.name+1more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1operator.global.rbac.serviceAccount.name@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1operator.global.rbac.serviceAccount.name:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1operator.global.rbac.serviceAccount.name@2"
-        }
-      ]
     },
     "constrains/operator.global.rbac.serviceAccount.annotations": {
       "not": {
@@ -2020,7 +3509,33 @@
         "type": "object"
       }
     },
-    "constrains/operator.global.rbac.serviceAccount.annotations+1more": {
+    "constrains/operator.global.rbac.serviceAccount.labels": {
+      "not": {
+        "properties": {
+          "operator": {
+            "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels@4"
+          }
+        },
+        "required": [
+          "operator"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/operator.global.rbac.serviceAccount.name": {
+      "not": {
+        "properties": {
+          "operator": {
+            "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name@7"
+          }
+        },
+        "required": [
+          "operator"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/operator.global.rbac.serviceAccount.name+1more": {
       "properties": {
         "operator": {
           "allOf": [
@@ -2028,14 +3543,7 @@
               "type": "object"
             },
             {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations@2"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations=null"
-                }
-              ]
+              "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null"
             }
           ]
         }
@@ -2044,19 +3552,6 @@
         "operator"
       ],
       "type": "object"
-    },
-    "constrains/operator.global.rbac.serviceAccount.name": {
-      "not": {
-        "properties": {
-          "operator": {
-            "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name@5"
-          }
-        },
-        "required": [
-          "operator"
-        ],
-        "type": "object"
-      }
     },
     "constrains/operator.global.rbac.serviceAccount.name:t": {
       "not": {
@@ -2074,7 +3569,53 @@
       ],
       "type": "object"
     },
+    "constrains/operator.global.rbac.serviceAccount.name=false": {
+      "properties": {
+        "operator": {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name=false"
+        }
+      },
+      "required": [
+        "operator"
+      ],
+      "type": "object"
+    },
+    "constrains/operator.global.rbac.serviceAccount.name=true": {
+      "properties": {
+        "operator": {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name=true"
+        }
+      },
+      "required": [
+        "operator"
+      ],
+      "type": "object"
+    },
     "constrains/operator.global.rbac.serviceAccount.name@2": {
+      "not": {
+        "properties": {
+          "operator": {
+            "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name@6"
+          }
+        },
+        "required": [
+          "operator"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/operator.global.rbac.serviceAccount.name@3": {
+      "properties": {
+        "operator": {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name@2"
+        }
+      },
+      "required": [
+        "operator"
+      ],
+      "type": "object"
+    },
+    "constrains/operator.global.rbac.serviceAccount.name@4": {
       "properties": {
         "operator": {
           "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name@3"
@@ -2085,7 +3626,18 @@
       ],
       "type": "object"
     },
-    "constrains/operator.global.rbac.serviceAccount.name@3": {
+    "constrains/operator.global.rbac.serviceAccount.name@5": {
+      "properties": {
+        "operator": {
+          "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name@5"
+        }
+      },
+      "required": [
+        "operator"
+      ],
+      "type": "object"
+    },
+    "constrains/operator.global.rbac.serviceAccount.name@6": {
       "properties": {
         "operator": {
           "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.name@4"
@@ -2131,11 +3683,74 @@
     "constrains/operator.nameOverride": {
       "properties": {
         "operator": {
+          "$ref": "#/$defs/constrains~1nameOverride"
+        }
+      },
+      "required": [
+        "operator"
+      ],
+      "type": "object"
+    },
+    "constrains/operator.nameOverride:t": {
+      "not": {
+        "$ref": "#/$defs/constrains~1operator.nameOverride:t@2"
+      }
+    },
+    "constrains/operator.nameOverride:t@2": {
+      "properties": {
+        "operator": {
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+        }
+      },
+      "required": [
+        "operator"
+      ],
+      "type": "object"
+    },
+    "constrains/operator.nameOverride=false": {
+      "properties": {
+        "operator": {
+          "$ref": "#/$defs/constrains~1nameOverride=false"
+        }
+      },
+      "required": [
+        "operator"
+      ],
+      "type": "object"
+    },
+    "constrains/operator.nameOverride=true": {
+      "properties": {
+        "operator": {
+          "$ref": "#/$defs/constrains~1nameOverride=true"
+        }
+      },
+      "required": [
+        "operator"
+      ],
+      "type": "object"
+    },
+    "constrains/operator.nameOverride@2": {
+      "properties": {
+        "operator": {
+          "$ref": "#/$defs/constrains~1nameOverride@2"
+        }
+      },
+      "required": [
+        "operator"
+      ],
+      "type": "object"
+    },
+    "constrains/operator.nameOverride@3": {
+      "properties": {
+        "operator": {
           "properties": {
             "nameOverride": {
               "anyOf": [
                 {
-                  "maxItems": 0,
+                  "items": {
+                    "pattern": "^[A-Za-z0-9_./+-]*$",
+                    "type": "string"
+                  },
                   "type": "array"
                 }
               ]
@@ -2152,41 +3767,94 @@
       ],
       "type": "object"
     },
-    "constrains/operator.nameOverride:t": {
-      "properties": {
-        "operator": {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        }
-      },
-      "required": [
-        "operator"
-      ],
-      "type": "object"
+    "constrains/operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+2more": {
+      "$ref": "#/$defs/constrains~1operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+2more@3"
     },
-    "constrains/operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+1more": {
+    "constrains/operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+2more@2": {
+      "$ref": "#/$defs/constrains~1operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+2more@3"
+    },
+    "constrains/operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+2more@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1operator.starrocksOperator.namespaceOverride+1more"
+          "properties": {
+            "operator": {
+              "$ref": "#/$defs/constrains~1starrocksOperator.namespaceOverride"
+            }
+          },
+          "required": [
+            "operator"
+          ],
+          "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1operator.starrocksOperator.namespaceOverride+1more@2"
+          "properties": {
+            "operator": {
+              "$ref": "#/$defs/constrains~1starrocksOperator.namespaceOverride@4"
+            }
+          },
+          "required": [
+            "operator"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "operator": {
+              "$ref": "#/$defs/constrains~1starrocksOperator.namespaceOverride=true"
+            }
+          },
+          "required": [
+            "operator"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "operator": {
+              "$ref": "#/$defs/constrains~1starrocksOperator.namespaceOverride=false"
+            }
+          },
+          "required": [
+            "operator"
+          ],
+          "type": "object"
         }
       ]
     },
-    "constrains/operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+1more@2": {
-      "anyOf": [
+    "constrains/operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+3more": {
+      "allOf": [
         {
-          "$ref": "#/$defs/constrains~1operator.starrocksOperator.namespaceOverride+1more@4"
+          "$ref": "#/$defs/constrains~1operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+2more"
         },
         {
-          "$ref": "#/$defs/constrains~1operator.starrocksOperator.namespaceOverride+1more@3"
+          "$ref": "#/$defs/constrains~1operator.starrocksOperator.namespaceOverride:t"
+        }
+      ]
+    },
+    "constrains/operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+3more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1operator.starrocksOperator.namespaceOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+2more@2"
         }
       ]
     },
     "constrains/operator.starrocksOperator.enabled:t": {
+      "not": {
+        "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t@3"
+      }
+    },
+    "constrains/operator.starrocksOperator.enabled:t@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t@3"
+      }
+    },
+    "constrains/operator.starrocksOperator.enabled:t@3": {
       "properties": {
         "operator": {
-          "$ref": "#/$defs/constrains~1starrocksOperator.enabled:t"
+          "$ref": "#/$defs/constrains~1starrocksOperator.enabled:t@2"
         }
       },
       "required": [
@@ -2194,58 +3862,10 @@
       ],
       "type": "object"
     },
-    "constrains/operator.starrocksOperator.namespaceOverride+1more": {
-      "$ref": "#/$defs/constrains~1operator.starrocksOperator.namespaceOverride+1more@6"
-    },
-    "constrains/operator.starrocksOperator.namespaceOverride+1more@2": {
-      "$ref": "#/$defs/constrains~1operator.starrocksOperator.namespaceOverride+1more@5"
-    },
-    "constrains/operator.starrocksOperator.namespaceOverride+1more@3": {
-      "$ref": "#/$defs/constrains~1operator.starrocksOperator.namespaceOverride+1more@6"
-    },
-    "constrains/operator.starrocksOperator.namespaceOverride+1more@4": {
-      "$ref": "#/$defs/constrains~1operator.starrocksOperator.namespaceOverride+1more@5"
-    },
-    "constrains/operator.starrocksOperator.namespaceOverride+1more@5": {
-      "allOf": [
-        {
-          "properties": {
-            "operator": {
-              "$ref": "#/$defs/constrains~1starrocksOperator.namespaceOverride@2"
-            }
-          },
-          "required": [
-            "operator"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1operator.starrocksOperator.namespaceOverride:t"
-        }
-      ]
-    },
-    "constrains/operator.starrocksOperator.namespaceOverride+1more@6": {
-      "allOf": [
-        {
-          "properties": {
-            "operator": {
-              "$ref": "#/$defs/constrains~1starrocksOperator.namespaceOverride@3"
-            }
-          },
-          "required": [
-            "operator"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1operator.starrocksOperator.namespaceOverride:t"
-        }
-      ]
-    },
     "constrains/operator.starrocksOperator.namespaceOverride:t": {
       "properties": {
         "operator": {
-          "$ref": "#/$defs/constrains~1starrocksOperator.namespaceOverride:t@2"
+          "$ref": "#/$defs/constrains~1starrocksOperator.namespaceOverride:t"
         }
       },
       "required": [
@@ -2255,13 +3875,18 @@
     },
     "constrains/operator.starrocksOperator.watchNamespace:t": {
       "not": {
-        "$ref": "#/$defs/constrains~1operator.starrocksOperator.watchNamespace:t@2"
+        "$ref": "#/$defs/constrains~1operator.starrocksOperator.watchNamespace:t@3"
       }
     },
     "constrains/operator.starrocksOperator.watchNamespace:t@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1operator.starrocksOperator.watchNamespace:t@3"
+      }
+    },
+    "constrains/operator.starrocksOperator.watchNamespace:t@3": {
       "properties": {
         "operator": {
-          "$ref": "#/$defs/constrains~1starrocksOperator.watchNamespace:t@2"
+          "$ref": "#/$defs/constrains~1starrocksOperator.watchNamespace:t@3"
         }
       },
       "required": [
@@ -2269,98 +3894,66 @@
       ],
       "type": "object"
     },
-    "constrains/starrocksOperator+starrocksOperator.namespaceOverride": {
-      "$ref": "#/$defs/constrains~1starrocksOperator+starrocksOperator.namespaceOverride@4"
-    },
     "constrains/starrocksOperator+starrocksOperator.namespaceOverride+1more": {
       "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1starrocksOperator.namespaceOverride:t"
-        },
         {
           "$ref": "#/$defs/constrains~1starrocksOperator.namespaceOverride@3"
         },
         {
-          "$ref": "#/$defs/constrains~1starrocksOperator.namespaceOverride@2"
-        }
-      ]
-    },
-    "constrains/starrocksOperator+starrocksOperator.namespaceOverride+1more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1starrocksOperator.namespaceOverride+starrocksOperator.namespaceOverride:t@2"
+          "not": {
+            "$ref": "#/$defs/constrains~1starrocksOperator.namespaceOverride@5"
+          }
         },
         {
-          "$ref": "#/$defs/constrains~1starrocksOperator.namespaceOverride+starrocksOperator.namespaceOverride:t"
+          "$ref": "#/$defs/constrains~1starrocksOperator.namespaceOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1starrocksOperator.namespaceOverride+starrocksOperator.namespaceOverride=null"
         }
       ]
     },
-    "constrains/starrocksOperator+starrocksOperator.namespaceOverride@2": {
+    "constrains/starrocksOperator+starrocksOperator.namespaceOverride+2more": {
       "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1starrocksOperator+starrocksOperator.namespaceOverride+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1starrocksOperator.namespaceOverride:t"
+        }
+      ]
+    },
+    "constrains/starrocksOperator+starrocksOperator.namespaceOverride+2more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1starrocksOperator.namespaceOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1starrocksOperator.namespaceOverride=false"
+        },
+        {
+          "$ref": "#/$defs/constrains~1starrocksOperator.namespaceOverride=true"
+        },
         {
           "$ref": "#/$defs/constrains~1starrocksOperator.namespaceOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1starrocksOperator.namespaceOverride@4"
         }
       ]
     },
-    "constrains/starrocksOperator+starrocksOperator.namespaceOverride@3": {
+    "constrains/starrocksOperator+starrocksOperator.namespaceOverride+3more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1starrocksOperator+starrocksOperator.namespaceOverride@2"
+          "$ref": "#/$defs/constrains~1starrocksOperator+starrocksOperator.namespaceOverride+2more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1starrocksOperator.namespaceOverride@4"
-        }
-      ]
-    },
-    "constrains/starrocksOperator+starrocksOperator.namespaceOverride@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1starrocksOperator+starrocksOperator.namespaceOverride@3"
-        },
-        {
-          "properties": {
-            "starrocksOperator": {
-              "properties": {
-                "namespaceOverride": {
-                  "type": "boolean"
-                }
-              },
-              "required": [
-                "namespaceOverride"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "starrocksOperator"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "starrocksOperator": {
-              "properties": {
-                "namespaceOverride": {
-                  "type": "number"
-                }
-              },
-              "required": [
-                "namespaceOverride"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "starrocksOperator"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/constrains~1starrocksOperator.namespaceOverride:t"
         }
       ]
     },
     "constrains/starrocksOperator.enabled:t": {
+      "not": {
+        "$ref": "#/$defs/constrains~1starrocksOperator.enabled:t@2"
+      }
+    },
+    "constrains/starrocksOperator.enabled:t@2": {
       "properties": {
         "starrocksOperator": {
           "properties": {
@@ -2380,72 +3973,6 @@
       "type": "object"
     },
     "constrains/starrocksOperator.namespaceOverride": {
-      "not": {
-        "properties": {
-          "starrocksOperator": {
-            "properties": {
-              "namespaceOverride": {
-                "pattern": "<$|<n$|<no $|<no v$|<no va$|<no val$|<no valu$|<no value$|<no value>|<no$|^ $|^ v$|^ va$|^ val$|^ valu$|^ value$|^ value>|^ value>$|^$|^<$|^<n$|^<no $|^<no v$|^<no va$|^<no val$|^<no valu$|^<no value$|^<no value>$|^<no$|^>|^>$|^a$|^al$|^alu$|^alue$|^alue>|^alue>$|^e$|^e>|^e>$|^l$|^lu$|^lue$|^lue>|^lue>$|^n$|^no $|^no v$|^no va$|^no val$|^no valu$|^no value$|^no value>|^no value>$|^no$|^o $|^o v$|^o va$|^o val$|^o valu$|^o value$|^o value>|^o value>$|^o$|^u$|^ue$|^ue>|^ue>$|^v$|^va$|^val$|^valu$|^value$|^value>|^value>$",
-                "type": "string"
-              }
-            },
-            "required": [
-              "namespaceOverride"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "starrocksOperator"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/starrocksOperator.namespaceOverride+starrocksOperator.namespaceOverride:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1starrocksOperator.namespaceOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1starrocksOperator.namespaceOverride:t@2"
-        }
-      ]
-    },
-    "constrains/starrocksOperator.namespaceOverride+starrocksOperator.namespaceOverride:t@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1starrocksOperator.namespaceOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1starrocksOperator.namespaceOverride@2"
-        }
-      ]
-    },
-    "constrains/starrocksOperator.namespaceOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1starrocksOperator.namespaceOverride:t@2"
-      }
-    },
-    "constrains/starrocksOperator.namespaceOverride:t@2": {
-      "properties": {
-        "starrocksOperator": {
-          "properties": {
-            "namespaceOverride": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "namespaceOverride"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "starrocksOperator"
-      ],
-      "type": "object"
-    },
-    "constrains/starrocksOperator.namespaceOverride@2": {
       "properties": {
         "starrocksOperator": {
           "properties": {
@@ -2464,7 +3991,105 @@
       ],
       "type": "object"
     },
-    "constrains/starrocksOperator.namespaceOverride@3": {
+    "constrains/starrocksOperator.namespaceOverride+starrocksOperator.namespaceOverride=null": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/constrains~1starrocksOperator.namespaceOverride@5"
+              }
+            },
+            {
+              "properties": {
+                "starrocksOperator": {
+                  "properties": {
+                    "namespaceOverride": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "namespaceOverride"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "starrocksOperator"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/starrocksOperator.namespaceOverride:t": {
+      "properties": {
+        "starrocksOperator": {
+          "properties": {
+            "namespaceOverride": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "namespaceOverride"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "starrocksOperator"
+      ],
+      "type": "object"
+    },
+    "constrains/starrocksOperator.namespaceOverride=false": {
+      "properties": {
+        "starrocksOperator": {
+          "properties": {
+            "namespaceOverride": {
+              "enum": [
+                false
+              ]
+            }
+          },
+          "required": [
+            "namespaceOverride"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "starrocksOperator"
+      ],
+      "type": "object"
+    },
+    "constrains/starrocksOperator.namespaceOverride=true": {
+      "properties": {
+        "starrocksOperator": {
+          "properties": {
+            "namespaceOverride": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "namespaceOverride"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "starrocksOperator"
+      ],
+      "type": "object"
+    },
+    "constrains/starrocksOperator.namespaceOverride@2": {
       "properties": {
         "starrocksOperator": {
           "properties": {
@@ -2484,13 +4109,49 @@
       ],
       "type": "object"
     },
+    "constrains/starrocksOperator.namespaceOverride@3": {
+      "properties": {
+        "starrocksOperator": {
+          "properties": {
+            "namespaceOverride": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "namespaceOverride"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "starrocksOperator"
+      ],
+      "type": "object"
+    },
     "constrains/starrocksOperator.namespaceOverride@4": {
       "properties": {
         "starrocksOperator": {
           "properties": {
             "namespaceOverride": {
-              "type": "string"
+              "type": "number"
             }
+          },
+          "required": [
+            "namespaceOverride"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "starrocksOperator"
+      ],
+      "type": "object"
+    },
+    "constrains/starrocksOperator.namespaceOverride@5": {
+      "properties": {
+        "starrocksOperator": {
+          "properties": {
+            "namespaceOverride": {}
           },
           "required": [
             "namespaceOverride"
@@ -2505,10 +4166,15 @@
     },
     "constrains/starrocksOperator.watchNamespace:t": {
       "not": {
-        "$ref": "#/$defs/constrains~1starrocksOperator.watchNamespace:t@2"
+        "$ref": "#/$defs/constrains~1starrocksOperator.watchNamespace:t@3"
       }
     },
     "constrains/starrocksOperator.watchNamespace:t@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1starrocksOperator.watchNamespace:t@3"
+      }
+    },
+    "constrains/starrocksOperator.watchNamespace:t@3": {
       "properties": {
         "starrocksOperator": {
           "properties": {
@@ -2586,36 +4252,47 @@
         }
       ]
     },
-    "values/operator/anyOf/null,boolean,number+string": {
-      "anyOf": [
-        {
-          "type": [
-            "null",
-            "boolean",
-            "number"
-          ]
-        },
-        {
-          "$ref": "#/$defs/values~1operator~1string@3"
-        }
-      ]
+    "values/not/:t": {
+      "not": {
+        "$ref": "#/$defs/t"
+      }
     },
-    "values/operator/not/keywords/pattern": {
+    "values/not/keywords/pattern": {
       "not": {
         "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
       }
     },
-    "values/operator/not/keywords/pattern@2": {
+    "values/not/keywords/pattern@2": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "values/not/keywords/pattern@3": {
       "not": {
         "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
       }
     },
-    "values/operator/not/keywords/pattern@3": {
+    "values/not/keywords/pattern@4": {
       "not": {
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
     },
-    "values/operator/object": {
+    "values/not/keywords/pattern@5": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
+      }
+    },
+    "values/not/keywords/pattern@6": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
+    "values/not/keywords/pattern@7": {
+      "not": {
+        "pattern": "^[-?:]([ \\t]|$)"
+      }
+    },
+    "values/object": {
       "additionalProperties": {
         "anyOf": [
           {
@@ -2626,7 +4303,7 @@
             "type": "integer"
           },
           {
-            "$ref": "#/$defs/values~1operator~1string"
+            "$ref": "#/$defs/values~1string"
           },
           {
             "type": "number"
@@ -2644,49 +4321,34 @@
         ]
       },
       "propertyNames": {
-        "$ref": "#/$defs/values~1operator~1string"
+        "$ref": "#/$defs/values~1string"
       },
       "type": "object"
     },
+    "values/operator.starrocksOperator.image": {
+      "additionalProperties": {},
+      "properties": {
+        "repository": {
+          "description": "image sliced by \"repository:tag\""
+        },
+        "tag": {}
+      }
+    },
+    "values/operator/anyOf/null,boolean,number+string": {
+      "anyOf": [
+        {
+          "type": [
+            "null",
+            "boolean",
+            "number"
+          ]
+        },
+        {
+          "$ref": "#/$defs/values~1operator~1string"
+        }
+      ]
+    },
     "values/operator/string": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
-        }
-      ],
-      "type": "string"
-    },
-    "values/operator/string@2": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^(null|Null|NULL)[ \\t]+#"
-          }
-        },
-        {
-          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-          }
-        }
-      ],
-      "type": "string"
-    },
-    "values/operator/string@3": {
       "not": {
         "pattern": "[^A-Za-z0-9_./+-]"
       },
@@ -2848,6 +4510,63 @@
       "items": {},
       "type": "array"
     },
+    "values/string": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "values/string;pattern-a-za-z0-9-t": {
+      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "values/string;pattern-null-null-null": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "values/string;pattern-r-n": {
+      "not": {
+        "pattern": "^[A-Za-z]+\\n[A-Za-z]+$"
+      },
+      "pattern": "[\\r\\n]",
+      "type": "string"
+    },
+    "values/string;pattern-t": {
+      "pattern": "^[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "values/string@2": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^(null|Null|NULL)[ \\t]+#"
+          }
+        },
+        {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+          }
+        }
+      ],
+      "type": "string"
+    },
     "when/operator!=null/then/fail": {
       "if": {
         "properties": {
@@ -2874,19 +4593,95 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t"
+            "$ref": "#/$defs/constrains~1global+global.rbac+global.rbac!=null+global.rbac=null+operator@4"
           },
           {
-            "$ref": "#/$defs/constrains~1operator.global.rbac.create:t"
+            "$ref": "#/$defs/constrains~1operator.global.rbac"
           },
           {
-            "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.labels+1more"
+            "$ref": "#/$defs/constrains~1global.rbac.create"
           },
           {
-            "$ref": "#/$defs/constrains~1operator.global.rbac.serviceAccount+operator.global.rbac.serviceAccount.name+1more"
+            "$ref": "#/$defs/constrains~1global.rbac"
           },
           {
-            "$ref": "#/$defs/constrains~1operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+1more@2"
+            "$ref": "#/$defs/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+2more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t@3"
+          },
+          {
+            "properties": {
+              "operator": {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1global.rbac.create@4"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1global.rbac.create=null"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "operator"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/when~1operator!=null~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t@3"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "operator": {
+            "additionalProperties": {},
+            "description": "Default values for operator.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
+            "properties": {
+              "starrocksOperator": {
+                "additionalProperties": {},
+                "properties": {
+                  "image": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1operator+operator.global.rbac.create:t+operator.starrocksOperator+6more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels+global.rbac.serviceAccount.labels=null+1more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1operator+operator.global+operator.global.rbac+operator.global.rbac.create:t+7more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1operator.global.rbac.create:t@2"
           }
         ]
       },
@@ -2909,9 +4704,7 @@
                           "labels": {
                             "anyOf": [
                               {
-                                "not": {
-                                  "$ref": "#/$defs/t"
-                                }
+                                "$ref": "#/$defs/values~1not~1:t"
                               },
                               {
                                 "not": {
@@ -2947,84 +4740,15 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "operator": {
-            "additionalProperties": {},
-            "description": "Default values for operator.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
-            "properties": {
-              "starrocksOperator": {
-                "additionalProperties": {},
-                "properties": {
-                  "image": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1global.rbac.serviceAccount"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount!=null+3more@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1operator.global.rbac@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global.rbac@3"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "operator": {
-            "additionalProperties": {},
-            "description": "Default values for operator.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
-            "properties": {
-              "global": {
-                "additionalProperties": {},
-                "properties": {
-                  "rbac": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "serviceAccount": {
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1global.rbac+global.rbac!=null+global.rbac=null+global.rbac?+operator.global.rbac@4"
+            "$ref": "#/$defs/constrains~1global+global.rbac+global.rbac!=null+global.rbac=null+operator@4"
           },
           {
             "$ref": "#/$defs/constrains~1global.rbac"
           },
           {
-            "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t"
+            "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t@3"
           },
           {
             "properties": {
@@ -3059,24 +4783,290 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1operator+operator.global.rbac.create:t+operator.starrocksOperator+6more"
+              },
+              {
+                "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t@3"
+              },
+              {
+                "$ref": "#/$defs/constrains~1operator.global.rbac.create:t@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1operator+operator.global.rbac.create:t+operator.starrocksOperator+7more"
+              },
+              {
+                "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t@3"
+              },
+              {
+                "$ref": "#/$defs/constrains~1operator.starrocksOperator.watchNamespace:t@3"
+              },
+              {
+                "$ref": "#/$defs/constrains~1operator.global.rbac.create:t@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
+              },
+              {
+                "$ref": "#/$defs/constrains~1operator+operator.global.rbac.create:t+operator.nameOverride+5more@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1operator+operator.global.rbac.create:t+operator.nameOverride+5more"
+              },
+              {
+                "$ref": "#/$defs/constrains~1operator.starrocksOperator.watchNamespace:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t@3"
+              },
+              {
+                "$ref": "#/$defs/constrains~1operator.global.rbac.create:t@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "operator": {
+            "additionalProperties": {},
+            "description": "Default values for operator.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
+            "properties": {
+              "global": {
+                "additionalProperties": {},
+                "properties": {
+                  "rbac": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "serviceAccount": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "name": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/$defs/values~1string;pattern-r-n"
+                              },
+                              {
+                                "$ref": "#/$defs/values~1string@2"
+                              },
+                              {
+                                "allOf": [
+                                  {
+                                    "$ref": "#/$defs/values~1not~1keywords~1pattern@7"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/values~1not~1keywords~1pattern"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/values~1not~1keywords~1pattern@6"
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "[ \\t]#"
+                                    }
+                                  },
+                                  {
+                                    "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/values~1not~1keywords~1pattern@4"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/values~1not~1keywords~1pattern@5"
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": ":[ \\t]|:$"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "[\\r\\n]"
+                                    }
+                                  },
+                                  {
+                                    "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
+                                  }
+                                ],
+                                "description": "Name of the object being referenced.",
+                                "type": "string"
+                              },
+                              {
+                                "$ref": "#/$defs/values~1not~1:t"
+                              },
+                              {
+                                "$ref": "#/$defs/values~1object"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+4more@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.name+5more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations"
-          },
           {
             "$ref": "#/$defs/constrains~1global.rbac.serviceAccount@2"
           },
           {
-            "$ref": "#/$defs/constrains~1operator.global.rbac.serviceAccount.name"
+            "$ref": "#/$defs/constrains~1global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount!=null+3more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1operator.global.rbac"
+          },
+          {
+            "$ref": "#/$defs/constrains~1global.rbac"
+          },
+          {
+            "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t@3"
+          },
+          {
+            "properties": {
+              "operator": {
+                "allOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1global.rbac.serviceAccount@3"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1global.rbac.serviceAccount=null"
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            "required": [
+              "operator"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/when~1operator!=null~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1operator+operator.global.rbac.create:t+operator.starrocksOperator+6more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations+2more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1operator+operator.global+operator.global.rbac+operator.global.rbac.create:t+7more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1operator.global.rbac.create:t@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "operator": {
+            "additionalProperties": {},
+            "description": "Default values for operator.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
+            "properties": {
+              "global": {
+                "additionalProperties": {},
+                "properties": {
+                  "rbac": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "serviceAccount": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "annotations": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/$defs/values~1not~1:t"
+                              },
+                              {
+                                "additionalProperties": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
+                                "type": [
+                                  "object",
+                                  "null"
+                                ]
+                              },
+                              {
+                                "not": {
+                                  "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations:helm-marker-free~1:helm-marker-free"
+                                }
+                              }
+                            ],
+                            "description": "Optional annotations to add to the serviceaccount manifest"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1global.rbac.serviceAccount@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1operator.global.rbac.serviceAccount.labels"
           },
           {
             "$ref": "#/$defs/constrains~1operator.global.rbac.serviceAccount.annotations"
+          },
+          {
+            "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.labels"
+          },
+          {
+            "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations"
           },
           {
             "$ref": "#/$defs/constrains~1operator.global.rbac.serviceAccount"
@@ -3088,31 +5078,19 @@
             "$ref": "#/$defs/constrains~1operator.global.rbac"
           },
           {
-            "$ref": "#/$defs/constrains~1operator.global.rbac.create"
+            "$ref": "#/$defs/constrains~1global.rbac.create"
           },
           {
             "$ref": "#/$defs/constrains~1global.rbac"
           },
           {
-            "$ref": "#/$defs/constrains~1global.rbac.create"
+            "$ref": "#/$defs/constrains~1operator.global.rbac.create"
           },
           {
-            "$ref": "#/$defs/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+2more"
+            "$ref": "#/$defs/constrains~1global+global.rbac+global.rbac.create+global.rbac.create!=null+33more"
           },
           {
-            "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+1more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations+5more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global+global.rbac+global.rbac.create+global.rbac.create!=null+19more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+4more"
+            "$ref": "#/$defs/constrains~1operator.global.rbac.serviceAccount.name@2"
           }
         ]
       },
@@ -3250,19 +5228,49 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t"
+            "$ref": "#/$defs/constrains~1operator.starrocksOperator.watchNamespace:t@2"
           },
           {
-            "$ref": "#/$defs/constrains~1operator.global.rbac.create:t"
+            "$ref": "#/$defs/constrains~1operator.global.rbac"
           },
           {
-            "$ref": "#/$defs/constrains~1operator.global.rbac.serviceAccount+operator.global.rbac.serviceAccount.name+1more"
+            "$ref": "#/$defs/constrains~1global.rbac.create"
           },
           {
-            "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+1more@2"
+            "$ref": "#/$defs/constrains~1global.rbac"
           },
           {
-            "$ref": "#/$defs/constrains~1operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+1more@2"
+            "$ref": "#/$defs/constrains~1operator.global.rbac.create"
+          },
+          {
+            "$ref": "#/$defs/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+2more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1operator.nameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1operator.nameOverride@3"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/when~1operator!=null~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1operator.global.rbac.create:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
           }
         ]
       },
@@ -3282,33 +5290,76 @@
                       "serviceAccount": {
                         "additionalProperties": {},
                         "properties": {
-                          "annotations": {
+                          "name": {
                             "anyOf": [
                               {
-                                "not": {
-                                  "$ref": "#/$defs/t"
-                                }
+                                "allOf": [
+                                  {
+                                    "$ref": "#/$defs/values~1not~1keywords~1pattern@7"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/values~1not~1keywords~1pattern"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/values~1not~1keywords~1pattern@6"
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "[ \\t]#"
+                                    }
+                                  },
+                                  {
+                                    "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/values~1not~1keywords~1pattern@4"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/values~1not~1keywords~1pattern@5"
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": ":[ \\t]|:$"
+                                    }
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "[\\r\\n]"
+                                    }
+                                  },
+                                  {
+                                    "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
+                                  }
+                                ],
+                                "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+                                "type": "string"
                               },
                               {
-                                "additionalProperties": {
-                                  "type": [
-                                    "string",
-                                    "null"
-                                  ]
-                                },
-                                "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
-                                "type": [
-                                  "object",
-                                  "null"
-                                ]
+                                "$ref": "#/$defs/values~1string;pattern-r-n"
                               },
                               {
-                                "not": {
-                                  "$ref": "#/$defs/constrains~1global.rbac.serviceAccount.annotations:helm-marker-free~1:helm-marker-free"
-                                }
+                                "$ref": "#/$defs/values~1string@2"
+                              },
+                              {
+                                "$ref": "#/$defs/values~1not~1:t"
+                              },
+                              {
+                                "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+                              },
+                              {
+                                "$ref": "#/$defs/values~1object"
+                              },
+                              {
+                                "$ref": "#/$defs/values~1string;pattern-t"
+                              },
+                              {
+                                "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+                                "type": "null"
+                              },
+                              {
+                                "$ref": "#/$defs/values~1string;pattern-null-null-null"
                               }
-                            ],
-                            "description": "Optional annotations to add to the serviceaccount manifest"
+                            ]
                           }
                         }
                       }
@@ -3325,49 +5376,58 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1operator.global.rbac"
+            "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount!=null+3more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1operator.global.rbac.create"
+            "$ref": "#/$defs/constrains~1global.rbac@2"
           },
           {
-            "$ref": "#/$defs/constrains~1global.rbac"
+            "$ref": "#/$defs/constrains~1operator.global.rbac@2"
           },
           {
-            "$ref": "#/$defs/constrains~1global.rbac.create"
+            "$ref": "#/$defs/constrains~1global.rbac.serviceAccount"
           },
           {
-            "$ref": "#/$defs/constrains~1operator.starrocksOperator.watchNamespace:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+2more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1operator.nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1operator.nameOverride"
+            "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t@3"
           }
         ]
       },
       "then": {
-        "$ref": "#/$defs/when~1operator!=null~1then~1fail"
+        "additionalProperties": {},
+        "properties": {
+          "operator": {
+            "additionalProperties": {},
+            "description": "Default values for operator.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
+            "properties": {
+              "global": {
+                "additionalProperties": {},
+                "properties": {
+                  "rbac": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "serviceAccount": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     {
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1global.rbac+global.rbac!=null+global.rbac=null+global.rbac?+operator.global.rbac@3"
+            "$ref": "#/$defs/constrains~1global.rbac@2"
           },
           {
-            "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t"
+            "$ref": "#/$defs/constrains~1global+global.rbac+global.rbac!=null+global.rbac=null+operator@3"
           },
           {
-            "$ref": "#/$defs/constrains~1global.rbac@3"
+            "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t@3"
           }
         ]
       },
@@ -3395,74 +5455,22 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1global.rbac+global.rbac!=null+global.rbac=null+global.rbac?+operator.global.rbac@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1operator.global.rbac"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global.rbac"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global.rbac.create"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+2more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t"
-          },
-          {
-            "properties": {
-              "operator": {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1global.rbac.create@4"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1global.rbac.create=null"
-                      }
-                    ]
-                  },
-                  {
-                    "type": "object"
-                  }
-                ]
-              }
-            },
-            "required": [
-              "operator"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/$defs/when~1operator!=null~1then~1fail"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1global.rbac.create+global.rbac.create!=null+global.rbac.create=null+2more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global.rbac+global.rbac!=null+global.rbac=null+global.rbac?+operator.global.rbac@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1operator.global.rbac@2"
+            "$ref": "#/$defs/constrains~1global.rbac@2"
           },
           {
             "$ref": "#/$defs/constrains~1global.rbac.create@2"
           },
           {
-            "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t"
+            "$ref": "#/$defs/constrains~1operator.global.rbac@2"
           },
           {
-            "$ref": "#/$defs/constrains~1global.rbac@3"
+            "$ref": "#/$defs/constrains~1global.rbac.create+global.rbac.create!=null+global.rbac.create=null+2more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1global+global.rbac+global.rbac!=null+global.rbac=null+operator@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t@3"
           }
         ]
       },
@@ -3499,77 +5507,28 @@
             "$ref": "#/$defs/constrains~1operator.global.rbac"
           },
           {
-            "$ref": "#/$defs/constrains~1operator.global.rbac.create"
+            "$ref": "#/$defs/constrains~1global.rbac.create"
           },
           {
             "$ref": "#/$defs/constrains~1global.rbac"
           },
           {
-            "$ref": "#/$defs/constrains~1global.rbac.create"
+            "$ref": "#/$defs/constrains~1operator.global.rbac.create"
           },
           {
             "$ref": "#/$defs/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+2more"
           },
           {
-            "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t"
+            "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t@3"
           },
           {
-            "$ref": "#/$defs/constrains~1operator.nameOverride:t"
+            "$ref": "#/$defs/constrains~1operator.nameOverride:t@2"
           },
           {
-            "$ref": "#/$defs/constrains~1operator.starrocksOperator.watchNamespace:t@2"
+            "$ref": "#/$defs/constrains~1operator.starrocksOperator.watchNamespace:t@3"
           },
           {
-            "$ref": "#/$defs/constrains~1operator.nameOverride"
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/$defs/when~1operator!=null~1then~1fail"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount!=null+3more@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global.rbac.serviceAccount@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1operator.global.rbac"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global.rbac"
-          },
-          {
-            "$ref": "#/$defs/constrains~1operator.starrocksOperator.enabled:t"
-          },
-          {
-            "properties": {
-              "operator": {
-                "allOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1global.rbac.serviceAccount@3"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1global.rbac.serviceAccount=null"
-                      }
-                    ]
-                  }
-                ]
-              }
-            },
-            "required": [
-              "operator"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/constrains~1operator.nameOverride@3"
           }
         ]
       },
@@ -3605,10 +5564,10 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1starrocksOperator.enabled:t"
+                "$ref": "#/$defs/constrains~1starrocksOperator.enabled:t@2"
               },
               {
-                "$ref": "#/$defs/constrains~1global.rbac.create:t"
+                "$ref": "#/$defs/constrains~1global.rbac.create:t@2"
               },
               {
                 "properties": {
@@ -3640,9 +5599,7 @@
                   "namespaceOverride": {
                     "anyOf": [
                       {
-                        "not": {
-                          "$ref": "#/$defs/t"
-                        }
+                        "$ref": "#/$defs/values~1not~1:t"
                       },
                       {
                         "not": {
@@ -3653,7 +5610,7 @@
                                   "$ref": "#/$defs/values~1operator~1anyOf~1null,boolean,number+string"
                                 },
                                 "propertyNames": {
-                                  "$ref": "#/$defs/values~1operator~1string@3"
+                                  "$ref": "#/$defs/values~1operator~1string"
                                 },
                                 "type": "object"
                               },
@@ -3671,7 +5628,7 @@
                                 "type": "array"
                               },
                               {
-                                "$ref": "#/$defs/values~1operator~1string@3"
+                                "$ref": "#/$defs/values~1operator~1string"
                               }
                             ]
                           },
@@ -3691,66 +5648,57 @@
               {
                 "allOf": [
                   {
+                    "$ref": "#/$defs/constrains~1global+global.rbac+global.rbac.create:t+global.rbac.serviceAccount+6more"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1global.rbac.create:t+starrocksOperator+starrocksOperator.enabled:t+5more"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1starrocksOperator.enabled:t@2"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1global.rbac.create:t@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1global+global.rbac+global.rbac.create:t+global.rbac.serviceAccount+7more"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1global.rbac.create:t+nameOverride+nameOverride:t+nameOverride=false+3more@2"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1global.rbac.create:t+starrocksOperator+starrocksOperator.enabled:t+6more"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1starrocksOperator.enabled:t@2"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1global.rbac.create:t@2"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1starrocksOperator.watchNamespace:t@3"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1global.rbac.create:t+nameOverride+nameOverride:t+nameOverride=false+3more"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1global+global.rbac+global.rbac.create:t+global.rbac.serviceAccount+7more@2"
+                  },
+                  {
                     "$ref": "#/$defs/constrains~1starrocksOperator.watchNamespace:t"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1starrocksOperator+starrocksOperator.namespaceOverride"
+                    "$ref": "#/$defs/constrains~1starrocksOperator.enabled:t@2"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1starrocksOperator.enabled:t"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1global.rbac.create:t"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/constrains~1starrocksOperator+starrocksOperator.namespaceOverride"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1starrocksOperator+starrocksOperator.namespaceOverride+1more@2"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1starrocksOperator.enabled:t"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1global.rbac.create:t"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1starrocksOperator.watchNamespace:t@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/constrains~1starrocksOperator+starrocksOperator.namespaceOverride+1more"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1starrocksOperator+starrocksOperator.namespaceOverride"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1starrocksOperator.enabled:t"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1global.rbac.create:t"
+                    "$ref": "#/$defs/constrains~1global.rbac.create:t@2"
                   }
                 ]
               }
@@ -3765,38 +5713,33 @@
                   "namespaceOverride": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1operator~1string@2"
+                        "$ref": "#/$defs/values~1string;pattern-r-n"
                       },
                       {
-                        "not": {
-                          "$ref": "#/$defs/t"
-                        }
+                        "$ref": "#/$defs/values~1string@2"
                       },
                       {
-                        "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-                        "type": "string"
+                        "$ref": "#/$defs/values~1not~1:t"
                       },
                       {
-                        "$ref": "#/$defs/values~1operator~1object"
+                        "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
                       },
                       {
-                        "pattern": "^[ \\t]*(#.*)?$",
-                        "type": "string"
+                        "$ref": "#/$defs/values~1object"
+                      },
+                      {
+                        "$ref": "#/$defs/values~1string;pattern-t"
                       },
                       {
                         "allOf": [
                           {
-                            "not": {
-                              "pattern": "^[-?:]([ \\t]|$)"
-                            }
+                            "$ref": "#/$defs/values~1not~1keywords~1pattern@7"
                           },
                           {
-                            "$ref": "#/$defs/values~1operator~1not~1keywords~1pattern"
+                            "$ref": "#/$defs/values~1not~1keywords~1pattern"
                           },
                           {
-                            "not": {
-                              "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                            }
+                            "$ref": "#/$defs/values~1not~1keywords~1pattern@6"
                           },
                           {
                             "not": {
@@ -3804,17 +5747,13 @@
                             }
                           },
                           {
-                            "not": {
-                              "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                            }
+                            "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
                           },
                           {
-                            "$ref": "#/$defs/values~1operator~1not~1keywords~1pattern@3"
+                            "$ref": "#/$defs/values~1not~1keywords~1pattern@4"
                           },
                           {
-                            "not": {
-                              "pattern": "^(|~|null|Null|NULL)$"
-                            }
+                            "$ref": "#/$defs/values~1not~1keywords~1pattern@5"
                           },
                           {
                             "not": {
@@ -3827,19 +5766,14 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/values~1operator~1not~1keywords~1pattern@2"
+                            "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
                           }
                         ],
                         "description": "Namespace of the referenced object.  If the object kind is non-namespace, such as \"User\" or \"Group\", and this value is not empty the Authorizer should report an error.",
                         "type": "string"
                       },
                       {
-                        "pattern": "[\\r\\n]",
-                        "type": "string"
-                      },
-                      {
-                        "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-                        "type": "string"
+                        "$ref": "#/$defs/values~1string;pattern-null-null-null"
                       },
                       {
                         "description": "Namespace of the referenced object.  If the object kind is non-namespace, such as \"User\" or \"Group\", and this value is not empty the Authorizer should report an error.",
@@ -3856,13 +5790,29 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1starrocksOperator+starrocksOperator.namespaceOverride"
+                "$ref": "#/$defs/constrains~1starrocksOperator.enabled:t@2"
               },
               {
-                "$ref": "#/$defs/constrains~1starrocksOperator.enabled:t"
+                "$ref": "#/$defs/constrains~1global.rbac.create:t@2"
               },
               {
-                "$ref": "#/$defs/constrains~1global.rbac.create:t"
+                "properties": {
+                  "starrocksOperator": {
+                    "properties": {
+                      "namespaceOverride": {
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "namespaceOverride"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "starrocksOperator"
+                ],
+                "type": "object"
               }
             ]
           },
@@ -3875,50 +5825,90 @@
                   "namespaceOverride": {
                     "anyOf": [
                       {
+                        "$ref": "#/$defs/values~1not~1:t"
+                      },
+                      {
+                        "not": {
+                          "additionalProperties": {
+                            "not": {
+                              "pattern": "[^A-Za-z0-9_.$/+: \t-]"
+                            },
+                            "pattern": "^[A-Za-z0-9_.$/+-]+:[ \t]+[A-Za-z0-9_.$/+-]+$",
+                            "type": "string"
+                          },
+                          "maxProperties": 1,
+                          "minProperties": 1,
+                          "propertyNames": {
+                            "minLength": 1,
+                            "not": {
+                              "pattern": "[^A-Za-z0-9_.$/+-]"
+                            },
+                            "type": "string"
+                          },
+                          "type": "object"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1starrocksOperator.enabled:t@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1global.rbac.create:t@2"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "starrocksOperator": {
+                "additionalProperties": {},
+                "properties": {
+                  "namespaceOverride": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/values~1string;pattern-r-n"
+                      },
+                      {
                         "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/values~1operator~1string@2"
+                        "$ref": "#/$defs/values~1string@2"
                       },
                       {
-                        "not": {
-                          "$ref": "#/$defs/t"
-                        }
+                        "$ref": "#/$defs/values~1not~1:t"
                       },
                       {
-                        "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-                        "type": "string"
+                        "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
                       },
                       {
-                        "$ref": "#/$defs/values~1operator~1object"
+                        "$ref": "#/$defs/values~1object"
                       },
                       {
-                        "pattern": "^[ \\t]*(#.*)?$",
-                        "type": "string"
+                        "$ref": "#/$defs/values~1string;pattern-t"
                       },
                       {
-                        "pattern": "[\\r\\n]",
-                        "type": "string"
-                      },
-                      {
-                        "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-                        "type": "string"
+                        "$ref": "#/$defs/values~1string;pattern-null-null-null"
                       },
                       {
                         "allOf": [
                           {
-                            "not": {
-                              "pattern": "^[-?:]([ \\t]|$)"
-                            }
+                            "$ref": "#/$defs/values~1not~1keywords~1pattern@7"
                           },
                           {
-                            "$ref": "#/$defs/values~1operator~1not~1keywords~1pattern"
+                            "$ref": "#/$defs/values~1not~1keywords~1pattern"
                           },
                           {
-                            "not": {
-                              "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                            }
+                            "$ref": "#/$defs/values~1not~1keywords~1pattern@6"
                           },
                           {
                             "not": {
@@ -3926,17 +5916,13 @@
                             }
                           },
                           {
-                            "not": {
-                              "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                            }
+                            "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
                           },
                           {
-                            "$ref": "#/$defs/values~1operator~1not~1keywords~1pattern@3"
+                            "$ref": "#/$defs/values~1not~1keywords~1pattern@4"
                           },
                           {
-                            "not": {
-                              "pattern": "^(|~|null|Null|NULL)$"
-                            }
+                            "$ref": "#/$defs/values~1not~1keywords~1pattern@5"
                           },
                           {
                             "not": {
@@ -3949,7 +5935,7 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/values~1operator~1not~1keywords~1pattern@2"
+                            "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
                           }
                         ],
                         "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
@@ -4019,13 +6005,7 @@
               "description": "How the operator's MySQL connection to FE negotiates TLS. Mirrors the MySQL client's\n--ssl-mode option:\nDISABLED  - always plaintext. An FE with ssl_force_secure_transport=true rejects the\nconnection with error 5205 and logs a warning for every attempt.\nPREFERRED - (default) encrypt when FE advertises SSL support, stay plaintext when it does\nnot, so a cluster without SSL configured behaves exactly as before.\nREQUIRED  - always encrypt, and fail the connection when FE does not support SSL. Use this\nto guarantee the operator never talks to FE in plaintext.\nThe server certificate is never verified: the keystore FE's documentation generates is\nself-signed, so there is no CA to chain to and its name does not match FE's in-cluster\nservice DNS name. Leave empty to use the operator's built-in default. Changing this value\nrestarts the operator pod."
             },
             "image": {
-              "additionalProperties": {},
-              "properties": {
-                "repository": {
-                  "description": "image sliced by \"repository:tag\""
-                },
-                "tag": {}
-              }
+              "$ref": "#/$defs/values~1operator.starrocksOperator.image"
             },
             "imagePullPolicy": {},
             "imagePullSecrets": {
@@ -4086,8 +6066,7 @@
                 "logConfig": {
                   "description": "besides the attributes you added, the chart will append \"source\" and \"service\" attributes to the log config.\nsee https://docs.datadoghq.com/containers/kubernetes/log/?tab=operator for more details.\ne.g., '{\"app\": \"starrocks\", \"tags\": [\"aa\", \"bb\"]}'"
                 }
-              },
-              "type": "object"
+              }
             },
             "metrics": {
               "additionalProperties": {},
@@ -4095,8 +6074,7 @@
                 "enabled": {
                   "type": "boolean"
                 }
-              },
-              "type": "object"
+              }
             },
             "profiling": {
               "additionalProperties": {},
@@ -4124,8 +6102,7 @@
               },
               "type": "object"
             }
-          },
-          "type": "object"
+          }
         },
         "global": {},
         "initPassword": {
@@ -4509,8 +6486,7 @@
                   "additionalProperties": {},
                   "properties": {
                     "tag": {}
-                  },
-                  "type": "object"
+                  }
                 },
                 "imagePullSecrets": {
                   "$ref": "#/$defs/values~1starrocks.starrocksCluster.componentValues.imagePullSecrets"
@@ -4543,8 +6519,7 @@
                 "topologySpreadConstraints": {
                   "$ref": "#/$defs/values~1starrocks.starrocksBeSpec.topologySpreadConstraints"
                 }
-              },
-              "type": "object"
+              }
             },
             "disasterRecovery": {
               "description": "Disaster recovery configuration. If you want to enable disaster recovery, you need to set the enabled field to true.\nNote:\n1. If you are using an existing StarRocks cluster, you need to clean up the meta of the FE component and the data of the CN\ncomponent before enabling disaster recovery. So it is better to use an empty StarRocks cluster to start disaster recovery.\n2. After disaster recovery, Operator will reboot the cluster as a normal cluster automatically, so if you need more checks by yourself,\nyou can\n1. Set the replicas of FE component to 1\n2. Set enabledBe and enabledCn to be false to disable to deploy BE and CN components.\n3. Generation field is used to run multiple times for disaster recovery. For example, if the last disaster recovery is\nnot what you want, you can modify related configurations and increase the generation value to run a new disaster recovery."
@@ -4565,8 +6540,7 @@
             "waitForFullRollout": {
               "description": "When true, the operator waits for the FE StatefulSet to be fully rolled out (all replicas ready\nand at the same revision) before updating BE/CN. This prevents a bad FE rollout from cascading\nto BE/CN. Defaults to false for backward compatibility."
             }
-          },
-          "type": "object"
+          }
         },
         "starrocksCnSpec": {
           "additionalProperties": {},
@@ -4867,14 +6841,7 @@
               "$ref": "#/$defs/values~1starrocks.starrocksBeSpec.hostPaths"
             },
             "image": {
-              "additionalProperties": {},
-              "properties": {
-                "repository": {
-                  "description": "image sliced by \"repository:tag\""
-                },
-                "tag": {}
-              },
-              "type": "object"
+              "$ref": "#/$defs/values~1operator.starrocksOperator.image"
             },
             "imagePullPolicy": {},
             "imagePullSecrets": {
@@ -4927,8 +6894,7 @@
                   "description": "If you want to remove one resource limit, e.g., cpu, you can set it to cpu: \"unlimited\"."
                 },
                 "requests": {}
-              },
-              "type": "object"
+              }
             },
             "runAsNonRoot": {
               "$ref": "#/$defs/values~1starrocks.starrocksBeSpec.runAsNonRoot"
@@ -4965,8 +6931,7 @@
                 "type": {
                   "description": "the FE service type, only supported ClusterIP, NodePort, LoadBalancer"
                 }
-              },
-              "type": "object"
+              }
             },
             "serviceAccount": {
               "description": "- name: \"image-pull-secret\"\nserviceAccount for FE access cloud service.",
@@ -5035,8 +7000,7 @@
             "topologySpreadConstraints": {
               "$ref": "#/$defs/values~1starrocks.starrocksBeSpec.topologySpreadConstraints"
             }
-          },
-          "type": "object"
+          }
         },
         "starrocksFeProxySpec": {
           "additionalProperties": {},

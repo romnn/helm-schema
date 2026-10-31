@@ -1,5 +1,112 @@
 {
   "$defs": {
+    "constrains/commonLabels:t": {
+      "properties": {
+        "commonLabels": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "commonLabels"
+      ],
+      "type": "object"
+    },
+    "constrains/commonLabels:t+fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonLabels:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceMonitor.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceMonitor.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceMonitor.annotations+serviceMonitor.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceMonitor.annotations:helm-marker-free"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceMonitor.namespace:t"
+        }
+      ]
+    },
+    "constrains/commonLabels:t+fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+serviceMonitor.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+serviceMonitor.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonLabels:t+fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonLabels:t+fullnameOverride+fullnameOverride:t+nameOverride:t+serviceMonitor+6more"
+        }
+      ]
+    },
+    "constrains/commonLabels:t+fullnameOverride+fullnameOverride:t+nameOverride:t+serviceMonitor+6more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonLabels:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceMonitor.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceMonitor.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceMonitor.annotations+serviceMonitor.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceMonitor.annotations:helm-marker-free"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceMonitor.namespace:t"
+        }
+      ]
+    },
     "constrains/fullnameOverride": {
       "not": {
         "$ref": "#/$defs/constrains~1fullnameOverride@2"
@@ -8,7 +115,7 @@
     "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride@2"
@@ -21,19 +128,6 @@
         },
         {
           "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+serviceMonitor.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+serviceMonitor.enabled:t"
         }
       ]
     },
@@ -58,13 +152,13 @@
     "constrains/fullnameOverride:t+nameOverride+nameOverride:t+serviceMonitor.enabled:t": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t"
@@ -95,18 +189,15 @@
     },
     "constrains/nameOverride": {
       "not": {
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/constrains~1nameOverride@2"
       }
     },
     "constrains/nameOverride:t": {
+      "not": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@2"
+      }
+    },
+    "constrains/nameOverride:t@2": {
       "properties": {
         "nameOverride": {
           "$ref": "#/$defs/t"
@@ -116,6 +207,162 @@
         "nameOverride"
       ],
       "type": "object"
+    },
+    "constrains/nameOverride@2": {
+      "properties": {
+        "nameOverride": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceMonitor+serviceMonitor.annotations": {
+      "not": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1serviceMonitor.annotations@2"
+          },
+          {
+            "properties": {
+              "serviceMonitor": {
+                "properties": {
+                  "annotations": {
+                    "type": "null"
+                  }
+                },
+                "required": [
+                  "annotations"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "serviceMonitor"
+            ],
+            "type": "object"
+          }
+        ]
+      }
+    },
+    "constrains/serviceMonitor.annotations": {
+      "not": {
+        "properties": {
+          "serviceMonitor": {
+            "properties": {
+              "annotations": {
+                "additionalProperties": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "annotations"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "serviceMonitor"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/serviceMonitor.annotations+serviceMonitor.annotations=null": {
+      "not": {
+        "anyOf": [
+          {
+            "properties": {
+              "serviceMonitor": {
+                "properties": {
+                  "annotations": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "annotations"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "serviceMonitor"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/constrains~1serviceMonitor.annotations@2"
+          }
+        ]
+      }
+    },
+    "constrains/serviceMonitor.annotations:helm-marker-free": {
+      "properties": {
+        "serviceMonitor": {
+          "properties": {
+            "annotations": {
+              "$ref": "#/$defs/helm-marker-free"
+            }
+          },
+          "required": [
+            "annotations"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "serviceMonitor"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceMonitor.annotations:t": {
+      "properties": {
+        "serviceMonitor": {
+          "properties": {
+            "annotations": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "annotations"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "serviceMonitor"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceMonitor.annotations@2": {
+      "not": {
+        "properties": {
+          "serviceMonitor": {
+            "properties": {
+              "annotations": {}
+            },
+            "required": [
+              "annotations"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "serviceMonitor"
+        ],
+        "type": "object"
+      }
     },
     "constrains/serviceMonitor.enabled:t": {
       "properties": {
@@ -135,6 +382,59 @@
         "serviceMonitor"
       ],
       "type": "object"
+    },
+    "constrains/serviceMonitor.namespace:t": {
+      "properties": {
+        "serviceMonitor": {
+          "properties": {
+            "namespace": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "namespace"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "serviceMonitor"
+      ],
+      "type": "object"
+    },
+    "helm-marker-free": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/helm-marker-free"
+          },
+          "propertyNames": {
+            "not": {
+              "pattern": "<no value>"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "type": [
+            "null",
+            "boolean",
+            "number"
+          ]
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/helm-marker-free"
+          },
+          "type": "array"
+        },
+        {
+          "not": {
+            "pattern": "<no value>"
+          },
+          "type": "string"
+        }
+      ]
     },
     "t": {
       "anyOf": [
@@ -167,7 +467,7 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more@2"
+        "$ref": "#/$defs/constrains~1commonLabels:t+fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more@2"
       },
       "then": false
     },

@@ -40,69 +40,6 @@
       "type": "object"
     },
     "constrains/replicas": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1replicas@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1replicas@7"
-        }
-      ]
-    },
-    "constrains/replicas@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1replicas"
-        },
-        {
-          "$ref": "#/$defs/constrains~1replicas@7"
-        }
-      ]
-    },
-    "constrains/replicas@3": {
-      "anyOf": [
-        {
-          "properties": {
-            "replicas": {
-              "type": "number"
-            }
-          },
-          "required": [
-            "replicas"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "replicas": {
-              "type": "boolean"
-            }
-          },
-          "required": [
-            "replicas"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1replicas@2"
-        }
-      ]
-    },
-    "constrains/replicas@4": {
-      "not": {
-        "properties": {
-          "replicas": {
-            "pattern": "<$|<n$|<no $|<no v$|<no va$|<no val$|<no valu$|<no value$|<no value>|<no$|^ $|^ v$|^ va$|^ val$|^ valu$|^ value$|^ value>|^ value>$|^$|^<$|^<n$|^<no $|^<no v$|^<no va$|^<no val$|^<no valu$|^<no value$|^<no value>$|^<no$|^>|^>$|^a$|^al$|^alu$|^alue$|^alue>|^alue>$|^e$|^e>|^e>$|^l$|^lu$|^lue$|^lue>|^lue>$|^n$|^no $|^no v$|^no va$|^no val$|^no valu$|^no value$|^no value>|^no value>$|^no$|^o $|^o v$|^o va$|^o val$|^o valu$|^o value$|^o value>|^o value>$|^o$|^u$|^ue$|^ue>|^ue>$|^v$|^va$|^val$|^valu$|^value$|^value>|^value>$",
-            "type": "string"
-          }
-        },
-        "required": [
-          "replicas"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/replicas@5": {
       "properties": {
         "replicas": {
           "type": "array"
@@ -113,21 +50,10 @@
       ],
       "type": "object"
     },
-    "constrains/replicas@6": {
+    "constrains/replicas@2": {
       "properties": {
         "replicas": {
           "type": "object"
-        }
-      },
-      "required": [
-        "replicas"
-      ],
-      "type": "object"
-    },
-    "constrains/replicas@7": {
-      "properties": {
-        "replicas": {
-          "type": "string"
         }
       },
       "required": [
@@ -294,25 +220,57 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/constrains~1enabled+enabled=null"
+                    "$ref": "#/$defs/constrains~1replicas"
                   },
                   {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1replicas@3"
+                    "$ref": "#/$defs/constrains~1enabled:t"
                   }
                 ]
               },
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/constrains~1enabled:t"
+                    "$ref": "#/$defs/constrains~1replicas"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1replicas@3"
+                    "$ref": "#/$defs/constrains~1enabled+enabled=null"
+                  },
+                  {
+                    "type": "object"
                   }
                 ]
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "replicas": {
+                "not": {
+                  "items": {
+                    "$ref": "#/$defs/values~1worker~1anyOf~1array+null,boolean,number+object+string"
+                  },
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1enabled+enabled=null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/$defs/constrains~1enabled:t"
               }
             ]
           },
@@ -365,49 +323,7 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/constrains~1replicas@5"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1enabled:t"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/constrains~1replicas@5"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1enabled+enabled=null"
-                  },
-                  {
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "replicas": {
-                "not": {
-                  "items": {
-                    "$ref": "#/$defs/values~1worker~1anyOf~1array+null,boolean,number+object+string"
-                  },
-                  "type": "array"
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/constrains~1replicas@6"
+                    "$ref": "#/$defs/constrains~1replicas@2"
                   },
                   {
                     "$ref": "#/$defs/constrains~1enabled+enabled=null"
@@ -420,7 +336,7 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/constrains~1replicas@6"
+                    "$ref": "#/$defs/constrains~1replicas@2"
                   },
                   {
                     "$ref": "#/$defs/constrains~1enabled:t"

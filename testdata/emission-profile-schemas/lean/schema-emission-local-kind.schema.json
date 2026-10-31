@@ -1,43 +1,10 @@
 {
-  "$defs": {
-    "values/workload/anyOf/=null+string": {
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "enum": [
-            null
-          ]
-        }
-      ]
-    }
-  },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "properties": {
     "global": {},
     "workload": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "additionalProperties": {},
-          "properties": {
-            "kind": {
-              "allOf": [
-                {
-                  "if": {
-                    "$ref": "#/$defs/values~1workload~1anyOf~1=null+string"
-                  },
-                  "then": {
-                    "type": "string"
-                  }
-                }
-              ]
-            }
-          }
-        }
-      ],
       "properties": {
         "kind": {},
         "strategy": {}

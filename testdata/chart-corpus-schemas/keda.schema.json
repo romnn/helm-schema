@@ -1,224 +1,107 @@
 {
   "$defs": {
     "constrains/additionalAnnotations": {
-      "allOf": [
-        {
-          "properties": {
-            "additionalAnnotations": {
-              "additionalProperties": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "type": [
-                "object",
-                "null"
-              ]
-            }
+      "not": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1additionalAnnotations@3"
           },
-          "required": [
-            "additionalAnnotations"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1additionalAnnotations@3"
-        }
-      ]
-    },
-    "constrains/additionalAnnotations+additionalAnnotations:helm-marker-free+1more": {
-      "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+1more@4"
-    },
-    "constrains/additionalAnnotations+additionalAnnotations:helm-marker-free+1more/:helm-marker-free": {
-      "$ref": "#/$defs/helm-marker-free"
-    },
-    "constrains/additionalAnnotations+additionalAnnotations:helm-marker-free+1more@2": {
-      "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+1more@4"
-    },
-    "constrains/additionalAnnotations+additionalAnnotations:helm-marker-free+1more@3": {
-      "allOf": [
-        {
-          "properties": {
-            "additionalAnnotations": {
-              "type": "object"
-            }
-          },
-          "required": [
-            "additionalAnnotations"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+1more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1additionalAnnotations@3"
-        }
-      ]
-    },
-    "constrains/additionalAnnotations+additionalAnnotations:helm-marker-free+1more@4": {
-      "anyOf": [
-        {
-          "not": {
+          {
             "properties": {
-              "additionalAnnotations": {}
+              "additionalAnnotations": {
+                "type": "null"
+              }
             },
             "required": [
               "additionalAnnotations"
             ],
             "type": "object"
           }
-        },
-        {
-          "properties": {
-            "additionalAnnotations": {
-              "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+1more~1:helm-marker-free"
-            }
-          },
-          "required": [
-            "additionalAnnotations"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "additionalAnnotations": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "additionalAnnotations"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/additionalAnnotations+additionalAnnotations:helm-marker-free+3more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1additionalAnnotations@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1additionalAnnotations:t+certificates.certManager.enabled:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1additionalAnnotations:t"
-        }
-      ]
-    },
-    "constrains/additionalAnnotations+additionalAnnotations:helm-marker-free+3more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+1more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1additionalAnnotations:t+certificates.certManager.enabled:t@3"
-        }
-      ]
-    },
-    "constrains/additionalAnnotations+additionalAnnotations:helm-marker-free+3more@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+3more"
+        ]
       }
     },
-    "constrains/additionalAnnotations+additionalAnnotations:helm-marker-free+4more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+3more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhooks.enabled:t@2"
-        }
-      ]
-    },
-    "constrains/additionalAnnotations+additionalAnnotations:helm-marker-free+4more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1webhooks.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+4more"
-        }
-      ]
-    },
-    "constrains/additionalAnnotations+additionalAnnotations:helm-marker-free+4more@3": {
+    "constrains/additionalAnnotations+additionalAnnotations=null": {
       "not": {
-        "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+4more@2"
-      }
-    },
-    "constrains/additionalAnnotations:t": {
-      "properties": {
-        "additionalAnnotations": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "additionalAnnotations"
-      ],
-      "type": "object"
-    },
-    "constrains/additionalAnnotations:t+certificates.certManager.enabled:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1additionalAnnotations:t+certificates.certManager.enabled:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1additionalAnnotations:t"
-        }
-      ]
-    },
-    "constrains/additionalAnnotations:t+certificates.certManager.enabled:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1additionalAnnotations:t"
-        }
-      ]
-    },
-    "constrains/additionalAnnotations:t+certificates.certManager.enabled:t@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1additionalAnnotations:t+certificates.certManager.enabled:t"
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1additionalAnnotations@3"
+          },
+          {
+            "properties": {
+              "additionalAnnotations": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "additionalAnnotations"
+            ],
+            "type": "object"
+          }
+        ]
       }
     },
     "constrains/additionalAnnotations@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1additionalAnnotations"
+        "properties": {
+          "additionalAnnotations": {
+            "additionalProperties": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "additionalAnnotations"
+        ],
+        "type": "object"
       }
     },
     "constrains/additionalAnnotations@3": {
-      "properties": {
-        "additionalAnnotations": {
-          "minProperties": 1,
-          "type": "object"
-        }
-      },
-      "required": [
-        "additionalAnnotations"
-      ],
-      "type": "object"
+      "not": {
+        "properties": {
+          "additionalAnnotations": {}
+        },
+        "required": [
+          "additionalAnnotations"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/additionalLabels:t": {
+      "not": {
+        "properties": {
+          "additionalLabels": {
+            "$ref": "#/$defs/t"
+          }
+        },
+        "required": [
+          "additionalLabels"
+        ],
+        "type": "object"
+      }
     },
     "constrains/certificates.certManager.enabled:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t@3"
-      }
+      "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t@2"
     },
     "constrains/certificates.certManager.enabled:t@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t@3"
+        "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t@4"
       }
     },
     "constrains/certificates.certManager.enabled:t@3": {
+      "not": {
+        "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t@4"
+      }
+    },
+    "constrains/certificates.certManager.enabled:t@4": {
       "properties": {
         "certificates": {
           "properties": {
@@ -286,7 +169,7 @@
     "constrains/prometheus.webhooks.enabled:t": {
       "properties": {
         "prometheus": {
-          "$ref": "#/$defs/constrains~1webhooks.enabled:t@2"
+          "$ref": "#/$defs/constrains~1webhooks.enabled:t"
         }
       },
       "required": [
@@ -303,121 +186,10 @@
       ],
       "type": "object"
     },
-    "constrains/webhooks+webhooks.name": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1webhooks.name@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhooks+webhooks.name@2"
-        }
-      ]
-    },
-    "constrains/webhooks+webhooks.name@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1webhooks.name@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhooks.name"
-        }
-      ]
-    },
-    "constrains/webhooks+webhooks.name@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1webhooks+webhooks.name"
-        },
-        {
-          "properties": {
-            "webhooks": {
-              "properties": {
-                "name": {
-                  "type": "boolean"
-                }
-              },
-              "required": [
-                "name"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "webhooks"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "webhooks": {
-              "properties": {
-                "name": {
-                  "type": "number"
-                }
-              },
-              "required": [
-                "name"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "webhooks"
-          ],
-          "type": "object"
-        }
-      ]
-    },
     "constrains/webhooks.enabled:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1webhooks.enabled:t@2"
-      }
-    },
-    "constrains/webhooks.enabled:t@2": {
       "properties": {
         "webhooks": {
           "$ref": "#/$defs/constrains~1enabled:t"
-        }
-      },
-      "required": [
-        "webhooks"
-      ],
-      "type": "object"
-    },
-    "constrains/webhooks.name": {
-      "not": {
-        "properties": {
-          "webhooks": {
-            "properties": {
-              "name": {
-                "pattern": "<$|<n$|<no $|<no v$|<no va$|<no val$|<no valu$|<no value$|<no value>|<no$|^ $|^ v$|^ va$|^ val$|^ valu$|^ value$|^ value>|^ value>$|^$|^<$|^<n$|^<no $|^<no v$|^<no va$|^<no val$|^<no valu$|^<no value$|^<no value>$|^<no$|^>|^>$|^a$|^al$|^alu$|^alue$|^alue>|^alue>$|^e$|^e>|^e>$|^l$|^lu$|^lue$|^lue>|^lue>$|^n$|^no $|^no v$|^no va$|^no val$|^no valu$|^no value$|^no value>|^no value>$|^no$|^o $|^o v$|^o va$|^o val$|^o valu$|^o value$|^o value>|^o value>$|^o$|^u$|^ue$|^ue>|^ue>$|^v$|^va$|^val$|^valu$|^value$|^value>|^value>$",
-                "type": "string"
-              }
-            },
-            "required": [
-              "name"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "webhooks"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/webhooks.name@2": {
-      "properties": {
-        "webhooks": {
-          "properties": {
-            "name": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "name"
-          ],
-          "type": "object"
         }
       },
       "required": [
@@ -442,7 +214,7 @@
       "anyOf": [
         {
           "additionalProperties": {
-            "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+1more~1:helm-marker-free"
+            "$ref": "#/$defs/helm-marker-free~1:helm-marker-free"
           },
           "propertyNames": {
             "not": {
@@ -460,7 +232,7 @@
         },
         {
           "items": {
-            "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+1more~1:helm-marker-free"
+            "$ref": "#/$defs/helm-marker-free~1:helm-marker-free"
           },
           "type": "array"
         },
@@ -471,6 +243,9 @@
           "type": "string"
         }
       ]
+    },
+    "helm-marker-free/:helm-marker-free": {
+      "$ref": "#/$defs/helm-marker-free"
     },
     "t": {
       "anyOf": [
@@ -543,83 +318,7 @@
   "allOf": [
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1certificates.certManager.generateCA:t@2"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "certificates": {
-                    "properties": {
-                      "certManager": {
-                        "properties": {
-                          "issuer": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "issuer"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "certManager"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "certificates"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "certificates": {
-                      "properties": {
-                        "certManager": {
-                          "properties": {
-                            "issuer": {}
-                          },
-                          "required": [
-                            "issuer"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "certManager"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "certificates"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhooks.enabled:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t@3"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1webhooks.enabled:t@2"
+        "$ref": "#/$defs/constrains~1webhooks.enabled:t"
       },
       "then": {
         "allOf": [
@@ -681,7 +380,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1webhooks.enabled:t@2"
+            "$ref": "#/$defs/constrains~1webhooks.enabled:t"
           },
           {
             "anyOf": [
@@ -719,7 +418,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1webhooks.enabled:t@2"
+            "$ref": "#/$defs/constrains~1webhooks.enabled:t"
           },
           {
             "anyOf": [
@@ -771,51 +470,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1webhooks.enabled:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "additionalAnnotations": {
-            "anyOf": [
-              {
-                "not": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              {
-                "additionalProperties": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
-                "type": [
-                  "object",
-                  "null"
-                ]
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+1more~1:helm-marker-free"
-                }
-              }
-            ],
-            "description": "Custom annotations to add into metadata"
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "not": {
@@ -833,7 +487,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1webhooks.enabled:t@2"
+            "$ref": "#/$defs/constrains~1webhooks.enabled:t"
           },
           {
             "anyOf": [
@@ -871,16 +525,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1webhooks+webhooks.name@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhooks.enabled:t@2"
+            "$ref": "#/$defs/constrains~1webhooks.enabled:t"
           },
           {
             "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t"
           },
           {
-            "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+3more@2"
+            "$ref": "#/$defs/constrains~1additionalLabels:t"
           }
         ]
       },
@@ -892,6 +543,13 @@
             "properties": {
               "name": {
                 "anyOf": [
+                  {
+                    "not": {
+                      "pattern": "^[A-Za-z]+\\n[A-Za-z]+$"
+                    },
+                    "pattern": "[\\r\\n]",
+                    "type": "string"
+                  },
                   {
                     "allOf": [
                       {
@@ -949,10 +607,6 @@
                   },
                   {
                     "pattern": "^[ \\t]*(#.*)?$",
-                    "type": "string"
-                  },
-                  {
-                    "pattern": "[\\r\\n]",
                     "type": "string"
                   },
                   {
@@ -1029,13 +683,58 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1webhooks.enabled:t@2"
+            "$ref": "#/$defs/constrains~1webhooks.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "additionalAnnotations": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              {
+                "additionalProperties": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-marker-free~1:helm-marker-free"
+                }
+              }
+            ],
+            "description": "Custom annotations to add into metadata"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1webhooks.enabled:t"
           },
           {
             "$ref": "#/$defs/constrains~1certificates.certManager.generateCA:t"
           },
           {
-            "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t@3"
+            "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t@4"
           }
         ]
       },
@@ -1063,7 +762,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1webhooks.enabled:t@2"
+            "$ref": "#/$defs/constrains~1webhooks.enabled:t"
           },
           {
             "$ref": "#/$defs/constrains~1prometheus.webhooks.enabled:t"
@@ -1095,13 +794,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1webhooks.enabled:t@2"
+            "$ref": "#/$defs/constrains~1webhooks.enabled:t"
           },
           {
             "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t"
           },
           {
-            "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+3more@2"
+            "$ref": "#/$defs/constrains~1additionalLabels:t"
           },
           {
             "properties": {
@@ -1174,7 +873,149 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1webhooks.enabled:t@2"
+            "$ref": "#/$defs/constrains~1webhooks.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1additionalLabels:t"
+          },
+          {
+            "properties": {
+              "webhooks": {
+                "properties": {
+                  "name": {
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "webhooks"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "webhooks": {
+            "additionalProperties": {},
+            "properties": {
+              "name": {
+                "description": "Name of the KEDA admission webhooks",
+                "not": {
+                  "additionalProperties": {
+                    "not": {
+                      "pattern": "[^A-Za-z0-9_.$/+: \t-]"
+                    },
+                    "pattern": "^[A-Za-z0-9_.$/+-]+:[ \t]+[A-Za-z0-9_.$/+-]+$",
+                    "type": "string"
+                  },
+                  "maxProperties": 1,
+                  "minProperties": 1,
+                  "propertyNames": {
+                    "minLength": 1,
+                    "not": {
+                      "pattern": "[^A-Za-z0-9_.$/+-]"
+                    },
+                    "type": "string"
+                  },
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "certificates": {
+                    "properties": {
+                      "certManager": {
+                        "properties": {
+                          "issuer": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "issuer"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "certManager"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "certificates"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "certificates": {
+                      "properties": {
+                        "certManager": {
+                          "properties": {
+                            "issuer": {}
+                          },
+                          "required": [
+                            "issuer"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "certManager"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "certificates"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1webhooks.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1certificates.certManager.generateCA:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t@4"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1webhooks.enabled:t"
           },
           {
             "anyOf": [
@@ -1272,7 +1113,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/constrains~1webhooks.enabled:t@2"
+            "$ref": "#/$defs/constrains~1webhooks.enabled:t"
           },
           {
             "$ref": "#/$defs/constrains~1prometheus.webhooks.enabled:t"
@@ -1285,7 +1126,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1webhooks.enabled:t@2"
+            "$ref": "#/$defs/constrains~1webhooks.enabled:t"
           },
           {
             "anyOf": [
@@ -1323,25 +1164,41 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+4more@3"
+            "$ref": "#/$defs/constrains~1webhooks.enabled:t"
+          },
+          {
+            "properties": {
+              "additionalAnnotations": {
+                "$ref": "#/$defs/helm-marker-free~1:helm-marker-free"
+              }
+            },
+            "required": [
+              "additionalAnnotations"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t@3"
           },
           {
             "$ref": "#/$defs/constrains~1additionalAnnotations@2"
           },
           {
-            "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+1more"
+            "$ref": "#/$defs/constrains~1additionalAnnotations"
           },
           {
-            "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t@2"
+            "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations=null"
           },
           {
-            "$ref": "#/$defs/constrains~1webhooks.enabled:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1additionalAnnotations:t+certificates.certManager.enabled:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1additionalAnnotations:t"
+            "properties": {
+              "additionalAnnotations": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            "required": [
+              "additionalAnnotations"
+            ],
+            "type": "object"
           }
         ]
       },

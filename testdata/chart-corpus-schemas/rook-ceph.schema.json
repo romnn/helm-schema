@@ -1,81 +1,17 @@
 {
   "$defs": {
-    "constrains/ceph-csi-operator+ceph-csi-operator.serviceAccount+1more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount+ceph-csi-operator.serviceAccount.name@2"
-        },
-        {
-          "properties": {
-            "ceph-csi-operator": {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "name": {
-                      "type": "number"
-                    }
-                  },
-                  "required": [
-                    "name"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "ceph-csi-operator"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "ceph-csi-operator": {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "name": {
-                      "type": "boolean"
-                    }
-                  },
-                  "required": [
-                    "name"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "ceph-csi-operator"
-          ],
-          "type": "object"
-        }
-      ]
-    },
     "constrains/ceph-csi-operator.fullnameOverride": {
       "not": {
         "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride@2"
       }
     },
-    "constrains/ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t": {
-      "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t@2"
-    },
     "constrains/ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+1more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride@2"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride@2"
         },
         {
           "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t@5"
@@ -88,7 +24,7 @@
           "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t@5"
@@ -101,7 +37,7 @@
           "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@2"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t"
         },
         {
           "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t@5"
@@ -121,19 +57,6 @@
         }
       ]
     },
-    "constrains/ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+1more@5": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t"
-        }
-      ]
-    },
     "constrains/ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+2more": {
       "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+2more@3"
     },
@@ -149,7 +72,7 @@
           "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride@2"
         },
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride@4"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride@3"
         },
         {
           "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t@5"
@@ -157,32 +80,12 @@
       ]
     },
     "constrains/ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+2more@4": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+1more@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t"
-        }
-      ]
-    },
-    "constrains/ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+2more@5": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+1more@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride@4"
-        }
-      ]
-    },
-    "constrains/ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+2more@6": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.nameOverride+1more@2"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.nameOverride+1more"
         },
         {
           "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+1more"
@@ -192,34 +95,40 @@
         }
       ]
     },
-    "constrains/ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+2more@7": {
+    "constrains/ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+2more@5": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.nameOverride+1more@3"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+1more@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.nameOverride+1more@2"
         },
         {
           "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+1more@4"
         },
         {
           "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+2more@2"
         }
       ]
     },
-    "constrains/ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+2more@8": {
-      "anyOf": [
+    "constrains/ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+3more": {
+      "allOf": [
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t+ceph-csi-operator.serviceAccount.create:t"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+2more@4"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t@5"
         }
       ]
-    },
-    "constrains/ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+3more": {
-      "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+3more@7"
     },
     "constrains/ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+3more@2": {
       "allOf": [
@@ -230,7 +139,7 @@
           "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride@2"
@@ -246,7 +155,7 @@
           "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@2"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t"
         },
         {
           "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t@4"
@@ -260,16 +169,6 @@
       ]
     },
     "constrains/ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+3more@4": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+2more@8"
-        }
-      ]
-    },
-    "constrains/ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+3more@5": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+1more@2"
@@ -282,42 +181,32 @@
         }
       ]
     },
-    "constrains/ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+3more@6": {
+    "constrains/ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+3more@5": {
       "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.nameOverride+2more@2"
-        },
         {
           "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+1more@3"
         },
         {
           "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+3more@3"
-        }
-      ]
-    },
-    "constrains/ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+3more@7": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+3more@4"
         },
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+2more@5"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.nameOverride+2more@2"
         }
       ]
     },
     "constrains/ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+4more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.imagePullSecrets:t@3"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride@2"
         },
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride@3"
         },
         {
           "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name:t"
@@ -330,16 +219,16 @@
     "constrains/ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+4more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.imagePullSecrets:t"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride@2"
         },
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name"
         },
         {
           "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name:t"
@@ -349,22 +238,60 @@
         }
       ]
     },
-    "constrains/ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+5more": {
+    "constrains/ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+4more@3": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.imagePullSecrets:t@3"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride@2"
         },
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride@4"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t@5"
+        }
+      ]
+    },
+    "constrains/ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+4more@4": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.nameOverride+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.nameOverride:t+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+4more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+3more"
+        }
+      ]
+    },
+    "constrains/ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+5more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride@3"
         },
         {
           "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name:t"
@@ -377,19 +304,19 @@
     "constrains/ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+5more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.imagePullSecrets:t@3"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride@2"
         },
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name@2"
         },
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name@2"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride@3"
         },
         {
           "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name:t"
@@ -400,265 +327,41 @@
       ]
     },
     "constrains/ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+5more@3": {
-      "allOf": [
+      "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.imagePullSecrets:t"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+4more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t@4"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.nameOverride+4more"
         },
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.nameOverride:t+3more"
         },
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t@5"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+5more"
         }
       ]
     },
     "constrains/ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+5more@4": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+5more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+4more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.imagePullSecrets:t+4more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.imagePullSecrets:t+3more"
-        }
-      ]
-    },
-    "constrains/ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+5more@5": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+4more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+5more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.imagePullSecrets:t+3more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.imagePullSecrets:t+4more@3"
-        }
-      ]
-    },
-    "constrains/ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+6more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.imagePullSecrets:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t@5"
-        }
-      ]
-    },
-    "constrains/ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+6more@2": {
-      "anyOf": [
-        {
           "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+5more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+6more"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+4more@3"
         },
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.imagePullSecrets:t+4more"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.nameOverride:t+3more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.imagePullSecrets:t+5more"
-        }
-      ]
-    },
-    "constrains/ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t@2"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.nameOverride+4more@2"
         }
       ]
     },
     "constrains/ceph-csi-operator.fullnameOverride:t": {
-      "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t@4"
-    },
-    "constrains/ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.imagePullSecrets:t+3more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.imagePullSecrets:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name:t"
-        }
-      ]
-    },
-    "constrains/ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.imagePullSecrets:t+3more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.imagePullSecrets:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name:t"
-        }
-      ]
-    },
-    "constrains/ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.imagePullSecrets:t+4more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.imagePullSecrets:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name:t"
-        }
-      ]
-    },
-    "constrains/ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.imagePullSecrets:t+4more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.imagePullSecrets:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name:t"
-        }
-      ]
-    },
-    "constrains/ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.imagePullSecrets:t+4more@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.imagePullSecrets:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name:t"
-        }
-      ]
-    },
-    "constrains/ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.imagePullSecrets:t+5more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.imagePullSecrets:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name:t"
-        }
-      ]
+      "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t@3"
     },
     "constrains/ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.nameOverride+1more": {
-      "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.nameOverride+1more@4"
-    },
-    "constrains/ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.nameOverride+1more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride@4"
-        }
-      ]
-    },
-    "constrains/ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.nameOverride+1more@3": {
       "allOf": [
         {
           "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t"
@@ -667,20 +370,20 @@
           "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride@4"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride@3"
         }
       ]
     },
-    "constrains/ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.nameOverride+1more@4": {
-      "anyOf": [
+    "constrains/ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.nameOverride+1more@2": {
+      "allOf": [
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride@4"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t@5"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride@3"
         }
       ]
     },
@@ -690,13 +393,13 @@
           "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@2"
         }
       ]
     },
@@ -706,23 +409,140 @@
           "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@2"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t"
         },
         {
           "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t@4"
         }
       ]
     },
+    "constrains/ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.nameOverride+3more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name:t"
+        }
+      ]
+    },
+    "constrains/ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.nameOverride+4more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name:t"
+        }
+      ]
+    },
+    "constrains/ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.nameOverride+4more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name:t"
+        }
+      ]
+    },
     "constrains/ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.nameOverride:t": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t@2"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t"
         },
         {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t"
+        }
+      ]
+    },
+    "constrains/ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.nameOverride:t+2more": {
+      "allOf": [
+        {
           "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name:t"
+        }
+      ]
+    },
+    "constrains/ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.nameOverride:t+3more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name:t"
+        }
+      ]
+    },
+    "constrains/ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.nameOverride:t+3more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name:t"
         }
       ]
     },
@@ -732,12 +552,12 @@
           "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t@2"
         }
       ]
     },
     "constrains/ceph-csi-operator.fullnameOverride:t@2": {
-      "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t@3"
+      "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t@4"
     },
     "constrains/ceph-csi-operator.fullnameOverride:t@3": {
       "not": {
@@ -787,48 +607,11 @@
       ],
       "type": "object"
     },
-    "constrains/ceph-csi-operator.imagePullSecrets:t": {
-      "$ref": "#/$defs/constrains~1ceph-csi-operator.imagePullSecrets:t@2"
-    },
-    "constrains/ceph-csi-operator.imagePullSecrets:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1ceph-csi-operator.imagePullSecrets:t@3"
-      }
-    },
-    "constrains/ceph-csi-operator.imagePullSecrets:t@3": {
-      "properties": {
-        "ceph-csi-operator": {
-          "properties": {
-            "imagePullSecrets": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "imagePullSecrets"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "ceph-csi-operator"
-      ],
-      "type": "object"
-    },
     "constrains/ceph-csi-operator.nameOverride": {
-      "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride@3"
+      "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride@2"
     },
     "constrains/ceph-csi-operator.nameOverride:t": {
       "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t@2"
-    },
-    "constrains/ceph-csi-operator.nameOverride:t+ceph-csi-operator.serviceAccount.create:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t"
-        }
-      ]
     },
     "constrains/ceph-csi-operator.nameOverride:t@2": {
       "not": {
@@ -861,15 +644,10 @@
     },
     "constrains/ceph-csi-operator.nameOverride@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride@4"
+        "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride@3"
       }
     },
     "constrains/ceph-csi-operator.nameOverride@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride@4"
-      }
-    },
-    "constrains/ceph-csi-operator.nameOverride@4": {
       "properties": {
         "ceph-csi-operator": {
           "properties": {
@@ -888,37 +666,12 @@
       ],
       "type": "object"
     },
-    "constrains/ceph-csi-operator.serviceAccount+ceph-csi-operator.serviceAccount.name": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name@3"
-        }
-      ]
-    },
-    "constrains/ceph-csi-operator.serviceAccount+ceph-csi-operator.serviceAccount.name@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount+ceph-csi-operator.serviceAccount.name"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name@3"
-        }
-      ]
-    },
     "constrains/ceph-csi-operator.serviceAccount.create:t": {
       "not": {
-        "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
+        "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@2"
       }
     },
     "constrains/ceph-csi-operator.serviceAccount.create:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
-      }
-    },
-    "constrains/ceph-csi-operator.serviceAccount.create:t@3": {
       "properties": {
         "ceph-csi-operator": {
           "properties": {
@@ -946,37 +699,31 @@
       "type": "object"
     },
     "constrains/ceph-csi-operator.serviceAccount.name": {
-      "not": {
-        "properties": {
-          "ceph-csi-operator": {
-            "properties": {
-              "serviceAccount": {
-                "properties": {
-                  "name": {
-                    "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name~1string;pattern-n-no-no-v"
-                  }
-                },
-                "required": [
-                  "name"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "serviceAccount"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "ceph-csi-operator"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/ceph-csi-operator.serviceAccount.name/string;pattern-n-no-no-v": {
-      "pattern": "<$|<n$|<no $|<no v$|<no va$|<no val$|<no valu$|<no value$|<no value>|<no$|^ $|^ v$|^ va$|^ val$|^ valu$|^ value$|^ value>|^ value>$|^$|^<$|^<n$|^<no $|^<no v$|^<no va$|^<no val$|^<no valu$|^<no value$|^<no value>$|^<no$|^>|^>$|^a$|^al$|^alu$|^alue$|^alue>|^alue>$|^e$|^e>|^e>$|^l$|^lu$|^lue$|^lue>|^lue>$|^n$|^no $|^no v$|^no va$|^no val$|^no valu$|^no value$|^no value>|^no value>$|^no$|^o $|^o v$|^o va$|^o val$|^o valu$|^o value$|^o value>|^o value>$|^o$|^u$|^ue$|^ue>|^ue>$|^v$|^va$|^val$|^valu$|^value$|^value>|^value>$",
-      "type": "string"
+      "properties": {
+        "ceph-csi-operator": {
+          "properties": {
+            "serviceAccount": {
+              "properties": {
+                "name": {
+                  "type": "array"
+                }
+              },
+              "required": [
+                "name"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "serviceAccount"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "ceph-csi-operator"
+      ],
+      "type": "object"
     },
     "constrains/ceph-csi-operator.serviceAccount.name:t": {
       "properties": {
@@ -1012,7 +759,7 @@
             "serviceAccount": {
               "properties": {
                 "name": {
-                  "type": "array"
+                  "type": "object"
                 }
               },
               "required": [
@@ -1031,94 +778,6 @@
         "ceph-csi-operator"
       ],
       "type": "object"
-    },
-    "constrains/ceph-csi-operator.serviceAccount.name@3": {
-      "properties": {
-        "ceph-csi-operator": {
-          "properties": {
-            "serviceAccount": {
-              "properties": {
-                "name": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "name"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "serviceAccount"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "ceph-csi-operator"
-      ],
-      "type": "object"
-    },
-    "constrains/csi+csi.serviceMonitor+csi.serviceMonitor.namespace": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1csi.serviceMonitor+csi.serviceMonitor.namespace@2"
-        },
-        {
-          "properties": {
-            "csi": {
-              "properties": {
-                "serviceMonitor": {
-                  "properties": {
-                    "namespace": {
-                      "type": "number"
-                    }
-                  },
-                  "required": [
-                    "namespace"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceMonitor"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "csi"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "csi": {
-              "properties": {
-                "serviceMonitor": {
-                  "properties": {
-                    "namespace": {
-                      "type": "boolean"
-                    }
-                  },
-                  "required": [
-                    "namespace"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceMonitor"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "csi"
-          ],
-          "type": "object"
-        }
-      ]
     },
     "constrains/csi+csi=null": {
       "$ref": "#/$defs/constrains~1csi+csi=null@4"
@@ -1564,88 +1223,12 @@
         ]
       }
     },
-    "constrains/csi.serviceMonitor+csi.serviceMonitor.namespace": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1csi.serviceMonitor.namespace"
-        },
-        {
-          "$ref": "#/$defs/constrains~1csi.serviceMonitor.namespace@2"
-        }
-      ]
-    },
-    "constrains/csi.serviceMonitor+csi.serviceMonitor.namespace@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1csi.serviceMonitor+csi.serviceMonitor.namespace"
-        },
-        {
-          "$ref": "#/$defs/constrains~1csi.serviceMonitor.namespace@2"
-        }
-      ]
-    },
     "constrains/csi.serviceMonitor.enabled:t": {
       "properties": {
         "csi": {
           "properties": {
             "serviceMonitor": {
               "$ref": "#/$defs/constrains~1enabled:t"
-            }
-          },
-          "required": [
-            "serviceMonitor"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "csi"
-      ],
-      "type": "object"
-    },
-    "constrains/csi.serviceMonitor.namespace": {
-      "not": {
-        "properties": {
-          "csi": {
-            "properties": {
-              "serviceMonitor": {
-                "properties": {
-                  "namespace": {
-                    "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name~1string;pattern-n-no-no-v"
-                  }
-                },
-                "required": [
-                  "namespace"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "serviceMonitor"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "csi"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/csi.serviceMonitor.namespace@2": {
-      "properties": {
-        "csi": {
-          "properties": {
-            "serviceMonitor": {
-              "properties": {
-                "namespace": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "namespace"
-              ],
-              "type": "object"
             }
           },
           "required": [
@@ -1912,10 +1495,6 @@
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
     },
-    "values/null;name-must-be-unique": {
-      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-      "type": "null"
-    },
     "values/object": {
       "additionalProperties": {
         "anyOf": [
@@ -1946,6 +1525,25 @@
       },
       "propertyNames": {
         "$ref": "#/$defs/values~1string"
+      },
+      "type": "object"
+    },
+    "values/object@2": {
+      "additionalProperties": {
+        "not": {
+          "pattern": "[^A-Za-z0-9_.$/+: \t-]"
+        },
+        "pattern": "^[A-Za-z0-9_.$/+-]+:[ \t]+[A-Za-z0-9_.$/+-]+$",
+        "type": "string"
+      },
+      "maxProperties": 1,
+      "minProperties": 1,
+      "propertyNames": {
+        "minLength": 1,
+        "not": {
+          "pattern": "[^A-Za-z0-9_.$/+-]"
+        },
+        "type": "string"
       },
       "type": "object"
     },
@@ -1987,54 +1585,11 @@
       ],
       "type": "string"
     },
-    "values/string;name-must-be-unique": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^[-?:]([ \\t]|$)"
-          }
-        },
-        {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern"
-        },
-        {
-          "not": {
-            "pattern": "^[!&*#{}\\[\\],|>@`%]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-          }
-        },
-        {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
-        },
-        {
-          "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
-        },
-        {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
-        }
-      ],
-      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+    "values/string;pattern-r-n": {
+      "not": {
+        "pattern": "^[A-Za-z]+\\n[A-Za-z]+$"
+      },
+      "pattern": "[\\r\\n]",
       "type": "string"
     },
     "values/string@2": {
@@ -2119,84 +1674,7 @@
   "allOf": [
     {
       "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.imagePullSecrets:t@3"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+3more"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+5more@5"
-              },
-              {
-                "$ref": "#/$defs/constrains~1csi.installCsiOperator+csi.installCsiOperator=null"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.imagePullSecrets:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+5more@4"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+3more"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
-              },
-              {
-                "$ref": "#/$defs/constrains~1csi.installCsiOperator:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.imagePullSecrets:t@3"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+3more"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
-              },
-              {
-                "$ref": "#/$defs/constrains~1csi.installCsiOperator:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+5more@5"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.imagePullSecrets:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+5more@4"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+3more"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
-              },
-              {
-                "$ref": "#/$defs/constrains~1csi.installCsiOperator+csi.installCsiOperator=null"
-              }
-            ]
-          }
-        ]
+        "$ref": "#/$defs/constrains~1csi.installCsiOperator+csi.installCsiOperator:t+csi.installCsiOperator=null"
       },
       "then": {
         "additionalProperties": {},
@@ -2205,43 +1683,8 @@
             "additionalProperties": {},
             "properties": {
               "serviceAccount": {
-                "additionalProperties": {},
                 "description": "Service account configuration",
-                "properties": {
-                  "name": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/values~1string;name-must-be-unique"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1string@2"
-                      },
-                      {
-                        "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-                        "type": "string"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1object"
-                      },
-                      {
-                        "pattern": "^[ \\t]*(#.*)?$",
-                        "type": "string"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1null;name-must-be-unique"
-                      },
-                      {
-                        "pattern": "[\\r\\n]",
-                        "type": "string"
-                      },
-                      {
-                        "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-                        "type": "string"
-                      }
-                    ],
-                    "description": "The name of the service account to use. If not set and create is true, a name is generated using the fullname template (default: \"\")"
-                  }
-                }
+                "type": "object"
               }
             }
           }
@@ -2252,143 +1695,15 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "csi": {
-                "properties": {
-                  "cephcsi": {
-                    "$ref": "#/$defs/constrains~1csi:t~1anyOf~1:t+object"
-                  }
-                },
-                "required": [
-                  "cephcsi"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "csi"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+3more@5"
           },
           {
-            "$ref": "#/$defs/constrains~1csi.cephcsi+csi.cephcsi=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1csi.cephcsi+csi.cephcsi=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1csi+csi=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1csi+csi=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1scaleDownOperator@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1csi:t"
+            "$ref": "#/$defs/constrains~1csi.installCsiOperator:t"
           }
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "csi": {
-            "additionalProperties": {},
-            "properties": {
-              "cephcsi": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.imagePullSecrets:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.nameOverride+1more"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+3more"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name@2"
-              },
-              {
-                "$ref": "#/$defs/constrains~1csi.installCsiOperator+csi.installCsiOperator=null"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.imagePullSecrets:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.nameOverride+1more"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+3more"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
-              },
-              {
-                "$ref": "#/$defs/constrains~1csi.installCsiOperator:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.name@2"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ceph-csi-operator": {
-            "additionalProperties": {},
-            "properties": {
-              "serviceAccount": {
-                "additionalProperties": {},
-                "description": "Service account configuration",
-                "properties": {
-                  "name": {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "$ref": "#/$defs/t"
-                        }
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/$defs/values~1array"
-                        }
-                      }
-                    ],
-                    "description": "The name of the service account to use. If not set and create is true, a name is generated using the fullname template (default: \"\")"
-                  }
-                }
-              }
-            }
-          }
-        }
+        "$ref": "#/$defs/when~1ceph-csi-operator.serviceAccount.create!=null~1then~1fail"
       }
     },
     {
@@ -2447,32 +1762,65 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+5more@4"
+              },
+              {
+                "$ref": "#/$defs/constrains~1csi.installCsiOperator:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+5more@4"
+              },
+              {
+                "$ref": "#/$defs/constrains~1csi.installCsiOperator+csi.installCsiOperator=null"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ceph-csi-operator": {
+            "additionalProperties": {},
+            "properties": {
+              "serviceAccount": {
+                "additionalProperties": {},
+                "description": "Service account configuration",
+                "properties": {
+                  "name": {
+                    "description": "The name of the service account to use. If not set and create is true, a name is generated using the fullname template (default: \"\")",
+                    "not": {
+                      "$ref": "#/$defs/values~1object@2"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1csi.snapshotter+csi.snapshotter=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1csi.snapshotter+csi.snapshotter=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1csi+csi=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1csi+csi=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1scaleDownOperator@2"
-          },
           {
             "properties": {
               "csi": {
                 "properties": {
-                  "snapshotter": {
+                  "cephcsi": {
                     "$ref": "#/$defs/constrains~1csi:t~1anyOf~1:t+object"
                   }
                 },
                 "required": [
-                  "snapshotter"
+                  "cephcsi"
                 ],
                 "type": "object"
               }
@@ -2481,6 +1829,21 @@
               "csi"
             ],
             "type": "object"
+          },
+          {
+            "$ref": "#/$defs/constrains~1scaleDownOperator@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1csi+csi=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1csi+csi=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1csi.cephcsi+csi.cephcsi=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1csi.cephcsi+csi.cephcsi=null"
           },
           {
             "$ref": "#/$defs/constrains~1csi:t"
@@ -2493,7 +1856,7 @@
           "csi": {
             "additionalProperties": {},
             "properties": {
-              "snapshotter": {
+              "cephcsi": {
                 "type": "object"
               }
             }
@@ -2541,125 +1904,6 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.nameOverride+1more"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator+ceph-csi-operator.serviceAccount+1more"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+3more"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
-              },
-              {
-                "$ref": "#/$defs/constrains~1csi.installCsiOperator:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t+ceph-csi-operator.nameOverride+1more"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator+ceph-csi-operator.serviceAccount+1more"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+3more"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
-              },
-              {
-                "$ref": "#/$defs/constrains~1csi.installCsiOperator+csi.installCsiOperator=null"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ceph-csi-operator": {
-            "additionalProperties": {},
-            "properties": {
-              "serviceAccount": {
-                "additionalProperties": {},
-                "description": "Service account configuration",
-                "properties": {
-                  "name": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/values~1string;name-must-be-unique"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1string@2"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/$defs/t"
-                        }
-                      },
-                      {
-                        "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-                        "type": "string"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1object"
-                      },
-                      {
-                        "pattern": "^[ \\t]*(#.*)?$",
-                        "type": "string"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1null;name-must-be-unique"
-                      },
-                      {
-                        "pattern": "[\\r\\n]",
-                        "type": "string"
-                      },
-                      {
-                        "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-                        "type": "string"
-                      }
-                    ],
-                    "description": "The name of the service account to use. If not set and create is true, a name is generated using the fullname template (default: \"\")"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+3more@6"
-          },
-          {
-            "$ref": "#/$defs/constrains~1csi.installCsiOperator+csi.installCsiOperator=null"
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ceph-csi-operator.serviceAccount.create!=null~1then~1fail"
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
             "$ref": "#/$defs/constrains~1scaleDownOperator@2"
@@ -2698,378 +1942,9 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1scaleDownOperator"
-      },
-      "then": false
-    },
-    {
-      "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1csi.attacher+csi.attacher=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1csi+csi=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1csi.attacher+csi.attacher=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1csi+csi=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1scaleDownOperator@2"
-          },
-          {
-            "properties": {
-              "csi": {
-                "properties": {
-                  "attacher": {
-                    "$ref": "#/$defs/constrains~1csi:t~1anyOf~1:t+object"
-                  }
-                },
-                "required": [
-                  "attacher"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "csi"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/$defs/constrains~1csi:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "csi": {
-            "additionalProperties": {},
-            "properties": {
-              "attacher": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1monitoring.enabled:t+scaleDownOperator"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "csi": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1monitoring.enabled:t+scaleDownOperator@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1csi+csi=null@3"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+3more@5"
-          },
-          {
-            "$ref": "#/$defs/constrains~1csi.installCsiOperator+csi.installCsiOperator=null"
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ceph-csi-operator.serviceAccount.create!=null~1then~1fail"
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "ceph-csi-operator": {
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1csi+csi.serviceMonitor+csi.serviceMonitor.namespace"
-          },
-          {
-            "$ref": "#/$defs/constrains~1csi.serviceMonitor.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1monitoring.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "csi": {
-            "additionalProperties": {},
-            "properties": {
-              "serviceMonitor": {
-                "additionalProperties": {},
-                "properties": {
-                  "namespace": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/values~1string@2"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/$defs/t"
-                        }
-                      },
-                      {
-                        "$ref": "#/$defs/values~1object"
-                      },
-                      {
-                        "pattern": "[\\r\\n]",
-                        "type": "string"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "not": {
-                              "pattern": "^[-?:]([ \\t]|$)"
-                            }
-                          },
-                          {
-                            "$ref": "#/$defs/values~1not~1keywords~1pattern"
-                          },
-                          {
-                            "not": {
-                              "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "[ \\t]#"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                            }
-                          },
-                          {
-                            "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
-                          },
-                          {
-                            "not": {
-                              "pattern": "^(|~|null|Null|NULL)$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": ":[ \\t]|:$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "[\\r\\n]"
-                            }
-                          },
-                          {
-                            "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
-                          }
-                        ],
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Namespace in which to deploy the ServiceMonitor"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "crds": {}
-              },
-              "required": [
-                "crds"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "crds": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "crds"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "csi": {
-                "properties": {
-                  "serviceMonitor": {
-                    "properties": {
-                      "namespace": {
-                        "type": "array"
-                      }
-                    },
-                    "required": [
-                      "namespace"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "serviceMonitor"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "csi"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/$defs/constrains~1csi.serviceMonitor.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1monitoring.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "csi": {
-            "additionalProperties": {},
-            "properties": {
-              "serviceMonitor": {
-                "additionalProperties": {},
-                "properties": {
-                  "namespace": {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "$ref": "#/$defs/t"
-                        }
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/$defs/values~1array"
-                        }
-                      }
-                    ],
-                    "description": "Namespace in which to deploy the ServiceMonitor"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1csi.resizer+csi.resizer=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1csi.resizer+csi.resizer=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1csi+csi=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1csi+csi=null"
-          },
-          {
-            "properties": {
-              "csi": {
-                "properties": {
-                  "resizer": {
-                    "$ref": "#/$defs/constrains~1csi:t~1anyOf~1:t+object"
-                  }
-                },
-                "required": [
-                  "resizer"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "csi"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/$defs/constrains~1scaleDownOperator@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1csi:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "csi": {
-            "additionalProperties": {},
-            "properties": {
-              "resizer": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+2more@7"
+            "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+2more@5"
           },
           {
             "$ref": "#/$defs/constrains~1csi.installCsiOperator+csi.installCsiOperator:t+csi.installCsiOperator=null@2"
@@ -3156,129 +2031,13 @@
       }
     },
     {
-      "if": {
-        "$ref": "#/$defs/constrains~1csi.installCsiOperator+csi.installCsiOperator:t+csi.installCsiOperator=null"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ceph-csi-operator": {
-            "additionalProperties": {},
-            "properties": {
-              "serviceAccount": {
-                "description": "Service account configuration",
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1monitoring.enabled:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "csi": {
-            "additionalProperties": {},
-            "properties": {
-              "serviceMonitor": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "csi": {
-                "properties": {
-                  "csiAddons": {
-                    "$ref": "#/$defs/constrains~1csi:t~1anyOf~1:t+object"
-                  }
-                },
-                "required": [
-                  "csiAddons"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "csi"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/$defs/constrains~1csi.csiAddons+csi.csiAddons=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1csi.csiAddons+csi.csiAddons=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1csi+csi=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1csi+csi=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1scaleDownOperator@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1csi:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "csi": {
-            "additionalProperties": {},
-            "properties": {
-              "csiAddons": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1discover+discover=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1discover+discover=null@2"
-          },
-          {
-            "properties": {
-              "discover": {
-                "$ref": "#/$defs/constrains~1csi:t~1anyOf~1:t+object"
-              }
-            },
-            "required": [
-              "discover"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/$defs/constrains~1scaleDownOperator@2"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "discover": {
-            "type": "object"
-          }
+      "additionalProperties": {},
+      "properties": {
+        "ceph-csi-operator": {
+          "type": [
+            "null",
+            "object"
+          ]
         }
       }
     },
@@ -3288,16 +2047,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.imagePullSecrets:t@3"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+6more@2"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+3more"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
+                "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+5more@3"
               },
               {
                 "$ref": "#/$defs/constrains~1csi.installCsiOperator:t"
@@ -3307,16 +2057,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.imagePullSecrets:t@3"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+6more@2"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+3more"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
+                "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+5more@3"
               },
               {
                 "$ref": "#/$defs/constrains~1csi.installCsiOperator+csi.installCsiOperator=null"
@@ -3350,12 +2091,104 @@
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1csi.provisioner+csi.provisioner=null@2"
+            "not": {
+              "properties": {
+                "crds": {}
+              },
+              "required": [
+                "crds"
+              ],
+              "type": "object"
+            }
           },
           {
-            "$ref": "#/$defs/constrains~1csi.provisioner+csi.provisioner=null"
+            "properties": {
+              "crds": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "crds"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+2more@5"
+          },
+          {
+            "$ref": "#/$defs/constrains~1csi.installCsiOperator+csi.installCsiOperator:t+csi.installCsiOperator=null@2"
+          },
+          {
+            "properties": {
+              "ceph-csi-operator": {
+                "allOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "controllerManager": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "controllerManager"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "controllerManager": {}
+                          },
+                          "required": [
+                            "controllerManager"
+                          ],
+                          "type": "object"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            "required": [
+              "ceph-csi-operator"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ceph-csi-operator!=null~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1csi.registrar+csi.registrar=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1csi.registrar+csi.registrar=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1scaleDownOperator@2"
           },
           {
             "$ref": "#/$defs/constrains~1csi+csi=null@2"
@@ -3364,18 +2197,15 @@
             "$ref": "#/$defs/constrains~1csi+csi=null"
           },
           {
-            "$ref": "#/$defs/constrains~1scaleDownOperator@2"
-          },
-          {
             "properties": {
               "csi": {
                 "properties": {
-                  "provisioner": {
+                  "registrar": {
                     "$ref": "#/$defs/constrains~1csi:t~1anyOf~1:t+object"
                   }
                 },
                 "required": [
-                  "provisioner"
+                  "registrar"
                 ],
                 "type": "object"
               }
@@ -3396,7 +2226,7 @@
           "csi": {
             "additionalProperties": {},
             "properties": {
-              "provisioner": {
+              "registrar": {
                 "type": "object"
               }
             }
@@ -3408,7 +2238,241 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+2more@6"
+            "properties": {
+              "csi": {
+                "properties": {
+                  "serviceMonitor": {
+                    "properties": {
+                      "namespace": {
+                        "type": "array"
+                      }
+                    },
+                    "required": [
+                      "namespace"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceMonitor"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "csi"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/constrains~1csi.serviceMonitor.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1monitoring.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "csi": {
+            "additionalProperties": {},
+            "properties": {
+              "serviceMonitor": {
+                "additionalProperties": {},
+                "properties": {
+                  "namespace": {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "$ref": "#/$defs/t"
+                        }
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/values~1array"
+                        }
+                      }
+                    ],
+                    "description": "Namespace in which to deploy the ServiceMonitor"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1csi.snapshotter+csi.snapshotter=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1csi.snapshotter+csi.snapshotter=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1scaleDownOperator@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1csi+csi=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1csi+csi=null"
+          },
+          {
+            "properties": {
+              "csi": {
+                "properties": {
+                  "snapshotter": {
+                    "$ref": "#/$defs/constrains~1csi:t~1anyOf~1:t+object"
+                  }
+                },
+                "required": [
+                  "snapshotter"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "csi"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/constrains~1csi:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "csi": {
+            "additionalProperties": {},
+            "properties": {
+              "snapshotter": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1discover+discover=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1discover+discover=null"
+          },
+          {
+            "properties": {
+              "discover": {
+                "$ref": "#/$defs/constrains~1csi:t~1anyOf~1:t+object"
+              }
+            },
+            "required": [
+              "discover"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/constrains~1scaleDownOperator@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "discover": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "csi": {
+                "properties": {
+                  "serviceMonitor": {
+                    "properties": {
+                      "namespace": {
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "namespace"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceMonitor"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "csi"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/constrains~1csi.serviceMonitor.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1monitoring.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "csi": {
+            "additionalProperties": {},
+            "properties": {
+              "serviceMonitor": {
+                "additionalProperties": {},
+                "properties": {
+                  "namespace": {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "$ref": "#/$defs/t"
+                        }
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/values~1object@2"
+                        }
+                      }
+                    ],
+                    "description": "Namespace in which to deploy the ServiceMonitor"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1scaleDownOperator"
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+2more@4"
           },
           {
             "$ref": "#/$defs/constrains~1csi.installCsiOperator+csi.installCsiOperator:t+csi.installCsiOperator=null"
@@ -3518,6 +2582,281 @@
             }
           }
         ]
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1monitoring.enabled:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "csi": {
+            "additionalProperties": {},
+            "properties": {
+              "serviceMonitor": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+2more@5"
+          },
+          {
+            "$ref": "#/$defs/constrains~1csi.installCsiOperator+csi.installCsiOperator:t+csi.installCsiOperator=null@2"
+          },
+          {
+            "properties": {
+              "ceph-csi-operator": {
+                "allOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "controllerManager": {
+                            "properties": {
+                              "manager": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "manager"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "controllerManager"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "controllerManager": {
+                              "properties": {
+                                "manager": {}
+                              },
+                              "required": [
+                                "manager"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "controllerManager"
+                          ],
+                          "type": "object"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            "required": [
+              "ceph-csi-operator"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ceph-csi-operator!=null~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1scaleDownOperator@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1csi.provisioner+csi.provisioner=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1csi.provisioner+csi.provisioner=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1csi+csi=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1csi+csi=null"
+          },
+          {
+            "properties": {
+              "csi": {
+                "properties": {
+                  "provisioner": {
+                    "$ref": "#/$defs/constrains~1csi:t~1anyOf~1:t+object"
+                  }
+                },
+                "required": [
+                  "provisioner"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "csi"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/constrains~1csi:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "csi": {
+            "additionalProperties": {},
+            "properties": {
+              "provisioner": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1csi.resizer+csi.resizer=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1csi.resizer+csi.resizer=null"
+          },
+          {
+            "properties": {
+              "csi": {
+                "properties": {
+                  "resizer": {
+                    "$ref": "#/$defs/constrains~1csi:t~1anyOf~1:t+object"
+                  }
+                },
+                "required": [
+                  "resizer"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "csi"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/constrains~1scaleDownOperator@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1csi+csi=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1csi+csi=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1csi:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "csi": {
+            "additionalProperties": {},
+            "properties": {
+              "resizer": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+3more@5"
+          },
+          {
+            "$ref": "#/$defs/constrains~1csi.installCsiOperator+csi.installCsiOperator=null"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ceph-csi-operator.serviceAccount.create!=null~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+3more@4"
+          },
+          {
+            "$ref": "#/$defs/constrains~1csi.installCsiOperator+csi.installCsiOperator=null"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ceph-csi-operator.serviceAccount.create!=null~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1monitoring.enabled:t+scaleDownOperator@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1csi+csi=null@3"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+3more@4"
+          },
+          {
+            "$ref": "#/$defs/constrains~1csi.installCsiOperator:t"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ceph-csi-operator.serviceAccount.create!=null~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1monitoring.enabled:t+scaleDownOperator"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "csi": {
+            "type": "object"
+          }
+        }
       }
     },
     {
@@ -3654,177 +2993,30 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+2more@7"
+            "$ref": "#/$defs/constrains~1scaleDownOperator@2"
           },
           {
-            "$ref": "#/$defs/constrains~1csi.installCsiOperator+csi.installCsiOperator:t+csi.installCsiOperator=null@2"
-          },
-          {
-            "properties": {
-              "ceph-csi-operator": {
-                "allOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "properties": {
-                          "controllerManager": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "controllerManager"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "not": {
-                          "properties": {
-                            "controllerManager": {}
-                          },
-                          "required": [
-                            "controllerManager"
-                          ],
-                          "type": "object"
-                        }
-                      }
-                    ]
-                  }
-                ]
-              }
-            },
-            "required": [
-              "ceph-csi-operator"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ceph-csi-operator!=null~1then~1fail"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+3more@5"
-          },
-          {
-            "$ref": "#/$defs/constrains~1csi.installCsiOperator:t"
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ceph-csi-operator.serviceAccount.create!=null~1then~1fail"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+2more@7"
-          },
-          {
-            "$ref": "#/$defs/constrains~1csi.installCsiOperator+csi.installCsiOperator:t+csi.installCsiOperator=null@2"
-          },
-          {
-            "properties": {
-              "ceph-csi-operator": {
-                "allOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "properties": {
-                          "controllerManager": {
-                            "properties": {
-                              "manager": {
-                                "enum": [
-                                  null
-                                ]
-                              }
-                            },
-                            "required": [
-                              "manager"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "controllerManager"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "not": {
-                          "properties": {
-                            "controllerManager": {
-                              "properties": {
-                                "manager": {}
-                              },
-                              "required": [
-                                "manager"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "controllerManager"
-                          ],
-                          "type": "object"
-                        }
-                      }
-                    ]
-                  }
-                ]
-              }
-            },
-            "required": [
-              "ceph-csi-operator"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ceph-csi-operator!=null~1then~1fail"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1csi.registrar+csi.registrar=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1csi.registrar+csi.registrar=null"
+            "$ref": "#/$defs/constrains~1csi.attacher+csi.attacher=null@2"
           },
           {
             "$ref": "#/$defs/constrains~1csi+csi=null@2"
           },
           {
-            "$ref": "#/$defs/constrains~1csi+csi=null"
+            "$ref": "#/$defs/constrains~1csi.attacher+csi.attacher=null"
           },
           {
-            "$ref": "#/$defs/constrains~1scaleDownOperator@2"
+            "$ref": "#/$defs/constrains~1csi+csi=null"
           },
           {
             "properties": {
               "csi": {
                 "properties": {
-                  "registrar": {
+                  "attacher": {
                     "$ref": "#/$defs/constrains~1csi:t~1anyOf~1:t+object"
                   }
                 },
                 "required": [
-                  "registrar"
+                  "attacher"
                 ],
                 "type": "object"
               }
@@ -3845,7 +3037,7 @@
           "csi": {
             "additionalProperties": {},
             "properties": {
-              "registrar": {
+              "attacher": {
                 "type": "object"
               }
             }
@@ -3880,17 +3072,275 @@
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+3more@6"
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+4more@4"
+              },
+              {
+                "$ref": "#/$defs/constrains~1csi.installCsiOperator:t"
+              }
+            ]
           },
           {
-            "$ref": "#/$defs/constrains~1csi.installCsiOperator:t"
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+4more@4"
+              },
+              {
+                "$ref": "#/$defs/constrains~1csi.installCsiOperator+csi.installCsiOperator=null"
+              }
+            ]
           }
         ]
       },
       "then": {
-        "$ref": "#/$defs/when~1ceph-csi-operator.serviceAccount.create!=null~1then~1fail"
+        "additionalProperties": {},
+        "properties": {
+          "ceph-csi-operator": {
+            "additionalProperties": {},
+            "properties": {
+              "serviceAccount": {
+                "additionalProperties": {},
+                "description": "Service account configuration",
+                "properties": {
+                  "name": {
+                    "anyOf": [
+                      {
+                        "allOf": [
+                          {
+                            "not": {
+                              "pattern": "^[-?:]([ \\t]|$)"
+                            }
+                          },
+                          {
+                            "$ref": "#/$defs/values~1not~1keywords~1pattern"
+                          },
+                          {
+                            "not": {
+                              "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "[ \\t]#"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                            }
+                          },
+                          {
+                            "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
+                          },
+                          {
+                            "not": {
+                              "pattern": "^(|~|null|Null|NULL)$"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": ":[ \\t]|:$"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "[\\r\\n]"
+                            }
+                          },
+                          {
+                            "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
+                          }
+                        ],
+                        "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+                        "type": "string"
+                      },
+                      {
+                        "$ref": "#/$defs/values~1string;pattern-r-n"
+                      },
+                      {
+                        "$ref": "#/$defs/values~1string@2"
+                      },
+                      {
+                        "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+                        "type": "string"
+                      },
+                      {
+                        "$ref": "#/$defs/values~1object"
+                      },
+                      {
+                        "pattern": "^[ \\t]*(#.*)?$",
+                        "type": "string"
+                      },
+                      {
+                        "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+                        "type": "null"
+                      },
+                      {
+                        "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+                        "type": "string"
+                      }
+                    ],
+                    "description": "The name of the service account to use. If not set and create is true, a name is generated using the fullname template (default: \"\")"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1csi.serviceMonitor.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1monitoring.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "csi": {
+            "additionalProperties": {},
+            "properties": {
+              "serviceMonitor": {
+                "additionalProperties": {},
+                "properties": {
+                  "namespace": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/values~1string;pattern-r-n"
+                      },
+                      {
+                        "$ref": "#/$defs/values~1string@2"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/t"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/values~1object"
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "not": {
+                              "pattern": "^[-?:]([ \\t]|$)"
+                            }
+                          },
+                          {
+                            "$ref": "#/$defs/values~1not~1keywords~1pattern"
+                          },
+                          {
+                            "not": {
+                              "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "[ \\t]#"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                            }
+                          },
+                          {
+                            "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
+                          },
+                          {
+                            "not": {
+                              "pattern": "^(|~|null|Null|NULL)$"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": ":[ \\t]|:$"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "[\\r\\n]"
+                            }
+                          },
+                          {
+                            "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
+                          }
+                        ],
+                        "type": "string"
+                      }
+                    ],
+                    "description": "Namespace in which to deploy the ServiceMonitor"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "csi": {
+                "properties": {
+                  "csiAddons": {
+                    "$ref": "#/$defs/constrains~1csi:t~1anyOf~1:t+object"
+                  }
+                },
+                "required": [
+                  "csiAddons"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "csi"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/constrains~1scaleDownOperator@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1csi+csi=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1csi+csi=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1csi.csiAddons+csi.csiAddons=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1csi.csiAddons+csi.csiAddons=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1csi:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "csi": {
+            "additionalProperties": {},
+            "properties": {
+              "csiAddons": {
+                "type": "object"
+              }
+            }
+          }
+        }
       }
     }
   ],
@@ -4260,10 +3710,10 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1scaleDownOperator~1not~1=null"
+                "$ref": "#/$defs/values~1scaleDownOperator~1not~1boolean"
               },
               {
-                "$ref": "#/$defs/values~1scaleDownOperator~1not~1boolean"
+                "$ref": "#/$defs/values~1scaleDownOperator~1not~1=null"
               }
             ]
           },

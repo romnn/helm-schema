@@ -1,128 +1,144 @@
 {
   "$defs": {
     "constrains/commonAnnotations": {
-      "$ref": "#/$defs/constrains~1commonAnnotations@2"
+      "not": {
+        "anyOf": [
+          {
+            "properties": {
+              "commonAnnotations": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "commonAnnotations"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/constrains~1commonAnnotations@3"
+          }
+        ]
+      }
     },
-    "constrains/commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+10more": {
+    "constrains/commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+13more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@5"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+serviceAccount.create:t"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+fullnameOverride+2more@2"
         },
         {
           "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
         },
         {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+13more@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations@2"
+        },
+        {
           "$ref": "#/$defs/constrains~1commonAnnotations"
-        },
-        {
-          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1rbac.create:t@4"
         },
         {
           "$ref": "#/$defs/constrains~1commonAnnotations:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.mutating.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1config.clusterWide@3"
+          "$ref": "#/$defs/constrains~1webhook.mutating.create:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1commonAnnotations:helm-marker-free"
         }
       ]
     },
-    "constrains/commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+12more": {
+    "constrains/commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+13more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+1more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+fullnameOverride+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+serviceAccount.create:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhook.mutating.create:t@2"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+13more@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+13more@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+fullnameOverride+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+serviceAccount.create:t@2"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+13more@4": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+7more"
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+13more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+9more@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+9more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+8more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+10more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+9more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+8more@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+8more@8"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+7more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+8more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+9more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+8more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+8more@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+8more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+9more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+7more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+8more@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+6more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+7more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+5more"
+          "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+fullnameOverride+8more"
         }
       ]
     },
-    "constrains/commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+5more": {
+    "constrains/commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+13more@5": {
+      "not": {
+        "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+13more@4"
+      }
+    },
+    "constrains/commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+13more@6": {
+      "not": {
+        "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+13more"
+      }
+    },
+    "constrains/commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+13more@7": {
+      "not": {
+        "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+13more@3"
+      }
+    },
+    "constrains/commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+1more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1rbac.create:t"
-        },
-        {
           "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations@2"
         },
         {
           "$ref": "#/$defs/constrains~1commonAnnotations"
@@ -131,668 +147,16 @@
           "$ref": "#/$defs/constrains~1commonAnnotations:t"
         },
         {
-          "$ref": "#/$defs/constrains~1webhook.mutating.create:t"
-        },
-        {
           "$ref": "#/$defs/constrains~1commonAnnotations:helm-marker-free"
         }
       ]
     },
-    "constrains/commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+6more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1rbac.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.mutating.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:helm-marker-free"
-        }
-      ]
-    },
-    "constrains/commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+7more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1rbac.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1monitoring.podMonitorEnabled:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.mutating.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:helm-marker-free"
-        }
-      ]
-    },
-    "constrains/commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+7more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1rbac.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1monitoring.podMonitorEnabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.mutating.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:helm-marker-free"
-        }
-      ]
-    },
-    "constrains/commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+7more@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations"
-        },
-        {
-          "$ref": "#/$defs/constrains~1rbac.create:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.mutating.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:helm-marker-free"
-        }
-      ]
-    },
-    "constrains/commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+7more@4": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations"
-        },
-        {
-          "$ref": "#/$defs/constrains~1rbac.create:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.mutating.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:helm-marker-free"
-        }
-      ]
-    },
-    "constrains/commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+8more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1rbac.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1monitoring.podMonitorEnabled:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.mutating.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:helm-marker-free"
-        }
-      ]
-    },
-    "constrains/commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+8more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1rbac.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1monitoring.podMonitorEnabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.mutating.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:helm-marker-free"
-        }
-      ]
-    },
-    "constrains/commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+8more@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations"
-        },
-        {
-          "$ref": "#/$defs/constrains~1rbac.create:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.mutating.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:helm-marker-free"
-        }
-      ]
-    },
-    "constrains/commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+8more@4": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1rbac.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1monitoring.podMonitorEnabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.mutating.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:helm-marker-free"
-        }
-      ]
-    },
-    "constrains/commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+8more@5": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations"
-        },
-        {
-          "$ref": "#/$defs/constrains~1rbac.create:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.mutating.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:helm-marker-free"
-        }
-      ]
-    },
-    "constrains/commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+8more@6": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations"
-        },
-        {
-          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1rbac.create:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.mutating.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1config.clusterWide@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:helm-marker-free"
-        }
-      ]
-    },
-    "constrains/commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+8more@7": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations"
-        },
-        {
-          "$ref": "#/$defs/constrains~1rbac.create:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.mutating.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:helm-marker-free"
-        }
-      ]
-    },
-    "constrains/commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+8more@8": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations"
-        },
-        {
-          "$ref": "#/$defs/constrains~1rbac.create:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.mutating.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:helm-marker-free"
-        }
-      ]
-    },
-    "constrains/commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+9more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations"
-        },
-        {
-          "$ref": "#/$defs/constrains~1rbac.create:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.mutating.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:helm-marker-free"
-        }
-      ]
-    },
-    "constrains/commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+9more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1rbac.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1monitoring.podMonitorEnabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.mutating.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:helm-marker-free"
-        }
-      ]
-    },
-    "constrains/commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+9more@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations"
-        },
-        {
-          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1rbac.create:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.mutating.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1config.clusterWide@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:helm-marker-free"
-        }
-      ]
-    },
-    "constrains/commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+9more@4": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations"
-        },
-        {
-          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1rbac.create:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.mutating.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1config.clusterWide@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:helm-marker-free"
-        }
-      ]
-    },
-    "constrains/commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+9more@5": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations"
-        },
-        {
-          "$ref": "#/$defs/constrains~1rbac.create:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.mutating.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:helm-marker-free"
-        }
-      ]
+    "constrains/commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+1more@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+1more"
+      }
     },
     "constrains/commonAnnotations+commonAnnotations=null": {
-      "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@2"
-    },
-    "constrains/commonAnnotations+commonAnnotations=null@2": {
       "not": {
         "anyOf": [
           {
@@ -809,15 +173,7 @@
             "type": "object"
           },
           {
-            "not": {
-              "properties": {
-                "commonAnnotations": {}
-              },
-              "required": [
-                "commonAnnotations"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/constrains~1commonAnnotations@3"
           }
         ]
       }
@@ -866,13 +222,24 @@
         "type": "object"
       }
     },
+    "constrains/commonAnnotations@3": {
+      "not": {
+        "properties": {
+          "commonAnnotations": {}
+        },
+        "required": [
+          "commonAnnotations"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/config+config.clusterWide+config.clusterWide:t+config.clusterWide=null+9more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1config.clusterWide:t"
         },
         {
-          "$ref": "#/$defs/constrains~1config.clusterWide:t"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+fullnameOverride+2more"
@@ -900,13 +267,13 @@
     "constrains/config+config.clusterWide+config.clusterWide:t+config.clusterWide=null+9more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1config.secret:t"
+          "$ref": "#/$defs/constrains~1config.clusterWide:t"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1config.clusterWide:t"
+          "$ref": "#/$defs/constrains~1config.secret:t"
         },
         {
           "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+fullnameOverride+2more"
@@ -934,10 +301,7 @@
           "$ref": "#/$defs/constrains~1config.clusterWide:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+serviceAccount.create:t"
@@ -946,10 +310,13 @@
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t"
         },
         {
           "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+fullnameOverride+2more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1config.create:t"
@@ -962,16 +329,13 @@
     "constrains/config+config.clusterWide+config.clusterWide:t+config.clusterWide=null+9more@4": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1config.secret:t@2"
-        },
-        {
           "$ref": "#/$defs/constrains~1config.clusterWide:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t"
+          "$ref": "#/$defs/constrains~1config.secret:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+serviceAccount.create:t"
@@ -980,10 +344,13 @@
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t"
         },
         {
           "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+fullnameOverride+2more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1config.create:t"
@@ -1065,13 +432,13 @@
           "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
+          "$ref": "#/$defs/constrains~1fullnameOverride"
+        },
+        {
           "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null"
         },
         {
           "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1rbac.create:t@4"
@@ -1093,13 +460,13 @@
           "$ref": "#/$defs/constrains~1nameOverride@2"
         },
         {
+          "$ref": "#/$defs/constrains~1fullnameOverride"
+        },
+        {
           "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null"
         },
         {
           "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1rbac.create:t@4"
@@ -1115,13 +482,10 @@
     "constrains/config+config.clusterWide+config.clusterWide=null+fullnameOverride+5more": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+nameOverride:t+rbac.create:t"
+          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null+fullnameOverride+fullnameOverride:t+3more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null+fullnameOverride+fullnameOverride:t+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null+fullnameOverride+fullnameOverride:t+2more@2"
+          "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+nameOverride+nameOverride:t+1more"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+rbac.create:t+serviceAccount"
@@ -1130,10 +494,10 @@
           "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+fullnameOverride+3more"
         },
         {
-          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null+fullnameOverride+fullnameOverride:t+3more"
+          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null+fullnameOverride+fullnameOverride:t+2more"
         },
         {
-          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null+fullnameOverride+fullnameOverride:t+3more@2"
+          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null+fullnameOverride+fullnameOverride:t+2more@2"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+rbac.create:t+1more"
@@ -1142,7 +506,10 @@
           "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+fullnameOverride+4more"
         },
         {
-          "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+nameOverride+nameOverride:t+1more"
+          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null+fullnameOverride+fullnameOverride:t+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+nameOverride:t+rbac.create:t"
         }
       ]
     },
@@ -1171,10 +538,7 @@
     "constrains/config+config.clusterWide+config.clusterWide=null+fullnameOverride+7more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+serviceAccount.create:t"
@@ -1183,10 +547,13 @@
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t"
         },
         {
           "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+fullnameOverride+2more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
         }
       ]
     },
@@ -1210,6 +577,28 @@
         }
       ]
     },
+    "constrains/config+config.clusterWide+config.clusterWide=null+fullnameOverride+8more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1webhook.mutating.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+fullnameOverride+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+serviceAccount.create:t@2"
+        }
+      ]
+    },
     "constrains/config+config.clusterWide+config.clusterWide=null+nameOverride+nameOverride:t+1more": {
       "allOf": [
         {
@@ -1222,10 +611,10 @@
           "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null"
         },
         {
-          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null@2"
+          "$ref": "#/$defs/constrains~1config.clusterWide"
         },
         {
-          "$ref": "#/$defs/constrains~1config.clusterWide"
+          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null@2"
         },
         {
           "$ref": "#/$defs/constrains~1rbac.create:t@4"
@@ -1241,10 +630,10 @@
           "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null"
         },
         {
-          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null@2"
+          "$ref": "#/$defs/constrains~1config.clusterWide"
         },
         {
-          "$ref": "#/$defs/constrains~1config.clusterWide"
+          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null@2"
         },
         {
           "$ref": "#/$defs/constrains~1rbac.create:t@4"
@@ -1264,10 +653,10 @@
     "constrains/config+config.clusterWide+config.clusterWide=null+rbac.create:t@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null@5"
+          "$ref": "#/$defs/constrains~1rbac.create:t"
         },
         {
-          "$ref": "#/$defs/constrains~1rbac.create:t"
+          "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null@5"
         }
       ]
     },
@@ -1311,10 +700,10 @@
           "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null"
+          "$ref": "#/$defs/constrains~1fullnameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
+          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null"
         },
         {
           "$ref": "#/$defs/constrains~1rbac.create:t@4"
@@ -1355,10 +744,10 @@
           "$ref": "#/$defs/constrains~1nameOverride@2"
         },
         {
-          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null"
+          "$ref": "#/$defs/constrains~1fullnameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
+          "$ref": "#/$defs/constrains~1config.clusterWide+config.clusterWide=null"
         },
         {
           "$ref": "#/$defs/constrains~1rbac.create:t@4"
@@ -1565,13 +954,13 @@
     "constrains/fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t+3more": {
       "allOf": [
         {
+          "$ref": "#/$defs/constrains~1rbac.create:t"
+        },
+        {
           "$ref": "#/$defs/constrains~1serviceAccount.create:t"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1rbac.create:t"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride"
@@ -1580,23 +969,23 @@
           "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1monitoring.podMonitorEnabled:t@4"
+          "$ref": "#/$defs/constrains~1monitoring.podMonitorEnabled:t@3"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t+3more@2": {
       "allOf": [
         {
+          "$ref": "#/$defs/constrains~1rbac.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1monitoring.podMonitorEnabled:t@2"
+        },
+        {
           "$ref": "#/$defs/constrains~1serviceAccount.create:t"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1rbac.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1monitoring.podMonitorEnabled:t"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride"
@@ -1609,10 +998,10 @@
     "constrains/fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t+nameOverride+3more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
+          "$ref": "#/$defs/constrains~1rbac.create:t"
         },
         {
-          "$ref": "#/$defs/constrains~1rbac.create:t"
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t@5"
@@ -1627,20 +1016,20 @@
           "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1monitoring.podMonitorEnabled:t@4"
+          "$ref": "#/$defs/constrains~1monitoring.podMonitorEnabled:t@3"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t+nameOverride+3more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
-        },
-        {
           "$ref": "#/$defs/constrains~1rbac.create:t"
         },
         {
-          "$ref": "#/$defs/constrains~1monitoring.podMonitorEnabled:t"
+          "$ref": "#/$defs/constrains~1monitoring.podMonitorEnabled:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t@5"
@@ -1659,10 +1048,10 @@
     "constrains/fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t+nameOverride+3more@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t+3more"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t+nameOverride+3more"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t+nameOverride+3more"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t+3more"
         }
       ]
     },
@@ -1685,7 +1074,7 @@
           "$ref": "#/$defs/constrains~1fullnameOverride@3"
         },
         {
-          "$ref": "#/$defs/constrains~1monitoring.podMonitorEnabled:t@2"
+          "$ref": "#/$defs/constrains~1monitoring.podMonitorEnabled:t"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
@@ -1695,29 +1084,52 @@
     "constrains/fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t@4": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1monitoring.podMonitorEnabled:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1monitoring.podMonitorEnabled:t"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride@3"
         }
       ]
     },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+rbac+2more": {
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+2more": {
       "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
-        },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+serviceAccount.create:t"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+2more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t@4"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+rbac+2more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+serviceAccount.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1rbac.create:t@4"
@@ -1779,45 +1191,22 @@
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+serviceAccount+1more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+serviceAccount.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+serviceAccount+1more@3": {
       "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t@3"
-        },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+serviceAccount+1more"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+serviceAccount+1more@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+serviceAccount+1more@2"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t@3"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+nameOverride:t+rbac.create:t+serviceAccount": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
+          "$ref": "#/$defs/constrains~1rbac.create:t"
         },
         {
-          "$ref": "#/$defs/constrains~1rbac.create:t"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride"
@@ -1846,10 +1235,10 @@
     "constrains/fullnameOverride+fullnameOverride:t+rbac.create:t@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1rbac.create:t"
         },
         {
-          "$ref": "#/$defs/constrains~1rbac.create:t"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride@3"
@@ -1878,10 +1267,10 @@
     "constrains/fullnameOverride+fullnameOverride:t+serviceAccount.create:t@4": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride@3"
@@ -2063,19 +1452,16 @@
       }
     },
     "constrains/monitoring.podMonitorEnabled:t": {
-      "$ref": "#/$defs/constrains~1monitoring.podMonitorEnabled:t@3"
+      "not": {
+        "$ref": "#/$defs/constrains~1monitoring.podMonitorEnabled:t@3"
+      }
     },
     "constrains/monitoring.podMonitorEnabled:t@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1monitoring.podMonitorEnabled:t@4"
+        "$ref": "#/$defs/constrains~1monitoring.podMonitorEnabled:t@3"
       }
     },
     "constrains/monitoring.podMonitorEnabled:t@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1monitoring.podMonitorEnabled:t@4"
-      }
-    },
-    "constrains/monitoring.podMonitorEnabled:t@4": {
       "properties": {
         "monitoring": {
           "properties": {
@@ -2094,43 +1480,12 @@
       ],
       "type": "object"
     },
-    "constrains/monitoringQueriesConfigMap+monitoringQueriesConfigMap.name": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1monitoringQueriesConfigMap.name"
-        },
-        {
-          "$ref": "#/$defs/constrains~1monitoringQueriesConfigMap.name@2"
-        }
-      ]
-    },
-    "constrains/monitoringQueriesConfigMap+monitoringQueriesConfigMap.name@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1monitoringQueriesConfigMap+monitoringQueriesConfigMap.name"
-        },
-        {
-          "$ref": "#/$defs/constrains~1monitoringQueriesConfigMap.name@2"
-        }
-      ]
-    },
-    "constrains/monitoringQueriesConfigMap+monitoringQueriesConfigMap.name@3": {
+    "constrains/monitoringQueriesConfigMap+monitoringQueriesConfigMap.name+3more": {
       "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1monitoringQueriesConfigMap+monitoringQueriesConfigMap.name@2"
-        },
         {
           "properties": {
             "monitoringQueriesConfigMap": {
-              "properties": {
-                "name": {
-                  "type": "number"
-                }
-              },
-              "required": [
-                "name"
-              ],
-              "type": "object"
+              "$ref": "#/$defs/constrains~1name@5"
             }
           },
           "required": [
@@ -2138,29 +1493,6 @@
           ],
           "type": "object"
         },
-        {
-          "properties": {
-            "monitoringQueriesConfigMap": {
-              "properties": {
-                "name": {
-                  "type": "boolean"
-                }
-              },
-              "required": [
-                "name"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "monitoringQueriesConfigMap"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/monitoringQueriesConfigMap+monitoringQueriesConfigMap.name@4": {
-      "anyOf": [
         {
           "properties": {
             "monitoringQueriesConfigMap": {
@@ -2182,58 +1514,116 @@
             "monitoringQueriesConfigMap"
           ],
           "type": "object"
-        }
-      ]
-    },
-    "constrains/monitoringQueriesConfigMap.name": {
-      "not": {
-        "properties": {
-          "monitoringQueriesConfigMap": {
+        },
+        {
+          "properties": {
+            "monitoringQueriesConfigMap": {
+              "$ref": "#/$defs/constrains~1name=null"
+            }
+          },
+          "required": [
+            "monitoringQueriesConfigMap"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
             "properties": {
-              "name": {
-                "$ref": "#/$defs/constrains~1monitoringQueriesConfigMap.name~1string;pattern-n-no-no-v"
+              "monitoringQueriesConfigMap": {
+                "properties": {
+                  "name": {}
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
               }
             },
             "required": [
-              "name"
+              "monitoringQueriesConfigMap"
             ],
             "type": "object"
           }
         },
-        "required": [
-          "monitoringQueriesConfigMap"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/monitoringQueriesConfigMap.name/string;pattern-n-no-no-v": {
-      "pattern": "<$|<n$|<no $|<no v$|<no va$|<no val$|<no valu$|<no value$|<no value>|<no$|^ $|^ v$|^ va$|^ val$|^ valu$|^ value$|^ value>|^ value>$|^$|^<$|^<n$|^<no $|^<no v$|^<no va$|^<no val$|^<no valu$|^<no value$|^<no value>$|^<no$|^>|^>$|^a$|^al$|^alu$|^alue$|^alue>|^alue>$|^e$|^e>|^e>$|^l$|^lu$|^lue$|^lue>|^lue>$|^n$|^no $|^no v$|^no va$|^no val$|^no valu$|^no value$|^no value>|^no value>$|^no$|^o $|^o v$|^o va$|^o val$|^o valu$|^o value$|^o value>|^o value>$|^o$|^u$|^ue$|^ue>|^ue>$|^v$|^va$|^val$|^valu$|^value$|^value>|^value>$",
-      "type": "string"
-    },
-    "constrains/monitoringQueriesConfigMap.name@2": {
-      "properties": {
-        "monitoringQueriesConfigMap": {
+        {
           "properties": {
-            "name": {
-              "type": "string"
+            "monitoringQueriesConfigMap": {
+              "$ref": "#/$defs/constrains~1name=false"
             }
           },
           "required": [
-            "name"
+            "monitoringQueriesConfigMap"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "monitoringQueriesConfigMap": {
+              "$ref": "#/$defs/constrains~1name=true"
+            }
+          },
+          "required": [
+            "monitoringQueriesConfigMap"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "monitoringQueriesConfigMap": {
+              "$ref": "#/$defs/constrains~1name@4"
+            }
+          },
+          "required": [
+            "monitoringQueriesConfigMap"
           ],
           "type": "object"
         }
-      },
-      "required": [
-        "monitoringQueriesConfigMap"
-      ],
-      "type": "object"
+      ]
     },
     "constrains/name": {
       "properties": {
         "name": {
           "pattern": "^(?:(?:[\\x20])*)$",
           "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "constrains/name=false": {
+      "properties": {
+        "name": {
+          "enum": [
+            false
+          ]
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "constrains/name=null": {
+      "properties": {
+        "name": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "constrains/name=true": {
+      "properties": {
+        "name": {
+          "enum": [
+            true
+          ]
         }
       },
       "required": [
@@ -2264,6 +1654,39 @@
       ],
       "type": "object"
     },
+    "constrains/name@4": {
+      "properties": {
+        "name": {
+          "type": "null"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "constrains/name@5": {
+      "properties": {
+        "name": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "constrains/name@6": {
+      "properties": {
+        "name": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
     "constrains/nameOverride": {
       "not": {
         "$ref": "#/$defs/constrains~1nameOverride@2"
@@ -2272,65 +1695,16 @@
     "constrains/nameOverride+nameOverride:t": {
       "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@4"
     },
-    "constrains/nameOverride+nameOverride:t+namespaceOverride+namespaceOverride:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@5"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t+namespaceOverride+namespaceOverride:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t+namespaceOverride+namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+namespaceOverride+namespaceOverride:t"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t+namespaceOverride:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t+namespaceOverride:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t+namespaceOverride:t"
-        }
-      ]
-    },
     "constrains/nameOverride+nameOverride:t+service.ipFamilies:t": {
       "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+service.ipFamilies:t@3"
     },
     "constrains/nameOverride+nameOverride:t+service.ipFamilies:t+service.ipFamilyPolicy:t+1more": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+service.ipFamilies:t@4"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+service.ipFamilyPolicy:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+service.ipFamilyPolicy:t@4"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+service.ipFamilies:t@4"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t@2"
@@ -2349,10 +1723,10 @@
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+service.ipFamilies:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t"
         }
       ]
     },
@@ -2375,10 +1749,10 @@
     "constrains/nameOverride+nameOverride:t+service.ipFamilies:t@4": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+service.ipFamilies:t"
+          "$ref": "#/$defs/constrains~1nameOverride:t+service.ipFamilies:t"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t+service.ipFamilies:t"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+service.ipFamilies:t"
         }
       ]
     },
@@ -2440,17 +1814,40 @@
           "$ref": "#/$defs/constrains~1nameOverride@2"
         },
         {
-          "$ref": "#/$defs/constrains~1service.name"
+          "$ref": "#/$defs/constrains~1service.name@2"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t+service.name@2": {
-      "anyOf": [
+      "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t+service.name"
+          "$ref": "#/$defs/constrains~1nameOverride:t@5"
         },
         {
+          "$ref": "#/$defs/constrains~1service.name"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@2"
+        }
+      ]
+    },
+    "constrains/nameOverride+nameOverride:t+service.name@3": {
+      "anyOf": [
+        {
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+service.name"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t+service.name"
+        }
+      ]
+    },
+    "constrains/nameOverride+nameOverride:t+service.name@4": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+service.name@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t+service.name@2"
         }
       ]
     },
@@ -2476,40 +1873,40 @@
     "constrains/nameOverride+nameOverride:t+serviceAccount.create:t@4": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+serviceAccount.create:t@7"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+serviceAccount.create:t"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
+          "$ref": "#/$defs/constrains~1nameOverride:t+serviceAccount.create:t"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t+serviceAccount.create:t@5": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t+serviceAccount.create:t"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+serviceAccount.create:t"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+serviceAccount.create:t@4"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t+serviceAccount.create:t@6": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+serviceAccount.create:t@5"
+          "$ref": "#/$defs/constrains~1nameOverride:t+serviceAccount.create:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+serviceAccount.create:t@2"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t+serviceAccount.create:t@7": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t+serviceAccount.create:t@2"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+serviceAccount.create:t@6"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+serviceAccount.create:t@2"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
         }
       ]
     },
@@ -2542,10 +1939,10 @@
     "constrains/nameOverride+nameOverride:t+webhook.validating.create:t@5": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1webhook.validating.create:t"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
+          "$ref": "#/$defs/constrains~1webhook.validating.create:t"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride@2"
@@ -2590,29 +1987,6 @@
     },
     "constrains/nameOverride:t": {
       "$ref": "#/$defs/constrains~1nameOverride:t@4"
-    },
-    "constrains/nameOverride:t+namespaceOverride+namespaceOverride:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@5"
-        }
-      ]
-    },
-    "constrains/nameOverride:t+namespaceOverride:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        }
-      ]
     },
     "constrains/nameOverride:t+service.ipFamilies:t": {
       "allOf": [
@@ -2660,27 +2034,37 @@
           "$ref": "#/$defs/constrains~1nameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1service.name"
+          "$ref": "#/$defs/constrains~1service.name@2"
         }
       ]
     },
-    "constrains/nameOverride:t+serviceAccount.create:t": {
+    "constrains/nameOverride:t+service.name@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+          "$ref": "#/$defs/constrains~1service.name"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t@2"
         }
       ]
     },
-    "constrains/nameOverride:t+serviceAccount.create:t@2": {
+    "constrains/nameOverride:t+serviceAccount.create:t": {
       "allOf": [
         {
           "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/nameOverride:t+serviceAccount.create:t@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
         }
       ]
     },
@@ -2720,79 +2104,6 @@
       "type": "object"
     },
     "constrains/namespaceOverride": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@6"
-        }
-      ]
-    },
-    "constrains/namespaceOverride:t": {
-      "properties": {
-        "namespaceOverride": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "namespaceOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/namespaceOverride@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@6"
-        }
-      ]
-    },
-    "constrains/namespaceOverride@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@2"
-        },
-        {
-          "properties": {
-            "namespaceOverride": {
-              "type": "number"
-            }
-          },
-          "required": [
-            "namespaceOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "namespaceOverride": {
-              "type": "boolean"
-            }
-          },
-          "required": [
-            "namespaceOverride"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/namespaceOverride@4": {
-      "not": {
-        "properties": {
-          "namespaceOverride": {
-            "$ref": "#/$defs/constrains~1monitoringQueriesConfigMap.name~1string;pattern-n-no-no-v"
-          }
-        },
-        "required": [
-          "namespaceOverride"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/namespaceOverride@5": {
       "properties": {
         "namespaceOverride": {
           "type": "array"
@@ -2803,10 +2114,10 @@
       ],
       "type": "object"
     },
-    "constrains/namespaceOverride@6": {
+    "constrains/namespaceOverride@2": {
       "properties": {
         "namespaceOverride": {
-          "type": "string"
+          "type": "object"
         }
       },
       "required": [
@@ -2838,8 +2149,60 @@
       ],
       "type": "object"
     },
-    "constrains/service+service.name": {
+    "constrains/service+service.name+service.name=false+service.name=null+service.name=true": {
       "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "service": {
+                "properties": {
+                  "name": {}
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "service": {
+              "$ref": "#/$defs/constrains~1name@4"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "service": {
+              "$ref": "#/$defs/constrains~1name=false"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "service": {
+              "$ref": "#/$defs/constrains~1name=null"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        },
         {
           "properties": {
             "service": {
@@ -2854,7 +2217,29 @@
         {
           "properties": {
             "service": {
+              "$ref": "#/$defs/constrains~1name=true"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "service": {
               "$ref": "#/$defs/constrains~1name"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "service": {
+              "$ref": "#/$defs/constrains~1name@5"
             }
           },
           "required": [
@@ -2903,6 +2288,17 @@
       "type": "object"
     },
     "constrains/service.name": {
+      "properties": {
+        "service": {
+          "$ref": "#/$defs/constrains~1name@6"
+        }
+      },
+      "required": [
+        "service"
+      ],
+      "type": "object"
+    },
+    "constrains/service.name@2": {
       "properties": {
         "service": {
           "$ref": "#/$defs/constrains~1name@3"
@@ -2988,6 +2384,11 @@
       ]
     },
     "constrains/webhook.mutating.create:t": {
+      "not": {
+        "$ref": "#/$defs/constrains~1webhook.mutating.create:t@2"
+      }
+    },
+    "constrains/webhook.mutating.create:t@2": {
       "properties": {
         "webhook": {
           "properties": {
@@ -3159,10 +2560,6 @@
       "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
       "type": "null"
     },
-    "values/null;namespace-defines-the-space": {
-      "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
-      "type": "null"
-    },
     "values/object": {
       "additionalProperties": {
         "anyOf": [
@@ -3193,6 +2590,25 @@
       },
       "propertyNames": {
         "$ref": "#/$defs/values~1string"
+      },
+      "type": "object"
+    },
+    "values/object@2": {
+      "additionalProperties": {
+        "not": {
+          "pattern": "[^A-Za-z0-9_.$/+: \t-]"
+        },
+        "pattern": "^[A-Za-z0-9_.$/+-]+:[ \t]+[A-Za-z0-9_.$/+-]+$",
+        "type": "string"
+      },
+      "maxProperties": 1,
+      "minProperties": 1,
+      "propertyNames": {
+        "minLength": 1,
+        "not": {
+          "pattern": "[^A-Za-z0-9_.$/+-]"
+        },
+        "type": "string"
       },
       "type": "object"
     },
@@ -3266,56 +2682,6 @@
       "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
       "type": "string"
     },
-    "values/string;namespace-defines-the-space": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^[-?:]([ \\t]|$)"
-          }
-        },
-        {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern"
-        },
-        {
-          "not": {
-            "pattern": "^[!&*#{}\\[\\],|>@`%]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-          }
-        },
-        {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
-        },
-        {
-          "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
-        },
-        {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
-        }
-      ],
-      "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
-      "type": "string"
-    },
     "values/string;pattern-a-za-z0-9-t": {
       "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
       "type": "string"
@@ -3325,6 +2691,9 @@
       "type": "string"
     },
     "values/string;pattern-r-n": {
+      "not": {
+        "pattern": "^[A-Za-z]+\\n[A-Za-z]+$"
+      },
       "pattern": "[\\r\\n]",
       "type": "string"
     },
@@ -3380,86 +2749,16 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+fullnameOverride+5more"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "rbac": {}
-                  },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "rbac": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "rbac"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+serviceAccount+1more@4"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+        "$ref": "#/$defs/constrains~1monitoring+monitoring.grafanaDashboard.create+2more"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "service": {
+          "monitoring": {
             "additionalProperties": {},
             "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/values~1string;name-must-be-unique"
-                  },
-                  {
-                    "$ref": "#/$defs/values~1string@2"
-                  },
-                  {
-                    "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
-                  },
-                  {
-                    "$ref": "#/$defs/values~1object"
-                  },
-                  {
-                    "$ref": "#/$defs/values~1string;pattern-t"
-                  },
-                  {
-                    "$ref": "#/$defs/values~1null;name-must-be-unique"
-                  },
-                  {
-                    "$ref": "#/$defs/values~1string;pattern-r-n"
-                  },
-                  {
-                    "$ref": "#/$defs/values~1string;pattern-null-null-null"
-                  }
-                ],
-                "description": "The name of the Webhook Service.\nDO NOT CHANGE THE SERVICE NAME as it is currently used to generate the certificate\nand can not be configured"
+              "grafanaDashboard": {
+                "type": "object"
               }
             }
           }
@@ -3519,111 +2818,6 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1nameOverride"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook.validating.create:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride:t@5"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t+nameOverride+3more@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1monitoring!=null~1then~1fail"
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+12more"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1monitoring!=null~1then~1fail"
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook+webhook=null"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1monitoring+monitoring.grafanaDashboard.create+2more"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "monitoring": {
-            "additionalProperties": {},
-            "properties": {
-              "grafanaDashboard": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+serviceAccount.create:t@4"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "serviceAccount": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "serviceAccount"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {}
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "monitoring": {
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+fullnameOverride+2more"
           },
           {
@@ -3639,551 +2833,39 @@
             "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+serviceAccount.create:t@2"
           },
           {
-            "$ref": "#/$defs/constrains~1webhook.mutating.create:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "commonAnnotations": {
-            "anyOf": [
-              {
-                "not": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              {
-                "additionalProperties": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
-                "type": [
-                  "object",
-                  "null"
-                ]
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-marker-free"
-                }
-              }
-            ],
-            "description": "Annotations to be added to all other resources."
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+fullnameOverride+7more@3"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "config": {
-            "description": "Operator configuration.",
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+fullnameOverride+7more@4"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "config": {}
-                  },
-                  "required": [
-                    "config"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "config": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "config"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/$defs/when~1monitoring!=null~1then~1fail"
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t+nameOverride+3more@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1monitoring!=null~1then~1fail"
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "crds": {}
-              },
-              "required": [
-                "crds"
-              ],
-              "type": "object"
-            }
-          },
-          {
             "properties": {
-              "crds": {
-                "enum": [
-                  null
-                ]
+              "monitoringQueriesConfigMap": {
+                "$ref": "#/$defs/constrains~1name@6"
               }
             },
             "required": [
-              "crds"
+              "monitoringQueriesConfigMap"
             ],
             "type": "object"
           }
         ]
       },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1monitoringQueriesConfigMap+monitoringQueriesConfigMap.name@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+fullnameOverride+2more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+serviceAccount.create:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1namespaceOverride@5"
-          }
-        ]
-      },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "namespaceOverride": {
-            "anyOf": [
-              {
-                "not": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/values~1array"
-                }
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "webhook": {
-                      "$ref": "#/$defs/constrains~1validating"
-                    }
-                  },
-                  "required": [
-                    "webhook"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "webhook": {
-                    "$ref": "#/$defs/constrains~1validating=null"
-                  }
-                },
-                "required": [
-                  "webhook"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1namespaceOverride@3"
-              },
-              {
-                "$ref": "#/$defs/constrains~1monitoringQueriesConfigMap+monitoringQueriesConfigMap.name@4"
-              },
-              {
-                "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+fullnameOverride+2more"
-              },
-              {
-                "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t@2"
-              },
-              {
-                "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t@2"
-              },
-              {
-                "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-              },
-              {
-                "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+serviceAccount.create:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1namespaceOverride@3"
-              },
-              {
-                "$ref": "#/$defs/constrains~1service+service.name"
-              },
-              {
-                "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t@2"
-              },
-              {
-                "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "namespaceOverride": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/values~1null;namespace-defines-the-space"
-              },
-              {
-                "$ref": "#/$defs/values~1string@2"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              {
-                "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
-              },
-              {
-                "$ref": "#/$defs/values~1object"
-              },
-              {
-                "$ref": "#/$defs/values~1string;pattern-t"
-              },
-              {
-                "$ref": "#/$defs/values~1string;pattern-r-n"
-              },
-              {
-                "$ref": "#/$defs/values~1string;pattern-null-null-null"
-              },
-              {
-                "$ref": "#/$defs/values~1string;namespace-defines-the-space"
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1service+service.name"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+namespaceOverride+namespaceOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "namespaceOverride": {
-            "not": {
-              "$ref": "#/$defs/values~1array"
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide:t+config.clusterWide=null+9more@5"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "config": {
+          "monitoringQueriesConfigMap": {
             "additionalProperties": {},
-            "description": "Operator configuration.",
+            "description": "Default monitoring queries",
             "properties": {
-              "data": {
-                "description": "The content of the configmap/secret, see\nhttps://cloudnative-pg.io/documentation/current/operator_conf/#available-options\nfor all the available options.\nINHERITED_ANNOTATIONS: categories\nINHERITED_LABELS: environment, workload, app\nWATCH_NAMESPACE: namespace-a,namespace-b",
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+serviceAccount+1more@3"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "rbac": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1nameOverride"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride:t@5"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook.validating.create:t@3"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+service.ipFamilies:t+service.ipFamilyPolicy:t+1more"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "service": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+fullnameOverride+2more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+serviceAccount.create:t@2"
-          }
-        ]
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "webhook": {
-                "additionalProperties": {},
-                "description": "The webhook configuration.",
-                "properties": {
-                  "mutating": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "monitoringQueriesConfigMap": {
-                "description": "Default monitoring queries",
-                "type": "object"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+serviceAccount.create:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+fullnameOverride+2more@2"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "monitoringQueriesConfigMap": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "monitoringQueriesConfigMap"
-                ],
-                "type": "object"
-              },
-              {
+              "name": {
+                "description": "The name of the default monitoring configmap.",
                 "not": {
-                  "properties": {
-                    "monitoringQueriesConfigMap": {}
-                  },
-                  "required": [
-                    "monitoringQueriesConfigMap"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/values~1object@2"
                 }
               }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/$defs/when~1monitoring!=null~1then~1fail"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1service+service.name"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+namespaceOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "namespaceOverride": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/values~1null;namespace-defines-the-space"
-              },
-              {
-                "$ref": "#/$defs/values~1string@2"
-              },
-              {
-                "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
-              },
-              {
-                "$ref": "#/$defs/values~1object"
-              },
-              {
-                "$ref": "#/$defs/values~1string;pattern-t"
-              },
-              {
-                "$ref": "#/$defs/values~1string;pattern-r-n"
-              },
-              {
-                "$ref": "#/$defs/values~1string;pattern-null-null-null"
-              },
-              {
-                "$ref": "#/$defs/values~1string;namespace-defines-the-space"
-              }
-            ]
+            }
           }
         }
       }
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+service.name@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-          }
-        ]
+        "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
       },
       "then": {
         "additionalProperties": {},
@@ -4192,10 +2874,33 @@
             "additionalProperties": {},
             "properties": {
               "name": {
-                "description": "The name of the Webhook Service.\nDO NOT CHANGE THE SERVICE NAME as it is currently used to generate the certificate\nand can not be configured",
-                "not": {
-                  "$ref": "#/$defs/values~1array"
-                }
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/values~1string;name-must-be-unique"
+                  },
+                  {
+                    "$ref": "#/$defs/values~1string;pattern-r-n"
+                  },
+                  {
+                    "$ref": "#/$defs/values~1string@2"
+                  },
+                  {
+                    "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+                  },
+                  {
+                    "$ref": "#/$defs/values~1object"
+                  },
+                  {
+                    "$ref": "#/$defs/values~1string;pattern-t"
+                  },
+                  {
+                    "$ref": "#/$defs/values~1null;name-must-be-unique"
+                  },
+                  {
+                    "$ref": "#/$defs/values~1string;pattern-null-null-null"
+                  }
+                ],
+                "description": "The name of the Webhook Service.\nDO NOT CHANGE THE SERVICE NAME as it is currently used to generate the certificate\nand can not be configured"
               }
             }
           }
@@ -4206,7 +2911,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t"
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t"
           },
           {
             "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+serviceAccount.create:t"
@@ -4215,7 +2920,7 @@
             "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
           },
           {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t"
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t"
           },
           {
             "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+fullnameOverride+2more@2"
@@ -4272,12 +2977,82 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+serviceAccount.create:t@6"
+        "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide:t+config.clusterWide=null+9more@5"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "serviceAccount": {
+          "config": {
+            "additionalProperties": {},
+            "description": "Operator configuration.",
+            "properties": {
+              "data": {
+                "description": "The content of the configmap/secret, see\nhttps://cloudnative-pg.io/documentation/current/operator_conf/#available-options\nfor all the available options.\nINHERITED_ANNOTATIONS: categories\nINHERITED_LABELS: environment, workload, app\nWATCH_NAMESPACE: namespace-a,namespace-b",
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook+webhook=null"
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+fullnameOverride+5more"
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "rbac": {}
+                  },
+                  "required": [
+                    "rbac"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "rbac": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "rbac"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+2more@2"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+serviceAccount+1more@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "rbac": {
             "type": "object"
           }
         }
@@ -4287,8 +3062,544 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1monitoringQueriesConfigMap+monitoringQueriesConfigMap.name@3"
+            "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide:t+config.clusterWide=null+9more@6"
           },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "config": {
+                      "properties": {
+                        "data": {}
+                      },
+                      "required": [
+                        "data"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "config"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "config": {
+                    "properties": {
+                      "data": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "data"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "config"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/when~1monitoring!=null~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1monitoringQueriesConfigMap+monitoringQueriesConfigMap.name+3more"
+              },
+              {
+                "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+fullnameOverride+2more"
+              },
+              {
+                "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+serviceAccount.create:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1service+service.name+service.name=false+service.name=null+service.name=true"
+              },
+              {
+                "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "namespaceOverride": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/values~1string;pattern-r-n"
+              },
+              {
+                "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
+                "type": "null"
+              },
+              {
+                "$ref": "#/$defs/values~1string@2"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              {
+                "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+              },
+              {
+                "$ref": "#/$defs/values~1object"
+              },
+              {
+                "$ref": "#/$defs/values~1string;pattern-t"
+              },
+              {
+                "$ref": "#/$defs/values~1string;pattern-null-null-null"
+              },
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "pattern": "^[-?:]([ \\t]|$)"
+                    }
+                  },
+                  {
+                    "$ref": "#/$defs/values~1not~1keywords~1pattern"
+                  },
+                  {
+                    "not": {
+                      "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[ \\t]#"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                    }
+                  },
+                  {
+                    "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
+                  },
+                  {
+                    "not": {
+                      "pattern": "^(|~|null|Null|NULL)$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": ":[ \\t]|:$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[\\r\\n]"
+                    }
+                  },
+                  {
+                    "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
+                  }
+                ],
+                "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
+                "type": "string"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "monitoring": {
+          "type": [
+            "null",
+            "object"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+fullnameOverride+2more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+serviceAccount.create:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1webhook.mutating.create:t@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "commonAnnotations": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              {
+                "additionalProperties": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-marker-free"
+                }
+              }
+            ],
+            "description": "Annotations to be added to all other resources."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+fullnameOverride+7more@3"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "config": {
+            "description": "Operator configuration.",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+service.name@4"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "additionalProperties": {},
+            "properties": {
+              "name": {
+                "description": "The name of the Webhook Service.\nDO NOT CHANGE THE SERVICE NAME as it is currently used to generate the certificate\nand can not be configured",
+                "not": {
+                  "$ref": "#/$defs/values~1object@2"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "crds": {}
+              },
+              "required": [
+                "crds"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "crds": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "crds"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "webhook": {
+                      "$ref": "#/$defs/constrains~1validating"
+                    }
+                  },
+                  "required": [
+                    "webhook"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "webhook": {
+                    "$ref": "#/$defs/constrains~1validating=null"
+                  }
+                },
+                "required": [
+                  "webhook"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1webhook+webhook=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1service+service.name+service.name=false+service.name=null+service.name=true"
+              },
+              {
+                "$ref": "#/$defs/constrains~1namespaceOverride@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1monitoringQueriesConfigMap+monitoringQueriesConfigMap.name+3more"
+              },
+              {
+                "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+fullnameOverride+2more"
+              },
+              {
+                "$ref": "#/$defs/constrains~1namespaceOverride@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+serviceAccount.create:t@2"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "namespaceOverride": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/values~1object@2"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1monitoringQueriesConfigMap+monitoringQueriesConfigMap.name+3more"
+              },
+              {
+                "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+fullnameOverride+2more"
+              },
+              {
+                "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+serviceAccount.create:t@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1namespaceOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1service+service.name+service.name=false+service.name=null+service.name=true"
+              },
+              {
+                "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1namespaceOverride"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "namespaceOverride": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/values~1array"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+serviceAccount.create:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+fullnameOverride+2more@2"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "monitoringQueriesConfigMap": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "monitoringQueriesConfigMap"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "monitoringQueriesConfigMap": {}
+                  },
+                  "required": [
+                    "monitoringQueriesConfigMap"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/when~1monitoring!=null~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
           {
             "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+fullnameOverride+2more"
           },
@@ -4307,45 +3618,248 @@
         ]
       },
       "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "monitoringQueriesConfigMap": {
+                "additionalProperties": {},
+                "description": "Default monitoring queries",
+                "properties": {
+                  "name": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/values~1string;name-must-be-unique"
+                      },
+                      {
+                        "$ref": "#/$defs/values~1string;pattern-r-n"
+                      },
+                      {
+                        "$ref": "#/$defs/values~1string@2"
+                      },
+                      {
+                        "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+                      },
+                      {
+                        "$ref": "#/$defs/values~1object"
+                      },
+                      {
+                        "$ref": "#/$defs/values~1string;pattern-t"
+                      },
+                      {
+                        "$ref": "#/$defs/values~1null;name-must-be-unique"
+                      },
+                      {
+                        "$ref": "#/$defs/values~1string;pattern-null-null-null"
+                      }
+                    ],
+                    "description": "The name of the default monitoring configmap."
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "webhook": {
+                "additionalProperties": {},
+                "description": "The webhook configuration.",
+                "properties": {
+                  "mutating": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "monitoringQueriesConfigMap": {
+                "description": "Default monitoring queries",
+                "type": "object"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+serviceAccount.create:t@7"
+      },
+      "then": {
         "additionalProperties": {},
         "properties": {
-          "monitoringQueriesConfigMap": {
+          "serviceAccount": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+serviceAccount.create:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+webhook.validating.create:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+fullnameOverride+2more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+13more@7"
+          },
+          {
+            "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:helm-marker-free+commonAnnotations:t+13more@5"
+          },
+          {
+            "$ref": "#/$defs/constrains~1commonAnnotations@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1commonAnnotations"
+          },
+          {
+            "$ref": "#/$defs/constrains~1commonAnnotations:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1webhook.mutating.create:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1commonAnnotations:helm-marker-free"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/when~1monitoring!=null~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t+nameOverride+3more@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1monitoring!=null~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+monitoring.podMonitorEnabled:t+nameOverride+3more@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1monitoring!=null~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide=null+fullnameOverride+7more@4"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "config": {}
+                  },
+                  "required": [
+                    "config"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "config": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "config"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/when~1monitoring!=null~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+service.name@3"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
             "additionalProperties": {},
-            "description": "Default monitoring queries",
             "properties": {
               "name": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/values~1string;name-must-be-unique"
-                  },
-                  {
-                    "$ref": "#/$defs/values~1string@2"
-                  },
-                  {
-                    "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
-                  },
-                  {
-                    "$ref": "#/$defs/values~1object"
-                  },
-                  {
-                    "$ref": "#/$defs/values~1string;pattern-t"
-                  },
-                  {
-                    "$ref": "#/$defs/values~1null;name-must-be-unique"
-                  },
-                  {
-                    "$ref": "#/$defs/values~1string;pattern-r-n"
-                  },
-                  {
-                    "$ref": "#/$defs/values~1string;pattern-null-null-null"
-                  }
-                ],
-                "description": "The name of the default monitoring configmap."
+                "description": "The name of the Webhook Service.\nDO NOT CHANGE THE SERVICE NAME as it is currently used to generate the certificate\nand can not be configured",
+                "not": {
+                  "$ref": "#/$defs/values~1array"
+                }
               }
             }
           }
         }
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+serviceAccount.create:t@5"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "serviceAccount": {}
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
     },
     {
       "if": {
@@ -4384,6 +3898,51 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1webhook.validating.create:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1nameOverride"
+          },
+          {
+            "$ref": "#/$defs/constrains~1nameOverride:t@5"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1nameOverride"
+          },
+          {
+            "$ref": "#/$defs/constrains~1nameOverride:t@5"
+          },
+          {
+            "$ref": "#/$defs/constrains~1webhook.validating.create:t@3"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+service.ipFamilies:t+service.ipFamilyPolicy:t+1more"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "type": "object"
+          }
+        }
+      }
     },
     {
       "if": {
@@ -4522,62 +4081,6 @@
             "type": "object"
           }
         }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1config+config.clusterWide+config.clusterWide:t+config.clusterWide=null+9more@6"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "config": {
-                      "properties": {
-                        "data": {}
-                      },
-                      "required": [
-                        "data"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "config"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "config": {
-                    "properties": {
-                      "data": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "data"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "config"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/$defs/when~1monitoring!=null~1then~1fail"
       }
     }
   ],
