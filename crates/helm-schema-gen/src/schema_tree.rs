@@ -1278,7 +1278,7 @@ fn ensure_object_properties(node: &mut SchemaNode) -> &mut BTreeMap<String, Sche
             node,
             SchemaNode::Typed(TypedSchemaNode::Keywords(keywords)) if keywords.is_empty_schema()
         );
-        if is_empty_schema {
+        if node.is_empty_slot() || is_empty_schema {
             *node = SchemaNode::untyped_member_host();
         } else {
             // Hosting a member under a non-object slot proves keys exist,
@@ -1612,11 +1612,9 @@ fn insert_schema_at_parts_tracking(
             // lanes for the member row instead of an array-only slot.
             SchemaNode::empty()
         } else {
-            // An ancestor object materialized only because a DESCENDANT is
-            // referenced: member reads prove keys exist, they do not bound
-            // the member set, so the interior node stays open (the strict
-            // root closure is created separately).
-            SchemaNode::unknown_object()
+            // Navigation carries descendants without proving the host's type.
+            // Executed member requirements supply objectness independently.
+            SchemaNode::untyped_member_host()
         }
     });
     if !next_is_array {
@@ -1744,7 +1742,7 @@ fn insert_into_typed_canonical_object_conjunct(
             if tail.is_empty() || next_is_array {
                 SchemaNode::empty()
             } else {
-                SchemaNode::unknown_object()
+                SchemaNode::untyped_member_host()
             }
         });
     if tail.is_empty() {

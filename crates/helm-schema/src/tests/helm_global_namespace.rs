@@ -2512,8 +2512,7 @@ fn a_disabled_aliased_dependency_is_not_table_asserted() -> eyre::Result<()> {
                     "install-crds": {
                         "type": "boolean"
                     }
-                },
-                "type": "object"
+                }
             }
         },
         "type": "object"

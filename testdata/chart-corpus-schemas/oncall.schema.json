@@ -14176,6 +14176,13 @@
     "values/cert-manager.containerSecurityContext": {
       "description": "Container Security Context to be set on the controller component container\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/"
     },
+    "values/cert-manager.global.podSecurityPolicy": {
+      "additionalProperties": {},
+      "properties": {
+        "enabled": {},
+        "useAppArmor": {}
+      }
+    },
     "values/ingress-nginx.controller.admissionWebhooks.patch.image": {
       "additionalProperties": {},
       "properties": {
@@ -18166,15 +18173,13 @@
                 },
                 "labels": {},
                 "name": {}
-              },
-              "type": "object"
+              }
             },
             "strategy": {
               "$ref": "#/$defs/values~1cert-manager.cainjector.strategy"
             },
             "tolerations": {}
-          },
-          "type": "object"
+          }
         },
         "clusterResourceNamespace": {
           "description": "Override the namespace used to store DNS provider credentials etc. for ClusterIssuer\nresources. By default, the same namespace as cert-manager is deployed within is\nused. This namespace will not be automatically created by the Helm chart."
@@ -18217,12 +18222,7 @@
               "description": "Set the verbosity of cert-manager. Range of 0 - 6 with 6 being the most verbose."
             },
             "podSecurityPolicy": {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {},
-                "useAppArmor": {}
-              },
-              "type": "object"
+              "$ref": "#/$defs/values~1cert-manager.global.podSecurityPolicy"
             },
             "priorityClassName": {
               "description": "Optional priority class to be used for the cert-manager pods"
@@ -18234,11 +18234,9 @@
                   "description": "Aggregate ClusterRoles to Kubernetes default user-facing roles. Ref: https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles"
                 },
                 "create": {}
-              },
-              "type": "object"
+              }
             }
-          },
-          "type": "object"
+          }
         },
         "http_proxy": {},
         "https_proxy": {},
@@ -18317,8 +18315,7 @@
             },
             "labels": {},
             "name": {}
-          },
-          "type": "object"
+          }
         },
         "serviceAnnotations": {},
         "serviceLabels": {},
@@ -18363,8 +18360,7 @@
                 "annotations": {
                   "description": "annotations for the startup API Check job RBAC and PSP resources"
                 }
-              },
-              "type": "object"
+              }
             },
             "resources": {
               "$ref": "#/$defs/values~1cert-manager.cainjector.resources"
@@ -18549,11 +18545,7 @@
         },
         "logLevel": {},
         "podSecurityPolicy": {
-          "additionalProperties": {},
-          "properties": {
-            "enabled": {},
-            "useAppArmor": {}
-          }
+          "$ref": "#/$defs/values~1cert-manager.global.podSecurityPolicy"
         },
         "priorityClassName": {},
         "rbac": {
@@ -19833,8 +19825,7 @@
               "description": "If set to true, this will deploy kube-state-metrics as a StatefulSet and the data\nwill be automatically sharded across <.Values.replicas> pods using the built-in\nautodiscovery feature: https://github.com/kubernetes/kube-state-metrics#automated-sharding\nThis is an experimental feature and there are no stability guarantees.",
               "properties": {
                 "enabled": {}
-              },
-              "type": "object"
+              }
             },
             "customLabels": {
               "description": "Additional labels to add to all resources\napp: kube-state-metrics"
@@ -19856,11 +19847,9 @@
                   "properties": {
                     "additionalLabels": {},
                     "enabled": {}
-                  },
-                  "type": "object"
+                  }
                 }
-              },
-              "type": "object"
+              }
             },
             "rbac": {
               "additionalProperties": {},
@@ -19868,8 +19857,7 @@
                 "create": {
                   "description": "If true, create & use RBAC resources"
                 }
-              },
-              "type": "object"
+              }
             },
             "releaseLabel": {
               "$ref": "#/$defs/values~1prometheus.kube-state-metrics.releaseLabel"
@@ -19886,8 +19874,7 @@
                 "name": {
                   "$ref": "#/$defs/values~1prometheus.kube-state-metrics.serviceAccount.name"
                 }
-              },
-              "type": "object"
+              }
             },
             "verticalPodAutoscaler": {
               "additionalProperties": {},
@@ -19906,8 +19893,7 @@
                 },
                 "recommenders": {},
                 "updatePolicy": {}
-              },
-              "type": "object"
+              }
             }
           }
         },
@@ -19929,16 +19915,14 @@
                 "imagePullSecrets": {
                   "description": "To help compatibility with other charts which use global.imagePullSecrets.\nAllow either an array of {name: pullSecret} maps (k8s-style), or an array of strings (more common helm-style).\nglobal:\nimagePullSecrets:\n- name: pullSecret1\n- name: pullSecret2\nor\nglobal:\nimagePullSecrets:\n- pullSecret1\n- pullSecret2"
                 }
-              },
-              "type": "object"
+              }
             },
             "kubeRBACProxy": {
               "additionalProperties": {},
               "description": "Configure kube-rbac-proxy. When enabled, creates a kube-rbac-proxy to protect the node-exporter http endpoint.\nThe requests are served through the same service but requests are HTTPS.",
               "properties": {
                 "enabled": {}
-              },
-              "type": "object"
+              }
             },
             "nameOverride": {
               "description": "- name: \"image-pull-secret\""
@@ -19951,8 +19935,7 @@
               "description": "Set a NetworkPolicy with:\ningress only on service.port\nno egress permitted",
               "properties": {
                 "enabled": {}
-              },
-              "type": "object"
+              }
             },
             "podLabels": {
               "description": "Extra labels to be added to node exporter pods"
@@ -20104,8 +20087,7 @@
                     }
                   }
                 }
-              },
-              "type": "object"
+              }
             },
             "rbac": {
               "additionalProperties": {},
@@ -20117,8 +20099,7 @@
                 "pspEnabled": {
                   "description": "If true, create & use Pod Security Policy resources\nhttps://kubernetes.io/docs/concepts/policy/pod-security-policy/"
                 }
-              },
-              "type": "object"
+              }
             },
             "releaseLabel": {
               "$ref": "#/$defs/values~1prometheus.kube-state-metrics.releaseLabel"
@@ -20134,16 +20115,14 @@
                     "enabled": {},
                     "ipFamilies": {},
                     "ipFamilyPolicy": {}
-                  },
-                  "type": "object"
+                  }
                 },
                 "nodePort": {},
                 "port": {},
                 "portName": {},
                 "targetPort": {},
                 "type": {}
-              },
-              "type": "object"
+              }
             },
             "serviceAccount": {
               "additionalProperties": {},
@@ -20156,8 +20135,7 @@
                 "name": {
                   "$ref": "#/$defs/values~1prometheus.kube-state-metrics.serviceAccount.name"
                 }
-              },
-              "type": "object"
+              }
             },
             "verticalPodAutoscaler": {
               "additionalProperties": {},
@@ -20176,8 +20154,7 @@
                 },
                 "recommenders": {},
                 "updatePolicy": {}
-              },
-              "type": "object"
+              }
             }
           }
         },
@@ -20619,17 +20596,14 @@
                     "redis": {
                       "description": "Node port for Redis&reg;"
                     }
-                  },
-                  "type": "object"
+                  }
                 },
                 "type": {
                   "description": "Redis&reg; Sentinel service type"
                 }
-              },
-              "type": "object"
+              }
             }
-          },
-          "type": "object"
+          }
         }
       }
     },
@@ -20654,8 +20628,7 @@
         "bitnami-common": {
           "type": "boolean"
         }
-      },
-      "type": "object"
+      }
     },
     "telegramPolling": {
       "additionalProperties": {},

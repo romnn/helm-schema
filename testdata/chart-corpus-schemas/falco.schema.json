@@ -1094,8 +1094,7 @@
               "description": "enabled specifies whether the Kubernetes metadata should be collected using the k8smeta plugin and the k8s-metacollector component.\nIt will deploy the k8s-metacollector external component that fetches Kubernetes metadata and pushes them to Falco instances.\nFor more info see:\nhttps://github.com/falcosecurity/k8s-metacollector\nhttps://github.com/falcosecurity/charts/tree/master/charts/k8s-metacollector\nWhen this option is disabled, Falco falls back to the container annotations to grab the metadata.\nIn such a case, only the ID, name, namespace, labels of the pod will be available.",
               "type": "boolean"
             }
-          },
-          "type": "object"
+          }
         }
       }
     },
@@ -1267,8 +1266,7 @@
                 "mutualtls": {
                   "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.mutualtls"
                 }
-              },
-              "type": "object"
+              }
             },
             "aws": {
               "additionalProperties": {},
@@ -1291,8 +1289,7 @@
                     "minimumpriority": {
                       "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
                     }
-                  },
-                  "type": "object"
+                  }
                 },
                 "externalid": {
                   "description": "External id for the role to assume (optional if you use EC2 Instance Profile)"
@@ -1306,8 +1303,7 @@
                     "streamname": {
                       "description": "AWS Kinesis Stream Name, if not empty, Kinesis output is *enabled*"
                     }
-                  },
-                  "type": "object"
+                  }
                 },
                 "lambda": {
                   "additionalProperties": {},
@@ -1318,8 +1314,7 @@
                     "minimumpriority": {
                       "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
                     }
-                  },
-                  "type": "object"
+                  }
                 },
                 "region": {
                   "description": "AWS Region (optionnal if you use EC2 Instance Profile)"
@@ -1345,8 +1340,7 @@
                     "prefix": {
                       "description": "AWS S3, name of prefix, keys will have format: s3://<bucket>/<prefix>/YYYY-MM-DD/YYYY-MM-DDTHH:mm:ss.s+01:00.json"
                     }
-                  },
-                  "type": "object"
+                  }
                 },
                 "secretaccesskey": {
                   "description": "AWS Secret Access Key (optionnal if you use EC2 Instance Profile)"
@@ -1375,8 +1369,7 @@
                     "region": {
                       "description": "Bucket Region"
                     }
-                  },
-                  "type": "object"
+                  }
                 },
                 "sns": {
                   "additionalProperties": {},
@@ -1390,8 +1383,7 @@
                     "topicarn": {
                       "description": "AWS SNS TopicARN, if not empty, AWS SNS output is *enabled*"
                     }
-                  },
-                  "type": "object"
+                  }
                 },
                 "sqs": {
                   "additionalProperties": {},
@@ -1402,14 +1394,12 @@
                     "url": {
                       "description": "AWS SQS Queue URL, if not empty, AWS SQS output is *enabled*"
                     }
-                  },
-                  "type": "object"
+                  }
                 },
                 "useirsa": {
                   "description": "Use IRSA, if true, the rolearn value will be used to set the ServiceAccount annotations and not the env var"
                 }
-              },
-              "type": "object"
+              }
             },
             "azure": {
               "additionalProperties": {},
@@ -1426,11 +1416,9 @@
                     "namespace": {
                       "description": "Name of the space the Hub is in"
                     }
-                  },
-                  "type": "object"
+                  }
                 }
-              },
-              "type": "object"
+              }
             },
             "cliq": {
               "additionalProperties": {},
@@ -1453,8 +1441,7 @@
                 "webhookurl": {
                   "description": "Zoho Cliq Channel URL (ex: <https://cliq.zoho.eu/api/v2/channelsbyname/XXXX/message?zapikey=YYYY>), if not empty, Cliq Chat output is *enabled*"
                 }
-              },
-              "type": "object"
+              }
             },
             "cloudevents": {
               "additionalProperties": {},
@@ -1468,8 +1455,7 @@
                 "minimumpriority": {
                   "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
                 }
-              },
-              "type": "object"
+              }
             },
             "datadog": {
               "additionalProperties": {},
@@ -1483,8 +1469,7 @@
                 "minimumpriority": {
                   "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
                 }
-              },
-              "type": "object"
+              }
             },
             "datadoglogs": {
               "additionalProperties": {},
@@ -1501,8 +1486,7 @@
                 "service": {
                   "description": "The name of the application or service generating the log events."
                 }
-              },
-              "type": "object"
+              }
             },
             "discord": {
               "additionalProperties": {},
@@ -1516,8 +1500,7 @@
                 "webhookurl": {
                   "description": "Discord WebhookURL (ex: <https://discord.com/api/webhooks/xxxxxxxxxx>...), if not empty, Discord output is *enabled*"
                 }
-              },
-              "type": "object"
+              }
             },
             "dogstatsd": {
               "additionalProperties": {},
@@ -1531,8 +1514,7 @@
                 "tags": {
                   "description": "A comma-separated list of tags to add to all metrics"
                 }
-              },
-              "type": "object"
+              }
             },
             "dynatrace": {
               "additionalProperties": {},
@@ -1549,8 +1531,7 @@
                 "minimumpriority": {
                   "$ref": "#/$defs/values~1falcosidekick.config.dynatrace.minimumpriority"
                 }
-              },
-              "type": "object"
+              }
             },
             "elasticsearch": {
               "additionalProperties": {},
@@ -1571,8 +1552,7 @@
                     "flushinterval": {
                       "description": "batch fush interval (default: 1s)"
                     }
-                  },
-                  "type": "object"
+                  }
                 },
                 "checkcert": {
                   "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.checkcert"
@@ -1625,8 +1605,7 @@
                 "username": {
                   "description": "Use this username to authenticate to Elasticsearch if the username is not empty"
                 }
-              },
-              "type": "object"
+              }
             },
             "fission": {
               "additionalProperties": {},
@@ -1652,8 +1631,7 @@
                 "routerservice": {
                   "description": "Service of Fission Router, \"router\" (default)"
                 }
-              },
-              "type": "object"
+              }
             },
             "gcp": {
               "additionalProperties": {},
@@ -1667,8 +1645,7 @@
                     "name": {
                       "description": "The name of the Cloud Function which is in form `projects/<project_id>/locations/<region>/functions/<function_name>`"
                     }
-                  },
-                  "type": "object"
+                  }
                 },
                 "cloudrun": {
                   "additionalProperties": {},
@@ -1682,8 +1659,7 @@
                     "minimumpriority": {
                       "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
                     }
-                  },
-                  "type": "object"
+                  }
                 },
                 "credentials": {
                   "description": "Base64 encoded JSON key file for the GCP service account"
@@ -1703,8 +1679,7 @@
                     "topic": {
                       "description": "Name of the Pub/Sub topic"
                     }
-                  },
-                  "type": "object"
+                  }
                 },
                 "storage": {
                   "additionalProperties": {},
@@ -1718,11 +1693,9 @@
                     "prefix": {
                       "description": "Name of prefix, keys will have format: gs://<bucket>/<prefix>/YYYY-MM-DD/YYYY-MM-DDTHH:mm:ss.s+01:00.json"
                     }
-                  },
-                  "type": "object"
+                  }
                 }
-              },
-              "type": "object"
+              }
             },
             "googlechat": {
               "additionalProperties": {},
@@ -1739,8 +1712,7 @@
                 "webhookurl": {
                   "description": "Google Chat Webhook URL (ex: <https://chat.googleapis.com/v1/spaces/XXXXXX/YYYYYY>), if not `empty`, Google Chat output is *enabled*"
                 }
-              },
-              "type": "object"
+              }
             },
             "gotify": {
               "additionalProperties": {},
@@ -1760,8 +1732,7 @@
                 "token": {
                   "description": "API Token"
                 }
-              },
-              "type": "object"
+              }
             },
             "grafana": {
               "additionalProperties": {},
@@ -1793,8 +1764,7 @@
                 "panelid": {
                   "description": "annotations are scoped to a specific panel. Optionnal."
                 }
-              },
-              "type": "object"
+              }
             },
             "grafanaoncall": {
               "additionalProperties": {},
@@ -1814,8 +1784,7 @@
                 "webhookurl": {
                   "description": "if not empty, Grafana OnCall output is enabled"
                 }
-              },
-              "type": "object"
+              }
             },
             "influxdb": {
               "additionalProperties": {},
@@ -1850,8 +1819,7 @@
                 "user": {
                   "description": "User to use if auth is *enabled* in Influxdb"
                 }
-              },
-              "type": "object"
+              }
             },
             "kafka": {
               "additionalProperties": {},
@@ -1895,8 +1863,7 @@
                 "username": {
                   "description": "use this username to authenticate to Kafka via SASL"
                 }
-              },
-              "type": "object"
+              }
             },
             "kafkarest": {
               "additionalProperties": {},
@@ -1916,8 +1883,7 @@
                 "version": {
                   "description": "Kafka Rest Proxy API version 2|1 (default: 2)"
                 }
-              },
-              "type": "object"
+              }
             },
             "kubeless": {
               "additionalProperties": {},
@@ -1940,8 +1906,7 @@
                 "port": {
                   "description": "Port of service of Kubeless function. Default is `8080`"
                 }
-              },
-              "type": "object"
+              }
             },
             "loki": {
               "additionalProperties": {},
@@ -1979,8 +1944,7 @@
                 "user": {
                   "description": "user for Grafana Logs"
                 }
-              },
-              "type": "object"
+              }
             },
             "mattermost": {
               "additionalProperties": {},
@@ -2012,8 +1976,7 @@
                 "webhookurl": {
                   "description": "Mattermost Webhook URL (ex: <https://XXXX/hooks/YYYY>), if not `empty`, Mattermost output is *enabled*"
                 }
-              },
-              "type": "object"
+              }
             },
             "mqtt": {
               "additionalProperties": {},
@@ -2042,8 +2005,7 @@
                 "user": {
                   "description": "User if the authentication is enabled in the broker"
                 }
-              },
-              "type": "object"
+              }
             },
             "n8n": {
               "additionalProperties": {},
@@ -2063,8 +2025,7 @@
                 "user": {
                   "description": "Username to authenticate with N8N in basic auth"
                 }
-              },
-              "type": "object"
+              }
             },
             "nats": {
               "additionalProperties": {},
@@ -2084,8 +2045,7 @@
                 "subjecttemplate": {
                   "$ref": "#/$defs/values~1falcosidekick.config.nats.subjecttemplate"
                 }
-              },
-              "type": "object"
+              }
             },
             "nodered": {
               "additionalProperties": {},
@@ -2108,8 +2068,7 @@
                 "user": {
                   "description": "User if Basic Auth is enabled for 'http in' node in Node-RED"
                 }
-              },
-              "type": "object"
+              }
             },
             "openfaas": {
               "additionalProperties": {},
@@ -2138,8 +2097,7 @@
                 "mutualtls": {
                   "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.mutualtls"
                 }
-              },
-              "type": "object"
+              }
             },
             "openobserve": {
               "additionalProperties": {},
@@ -2171,8 +2129,7 @@
                 "username": {
                   "description": "use this username to authenticate to OpenObserve if the username is not empty"
                 }
-              },
-              "type": "object"
+              }
             },
             "opsgenie": {
               "additionalProperties": {},
@@ -2192,8 +2149,7 @@
                 "region": {
                   "description": "(`us` or `eu`) region of your domain"
                 }
-              },
-              "type": "object"
+              }
             },
             "otlp": {
               "additionalProperties": {},
@@ -2219,8 +2175,7 @@
                     "timeout": {
                       "description": "OTLP timeout for outgoing metrics in milliseconds (default: \"\" which uses SDK default: 10000)"
                     }
-                  },
-                  "type": "object"
+                  }
                 },
                 "traces": {
                   "additionalProperties": {},
@@ -2249,11 +2204,9 @@
                     "timeout": {
                       "description": "OTLP timeout: timeout value in milliseconds (default: \"\" which uses SDK default: 10000)"
                     }
-                  },
-                  "type": "object"
+                  }
                 }
-              },
-              "type": "object"
+              }
             },
             "pagerduty": {
               "additionalProperties": {},
@@ -2267,8 +2220,7 @@
                 "routingkey": {
                   "description": "Pagerduty Routing Key, if not empty, Pagerduty output is *enabled*"
                 }
-              },
-              "type": "object"
+              }
             },
             "policyreport": {
               "additionalProperties": {},
@@ -2288,8 +2240,7 @@
                 "prunebypriority": {
                   "description": "if true; the events with lowest severity are pruned first, in FIFO order"
                 }
-              },
-              "type": "object"
+              }
             },
             "prometheus": {
               "additionalProperties": {},
@@ -2297,8 +2248,7 @@
                 "extralabels": {
                   "$ref": "#/$defs/values~1falcosidekick.config.loki.extralabels"
                 }
-              },
-              "type": "object"
+              }
             },
             "rabbitmq": {
               "additionalProperties": {},
@@ -2312,8 +2262,7 @@
                 "url": {
                   "description": "Rabbitmq URL, if not empty, Rabbitmq output is *enabled*"
                 }
-              },
-              "type": "object"
+              }
             },
             "redis": {
               "additionalProperties": {},
@@ -2336,8 +2285,7 @@
                 "storagetype": {
                   "description": "Redis storage type: hashmap or list"
                 }
-              },
-              "type": "object"
+              }
             },
             "rocketchat": {
               "additionalProperties": {},
@@ -2366,8 +2314,7 @@
                 "webhookurl": {
                   "description": "Rocketchat Webhook URL (ex: <https://XXXX/hooks/YYYY>), if not `empty`, Rocketchat output is *enabled*"
                 }
-              },
-              "type": "object"
+              }
             },
             "slack": {
               "additionalProperties": {},
@@ -2396,8 +2343,7 @@
                 "webhookurl": {
                   "description": "Slack Webhook URL (ex: <https://hooks.slack.com/services/XXXX/YYYY/ZZZZ>), if not `empty`, Slack output is *enabled*"
                 }
-              },
-              "type": "object"
+              }
             },
             "smtp": {
               "additionalProperties": {},
@@ -2438,8 +2384,7 @@
                 "user": {
                   "description": "user to access SMTP server"
                 }
-              },
-              "type": "object"
+              }
             },
             "spyderbat": {
               "additionalProperties": {},
@@ -2462,8 +2407,7 @@
                 "sourcedescription": {
                   "description": "Spyderbat source description and display name if not empty, max 256 characters"
                 }
-              },
-              "type": "object"
+              }
             },
             "stan": {
               "additionalProperties": {},
@@ -2489,8 +2433,7 @@
                 "subjecttemplate": {
                   "$ref": "#/$defs/values~1falcosidekick.config.nats.subjecttemplate"
                 }
-              },
-              "type": "object"
+              }
             },
             "statsd": {
               "additionalProperties": {},
@@ -2501,8 +2444,7 @@
                 "namespace": {
                   "description": "A prefix for all metrics"
                 }
-              },
-              "type": "object"
+              }
             },
             "syslog": {
               "additionalProperties": {},
@@ -2522,8 +2464,7 @@
                 "protocol": {
                   "description": "Syslog transport protocol. It can be either \"tcp\" or \"udp\""
                 }
-              },
-              "type": "object"
+              }
             },
             "teams": {
               "additionalProperties": {},
@@ -2540,8 +2481,7 @@
                 "webhookurl": {
                   "description": "Teams Webhook URL (ex: <https://outlook.office.com/webhook/XXXXXX/IncomingWebhook/YYYYYY>\"), if not `empty`, Teams output is *enabled*"
                 }
-              },
-              "type": "object"
+              }
             },
             "tekton": {
               "additionalProperties": {},
@@ -2555,8 +2495,7 @@
                 "minimumpriority": {
                   "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
                 }
-              },
-              "type": "object"
+              }
             },
             "telegram": {
               "additionalProperties": {},
@@ -2576,8 +2515,7 @@
                 "token": {
                   "description": "telegram bot authentication token"
                 }
-              },
-              "type": "object"
+              }
             },
             "timescaledb": {
               "additionalProperties": {},
@@ -2603,8 +2541,7 @@
                 "user": {
                   "description": "Username to authenticate with TimescaleDB"
                 }
-              },
-              "type": "object"
+              }
             },
             "tlsserver": {
               "additionalProperties": {},
@@ -2615,8 +2552,7 @@
                 "notlsport": {
                   "description": "port to serve http server serving selected endpoints"
                 }
-              },
-              "type": "object"
+              }
             },
             "wavefront": {
               "additionalProperties": {},
@@ -2645,8 +2581,7 @@
                 "minimumpriority": {
                   "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.minimumpriority"
                 }
-              },
-              "type": "object"
+              }
             },
             "webhook": {
               "additionalProperties": {},
@@ -2669,8 +2604,7 @@
                 "mutualtls": {
                   "$ref": "#/$defs/values~1falcosidekick.config.alertmanager.mutualtls"
                 }
-              },
-              "type": "object"
+              }
             },
             "yandex": {
               "additionalProperties": {},
@@ -2690,8 +2624,7 @@
                     "streamname": {
                       "description": "stream name in format /${region}/${folder_id}/${ydb_id}/${stream_name}"
                     }
-                  },
-                  "type": "object"
+                  }
                 },
                 "region": {
                   "description": "yandex storage region (default: ru-central-1)"
@@ -2711,14 +2644,12 @@
                     "prefix": {
                       "description": "name of prefix, keys will have format: s3://<bucket>/<prefix>/YYYY-MM-DD/YYYY-MM-DDTHH:mm:ss.s+01:00.json"
                     }
-                  },
-                  "type": "object"
+                  }
                 },
                 "secretaccesskey": {
                   "description": "yandex secret access key"
                 }
-              },
-              "type": "object"
+              }
             },
             "zincsearch": {
               "additionalProperties": {},
@@ -2741,11 +2672,9 @@
                 "username": {
                   "description": "use this username to authenticate to ZincSearch"
                 }
-              },
-              "type": "object"
+              }
             }
-          },
-          "type": "object"
+          }
         },
         "customAnnotations": {
           "description": "custom annotations to add to all resources"
@@ -2775,8 +2704,7 @@
             "type": {
               "description": "Service type"
             }
-          },
-          "type": "object"
+          }
         },
         "serviceMonitor": {
           "additionalProperties": {},
@@ -2796,8 +2724,7 @@
             "scrapeTimeout": {
               "description": "specify a user defined scrape timeout. When not specified Prometheus default scrape timeout is used."
             }
-          },
-          "type": "object"
+          }
         },
         "webui": {
           "additionalProperties": {},
@@ -2828,11 +2755,9 @@
                     "type": {
                       "description": "The web UI Redis service type (i. e: LoadBalancer)"
                     }
-                  },
-                  "type": "object"
+                  }
                 }
-              },
-              "type": "object"
+              }
             },
             "service": {
               "additionalProperties": {},
@@ -2852,11 +2777,9 @@
                 "type": {
                   "description": "The web UI service type"
                 }
-              },
-              "type": "object"
+              }
             }
-          },
-          "type": "object"
+          }
         }
       }
     },

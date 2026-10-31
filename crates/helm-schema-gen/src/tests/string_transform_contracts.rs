@@ -347,11 +347,9 @@ fn shadowed_dependency_global_default_does_not_type_ignored_input() {
                                 "replicas": {
                                     "type": "integer"
                                 }
-                            },
-                            "type": "object"
+                            }
                         }
-                    },
-                    "type": "object"
+                    }
                 }
             },
             "type": "object"

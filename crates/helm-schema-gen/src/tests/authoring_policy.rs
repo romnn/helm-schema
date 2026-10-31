@@ -560,12 +560,10 @@ fn annotate_backfills_dependency_defaults_as_documentation() {
                     "properties": {
                         "global": {},
                         "limit": {},
-                        "nested": {
-                            "additionalProperties": {},
-                            "properties": {
-                                "flag": {}
-                            }
-                        }
+                        "nested": { "anyOf": [
+                            { "additionalProperties": {}, "properties": { "flag": {} } },
+                            { "properties": { "flag": {} } }
+                        ] }
                     },
                     "type": "object"
                 }
@@ -665,12 +663,10 @@ fn annotate_backfills_dependency_defaults_as_documentation() {
                     "properties": {
                         "global": {},
                         "limit": {},
-                        "nested": {
-                            "additionalProperties": {},
-                            "properties": {
-                                "flag": {}
-                            }
-                        }
+                        "nested": { "anyOf": [
+                            { "additionalProperties": {}, "properties": { "flag": {} } },
+                            { "properties": { "flag": {} } }
+                        ] }
                     },
                     "type": "object"
                 }
@@ -961,7 +957,7 @@ fn unknown_regions_do_not_retype_unobserved_members_through_parent_defaults() {
             "$schema": "http://json-schema.org/draft-07/schema#",
             "type": "object",
             "properties": {
-                "config": { "type": "object", "properties": { "used": {} }, "additionalProperties": {} },
+                "config": { "properties": { "used": {} }, "additionalProperties": {} },
                 "global": {}
             },
             "additionalProperties": false

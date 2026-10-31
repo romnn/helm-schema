@@ -295,8 +295,7 @@ fn negated_boolean_guard_lowers_to_not_condition() {
                     "if": {"$ref": "#/$defs/helm-condition-0"},
                     "then": {"additionalProperties": {}, "properties": {"host": {"type": "string"}}}
                 }],
-                "properties": {"enabled": {}, "host": {}},
-                "type": "object"
+                "properties": {"enabled": {}, "host": {}}
             },
             "global": {}
         },
@@ -600,8 +599,8 @@ fn or_boolean_guards_lower_to_any_of_condition() {
             }}
         }],
         "properties": {
-            "feature": {"additionalProperties": {}, "properties": {"enabled": {}, "host": {}}, "type": "object"},
-            "global": {"additionalProperties": {}, "properties": {"featureEnabled": {}}, "type": "object"}
+            "feature": {"additionalProperties": {}, "properties": {"enabled": {}, "host": {}}},
+            "global": {"additionalProperties": {}, "properties": {"featureEnabled": {}}}
         },
         "type": "object"
     }));

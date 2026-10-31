@@ -14102,6 +14102,12 @@
         }
       ]
     },
+    "values/global": {
+      "additionalProperties": {},
+      "properties": {
+        "image": {}
+      }
+    },
     "values/ingress-nginx.commonLabels": {
       "description": "Labels to apply to all resources\nscmhash: abc123\nmyLabel: aakkmd"
     },
@@ -14190,13 +14196,6 @@
         }
       }
     },
-    "values/ingress-nginx.global": {
-      "additionalProperties": {},
-      "properties": {
-        "image": {}
-      },
-      "type": "object"
-    },
     "values/ingress-nginx.imagePullSecrets": {
       "description": "Optional array of imagePullSecrets containing private registry credentials\nRef: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\n- name: secretName"
     },
@@ -14210,8 +14209,7 @@
           "additionalProperties": {},
           "properties": {
             "annotations": {}
-          },
-          "type": "object"
+          }
         }
       }
     },
@@ -15812,10 +15810,7 @@
       "description": "Specific config for github integration"
     },
     "global": {
-      "additionalProperties": {},
-      "properties": {
-        "image": {}
-      }
+      "$ref": "#/$defs/values~1global"
     },
     "globals": {},
     "imagePullSecrets": {},
@@ -16327,7 +16322,7 @@
         "enabled": {},
         "fullnameOverride": {},
         "global": {
-          "$ref": "#/$defs/values~1ingress-nginx.global"
+          "$ref": "#/$defs/values~1global"
         },
         "imagePullSecrets": {
           "$ref": "#/$defs/values~1ingress-nginx.imagePullSecrets"
@@ -16882,7 +16877,7 @@
         "enabled": {},
         "fullnameOverride": {},
         "global": {
-          "$ref": "#/$defs/values~1ingress-nginx.global"
+          "$ref": "#/$defs/values~1global"
         },
         "imagePullSecrets": {
           "$ref": "#/$defs/values~1ingress-nginx.imagePullSecrets"
@@ -16946,8 +16941,7 @@
                 "enabled": {
                   "description": "Deprecated: Service monitor will be removed in future releases of reloader in favour of Pod monitor\nEnabling this requires service to be enabled as well, or no endpoints will be found\nSet the namespace the ServiceMonitor should be deployed\nnamespace: monitoring"
                 }
-              },
-              "type": "object"
+              }
             },
             "verticalPodAutoscaler": {
               "additionalProperties": {},
@@ -16966,11 +16960,9 @@
                 },
                 "recommenders": {},
                 "updatePolicy": {}
-              },
-              "type": "object"
+              }
             }
-          },
-          "type": "object"
+          }
         }
       }
     },
