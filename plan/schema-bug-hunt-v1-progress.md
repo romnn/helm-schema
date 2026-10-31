@@ -9676,4 +9676,24 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Orchestrator decisions:
     - Package D's consumer-projection design is retired. HEAP2 now carries the FR cells and the postgresql-ha/zabbix battery.
     - The NAVCARRIER builder fixes the navigation-ancestor emission.
-Next: HEAP2 hand-back → targeted battery (redis, cilium, argo-cd, airflow, postgresql-ha, zabbix); NAVCARRIER hand-back → harbor battery; then rebase C06b5 and the Q rebase (c32c43f1) onto the line; full preview before landing.
+- 22:02 (Oct 31) — **R3b: preview 4 cuts false rejections from 7,534 to 32 but adds about 6.5k false acceptances, 92% of them first accepted at HOSTS; user decisions: roster only small classes, Codex does most of the work, never stop started delegates.**
+  - Line a4afcaa6 (r3b/construction), newest first:
+    - a4afcaa6 heap-history ownership: byte-identical, W1 parity, 0 new unit failures, KPS +10.05%.
+    - f8df1351 fixtures from one verified dump; e63d2102 INTEG placement onto E/F relationships; 9bacc390 Q (RelationshipQuery); 05fc16d9 NAVCARRIER; 0ac7f030 HOSTS.
+  - Preview 4 (round8-r3b-preview4-evidence, live round-74 battery against ROSTER_BASELINE, 156 of 157 charts; daskhub failed its stale-intake check):
+    - FR 7,534 → 32 on 12 charts: kube-prometheus-stack 11, openebs 8, crossplane 3, datadog 2, and one each in argo-events, external-secrets, kibana, netbox, okteto, qdrant, rancher, yourls.
+    - FA 90,550 → 98,934. Of 8,807 new FA cases, 2,290 are cells the CRD oracle now decides (undecided in preview 2); 6,517 are real new FA. 424 FA closed.
+  - FA attribution (round8-r3b-diag/transfer/fa-attribution.{md,json}): each saved document revalidated against every committed fixture from ad33fed8 to a4afcaa6; 25,737 checks.
+    - First accepting fixture: HOSTS 0ac7f030 5,979, E/F d14fad18 329, NAV 05fc16d9 209.
+    - HOSTS: gen path_resolver.rs:89 drops ancestor declarations when only descendant reads and an unknown region remain. Every case loses a `type` assertion that main keeps under a guard. The executed member-host and output demands that should replace them are missing.
+    - E/F: airflow workers.* (169) is isolated to C06b→E/F (coarse serialized parent, ir value/control.rs:652). Nats (71) already accepts at C06b.
+    - NAV: gen schema_tree.rs:1617 `unknown_object` → `untyped_member_host`; the executed selector-receiver demand is missing.
+    - 13 FR controls show each restored constraint can coexist with its FR closure.
+  - User decisions (Oct 31):
+    - Keep the bar: the big FA classes close before landing; only small classes are rostered.
+    - Codex does most of the work, including bug hunting. Claude Opus at xhigh only for the hardest design work.
+    - Never stop a started delegate to change its model, effort or vendor; apply preferences to the next launch.
+  - Running lanes:
+    - HEAP3 (Codex): merge fallback and member-scope proof. SPIKE (Claude Opus xhigh): a competing minimal guarded join.
+    - FRFIX (Codex): the 32 FR. HOSTSFA (Codex): restore the HOSTS constraints from executed facts.
+Next: HEAP3/SPIKE hand-back → merge the winner with one clean dump and a unit check; FRFIX and HOSTSFA hand-backs → targeted batteries; then copy isolation (airflow workers), NAV receiver demands, and a full preview before the landing chain.
