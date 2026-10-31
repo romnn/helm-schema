@@ -2609,6 +2609,7 @@ mod conditional_input_backing_laws {
                     content: None,
                 },
                 origin: crate::value::Origin {
+                    derivation: None,
                     identity: Some(ValuesPath::parse("obj")),
                     influences: std::collections::BTreeSet::default(),
                 },

@@ -236,6 +236,7 @@ fn unknown_helper_text(influences: BTreeSet<ValuesPath>) -> Value {
                 content: None,
             },
             origin: Origin {
+                derivation: None,
                 identity: None,
                 influences,
             },

@@ -103,6 +103,7 @@ impl Value {
                     aliases: super::AliasSet::RenderGraph,
                 }),
                 origin: super::Origin {
+                    derivation: None,
                     identity: Some(path),
                     influences: BTreeSet::new(),
                 },
@@ -252,6 +253,7 @@ impl Value {
                     aliases: super::AliasSet::RenderGraph,
                 }),
                 origin: super::Origin {
+                    derivation: None,
                     identity: None,
                     influences: inputs,
                 },
@@ -403,8 +405,9 @@ impl State {
                     aliases: _,
                 }),
                 origin: super::Origin {
+                    derivation: _,
                     identity: None,
-                    influences: _
+                    influences: _,
                 },
             })
         );
@@ -543,6 +546,7 @@ impl State {
                 datum: Datum::Map { view, target },
                 origin:
                     super::Origin {
+                        derivation: _,
                         identity: Some(_),
                         influences: _,
                     },
@@ -553,6 +557,7 @@ impl State {
                         target: target.clone(),
                     },
                     origin: super::Origin {
+                        derivation: None,
                         identity: None,
                         influences: value.inputs(),
                     },
@@ -578,6 +583,7 @@ impl State {
                             target: Some(backing.object),
                         },
                         origin: super::Origin {
+                            derivation: None,
                             identity: None,
                             influences: value.inputs(),
                         },
@@ -880,6 +886,7 @@ impl State {
                 node: Rc::new(ValueNode::Leaf(Leaf {
                     datum,
                     origin: super::Origin {
+                        derivation: None,
                         identity: None,
                         influences,
                     },
@@ -924,6 +931,7 @@ impl State {
                             content: None,
                         },
                         origin: super::Origin {
+                            derivation: None,
                             identity: None,
                             influences: self.heap.freeze(&value).inputs(),
                         },
@@ -944,6 +952,7 @@ impl State {
                 datum: _,
                 origin:
                     super::Origin {
+                        derivation: _,
                         identity: Some(path),
                         influences: _,
                     },
@@ -972,11 +981,7 @@ impl State {
                     },
                 origin: _,
             }) => {
-                let path = self.heap.arena.input_paths.borrow().get(id).cloned();
-                let mut unknown = self.unknown_child_value(Some(id), path.as_ref(), key);
-                if path.is_none() {
-                    unknown = Value::with_influences(unknown, value.inputs());
-                }
+                let unknown = self.unknown_map_child(&value, id, key);
                 self.consumed(&field_value(
                     self.heap.version.field(id, key),
                     &unknown,
@@ -989,6 +994,23 @@ impl State {
             }) => Value::influenced(value.inputs()),
         })
     }
+    fn unknown_map_child(&self, value: &Value, id: &super::ObjectId, key: &str) -> Value {
+        let path = self.heap.arena.input_paths.borrow().get(id).cloned();
+        let mut unknown = self.unknown_child_value(Some(id), path.as_ref(), key);
+        if path.is_none() {
+            unknown = Value::with_influences(unknown, value.inputs());
+        }
+        if let ValueNode::Leaf(Leaf { datum: _, origin }) = value.node.as_ref()
+            && origin.derivation.is_some()
+        {
+            unknown = unknown.derived(
+                self.heap.freeze(value),
+                super::relationship::Operation::Member(key.to_owned()),
+            );
+        }
+        unknown
+    }
+
     fn unknown_child_value(
         &self,
         id: Option<&super::ObjectId>,
@@ -1134,6 +1156,7 @@ impl State {
                 datum: Datum::Unknown(super::UnknownValue { types, aliases: _ }),
                 origin:
                     super::Origin {
+                        derivation: _,
                         identity: Some(path),
                         influences: _,
                     },

@@ -556,10 +556,15 @@ pub(super) fn descriptor(
     let kind_only = matches!(function, "kindOf" | "kindIs");
     let name = descriptor_name(value, kind_only);
     if matches!(function, "kindOf" | "typeOf") {
-        return name.map_or_else(
-            || refined_parameter(&Value::influenced(value.inputs()), GoType::String),
-            Value::string,
-        );
+        return name
+            .map_or_else(
+                || refined_parameter(&Value::influenced(value.inputs()), GoType::String),
+                Value::string,
+            )
+            .derived(
+                state.heap.freeze(value),
+                super::relationship::Operation::Descriptor { kind_only },
+            );
     }
     let Some(GuardValue::String(expected)) = arguments.first().and_then(Value::constant) else {
         return Value::influenced(value.inputs());

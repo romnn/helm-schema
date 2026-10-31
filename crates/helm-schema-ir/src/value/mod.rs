@@ -14,6 +14,7 @@ pub(crate) mod output;
 mod query;
 mod quoted;
 mod read_set;
+pub(crate) mod relationship;
 pub(crate) mod scalar_value;
 mod session;
 mod shape_summary;
@@ -435,6 +436,13 @@ pub(crate) struct FrozenValue {
     value: Value,
 }
 
+impl PartialEq for FrozenValue {
+    fn eq(&self, other: &Self) -> bool {
+        Rc::ptr_eq(&self.heap, &other.heap) && self.value == other.value
+    }
+}
+impl Eq for FrozenValue {}
+
 #[cfg(test)]
 #[path = "../tests/runtime_frozen_helpers.rs"]
 mod frozen_test_helpers;
@@ -681,6 +689,7 @@ struct RuntimeRead {
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 struct Origin {
+    derivation: Option<Rc<relationship::Derivation>>,
     identity: Option<ValuesPath>,
     influences: BTreeSet<ValuesPath>,
 }

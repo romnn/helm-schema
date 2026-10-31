@@ -186,6 +186,7 @@ fn unknown_map(
                 aliases: AliasSet::RenderGraph,
             }),
             origin: Origin {
+                derivation: None,
                 identity: None,
                 influences: inputs,
             },

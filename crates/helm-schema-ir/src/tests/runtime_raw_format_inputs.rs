@@ -32,6 +32,7 @@ fn materialize(state: &mut State, path: &str) -> eyre::Result<ObjectId> {
                 aliases: AliasSet::RenderGraph,
             }),
             origin: Origin {
+                derivation: None,
                 identity: Some(ValuesPath::parse(path)),
                 influences: BTreeSet::new(),
             },

@@ -102,8 +102,8 @@ pub(super) fn transfer(
         }
         "deepCopy" | "mustDeepCopy" => Ok(copy(&input.first, state, &mut BTreeSet::new(), 0)),
         "quote" | "squote" => Ok(transfer_quote(input, state)),
-        "int" | "int64" | "float64" => Ok(transfer_numeric_cast(input)),
-        "upper" | "lower" | "trim" | "toString" => Ok(transfer_string_transform(input)),
+        "int" | "int64" | "float64" => Ok(transfer_numeric_cast(input, state)),
+        "upper" | "lower" | "trim" | "toString" => Ok(transfer_string_transform(input, state)),
         "print" | "println" => Ok(transfer_print(input)),
         "indent" | "nindent" => Ok(transfer_indent(input, state)),
         _ => {
@@ -900,6 +900,20 @@ fn transfer_deserialize(input: TransferInput<'_>, state: &mut State) -> Value {
         last: _,
     } = input;
 
+    if first.constant().is_none() {
+        let frozen = state.heap.freeze(&first);
+        let decoded = unknown_decoded(function, influences, state);
+        return decoded.derived(
+            frozen,
+            super::relationship::Operation::Decode(match function {
+                "fromYaml" => super::relationship::Decoder::YamlMap,
+                "fromYamlArray" => super::relationship::Decoder::YamlSequence,
+                "fromJson" => super::relationship::Decoder::JsonMap,
+                "fromJsonArray" => super::relationship::Decoder::JsonSequence,
+                _ => super::relationship::Decoder::JsonValue,
+            }),
+        );
+    }
     let Some(GuardValue::String(text)) = first.constant() else {
         return unknown_decoded(function, influences.clone(), state);
     };
@@ -983,7 +997,7 @@ fn transfer_quote(input: TransferInput<'_>, state: &State) -> Value {
     Value::string(&output.join(" "))
 }
 
-fn transfer_numeric_cast(input: TransferInput<'_>) -> Value {
+fn transfer_numeric_cast(input: TransferInput<'_>, state: &State) -> Value {
     let TransferInput {
         function,
         arguments: _,
@@ -1029,14 +1043,19 @@ fn transfer_numeric_cast(input: TransferInput<'_>) -> Value {
                 content: content.map(super::scalar_value::ScalarContent::Literal),
             },
             origin: super::Origin {
+                derivation: None,
                 identity: None,
                 influences,
             },
         })),
     }
+    .derived(
+        state.heap.freeze(&first),
+        super::relationship::Operation::Numeric(kind),
+    )
 }
 
-fn transfer_string_transform(input: TransferInput<'_>) -> Value {
+fn transfer_string_transform(input: TransferInput<'_>, state: &State) -> Value {
     let TransferInput {
         function,
         arguments: _,
@@ -1065,6 +1084,26 @@ fn transfer_string_transform(input: TransferInput<'_>) -> Value {
         )
     {
         return last;
+    }
+    if function == "toString" {
+        let value = scalar_text(&last).map_or_else(
+            || Value::scalar(super::ScalarType::String, None).with_influences(influences),
+            |text| Value::string(&text),
+        );
+        return value.derived(
+            state.heap.freeze(&last),
+            super::relationship::Operation::Stringify,
+        );
+    }
+    if function == "trim" {
+        let value = scalar_text(&last).map_or_else(
+            || Value::scalar(super::ScalarType::String, None).with_influences(influences),
+            |text| Value::string(text.trim()),
+        );
+        return value.derived(
+            state.heap.freeze(&last),
+            super::relationship::Operation::Trim,
+        );
     }
     let Some(text) = scalar_text(&last) else {
         return Value::influenced(last.inputs());
@@ -1395,7 +1434,8 @@ fn copy(
     seen: &mut BTreeSet<super::ObjectId>,
     depth: usize,
 ) -> Value {
-    let influences = state.heap.freeze(value).inputs();
+    let frozen = state.heap.freeze(value);
+    let influences = frozen.inputs();
     if depth > 32 {
         return Value::influenced(influences);
     }
@@ -1467,7 +1507,7 @@ fn copy(
             copy(no, state, &mut seen.clone(), depth + 1),
         ),
     };
-    Value::with_influences(copied, influences)
+    Value::with_influences(copied, influences).derived(frozen, super::relationship::Operation::Copy)
 }
 
 fn copy_sequence(
@@ -1809,6 +1849,7 @@ fn fresh_map(
                 target: Some(target),
             },
             origin: super::Origin {
+                derivation: None,
                 identity: None,
                 influences,
             },
@@ -1821,8 +1862,16 @@ fn select_map(function: &str, arguments: &[Value], state: &mut State) -> Value {
     let Some(first) = arguments.first() else {
         return Value::influenced(influences);
     };
-    let Some(mut map) = map_fields(first, state) else {
-        return Value::influenced(influences);
+    // Picking unknown members needs presence guards; omitted remainders stay lazy.
+    let first = if function == "pick" {
+        let first = state.consumed(first);
+        if state.map_target(&first).is_some() {
+            state.consumed(&first)
+        } else {
+            first
+        }
+    } else {
+        first.clone()
     };
     let keys = arguments
         .iter()
@@ -1838,6 +1887,15 @@ fn select_map(function: &str, arguments: &[Value], state: &mut State) -> Value {
     let Some(keys) = keys else {
         return Value::influenced(influences);
     };
+    let operation = if function == "omit" {
+        super::relationship::Operation::Omit(keys.clone())
+    } else {
+        super::relationship::Operation::Pick(keys.clone())
+    };
+    let frozen = state.heap.freeze(&first);
+    let Some(mut map) = map_fields(&first, state) else {
+        return Value::influenced(influences).derived(frozen, operation);
+    };
     if function == "omit" {
         for key in keys {
             map.fields.insert(key, Field::Absent);
@@ -1845,13 +1903,20 @@ fn select_map(function: &str, arguments: &[Value], state: &mut State) -> Value {
     } else {
         map.fields.retain(|key, _| keys.contains(key));
         for key in keys {
-            if !map.fields.contains_key(&key) && map.remainder != Remainder::Closed {
-                map.fields.insert(key, Field::Unknown);
+            if matches!(map.fields.get(&key), Some(Field::Unknown))
+                || !map.fields.contains_key(&key) && map.remainder != Remainder::Closed
+            {
+                let present = state.field_presence(&first, &key);
+                let value = state.field(&first, &key);
+                map.fields.insert(
+                    key,
+                    Field::select(state.test(&present), Field::Present(value), Field::Absent),
+                );
             }
         }
         map.remainder = Remainder::Closed;
     }
-    fresh_map(map, influences, state)
+    fresh_map(map, influences, state).derived(frozen, operation)
 }
 
 fn pluck(arguments: &[Value], state: &mut State) -> Value {
@@ -2069,10 +2134,12 @@ fn merge(arguments: &[Value], state: &mut State, overwrite: bool) -> Result<Valu
     }
     if !disjoint {
         // Mergo walks map keys in unspecified order; aliased paths can interfere through the heap.
+        let frozen = state.heap.freeze(&Value::sequence(arguments.to_vec()));
         let mut affected = arguments.to_vec();
         affected.push(destination.clone());
         widen_operands(&affected, state);
-        return Ok(interface_map_view(&destination, state));
+        return Ok(interface_map_view(&destination, state)
+            .derived(frozen, super::relationship::Operation::Merge { overwrite }));
     }
     for source in arguments.iter().skip(1) {
         if !merge_maps(&target, source, state, overwrite, 0) {
@@ -2454,6 +2521,7 @@ fn unknown_decoded(
                 aliases: super::AliasSet::Known(BTreeSet::from([region])),
             }),
             origin: super::Origin {
+                derivation: None,
                 identity: None,
                 influences,
             },

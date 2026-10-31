@@ -341,6 +341,7 @@ fn receiver_materialization_preserves_the_same_member_obligation() -> eyre::Resu
                 aliases: super::AliasSet::RenderGraph,
             }),
             origin: super::Origin {
+                derivation: None,
                 identity: Some(path.clone()),
                 influences: BTreeSet::new(),
             },

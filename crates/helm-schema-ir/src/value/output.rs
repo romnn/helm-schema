@@ -1954,7 +1954,7 @@ fn json_sequence(
     ))
 }
 
-fn json(
+pub(super) fn json(
     value: &Value,
     heap: &super::HeapVersion,
     seen: &mut BTreeSet<super::ObjectId>,
@@ -2106,13 +2106,6 @@ struct RawFormatArm<'value> {
     value: &'value Value,
 }
 
-fn pristine_input_backing(object: &super::ObjectVersion) -> bool {
-    matches!(object, super::ObjectVersion {
-        revision: _, multiplicity: _,
-        data: ObjectData::Map { fields, remainder: super::Remainder::Input },
-    } if fields.is_empty())
-}
-
 #[cfg(test)]
 #[path = "../tests/runtime_raw_format_inputs.rs"]
 mod raw_format_input_tests;
@@ -2242,7 +2235,6 @@ pub(super) struct PayloadQuery<'a, 'inputs> {
     remaining: usize,
     limit: usize,
     shape: PayloadShape,
-    omission_depth: usize,
     predicates: helm_schema_core::PredicateMemo,
 }
 
@@ -2255,6 +2247,7 @@ impl<'a, 'inputs> PayloadQuery<'a, 'inputs> {
         }];
         let mut inputs = Vec::new();
         let mut proofs = BTreeMap::new();
+        let mut relationships = super::relationship::RelationshipQuery::new(self.inputs, 1024);
         let mut remaining = super::MAX_SCALAR_DISPATCH_STATES;
         while let Some(RawFormatArm { condition, value }) = pending.pop() {
             if condition == Predicate::False {
@@ -2287,11 +2280,11 @@ impl<'a, 'inputs> PayloadQuery<'a, 'inputs> {
                         return Vec::new();
                     }
                     remaining -= 1;
-                    let path = self.original_identity_path(datum, origin);
+                    let path = relationships.direct_input_path(datum, origin);
                     if let Some(path) = path {
                         let unchanged = *proofs
                             .entry(path.clone())
-                            .or_insert_with(|| self.original_input_is_unchanged(&path, heap));
+                            .or_insert_with(|| relationships.original_unchanged(&path, heap));
                         if unchanged {
                             inputs.push(RawFormatInput { condition, path });
                         }
@@ -2300,125 +2293,6 @@ impl<'a, 'inputs> PayloadQuery<'a, 'inputs> {
             }
         }
         inputs
-    }
-
-    fn original_identity_path(
-        &self,
-        datum: &Datum,
-        origin: &super::Origin,
-    ) -> Option<helm_schema_core::ValuesPath> {
-        match datum {
-            Datum::Scalar {
-                go_type: _,
-                content: Some(ScalarContent::Identity(path)),
-            } => Some(path.clone()),
-            Datum::Map {
-                view: _,
-                target: Some(object),
-            } => self
-                .inputs
-                .iter()
-                .find_map(|(path, backing)| (backing.object == *object).then(|| path.clone())),
-            Datum::Scalar {
-                go_type: _,
-                content: None,
-            }
-            | Datum::Map {
-                view: _,
-                target: None,
-            }
-            | Datum::Unknown(super::UnknownValue {
-                types: _,
-                aliases: _,
-            }) => origin.identity.clone(),
-            Datum::Text(_)
-            | Datum::Scalar {
-                go_type: _,
-                content:
-                    Some(
-                        ScalarContent::Literal(_)
-                        | ScalarContent::Rendered(_)
-                        | ScalarContent::PrintfStringIdentity(_)
-                        | ScalarContent::SplitLength {
-                            value: _,
-                            separator: _,
-                        }
-                        | ScalarContent::Length(_),
-                    ),
-            }
-            | Datum::Sequence(_)
-            | Datum::Strings(_)
-            | Datum::Slot {
-                backing: _,
-                index: _,
-            } => None,
-        }
-    }
-
-    fn original_input_is_unchanged(
-        &self,
-        path: &helm_schema_core::ValuesPath,
-        heap: &super::HeapVersion,
-    ) -> bool {
-        let inputs = self.inputs;
-        let root = helm_schema_core::ValuesPath::default();
-        if inputs
-            .get(&root)
-            .and_then(|backing| heap.object(&backing.object))
-            .is_none()
-        {
-            return false;
-        }
-        let mut prefix = root;
-        for segment in path.segments() {
-            let helm_schema_core::Segment::Literal(key) = segment else {
-                return false;
-            };
-            if let Some(object) = inputs
-                .get(&prefix)
-                .and_then(|backing| heap.object(&backing.object))
-            {
-                let super::ObjectVersion {
-                    revision: _,
-                    multiplicity,
-                    data,
-                } = object;
-                if *multiplicity != super::Multiplicity::Singleton {
-                    return false;
-                }
-                match data {
-                    ObjectData::Map {
-                        fields,
-                        remainder: super::Remainder::Input,
-                    } if !fields.contains_key(key) => {}
-                    ObjectData::Map {
-                        fields: _,
-                        remainder: _,
-                    }
-                    | ObjectData::Strings(_)
-                    | ObjectData::Opaque { reachable: _ }
-                    | ObjectData::Widened { inputs: _ } => return false,
-                }
-            }
-            prefix.push(key.clone());
-        }
-        if inputs
-            .get(path)
-            .and_then(|backing| heap.object(&backing.object))
-            .is_some_and(|object| !pristine_input_backing(object))
-        {
-            return false;
-        }
-        // ValuesPath orders encoded keys; starting below the first child skips interleaved siblings.
-        let mut first_child = path.clone();
-        first_child.push("\0");
-        inputs
-            .range(first_child..)
-            .take_while(|(candidate, _)| candidate.is_descendant_of(path))
-            .all(|(_, backing)| {
-                heap.object(&backing.object)
-                    .is_none_or(pristine_input_backing)
-            })
     }
 
     pub(super) fn new(
@@ -2446,7 +2320,6 @@ impl<'a, 'inputs> PayloadQuery<'a, 'inputs> {
             remaining: limit,
             limit,
             shape,
-            omission_depth: 0,
             predicates: helm_schema_core::PredicateMemo::new(),
         }
     }
@@ -2515,6 +2388,24 @@ impl<'a, 'inputs> PayloadQuery<'a, 'inputs> {
                 let yes = self.node(yes, heap);
                 let no = self.node(no, heap);
                 self.choice(decision, yes, no)
+            }
+            ValueNode::Leaf(Leaf {
+                datum: _,
+                origin:
+                    super::Origin {
+                        derivation: Some(derivation),
+                        identity: _,
+                        influences: _,
+                    },
+            }) if derivation.operation == super::relationship::Operation::Trim => {
+                let mut view = self.value(&derivation.source);
+                for arm in &mut view.known {
+                    if !self.charge(arm.spelling.len().div_ceil(64) + 1) {
+                        return PayloadView::unknown();
+                    }
+                    arm.spelling = arm.spelling.trim().to_owned();
+                }
+                view
             }
             ValueNode::Leaf(Leaf {
                 datum: Datum::Text(text),
@@ -2661,269 +2552,83 @@ impl<'a, 'inputs> PayloadQuery<'a, 'inputs> {
         json: bool,
         strip_marker: bool,
     ) -> PayloadView<'a> {
-        let Some(remaining) = self.remaining.checked_sub(1) else {
-            return PayloadView::unknown();
-        };
-        self.remaining = remaining;
-        match value.node.as_ref() {
-            ValueNode::Select { decision, yes, no } => {
-                let yes = self.operand(yes, heap, json, strip_marker);
-                let no = self.operand(no, heap, json, strip_marker);
-                self.choice(decision, yes, no)
-            }
-            ValueNode::Leaf(Leaf { datum: _, origin }) => {
-                let scalar = match value.node.as_ref() {
-                    ValueNode::Leaf(Leaf {
-                        datum:
-                            Datum::Scalar {
-                                content: Some(ScalarContent::Identity(path)),
-                                go_type: _,
-                            },
-                        origin: _,
-                    }) => Some(path),
-                    _ => None,
-                };
-                let path = origin.identity.as_ref().or(scalar).or_else(|| {
-                    let ValueNode::Leaf(Leaf {
-                        datum:
-                            Datum::Map {
-                                target: Some(target),
-                                view: _,
-                            },
-                        origin: _,
-                    }) = value.node.as_ref()
-                    else {
-                        return None;
-                    };
-                    origin.influences.iter().take(self.remaining).find(|path| {
-                        if !self.charge(1) {
-                            return false;
-                        }
-                        self.inputs
-                            .get(*path)
-                            .is_some_and(|backing| backing.object == *target)
-                    })
-                });
-                let Some(path) = path else {
-                    return PayloadView::unknown();
-                };
-                let Some(omitted_members) = self.omissions(path, heap) else {
-                    return PayloadView::unknown();
-                };
-                if !self.charge(1) {
-                    return PayloadView::unknown();
-                }
-                let condition = if omitted_members.is_empty() {
-                    Predicate::True
-                } else {
-                    Predicate::from(helm_schema_core::Guard::TypeIs {
-                        path: path.clone(),
-                        schema_type: "object".to_owned(),
-                    })
-                };
-                PayloadView {
-                    known: vec![SerializedPayload {
-                        condition: condition.clone(),
-                        path,
-                        kind: crate::ValueKind::YamlSerialized,
-                        strip_marker,
-                        flow_node: json,
-                        omitted_members,
-                        spelling: if json {
-                            "{\"00000000\": 00000000}"
-                        } else {
-                            match self.shape {
-                                PayloadShape::Mapping => "00000000: 00000000",
-                                PayloadShape::Scalar => "00000000",
-                                PayloadShape::Sequence => "- 00000000",
-                            }
-                        }
-                        .to_owned(),
-                    }],
-                    unknown: condition.negated(),
-                }
-            }
-        }
-    }
-
-    fn unchanged(
-        &mut self,
-        path: &helm_schema_core::ValuesPath,
-        heap: &super::HeapVersion,
-    ) -> bool {
-        self.omissions(path, heap)
-            .is_some_and(|omitted| omitted.is_empty())
-    }
-
-    fn omissions(
-        &mut self,
-        path: &helm_schema_core::ValuesPath,
-        heap: &super::HeapVersion,
-    ) -> Option<BTreeSet<String>> {
-        if self.omission_depth >= 32 {
-            return None;
-        }
-        self.omission_depth += 1;
-        let result = self.omissions_inner(path, heap);
-        self.omission_depth -= 1;
-        result
-    }
-
-    fn omissions_inner(
-        &mut self,
-        path: &helm_schema_core::ValuesPath,
-        heap: &super::HeapVersion,
-    ) -> Option<BTreeSet<String>> {
-        let mut prefix = helm_schema_core::ValuesPath::default();
-        for segment in path.segments() {
-            self.remaining = self.remaining.checked_sub(1)?;
-            match segment {
-                helm_schema_core::Segment::Literal(key) => prefix.push(key.clone()),
-                helm_schema_core::Segment::EachMember => {
-                    // A wildcard cannot bind overwritten or removed original collection members.
-                    if self
-                        .inputs
-                        .get(&prefix)
-                        .and_then(|backing| heap.object(&backing.object))
-                        .is_some_and(|object| !pristine_input_backing(object))
-                    {
-                        return None;
-                    }
-                    prefix.push_each_member();
-                }
-            }
-        }
-        let mut omitted = BTreeSet::new();
-        if let Some(object) = self
-            .inputs
-            .get(path)
-            .and_then(|backing| heap.object(&backing.object))
-        {
-            let super::ObjectVersion {
-                revision: _,
-                multiplicity: _,
-                data,
-            } = object;
-            let ObjectData::Map {
-                fields,
-                remainder: super::Remainder::Input,
-            } = data
-            else {
-                return None;
-            };
-            for (key, field) in fields {
-                self.remaining = self.remaining.checked_sub(1)?;
-                if key.contains("<no value>") || !self.serializable_field(field, heap) {
-                    return None;
-                }
-                self.remaining = self.remaining.checked_sub(key.len().div_ceil(64))?;
-                omitted.insert(key.clone());
-            }
-        }
-        let mut first_child = path.clone();
-        first_child.push("\0");
-        for (candidate, backing) in self
-            .inputs
-            .range(first_child..)
-            .take_while(|(candidate, _)| candidate.is_descendant_of(path))
-        {
-            self.remaining = self.remaining.checked_sub(1)?;
-            let Some(object) = heap.object(&backing.object) else {
+        let mut query = super::relationship::RelationshipQuery::new(self.inputs, self.remaining);
+        let relationships = query.node_value(value, heap, &[]);
+        self.remaining = self.remaining.saturating_sub(query.work());
+        let mut known = Vec::new();
+        let mut unknown = relationships.unknown;
+        for relationship in relationships.known {
+            let super::relationship::Relationship {
+                condition,
+                source,
+                output_path,
+                omitted_members,
+                preimage,
+                capture,
+            } = relationship;
+            let std::borrow::Cow::Borrowed(path) = source else {
+                unknown = Predicate::True;
                 continue;
             };
-            if pristine_input_backing(object) {
-                continue;
-            }
-            let super::ObjectVersion {
-                revision: _,
-                multiplicity: _,
-                data,
-            } = object;
-            let ObjectData::Map {
-                fields,
-                remainder: super::Remainder::Input,
-            } = data
-            else {
-                return None;
-            };
-            for (key, field) in fields {
-                self.remaining = self.remaining.checked_sub(1)?;
-                if key.contains("<no value>") || !self.serializable_field(field, heap) {
-                    return None;
-                }
-            }
-            let helm_schema_core::Segment::Literal(key) =
-                candidate.segments().nth(path.segments().len())?
-            else {
-                return None;
-            };
-            self.remaining = self.remaining.checked_sub(key.len().div_ceil(64))?;
-            omitted.insert(key.clone());
-        }
-        Some(omitted)
-    }
-
-    fn serializable_field(&mut self, field: &super::Field, heap: &super::HeapVersion) -> bool {
-        if self.remaining == 0 {
-            return false;
-        }
-        self.remaining -= 1;
-        match field {
-            super::Field::Absent => true,
-            super::Field::Unknown => false,
-            super::Field::Select {
-                decision: _,
-                yes,
-                no,
-            } => self.serializable_field(yes, heap) && self.serializable_field(no, heap),
-            super::Field::Present(value) => self.serializable_value(value, heap),
-        }
-    }
-
-    fn serializable_value(&mut self, value: &Value, heap: &super::HeapVersion) -> bool {
-        if self.remaining == 0 {
-            return false;
-        }
-        self.remaining -= 1;
-        match value.node.as_ref() {
-            ValueNode::Select {
-                decision: _,
-                yes,
-                no,
-            } => self.serializable_value(yes, heap) && self.serializable_value(no, heap),
-            ValueNode::Leaf(Leaf { datum: _, origin })
-                if origin
-                    .identity
-                    .as_ref()
-                    .is_some_and(|path| self.unchanged(path, heap)) =>
+            if capture.is_some()
+                || !output_path.is_empty()
+                || !super::relationship::structural_preimage(&preimage)
             {
-                true
+                unknown = Predicate::True;
+                continue;
             }
-            ValueNode::Leaf(Leaf {
-                datum: Datum::Text(_),
-                origin: _,
-            }) => true,
-            ValueNode::Leaf(Leaf {
-                datum:
-                    Datum::Scalar {
-                        go_type,
-                        content: _,
-                    },
-                origin: _,
-            }) => !matches!(go_type, super::ScalarType::Complex128),
-            ValueNode::Leaf(Leaf {
-                datum: _,
-                origin: _,
-            }) => {
-                let mut query = JsonQuery {
-                    preserve_nil_collections: true,
-                    remaining: Some(&mut self.remaining),
-                    outcome: &|_| None,
-                    choice: None,
-                };
-                json(value, heap, &mut BTreeSet::new(), 0, &mut query).is_some()
+            let mut condition = condition;
+            if !omitted_members.is_empty() {
+                let mapping = Predicate::from(helm_schema_core::Guard::TypeIs {
+                    path: path.clone(),
+                    schema_type: "object".to_owned(),
+                });
+                condition = self
+                    .predicates
+                    .normalize(Predicate::all(vec![condition, mapping.clone()]));
+                unknown = self
+                    .predicates
+                    .normalize(Predicate::Or(vec![unknown, mapping.negated()]));
             }
+            for step in &preimage {
+                if let super::relationship::Preimage::Operation(super::relationship::Derivation {
+                    source: _,
+                    operation: super::relationship::Operation::Decode(decoder),
+                }) = step
+                    && let Some(schema_type) = decoder.schema_type()
+                {
+                    let shape = Predicate::from(helm_schema_core::Guard::TypeIs {
+                        path: path.clone(),
+                        schema_type: schema_type.to_owned(),
+                    });
+                    condition = self
+                        .predicates
+                        .normalize(Predicate::all(vec![condition, shape.clone()]));
+                    unknown = self
+                        .predicates
+                        .normalize(Predicate::Or(vec![unknown, shape.negated()]));
+                }
+            }
+            known.push(SerializedPayload {
+                condition,
+                path,
+                kind: crate::ValueKind::YamlSerialized,
+                spelling: if json {
+                    "{\"00000000\": 00000000}"
+                } else {
+                    match self.shape {
+                        PayloadShape::Mapping => "00000000: 00000000",
+                        PayloadShape::Scalar => "00000000",
+                        PayloadShape::Sequence => "- 00000000",
+                    }
+                }
+                .to_owned(),
+                strip_marker,
+                flow_node: json,
+                omitted_members,
+            });
         }
+        PayloadView { known, unknown }
     }
 
     fn buffer(&mut self, buffer: &'a TextBuffer) -> PayloadView<'a> {
@@ -2931,18 +2636,43 @@ impl<'a, 'inputs> PayloadQuery<'a, 'inputs> {
             return PayloadView::unknown();
         };
         self.remaining = remaining;
-        let [part] = buffer.parts.as_slice() else {
+        let mut payload = None;
+        let mut prefix = String::new();
+        let mut suffix = String::new();
+        for part in &buffer.parts {
+            if !self.charge(1) {
+                return PayloadView::unknown();
+            }
+            match part.content() {
+                TextPart::Bytes(bytes) if bytes.trim().is_empty() => {
+                    if !self.charge(bytes.len().div_ceil(64)) {
+                        return PayloadView::unknown();
+                    }
+                    if payload.is_some() {
+                        suffix.push_str(bytes);
+                    } else {
+                        prefix.push_str(bytes);
+                    }
+                }
+                TextPart::Frozen(value) if payload.is_none() => payload = Some(self.value(value)),
+                TextPart::Select { decision, yes, no } if payload.is_none() => {
+                    let yes = self.buffer(yes);
+                    let no = self.buffer(no);
+                    payload = Some(self.choice(decision, yes, no));
+                }
+                _ => return PayloadView::unknown(),
+            }
+        }
+        let Some(mut view) = payload else {
             return PayloadView::unknown();
         };
-        match part.content() {
-            TextPart::Frozen(value) => self.value(value),
-            TextPart::Select { decision, yes, no } => {
-                let yes = self.buffer(yes);
-                let no = self.buffer(no);
-                self.choice(decision, yes, no)
+        for arm in &mut view.known {
+            if !self.charge((prefix.len() + suffix.len() + arm.spelling.len()).div_ceil(64)) {
+                return PayloadView::unknown();
             }
-            TextPart::Bytes(_) | TextPart::Unknown(_) => PayloadView::unknown(),
+            arm.spelling = format!("{prefix}{}{suffix}", arm.spelling);
         }
+        view
     }
 
     fn retain_claim(

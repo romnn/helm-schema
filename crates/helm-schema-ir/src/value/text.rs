@@ -201,6 +201,10 @@ enum Unresolved {
 type Outcome<'a> = dyn Fn(&super::FrozenTest) -> Option<bool> + 'a;
 
 impl FrozenText {
+    pub(super) fn term(&self) -> &TextTerm {
+        self.0.as_ref()
+    }
+
     pub(super) fn exact_text(&self) -> Option<String> {
         resolve(&self.0, &|_| None, &mut 4096).ok()
     }
@@ -316,13 +320,16 @@ fn serialized_term(term: &TextTerm, outcome: &Outcome<'_>, remaining: &mut usize
     };
     *remaining = next;
     match term {
-        TextTerm::Yaml { value, pretty: _ }
+        TextTerm::Yaml {
+            value: _,
+            pretty: _,
+        }
         | TextTerm::Json {
-            value,
+            value: _,
             pretty: _,
             escape_html: _,
             literal: _,
-        } => value.identity().is_some() || serialized_value(&value.value, outcome, remaining),
+        } => true,
         TextTerm::Resolved { term, literal: _ } => serialized_term(term, outcome, remaining),
         TextTerm::Capture {
             graph,

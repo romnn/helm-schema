@@ -420,6 +420,7 @@ impl HeapVersion {
                             content: None,
                         },
                         origin: super::Origin {
+                            derivation: None,
                             identity: None,
                             influences: inputs.as_ref().clone(),
                         },

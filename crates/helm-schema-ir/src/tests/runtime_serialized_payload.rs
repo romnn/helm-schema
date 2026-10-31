@@ -86,6 +86,319 @@ fn helper_captures_and_json_preserve_the_borrowed_origin() {
     }
 }
 
+/// Literal whitespace around a captured serializer does not erase its payload relationship.
+#[test]
+fn multipart_capture_preserves_serialized_origin() {
+    let helpers = indoc! {r#"
+        {{ define "serialize" }}
+        {{ toYaml . }}
+        {{ end }}
+    "#};
+    sim_assert_eq!(
+        have: payload_origins(r#"value: {{ include "serialize" .Values.payload | nindent 2 }}"#, helpers),
+        want: BTreeSet::from([ValuesPath::parse("payload")])
+    );
+}
+
+/// Decoding a serializer keeps the operand snapshot through a later serialization.
+#[test]
+fn decoded_serialization_preserves_frozen_source() {
+    let source = indoc! {r#"
+        {{- $saved := fromYaml (toYaml .Values.payload) -}}
+        {{- $_ := set .Values.payload "changed" "later" -}}
+        value: {{ toYaml $saved | nindent 2 }}
+    "#};
+    sim_assert_eq!(
+        have: payload_origins(source, ""),
+        want: BTreeSet::from([ValuesPath::parse("payload")])
+    );
+}
+
+/// Unknown decoded kinds share one operation preimage even without a values-level kind test.
+#[test]
+fn json_decoder_keeps_its_common_source_preimage() -> eyre::Result<()> {
+    let db = IrAnalysisDb::new(&DefineIndex::new());
+    let execution = execute_document("{{ fromJson (toJson .Values.payload) }}", None, &db);
+    let site = execution
+        .sites()
+        .find(|site| site.rendered())
+        .ok_or_eyre("decoded output missing")?;
+    let view = execution.relationships(site.value(), &[], 1024);
+    sim_assert_eq!(have: view.known.len(), want: 1);
+    sim_assert_eq!(have: view.known.first().ok_or_eyre("decoded source missing")?.source.as_ref(), want: &ValuesPath::parse("payload"));
+    Ok(())
+}
+
+/// Whole-map and member queries agree on surviving fields after an overwrite.
+#[test]
+fn relationship_query_projects_surviving_constructed_members() -> eyre::Result<()> {
+    use crate::value::relationship::RelationshipQuery;
+    use crate::value::{Field, Remainder, State, Value};
+
+    let mut state = State::new(Value::nil());
+    let map = state.heap.map(Remainder::Closed);
+    let object = state.map_target(&map).ok_or_eyre("map backing missing")?;
+    state.heap.write(
+        &object,
+        "keep",
+        Field::Present(Value::input(ValuesPath::parse("original"))),
+    );
+    state.heap.write(
+        &object,
+        "overwrite",
+        Field::Present(Value::input(ValuesPath::parse("discarded"))),
+    );
+    state
+        .heap
+        .write(&object, "overwrite", Field::Present(Value::string("fixed")));
+    let frozen = state.heap.freeze(&map);
+    let inputs = state.heap.arena.input_objects.borrow();
+    let whole = RelationshipQuery::new(&inputs, 1024).value(&frozen, &[]);
+    sim_assert_eq!(have: whole.known.len(), want: 1);
+    let kept = whole.known.first().ok_or_eyre("surviving member missing")?;
+    sim_assert_eq!(have: kept.output_path.clone(), want: vec!["keep".to_owned()]);
+    sim_assert_eq!(have: kept.source.as_ref(), want: &ValuesPath::parse("original"));
+    let member = RelationshipQuery::new(&inputs, 1024).value(&frozen, &["keep".to_owned()]);
+    sim_assert_eq!(have: member.known.first().ok_or_eyre("requested member missing")?.source.as_ref(), want: kept.source.as_ref());
+    Ok(())
+}
+
+/// Picking named members cannot claim that the discarded remainder still survives.
+#[test]
+fn relationship_query_pick_keeps_only_selected_members() -> eyre::Result<()> {
+    let db = IrAnalysisDb::new(&DefineIndex::new());
+    let execution = execute_document(r#"{{ toYaml (pick .Values.payload "kept") }}"#, None, &db);
+    let site = execution
+        .sites()
+        .find(|site| site.rendered())
+        .ok_or_eyre("picked output missing")?;
+    let view = execution.relationships(site.value(), &[], 1024);
+    sim_assert_eq!(have: view.known.len(), want: 1);
+    let arm = view.known.first().ok_or_eyre("selected member missing")?;
+    sim_assert_eq!(have: arm.source.as_ref(), want: &ValuesPath::parse("payload.kept"));
+    sim_assert_eq!(have: &arm.output_path, want: &vec!["kept".to_owned()]);
+    Ok(())
+}
+
+/// A shallow omission preserves nested aliases, so later nested writes withdraw that region.
+#[test]
+fn omitted_map_keeps_later_alias_exclusions() -> eyre::Result<()> {
+    let source = indoc! {r#"
+        {{- $saved := omit .Values.payload "removed" -}}
+        {{- $_ := set .Values.payload.nested "changed" "fixed" -}}
+        {{ toYaml $saved }}
+    "#};
+    let db = IrAnalysisDb::new(&DefineIndex::new());
+    let execution = execute_document(source, None, &db);
+    let site = execution
+        .sites()
+        .find(|site| site.rendered())
+        .ok_or_eyre("omitted map output missing")?;
+    let view = execution.serialized_payload(site.value());
+    let arm = view
+        .known
+        .first()
+        .ok_or_eyre("remaining input region missing")?;
+    sim_assert_eq!(have: arm.path, want: &ValuesPath::parse("payload"));
+    sim_assert_eq!(have: &arm.omitted_members, want: &BTreeSet::from(["nested".to_owned(), "removed".to_owned()]));
+    Ok(())
+}
+
+/// An unknown write to the decoded object cannot retain its old whole-source certificate.
+#[test]
+fn widened_decoded_map_drops_its_whole_source_claim() {
+    for (decoder, serializer) in [("fromYaml", "toYaml"), ("mustFromJson", "toJson")] {
+        let source = formatdoc! {r#"
+            {{{{- $saved := {decoder} ({serializer} .Values.payload) -}}}}
+            {{{{- $_ := set $saved (randAlphaNum 1) "fixed" -}}}}
+            {{{{ toYaml $saved }}}}
+        "#};
+        sim_assert_eq!(have: payload_origins(&source, ""), want: BTreeSet::new());
+    }
+}
+
+/// Exhaustion leaves unknown coverage instead of declaring an incomplete query exhaustive.
+#[test]
+fn relationship_query_budget_exhaustion_widens() {
+    use crate::value::relationship::RelationshipQuery;
+    use crate::value::{State, Value};
+    use helm_schema_core::Predicate;
+
+    let state = State::new(Value::nil());
+    let frozen = state
+        .heap
+        .freeze(&Value::input(ValuesPath::parse("payload")));
+    let inputs = state.heap.arena.input_objects.borrow();
+    for limit in 0..=1 {
+        let mut query = RelationshipQuery::new(&inputs, limit);
+        let view = query.value(&frozen, &[]);
+        sim_assert_eq!(have: view.unknown, want: Predicate::True);
+        sim_assert_eq!(have: view.known.len(), want: 0);
+        assert!(query.work() <= limit);
+    }
+}
+
+/// A repeated decision cannot introduce a source from the contradictory branch.
+#[test]
+fn relationship_query_keeps_guard_correlation() {
+    use crate::value::relationship::RelationshipQuery;
+    use crate::value::{Coverage, State, Value, ValueNode};
+    use helm_schema_core::Predicate;
+    use std::rc::Rc;
+
+    let state = State::new(Value::nil());
+    let condition = Predicate::truthy_path("enabled");
+    let decision =
+        state
+            .heap
+            .arena
+            .decision(condition.clone(), condition.negated(), Coverage::Exact);
+    let nested = Value {
+        node: Rc::new(ValueNode::Select {
+            decision: Rc::clone(&decision),
+            yes: Value::input(ValuesPath::parse("live")),
+            no: Value::input(ValuesPath::parse("impossible")),
+        }),
+    };
+    let frozen = state.heap.freeze(&Value {
+        node: Rc::new(ValueNode::Select {
+            decision,
+            yes: nested,
+            no: Value::string("fixed"),
+        }),
+    });
+    let inputs = state.heap.arena.input_objects.borrow();
+    let view = RelationshipQuery::new(&inputs, 1024).value(&frozen, &[]);
+    sim_assert_eq!(have: view.known.len(), want: 1);
+    if let Some(arm) = view.known.first() {
+        sim_assert_eq!(have: arm.source.as_ref(), want: &ValuesPath::parse("live"));
+        sim_assert_eq!(have: &arm.condition, want: &condition);
+    }
+}
+
+/// Composed captures retain every source occurrence without asserting a whole-payload identity.
+#[test]
+fn relationship_query_traverses_every_capture_part() -> eyre::Result<()> {
+    let helpers = indoc! {r#"
+        {{- define "composed" -}}
+        first: {{ .first }}
+        second: {{ .second }}
+        {{- end -}}
+    "#};
+    let source = r#"{{ include "composed" (dict "first" .Values.left "second" .Values.right) }}"#;
+    let mut defines = DefineIndex::new();
+    defines.add_file_source("_helpers.tpl", helpers);
+    let db = IrAnalysisDb::new(&defines);
+    let execution = execute_document(source, None, &db);
+    let site = execution
+        .sites()
+        .find(|site| site.rendered())
+        .ok_or_eyre("capture output missing")?;
+    let view = execution.relationships(site.value(), &[], 1024);
+    sim_assert_eq!(have: view.known.iter().map(|arm| arm.source.as_ref().clone()).collect::<BTreeSet<_>>(), want: BTreeSet::from([ValuesPath::parse("left"), ValuesPath::parse("right")]));
+    assert!(view.known.iter().all(|arm| arm.capture.is_some()));
+    sim_assert_eq!(have: view.unknown, want: helm_schema_core::Predicate::True);
+    Ok(())
+}
+
+/// Exact serializer bytes still carry constructed members' operation preimages through captures.
+#[test]
+fn literal_capture_keeps_constructed_member_preimages() -> eyre::Result<()> {
+    let helpers = indoc! {r#"
+        {{- define "constructed" -}}
+        {{- toYaml (dict "type" (typeOf (toString .))) -}}
+        {{- end -}}
+    "#};
+    let mut defines = DefineIndex::new();
+    defines.add_file_source("_helpers.tpl", helpers);
+    let db = IrAnalysisDb::new(&defines);
+    let execution = execute_document(r#"{{ include "constructed" .Values.input }}"#, None, &db);
+    let site = execution
+        .sites()
+        .find(|site| site.rendered())
+        .ok_or_eyre("constructed capture missing")?;
+    let view = execution.relationships(site.value(), &[], 1024);
+    sim_assert_eq!(have: view.known.len(), want: 1);
+    let arm = view
+        .known
+        .first()
+        .ok_or_eyre("constructed member preimage missing")?;
+    sim_assert_eq!(have: arm.source.as_ref(), want: &ValuesPath::parse("input"));
+    sim_assert_eq!(have: &arm.output_path, want: &vec!["type".to_owned()]);
+    Ok(())
+}
+
+/// Result types do not replace the frozen input needed for a later consumer's preimage.
+#[test]
+fn relationship_query_retains_operation_preimages() -> eyre::Result<()> {
+    use crate::value::relationship::{Operation, Preimage};
+
+    for source in [
+        "{{ toString .Values.input }}",
+        "{{ int .Values.input }}",
+        "{{ typeOf .Values.input }}",
+        "{{ b64enc .Values.input }}",
+        "{{ tpl (toString .Values.input) . }}",
+    ] {
+        let db = IrAnalysisDb::new(&DefineIndex::new());
+        let execution = execute_document(source, None, &db);
+        let site = execution
+            .sites()
+            .find(|site| site.rendered())
+            .ok_or_eyre("operation output missing")?;
+        let view = execution.relationships(site.value(), &[], 1024);
+        let arm = view
+            .known
+            .first()
+            .ok_or_eyre("operation preimage missing")?;
+        sim_assert_eq!(have: arm.source.as_ref(), want: &ValuesPath::parse("input"));
+        assert!(
+            arm.preimage.iter().any(|step| matches!(
+                step,
+                Preimage::Text(_)
+                    | Preimage::Operation(crate::value::relationship::Derivation {
+                        source: _,
+                        operation: Operation::Stringify
+                            | Operation::Numeric(_)
+                            | Operation::Descriptor { kind_only: _ },
+                    })
+            )),
+            "{source}"
+        );
+    }
+    Ok(())
+}
+
+/// Guarded constants still need their source preimage even with no leaf data origins.
+#[test]
+fn control_only_operands_keep_their_frozen_preimage() -> eyre::Result<()> {
+    use crate::value::relationship::Operation;
+    use crate::value::{Coverage, ScalarType, State, Value};
+    use helm_schema_core::{GuardValue, Predicate};
+
+    let state = State::new(Value::nil());
+    let condition = Predicate::truthy_path("enabled");
+    let decision =
+        state
+            .heap
+            .arena
+            .decision(condition.clone(), condition.negated(), Coverage::Exact);
+    let source = Value::select(
+        decision,
+        Value::literal(GuardValue::Bool(true)),
+        Value::literal(GuardValue::Bool(false)),
+    );
+    let frozen = state.heap.freeze(&source);
+    sim_assert_eq!(have: frozen.inputs(), want: BTreeSet::new());
+    let result =
+        Value::scalar(ScalarType::Int, None).derived(frozen, Operation::Numeric(ScalarType::Int));
+    let preimage = result
+        .operation_preimage()
+        .ok_or_eyre("guard-only source preimage was dropped")?;
+    sim_assert_eq!(have: &preimage.source.value, want: &source);
+    Ok(())
+}
+
 /// Reusing one frozen payload preserves both executed destinations after an intervening write.
 #[test]
 fn one_frozen_payload_keeps_both_output_occurrences() {
@@ -607,6 +920,7 @@ fn modified_descendant_members_are_not_claimed_unchanged() -> eyre::Result<()> {
                 aliases: AliasSet::RenderGraph,
             }),
             origin: Origin {
+                derivation: None,
                 identity: Some(child_path),
                 influences: BTreeSet::new(),
             },

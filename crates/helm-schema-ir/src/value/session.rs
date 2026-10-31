@@ -295,6 +295,7 @@ fn initial_state(db: &IrAnalysisDb) -> State {
                     target: Some(target),
                 },
                 origin: Origin {
+                    derivation: None,
                     identity: Some(path),
                     influences: BTreeSet::default(),
                 },
