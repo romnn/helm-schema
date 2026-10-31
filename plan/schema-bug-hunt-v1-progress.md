@@ -9658,4 +9658,22 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
     - HOSTS (sol high): typed read-only `.Files`/`.Capabilities` hosts, and main's discard rules for serialized parents.
     - The rearchitecture skill now requires full-chart reds and targeted battery movement in every hand-back.
   - Estimate: the landing waits on HEAP2. Corpus parity will be re-measured after it; landing is at least 2 weeks out.
-Next: HEAP2 hand-back → targeted battery on redis/cilium/argo-cd/airflow; then rebase the C06b join, D3 and HOSTS onto it; full preview before landing.
+- 03:14 (Oct 31) — **R3b: HOSTS merged; package D retired because its false rejections share HEAP2's root cause; C06b parked until HEAP2.**
+  - 0ac7f030 HOSTS: typed read-only `.Files`/`.Capabilities` hosts.
+    - Live: cilium FR 33 → 0, FA 1,952 → 1,911; airflow unchanged.
+    - Line units: 325 inherited failures, 0 new. 108 fixtures adopted from its dump.
+    - A schema-only screen against the line commit is not possible with the harness; the full preview covers the other charts.
+    - Its airflow `workers.*` fix was withdrawn by the builder (+169 FA closed, +86 FR) and moved to HEAP2.
+  - C06b turn 5 (c06b5.patch against 3ded9720): KPS +3.8%, 0 new units, public 5/5, net +1,409 LOC; its 4 full-chart placement cells stay blocked by the heap loss. Parked.
+  - D3 (consumer projection over RelationshipQuery) failed live:
+    - FR: postgresql-ha 555 → 1,846, bitnami-redis 307 → 1,398, harbor 162 → 948, zabbix 245 → 670.
+    - Also KPS +20.6% and one new W1 FR. Not merged.
+  - False-rejection diagnosis (round8/designs/false-rejection-diagnosis.md):
+    - 10 of 11 traced FR cells are declared child types that survive because heap widening erased the child identities.
+      Two triggers: an unknown `tpl` under a disabled component, and read-only `range` loops failing the whole-program footprint certifier.
+    - The 11th, harbor `internalTLS.core`, is an independent emission bug: navigation-only ancestors are typed (gen schema_tree.rs:1619).
+    - D3 tripled FR by requiring positive consumer certificates before dropping declarations.
+  - Orchestrator decisions:
+    - Package D's consumer-projection design is retired. HEAP2 now carries the FR cells and the postgresql-ha/zabbix battery.
+    - The NAVCARRIER builder fixes the navigation-ancestor emission.
+Next: HEAP2 hand-back → targeted battery (redis, cilium, argo-cd, airflow, postgresql-ha, zabbix); NAVCARRIER hand-back → harbor battery; then rebase C06b5 and the Q rebase (c32c43f1) onto the line; full preview before landing.
