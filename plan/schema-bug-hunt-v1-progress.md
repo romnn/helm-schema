@@ -9696,4 +9696,21 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Running lanes:
     - HEAP3 (Codex): merge fallback and member-scope proof. SPIKE (Claude Opus xhigh): a competing minimal guarded join.
     - FRFIX (Codex): the 32 FR. HOSTSFA (Codex): restore the HOSTS constraints from executed facts.
-Next: HEAP3/SPIKE hand-back → merge the winner with one clean dump and a unit check; FRFIX and HOSTSFA hand-backs → targeted batteries; then copy isolation (airflow workers), NAV receiver demands, and a full preview before the landing chain.
+- 02:42 (Nov 1) — **R3b: both heap-precision attempts fail to move redis `auth`; a first-principles challenge and an effect design both name the run-time effect model as the structural flaw; a ceiling ablation decides the redirect.**
+  - SPIKE (Claude Opus xhigh) and HEAP3 slice 1 (Codex): the redis schema is byte-identical and `auth: true` / deleted `auth` are still accepted. Neither patch is merged; both are kept as reference.
+    - SPIKE localized two root-wide invalidations before any `.Values.auth` read: B1, bitnami `contains "{{"` undecidable because `.Release.Name` is unknown; B2, the merge escape of `Widened` operands.
+    - HEAP3 removed B2's global invalidation. 106 remain at `write_footprint.rs:169` (uncertified ranges), with 1,059 `.Values` scope-proof exhaustions, three signoz tests over 6 GB, and +4,446 production LOC.
+  - TPLFREE (Codex): typed `.Release` plus exact template-action conditions, verified against Helm 4.2.3. 14 laws; units 297 failures (0 new, 8 fixed); KPS 0.996×. Corpus unchanged. Parked: no merges without corpus movement.
+  - User request (Nov 1): periodic first-principles challenges by a fresh subagent. The goal is fixed: a true abstract interpreter with proper static analysis per the ADRs; challengers question only the how.
+  - Challenger verdict (round8/designs/challenge/first-principles-2026-11-01.md): continue, with a redirect. The executor, value algebra, text graph and placement are the right shape. Effects discovered at run time, where every uncertified effect wipes the render heap, are the flaw suppressing both FA and FR.
+    - FR fell partly by converting constraints into FA: HOSTS relaxed declared types before the replacing facts existed.
+    - R3b's matched tightenings over main fell 3,796 → 1,318.
+  - Effect design (round8/designs/effects/effect-summaries-design.md):
+    - Helm, sprig and Go template semantics allow storage mutation only through set, unset, merge* and unknown `tpl` text; template calls inherit no variables.
+    - Design: static per-program effect summaries from the AST and the function catalog; unknown storage with an alias bound; flat freshness retention.
+    - It deletes write_footprint, the widen and invalidate fallbacks and the HEAP3 prototype, about +300 LOC against a4afcaa6.
+    - Census: 83.5% of 522 range bodies in 8 charts need no widening; the current certifier accepts 3.1%.
+  - Orchestrator decision: values-supplied `tpl` text follows ADR 0002 strictly. Constraints that need "no template action" go under one shared root-level condition, never a per-site guard and never an unrecorded assumption.
+  - Process corrections: no merge without corpus movement; ablate the ceiling before building; FR reaches 0 at landing without relaxing the generator early.
+  - Running: CEILING (havoc-off ablation on 10 charts, with and without the HOSTS classifier revert), HEAP3 effect inventory, FRFIX, HOSTSFA, UNITREC (re-classify the line's unit failures).
+Next: CEILING hand-back → if at least about 40% of the 10 charts' FA close with under 1% new FR, build effect slice 1 (static summaries and alias-bounded unknown storage) as the heap core; if under 10%, the heap is not the main cause and the plan is re-derived.
