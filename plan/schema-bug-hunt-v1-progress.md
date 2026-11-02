@@ -9757,4 +9757,35 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
     - F80/F43 stay strict. The ADR text is updated with the slice that implements it.
   - EMIT2 (test-observation adapters, generator fixes, dependency globals, oncall API availability; 15 fixed, 0 new, +141 LOC, KPS 0.98×) is integrating onto 9d0c72d7.
   - The user disabled Spotlight on T7 after a system-wide I/O stall (11:40–12:50) took down two runs; all runs were resumed.
-Next: E1 decides declared-type slice 1 (unified requirement recorder, environment-projected guards, deletion of HOSTS, inheritance and declared objectness); integrate EMIT2, then UNITREC2 and EFFECTS1 (rebased on 9d0c72d7); Part A census, then the static-immutability decision.
+- 18:56 (Nov 2) — **R3b: EMIT is on the line (d69c2e10); E1 confirms the declared-type rule with zero controls rejected, Part A refutes static immutability on the big charts, and declared-type slice S1 starts.**
+  - Line r3b/construction: 9d0c72d7 → 73d9537e, 50f0d186, 2c99a89b, d69c2e10 (EMIT, integrated in round8-r3b-integ3).
+    - Gates on integ3: units 0 new (14 fixed); integration 168 failures, 0 new; 3 FA closed, 0 new FA or FR; KPS 1.005×.
+  - Orchestrator mistake while committing:
+    - The G and TEXT commits staged only crates/, plan/ and testdata/, which left that patch's Cargo.lock, Cargo.toml, taskfile.yaml and tools/ changes uncommitted.
+    - The EMIT patch then failed to apply, and `git apply --check && git apply` under `set -e` did not stop the script.
+    - As a result, 73d9537e holds only a test file and 50f0d186 only fixtures.
+    - Repaired forward: 2c99a89b adds the root files and d69c2e10 the EMIT source. Every tracked file of d69c2e10 was compared with integ3 and is identical.
+    - 1a2a7b47 through 50f0d186 do not build individually. Squashing them needs a history rewrite, which awaits the user's decision.
+  - E1 (host-requirement sidecars on the ceiling trees):
+    - With bounded DNF guards: 97 closed on G and 414 on H.
+    - With exact guards on H: 840 closures guaranteed and 1,865 possible on redis, vault, argo-cd and datadog.
+    - 0 controls rejected.
+  - Part A census refutes static MayWrite on the big charts.
+    - bitnami common's tplvalues merge reaches the whole input.
+    - The KPS chart's tpl sites are ineligible.
+    - So static immutability alone does not open the big charts.
+  - Declared-type plan v2 (round8/designs/decltype/declared-type-qualification-v2.md) orders the slices:
+    - S1: one requirement recorder, an export-time exact guard fold, LintWithdrawal, and deletion of the HOSTS classifier, inheritance and declared objectness, together with the narrowed ADR 0043.
+    - S2: shadow identity on demand receivers. S3: the exact T arm plus lazy guards. S4: unknown controls and known programs.
+    - S5: range. S6: placement (the C06b class). S7: copy provenance.
+    - Falsifier F1 for S1:
+      - no control is rejected;
+      - datadog closes at least 90 FA;
+      - the fold costs at most 0.35 CPU-s on KPS, and KPS stays within 1.10×;
+      - cells reopened on the HOSTS charts do not exceed S1's closures.
+  - Launched:
+    - S1 in round8-r3b-decl1 (from d69c2e10);
+    - F2a, counters that classify invalidations by cause on the big charts (prediction: at least 80% are eligible tpl sites, reach-only effects or merge escapes);
+    - a Codex design review of v2.
+    - UNITREC2 and EFFECTS1 keep running and rebase onto d69c2e10 when final.
+Next: S1 hand-back (F1 decides); fold the v2 review into S1 via steer; F2a decides S2's identity mechanism; integrate UNITREC2, then EFFECTS1, onto d69c2e10.
