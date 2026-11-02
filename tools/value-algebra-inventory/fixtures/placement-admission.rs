@@ -16,3 +16,6 @@ enum HintScope {
 struct HintGrade {
     scope: HintScope,
 }
+struct CompletedTextUse {
+    relation: Option<TextPreimage>,
+}

@@ -259,6 +259,8 @@ tasks:
     desc: "run integration tests in cargo workspace"
     vars:
       CORPUS_ARTIFACTS: '{{.CORPUS_ARTIFACTS | default (print .ROOT_DIR "/.cache/corpus-generation")}}'
+      # A prepared dump must be verified without replacing its Helm-ready manifest.
+      CORPUS_VERIFY: '{{.CORPUS_VERIFY | default ""}}'
       # Concurrent chart generations inside the one producer process; each
       # holds a whole-chart analysis in memory. Empty lets the producer size
       # it to the host's memory and cores.
@@ -268,11 +270,9 @@ tasks:
     cmds:
       # The Helm adjudication renders in resident helmsweep servers.
       - task: build:helmsweep
-      # One producer run generates every registered corpus artifact and its
-      # manifest; the tests then consume those artifacts after checking the
-      # manifest against this checkout instead of regenerating each chart per
-      # test. A stale manifest fails the consuming tests.
-      - cargo run -p helm-schema-test-support --bin corpus_generation -- --out "{{.CORPUS_ARTIFACTS}}"{{if .CORPUS_JOBS}} --jobs {{.CORPUS_JOBS}}{{end}}
+      # Generate or verify every registered artifact before the tests consume the dump.
+      # A stale manifest fails verification and the consuming tests.
+      - cargo run -p helm-schema-test-support --bin corpus_generation -- --{{if .CORPUS_VERIFY}}verify{{else}}out{{end}} "{{.CORPUS_ARTIFACTS}}"{{if and (not .CORPUS_VERIFY) .CORPUS_JOBS}} --jobs {{.CORPUS_JOBS}}{{end}}
       - cargo nextest run -P integration --workspace --all-targets --no-tests warn {{.CLI_ARGS}}
 
   test:network:
