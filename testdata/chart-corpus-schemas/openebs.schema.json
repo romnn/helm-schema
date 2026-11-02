@@ -2833,16 +2833,16 @@
     "constrains/engines+engines.replicated+engines.replicated.mayastor+11more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more@2"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.base.jaeger.enabled+mayastor.base.jaeger.enabled:t+1more"
@@ -2900,19 +2900,19 @@
     "constrains/engines+engines.replicated+engines.replicated.mayastor+8more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@12"
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@15"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.enabled+mayastor.localpv-provisioner.enabled:t+1more"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+3more@3"
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+3more@4"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride:t+3more@13"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+3more@4"
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+3more@5"
         },
         {
           "$ref": "#/$defs/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled:t+1more"
@@ -2922,7 +2922,7 @@
     "constrains/engines+engines.replicated+engines.replicated.mayastor+8more@3": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@13"
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@16"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.enabled+mayastor.localpv-provisioner.enabled:t+1more"
@@ -2935,7 +2935,7 @@
     "constrains/engines+engines.replicated+engines.replicated.mayastor+8more@4": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@14"
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@17"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.enabled+mayastor.localpv-provisioner.enabled:t+1more"
@@ -3881,6 +3881,16 @@
         }
       ]
     },
+    "constrains/engines.local.hostpath.enabled+engines.local.hostpath.enabled=null+5more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1localpv-provisioner.fullnameOverride+localpv-provisioner.fullnameOverride:t+3more@22"
+        },
+        {
+          "$ref": "#/$defs/constrains~1engines.local.hostpath.enabled+engines.local.hostpath.enabled=null"
+        }
+      ]
+    },
     "constrains/engines.local.hostpath.enabled:t": {
       "properties": {
         "engines": {
@@ -3907,6 +3917,16 @@
         "engines"
       ],
       "type": "object"
+    },
+    "constrains/engines.local.hostpath.enabled:t+localpv-provisioner.fullnameOverride+4more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1localpv-provisioner.fullnameOverride+localpv-provisioner.fullnameOverride:t+3more@22"
+        },
+        {
+          "$ref": "#/$defs/constrains~1engines.local.hostpath.enabled:t"
+        }
+      ]
     },
     "constrains/engines.local.hostpath.enabled=null": {
       "properties": {
@@ -4064,6 +4084,16 @@
         }
       ]
     },
+    "constrains/engines.local.lvm.enabled+engines.local.lvm.enabled=null+1more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1lvm-localpv.rbac.pspEnabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1engines.local.lvm.enabled+engines.local.lvm.enabled=null"
+        }
+      ]
+    },
     "constrains/engines.local.lvm.enabled:t": {
       "properties": {
         "engines": {
@@ -4090,6 +4120,16 @@
         "engines"
       ],
       "type": "object"
+    },
+    "constrains/engines.local.lvm.enabled:t+lvm-localpv.rbac.pspEnabled:t": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1lvm-localpv.rbac.pspEnabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1engines.local.lvm.enabled:t"
+        }
+      ]
     },
     "constrains/engines.local.lvm.enabled=null": {
       "properties": {
@@ -4856,6 +4896,19 @@
         }
       ]
     },
+    "constrains/engines.replicated.mayastor+mayastor.localpv-provisioner.enabled:t+5more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1engines.replicated.mayastor.enabled:t"
+        }
+      ]
+    },
     "constrains/engines.replicated.mayastor.enabled": {
       "not": {
         "properties": {
@@ -5041,7 +5094,7 @@
           "$ref": "#/$defs/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled:t+1more"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more@3"
+          "$ref": "#/$defs/constrains~1mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.enabled+mayastor.loki.enabled:t+mayastor.loki.enabled=null"
@@ -5148,7 +5201,7 @@
           "$ref": "#/$defs/constrains~1mayastor.loki.deploymentMode='SimpleScalable(3c)-(3e)Dis...'+2more"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more@3"
+          "$ref": "#/$defs/constrains~1mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.deploymentMode+6more"
@@ -5179,7 +5232,7 @@
           "$ref": "#/$defs/constrains~1mayastor.loki.deploymentMode='SimpleScalable(3c)-(3e)Dis...'+2more"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more@3"
+          "$ref": "#/$defs/constrains~1mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.deploymentMode+6more"
@@ -5312,6 +5365,32 @@
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.enabled+mayastor.loki.enabled=null"
+        }
+      ]
+    },
+    "constrains/engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null+6more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null"
+        }
+      ]
+    },
+    "constrains/engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null+6more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.enabled+mayastor.localpv-provisioner.enabled=null"
         }
       ]
     },
@@ -5455,6 +5534,19 @@
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.enabled+mayastor.loki.enabled=null"
+        }
+      ]
+    },
+    "constrains/engines.replicated.mayastor.enabled:t+mayastor.localpv-provisioner.enabled+6more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.enabled+mayastor.localpv-provisioner.enabled=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1engines.replicated.mayastor.enabled:t"
         }
       ]
     },
@@ -5612,13 +5704,13 @@
           "$ref": "#/$defs/constrains~1enterprise.enabled@4"
         },
         {
-          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@4"
+          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@3"
         },
         {
           "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@14"
         },
         {
-          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@5"
+          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@4"
         },
         {
           "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace"
@@ -5627,7 +5719,7 @@
           "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@2"
         },
         {
-          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@3"
+          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@5"
         },
         {
           "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@21"
@@ -5782,10 +5874,10 @@
           "$ref": "#/$defs/constrains~1enterprise.enabled@4"
         },
         {
-          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@4"
+          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@3"
         },
         {
-          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@5"
+          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@4"
         },
         {
           "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace"
@@ -5794,7 +5886,7 @@
           "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@2"
         },
         {
-          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@3"
+          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@5"
         },
         {
           "$ref": "#/$defs/constrains~1monitoring.dashboards.enabled:t@3"
@@ -5834,7 +5926,7 @@
           "$ref": "#/$defs/constrains~1enterprise.enabled@4"
         },
         {
-          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@4"
+          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@3"
         },
         {
           "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace"
@@ -5843,7 +5935,7 @@
           "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@2"
         },
         {
-          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@3"
+          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@5"
         },
         {
           "$ref": "#/$defs/constrains~1monitoring.dashboards.enabled:t@3"
@@ -5883,7 +5975,7 @@
           "$ref": "#/$defs/constrains~1enterprise.enabled@4"
         },
         {
-          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@5"
+          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@4"
         },
         {
           "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace"
@@ -5892,7 +5984,7 @@
           "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@2"
         },
         {
-          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@3"
+          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@5"
         },
         {
           "$ref": "#/$defs/constrains~1monitoring.dashboards+monitoring.dashboards.namespace"
@@ -5938,7 +6030,7 @@
           "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@2"
         },
         {
-          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@3"
+          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@5"
         },
         {
           "$ref": "#/$defs/constrains~1monitoring.dashboards.enabled:t@3"
@@ -5984,7 +6076,7 @@
           "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@2"
         },
         {
-          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@3"
+          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@5"
         },
         {
           "$ref": "#/$defs/constrains~1monitoring.dashboards+monitoring.dashboards.namespace"
@@ -6505,13 +6597,13 @@
           "$ref": "#/$defs/constrains~1enterprise.enabled@4"
         },
         {
-          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@4"
+          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@3"
         },
         {
           "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@14"
         },
         {
-          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@5"
+          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@4"
         },
         {
           "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace"
@@ -6520,7 +6612,7 @@
           "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@2"
         },
         {
-          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@3"
+          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@5"
         },
         {
           "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@21"
@@ -6611,10 +6703,10 @@
           "$ref": "#/$defs/constrains~1enterprise.enabled@4"
         },
         {
-          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@4"
+          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@3"
         },
         {
-          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@5"
+          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@4"
         },
         {
           "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace"
@@ -6623,7 +6715,7 @@
           "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@2"
         },
         {
-          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@3"
+          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@5"
         },
         {
           "$ref": "#/$defs/constrains~1monitoring.dashboards.enabled:t@3"
@@ -6660,7 +6752,7 @@
           "$ref": "#/$defs/constrains~1enterprise.enabled@4"
         },
         {
-          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@4"
+          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@3"
         },
         {
           "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace"
@@ -6669,7 +6761,7 @@
           "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@2"
         },
         {
-          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@3"
+          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@5"
         },
         {
           "$ref": "#/$defs/constrains~1monitoring.dashboards.enabled:t@3"
@@ -6706,7 +6798,7 @@
           "$ref": "#/$defs/constrains~1enterprise.enabled@4"
         },
         {
-          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@5"
+          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@4"
         },
         {
           "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace"
@@ -6715,7 +6807,7 @@
           "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@2"
         },
         {
-          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@3"
+          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@5"
         },
         {
           "$ref": "#/$defs/constrains~1monitoring.dashboards+monitoring.dashboards.namespace"
@@ -6758,7 +6850,7 @@
           "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@2"
         },
         {
-          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@3"
+          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@5"
         },
         {
           "$ref": "#/$defs/constrains~1monitoring.dashboards.enabled:t@3"
@@ -6801,7 +6893,7 @@
           "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@2"
         },
         {
-          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@3"
+          "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@5"
         },
         {
           "$ref": "#/$defs/constrains~1monitoring.dashboards+monitoring.dashboards.namespace"
@@ -8415,7 +8507,7 @@
       ]
     },
     "constrains/grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more": {
-      "$ref": "#/$defs/constrains~1grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more@15"
+      "$ref": "#/$defs/constrains~1grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more@18"
     },
     "constrains/grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more@10": {
       "allOf": [
@@ -8622,13 +8714,13 @@
       ]
     },
     "constrains/grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more@2": {
-      "$ref": "#/$defs/constrains~1grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more@16"
+      "$ref": "#/$defs/constrains~1grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more@15"
     },
     "constrains/grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more@3": {
-      "$ref": "#/$defs/constrains~1grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more@17"
+      "$ref": "#/$defs/constrains~1grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more@16"
     },
     "constrains/grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more@4": {
-      "$ref": "#/$defs/constrains~1grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more@18"
+      "$ref": "#/$defs/constrains~1grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more@17"
     },
     "constrains/grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more@5": {
       "allOf": [
@@ -11868,6 +11960,16 @@
     "constrains/localpv-provisioner.fullnameOverride+localpv-provisioner.fullnameOverride:t+3more@22": {
       "anyOf": [
         {
+          "$ref": "#/$defs/constrains~1localpv-provisioner.fullnameOverride+localpv-provisioner.fullnameOverride:t+3more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1localpv-provisioner.fullnameOverride+localpv-provisioner.fullnameOverride:t+2more"
+        }
+      ]
+    },
+    "constrains/localpv-provisioner.fullnameOverride+localpv-provisioner.fullnameOverride:t+3more@23": {
+      "anyOf": [
+        {
           "$ref": "#/$defs/constrains~1localpv-provisioner.rbac.create:t@2"
         },
         {
@@ -11875,7 +11977,7 @@
         }
       ]
     },
-    "constrains/localpv-provisioner.fullnameOverride+localpv-provisioner.fullnameOverride:t+3more@23": {
+    "constrains/localpv-provisioner.fullnameOverride+localpv-provisioner.fullnameOverride:t+3more@24": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1localpv-provisioner.rbac.pspEnabled:t@2"
@@ -13718,23 +13820,7 @@
     "constrains/localpv-provisioner.rbac.pspEnabled!=null": {
       "properties": {
         "localpv-provisioner": {
-          "properties": {
-            "rbac": {
-              "properties": {
-                "pspEnabled": {
-                  "$ref": "#/$defs/constrains~1crds!=null~1not~1=null"
-                }
-              },
-              "required": [
-                "pspEnabled"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "rbac"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/constrains~1rbac.pspEnabled!=null"
         }
       },
       "required": [
@@ -13758,23 +13844,7 @@
     "constrains/localpv-provisioner.rbac.pspEnabled:t@4": {
       "properties": {
         "localpv-provisioner": {
-          "properties": {
-            "rbac": {
-              "properties": {
-                "pspEnabled": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "pspEnabled"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "rbac"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/constrains~1rbac.pspEnabled:t"
         }
       },
       "required": [
@@ -19142,7 +19212,7 @@
     "constrains/lvm-localpv+lvm-localpv.serviceAccount+lvm-localpv.serviceAccount.lvmController+3more": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmNode.name@7"
+          "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmNode.name@6"
         },
         {
           "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmNode.name@8"
@@ -19169,7 +19239,7 @@
           "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmNode.name@5"
         },
         {
-          "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmNode.name@6"
+          "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmNode.name@7"
         }
       ]
     },
@@ -19210,7 +19280,7 @@
     "constrains/lvm-localpv+lvm-localpv.serviceAccount+lvm-localpv.serviceAccount.lvmController+3more@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmNode.name@7"
+          "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmNode.name@6"
         },
         {
           "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmNode.name@8"
@@ -19234,7 +19304,7 @@
           "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmNode.name@5"
         },
         {
-          "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmNode.name@6"
+          "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmNode.name@7"
         }
       ]
     },
@@ -19275,7 +19345,7 @@
           "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmController.name@4"
         },
         {
-          "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmNode.name@7"
+          "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmNode.name@6"
         },
         {
           "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmController.name@11"
@@ -19317,7 +19387,7 @@
           "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmController.name@7"
         },
         {
-          "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmNode.name@6"
+          "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmNode.name@7"
         },
         {
           "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmController.name@5"
@@ -19333,7 +19403,7 @@
           "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmController.name@4"
         },
         {
-          "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmNode.name@7"
+          "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmNode.name@6"
         },
         {
           "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmController.name@11"
@@ -19372,7 +19442,7 @@
           "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmController.name@7"
         },
         {
-          "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmNode.name@6"
+          "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmNode.name@7"
         },
         {
           "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmController.name@5"
@@ -19388,7 +19458,7 @@
           "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmController.name@4"
         },
         {
-          "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmNode.name@7"
+          "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmNode.name@6"
         },
         {
           "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmController.name@11"
@@ -19430,7 +19500,7 @@
           "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmController.name@7"
         },
         {
-          "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmNode.name@6"
+          "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmNode.name@7"
         },
         {
           "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmController.name@5"
@@ -19443,7 +19513,7 @@
           "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmController.name@4"
         },
         {
-          "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmNode.name@7"
+          "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmNode.name@6"
         },
         {
           "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmController.name@11"
@@ -19482,7 +19552,7 @@
           "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmController.name@7"
         },
         {
-          "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmNode.name@6"
+          "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmNode.name@7"
         },
         {
           "$ref": "#/$defs/constrains~1lvm-localpv.serviceAccount.lvmController.name@5"
@@ -19698,6 +19768,17 @@
         ],
         "type": "object"
       }
+    },
+    "constrains/lvm-localpv.rbac.pspEnabled:t": {
+      "properties": {
+        "lvm-localpv": {
+          "$ref": "#/$defs/constrains~1rbac.pspEnabled:t"
+        }
+      },
+      "required": [
+        "lvm-localpv"
+      ],
+      "type": "object"
     },
     "constrains/lvm-localpv.serviceAccount.lvmController+1more": {
       "not": {
@@ -20308,7 +20389,7 @@
             "serviceAccount": {
               "properties": {
                 "lvmNode": {
-                  "$ref": "#/$defs/constrains~1name@10"
+                  "$ref": "#/$defs/constrains~1name@9"
                 }
               },
               "required": [
@@ -20335,7 +20416,7 @@
             "serviceAccount": {
               "properties": {
                 "lvmNode": {
-                  "$ref": "#/$defs/constrains~1name@9"
+                  "$ref": "#/$defs/constrains~1name@10"
                 }
               },
               "required": [
@@ -20526,10 +20607,10 @@
       }
     },
     "constrains/mayastor+mayastor.alloy+mayastor.alloy.'$chart_tests':t+mayastor.alloy.agent+15more": {
-      "$ref": "#/$defs/constrains~1mayastor+mayastor.alloy+mayastor.alloy.'$chart_tests':t+mayastor.alloy.agent+15more@6"
+      "$ref": "#/$defs/constrains~1mayastor+mayastor.alloy+mayastor.alloy.'$chart_tests':t+mayastor.alloy.agent+15more@5"
     },
     "constrains/mayastor+mayastor.alloy+mayastor.alloy.'$chart_tests':t+mayastor.alloy.agent+15more@2": {
-      "$ref": "#/$defs/constrains~1mayastor+mayastor.alloy+mayastor.alloy.'$chart_tests':t+mayastor.alloy.agent+15more@5"
+      "$ref": "#/$defs/constrains~1mayastor+mayastor.alloy+mayastor.alloy.'$chart_tests':t+mayastor.alloy.agent+15more@6"
     },
     "constrains/mayastor+mayastor.alloy+mayastor.alloy.'$chart_tests':t+mayastor.alloy.agent+15more@3": {
       "allOf": [
@@ -23424,7 +23505,7 @@
     "constrains/mayastor+mayastor.jaeger-operator+mayastor.jaeger-operator.fullnameOverride+11more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor+mayastor.jaeger-operator+mayastor.jaeger-operator.serviceAccount+2more@2"
@@ -23433,13 +23514,13 @@
           "$ref": "#/$defs/constrains~1mayastor+mayastor.jaeger-operator+mayastor.jaeger-operator.serviceAccount+2more@3"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more@4"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more@2"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more@2"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.serviceAccount.name:t@2"
@@ -23465,7 +23546,7 @@
     "constrains/mayastor+mayastor.jaeger-operator+mayastor.jaeger-operator.fullnameOverride+11more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.image.imagePullSecrets:t@2"
@@ -23477,13 +23558,13 @@
           "$ref": "#/$defs/constrains~1mayastor+mayastor.jaeger-operator+mayastor.jaeger-operator.serviceAccount+2more@3"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more@4"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more@2"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more@2"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.serviceAccount.name:t@2"
@@ -23496,16 +23577,16 @@
     "constrains/mayastor+mayastor.jaeger-operator+mayastor.jaeger-operator.fullnameOverride+11more@3": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more@2"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor+mayastor.jaeger-operator+mayastor.jaeger-operator.serviceAccount+2more@4"
@@ -23521,16 +23602,16 @@
     "constrains/mayastor+mayastor.jaeger-operator+mayastor.jaeger-operator.fullnameOverride+11more@4": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more@2"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.image.imagePullSecrets:t"
@@ -23546,16 +23627,16 @@
     "constrains/mayastor+mayastor.jaeger-operator+mayastor.jaeger-operator.fullnameOverride+11more@5": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more@2"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor+mayastor.jaeger-operator+mayastor.jaeger-operator.fullnameOverride+11more@10"
@@ -23616,13 +23697,13 @@
     "constrains/mayastor+mayastor.jaeger-operator+mayastor.jaeger-operator.serviceAccount+2more@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.serviceAccount.name@4"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.serviceAccount.name@3"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.serviceAccount.name:t"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.serviceAccount.name@3"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.serviceAccount.name@4"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.serviceAccount.name@2"
@@ -23644,7 +23725,7 @@
     "constrains/mayastor+mayastor.jaeger-operator+mayastor.jaeger-operator.serviceAccount+2more@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.serviceAccount.name@4"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.serviceAccount.name@3"
         },
         {
           "properties": {
@@ -23691,7 +23772,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.serviceAccount.name@3"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.serviceAccount.name@4"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.serviceAccount.name@2"
@@ -24498,7 +24579,7 @@
     "constrains/mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+10more@4": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@5"
+          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@4"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@11"
@@ -24507,13 +24588,13 @@
           "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@3"
+          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@5"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@2"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@4"
+          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@3"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards:t@5"
@@ -24553,19 +24634,19 @@
     "constrains/mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+10more@5": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@5"
+          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@4"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@3"
+          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@5"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@2"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@4"
+          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@3"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@13"
@@ -24608,13 +24689,13 @@
           "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@3"
+          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@5"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@2"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@4"
+          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@3"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards:t@5"
@@ -24654,7 +24735,7 @@
     "constrains/mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+10more@7": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@5"
+          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@4"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards+1more"
@@ -24663,7 +24744,7 @@
           "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@3"
+          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@5"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@2"
@@ -24706,7 +24787,7 @@
           "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@3"
+          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@5"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@2"
@@ -24755,7 +24836,7 @@
           "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@3"
+          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@5"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@2"
@@ -24908,13 +24989,13 @@
       ]
     },
     "constrains/mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+8more": {
-      "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+8more@7"
+      "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+8more@6"
     },
     "constrains/mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+8more@2": {
-      "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+8more@8"
+      "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+8more@7"
     },
     "constrains/mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+8more@3": {
-      "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+8more@6"
+      "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+8more@8"
     },
     "constrains/mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+8more@4": {
       "allOf": [
@@ -25092,7 +25173,7 @@
           "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@3"
+          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@5"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@2"
@@ -25424,7 +25505,7 @@
     "constrains/mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+9more@5": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@5"
+          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@4"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@11"
@@ -25433,13 +25514,13 @@
           "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@3"
+          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@5"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@2"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@4"
+          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@3"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards:t@5"
@@ -25476,19 +25557,19 @@
     "constrains/mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+9more@6": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@5"
+          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@4"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@3"
+          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@5"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@2"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@4"
+          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@3"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@13"
@@ -25528,13 +25609,13 @@
           "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@3"
+          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@5"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@2"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@4"
+          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@3"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards:t@5"
@@ -25571,7 +25652,7 @@
     "constrains/mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+9more@8": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@5"
+          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@4"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards+1more"
@@ -25580,7 +25661,7 @@
           "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@3"
+          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@5"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@2"
@@ -25620,7 +25701,7 @@
           "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@3"
+          "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@5"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@2"
@@ -25721,7 +25802,7 @@
           "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@6"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@9"
+          "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@8"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@2"
@@ -25741,16 +25822,16 @@
       ]
     },
     "constrains/mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more": {
-      "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more@6"
-    },
-    "constrains/mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more@2": {
-      "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more@8"
-    },
-    "constrains/mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more@3": {
       "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more@5"
     },
-    "constrains/mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more@4": {
+    "constrains/mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more@2": {
       "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more@7"
+    },
+    "constrains/mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more@3": {
+      "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more@6"
+    },
+    "constrains/mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more@4": {
+      "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more@8"
     },
     "constrains/mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more@5": {
       "anyOf": [
@@ -25862,7 +25943,7 @@
           "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@6"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@9"
+          "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@8"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@2"
@@ -25902,7 +25983,7 @@
           "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@6"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@9"
+          "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@8"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@2"
@@ -26000,7 +26081,7 @@
           "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@6"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@9"
+          "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@8"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@2"
@@ -26014,7 +26095,7 @@
       ]
     },
     "constrains/mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more": {
-      "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@10"
+      "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@9"
     },
     "constrains/mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@10": {
       "anyOf": [
@@ -26213,25 +26294,25 @@
       ]
     },
     "constrains/mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@2": {
-      "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@11"
+      "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@10"
     },
     "constrains/mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@3": {
-      "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@12"
+      "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@11"
     },
     "constrains/mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@4": {
-      "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@13"
+      "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@12"
     },
     "constrains/mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@5": {
-      "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@14"
+      "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@13"
     },
     "constrains/mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@6": {
-      "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@15"
+      "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@14"
     },
     "constrains/mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@7": {
-      "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@16"
+      "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@15"
     },
     "constrains/mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@8": {
-      "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@9"
+      "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@16"
     },
     "constrains/mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@9": {
       "anyOf": [
@@ -29996,13 +30077,13 @@
           "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null@2"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.service.type"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null@2"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride:t"
@@ -30018,13 +30099,13 @@
           "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null@2"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.service.type"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null@2"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride@2"
@@ -30065,16 +30146,16 @@
     "constrains/mayastor.jaeger-operator+mayastor.jaeger-operator.fullnameOverride+7more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more@2"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.serviceAccount.create:t"
@@ -30084,13 +30165,13 @@
     "constrains/mayastor.jaeger-operator+mayastor.jaeger-operator.fullnameOverride:t+4more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null@2"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.service.type"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null@2"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride:t"
@@ -30103,13 +30184,13 @@
     "constrains/mayastor.jaeger-operator+mayastor.jaeger-operator.fullnameOverride:t+5more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null@2"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.service.type"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null"
+          "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null@2"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t"
@@ -30126,13 +30207,13 @@
       "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more@3"
     },
     "constrains/mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more@2": {
-      "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more@5"
+      "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more@4"
     },
     "constrains/mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more@3": {
       "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more@5"
     },
     "constrains/mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more@4": {
-      "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more@2"
+      "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more@5"
     },
     "constrains/mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more@5": {
       "anyOf": [
@@ -31680,10 +31761,10 @@
       }
     },
     "constrains/mayastor.jaeger-operator.fullnameOverride+1more": {
-      "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more@5"
+      "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more@4"
     },
     "constrains/mayastor.jaeger-operator.fullnameOverride+1more@2": {
-      "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more@4"
+      "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more@5"
     },
     "constrains/mayastor.jaeger-operator.fullnameOverride+1more@3": {
       "allOf": [
@@ -31735,10 +31816,10 @@
       "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t@2"
     },
     "constrains/mayastor.jaeger-operator.fullnameOverride:t+2more": {
-      "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more@5"
+      "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more@4"
     },
     "constrains/mayastor.jaeger-operator.fullnameOverride:t+2more@2": {
-      "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more@4"
+      "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more@5"
     },
     "constrains/mayastor.jaeger-operator.fullnameOverride:t+2more@3": {
       "allOf": [
@@ -31881,10 +31962,10 @@
       }
     },
     "constrains/mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t": {
-      "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t@4"
+      "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t@3"
     },
     "constrains/mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t@2": {
-      "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t@3"
+      "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t@4"
     },
     "constrains/mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t@3": {
       "anyOf": [
@@ -31988,10 +32069,10 @@
       "type": "object"
     },
     "constrains/mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null": {
-      "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null@3"
+      "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null@4"
     },
     "constrains/mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null@2": {
-      "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null@4"
+      "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null@3"
     },
     "constrains/mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null@3": {
       "not": {
@@ -32222,7 +32303,7 @@
         "mayastor": {
           "properties": {
             "jaeger-operator": {
-              "$ref": "#/$defs/constrains~1serviceAccount.name@5"
+              "$ref": "#/$defs/constrains~1serviceAccount.name@7"
             }
           },
           "required": [
@@ -32241,7 +32322,7 @@
         "mayastor": {
           "properties": {
             "jaeger-operator": {
-              "$ref": "#/$defs/constrains~1serviceAccount.name@7"
+              "$ref": "#/$defs/constrains~1serviceAccount.name@5"
             }
           },
           "required": [
@@ -32940,7 +33021,7 @@
     "constrains/mayastor.localpv-provisioner.fullnameOverride+3more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.nameOverride:t"
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.nameOverride:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride@4"
@@ -32965,11 +33046,27 @@
           "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.rbac.create:t@4"
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.rbac.pspEnabled:t@4"
         }
       ]
     },
     "constrains/mayastor.localpv-provisioner.fullnameOverride+3more@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.rbac.create:t@4"
+        }
+      ]
+    },
+    "constrains/mayastor.localpv-provisioner.fullnameOverride+3more@4": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride:t"
@@ -32985,7 +33082,7 @@
         }
       ]
     },
-    "constrains/mayastor.localpv-provisioner.fullnameOverride+3more@4": {
+    "constrains/mayastor.localpv-provisioner.fullnameOverride+3more@5": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.nameOverride:t"
@@ -33002,9 +33099,54 @@
       ]
     },
     "constrains/mayastor.localpv-provisioner.fullnameOverride+4more": {
-      "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@10"
+      "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@13"
     },
     "constrains/mayastor.localpv-provisioner.fullnameOverride+4more@10": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.nameOverride:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.rbac.create:t@4"
+        }
+      ]
+    },
+    "constrains/mayastor.localpv-provisioner.fullnameOverride+4more@11": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.nameOverride+1more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+1more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.rbac.create:t@4"
+        }
+      ]
+    },
+    "constrains/mayastor.localpv-provisioner.fullnameOverride+4more@12": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.nameOverride+1more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+1more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.rbac.pspEnabled:t@4"
+        }
+      ]
+    },
+    "constrains/mayastor.localpv-provisioner.fullnameOverride+4more@13": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride"
@@ -33023,7 +33165,7 @@
         }
       ]
     },
-    "constrains/mayastor.localpv-provisioner.fullnameOverride+4more@11": {
+    "constrains/mayastor.localpv-provisioner.fullnameOverride+4more@14": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.rbac.create:t"
@@ -33042,7 +33184,7 @@
         }
       ]
     },
-    "constrains/mayastor.localpv-provisioner.fullnameOverride+4more@12": {
+    "constrains/mayastor.localpv-provisioner.fullnameOverride+4more@15": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.nameOverride:t"
@@ -33061,7 +33203,7 @@
         }
       ]
     },
-    "constrains/mayastor.localpv-provisioner.fullnameOverride+4more@13": {
+    "constrains/mayastor.localpv-provisioner.fullnameOverride+4more@16": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride:t+2more@2"
@@ -33070,17 +33212,17 @@
           "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride:t+3more@8"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+3more@2"
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+3more@3"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@6"
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@10"
         }
       ]
     },
-    "constrains/mayastor.localpv-provisioner.fullnameOverride+4more@14": {
+    "constrains/mayastor.localpv-provisioner.fullnameOverride+4more@17": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+3more"
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+3more@2"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride:t+3more@6"
@@ -33089,34 +33231,72 @@
           "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride:t+2more"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@7"
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@5"
         }
       ]
     },
-    "constrains/mayastor.localpv-provisioner.fullnameOverride+4more@15": {
+    "constrains/mayastor.localpv-provisioner.fullnameOverride+4more@18": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@8"
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+3more"
+        }
+      ]
+    },
+    "constrains/mayastor.localpv-provisioner.fullnameOverride+4more@19": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@11"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.rbac.create:t@3"
         }
       ]
     },
-    "constrains/mayastor.localpv-provisioner.fullnameOverride+4more@16": {
+    "constrains/mayastor.localpv-provisioner.fullnameOverride+4more@2": {
+      "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@14"
+    },
+    "constrains/mayastor.localpv-provisioner.fullnameOverride+4more@20": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@9"
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@12"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.rbac.pspEnabled:t@3"
         }
       ]
     },
-    "constrains/mayastor.localpv-provisioner.fullnameOverride+4more@2": {
-      "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@11"
-    },
     "constrains/mayastor.localpv-provisioner.fullnameOverride+4more@3": {
+      "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@18"
+    },
+    "constrains/mayastor.localpv-provisioner.fullnameOverride+4more@4": {
+      "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@6"
+    },
+    "constrains/mayastor.localpv-provisioner.fullnameOverride+4more@5": {
+      "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@6"
+    },
+    "constrains/mayastor.localpv-provisioner.fullnameOverride+4more@6": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.nameOverride:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.rbac.pspEnabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.nameOverride@4"
+        }
+      ]
+    },
+    "constrains/mayastor.localpv-provisioner.fullnameOverride+4more@7": {
       "allOf": [
         {
           "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.rbac.create:t"
@@ -33135,7 +33315,7 @@
         }
       ]
     },
-    "constrains/mayastor.localpv-provisioner.fullnameOverride+4more@4": {
+    "constrains/mayastor.localpv-provisioner.fullnameOverride+4more@8": {
       "allOf": [
         {
           "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.nameOverride:t"
@@ -33154,7 +33334,7 @@
         }
       ]
     },
-    "constrains/mayastor.localpv-provisioner.fullnameOverride+4more@5": {
+    "constrains/mayastor.localpv-provisioner.fullnameOverride+4more@9": {
       "allOf": [
         {
           "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.nameOverride:t@5"
@@ -33170,70 +33350,6 @@
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.rbac.create:t@4"
-        }
-      ]
-    },
-    "constrains/mayastor.localpv-provisioner.fullnameOverride+4more@6": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.nameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.nameOverride@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.rbac.create:t@4"
-        }
-      ]
-    },
-    "constrains/mayastor.localpv-provisioner.fullnameOverride+4more@7": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.nameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.rbac.pspEnabled:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.nameOverride@4"
-        }
-      ]
-    },
-    "constrains/mayastor.localpv-provisioner.fullnameOverride+4more@8": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.nameOverride+1more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+1more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.rbac.create:t@4"
-        }
-      ]
-    },
-    "constrains/mayastor.localpv-provisioner.fullnameOverride+4more@9": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.nameOverride+1more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+1more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.rbac.pspEnabled:t@4"
         }
       ]
     },
@@ -33293,10 +33409,10 @@
           "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride:t+3more@8"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+3more@2"
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+3more@3"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@5"
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@9"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+5more@7"
@@ -33309,7 +33425,7 @@
           "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+5more@5"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@4"
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@8"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride:t+3more@7"
@@ -33522,7 +33638,7 @@
           "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+5more@6"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+3more"
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+3more@2"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride:t+3more@6"
@@ -33557,7 +33673,7 @@
           "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride:t+5more@3"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@3"
+          "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@7"
         }
       ]
     },
@@ -35053,7 +35169,7 @@
       ]
     },
     "constrains/mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more": {
-      "$ref": "#/$defs/constrains~1mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more@9"
+      "$ref": "#/$defs/constrains~1mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more@7"
     },
     "constrains/mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more@10": {
       "anyOf": [
@@ -35066,10 +35182,10 @@
       ]
     },
     "constrains/mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more@2": {
-      "$ref": "#/$defs/constrains~1mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more@10"
+      "$ref": "#/$defs/constrains~1mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more@9"
     },
     "constrains/mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more@3": {
-      "$ref": "#/$defs/constrains~1mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more@7"
+      "$ref": "#/$defs/constrains~1mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more@10"
     },
     "constrains/mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more@4": {
       "$ref": "#/$defs/constrains~1mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more@8"
@@ -35846,7 +35962,7 @@
           "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@8"
+          "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@9"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.create:t@5"
@@ -36024,7 +36140,7 @@
           "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@8"
+          "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@9"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.create:t@5"
@@ -36124,7 +36240,7 @@
           "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@8"
+          "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@9"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.create:t@5"
@@ -36199,7 +36315,7 @@
           "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@8"
+          "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@9"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.create:t@5"
@@ -36314,7 +36430,7 @@
           "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride@4"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@8"
+          "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@9"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.create:t@5"
@@ -36339,7 +36455,7 @@
           "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@8"
+          "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@9"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.create:t@5"
@@ -36580,7 +36696,7 @@
           "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride@4"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@8"
+          "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@9"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.create:t@5"
@@ -36605,7 +36721,7 @@
           "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@8"
+          "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@9"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.create:t@5"
@@ -36695,7 +36811,7 @@
           "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride@4"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@8"
+          "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@9"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.create:t@5"
@@ -36754,7 +36870,7 @@
           "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride@4"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@8"
+          "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@9"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.create:t@5"
@@ -36924,7 +37040,7 @@
           "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride@4"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@8"
+          "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@9"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.create:t@5"
@@ -36989,7 +37105,7 @@
           "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride@4"
         },
         {
-          "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@8"
+          "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@9"
         },
         {
           "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.create:t@5"
@@ -37633,7 +37749,7 @@
       ]
     },
     "constrains/mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more": {
-      "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@12"
+      "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@11"
     },
     "constrains/mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@10": {
       "anyOf": [
@@ -37714,13 +37830,13 @@
       ]
     },
     "constrains/mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@2": {
-      "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@13"
+      "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@12"
     },
     "constrains/mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@3": {
-      "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@10"
+      "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@13"
     },
     "constrains/mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@4": {
-      "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@11"
+      "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@10"
     },
     "constrains/mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@5": {
       "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@15"
@@ -38152,7 +38268,7 @@
             "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@9"
+            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@8"
           }
         ]
       }
@@ -38400,7 +38516,7 @@
         "mayastor": {
           "properties": {
             "loki": {
-              "$ref": "#/$defs/constrains~1grafana-agent-operator.serviceAccount.name@12"
+              "$ref": "#/$defs/constrains~1grafana-agent-operator.serviceAccount.name@11"
             }
           },
           "required": [
@@ -38419,7 +38535,7 @@
         "mayastor": {
           "properties": {
             "loki": {
-              "$ref": "#/$defs/constrains~1grafana-agent-operator.serviceAccount.name@11"
+              "$ref": "#/$defs/constrains~1grafana-agent-operator.serviceAccount.name@12"
             }
           },
           "required": [
@@ -38474,7 +38590,7 @@
       "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t@4"
     },
     "constrains/mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more": {
-      "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@10"
+      "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@9"
     },
     "constrains/mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@10": {
       "anyOf": [
@@ -38631,25 +38747,25 @@
       ]
     },
     "constrains/mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@2": {
-      "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@11"
+      "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@10"
     },
     "constrains/mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@3": {
-      "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@12"
+      "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@11"
     },
     "constrains/mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@4": {
-      "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@13"
+      "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@12"
     },
     "constrains/mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@5": {
-      "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@14"
+      "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@13"
     },
     "constrains/mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@6": {
-      "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@15"
+      "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@14"
     },
     "constrains/mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@7": {
-      "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@16"
+      "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@15"
     },
     "constrains/mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@8": {
-      "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@9"
+      "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@16"
     },
     "constrains/mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@9": {
       "anyOf": [
@@ -38674,10 +38790,10 @@
       ]
     },
     "constrains/mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards.enabled:t+1more": {
-      "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards.enabled:t+1more@4"
+      "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards.enabled:t+1more@3"
     },
     "constrains/mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards.enabled:t+1more@2": {
-      "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards.enabled:t+1more@3"
+      "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards.enabled:t+1more@4"
     },
     "constrains/mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards.enabled:t+1more@3": {
       "anyOf": [
@@ -38706,10 +38822,10 @@
       ]
     },
     "constrains/mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards:t": {
-      "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards:t@4"
+      "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards:t@3"
     },
     "constrains/mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards:t@2": {
-      "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards:t@3"
+      "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards:t@4"
     },
     "constrains/mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards:t@3": {
       "anyOf": [
@@ -39729,13 +39845,13 @@
       "type": "object"
     },
     "constrains/mayastor.loki.monitoring.dashboards.namespace@3": {
-      "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@8"
-    },
-    "constrains/mayastor.loki.monitoring.dashboards.namespace@4": {
       "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@9"
     },
-    "constrains/mayastor.loki.monitoring.dashboards.namespace@5": {
+    "constrains/mayastor.loki.monitoring.dashboards.namespace@4": {
       "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@10"
+    },
+    "constrains/mayastor.loki.monitoring.dashboards.namespace@5": {
+      "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.dashboards.namespace@8"
     },
     "constrains/mayastor.loki.monitoring.dashboards.namespace@6": {
       "not": {
@@ -40808,7 +40924,7 @@
       ]
     },
     "constrains/mayastor.loki.rollout_operator.fullnameOverride+5more": {
-      "$ref": "#/$defs/constrains~1mayastor.loki.rollout_operator.fullnameOverride+5more@9"
+      "$ref": "#/$defs/constrains~1mayastor.loki.rollout_operator.fullnameOverride+5more@12"
     },
     "constrains/mayastor.loki.rollout_operator.fullnameOverride+5more@10": {
       "anyOf": [
@@ -40862,7 +40978,7 @@
       ]
     },
     "constrains/mayastor.loki.rollout_operator.fullnameOverride+5more@2": {
-      "$ref": "#/$defs/constrains~1mayastor.loki.rollout_operator.fullnameOverride+5more@12"
+      "$ref": "#/$defs/constrains~1mayastor.loki.rollout_operator.fullnameOverride+5more@9"
     },
     "constrains/mayastor.loki.rollout_operator.fullnameOverride+5more@3": {
       "$ref": "#/$defs/constrains~1mayastor.loki.rollout_operator.fullnameOverride+5more@5"
@@ -44185,13 +44301,13 @@
       "type": "object"
     },
     "constrains/monitoring.dashboards.namespace@3": {
-      "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@11"
-    },
-    "constrains/monitoring.dashboards.namespace@4": {
       "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@12"
     },
-    "constrains/monitoring.dashboards.namespace@5": {
+    "constrains/monitoring.dashboards.namespace@4": {
       "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@13"
+    },
+    "constrains/monitoring.dashboards.namespace@5": {
+      "$ref": "#/$defs/constrains~1monitoring.dashboards.namespace@11"
     },
     "constrains/monitoring.dashboards.namespace@6": {
       "additionalProperties": {},
@@ -45881,6 +45997,44 @@
         ],
         "type": "object"
       }
+    },
+    "constrains/rbac.pspEnabled!=null": {
+      "properties": {
+        "rbac": {
+          "properties": {
+            "pspEnabled": {
+              "$ref": "#/$defs/constrains~1crds!=null~1not~1=null"
+            }
+          },
+          "required": [
+            "pspEnabled"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "rbac"
+      ],
+      "type": "object"
+    },
+    "constrains/rbac.pspEnabled:t": {
+      "properties": {
+        "rbac": {
+          "properties": {
+            "pspEnabled": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "pspEnabled"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "rbac"
+      ],
+      "type": "object"
     },
     "constrains/rollout_operator": {
       "additionalProperties": {},
@@ -50263,6 +50417,22 @@
       },
       "then": false
     },
+    "when/localpv-provisioner.fullnameOverride!=null+localpv-provisioner.nameOverride+1more/then/fail@2": {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1localpv-provisioner.fullnameOverride!=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1localpv-provisioner.rbac.pspEnabled!=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1localpv-provisioner.nameOverride!=null"
+          }
+        ]
+      },
+      "then": false
+    },
     "when/localpv-provisioner.fullnameOverride!=null+localpv-provisioner.nameOverride+2more/then/fail": {
       "if": {
         "allOf": [
@@ -50301,6 +50471,20 @@
         "properties": {
           "lvm-localpv": {
             "$ref": "#/$defs/constrains~1crds!=null"
+          }
+        },
+        "required": [
+          "lvm-localpv"
+        ],
+        "type": "object"
+      },
+      "then": false
+    },
+    "when/lvm-localpv.rbac.pspEnabled!=null/then/fail": {
+      "if": {
+        "properties": {
+          "lvm-localpv": {
+            "$ref": "#/$defs/constrains~1rbac.pspEnabled!=null"
           }
         },
         "required": [
@@ -50942,6 +51126,22 @@
               "mayastor"
             ],
             "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    "when/mayastor.localpv-provisioner.fullnameOverride+2more/then/fail": {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.nameOverride!=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride!=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.rbac.pspEnabled!=null"
           }
         ]
       },
@@ -51622,16 +51822,16 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t"
+            "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t@2"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more"
+            "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more"
+            "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more"
+            "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more@2"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor.base.jaeger.enabled+mayastor.base.jaeger.enabled:t+1more"
@@ -51746,7 +51946,7 @@
             "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+3more"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@3"
+            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@4"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+6more@2"
@@ -51755,31 +51955,31 @@
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+6more"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride+4more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more"
-          },
-          {
             "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more@4"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+4more"
+            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride+4more"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+4more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+8more"
@@ -52261,6 +52461,14 @@
     },
     {
       "if": {
+        "$ref": "#/$defs/constrains~1engines.local.hostpath.enabled:t+localpv-provisioner.fullnameOverride+4more"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1localpv-provisioner.fullnameOverride!=null+localpv-provisioner.nameOverride+1more~1then~1fail@2"
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "$ref": "#/$defs/constrains~1mayastor.loki.enabled:t"
@@ -52493,13 +52701,28 @@
             "$ref": "#/$defs/constrains~1mayastor.loki.enabled:t"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards.enabled:t+1more@2"
+            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards.enabled:t+1more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+8more@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@4"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@4"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards:t@2"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+8more@2"
+            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards.enabled:t+1more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+9more@2"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@3"
@@ -52508,19 +52731,13 @@
             "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@3"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards.enabled:t+1more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+9more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@2"
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+8more@2"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@2"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+8more"
@@ -52532,52 +52749,43 @@
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+8more@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@8"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@8"
-          },
-          {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+7more"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+9more"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@7"
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@8"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@7"
+            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@8"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+9more@4"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@6"
+            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@7"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+10more"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@5"
+            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@6"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@6"
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@7"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+10more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@4"
+            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@5"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@5"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@6"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+9more@3"
@@ -53299,6 +53507,14 @@
     },
     {
       "if": {
+        "$ref": "#/$defs/constrains~1engines.local.hostpath.enabled+engines.local.hostpath.enabled=null+5more"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1localpv-provisioner.fullnameOverride!=null+localpv-provisioner.nameOverride+1more~1then~1fail@2"
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -53381,7 +53597,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.rollout_operator.fullnameOverride+5more@2"
+            "$ref": "#/$defs/constrains~1mayastor.loki.rollout_operator.fullnameOverride+5more"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor.loki.rollout_operator.enabled:t"
@@ -53980,7 +54196,7 @@
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.rollout_operator+8more@6"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.rollout_operator.fullnameOverride+5more"
+            "$ref": "#/$defs/constrains~1mayastor.loki.rollout_operator.fullnameOverride+5more@2"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor.loki.rollout_operator.fullnameOverride:t+4more@2"
@@ -54179,7 +54395,7 @@
             "$ref": "#/$defs/constrains~1mayastor+mayastor.jaeger-operator+mayastor.jaeger-operator.fullnameOverride+11more@8"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t@2"
+            "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.jaeger-operator+mayastor.jaeger-operator.fullnameOverride+11more@11"
@@ -54188,13 +54404,13 @@
             "$ref": "#/$defs/constrains~1mayastor+mayastor.jaeger-operator+mayastor.jaeger-operator.fullnameOverride+11more@9"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more@4"
+            "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more@2"
+            "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more@2"
+            "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more"
           },
           {
             "$ref": "#/$defs/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null"
@@ -54739,7 +54955,7 @@
             "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+3more"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@3"
+            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@4"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+6more@2"
@@ -54748,31 +54964,31 @@
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+6more"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride+4more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more"
-          },
-          {
             "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more@4"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+4more"
+            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride+4more"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+4more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+8more"
@@ -55304,13 +55520,28 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards.enabled:t+1more@2"
+            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards.enabled:t+1more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+8more@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@4"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@4"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards:t@2"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+8more@2"
+            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards.enabled:t+1more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+9more@2"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@3"
@@ -55319,19 +55550,13 @@
             "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@3"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards.enabled:t+1more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+9more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@2"
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+8more@2"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@2"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+8more"
@@ -55343,52 +55568,43 @@
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+8more@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@8"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@8"
-          },
-          {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+7more"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+9more"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@7"
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@8"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@7"
+            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@8"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+9more@4"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@6"
+            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@7"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+10more"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@5"
+            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@6"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@6"
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@7"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+10more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@4"
+            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@5"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@5"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@6"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+9more@3"
@@ -55409,13 +55625,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.alloy+mayastor.alloy.'$chart_tests':t+mayastor.alloy.agent+15more@2"
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.alloy+mayastor.alloy.'$chart_tests':t+mayastor.alloy.agent+15more"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.alloy+mayastor.alloy.'$chart_tests':t+mayastor.alloy.agent+14more"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.alloy+mayastor.alloy.'$chart_tests':t+mayastor.alloy.agent+15more"
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.alloy+mayastor.alloy.'$chart_tests':t+mayastor.alloy.agent+15more@2"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor.alloy.enabled+mayastor.alloy.enabled=null"
@@ -55644,13 +55860,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.alloy+mayastor.alloy.'$chart_tests':t+mayastor.alloy.agent+15more@2"
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.alloy+mayastor.alloy.'$chart_tests':t+mayastor.alloy.agent+15more"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.alloy+mayastor.alloy.'$chart_tests':t+mayastor.alloy.agent+14more"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.alloy+mayastor.alloy.'$chart_tests':t+mayastor.alloy.agent+15more"
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.alloy+mayastor.alloy.'$chart_tests':t+mayastor.alloy.agent+15more@2"
           },
           {
             "$ref": "#/$defs/constrains~1engines.replicated.mayastor.enabled:t"
@@ -55671,7 +55887,7 @@
             "$ref": "#/$defs/constrains~1mayastor+mayastor.jaeger-operator+mayastor.jaeger-operator.fullnameOverride+11more@8"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t@2"
+            "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.jaeger-operator+mayastor.jaeger-operator.fullnameOverride+11more@11"
@@ -55680,13 +55896,13 @@
             "$ref": "#/$defs/constrains~1mayastor+mayastor.jaeger-operator+mayastor.jaeger-operator.fullnameOverride+11more@9"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more@4"
+            "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more@2"
+            "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more@2"
+            "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more"
           },
           {
             "$ref": "#/$defs/constrains~1engines.replicated.mayastor.enabled:t"
@@ -55914,7 +56130,7 @@
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.rollout_operator+8more@6"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.rollout_operator.fullnameOverride+5more"
+            "$ref": "#/$defs/constrains~1mayastor.loki.rollout_operator.fullnameOverride+5more@2"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor.loki.rollout_operator.fullnameOverride:t+4more@2"
@@ -56004,6 +56220,14 @@
       },
       "then": {
         "$ref": "#/$defs/when~1mayastor.loki.minio.enabled+mayastor.loki.minio.fullnameOverride+3more~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null+6more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mayastor.localpv-provisioner.fullnameOverride+2more~1then~1fail"
       }
     },
     {
@@ -56167,6 +56391,14 @@
             }
           }
         ]
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1engines.local.lvm.enabled:t+lvm-localpv.rbac.pspEnabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1lvm-localpv.rbac.pspEnabled!=null~1then~1fail"
       }
     },
     {
@@ -56443,6 +56675,14 @@
             "$ref": "#/$defs/constrains~1rollout_operator"
           }
         }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1engines.replicated.mayastor+mayastor.localpv-provisioner.enabled:t+5more"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mayastor.localpv-provisioner.fullnameOverride+2more~1then~1fail"
       }
     },
     {
@@ -57285,13 +57525,28 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards.enabled:t+1more@2"
+            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards.enabled:t+1more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+8more@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@4"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@4"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards:t@2"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+8more@2"
+            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards.enabled:t+1more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+9more@2"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@3"
@@ -57300,19 +57555,13 @@
             "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@3"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards.enabled:t+1more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+9more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@2"
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+8more@2"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@2"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+8more"
@@ -57324,52 +57573,43 @@
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+8more@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@8"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@8"
-          },
-          {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+7more"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+9more"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@7"
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@8"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@7"
+            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@8"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+9more@4"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@6"
+            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@7"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+10more"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@5"
+            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@6"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@6"
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@7"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+10more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@4"
+            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@5"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@5"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@6"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+9more@3"
@@ -57440,13 +57680,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.alloy+mayastor.alloy.'$chart_tests':t+mayastor.alloy.agent+15more@2"
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.alloy+mayastor.alloy.'$chart_tests':t+mayastor.alloy.agent+15more"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.alloy+mayastor.alloy.'$chart_tests':t+mayastor.alloy.agent+14more"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.alloy+mayastor.alloy.'$chart_tests':t+mayastor.alloy.agent+15more"
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.alloy+mayastor.alloy.'$chart_tests':t+mayastor.alloy.agent+15more@2"
           },
           {
             "$ref": "#/$defs/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null"
@@ -57481,7 +57721,7 @@
             "$ref": "#/$defs/constrains~1mayastor.loki.enabled:t"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.rollout_operator.fullnameOverride+5more@2"
+            "$ref": "#/$defs/constrains~1mayastor.loki.rollout_operator.fullnameOverride+5more"
           },
           {
             "$ref": "#/$defs/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null"
@@ -57811,6 +58051,14 @@
       },
       "then": {
         "$ref": "#/$defs/when~1mayastor.base.jaeger.enabled!=null+mayastor.jaeger-operator.service.type~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null+6more"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mayastor.localpv-provisioner.fullnameOverride+2more~1then~1fail"
       }
     },
     {
@@ -58232,16 +58480,16 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.image.imagePullSecrets:t"
@@ -58263,16 +58511,16 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.image.imagePullSecrets:t"
@@ -58294,16 +58542,16 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.image.imagePullSecrets:t"
@@ -58325,16 +58573,16 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.image.imagePullSecrets:t"
@@ -58481,7 +58729,7 @@
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.rollout_operator+8more@6"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.rollout_operator.fullnameOverride+5more"
+            "$ref": "#/$defs/constrains~1mayastor.loki.rollout_operator.fullnameOverride+5more@2"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor.loki.rollout_operator.fullnameOverride:t+4more@2"
@@ -59044,7 +59292,7 @@
             "$ref": "#/$defs/constrains~1mayastor.loki.deploymentMode='SimpleScalable(3c)-(3e)Dis...'+2more"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more@3"
+            "$ref": "#/$defs/constrains~1mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.deploymentMode+6more"
@@ -59550,13 +59798,28 @@
             "$ref": "#/$defs/constrains~1mayastor.loki.enabled:t"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards.enabled:t+1more@2"
+            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards.enabled:t+1more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+8more@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@4"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@4"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards:t@2"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+8more@2"
+            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards.enabled:t+1more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+9more@2"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@3"
@@ -59565,19 +59828,13 @@
             "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@3"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards.enabled:t+1more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+9more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@2"
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+8more@2"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@2"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+8more"
@@ -59589,52 +59846,43 @@
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+8more@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@8"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@8"
-          },
-          {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+7more"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+9more"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@7"
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@8"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@7"
+            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@8"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+9more@4"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@6"
+            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@7"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+10more"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@5"
+            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@6"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@6"
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@7"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+10more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@4"
+            "$ref": "#/$defs/constrains~1mayastor.loki.loki.image.tag:t+mayastor.loki.monitoring.dashboards+5more@5"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@5"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.loki.image.tag:t+6more@6"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+9more@3"
@@ -59712,7 +59960,7 @@
             "$ref": "#/$defs/constrains~1mayastor.loki.loki.annotations:t"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more@3"
+            "$ref": "#/$defs/constrains~1mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.deploymentMode+6more"
@@ -60173,14 +60421,14 @@
                 "$ref": "#/$defs/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more@2"
+                "$ref": "#/$defs/constrains~1mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more@3"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more@2"
+                "$ref": "#/$defs/constrains~1mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more@3"
               },
               {
                 "$ref": "#/$defs/constrains~1engines.replicated.mayastor.enabled:t"
@@ -60196,7 +60444,7 @@
                 "$ref": "#/$defs/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more@2"
+                "$ref": "#/$defs/constrains~1mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more@3"
               },
               {
                 "$ref": "#/$defs/constrains~1mayastor.loki.enabled+mayastor.loki.enabled=null"
@@ -60209,7 +60457,7 @@
                 "$ref": "#/$defs/constrains~1mayastor.loki.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more@2"
+                "$ref": "#/$defs/constrains~1mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more@3"
               },
               {
                 "$ref": "#/$defs/constrains~1engines.replicated.mayastor.enabled:t"
@@ -60543,7 +60791,7 @@
             "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+3more"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@3"
+            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@4"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+6more@2"
@@ -60552,31 +60800,31 @@
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+6more"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride+4more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more"
-          },
-          {
             "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more@4"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+4more"
+            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride+4more"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+4more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+8more"
@@ -60618,10 +60866,10 @@
             "$ref": "#/$defs/constrains~1localpv-provisioner.fullnameOverride+localpv-provisioner.fullnameOverride:t+2more@7"
           },
           {
-            "$ref": "#/$defs/constrains~1localpv-provisioner.fullnameOverride+localpv-provisioner.fullnameOverride:t+3more@23"
+            "$ref": "#/$defs/constrains~1localpv-provisioner.fullnameOverride+localpv-provisioner.fullnameOverride:t+3more@24"
           },
           {
-            "$ref": "#/$defs/constrains~1localpv-provisioner.fullnameOverride+localpv-provisioner.fullnameOverride:t+3more@22"
+            "$ref": "#/$defs/constrains~1localpv-provisioner.fullnameOverride+localpv-provisioner.fullnameOverride:t+3more@23"
           }
         ]
       },
@@ -60725,7 +60973,7 @@
                 "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.selfMonitoring.grafanaAgent.installOperator+1more"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@8"
+                "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@9"
               },
               {
                 "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.create:t@5"
@@ -60771,7 +61019,7 @@
                 "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.selfMonitoring.grafanaAgent.installOperator+1more"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@8"
+                "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@9"
               },
               {
                 "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.create:t@5"
@@ -60811,7 +61059,7 @@
                 "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.selfMonitoring.grafanaAgent.installOperator:t"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@8"
+                "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@9"
               },
               {
                 "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.create:t@5"
@@ -60851,7 +61099,7 @@
                 "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.selfMonitoring.grafanaAgent.installOperator+1more"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@8"
+                "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@9"
               },
               {
                 "$ref": "#/$defs/constrains~1engines.replicated.mayastor.enabled:t"
@@ -60894,7 +61142,7 @@
                 "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.selfMonitoring.grafanaAgent.installOperator:t"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@8"
+                "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@9"
               },
               {
                 "$ref": "#/$defs/constrains~1engines.replicated.mayastor.enabled:t"
@@ -60943,7 +61191,7 @@
                 "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.selfMonitoring.grafanaAgent.installOperator:t"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@8"
+                "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@9"
               },
               {
                 "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.create:t@5"
@@ -60983,7 +61231,7 @@
                 "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.selfMonitoring.grafanaAgent.installOperator+1more"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@8"
+                "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@9"
               },
               {
                 "$ref": "#/$defs/constrains~1engines.replicated.mayastor.enabled:t"
@@ -61026,7 +61274,7 @@
                 "$ref": "#/$defs/constrains~1mayastor.loki.monitoring.selfMonitoring.grafanaAgent.installOperator:t"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@8"
+                "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.serviceAccount.name@9"
               },
               {
                 "$ref": "#/$defs/constrains~1engines.replicated.mayastor.enabled:t"
@@ -62403,6 +62651,14 @@
     },
     {
       "if": {
+        "$ref": "#/$defs/constrains~1engines.local.lvm.enabled+engines.local.lvm.enabled=null+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1lvm-localpv.rbac.pspEnabled!=null~1then~1fail"
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "$ref": "#/$defs/constrains~1rawfile-localpv.fullnameOverride+rawfile-localpv.fullnameOverride:t+4more@5"
@@ -62725,7 +62981,7 @@
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.rollout_operator+8more@6"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.rollout_operator.fullnameOverride+5more"
+            "$ref": "#/$defs/constrains~1mayastor.loki.rollout_operator.fullnameOverride+5more@2"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor.loki.rollout_operator.fullnameOverride:t+4more@2"
@@ -62817,16 +63073,16 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.image.imagePullSecrets:t"
@@ -62848,16 +63104,16 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.image.imagePullSecrets:t"
@@ -62879,16 +63135,16 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.image.imagePullSecrets:t"
@@ -62910,16 +63166,16 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.image.imagePullSecrets:t"
@@ -63040,7 +63296,7 @@
             "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+3more"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@3"
+            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@4"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+6more@2"
@@ -63049,31 +63305,31 @@
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+6more"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride+4more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more"
-          },
-          {
             "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more@4"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+4more"
+            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride+4more"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+2more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor.loki.grafana-agent-operator.fullnameOverride:t+4more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+7more"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.loki+mayastor.loki.grafana-agent-operator+8more"
@@ -63585,7 +63841,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.rollout_operator.fullnameOverride+5more@2"
+            "$ref": "#/$defs/constrains~1mayastor.loki.rollout_operator.fullnameOverride+5more"
           },
           {
             "$ref": "#/$defs/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null"
@@ -63614,14 +63870,14 @@
                 "$ref": "#/$defs/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more"
+                "$ref": "#/$defs/constrains~1mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more@2"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more"
+                "$ref": "#/$defs/constrains~1mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1engines.replicated.mayastor.enabled:t"
@@ -63637,7 +63893,7 @@
                 "$ref": "#/$defs/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more"
+                "$ref": "#/$defs/constrains~1mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1mayastor.loki.enabled+mayastor.loki.enabled=null"
@@ -63650,7 +63906,7 @@
                 "$ref": "#/$defs/constrains~1mayastor.loki.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more"
+                "$ref": "#/$defs/constrains~1mayastor.loki+mayastor.loki.enterprise.enabled+mayastor.loki.loki.image.tag+8more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1engines.replicated.mayastor.enabled:t"
@@ -63957,7 +64213,7 @@
             "$ref": "#/$defs/constrains~1mayastor.loki.enabled:t"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.loki.rollout_operator.fullnameOverride+5more@2"
+            "$ref": "#/$defs/constrains~1mayastor.loki.rollout_operator.fullnameOverride+5more"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor.loki.rollout_operator.enabled:t"
@@ -64676,13 +64932,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t"
+            "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t@2"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more"
+            "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more"
+            "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more@2"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor.base.jaeger.enabled+mayastor.base.jaeger.enabled:t+1more"
@@ -64857,6 +65113,14 @@
     },
     {
       "if": {
+        "$ref": "#/$defs/constrains~1engines.replicated.mayastor.enabled:t+mayastor.localpv-provisioner.enabled+6more"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mayastor.localpv-provisioner.fullnameOverride+2more~1then~1fail"
+      }
+    },
+    {
+      "if": {
         "$ref": "#/$defs/constrains~1engines.local.rawfile.enabled+engines.local.rawfile.enabled:t+5more@2"
       },
       "then": {
@@ -64896,25 +65160,25 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@16"
+            "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@20"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@19"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@15"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+4more@12"
-          },
-          {
             "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.enabled+mayastor.localpv-provisioner.enabled:t+1more"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+3more@3"
+            "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+3more@4"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride:t+3more@13"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+3more@4"
+            "$ref": "#/$defs/constrains~1mayastor.localpv-provisioner.fullnameOverride+3more@5"
           },
           {
             "$ref": "#/$defs/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled:t+1more"
@@ -65001,16 +65265,16 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.image.imagePullSecrets:t"
@@ -65029,16 +65293,16 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.image.imagePullSecrets:t"
@@ -65057,16 +65321,16 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.image.imagePullSecrets:t"
@@ -65085,16 +65349,16 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.nameOverride+mayastor.jaeger-operator.nameOverride:t@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride+1more@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator+mayastor.jaeger-operator.service+2more@2"
               },
               {
-                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more"
+                "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.fullnameOverride:t+2more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1mayastor.jaeger-operator.image.imagePullSecrets:t"
@@ -65185,13 +65449,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.alloy+mayastor.alloy.'$chart_tests':t+mayastor.alloy.agent+15more@2"
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.alloy+mayastor.alloy.'$chart_tests':t+mayastor.alloy.agent+15more"
           },
           {
             "$ref": "#/$defs/constrains~1mayastor+mayastor.alloy+mayastor.alloy.'$chart_tests':t+mayastor.alloy.agent+14more"
           },
           {
-            "$ref": "#/$defs/constrains~1mayastor+mayastor.alloy+mayastor.alloy.'$chart_tests':t+mayastor.alloy.agent+15more"
+            "$ref": "#/$defs/constrains~1mayastor+mayastor.alloy+mayastor.alloy.'$chart_tests':t+mayastor.alloy.agent+15more@2"
           },
           {
             "$ref": "#/$defs/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null"
@@ -68261,7 +68525,7 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/constrains~1grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more"
+                    "$ref": "#/$defs/constrains~1grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more@2"
                   },
                   {
                     "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
@@ -68277,29 +68541,13 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/constrains~1grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more@3"
+                    "$ref": "#/$defs/constrains~1grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more@4"
                   },
                   {
                     "type": "object"
                   },
                   {
                     "$ref": "#/$defs/constrains~1enabled:t"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1monitoring.selfMonitoring.grafanaAgent.installOperator+1more"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/constrains~1grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more@4"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
-                  },
-                  {
-                    "type": "object"
                   },
                   {
                     "$ref": "#/$defs/constrains~1monitoring.selfMonitoring.grafanaAgent.installOperator+1more"
@@ -68334,6 +68582,77 @@
                     "type": "object"
                   },
                   {
+                    "$ref": "#/$defs/constrains~1monitoring.selfMonitoring.grafanaAgent.installOperator+1more"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more@3"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1monitoring.selfMonitoring.grafanaAgent.installOperator:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more@3"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1enabled:t"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1monitoring.selfMonitoring.grafanaAgent.installOperator:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more@2"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1enabled:t"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1monitoring.selfMonitoring.grafanaAgent.installOperator+1more"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1enabled:t"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1monitoring.selfMonitoring.grafanaAgent.installOperator:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more@4"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1enabled:t"
+                  },
+                  {
                     "$ref": "#/$defs/constrains~1monitoring.selfMonitoring.grafanaAgent.installOperator:t"
                   }
                 ]
@@ -68373,10 +68692,13 @@
                     "$ref": "#/$defs/constrains~1grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more@4"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1enabled:t"
+                    "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1monitoring.selfMonitoring.grafanaAgent.installOperator:t"
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1monitoring.selfMonitoring.grafanaAgent.installOperator+1more"
                   }
                 ]
               },
@@ -68386,10 +68708,13 @@
                     "$ref": "#/$defs/constrains~1grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more@3"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1enabled:t"
+                    "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1monitoring.selfMonitoring.grafanaAgent.installOperator:t"
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1monitoring.selfMonitoring.grafanaAgent.installOperator+1more"
                   }
                 ]
               },
@@ -68399,67 +68724,6 @@
                     "$ref": "#/$defs/constrains~1grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1enabled:t"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1monitoring.selfMonitoring.grafanaAgent.installOperator:t"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/constrains~1grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more@4"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1enabled:t"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1monitoring.selfMonitoring.grafanaAgent.installOperator+1more"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/constrains~1grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more@3"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1monitoring.selfMonitoring.grafanaAgent.installOperator+1more"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/constrains~1grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more@2"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1monitoring.selfMonitoring.grafanaAgent.installOperator+1more"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/constrains~1grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more@4"
-                  },
-                  {
                     "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
                   },
                   {
@@ -68473,7 +68737,7 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/constrains~1grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more@2"
+                    "$ref": "#/$defs/constrains~1grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more@3"
                   },
                   {
                     "type": "object"
@@ -68489,7 +68753,7 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/constrains~1grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more@3"
+                    "$ref": "#/$defs/constrains~1grafana-agent-operator.customLabels:t+grafana-agent-operator.fullnameOverride+6more@4"
                   },
                   {
                     "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
