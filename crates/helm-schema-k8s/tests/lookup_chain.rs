@@ -36,6 +36,7 @@ fn provider_use(path: YamlPath, resource: ResourceRef) -> ProviderSchemaUse {
         kind: ValueKind::Scalar,
         stringified: false,
         plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
+        text_preimage: None,
         strip_marker: false,
         resource,
         is_self_range_collection: false,

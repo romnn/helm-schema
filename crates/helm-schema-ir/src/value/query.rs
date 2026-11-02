@@ -142,7 +142,15 @@ impl Value {
                 origin: _,
             }) => match content {
                 Some(ScalarContent::Literal(value)) => Some(value),
-                Some(ScalarContent::Identity(_)) | None => None,
+                Some(
+                    ScalarContent::Identity(_)
+                    | ScalarContent::StringDomain {
+                        pattern: _,
+                        min_bytes: _,
+                        max_bytes: _,
+                    },
+                )
+                | None => None,
             },
             ValueNode::Leaf(Leaf {
                 datum: Datum::Text(text),
@@ -1012,7 +1020,7 @@ impl State {
         {
             unknown = unknown.derived(
                 self.heap.freeze(value),
-                super::relationship::Operation::Member(key.to_owned()),
+                super::relationship::ValueOperation::Member(key.to_owned()),
             );
         }
         unknown
@@ -1108,6 +1116,27 @@ impl State {
                 GuardValue::Int(value) => *value != 0,
                 GuardValue::Float(value) => value.parse::<f64>().ok()? != 0.0,
             });
+        }
+        if let ValueNode::Leaf(Leaf {
+            datum:
+                Datum::Scalar {
+                    go_type: ScalarType::String,
+                    content:
+                        Some(ScalarContent::StringDomain {
+                            pattern: _,
+                            min_bytes,
+                            max_bytes,
+                        }),
+                },
+            origin: _,
+        }) = value.node.as_ref()
+        {
+            if *min_bytes > 0 {
+                return Some(true);
+            }
+            if *max_bytes == 0 {
+                return Some(false);
+            }
         }
         match value.node.as_ref() {
             ValueNode::Leaf(Leaf {
@@ -1307,6 +1336,23 @@ fn truth_test(state: &State, value: &Value, budget: &mut TruthBudget<'_>) -> Rc<
         return budget.unknown(state);
     }
     budget.visits -= 1;
+    if matches!(
+        value.node.as_ref(),
+        ValueNode::Leaf(Leaf {
+            datum: Datum::Text(_),
+            origin: _
+        })
+    ) && let Some(test) = super::text_actions::truth_test(value, state)
+    {
+        return test;
+    }
+    if let Some(super::relationship::Derivation {
+        source: _,
+        operation: super::relationship::ValueOperation::Capability { guard: _, decision },
+    }) = value.operation_preimage()
+    {
+        return Rc::clone(decision);
+    }
     if let ValueNode::Leaf(Leaf {
         datum: Datum::Map {
             target: Some(id),
@@ -1853,7 +1899,7 @@ fn alternative_views(
         }),
         ValueNode::Select { decision, yes, no } => {
             for (taken, arm) in [(true, yes), (false, no)] {
-                let predicate = if decision.coverage == Coverage::Partial {
+                let predicate = if decision.coverage != Coverage::Exact {
                     Predicate::True
                 } else if taken {
                     decision.when_true.clone()
@@ -1866,10 +1912,7 @@ fn alternative_views(
                     continue;
                 }
                 alternative_views(
-                    &FrozenValue {
-                        heap: Rc::clone(&value.heap),
-                        value: arm.clone(),
-                    },
+                    &FrozenValue::at(Rc::clone(&value.heap), arm.clone()),
                     condition,
                     coverage_exact && decision.coverage == Coverage::Exact,
                     result,

@@ -52,6 +52,7 @@ fn provider_resolution_distinguishes_stringified_scalar_uses() {
         provenance: Vec::new(),
         stringified,
         plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
+        text_preimage: None,
         strip_marker: false,
         template_supplied_member_keys: BTreeSet::new(),
         split_segment: None,
@@ -2489,6 +2490,7 @@ fn compound_sound_subset_scopes_provider_payloads() {
         provenance: Vec::new(),
         stringified: false,
         plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
+        text_preimage: None,
         template_supplied_member_keys: BTreeSet::new(),
         split_segment: None,
         merge_layers: None,
@@ -2611,6 +2613,7 @@ fn textual_rows_are_not_inherently_falsy_tolerant() -> eyre::Result<()> {
         provenance: Vec::new(),
         stringified: false,
         plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
+        text_preimage: None,
         template_supplied_member_keys: BTreeSet::new(),
         split_segment: None,
         merge_layers: None,
@@ -2647,6 +2650,7 @@ fn pathless_dependency_fragment_root_keeps_values_mapping_open_with_descendants(
         provenance: Vec::new(),
         stringified: false,
         plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
+        text_preimage: None,
         template_supplied_member_keys: std::collections::BTreeSet::default(),
         split_segment: None,
         merge_layers: None,
@@ -2695,6 +2699,7 @@ fn type_hint_only_descendant_preserves_object_input_branch() {
         provenance: Vec::new(),
         stringified: false,
         plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
+        text_preimage: None,
         template_supplied_member_keys: std::collections::BTreeSet::default(),
         split_segment: None,
         merge_layers: None,
@@ -3015,7 +3020,40 @@ fn unrelated_default_inside_set_does_not_mark_target_as_defaulted() {
     retained.stringified = true;
     retained.nil_omitting = true;
     retained.plain_scalar_placement = helm_schema_core::PlainScalarPlacement::BlockValue;
-    sim_assert_eq!(have: rendered_uses, want: vec![retained]);
+    let mut written = retained.clone();
+    written.source_expr = helm_schema_core::ValuesPath::parse("other");
+    written.nil_omitting = false;
+    let host = helm_schema_core::ValuesPath::parse("serviceAccount");
+    let common = [
+        helm_schema_core::Predicate::truthy_path(""),
+        helm_schema_core::Predicate::truthy_path("other"),
+        helm_schema_core::Predicate::from(Guard::TypeIs {
+            path: host.clone(),
+            schema_type: "object".to_owned(),
+        }),
+        helm_schema_core::Predicate::from(Guard::Eq {
+            path: host.clone(),
+            value: GuardValue::Null,
+        })
+        .negated(),
+        helm_schema_core::Predicate::from(Guard::Absent { path: host }).negated(),
+    ];
+    let string = vec![helm_schema_core::Predicate::from(Guard::TypeIs {
+        path: written.source_expr.clone(),
+        schema_type: "string".to_owned(),
+    })];
+    written.condition = helm_schema_core::GuardDnf::from_disjunction(
+        [
+            string,
+            formatted_collection_conditions(&written.source_expr),
+        ]
+        .into_iter()
+        .map(|mut conditions| {
+            conditions.extend(common.clone());
+            conditions
+        }),
+    );
+    sim_assert_eq!(have: rendered_uses, want: vec![written, retained]);
     let target_default_guards = projection
         .uses()
         .iter()
@@ -3025,6 +3063,33 @@ fn unrelated_default_inside_set_does_not_mark_target_as_defaulted() {
         })
         .collect::<Vec<_>>();
     sim_assert_eq!(have: target_default_guards, want: Vec::<Guard>::new());
+}
+
+fn formatted_collection_conditions(
+    path: &helm_schema_core::ValuesPath,
+) -> Vec<helm_schema_core::Predicate> {
+    let mut conditions = ["null", "boolean", "number", "string"]
+        .map(|schema_type| {
+            helm_schema_core::Predicate::from(Guard::TypeIs {
+                path: path.clone(),
+                schema_type: schema_type.to_owned(),
+            })
+            .negated()
+        })
+        .to_vec();
+    conditions
+        .push(helm_schema_core::Predicate::from(Guard::Absent { path: path.clone() }).negated());
+    conditions.push(
+        helm_schema_core::Predicate::from(Guard::MatchesValue {
+            path: path.clone(),
+            pattern: helm_schema_core::ValuePattern::Array {
+                prefix: Vec::new(),
+                items: None,
+            },
+        })
+        .negated(),
+    );
+    conditions
 }
 
 #[test]
@@ -3081,6 +3146,7 @@ fn guarded_fragment_array_provider_schema_stays_precise() {
             provenance: Vec::new(),
             stringified: false,
             plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
+            text_preimage: None,
             template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
             merge_layers: None,
@@ -3109,6 +3175,7 @@ fn guarded_fragment_array_provider_schema_stays_precise() {
             provenance: Vec::new(),
             stringified: false,
             plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
+            text_preimage: None,
             template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
             merge_layers: None,
@@ -3183,6 +3250,7 @@ fn repeated_exact_provider_subtrees_emit_provider_definitions() {
             provenance: Vec::new(),
             stringified: false,
             plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
+            text_preimage: None,
             template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
             merge_layers: None,
@@ -3202,6 +3270,7 @@ fn repeated_exact_provider_subtrees_emit_provider_definitions() {
             provenance: Vec::new(),
             stringified: false,
             plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
+            text_preimage: None,
             template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
             merge_layers: None,
@@ -3258,6 +3327,7 @@ fn values_yaml_comments_override_provider_descriptions() {
         provenance: Vec::new(),
         stringified: false,
         plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
+        text_preimage: None,
         template_supplied_member_keys: std::collections::BTreeSet::default(),
         split_segment: None,
         merge_layers: None,

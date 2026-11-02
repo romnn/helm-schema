@@ -1,3 +1,4 @@
+use color_eyre::eyre;
 use serde_json::json;
 use test_util::prelude::sim_assert_eq;
 
@@ -5,12 +6,12 @@ use super::ContractDocument;
 use crate::{ContractUse, Guard, ResourceRef, ValueKind, YamlPath};
 
 #[test]
-fn contract_document_serializes_stable_guard_shape() {
-    let value_use = ContractUse {
-        source_expr: helm_schema_core::ValuesPath::parse("kid.enabled"),
-        path: YamlPath(vec!["data".to_string(), "enabled".to_string()]),
-        kind: ValueKind::Scalar,
-        condition: helm_schema_core::GuardDnf::from_guards(vec![
+fn contract_document_serializes_stable_guard_shape() -> eyre::Result<()> {
+    let value_use = ContractUse::new(
+        helm_schema_core::ValuesPath::parse("kid.enabled"),
+        YamlPath(vec!["data".to_string(), "enabled".to_string()]),
+        ValueKind::Scalar,
+        vec![
             Guard::AnyOf {
                 alternatives: vec![
                     vec![Guard::Truthy {
@@ -29,46 +30,22 @@ fn contract_document_serializes_stable_guard_shape() {
                     helm_schema_core::ValuesPath::parse("tags.observability"),
                 ],
             },
-        ]),
-        resource: Some(ResourceRef::concrete(
+        ],
+        Some(ResourceRef::concrete(
             "v1".to_string(),
             "ConfigMap".to_string(),
         )),
-        provenance: Vec::new(),
-        stringified: false,
-        plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
-        strip_marker: false,
-        template_supplied_member_keys: std::collections::BTreeSet::default(),
-        split_segment: None,
-        merge_layers: None,
-        range_key: false,
-        nil_omitting: false,
-        omitted_members: std::collections::BTreeMap::default(),
-        digest: false,
-        merge_operand: false,
-    };
-    let earlier_use = ContractUse {
-        source_expr: helm_schema_core::ValuesPath::parse("alpha.enabled"),
-        path: YamlPath(Vec::new()),
-        kind: ValueKind::Scalar,
-        condition: helm_schema_core::GuardDnf::from_guards(Vec::new()),
-        resource: None,
-        provenance: Vec::new(),
-        stringified: false,
-        plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
-        strip_marker: false,
-        template_supplied_member_keys: std::collections::BTreeSet::default(),
-        split_segment: None,
-        merge_layers: None,
-        range_key: false,
-        nil_omitting: false,
-        omitted_members: std::collections::BTreeMap::default(),
-        digest: false,
-        merge_operand: false,
-    };
+    );
+    let earlier_use = ContractUse::new(
+        helm_schema_core::ValuesPath::parse("alpha.enabled"),
+        YamlPath(Vec::new()),
+        ValueKind::Scalar,
+        Vec::new(),
+        None,
+    );
     let document = ContractDocument::from_contract_uses(vec![value_use, earlier_use]);
 
-    let actual = serde_json::to_value(document.clone()).expect("serialize contract document");
+    let actual = serde_json::to_value(document.clone())?;
 
     sim_assert_eq!(
         have: actual,
@@ -106,7 +83,7 @@ fn contract_document_serializes_stable_guard_shape() {
         })
     );
 
-    let decoded: ContractDocument =
-        serde_json::from_value(actual).expect("deserialize contract document");
+    let decoded: ContractDocument = serde_json::from_value(actual)?;
     sim_assert_eq!(have: decoded, want: document);
+    Ok(())
 }

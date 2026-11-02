@@ -120,6 +120,7 @@ pub fn unicode_mode_escaped_pattern(pattern: &str) -> Option<String> {
 #[derive(Default)]
 struct PortableEscapes {
     respellings: Vec<Respelling>,
+    inverse_budget: Option<usize>,
 }
 
 /// The ECMA-262 text that replaces one escape's source span.
@@ -128,8 +129,26 @@ struct Respelling {
     text: String,
 }
 
+#[derive(Debug, thiserror::Error)]
+enum PatternAdmission {
+    #[error("unsupported pattern syntax")]
+    Unsupported,
+}
+
 impl PortableEscapes {
-    fn record(&mut self, literal: &ast::Literal, in_class: bool) {
+    fn charge(&mut self) -> Result<(), PatternAdmission> {
+        if let Some(remaining) = &mut self.inverse_budget {
+            *remaining = remaining
+                .checked_sub(1)
+                .ok_or(PatternAdmission::Unsupported)?;
+        }
+        Ok(())
+    }
+
+    fn record(&mut self, literal: &ast::Literal, in_class: bool) -> Result<(), PatternAdmission> {
+        if self.inverse_budget.is_some() && !portable_literal(literal, in_class) {
+            return Err(PatternAdmission::Unsupported);
+        }
         let escaped = matches!(literal.kind, LiteralKind::Superfluous | LiteralKind::Meta);
         // ECMA-262's `u` flag admits only these identity escapes, plus `-` in a class.
         let unicode_mode_escapable =
@@ -147,29 +166,39 @@ impl PortableEscapes {
                 literal.c.to_string()
             }
         } else {
-            return;
+            return Ok(());
         };
         self.respellings.push(Respelling {
             span: literal.span,
             text,
         });
+        Ok(())
     }
 }
 
 impl ast::Visitor for PortableEscapes {
     type Output = Vec<Respelling>;
-    type Err = ();
+    type Err = PatternAdmission;
 
     fn finish(self) -> Result<Self::Output, Self::Err> {
         Ok(self.respellings)
     }
 
     fn visit_pre(&mut self, ast: &Ast) -> Result<(), Self::Err> {
+        self.charge()?;
         match ast {
-            Ast::Literal(literal) => self.record(literal, false),
+            Ast::Literal(literal) => self.record(literal, false)?,
             // Rust reads `\<` and `\>` as word-boundary assertions, where RE2
             // reads them as the literal angle brackets.
             Ast::Assertion(assertion) => {
+                if self.inverse_budget.is_some()
+                    && !matches!(
+                        assertion.kind,
+                        ast::AssertionKind::StartLine | ast::AssertionKind::EndLine
+                    )
+                {
+                    return Err(PatternAdmission::Unsupported);
+                }
                 let text = match assertion.kind {
                     ast::AssertionKind::WordBoundaryStartAngle => "<",
                     ast::AssertionKind::WordBoundaryEndAngle => ">",
@@ -180,13 +209,30 @@ impl ast::Visitor for PortableEscapes {
                     text: text.to_string(),
                 });
             }
-            Ast::Flags(set) if ignores_whitespace(&set.flags) => return Err(()),
+            Ast::Flags(set) if self.inverse_budget.is_some() || ignores_whitespace(&set.flags) => {
+                return Err(PatternAdmission::Unsupported);
+            }
             Ast::Group(group) => {
                 if let ast::GroupKind::NonCapturing(flags) = &group.kind
-                    && ignores_whitespace(flags)
+                    && (ignores_whitespace(flags)
+                        || self.inverse_budget.is_some() && !flags.items.is_empty())
                 {
-                    return Err(());
+                    return Err(PatternAdmission::Unsupported);
                 }
+                if self.inverse_budget.is_some()
+                    && matches!(
+                        group.kind,
+                        ast::GroupKind::CaptureName {
+                            starts_with_p: true,
+                            name: _
+                        }
+                    )
+                {
+                    return Err(PatternAdmission::Unsupported);
+                }
+            }
+            Ast::ClassUnicode(_) if self.inverse_budget.is_some() => {
+                return Err(PatternAdmission::Unsupported);
             }
             _ => {}
         }
@@ -194,14 +240,18 @@ impl ast::Visitor for PortableEscapes {
     }
 
     fn visit_class_set_item_pre(&mut self, item: &ClassSetItem) -> Result<(), Self::Err> {
+        self.charge()?;
         match item {
-            ClassSetItem::Literal(literal) => self.record(literal, true),
+            ClassSetItem::Literal(literal) => self.record(literal, true)?,
             ClassSetItem::Range(range) => {
-                self.record(&range.start, true);
-                self.record(&range.end, true);
+                self.record(&range.start, true)?;
+                self.record(&range.end, true)?;
             }
             // RE2 reads a `[` inside a class literally, where Rust opens a nested class.
-            ClassSetItem::Bracketed(_) => return Err(()),
+            ClassSetItem::Bracketed(_) => return Err(PatternAdmission::Unsupported),
+            ClassSetItem::Ascii(_) | ClassSetItem::Unicode(_) if self.inverse_budget.is_some() => {
+                return Err(PatternAdmission::Unsupported);
+            }
             _ => {}
         }
         Ok(())
@@ -212,7 +262,7 @@ impl ast::Visitor for PortableEscapes {
         &mut self,
         _op: &ast::ClassSetBinaryOp,
     ) -> Result<(), Self::Err> {
-        Err(())
+        Err(PatternAdmission::Unsupported)
     }
 }
 
@@ -322,6 +372,42 @@ fn ecma_case_folded_pattern(pattern: &str) -> Option<String> {
         return None;
     }
     Some(out)
+}
+
+/// Admits the ASCII regex syntax shared by the inverse compiler and ECMA-262.
+pub(crate) fn portable_ascii_pattern(pattern: &str) -> bool {
+    let Ok(parsed) = ast::parse::Parser::new().parse(pattern) else {
+        return false;
+    };
+    ast::visit(
+        &parsed,
+        PortableEscapes {
+            inverse_budget: Some(4096),
+            ..PortableEscapes::default()
+        },
+    )
+    .is_ok()
+}
+
+fn portable_literal(literal: &ast::Literal, in_class: bool) -> bool {
+    match literal.kind {
+        LiteralKind::Superfluous => literal.c == '/' || in_class && literal.c == '-',
+        LiteralKind::Verbatim
+        | LiteralKind::Meta
+        | LiteralKind::HexFixed(ast::HexLiteralKind::X | ast::HexLiteralKind::UnicodeShort)
+        | LiteralKind::Special(
+            ast::SpecialLiteralKind::FormFeed
+            | ast::SpecialLiteralKind::Tab
+            | ast::SpecialLiteralKind::LineFeed
+            | ast::SpecialLiteralKind::CarriageReturn
+            | ast::SpecialLiteralKind::VerticalTab
+            | ast::SpecialLiteralKind::Space,
+        ) => true,
+        LiteralKind::Octal
+        | LiteralKind::HexFixed(ast::HexLiteralKind::UnicodeLong)
+        | LiteralKind::HexBrace(_)
+        | LiteralKind::Special(ast::SpecialLiteralKind::Bell) => false,
+    }
 }
 
 #[cfg(test)]

@@ -301,6 +301,18 @@ pub(crate) fn executed_scalar_body(
     span: Span,
     source_path: Option<&str>,
 ) -> HelperBranchBody {
+    let conditional = crate::value::tests::conditional_helper_text(execution);
+    if matches!(conditional, HelperBranchBody::Nested { .. })
+        || execution.placed_documents().all(|document| {
+            document
+                .ownership
+                .nodes
+                .iter()
+                .all(|node| !matches!(node.kind, YamlNodeKind::Mapping))
+        })
+    {
+        return conditional;
+    }
     let mut names = Vec::new();
     for document in execution.placed_documents() {
         for node in &document.ownership.nodes {

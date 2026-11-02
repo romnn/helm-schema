@@ -1,3 +1,6 @@
+#[path = "semver_patterns.rs"]
+mod semver_patterns;
+
 use color_eyre::eyre::{self, OptionExt as _};
 use indoc::indoc;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
@@ -511,6 +514,7 @@ fn direct_provider_scalar_keeps_positive_subset_of_int_cast_guard() {
             kind: crate::ValueKind::Scalar,
             stringified: false,
             plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
+            text_preimage: None,
             resource: crate::ResourceRef::concrete("v1".to_string(), "Service".to_string()),
             is_self_range_collection: false,
             source_null_tolerant: false,
@@ -1069,9 +1073,12 @@ fn partial_helper_output_queries_do_not_reexecute() {
     let second = observe();
     sim_assert_eq!(have: first, want: second);
     sim_assert_eq!(have: result.execution.all_sites().count(), want: count);
+    sim_assert_eq!(have: result.exact_truth(), want: Some(Predicate::truthy_path("enabled")));
     assert!(
-        result.exact_truth().is_none(),
-        "recursive partial output became complete"
+        result
+            .subject_sites()
+            .any(|site| site.value().exact_text().is_none()),
+        "recursive output content lost its unknown alternative"
     );
 }
 
@@ -1401,7 +1408,7 @@ fn semver_selected_print_helper_keeps_policy_default_dispatch() {
         &mut seen,
     );
     let below = |constraint| {
-        helm_schema_ast::semver_constraint_match_pattern(constraint).map(|pattern| {
+        semver_patterns::semver_constraint_match_pattern(constraint).map(|pattern| {
             Predicate::all(vec![
                 Predicate::truthy_path("kubeVersion"),
                 Predicate::from(Guard::MatchesPattern {
@@ -1944,7 +1951,7 @@ fn guarded_formatter_assignment_does_not_emit_dead_fallback_failures() {
     );
     let symbolic = crate::SymbolicIrContext::new(&defines);
     let signals = symbolic
-        .generate_contract_ir(r#"image: {{ include "image" . }}"#)
+        .generate_contract_ir_for_source(r#"image: {{ include "image" . }}"#, "templates/NOTES.txt")
         .finalize()
         .into_schema_signals();
     sim_assert_eq!(

@@ -140,6 +140,7 @@ fn merge_pathless_resource_variants(uses: &mut Vec<ContractUse>) {
         kind: ValueKind,
         predicates: BTreeSet<Predicate>,
         placement: helm_schema_core::PlainScalarPlacement,
+        text_preimage: Option<helm_schema_core::TextPreimage>,
     }
     let mut pathless_index_by_identity: BTreeMap<PathlessIdentity, usize> = BTreeMap::new();
 
@@ -152,6 +153,7 @@ fn merge_pathless_resource_variants(uses: &mut Vec<ContractUse>) {
                     .cloned()
                     .unwrap_or_default(),
                 placement: contract_use.plain_scalar_placement,
+                text_preimage: contract_use.text_preimage.clone(),
             };
             if let Some(existing) = pathless_index_by_identity
                 .get(&key)
@@ -538,6 +540,7 @@ struct RenderSite<'a> {
     kind: ValueKind,
     resource: Option<&'a ResourceRef>,
     placement: helm_schema_core::PlainScalarPlacement,
+    text_preimage: Option<&'a helm_schema_core::TextPreimage>,
     read_condition: Option<&'a helm_schema_core::GuardDnf>,
 }
 
@@ -548,6 +551,7 @@ fn render_site(contract_use: &ContractUse) -> RenderSite<'_> {
         kind: contract_use.kind,
         resource: contract_use.resource.as_ref(),
         placement: contract_use.plain_scalar_placement,
+        text_preimage: contract_use.text_preimage.as_ref(),
         read_condition: (contract_use.kind == ValueKind::WidenedDependency)
             .then_some(&contract_use.condition),
     }
@@ -588,6 +592,7 @@ fn contract_use_base_cmp(left: &ContractUse, right: &ContractUse) -> std::cmp::O
         .then_with(|| left.path.0.cmp(&right.path.0))
         .then_with(|| (left.kind as u8).cmp(&(right.kind as u8)))
         .then_with(|| left.resource.cmp(&right.resource))
+        .then_with(|| left.text_preimage.cmp(&right.text_preimage))
         .then_with(|| {
             left.plain_scalar_placement
                 .cmp(&right.plain_scalar_placement)

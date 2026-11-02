@@ -13,6 +13,7 @@ mod history;
 mod hosts;
 mod input_paths;
 mod invoke;
+mod json_query;
 pub(crate) mod kinds;
 mod namespace;
 mod operations;
@@ -27,6 +28,8 @@ mod shape_summary;
 mod site_index;
 mod state;
 mod text;
+mod text_actions;
+mod text_prefix;
 pub(crate) mod use_policy;
 mod window_exits;
 mod write_footprint;
@@ -330,6 +333,8 @@ struct FrozenTest {
 enum Coverage {
     Exact,
     Partial,
+    /// Incomplete coverage with independently proved true and false subsets.
+    CertifiedPartial,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

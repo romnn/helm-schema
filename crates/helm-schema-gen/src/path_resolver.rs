@@ -450,6 +450,7 @@ fn metadata_schema(evidence: &ContractPathSchemaEvidence) -> Value {
                         use_.omitted_members.clone(),
                     )
                     .with_plain_scalar_placement(use_.plain_scalar_placement)
+                    .with_text_preimage(use_.text_preimage.clone())
                     .with_strip_marker(use_.strip_marker);
                     occurrences.push(
                         ResolvePolicy::provider_schema_for_value_use(&schema, &policy)

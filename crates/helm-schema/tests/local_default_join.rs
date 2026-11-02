@@ -14,7 +14,7 @@ const RANGE: &str = r#"{{ range $x := list .Values.item }}{{ if $.Values.flag }}
 const WITHOUT_RANGE: &str = r#"{{ $x := .Values.item }}{{ if $.Values.flag }}{{ $x = default "d" $.Values.other }}{{ end }}READ"#;
 const NESTED_RANGE: &str = r#"{{ range $x := list .Values.item }}{{ if $.Values.flag }}{{ if $.Values.nested }}{{ $x = default "d" $.Values.other }}{{ end }}{{ end }}READ{{ end }}"#;
 
-fn schema_for(template: &str) -> eyre::Result<Value> {
+fn schema_for(template_path: &str, template: &str) -> eyre::Result<Value> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
     for (path, source) in [
         (
@@ -34,7 +34,7 @@ fn schema_for(template: &str) -> eyre::Result<Value> {
                 nested: false
             "},
         ),
-        ("templates/probe.yaml", template),
+        (template_path, template),
     ] {
         test_util::write(&chart_dir.join(path)?, source)?;
     }
@@ -134,19 +134,23 @@ fn expected_schema(nonnullable_paths: &[&str]) -> eyre::Result<Value> {
 
 fn serialized_schema_for(program: &str) -> eyre::Result<Value> {
     let body = program.replace("READ", "{{ $x | toYaml }}");
-    schema_for(&formatdoc! {"
+    schema_for(
+        "templates/probe.yaml",
+        &formatdoc! {"
         apiVersion: v1
         kind: ConfigMap
         metadata:
           name: probe
         {body}
-    "})
+    "},
+    )
 }
 
 #[test]
 fn bare_reads_preserve_the_complete_schema_across_join_shapes() -> eyre::Result<()> {
     for program in [RANGE, WITHOUT_RANGE, NESTED_RANGE] {
-        let schema = schema_for(&program.replace("READ", "{{ $x }}"))?;
+        // Helm leaves NOTES output unparsed, isolating the read and provenance law.
+        let schema = schema_for("templates/NOTES.txt", &program.replace("READ", "{{ $x }}"))?;
         sim_assert_eq!(have: schema, want: expected_schema(&[])?, "{program}");
     }
     Ok(())

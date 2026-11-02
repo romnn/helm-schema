@@ -37,6 +37,11 @@ pub(super) fn transfer(
         first,
         last,
     };
+    transfer_known(input, state)
+}
+
+fn transfer_known(input: TransferInput<'_>, state: &mut State) -> Result<Value, TransferDemand> {
+    let function = input.function;
     match crate::function_semantics::function_semantics(function).behavior {
         crate::function_semantics::OutputBehavior::Encoded(alphabet) => {
             return Ok(Value::frozen_text(
@@ -104,7 +109,9 @@ pub(super) fn transfer(
         "quote" | "squote" => Ok(transfer_quote(input, state)),
         "int" | "int64" | "float64" => Ok(transfer_numeric_cast(input, state)),
         "upper" | "lower" | "trim" | "toString" => Ok(transfer_string_transform(input, state)),
-        "print" | "println" => Ok(transfer_print(input)),
+        "print" | "println" => Ok(transfer_print(input, state)),
+        "printf" => Ok(transfer_printf(input, state)),
+        "trunc" | "trimSuffix" | "trimPrefix" | "replace" => Ok(transfer_text_edit(input, state)),
         "indent" | "nindent" => Ok(transfer_indent(input, state)),
         _ => {
             match crate::function_semantics::function_semantics(input.function).heap_effect {
@@ -719,176 +726,7 @@ fn transfer_contains(input: TransferInput<'_>, state: &State) -> Value {
     if needle.is_empty() {
         return Value::literal(GuardValue::Bool(true));
     }
-    contains_text(needle, &last, state, &influences, &mut 128)
-}
-
-fn contains_text(
-    needle: &str,
-    last: &Value,
-    state: &State,
-    influences: &BTreeSet<ValuesPath>,
-    remaining: &mut usize,
-) -> Value {
-    use helm_schema_core::{Guard, Predicate};
-    let Some(next) = remaining.checked_sub(1) else {
-        return Value::influenced(influences.clone());
-    };
-    *remaining = next;
-    if let ValueNode::Select { decision, yes, no } = last.node.as_ref() {
-        return Value::select(
-            Rc::clone(decision),
-            contains_text(needle, yes, state, influences, remaining),
-            contains_text(needle, no, state, influences, remaining),
-        );
-    }
-    if let Some(GuardValue::String(text)) = last.constant() {
-        return Value::literal(GuardValue::Bool(text.contains(needle)));
-    }
-    let predicate = if let Some(path) = last.identity() {
-        Some(Predicate::from(Guard::MatchesPattern {
-            path: path.clone(),
-            pattern: regex::escape(needle),
-            templated: false,
-        }))
-    } else if needle == "{{" {
-        if let Some(source) = json_source(last, remaining) {
-            return json_source_contains(source, state, influences, remaining);
-        }
-        None
-    } else {
-        None
-    };
-    let Some(predicate) = predicate else {
-        return Value::influenced(influences.clone());
-    };
-    let decision = state.heap.arena.decision(
-        predicate.clone(),
-        predicate.negated(),
-        super::Coverage::Exact,
-    );
-    Value::select(
-        decision,
-        Value::literal(GuardValue::Bool(true)),
-        Value::literal(GuardValue::Bool(false)),
-    )
-}
-
-fn json_source<'a>(value: &'a Value, remaining: &mut usize) -> Option<&'a super::FrozenValue> {
-    let ValueNode::Leaf(Leaf {
-        datum: Datum::Text(text),
-        origin: _,
-    }) = value.node.as_ref()
-    else {
-        return None;
-    };
-    let mut term = &text.0;
-    loop {
-        *remaining = remaining.checked_sub(1)?;
-        match term.as_ref() {
-            super::text::TextTerm::Json {
-                value,
-                pretty: _,
-                escape_html: _,
-                literal: _,
-            } => return Some(value),
-            super::text::TextTerm::Resolved {
-                term: nested,
-                literal: _,
-            } => term = nested,
-            super::text::TextTerm::Yaml {
-                value: _,
-                pretty: _,
-            }
-            | super::text::TextTerm::Capture {
-                graph: _,
-                strip_marker: _,
-            }
-            | super::text::TextTerm::Tpl {
-                source: _,
-                result: _,
-            }
-            | super::text::TextTerm::Indent {
-                value: _,
-                width: _,
-                newline: _,
-            }
-            | super::text::TextTerm::Quote { value: _ }
-            | super::text::TextTerm::Encoded {
-                value: _,
-                alphabet: _,
-            } => return None,
-        }
-    }
-}
-
-fn json_source_contains(
-    source: &super::FrozenValue,
-    state: &State,
-    influences: &BTreeSet<ValuesPath>,
-    remaining: &mut usize,
-) -> Value {
-    use helm_schema_core::{Guard, Predicate, ValuePattern};
-    let Some(next) = remaining.checked_sub(1) else {
-        return Value::influenced(influences.clone());
-    };
-    *remaining = next;
-    if let Some(literal) = source.literal() {
-        return Value::literal(GuardValue::Bool(
-            matches!(literal, GuardValue::String(text) if text.contains("{{")),
-        ));
-    }
-    if let ValueNode::Select { decision, yes, no } = source.value.node.as_ref() {
-        let yes = super::FrozenValue {
-            heap: Rc::clone(&source.heap),
-            value: yes.clone(),
-        };
-        let no = super::FrozenValue {
-            heap: Rc::clone(&source.heap),
-            value: no.clone(),
-        };
-        return Value::select(
-            Rc::clone(decision),
-            json_source_contains(&yes, state, influences, remaining),
-            json_source_contains(&no, state, influences, remaining),
-        );
-    }
-    let inputs = state.heap.arena.input_objects.borrow();
-    let mut query = super::relationship::RelationshipQuery::new(&inputs, *remaining);
-    let view = query.value(source, &[]);
-    *remaining = remaining.saturating_sub(query.work());
-    if view.unknown != Predicate::False {
-        return Value::influenced(influences.clone());
-    }
-    let [payload] = view.known.as_slice() else {
-        return Value::influenced(influences.clone());
-    };
-    if payload.condition != Predicate::True
-        || !payload.output_path.is_empty()
-        || payload.capture.is_some()
-        || !super::relationship::structural_preimage(&payload.preimage)
-    {
-        return Value::influenced(influences.clone());
-    }
-    let predicate = Predicate::Or(vec![
-        Predicate::from(Guard::Absent {
-            path: payload.source.as_ref().clone(),
-        }),
-        Predicate::from(Guard::MatchesValue {
-            path: payload.source.as_ref().clone(),
-            pattern: ValuePattern::TemplateActionFree,
-        }),
-    ])
-    .negated();
-    let decision = state.heap.arena.decision(
-        predicate.clone(),
-        predicate.negated(),
-        super::Coverage::Exact,
-    );
-    Value::select(
-        decision,
-        Value::literal(GuardValue::Bool(true)),
-        Value::literal(GuardValue::Bool(false)),
-    )
+    super::text_actions::contains(&last, needle, state)
 }
 
 fn transfer_deserialize(input: TransferInput<'_>, state: &mut State) -> Value {
@@ -905,7 +743,7 @@ fn transfer_deserialize(input: TransferInput<'_>, state: &mut State) -> Value {
         let decoded = unknown_decoded(function, influences, state);
         return decoded.derived(
             frozen,
-            super::relationship::Operation::Decode(match function {
+            super::relationship::ValueOperation::Decode(match function {
                 "fromYaml" => super::relationship::Decoder::YamlMap,
                 "fromYamlArray" => super::relationship::Decoder::YamlSequence,
                 "fromJson" => super::relationship::Decoder::JsonMap,
@@ -959,6 +797,9 @@ fn transfer_quote(input: TransferInput<'_>, state: &State) -> Value {
         last: _,
     } = input;
 
+    if function == "quote" && arguments.len() > 1 {
+        return quote_many(arguments, influences, state);
+    }
     let mut output = Vec::new();
     for value in arguments {
         if value.constant() == Some(&GuardValue::Null) {
@@ -982,7 +823,12 @@ fn transfer_quote(input: TransferInput<'_>, state: &State) -> Value {
                     character.is_control() || matches!(character, '\u{2028}' | '\u{2029}')
                 }))
         {
-            return Value::influenced(influences.clone());
+            return Value::frozen_text(
+                super::text::TextTerm::Quote {
+                    value: state.heap.freeze(value),
+                },
+                influences.clone(),
+            );
         }
         let quoted = if function == "quote" {
             serde_json::to_string(&text).ok()
@@ -995,6 +841,61 @@ fn transfer_quote(input: TransferInput<'_>, state: &State) -> Value {
         output.push(quoted);
     }
     Value::string(&output.join(" "))
+}
+
+fn quote_many(arguments: &[Value], influences: BTreeSet<ValuesPath>, state: &State) -> Value {
+    if arguments.len() > super::MAX_SCALAR_DISPATCH_STATES {
+        return Value::influenced(influences);
+    }
+    let mut output = super::TextBuffer::default();
+    let mut emitted = Value::literal(GuardValue::Bool(false));
+    for argument in arguments {
+        let frozen = state.heap.freeze(argument);
+        let nil = super::text::quote_nil_condition(&frozen);
+        if nil == Some(super::Predicate::True) {
+            continue;
+        }
+        let quoted = transfer_quote(
+            TransferInput {
+                function: "quote",
+                arguments: std::slice::from_ref(argument),
+                influences: frozen.inputs(),
+                first: argument.clone(),
+                last: argument.clone(),
+            },
+            state,
+        );
+        let mut next = super::TextBuffer::default();
+        let separator = Value::select(state.test(&emitted), Value::string(" "), Value::string(""));
+        next.emit(state.heap.freeze(&separator));
+        next.emit(state.heap.freeze(&quoted));
+        let next = super::text::capture(&next, false);
+        let next = if nil == Some(super::Predicate::False) {
+            emitted = Value::literal(GuardValue::Bool(true));
+            next
+        } else {
+            let decision = match nil {
+                Some(predicate) => state.heap.arena.decision(
+                    predicate.clone(),
+                    predicate.negated(),
+                    super::Coverage::Exact,
+                ),
+                None => state.heap.arena.decision(
+                    super::Predicate::False,
+                    super::Predicate::False,
+                    super::Coverage::Partial,
+                ),
+            };
+            emitted = Value::select(
+                Rc::clone(&decision),
+                emitted,
+                Value::literal(GuardValue::Bool(true)),
+            );
+            Value::select(decision, Value::string(""), next)
+        };
+        output.emit(state.heap.freeze(&next));
+    }
+    super::text::capture(&output, false).with_influences(influences)
 }
 
 fn transfer_numeric_cast(input: TransferInput<'_>, state: &State) -> Value {
@@ -1051,7 +952,7 @@ fn transfer_numeric_cast(input: TransferInput<'_>, state: &State) -> Value {
     }
     .derived(
         state.heap.freeze(&first),
-        super::relationship::Operation::Numeric(kind),
+        super::relationship::ValueOperation::Numeric(kind),
     )
 }
 
@@ -1092,7 +993,7 @@ fn transfer_string_transform(input: TransferInput<'_>, state: &State) -> Value {
         );
         return value.derived(
             state.heap.freeze(&last),
-            super::relationship::Operation::Stringify,
+            super::relationship::ValueOperation::Format(super::relationship::TextFormat::Value),
         );
     }
     if function == "trim" {
@@ -1102,25 +1003,27 @@ fn transfer_string_transform(input: TransferInput<'_>, state: &State) -> Value {
         );
         return value.derived(
             state.heap.freeze(&last),
-            super::relationship::Operation::Trim,
+            super::relationship::ValueOperation::Trim,
         );
     }
-    let Some(text) = scalar_text(&last) else {
-        return Value::influenced(last.inputs());
+    let transform = if function == "upper" {
+        super::relationship::TextTransform::Upper
+    } else {
+        super::relationship::TextTransform::Lower
     };
-    if matches!(function, "upper" | "lower" | "trim") && !text.is_ascii() {
-        return Value::influenced(influences.clone());
-    }
-    let text = match function {
-        "upper" => text.to_uppercase(),
-        "lower" => text.to_lowercase(),
-        "trim" => text.trim().to_owned(),
-        _ => text,
-    };
-    Value::string(&text)
+    scalar_text(&last)
+        .and_then(|text| transform.apply(&text, 64 * 1024))
+        .map_or_else(
+            || Value::scalar(super::ScalarType::String, None).with_influences(influences),
+            |text| Value::string(&text),
+        )
+        .derived(
+            state.heap.freeze(&last),
+            super::relationship::ValueOperation::Text(transform),
+        )
 }
 
-fn transfer_print(input: TransferInput<'_>) -> Value {
+fn transfer_print(input: TransferInput<'_>, state: &State) -> Value {
     let TransferInput {
         function,
         arguments,
@@ -1129,27 +1032,203 @@ fn transfer_print(input: TransferInput<'_>) -> Value {
         last: _,
     } = input;
 
-    if function == "print"
-        && arguments
-            .iter()
-            .any(|value| !matches!(value.constant(), Some(GuardValue::String(_))))
-    {
-        return Value::influenced(influences.clone());
-    }
-    let mut output = String::new();
+    let mut graph = super::TextBuffer::default();
+    let mut previous_type = super::kinds::GoType::String;
     for (index, value) in arguments.iter().enumerate() {
-        let Some(text) = scalar_text(value) else {
-            return Value::influenced(influences.clone());
-        };
-        if function == "println" && index > 0 {
-            output.push(' ');
+        let current_type = state.heap.freeze(value).go_type();
+        let is_string = current_type == super::kinds::GoType::String;
+        let previous_string = previous_type == super::kinds::GoType::String;
+        if function == "print"
+            && index > 0
+            && !previous_string
+            && !is_string
+            && [previous_type, current_type].contains(&super::kinds::GoType::Unknown)
+        {
+            // Sprint separates adjacent nonstrings; an unknown operand may be a string.
+            return Value::scalar(super::ScalarType::String, None).with_influences(influences);
         }
-        output.push_str(&text);
+        if index > 0 && (function == "println" || !previous_string && !is_string) {
+            graph.bytes(" ");
+        }
+        if let Some(text) = scalar_text(value) {
+            graph.bytes(&text);
+        } else {
+            graph.emit(state.heap.freeze(value));
+        }
+        previous_type = current_type;
     }
     if function == "println" {
-        output.push('\n');
+        graph.bytes("\n");
     }
-    Value::string(&output)
+    super::text::capture(&graph, false).with_influences(influences)
+}
+
+fn transfer_printf(input: TransferInput<'_>, state: &State) -> Value {
+    let Some(GuardValue::String(format)) = input.first.constant() else {
+        return Value::influenced(input.influences);
+    };
+    let Some(parts) = helm_schema_ast::parse_supported_printf_format(format) else {
+        return Value::influenced(input.influences);
+    };
+    let mut graph = super::TextBuffer::default();
+    let mut arguments = input.arguments.iter().skip(1);
+    for part in parts {
+        match part {
+            helm_schema_ast::PrintfPart::Literal(text) => graph.bytes(text),
+            helm_schema_ast::PrintfPart::Substitution(verb) => {
+                let Some(value) = arguments.next() else {
+                    return Value::influenced(input.influences);
+                };
+                let frozen = state.heap.freeze(value);
+                match (verb, frozen.go_type()) {
+                    (helm_schema_ast::PrintfVerb::String, super::kinds::GoType::String)
+                    | (
+                        helm_schema_ast::PrintfVerb::Decimal,
+                        super::kinds::GoType::Int
+                        | super::kinds::GoType::Int64
+                        | super::kinds::GoType::Uint64,
+                    ) => {
+                        if let Some(text) = scalar_text(value) {
+                            graph.bytes(&text);
+                        } else {
+                            graph.emit(frozen);
+                        }
+                    }
+                    (helm_schema_ast::PrintfVerb::String, _) => {
+                        graph.emit(state.heap.freeze(&printf_string(value, state)));
+                    }
+                    _ => return Value::influenced(input.influences),
+                }
+            }
+        }
+    }
+    if arguments.next().is_some() {
+        return Value::influenced(input.influences);
+    }
+    super::text::capture(&graph, false)
+}
+
+fn printf_string(value: &Value, state: &State) -> Value {
+    printf_string_with_budget(value, state, &mut 128)
+}
+
+fn printf_string_with_budget(value: &Value, state: &State, remaining: &mut usize) -> Value {
+    use helm_schema_core::{Guard, Predicate};
+    if *remaining == 0 {
+        return Value::influenced(value.inputs());
+    }
+    *remaining -= 1;
+    if let ValueNode::Select { decision, yes, no } = value.node.as_ref() {
+        let yes = printf_string_with_budget(yes, state, remaining);
+        let no = printf_string_with_budget(no, state, remaining);
+        return Value::select(Rc::clone(decision), yes, no);
+    }
+    if state.heap.freeze(value).go_type() == super::kinds::GoType::String {
+        return value.clone();
+    }
+    let Some(path) = value.identity() else {
+        return Value::influenced(value.inputs());
+    };
+    let string = Predicate::from(Guard::TypeIs {
+        path: path.clone(),
+        schema_type: "string".to_owned(),
+    });
+    let scalar = Predicate::Or(vec![
+        Predicate::from(Guard::Absent { path: path.clone() }),
+        Predicate::from(Guard::TypeIs {
+            path: path.clone(),
+            schema_type: "null".to_owned(),
+        }),
+        Predicate::from(Guard::TypeIs {
+            path: path.clone(),
+            schema_type: "boolean".to_owned(),
+        }),
+        Predicate::from(Guard::TypeIs {
+            path: path.clone(),
+            schema_type: "number".to_owned(),
+        }),
+    ]);
+    // Scalar mismatches have a mandatory diagnostic prefix.
+    // Containers always print delimiters, and their leaves recursively consume the verb.
+    let mut diagnostic = super::TextBuffer::default();
+    diagnostic.bytes("%!s(");
+    diagnostic.emit(state.heap.freeze(&Value::influenced(value.inputs())));
+    diagnostic.bytes(")");
+    let empty_sequence = helm_schema_core::Predicate::from(helm_schema_core::Guard::MatchesValue {
+        path: path.clone(),
+        pattern: helm_schema_core::ValuePattern::Array {
+            prefix: Vec::new(),
+            items: None,
+        },
+    });
+    let container = Value::select(
+        state.heap.arena.decision(
+            empty_sequence.clone(),
+            empty_sequence.negated(),
+            super::Coverage::Exact,
+        ),
+        Value::string("[]"),
+        Value::scalar(
+            super::ScalarType::String,
+            Some(super::scalar_value::ScalarContent::StringDomain {
+                pattern: r"[\s\S]*",
+                min_bytes: 1,
+                max_bytes: usize::MAX,
+            }),
+        )
+        .with_influences(value.inputs()),
+    )
+    .derived(
+        state.heap.freeze(value),
+        super::relationship::ValueOperation::Format(super::relationship::TextFormat::String),
+    );
+    let mismatch = Value::select(
+        state
+            .heap
+            .arena
+            .decision(scalar.clone(), scalar.negated(), super::Coverage::Exact),
+        super::text::capture(&diagnostic, false),
+        container,
+    );
+    Value::select(
+        state
+            .heap
+            .arena
+            .decision(string.clone(), string.negated(), super::Coverage::Exact),
+        super::kinds::refined_parameter(value, super::kinds::GoType::String),
+        mismatch,
+    )
+}
+
+fn transfer_text_edit(input: TransferInput<'_>, state: &State) -> Value {
+    use super::relationship::{TextTransform, ValueOperation};
+    let transform = match (input.function, input.first.constant()) {
+        ("trunc", Some(GuardValue::Int(length))) => TextTransform::Truncate(*length),
+        ("trimSuffix", Some(GuardValue::String(suffix))) => {
+            TextTransform::TrimSuffix(suffix.clone())
+        }
+        ("trimPrefix", Some(GuardValue::String(prefix))) => {
+            TextTransform::TrimPrefix(prefix.clone())
+        }
+        ("replace", Some(GuardValue::String(from))) => {
+            let Some(GuardValue::String(to)) = input.arguments.get(1).and_then(Value::constant)
+            else {
+                return Value::influenced(input.influences);
+            };
+            TextTransform::Replace {
+                from: from.clone(),
+                to: to.clone(),
+            }
+        }
+        _ => return Value::influenced(input.influences),
+    };
+    let frozen = state.heap.freeze(&input.last);
+    let text = scalar_text(&input.last).and_then(|text| transform.apply(&text, 64 * 1024));
+    let value = text.map_or_else(
+        || Value::scalar(super::ScalarType::String, None).with_influences(input.influences),
+        |text| Value::string(&text),
+    );
+    value.derived(frozen, ValueOperation::Text(transform))
 }
 
 fn transfer_indent(input: TransferInput<'_>, state: &State) -> Value {
@@ -1490,7 +1569,8 @@ fn copy(
             copy(no, state, &mut seen.clone(), depth + 1),
         ),
     };
-    Value::with_influences(copied, influences).derived(frozen, super::relationship::Operation::Copy)
+    Value::with_influences(copied, influences)
+        .derived(frozen, super::relationship::ValueOperation::Copy)
 }
 
 fn copy_sequence(
@@ -1875,9 +1955,9 @@ fn select_map(function: &str, arguments: &[Value], state: &mut State) -> Value {
         return Value::influenced(influences);
     };
     let operation = if function == "omit" {
-        super::relationship::Operation::Omit(keys.clone())
+        super::relationship::ValueOperation::Omit(keys.clone())
     } else {
-        super::relationship::Operation::Pick(keys.clone())
+        super::relationship::ValueOperation::Pick(keys.clone())
     };
     let frozen = state.heap.freeze(&first);
     let Some(mut map) = map_fields(&first, state) else {
@@ -2125,8 +2205,10 @@ fn merge(arguments: &[Value], state: &mut State, overwrite: bool) -> Result<Valu
         let mut affected = arguments.to_vec();
         affected.push(destination.clone());
         widen_operands(&affected, state);
-        return Ok(interface_map_view(&destination, state)
-            .derived(frozen, super::relationship::Operation::Merge { overwrite }));
+        return Ok(interface_map_view(&destination, state).derived(
+            frozen,
+            super::relationship::ValueOperation::Merge { overwrite },
+        ));
     }
     for source in arguments.iter().skip(1) {
         if !merge_maps(&target, source, state, overwrite, 0) {

@@ -611,7 +611,7 @@ fn case_mapping_keeps_the_plain_slot_language_beside_its_string_contract() {
     "};
     let schema = schema_for_values_yaml(parse_ir(src), Some("scheme: http\n"));
 
-    for value in ["http", "HTTPS"] {
+    for value in ["http", "HTTPS", "a #b", "HTTP #comment"] {
         let instance = serde_json::json!({ "scheme": value });
         assert!(
             schema_accepts_instance(&schema, &instance),
@@ -619,7 +619,7 @@ fn case_mapping_keeps_the_plain_slot_language_beside_its_string_contract() {
         );
     }
     let multiline = ['a', '\n', 'b'].into_iter().collect::<String>();
-    for value in ["a: b", "a #b", multiline.as_str(), "&anchor"] {
+    for value in ["a: b", "true #b", multiline.as_str(), "&anchor"] {
         let instance = serde_json::json!({ "scheme": value });
         assert!(
             !schema_accepts_instance(&schema, &instance),
@@ -2387,5 +2387,36 @@ fn helper_slots_bind_their_language_where_the_caller_consumes_yaml() {
                 "{label}: instance={instance}; schema={schema}"
             );
         }
+    }
+}
+
+#[test]
+fn guarded_formatter_assignment_keeps_live_yaml_failures() {
+    let helpers = indoc! {r#"
+        {{- define "image" -}}
+        {{- $image := "repository:tag" -}}
+        {{- if or .Values.local .Values.global -}}
+        {{- $image = printf "%s/%s" (.Values.local | default .Values.global) $image -}}
+        {{- end -}}
+        {{- $image -}}
+        {{- end -}}
+    "#};
+    let schema = schema_for(parse_ir_with_helpers(
+        r#"image: {{ include "image" . }}"#,
+        helpers,
+    ));
+    for (instance, want) in [
+        (serde_json::json!({}), true),
+        (serde_json::json!({"local": "", "global": ""}), true),
+        (serde_json::json!({"local": "registry", "global": 7}), true),
+        (serde_json::json!({"local": 7, "global": "registry"}), false),
+        (serde_json::json!({"local": "", "global": "registry"}), true),
+        (serde_json::json!({"local": "", "global": 7}), false),
+        (
+            serde_json::json!({"local": false, "global": "registry"}),
+            true,
+        ),
+    ] {
+        sim_assert_eq!(have: schema_accepts_instance(&schema, &instance), want: want, "{instance}");
     }
 }

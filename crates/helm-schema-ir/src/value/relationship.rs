@@ -46,25 +46,93 @@ impl Decoder {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub(super) enum TextTransform {
+    Truncate(i64),
+    TrimPrefix(String),
+    TrimSuffix(String),
+    Upper,
+    Lower,
+    Replace { from: String, to: String },
+}
+
+impl TextTransform {
+    pub(super) fn preimage(&self) -> Option<helm_schema_core::TextPreimage> {
+        match self {
+            Self::Upper | Self::Lower => {}
+            Self::Replace { from, to: _ } if from.chars().count() == 1 => {}
+            Self::Truncate(_)
+            | Self::TrimPrefix(_)
+            | Self::TrimSuffix(_)
+            | Self::Replace { from: _, to: _ } => return None,
+        }
+        let mut relation = helm_schema_core::TextPreimage::default();
+        for byte in 0..=127 {
+            let text = char::from(byte).to_string();
+            let output = self.apply(&text, 4096)?;
+            if text != output {
+                relation.characters.insert(byte, output);
+            }
+        }
+        Some(relation)
+    }
+
+    pub(super) fn apply(&self, text: &str, limit: usize) -> Option<String> {
+        let output = match self {
+            Self::Upper if text.is_ascii() && text.len() <= limit => text.to_uppercase(),
+            Self::Lower if text.is_ascii() && text.len() <= limit => text.to_lowercase(),
+            Self::Upper | Self::Lower => return None,
+            Self::Truncate(length) => {
+                let width = usize::try_from(length.unsigned_abs()).ok()?;
+                if *length < 0 {
+                    text.get(text.len().saturating_sub(width)..)?
+                } else {
+                    text.get(..width.min(text.len()))?
+                }
+                .to_owned()
+            }
+            Self::TrimPrefix(prefix) => text.strip_prefix(prefix).unwrap_or(text).to_owned(),
+            Self::TrimSuffix(suffix) => text.strip_suffix(suffix).unwrap_or(text).to_owned(),
+            Self::Replace { from, to } => super::text::bounded_replace(text, from, to, limit)?,
+        };
+        (output.len() <= limit).then_some(output)
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) enum TextFormat {
+    Value,
+    String,
+}
+
 /// One executed operation, retained on its result's canonical origin.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(super) enum Operation {
+pub(super) enum ValueOperation {
+    Capability {
+        guard: helm_schema_core::CapabilityGuard,
+        decision: Rc<super::FrozenTest>,
+    },
     Decode(Decoder),
-    Stringify,
+    Format(TextFormat),
+    Text(TextTransform),
     Trim,
     Numeric(super::ScalarType),
-    Descriptor { kind_only: bool },
+    Descriptor {
+        kind_only: bool,
+    },
     Member(String),
     Copy,
     Omit(BTreeSet<String>),
     Pick(BTreeSet<String>),
-    Merge { overwrite: bool },
+    Merge {
+        overwrite: bool,
+    },
 }
 
 #[derive(Clone, Debug)]
 pub(super) struct Derivation {
     pub(super) source: FrozenValue,
-    pub(super) operation: Operation,
+    pub(super) operation: ValueOperation,
 }
 
 impl PartialEq for Derivation {
@@ -89,7 +157,7 @@ impl Value {
         }
     }
 
-    pub(super) fn derived(mut self, source: FrozenValue, operation: Operation) -> Self {
+    pub(super) fn derived(mut self, source: FrozenValue, operation: ValueOperation) -> Self {
         let inputs = source.inputs();
         if inputs.is_empty() && self.constant().is_some() {
             return self;
@@ -319,7 +387,15 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
             Datum::Text(_)
             | Datum::Scalar {
                 go_type: _,
-                content: Some(ScalarContent::Literal(_)),
+                content:
+                    Some(
+                        ScalarContent::Literal(_)
+                        | ScalarContent::StringDomain {
+                            pattern: _,
+                            min_bytes: _,
+                            max_bytes: _,
+                        },
+                    ),
             }
             | Datum::Sequence(_)
             | Datum::Strings(_)
@@ -588,10 +664,10 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
         members: &[String],
         depth: usize,
     ) -> Relationships<'a> {
-        if let Operation::Pick(_) = &derivation.operation {
+        if let ValueOperation::Pick(_) = &derivation.operation {
             return self.pick(datum, heap, members, depth);
         }
-        if let Operation::Omit(keys) = &derivation.operation
+        if let ValueOperation::Omit(keys) = &derivation.operation
             && members.first().is_some_and(|key| keys.contains(key))
         {
             return Relationships {
@@ -600,10 +676,10 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
             };
         }
         let mut requested = members.to_vec();
-        if let Operation::Member(key) = &derivation.operation {
+        if let ValueOperation::Member(key) = &derivation.operation {
             requested.insert(0, key.clone());
         }
-        let mut view = if let Operation::Merge { overwrite: _ } = derivation.operation {
+        let mut view = if let ValueOperation::Merge { overwrite: _ } = derivation.operation {
             let mut view = Relationships::unknown();
             if let ValueNode::Leaf(Leaf {
                 datum: Datum::Sequence(sequence),
@@ -630,7 +706,7 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
             )
         };
         if members.is_empty()
-            && let Operation::Omit(keys) = &derivation.operation
+            && let ValueOperation::Omit(keys) = &derivation.operation
         {
             let key_work = keys.iter().fold(0_usize, |work, key| {
                 work.saturating_add(1 + key.len().div_ceil(64))
@@ -654,8 +730,8 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
         }
         if matches!(
             derivation.operation,
-            Operation::Omit(_) | Operation::Member(_)
-        ) || derivation.operation == Operation::Copy && matches!(datum, Datum::Unknown(_))
+            ValueOperation::Omit(_) | ValueOperation::Member(_)
+        ) || derivation.operation == ValueOperation::Copy && matches!(datum, Datum::Unknown(_))
         {
             self.refresh_aliases(&mut view, heap);
         }
@@ -1280,66 +1356,116 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
         Some(omitted)
     }
 
-    fn serializable_field(&mut self, field: &super::Field, heap: &super::HeapVersion) -> bool {
-        if self.remaining == 0 {
-            return false;
-        }
-        self.remaining -= 1;
-        match field {
-            super::Field::Absent => true,
-            super::Field::Unknown => false,
-            super::Field::Select {
-                decision: _,
-                yes,
-                no,
-            } => self.serializable_field(yes, heap) && self.serializable_field(no, heap),
-            super::Field::Present(value) => self.serializable_value(value, heap),
-        }
+    fn serializable_field(&mut self, field: &super::Field, heap: &HeapVersion) -> bool {
+        super::json_query::field(
+            field,
+            "",
+            heap,
+            0,
+            &mut BTreeSet::new(),
+            &mut Serializable { query: self },
+        )
     }
 
-    fn serializable_value(&mut self, value: &Value, heap: &super::HeapVersion) -> bool {
-        if self.remaining == 0 {
-            return false;
+    pub(super) fn serializable_value(&mut self, value: &Value, heap: &HeapVersion) -> bool {
+        super::json_query::value(
+            value,
+            heap,
+            0,
+            &mut BTreeSet::new(),
+            &mut Serializable { query: self },
+        )
+    }
+}
+
+struct Serializable<'query, 'values, 'inputs> {
+    query: &'query mut RelationshipQuery<'values, 'inputs>,
+}
+
+impl super::json_query::Fact for Serializable<'_, '_, '_> {
+    type Output = bool;
+    fn charge(&mut self, _depth: usize) -> bool {
+        self.query.charge(1)
+    }
+    fn unknown(&self) -> bool {
+        false
+    }
+    fn key(&self, _key: &str) -> bool {
+        true
+    }
+    fn join(&self, values: Vec<bool>) -> bool {
+        values.into_iter().all(|value| value)
+    }
+    fn select(&self, _decision: &super::FrozenTest, yes: bool, no: bool) -> bool {
+        yes && no
+    }
+    fn decisive(&self, value: &bool) -> bool {
+        !value
+    }
+    fn examine(&mut self, value: &Value, heap: &HeapVersion, _depth: usize) -> Option<bool> {
+        let ValueNode::Leaf(Leaf { datum, origin }) = value.node.as_ref() else {
+            return None;
+        };
+        if origin
+            .identity
+            .as_ref()
+            .is_some_and(|path| self.query.unchanged(path, heap))
+        {
+            return Some(true);
         }
-        self.remaining -= 1;
-        match value.node.as_ref() {
-            ValueNode::Select {
-                decision: _,
-                yes,
-                no,
-            } => self.serializable_value(yes, heap) && self.serializable_value(no, heap),
-            ValueNode::Leaf(Leaf { datum: _, origin })
-                if origin
-                    .identity
-                    .as_ref()
-                    .is_some_and(|path| self.unchanged(path, heap)) =>
-            {
-                true
+        match datum {
+            Datum::Text(_)
+            | Datum::Map {
+                target: None,
+                view: _,
+            } => Some(true),
+            Datum::Scalar {
+                go_type,
+                content: _,
             }
-            ValueNode::Leaf(Leaf {
-                datum: Datum::Text(_),
-                origin: _,
-            }) => true,
-            ValueNode::Leaf(Leaf {
-                datum:
-                    Datum::Scalar {
-                        go_type,
-                        content: _,
-                    },
-                origin: _,
-            }) => !matches!(go_type, super::ScalarType::Complex128),
-            ValueNode::Leaf(Leaf {
-                datum: _,
-                origin: _,
-            }) => {
+            | Datum::Unknown(super::UnknownValue {
+                types: super::TypeCoverage::Scalar(go_type),
+                aliases: _,
+            }) => Some(match go_type {
+                super::ScalarType::Complex128 | super::ScalarType::Invalid => false,
+                super::ScalarType::Float64 => value.constant().is_some(),
+                super::ScalarType::Nil
+                | super::ScalarType::Bool
+                | super::ScalarType::String
+                | super::ScalarType::Int
+                | super::ScalarType::Int64
+                | super::ScalarType::Uint8
+                | super::ScalarType::Uint64 => true,
+            }),
+            Datum::Sequence(sequence)
+                if sequence
+                    .storage
+                    .as_ref()
+                    .is_some_and(|storage| storage.is_bytes()) =>
+            {
+                Some(true)
+            }
+            Datum::Slot {
+                backing: _,
+                index: _,
+            }
+            | Datum::Unknown(_) => {
                 let mut query = super::output::JsonQuery {
                     preserve_nil_collections: true,
-                    remaining: Some(&mut self.remaining),
+                    remaining: Some(&mut self.query.remaining),
                     outcome: &|_| None,
                     choice: None,
                 };
-                super::output::json(value, heap, &mut BTreeSet::new(), 0, &mut query).is_some()
+                Some(
+                    super::output::json(value, heap, &mut BTreeSet::new(), 0, &mut query).is_some(),
+                )
             }
+            Datum::Map {
+                target: Some(_),
+                view: _,
+            }
+            | Datum::Sequence(_)
+            | Datum::Strings(_) => None,
         }
     }
 }
@@ -1358,16 +1484,21 @@ pub(super) fn structural_preimage(preimage: &[Preimage<'_>]) -> bool {
         match step {
             Preimage::TemplateSource(_) => return false,
             Preimage::Operation(derivation) => match &derivation.operation {
-                Operation::Decode(format) if decode.is_none() => decode = Some(*format),
-                Operation::Copy | Operation::Omit(_) => {}
-                Operation::Decode(_)
-                | Operation::Trim
-                | Operation::Pick(_)
-                | Operation::Merge { overwrite: _ }
-                | Operation::Stringify
-                | Operation::Numeric(_)
-                | Operation::Descriptor { kind_only: _ }
-                | Operation::Member(_) => return false,
+                ValueOperation::Decode(format) if decode.is_none() => decode = Some(*format),
+                ValueOperation::Copy | ValueOperation::Omit(_) => {}
+                ValueOperation::Decode(_)
+                | ValueOperation::Capability {
+                    guard: _,
+                    decision: _,
+                }
+                | ValueOperation::Trim
+                | ValueOperation::Text(_)
+                | ValueOperation::Pick(_)
+                | ValueOperation::Merge { overwrite: _ }
+                | ValueOperation::Format(TextFormat::Value | TextFormat::String)
+                | ValueOperation::Numeric(_)
+                | ValueOperation::Descriptor { kind_only: _ }
+                | ValueOperation::Member(_) => return false,
             },
             Preimage::Text(text) => match text.term() {
                 super::text::TextTerm::Yaml {
@@ -1608,18 +1739,7 @@ impl<'a> RelationshipQuery<'a, '_> {
             }
         }
         if let Some(derivation) = &origin.derivation {
-            return match &derivation.operation {
-                Operation::Stringify
-                | Operation::Trim
-                | Operation::Numeric(_)
-                | Operation::Descriptor { kind_only: _ } => MemberPresence::constant(false),
-                Operation::Member(_)
-                | Operation::Copy
-                | Operation::Omit(_)
-                | Operation::Pick(_)
-                | Operation::Decode(_)
-                | Operation::Merge { overwrite: _ } => MemberPresence::unknown(),
-            };
+            return operation_member_presence(&derivation.operation);
         }
         if let Some(path) = self.input_path(datum, origin) {
             let mut path = path.into_owned();
@@ -1876,4 +1996,24 @@ fn fallback_input_path(value: &Value) -> Option<&helm_schema_core::ValuesPath> {
     };
     (decision.coverage == Coverage::Exact && when_nil == &nil && when_present == &nil.negated())
         .then_some(path)
+}
+
+fn operation_member_presence(operation: &ValueOperation) -> MemberPresence {
+    match operation {
+        ValueOperation::Format(TextFormat::Value | TextFormat::String)
+        | ValueOperation::Capability {
+            guard: _,
+            decision: _,
+        }
+        | ValueOperation::Trim
+        | ValueOperation::Text(_)
+        | ValueOperation::Numeric(_)
+        | ValueOperation::Descriptor { kind_only: _ } => MemberPresence::constant(false),
+        ValueOperation::Member(_)
+        | ValueOperation::Copy
+        | ValueOperation::Omit(_)
+        | ValueOperation::Pick(_)
+        | ValueOperation::Decode(_)
+        | ValueOperation::Merge { overwrite: _ } => MemberPresence::unknown(),
+    }
 }

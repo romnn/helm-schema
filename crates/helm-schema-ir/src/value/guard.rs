@@ -299,7 +299,7 @@ struct Goal<'a> {
     value: bool,
 }
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
-struct Key {
+struct GuardProofKey {
     context: usize,
     id: u64,
     value: bool,
@@ -307,8 +307,8 @@ struct Key {
 #[derive(Clone)]
 struct Search<'a> {
     pending: Vec<Goal<'a>>,
-    bindings: AHashMap<Key, bool>,
-    expanded: AHashSet<Key>,
+    bindings: AHashMap<GuardProofKey, bool>,
+    expanded: AHashSet<GuardProofKey>,
 }
 
 impl<'a> Search<'a> {
@@ -320,7 +320,7 @@ impl<'a> Search<'a> {
             });
         } else {
             self.bindings.insert(
-                Key {
+                GuardProofKey {
                     context: Rc::as_ptr(&node.queries) as usize,
                     id: node.test.id,
                     value: false,
@@ -540,7 +540,7 @@ impl RuntimeGuard {
                 Self::False | Self::True => 0,
             };
             initial.bindings.insert(
-                Key {
+                GuardProofKey {
                     context,
                     id: binding.decision,
                     value: false,
@@ -564,14 +564,14 @@ impl RuntimeGuard {
                     Self::Branch(node) => node,
                 };
                 let context = Rc::as_ptr(&node.queries) as usize;
-                if !search.expanded.insert(Key {
+                if !search.expanded.insert(GuardProofKey {
                     context,
                     id: node.id,
                     value,
                 }) {
                     continue;
                 }
-                let atom = Key {
+                let atom = GuardProofKey {
                     context,
                     id: node.test.id,
                     value: false,
@@ -622,7 +622,7 @@ impl FrozenTest {
             } else {
                 self.when_false.clone()
             }
-        } else if self.runtime.is_none() {
+        } else if self.runtime.is_none() && self.coverage == Coverage::Partial {
             Predicate::True
         } else if taken {
             self.when_false.clone().negated()
@@ -1229,17 +1229,9 @@ impl DecisionStore {
                             sufficient,
                         }
                     }
-                    Coverage::Partial => Projection {
-                        necessary: self
-                            .project_union_with_work(vec![yes.necessary, no.necessary], remaining)
-                            .unwrap_or(Predicate::True),
-                        sufficient: charged_projection(
-                            Predicate::all(vec![yes.sufficient, no.sufficient]),
-                            remaining,
-                        )
-                        .map(fold_conjunction_constants)
-                        .unwrap_or(Predicate::False),
-                    },
+                    Coverage::Partial | Coverage::CertifiedPartial => {
+                        self.project_partial(node, yes, no, remaining)
+                    }
                 }
             }
         };
@@ -1247,6 +1239,73 @@ impl DecisionStore {
             self.projections.insert(key, result.clone());
         }
         result
+    }
+
+    fn project_partial(
+        &mut self,
+        node: &DecisionNode,
+        yes: Projection,
+        no: Projection,
+        remaining: &mut usize,
+    ) -> Projection {
+        // Certificates are optional precision; retain their local syntax ceiling as well.
+        const MAX_CERTIFICATE_SYNTAX: usize = 64;
+        let fallback = Projection {
+            necessary: self
+                .project_union_with_work(
+                    vec![yes.necessary.clone(), no.necessary.clone()],
+                    remaining,
+                )
+                .unwrap_or(Predicate::True),
+            sufficient: charged_projection(
+                Predicate::all(vec![yes.sufficient.clone(), no.sufficient.clone()]),
+                remaining,
+            )
+            .map(fold_conjunction_constants)
+            .unwrap_or(Predicate::False),
+        };
+        if node.test.coverage != Coverage::CertifiedPartial {
+            return fallback;
+        }
+        // Charge certificate traversal before inspecting or composing its predicates.
+        if charged_projection(
+            Predicate::all(vec![
+                node.test.when_true.clone(),
+                node.test.when_false.clone(),
+            ]),
+            remaining,
+        )
+        .is_none()
+            || node.test.when_true.contains_approximation()
+            || node.test.when_false.contains_approximation()
+        {
+            return fallback;
+        }
+        let necessary = self.project_union_with_work(
+            vec![
+                Predicate::all(vec![node.test.when_false.negated(), yes.necessary]),
+                Predicate::all(vec![node.test.when_true.negated(), no.necessary]),
+            ],
+            remaining,
+        );
+        let sufficient = self.project_union_with_work(
+            vec![
+                Predicate::all(vec![node.test.when_true.clone(), yes.sufficient.clone()]),
+                Predicate::all(vec![node.test.when_false.clone(), no.sufficient.clone()]),
+                Predicate::all(vec![yes.sufficient, no.sufficient]),
+            ],
+            remaining,
+        );
+        match (
+            necessary.filter(|predicate| predicate.syntax_size() <= MAX_CERTIFICATE_SYNTAX),
+            sufficient.filter(|predicate| predicate.syntax_size() <= MAX_CERTIFICATE_SYNTAX),
+        ) {
+            (Some(necessary), Some(sufficient)) => Projection {
+                necessary,
+                sufficient,
+            },
+            (Some(_) | None, None) | (None, Some(_)) => fallback,
+        }
     }
 
     // Frozen formulas retain neither runtime guards nor heaps.
@@ -1461,6 +1520,10 @@ impl Arena {
         yes: Rc<FrozenTest>,
         no: Rc<FrozenTest>,
     ) -> Rc<FrozenTest> {
+        // Selecting true/false is the original test, including its independently known subsets.
+        if yes.constant_outcome() == Some(true) && no.constant_outcome() == Some(false) {
+            return decision;
+        }
         let mut store = self.guards.borrow_mut();
         let condition = store.edge(
             &DecisionEdge {

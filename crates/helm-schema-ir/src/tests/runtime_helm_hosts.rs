@@ -1,6 +1,7 @@
 use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_ast::DefineIndex;
 use helm_schema_core::{Predicate, ValuesPath};
+use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
 use super::execute_document;
@@ -15,7 +16,7 @@ fn files_get_plain_text_and_missing_file_preserve_values_identity() -> eyre::Res
         r#"{{ tpl (.Files.Get "f") . }}{{ .Values.after }}"#,
         r#"{{ tpl (.Files.Get "missing") . }}{{ .Values.after }}"#,
     ] {
-        let execution = execute_document(source, Some("templates/test.yaml"), &db);
+        let execution = execute_document(source, Some("templates/NOTES.txt"), &db);
         sim_assert_eq!(have: execution.abort_predicate(), want: Predicate::False);
         let output = execution
             .sites()
@@ -63,7 +64,7 @@ fn capabilities_has_is_read_only_even_with_an_unknown_result() -> eyre::Result<(
         "{{ $_ := .Capabilities.KubeVersion.GitVersion }}{{ .Values.after }}",
         "{{ $_ := .Capabilities.KubeVersion.String }}{{ .Values.after }}",
     ] {
-        let execution = execute_document(source, Some("templates/test.yaml"), &db);
+        let execution = execute_document(source, Some("templates/NOTES.txt"), &db);
         sim_assert_eq!(have: execution.abort_predicate(), want: Predicate::False);
         let output = execution
             .sites()
@@ -106,8 +107,12 @@ fn files_get_uses_the_executing_chart_instance_catalog() {
 
 #[test]
 fn readonly_file_methods_keep_known_payloads_and_receiver_types() {
+    let contents = indoc! {"
+        hello
+        world
+    "};
     let mut defines = DefineIndex::new();
-    defines.add_files_get_source("config/a.txt", "hello\nworld\n");
+    defines.add_files_get_source("config/a.txt", contents);
     defines.add_chart_file("", "binary", &[0, 255]);
     defines.add_files_get_source("plain/a", "hello");
     defines.add_chart_file("", "secret/a", &[0, 0, 0]);
@@ -115,7 +120,7 @@ fn readonly_file_methods_keep_known_payloads_and_receiver_types() {
     for (source, expected) in [
         (
             r#"{{ (.Files.Glob "config/*").Get "config/a.txt" }}"#,
-            "hello\nworld\n",
+            contents,
         ),
         (
             r#"{{ range .Files.Lines "config/a.txt" }}[{{ . }}]{{ end }}"#,
@@ -124,7 +129,7 @@ fn readonly_file_methods_keep_known_payloads_and_receiver_types() {
         (r#"{{ typeOf (.Files.Lines "config/a.txt") }}"#, "[]string"),
         (
             r#"{{ toString (.Files.GetBytes "config/a.txt") }}"#,
-            "hello\nworld\n",
+            contents,
         ),
         (r#"{{ toJson (.Files.GetBytes "binary") }}"#, r#""AP8=""#),
         (

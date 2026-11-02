@@ -137,7 +137,7 @@ impl SpellingTransfer {
             }) => self.text(text.term()),
             ValueNode::Leaf(Leaf { datum: _, origin }) => {
                 if let Some(derivation) = &origin.derivation {
-                    if derivation.operation == super::super::relationship::Operation::Trim {
+                    if derivation.operation == super::super::relationship::ValueOperation::Trim {
                         let mut view = self.frozen(&derivation.source);
                         for arm in &mut view.known {
                             arm.bytes = arm.bytes.trim().to_owned();

@@ -1,140 +1,30 @@
-use std::collections::BTreeSet;
+//! Supported Go format syntax for the canonical interpreter.
 
-use crate::{Literal, TemplateExpr};
-use helm_schema_core::GuardValue;
-
-/// Returns the first argument when it is a literal `printf` format string.
-#[must_use]
-pub fn literal_printf_format(args: &[TemplateExpr]) -> Option<&str> {
-    match args.first()?.deparen() {
-        TemplateExpr::Literal(Literal::String(format) | Literal::RawString(format)) => {
-            Some(format.as_str())
-        }
-        _ => None,
-    }
-}
-
-/// Evaluates a supported literal `printf` format over finite argument string sets.
-#[must_use]
-pub fn render_printf_string_sets(
-    format: &str,
-    arg_strings: &[BTreeSet<String>],
-) -> Option<BTreeSet<String>> {
-    let parts = parse_supported_printf_format(format)?;
-    let substitutions = parts
-        .iter()
-        .filter(|part| matches!(part, PrintfPart::Substitution(_)))
-        .count();
-    if substitutions != arg_strings.len() {
-        return None;
-    }
-
-    let mut rendered: BTreeSet<String> = [String::new()].into_iter().collect();
-    let mut arg_index = 0usize;
-    for part in parts {
-        match part {
-            PrintfPart::Literal(literal) => {
-                rendered = rendered
-                    .into_iter()
-                    .map(|mut current| {
-                        current.push_str(literal);
-                        current
-                    })
-                    .collect();
-            }
-            PrintfPart::Substitution(PrintfVerb::String) => {
-                let strings = arg_strings.get(arg_index)?;
-                if strings.is_empty() {
-                    return None;
-                }
-                let mut next = BTreeSet::new();
-                for current in &rendered {
-                    for value in strings {
-                        let mut rendered_value = current.clone();
-                        rendered_value.push_str(value);
-                        next.insert(rendered_value);
-                    }
-                }
-                rendered = next;
-                arg_index += 1;
-            }
-            PrintfPart::Substitution(PrintfVerb::Decimal) => return None,
-        }
-    }
-    Some(rendered)
-}
-
-/// Evaluates a supported literal `printf` format over exact typed scalars.
-#[must_use]
-pub fn render_printf_scalar_values(format: &str, args: &[GuardValue]) -> Option<String> {
-    let parts = parse_supported_printf_format(format)?;
-    let substitutions = parts
-        .iter()
-        .filter(|part| matches!(part, PrintfPart::Substitution(_)))
-        .count();
-    if substitutions != args.len() {
-        return None;
-    }
-
-    let mut rendered = String::new();
-    let mut arg_index = 0usize;
-    for part in parts {
-        match part {
-            PrintfPart::Literal(literal) => rendered.push_str(literal),
-            PrintfPart::Substitution(verb) => {
-                let value = args.get(arg_index)?;
-                match (verb, value) {
-                    (PrintfVerb::String, GuardValue::String(value)) => rendered.push_str(value),
-                    (PrintfVerb::Decimal, GuardValue::Int(value)) => {
-                        rendered.push_str(&value.to_string());
-                    }
-                    _ => return None,
-                }
-                arg_index += 1;
-            }
-        }
-    }
-    Some(rendered)
-}
-
-/// Returns the data-argument index whose `%s` substitution opens the
-/// rendered token, for a complete supported literal format.
-#[must_use]
-pub fn token_initial_printf_string_argument(args: &[TemplateExpr]) -> Option<usize> {
-    let format = literal_printf_format(args)?;
-    let parts = parse_supported_printf_format(format)?;
-    let substitutions = parts
-        .iter()
-        .filter(|part| matches!(part, PrintfPart::Substitution(_)))
-        .count();
-    if substitutions != args.len().checked_sub(1)?
-        || !matches!(
-            parts.first(),
-            Some(PrintfPart::Substitution(PrintfVerb::String))
-        )
-    {
-        return None;
-    }
-    Some(1)
-}
-
+/// A parsed contribution from the supported Go format language.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum PrintfPart<'a> {
+pub enum PrintfPart<'a> {
+    /// Literal output, including an escaped percent sign.
     Literal(&'a str),
+    /// One data operand rendered using this verb.
     Substitution(PrintfVerb),
 }
 
+/// Go formatting verbs whose output the interpreter can retain structurally.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum PrintfVerb {
+pub enum PrintfVerb {
+    /// A string operand rendered without escaping.
     String,
+    /// An integer operand rendered in base ten.
     Decimal,
 }
 
+/// Parses `%s`, `%d`, and `%%`, declining flags, widths, indexes, and other verbs.
+#[must_use]
 #[expect(
     clippy::indexing_slicing,
     reason = "this hot format scanner checks the byte cursor before every direct access"
 )]
-fn parse_supported_printf_format(format: &str) -> Option<Vec<PrintfPart<'_>>> {
+pub fn parse_supported_printf_format(format: &str) -> Option<Vec<PrintfPart<'_>>> {
     let mut parts = Vec::new();
     let mut literal_start = 0usize;
     let bytes = format.as_bytes();

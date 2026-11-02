@@ -48,6 +48,7 @@ fn provider_resolution_phase_resolves_each_exact_and_concrete_use_once() -> eyre
         kind: ValueKind::Scalar,
         stringified: false,
         plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
+        text_preimage: None,
         strip_marker: false,
         resource,
         is_self_range_collection: false,

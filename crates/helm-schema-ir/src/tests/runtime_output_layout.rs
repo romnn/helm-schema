@@ -1,5 +1,7 @@
 use std::collections::BTreeSet;
 
+use color_eyre::eyre;
+
 use std::rc::Rc;
 
 use helm_schema_core::{PlainScalarPlacement, Predicate, PredicateMemo, ValuesPath};
@@ -250,8 +252,9 @@ fn partial_choices_only_preserve_states_proved_by_both_arms() {
             }),
         };
         let input_paths = fixture.state.heap.arena.input_paths.borrow();
-        let mut transfers = super::LexicalTransfers::new(&input_paths);
-        let states = transfers.part(&selected, LexicalState::Double, &fixture.memo);
+        let input_objects = fixture.state.heap.arena.input_objects.borrow();
+        let mut transfers = super::LexicalTransfers::new(&input_paths, &input_objects);
+        let states = transfers.part(&selected, LexicalState::Double, &[], &fixture.memo);
         sim_assert_eq!(have: states.get(&LexicalState::Double).cloned().map(|condition| fixture.memo.normalize(condition)), want: preserves.then_some(Predicate::True));
         sim_assert_eq!(have: states.len(), want: usize::from(preserves));
     }
@@ -621,4 +624,40 @@ fn shared_syntax_keeps_frozen_inputs_and_guards_separate() {
     let memo = PredicateMemo::new();
     sim_assert_eq!(have: first.invalid(&memo).value_paths(), want: BTreeSet::from([ValuesPath::parse("value")]));
     sim_assert_eq!(have: second.invalid(&memo).value_paths(), want: BTreeSet::from([ValuesPath::parse("other"), ValuesPath::parse("flag")]));
+}
+
+#[test]
+fn stringification_does_not_reapply_an_overwritten_input_members_text() -> eyre::Result<()> {
+    use crate::value::kinds::GoType;
+    use crate::value::relationship::ValueOperation;
+    use crate::value::{Field, ScalarType};
+    use color_eyre::eyre::OptionExt as _;
+
+    let mut state = State::new(Value::nil());
+    state
+        .map_target(&Value::input(ValuesPath::default()))
+        .ok_or_eyre("root backing missing")?;
+    let source = crate::value::kinds::refined_parameter(
+        &Value::input(ValuesPath::parse("payload")),
+        GoType::Map,
+    );
+    let target = state
+        .map_target(&source)
+        .ok_or_eyre("map backing missing")?;
+    state
+        .heap
+        .write(&target, "x", Field::Present(Value::string("safe")));
+    let stringified = Value::scalar(ScalarType::String, None).derived(
+        state.heap.freeze(&source),
+        ValueOperation::Format(crate::value::relationship::TextFormat::Value),
+    );
+    let frozen = state.heap.freeze(&stringified);
+    let input_paths = state.heap.arena.input_paths.borrow();
+    let input_objects = state.heap.arena.input_objects.borrow();
+    let mut transfers = super::LexicalTransfers::new(&input_paths, &input_objects);
+    // An original x containing a quote is overwritten before formatting, so it cannot
+    // establish an invalid output quote through its old input identity.
+    let states = transfers.value(&frozen, super::LexicalState::Double, &PredicateMemo::new());
+    sim_assert_eq!(have: states.get(&super::LexicalState::Invalid), want: None);
+    Ok(())
 }

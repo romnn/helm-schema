@@ -432,7 +432,7 @@ fn parameter_nil(expected: GoType) -> Option<super::Value> {
     }
 }
 
-fn refined_parameter(value: &super::Value, expected: GoType) -> super::Value {
+pub(super) fn refined_parameter(value: &super::Value, expected: GoType) -> super::Value {
     use super::{Datum, Leaf, ScalarType, TypeCoverage, UnknownValue, Value, ValueNode};
     let ValueNode::Leaf(Leaf { datum: _, origin }) = value.node.as_ref() else {
         return value.clone();
@@ -563,7 +563,7 @@ pub(super) fn descriptor(
             )
             .derived(
                 state.heap.freeze(value),
-                super::relationship::Operation::Descriptor { kind_only },
+                super::relationship::ValueOperation::Descriptor { kind_only },
             );
     }
     let Some(GuardValue::String(expected)) = arguments.first().and_then(Value::constant) else {

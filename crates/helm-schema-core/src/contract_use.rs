@@ -210,6 +210,9 @@ pub struct ContractUse {
     /// Positive plain-block placement proof for this particular rendered use.
     #[serde(default, skip_serializing_if = "is_default")]
     pub plain_scalar_placement: PlainScalarPlacement,
+    /// Executed text relation from this input to the complete scalar spelling.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub text_preimage: Option<crate::TextPreimage>,
     /// Literal member keys the TEMPLATE writes beside this fragment splice
     /// in the same mapping (`- name: tmp` next to `toYaml .Values.tmpVolume`):
     /// the rendered object already has them, so a provider slot's object
@@ -307,6 +310,7 @@ impl ContractUse {
             stringified: false,
             strip_marker: false,
             plain_scalar_placement: PlainScalarPlacement::Unknown,
+            text_preimage: None,
             template_supplied_member_keys: std::collections::BTreeSet::new(),
             split_segment: None,
             merge_layers: None,
@@ -362,6 +366,7 @@ impl ContractUse {
             stringified: _,
             strip_marker: _,
             plain_scalar_placement: _,
+            text_preimage: _,
             template_supplied_member_keys: _,
             split_segment: _,
             merge_layers,

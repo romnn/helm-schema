@@ -391,7 +391,7 @@ fn typed_output_preserves_nested_branches_through_inline_nested_if() {
 /// the rendered string). Fall through to the flat path, which
 /// already conservatively collects literals as candidates.
 #[test]
-fn wrapper_with_mixed_content_does_not_promote_branches() {
+fn mixed_text_composition_keeps_guarded_branch_values() {
     let helpers = index_with(indoc! {r#"
         {{- define "outer" -}}
         prefix-{{ include "inner" . }}
@@ -405,12 +405,12 @@ fn wrapper_with_mixed_content_does_not_promote_branches() {
         {{- end -}}
     "#});
     let out = evaluate_helper("outer", &helpers);
-    // The mixed-content wrapper is NOT a pure delegation — the
-    // typed nested form doesn't fit. Fall back to flat.
-    assert!(
-        matches!(out, HelperBranchBody::Literals { .. }),
-        "mixed-content wrapper must fall through to flat literals; got {out:?}"
-    );
+    sim_assert_eq!(have: out, want: HelperBranchBody::Nested {
+        branches: vec![
+            HelperBranch { guard: Some(CapabilityGuard::Has { api: "X".to_owned() }), body: HelperBranchBody::literals(vec!["prefix-X".to_owned()]) },
+            HelperBranch { guard: None, body: HelperBranchBody::literals(vec!["prefix-Y".to_owned()]) },
+        ],
+    });
 }
 
 /// Wrapper indirection must respect the same cycle guard the

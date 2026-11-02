@@ -91,7 +91,8 @@ fn relevant_cycle_cuts_do_not_reuse_a_result_from_another_call_chain() {
     "#};
     for invocation in [r#"{{ include "target" . }}"#, r#"{{ include "a" . }}"#] {
         let db = helper_db(source);
-        let execution = crate::value::tests::execute_document(invocation, None, &db);
+        let execution =
+            crate::value::tests::execute_document(invocation, Some("templates/NOTES.txt"), &db);
         assert!(
             execution
                 .reads()

@@ -311,10 +311,12 @@ fn initial_state(db: &IrAnalysisDb) -> State {
         };
         state.heap.write(&id, "Values", Field::Present(values));
     }
-    for key in ["Chart", "Release", "Subcharts", "Template"] {
+    for key in ["Chart", "Subcharts", "Template"] {
         let value = Value::unknown();
         state.heap.write(&id, key, Field::Present(value));
     }
+    let release = super::hosts::release(&mut state, false);
+    state.heap.write(&id, "Release", Field::Present(release));
     let capabilities = super::hosts::capabilities(&mut state);
     state
         .heap

@@ -1137,7 +1137,12 @@ pub(crate) fn evaluate_guard_set_on_values(
 fn value_pattern_schema(pattern: &ValuePattern) -> Option<Value> {
     Some(match pattern {
         ValuePattern::Any => Value::Bool(true),
-        ValuePattern::TemplateFree => serde_json::json!({"$ref": "#/$defs/Q"}),
+        ValuePattern::Scalar => serde_json::json!({"type": ["null", "boolean", "number"]}),
+        ValuePattern::TemplateFree => serde_json::json!({
+            "$ref": helm_schema_json_schema_walk::definition_reference(
+                crate::resolve_policy::scalar_preimage::TEMPLATED_MARKER_FREE_DEFINITION_NAME,
+            )
+        }),
         ValuePattern::TemplateActionFree => {
             serde_json::json!({"$ref": helm_schema_json_schema_walk::definition_reference(crate::resolve_policy::scalar_preimage::NO_TEMPLATE_ACTIONS_DEFINITION_NAME)})
         }
@@ -1167,6 +1172,11 @@ fn value_pattern_schema(pattern: &ValuePattern) -> Option<Value> {
                 serde_json::json!({"type": "array", "minItems": prefix.len(), "items": prefix, "additionalItems": items.unwrap_or(Value::Bool(false))})
             }
         }
+        ValuePattern::Object { keys, values } => serde_json::json!({
+            "type": "object", "propertyNames": value_pattern_schema(keys)?,
+            "additionalProperties": value_pattern_schema(values)?,
+        }),
+        ValuePattern::Not(pattern) => serde_json::json!({"not": value_pattern_schema(pattern)?}),
         ValuePattern::AllOf(patterns) if patterns.is_empty() => Value::Bool(true),
         ValuePattern::AllOf(patterns) => {
             serde_json::json!({"allOf": patterns.iter().map(value_pattern_schema).collect::<Option<Vec<_>>>()?})

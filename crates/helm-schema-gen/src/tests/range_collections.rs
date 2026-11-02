@@ -484,6 +484,7 @@ fn wildcard_source_path_types_both_collection_lanes_without_empty_variant() {
         provenance: Vec::new(),
         stringified: false,
         plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
+        text_preimage: None,
         template_supplied_member_keys: std::collections::BTreeSet::default(),
         split_segment: None,
         merge_layers: None,

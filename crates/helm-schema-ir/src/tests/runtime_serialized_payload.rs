@@ -339,7 +339,7 @@ fn literal_capture_keeps_constructed_member_preimages() -> eyre::Result<()> {
 /// Result types do not replace the frozen input needed for a later consumer's preimage.
 #[test]
 fn relationship_query_retains_operation_preimages() -> eyre::Result<()> {
-    use crate::value::relationship::{Operation, Preimage};
+    use crate::value::relationship::{Preimage, ValueOperation};
 
     for source in [
         "{{ toString .Values.input }}",
@@ -366,9 +366,11 @@ fn relationship_query_retains_operation_preimages() -> eyre::Result<()> {
                 Preimage::Text(_)
                     | Preimage::Operation(crate::value::relationship::Derivation {
                         source: _,
-                        operation: Operation::Stringify
-                            | Operation::Numeric(_)
-                            | Operation::Descriptor { kind_only: _ },
+                        operation: ValueOperation::Format(
+                            crate::value::relationship::TextFormat::Value
+                                | crate::value::relationship::TextFormat::String
+                        ) | ValueOperation::Numeric(_)
+                            | ValueOperation::Descriptor { kind_only: _ },
                     })
             )),
             "{source}"
@@ -380,7 +382,7 @@ fn relationship_query_retains_operation_preimages() -> eyre::Result<()> {
 /// Guarded constants still need their source preimage even with no leaf data origins.
 #[test]
 fn control_only_operands_keep_their_frozen_preimage() -> eyre::Result<()> {
-    use crate::value::relationship::Operation;
+    use crate::value::relationship::ValueOperation;
     use crate::value::{Coverage, ScalarType, State, Value};
     use helm_schema_core::{GuardValue, Predicate};
 
@@ -398,8 +400,8 @@ fn control_only_operands_keep_their_frozen_preimage() -> eyre::Result<()> {
     );
     let frozen = state.heap.freeze(&source);
     sim_assert_eq!(have: frozen.inputs(), want: BTreeSet::new());
-    let result =
-        Value::scalar(ScalarType::Int, None).derived(frozen, Operation::Numeric(ScalarType::Int));
+    let result = Value::scalar(ScalarType::Int, None)
+        .derived(frozen, ValueOperation::Numeric(ScalarType::Int));
     let preimage = result
         .operation_preimage()
         .ok_or_eyre("guard-only source preimage was dropped")?;

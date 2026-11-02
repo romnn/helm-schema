@@ -110,7 +110,27 @@ pub(super) fn transfer(invocation: &Invocation, state: &mut State) -> Value {
         | Method::FilesLines
         | Method::FilesAsConfig
         | Method::FilesAsSecrets => files_transfer(invocation, state),
-        Method::ApiVersionsHas => readonly_unknown(TypeCoverage::Scalar(ScalarType::Bool)),
+        Method::ApiVersionsHas => {
+            let value = readonly_unknown(TypeCoverage::Scalar(ScalarType::Bool));
+            let Some(GuardValue::String(api)) = invocation
+                .operands
+                .first()
+                .and_then(|operand| operand.value.constant())
+            else {
+                return value;
+            };
+            value.derived(
+                state.heap.freeze(receiver),
+                super::relationship::ValueOperation::Capability {
+                    guard: helm_schema_core::CapabilityGuard::Has { api: api.clone() },
+                    decision: state.heap.arena.decision(
+                        helm_schema_core::Predicate::False,
+                        helm_schema_core::Predicate::False,
+                        super::Coverage::Partial,
+                    ),
+                },
+            )
+        }
         Method::KubeVersionGitVersion => {
             let version = state.get_field(receiver, "Version");
             if state.heap.freeze(&version).go_type() == super::kinds::GoType::String {
@@ -259,6 +279,51 @@ pub(super) fn file_catalogs(
         .entry(String::new())
         .or_insert_with(|| typed_map(state.heap.map(Remainder::Closed), MapType::Files));
     catalogs
+}
+
+// Helm validates release names before rendering; namespace remains caller-supplied text.
+// The six fields and their Go types come from chart/common/util.ToRenderValues.
+pub(super) fn release(state: &mut State, initial_fields: bool) -> Value {
+    if !initial_fields {
+        // Dependencies share this map in Helm; their writes are not yet imported across units.
+        return state.heap.map(Remainder::Unknown {
+            inputs: Rc::new(BTreeSet::new()),
+        });
+    }
+    let release = state.heap.map(Remainder::Closed);
+    if let Some(target) = state.map_target(&release) {
+        let name = Value::scalar(
+            ScalarType::String,
+            Some(super::scalar_value::ScalarContent::StringDomain {
+                pattern: r"[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*",
+                min_bytes: 1,
+                max_bytes: 53,
+            }),
+        );
+        for (field, value) in [
+            ("Name", name),
+            (
+                "Namespace",
+                readonly_unknown(TypeCoverage::Scalar(ScalarType::String)),
+            ),
+            ("Service", Value::string("Helm")),
+            (
+                "IsInstall",
+                readonly_unknown(TypeCoverage::Scalar(ScalarType::Bool)),
+            ),
+            (
+                "IsUpgrade",
+                readonly_unknown(TypeCoverage::Scalar(ScalarType::Bool)),
+            ),
+            (
+                "Revision",
+                readonly_unknown(TypeCoverage::Scalar(ScalarType::Int)),
+            ),
+        ] {
+            state.heap.write(&target, field, Field::Present(value));
+        }
+    }
+    release
 }
 
 pub(super) fn capabilities(state: &mut State) -> Value {

@@ -285,6 +285,7 @@ pub(super) fn provider_schema_use(
         stringified: contract_use.stringified,
         plain_scalar_placement: contract_use.plain_scalar_placement,
         strip_marker: contract_use.strip_marker,
+        text_preimage: contract_use.text_preimage.clone(),
         resource,
         template_supplied_member_keys: contract_use.template_supplied_member_keys.clone(),
         split_segment: contract_use.split_segment.clone(),

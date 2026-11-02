@@ -942,6 +942,7 @@ pub(super) fn record_contract_use_conjunction(
             .flatten()
             .filter(|provider_use| {
                 !(provider_use.kind == ValueKind::Scalar
+                    && provider_use.text_preimage.is_none()
                     && provider_use.split_segment.is_none()
                     && (provider_use.stringified && serialized_sibling_owns_scalar_preimage
                         || scoped_consumer_owns_raw_domain))

@@ -984,11 +984,11 @@ fn substr_contract_projects_through_helper_arguments() {
     );
 
     for instance in [
-        serde_json::json!({ "cli": { "tag": "sha256:abc" } }),
-        serde_json::json!({ "cli": { "tag": "v1.2.3" } }),
+        serde_json::json!({ "cli": { "image": "repo/cli", "tag": "sha256:abc" } }),
+        serde_json::json!({ "cli": { "image": "repo/cli", "tag": "v1.2.3" } }),
         // The semver parser sees the DERIVED substring, not the raw tag, so
         // the raw path keeps the full string domain.
-        serde_json::json!({ "cli": { "tag": "not-a-semver" } }),
+        serde_json::json!({ "cli": { "image": "repo/cli", "tag": "not-a-semver" } }),
     ] {
         assert!(
             schema_accepts_instance(&schema, &instance),
@@ -997,8 +997,8 @@ fn substr_contract_projects_through_helper_arguments() {
         );
     }
     for instance in [
-        serde_json::json!({ "cli": { "tag": { "bad": true } } }),
-        serde_json::json!({ "cli": { "tag": [1] } }),
+        serde_json::json!({ "cli": { "image": "repo/cli", "tag": { "bad": true } } }),
+        serde_json::json!({ "cli": { "image": "repo/cli", "tag": [1] } }),
     ] {
         assert!(
             !schema_accepts_instance(&schema, &instance),

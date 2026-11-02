@@ -6,7 +6,6 @@ mod contract_normalization;
 mod contract_signal_builder;
 pub(crate) mod fragment_eval;
 mod function_semantics;
-mod helper_meta;
 mod observed_facts;
 mod range_modes;
 mod resource_identity;

@@ -12,7 +12,12 @@ fn simple_template_schema() {
         replicas: {{ .Values.replicas }}
         {{- end }}
     "};
-    let schema = schema_for(parse_ir(src));
+    let manifest = schema_for(parse_ir(src));
+    let index = DefineIndex::new();
+    // Notes retain the same executed reads without a YAML destination contract.
+    let schema = schema_for(
+        SymbolicIrContext::new(&index).generate_contract_ir_for_source(src, "templates/NOTES.txt"),
+    );
 
     let expected = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -26,6 +31,28 @@ fn simple_template_schema() {
         }
     });
     sim_assert_eq!(have: schema, want: expected);
+    // Manifest mode still checks the original unquoted template against Helm.
+
+    for (instance, want) in [
+        (
+            serde_json::json!({"enabled": false, "name": "a: b", "replicas": "["}),
+            true,
+        ),
+        (
+            serde_json::json!({"enabled": true, "name": "ordinary", "replicas": 7}),
+            true,
+        ),
+        (
+            serde_json::json!({"enabled": true, "name": "a: b", "replicas": 7}),
+            false,
+        ),
+        (
+            serde_json::json!({"enabled": true, "name": "ordinary", "replicas": "["}),
+            false,
+        ),
+    ] {
+        sim_assert_eq!(have: schema_accepts_instance(&manifest, &instance), want: want, "{instance}");
+    }
 }
 
 #[test]
@@ -548,7 +575,12 @@ fn guard_only_values_without_type_evidence_stay_unconstrained() {
         key: {{ .Values.feature.name }}
         {{- end }}
     "};
-    let schema = schema_for(parse_ir(src));
+    let manifest = schema_for(parse_ir(src));
+    let index = DefineIndex::new();
+    // Notes retain the same executed reads without a YAML destination contract.
+    let schema = schema_for(
+        SymbolicIrContext::new(&index).generate_contract_ir_for_source(src, "templates/NOTES.txt"),
+    );
 
     let expected = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -578,6 +610,26 @@ fn guard_only_values_without_type_evidence_stay_unconstrained() {
         }
     });
     sim_assert_eq!(have: schema, want: expected);
+    // Manifest mode still checks the original unquoted template against Helm.
+
+    for (instance, want) in [
+        (serde_json::json!({}), false),
+        (serde_json::json!({"feature": {}}), true),
+        (
+            serde_json::json!({"feature": {"enabled": false, "name": "a: b"}}),
+            true,
+        ),
+        (
+            serde_json::json!({"feature": {"enabled": true, "name": "ordinary"}}),
+            true,
+        ),
+        (
+            serde_json::json!({"feature": {"enabled": true, "name": "a: b"}}),
+            false,
+        ),
+    ] {
+        sim_assert_eq!(have: schema_accepts_instance(&manifest, &instance), want: want, "{instance}");
+    }
 }
 
 #[test]

@@ -45,9 +45,10 @@ fn write_shared_helper_chart(chart_dir: &VfsPath) -> eyre::Result<()> {
             {{- end -}}
         "#},
     )?;
+    // JSON transport isolates namespace identity from raw scalar YAML spellings.
     test_util::write(
         &chart_dir.join("templates/frag.yaml")?,
-        "parentName: {{ .Values.parentSecret.name }}\n",
+        "parentName: {{ .Values.parentSecret.name | toJson }}\n",
     )?;
     // A subdirectory template still reports the chart's own `templates`
     // directory, so this reaches `d3e2e/templates/frag.yaml`.
@@ -76,7 +77,7 @@ fn write_shared_helper_chart(chart_dir: &VfsPath) -> eyre::Result<()> {
     )?;
     test_util::write(
         &chart_dir.join("charts/kid/templates/frag.yaml")?,
-        "childName: {{ .Values.childToken }}\n",
+        "childName: {{ .Values.childToken | toJson }}\n",
     )?;
     test_util::write(
         &chart_dir.join("charts/kid/templates/probe.yaml")?,

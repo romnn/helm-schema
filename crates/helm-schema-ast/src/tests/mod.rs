@@ -1,9 +1,7 @@
 use crate::{
     DefineIndex, TemplateExpr, TemplateHeader, contains_template_action, parse_action_expressions,
-    render_printf_scalar_values,
 };
 use color_eyre::eyre::{self, OptionExt as _};
-use helm_schema_core::GuardValue;
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
@@ -182,21 +180,5 @@ fn define_index_tracks_file_sources_deterministically() {
     sim_assert_eq!(
         have: idx.file_sources().map(|(path, ..)| path).collect::<Vec<_>>(),
         want: vec!["templates/a.yaml", "templates/z.yaml"]
-    );
-}
-
-#[test]
-fn printf_renders_exact_typed_semver_components() {
-    sim_assert_eq!(
-        have: render_printf_scalar_values(
-            "%d.%d.0",
-            &[GuardValue::Int(1), GuardValue::Int(35)]
-        ),
-        want: Some("1.35.0".to_string()),
-    );
-    sim_assert_eq!(
-        have: render_printf_scalar_values("%d", &[GuardValue::string("35")]),
-        want: None,
-        "a string must not masquerade as a decimal argument"
     );
 }

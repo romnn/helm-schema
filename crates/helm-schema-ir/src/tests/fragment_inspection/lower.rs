@@ -26,6 +26,11 @@ pub(crate) enum ScalarRenderPart {
 impl ScalarContent {
     fn rendered_parts(&self) -> Option<Vec<ScalarRenderPart>> {
         let parts = match self {
+            Self::StringDomain {
+                pattern: _,
+                min_bytes: _,
+                max_bytes: _,
+            } => return None,
             Self::Literal(value) => {
                 let text = match value {
                     helm_schema_core::GuardValue::String(text)
@@ -140,6 +145,7 @@ pub(crate) fn lower_serialized_payload(
         capture: _,
         strip_marker,
         flow_node: _,
+        text_preimage: _,
         omitted_members,
     } = payload;
     Guarded {

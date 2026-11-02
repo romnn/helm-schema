@@ -19,6 +19,8 @@ mod range_laws;
 mod reconvergence_laws;
 #[path = "runtime_serialized_payload.rs"]
 mod serialized_payload_laws;
+#[path = "template_action_laws.rs"]
+mod template_action_laws;
 
 impl super::Heap {
     /// A session heap with a private predicate memo, for tests that build heaps directly.
@@ -3513,5 +3515,161 @@ impl super::FrozenValue {
             outcome: &|_| None,
             choice: None,
         })
+    }
+}
+
+struct HostChoice {
+    guard: helm_schema_core::CapabilityGuard,
+    test: Rc<super::FrozenTest>,
+}
+
+pub(crate) fn conditional_helper_text(
+    execution: &DocumentExecution,
+) -> helm_schema_core::HelperBranchBody {
+    let mut hosts = std::collections::BTreeMap::new();
+    for site in execution.all_sites() {
+        if let Some(super::relationship::Derivation {
+            source: _,
+            operation: super::relationship::ValueOperation::Capability { guard, decision },
+        }) = site.value().value.operation_preimage()
+        {
+            hosts.insert(
+                decision.id,
+                HostChoice {
+                    guard: guard.clone(),
+                    test: Rc::clone(decision),
+                },
+            );
+        }
+    }
+    let Some(exit) = execution.exits.first() else {
+        return helm_schema_core::HelperBranchBody::literals(Vec::new());
+    };
+    let hosts = hosts.into_values().collect::<Vec<_>>();
+    let mut bodies = Vec::new();
+    let mut remaining = 4096;
+    for (_, buffer) in execution.text() {
+        let body = conditional_hosts(buffer, &hosts, &exit.state.heap.arena, &[], &mut remaining);
+        bodies.push(body);
+    }
+    if bodies.len() == 1 {
+        return bodies.remove(0);
+    }
+    helm_schema_core::HelperBranchBody::literals(
+        bodies
+            .iter()
+            .flat_map(helm_schema_core::HelperBranchBody::all_literals)
+            .collect(),
+    )
+}
+
+fn conditional_hosts(
+    buffer: &super::TextBuffer,
+    hosts: &[HostChoice],
+    arena: &super::Arena,
+    choices: &[super::DecisionEdge],
+    remaining: &mut usize,
+) -> helm_schema_core::HelperBranchBody {
+    use helm_schema_core::{HelperBranch, HelperBranchBody};
+    if *remaining == 0 || choices.len() >= 64 {
+        return HelperBranchBody::literals(Vec::new());
+    }
+    *remaining -= 1;
+    let Some((host, rest)) = hosts.split_first() else {
+        return conditional_buffer(buffer, arena, choices, remaining);
+    };
+    let mut branch = |taken| {
+        let mut selected = choices.to_vec();
+        selected.push(super::DecisionEdge {
+            test: Rc::clone(&host.test),
+            taken,
+        });
+        conditional_hosts(buffer, rest, arena, &selected, remaining)
+    };
+    let yes = branch(true);
+    let no = branch(false);
+    if yes == no {
+        return yes;
+    }
+    let mut branches = vec![HelperBranch {
+        guard: Some(host.guard.clone()),
+        body: yes,
+    }];
+    match no {
+        HelperBranchBody::Nested { branches: rest } => branches.extend(rest),
+        no @ HelperBranchBody::Literals { values: _ } => branches.push(HelperBranch {
+            guard: None,
+            body: no,
+        }),
+    }
+    HelperBranchBody::Nested { branches }
+}
+
+fn conditional_buffer(
+    buffer: &super::TextBuffer,
+    arena: &super::Arena,
+    choices: &[super::DecisionEdge],
+    remaining: &mut usize,
+) -> helm_schema_core::HelperBranchBody {
+    use helm_schema_core::HelperBranchBody;
+    let empty = || HelperBranchBody::literals(Vec::new());
+    if choices.len() >= 64 || *remaining == 0 {
+        return empty();
+    }
+    let selected = arena.runtime_path(choices);
+    match super::text::buffer_text(buffer, &|test| selected.implies_test(test), remaining) {
+        Ok(text) => {
+            let value = serde_yaml::from_str::<serde_json::Value>(&text).ok();
+            let text = match value {
+                Some(serde_json::Value::String(text)) => text,
+                Some(serde_json::Value::Number(value)) => value.to_string(),
+                Some(serde_json::Value::Bool(value)) => value.to_string(),
+                Some(
+                    serde_json::Value::Null
+                    | serde_json::Value::Array(_)
+                    | serde_json::Value::Object(_),
+                )
+                | None => return empty(),
+            };
+            HelperBranchBody::literals(vec![text])
+        }
+        Err(super::text::Unresolved::Choice(test)) => {
+            let mut branch = |taken| {
+                let mut edges = choices.to_vec();
+                edges.push(super::DecisionEdge {
+                    test: Rc::clone(&test),
+                    taken,
+                });
+                conditional_buffer(buffer, arena, &edges, remaining)
+            };
+            let yes = branch(true);
+            let no = branch(false);
+            let mut values = yes.all_literals();
+            for text in no.all_literals() {
+                if !values.contains(&text) {
+                    values.push(text);
+                }
+            }
+            HelperBranchBody::literals(values)
+        }
+        Err(super::text::Unresolved::Unknown | super::text::Unresolved::Exhausted) => empty(),
+    }
+}
+
+#[test]
+fn printf_renders_exact_typed_semver_components() {
+    sim_assert_eq!(have: texts(r#"{{ printf "%d.%d.0" 1 35 }}"#), want: vec![Some("1.35.0".to_owned())]);
+    sim_assert_eq!(have: texts(r#"{{ printf "%d" "35" }}"#), want: vec![None], "a string must not masquerade as a decimal argument");
+}
+
+#[test]
+fn printf_exact_rendering_only_accepts_supported_string_formats() {
+    for (source, expected) in [
+        (r#"{{ printf "prefix-%s-%%" "x" }}"#, Some("prefix-x-%")),
+        (r#"{{ printf "%d" "x" }}"#, None),
+        (r#"{{ printf "literal" "unused" }}"#, None),
+        (r#"{{ printf "%s-%s" "x" }}"#, None),
+    ] {
+        sim_assert_eq!(have: texts(source), want: vec![expected.map(str::to_owned)], "{source}");
     }
 }

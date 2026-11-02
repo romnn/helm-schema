@@ -935,6 +935,7 @@ fn pathless_conditional_target_does_not_own_descendant_defaults() {
         provenance: Vec::new(),
         stringified: false,
         plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
+        text_preimage: None,
         template_supplied_member_keys: BTreeSet::new(),
         split_segment: None,
         merge_layers: None,
@@ -1329,6 +1330,72 @@ fn block_placement_is_part_of_the_provider_policy_cache_key_and_preimage() -> ey
         sim_assert_eq!(have: validator.is_valid(&serde_json::json!("line\nbreak")), want: line_break);
         sim_assert_eq!(have: validator.is_valid(&serde_json::json!("first\n  value: last")), want: true);
         sim_assert_eq!(have: validator.is_valid(&serde_json::json!("line\r\nbreak")), want: true);
+    }
+    Ok(())
+}
+
+#[test]
+fn composed_text_preimages_retain_provider_demands() -> eyre::Result<()> {
+    let mut upper = helm_schema_core::TextPreimage::default();
+    for byte in b'a'..=b'z' {
+        upper
+            .characters
+            .insert(byte, char::from(byte).to_ascii_uppercase().to_string());
+    }
+    for (relation, provider_schema, cases) in [
+        (
+            upper,
+            serde_json::json!({"type": "string", "enum": ["HTTP", "HTTPS"]}),
+            vec![
+                ("http", true),
+                ("HTTPS", true),
+                ("a #b", false),
+                ("&anchor", false),
+            ],
+        ),
+        (
+            helm_schema_core::TextPreimage {
+                after: ":tag".to_owned(),
+                ..helm_schema_core::TextPreimage::default()
+            },
+            serde_json::json!({"type": "string"}),
+            vec![("repository", true), ("a #b", true), ("true #b", false)],
+        ),
+    ] {
+        let policy = ProviderValueUsePolicy::new(
+            ValueKind::Scalar,
+            true,
+            false,
+            BTreeSet::new(),
+            None,
+            BTreeMap::new(),
+        )
+        .with_plain_scalar_placement(helm_schema_core::PlainScalarPlacement::BlockValue)
+        .with_text_preimage(Some(relation));
+        let schema = ResolvePolicy::provider_schema_for_value_use(&provider_schema, &policy)
+            .ok_or_eyre("missing text preimage")?;
+        let validator = jsonschema::validator_for(&schema)?;
+        let actual = cases
+            .iter()
+            .map(|(value, _)| validator.is_valid(&serde_json::json!(value)))
+            .collect::<Vec<_>>();
+        let expected = cases.iter().map(|(_, want)| *want).collect::<Vec<_>>();
+        sim_assert_eq!(have: actual, want: expected);
+    }
+    Ok(())
+}
+
+#[test]
+fn inexact_text_bounds_do_not_become_rejections_under_negation() -> eyre::Result<()> {
+    let relation = helm_schema_core::TextPreimage::default();
+    let unknown = serde_json::json!({"allOf": [{"const": "x"}, {"pattern": "(?=x)"}]});
+    for (target, want) in [
+        (unknown.clone(), vec![true, false]),
+        (serde_json::json!({"not": unknown}), vec![true, true]),
+    ] {
+        let preimage = relation.schema_preimage(&target);
+        let validator = jsonschema::validator_for(&preimage)?;
+        sim_assert_eq!(have: ["x", "y"].map(|text|validator.is_valid(&serde_json::json!(text))).to_vec(), want: want);
     }
     Ok(())
 }

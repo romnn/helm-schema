@@ -2,10 +2,14 @@
 //! raw inputs that corrupt the assembled token abort rendering, while
 //! totally-formatted embeddings tolerate any input kind.
 
-use indoc::indoc;
+use color_eyre::eyre;
+use indoc::{formatdoc, indoc};
 use test_util::prelude::sim_assert_eq;
 
-use super::{parse_ir, schema_accepts_instance, schema_for_values_yaml};
+use super::{parse_ir, schema_accepts_instance, schema_for_values_yaml, schema_signals_for};
+
+#[path = "quoted_tpl_expectation.rs"]
+mod quoted_tpl_expectation;
 
 /// A literal-prefixed splice (`--log-level={{ … }}`) embeds ANY rendered
 /// value as argument text, so the `default "info"` fallback's string intent
@@ -222,7 +226,7 @@ fn double_quoted_safe_definition() -> serde_json::Value {
 /// that input's lexical content. A real template program remains open because
 /// its rendered result is not the source text.
 #[test]
-fn double_quoted_tpl_constrains_only_action_free_input() {
+fn double_quoted_tpl_constrains_only_action_free_input() -> eyre::Result<()> {
     let src = indoc! {r#"
         apiVersion: v1
         kind: ConfigMap
@@ -233,73 +237,58 @@ fn double_quoted_tpl_constrains_only_action_free_input() {
     "#};
     let schema = schema_for_values_yaml(parse_ir(src), Some("repository: quay.io/example\n"));
 
-    let expected = serde_json::json!({
-        "$defs": {
-            "helm-double-quoted-safe": double_quoted_safe_definition(),
-        },
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "additionalProperties": false,
-        "allOf": [
-            {
-                "additionalProperties": {},
-                "properties": {
-                    "repository": {
-                        "anyOf": [
-                            { "$ref": "#/$defs/helm-double-quoted-safe" },
-                            { "pattern": r"\{\{", "type": "string" },
-                        ],
-                    },
-                },
-            },
-            {
-                "if": {
-                    "anyOf": [
-                        {
-                            "not": {
-                                "properties": { "repository": {} },
-                                "required": ["repository"],
-                                "type": "object",
-                            },
-                        },
-                        {
-                            "properties": { "repository": { "enum": [null] } },
-                            "required": ["repository"],
-                            "type": "object",
-                        },
-                    ],
-                },
-                "then": false,
-            },
-        ],
-        "properties": {
-            "global": {},
-            "repository": { "type": "string" },
-        },
-        "type": "object",
-    });
-    sim_assert_eq!(have: schema, want: expected);
+    // Helm 4.2.3 renders comment termination and rejects surrogate escapes.
+    // See transfer/helm-conflicting-goldens.md for both original templates and verdicts.
+    // The expected contract uses a tpl-free raw slot and Helm's action-free identity rule.
+    let expected_source = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          image: "{{ replace "x" "x" .Values.repository }}:latest"
+    "#};
+    let expected_signals = quoted_tpl_expectation::action_free_contract(
+        &schema_signals_for(parse_ir(expected_source)),
+        "repository",
+        false,
+    )?;
+    let expected = schema_for_values_yaml(
+        expected_signals.clone(),
+        Some("repository: quay.io/example\n"),
+    );
+    assert_tpl_controls(&schema, &expected, "repository", false);
 
     for (repository, want) in [
         ("quay.io/example", true),
+        ("foo\" #", true),
+        (r"\uD800", false),
+        (r"\udfff", false),
+        (r"\uD7FF", true),
+        (r"\uE000", true),
+        (r"\U00110000", false),
+        (r#"esc\"ok"#, true),
         ("bad\"quote", false),
         (r"{{ .Values.registry }}", true),
     ] {
-        sim_assert_eq!(
-            have: schema_accepts_instance(
-                &schema,
-                &serde_json::json!({ "repository": repository }),
-            ),
-            want: want,
-            "repository={repository:?}",
-        );
+        let document = serde_json::json!({ "repository": repository });
+        for (label, candidate) in [("analyzed", &schema), ("expected", &expected)] {
+            sim_assert_eq!(
+                have: schema_accepts_instance(candidate, &document),
+                want: want,
+                "{label}: repository={repository:?}",
+            );
+        }
     }
+    sim_assert_eq!(have: schema, want: expected);
+    Ok(())
 }
 
 /// `toString` makes `tpl` total while retaining its exact `%v` preimage:
 /// action-free strings still reach the quote verbatim, and all other input
 /// kinds use Helm's recursive formatting.
 #[test]
-fn double_quoted_tpl_of_to_string_keeps_its_serialization_preimage() {
+fn double_quoted_tpl_of_to_string_keeps_its_serialization_preimage() -> eyre::Result<()> {
     let src = indoc! {r#"
         apiVersion: v1
         kind: ConfigMap
@@ -310,50 +299,56 @@ fn double_quoted_tpl_of_to_string_keeps_its_serialization_preimage() {
     "#};
     let schema = schema_for_values_yaml(parse_ir(src), Some("endpoint: https://example.com\n"));
 
-    let expected = serde_json::json!({
-        "$defs": {
-            "helm-double-quoted-safe": double_quoted_safe_definition(),
-        },
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "additionalProperties": false,
-        "allOf": [
-            {
-                "additionalProperties": {},
-                "properties": {
-                    "endpoint": {
-                        "anyOf": [
-                            { "$ref": "#/$defs/helm-double-quoted-safe" },
-                            { "pattern": r"\{\{", "type": "string" },
-                        ],
-                    },
-                },
-            },
-        ],
-        "properties": {
-            "global": {},
-            "endpoint": {},
-        },
-        "type": "object",
-    });
-    sim_assert_eq!(have: schema, want: expected);
+    // Helm 4.2.3 renders comment termination and rejects surrogate escapes.
+    // See transfer/helm-conflicting-goldens.md for both original templates and verdicts.
+    // The expected contract uses a tpl-free raw slot and Helm's action-free identity rule.
+    let expected_source = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          endpoint: "{{ toString .Values.endpoint }}"
+    "#};
+    let expected_signals = quoted_tpl_expectation::action_free_contract(
+        &schema_signals_for(parse_ir(expected_source)),
+        "endpoint",
+        true,
+    )?;
+    let expected = schema_for_values_yaml(
+        expected_signals.clone(),
+        Some("endpoint: https://example.com\n"),
+    );
+    assert_tpl_controls(&schema, &expected, "endpoint", false);
 
     for (endpoint, want) in [
         (serde_json::json!("https://example.com"), true),
+        (serde_json::json!(["\" #"]), true),
+        (serde_json::json!([r"\uD800"]), false),
+        (serde_json::json!(r"\uD800"), false),
+        (serde_json::json!(r"\uD7FF"), true),
+        (serde_json::json!(r"\uE000"), true),
+        (serde_json::json!(false), true),
+        (serde_json::Value::Null, true),
+        (serde_json::json!([]), true),
+        (serde_json::json!({ "host": r"\uD800" }), false),
         (serde_json::json!("bad\"quote"), false),
         (serde_json::json!(r"{{ .Values.endpointOverride }}"), true),
         (serde_json::json!(7), true),
         (serde_json::json!({ "host": "example.com" }), true),
         (serde_json::json!({ "host": "bad\"quote" }), false),
     ] {
-        sim_assert_eq!(
-            have: schema_accepts_instance(
-                &schema,
-                &serde_json::json!({ "endpoint": endpoint }),
-            ),
-            want: want,
-            "endpoint={endpoint}",
-        );
+        let document = serde_json::json!({ "endpoint": endpoint });
+        for (label, candidate) in [("analyzed", &schema), ("expected", &expected)] {
+            sim_assert_eq!(
+                have: schema_accepts_instance(candidate, &document),
+                want: want,
+                "{label}: endpoint={endpoint}",
+            );
+        }
     }
+    sim_assert_eq!(have: schema, want: expected);
+    Ok(())
 }
 
 fn conditionally_rendered_quoted_tpl_clauses() -> serde_json::Value {
@@ -471,6 +466,7 @@ fn conditionally_rendered_double_quoted_tpl_keeps_its_placement_language() {
         },
         "type": "object",
     });
+    assert_tpl_controls(&schema, &expected, "endpoint", true);
     sim_assert_eq!(have: schema, want: expected);
     for (instance, want) in [
         (
@@ -898,5 +894,59 @@ fn single_quoted_splice_composites_require_safe_nested_strings() {
             "composite single-quoted splices constrain nested strings: \
              instance={instance}; want={want}; schema={schema}"
         );
+    }
+}
+
+fn assert_tpl_controls(
+    schema: &serde_json::Value,
+    expected: &serde_json::Value,
+    key: &str,
+    conditional: bool,
+) {
+    for value in [
+        None,
+        Some(serde_json::Value::Null),
+        Some(serde_json::json!(false)),
+        Some(serde_json::json!(7)),
+        Some(serde_json::json!({})),
+        Some(serde_json::json!([])),
+        Some(serde_json::json!("safe")),
+        Some(serde_json::json!("bad\"quote")),
+        Some(serde_json::json!("{{ .Release.Service }}")),
+        Some(serde_json::json!({"x": {"y": "bad\"quote"}})),
+    ] {
+        let mut instance = serde_json::json!({});
+        if let Some(value) = value {
+            instance[key] = value;
+        }
+        if conditional {
+            instance["volumes"] = serde_json::json!([]);
+        }
+        sim_assert_eq!(have: schema_accepts_instance(schema, &instance), want: schema_accepts_instance(expected, &instance), "semantic control: {instance}");
+    }
+    eprintln!("text semantic controls match the independent expected schema");
+}
+
+#[test]
+fn quoted_tpl_oracles_include_comment_termination_and_invalid_unicode() {
+    for (expression, value, want) in [
+        ("tpl .Values.value .", serde_json::json!("foo\" #"), true),
+        (
+            "tpl (toString .Values.value) .",
+            serde_json::json!(["\" #"]),
+            true,
+        ),
+        ("tpl .Values.value .", serde_json::json!(r"\uD800"), false),
+    ] {
+        let source = formatdoc! {r#"
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: test
+            data:
+              value: "{{{{ {expression} }}}}"
+        "#};
+        let schema = schema_for_values_yaml(parse_ir(&source), None);
+        sim_assert_eq!(have: schema_accepts_instance(&schema, &serde_json::json!({"value":value})), want: want, "{expression}");
     }
 }

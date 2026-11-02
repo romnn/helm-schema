@@ -461,7 +461,11 @@ pub(crate) fn templated_yaml_provider_preimage(schema: Value) -> Value {
 }
 
 pub(crate) fn serialized_yaml_provider_preimage(schema: Value, templated: bool) -> Value {
-    let name = if templated { "Q" } else { "helm-marker-free" };
+    let name = if templated {
+        TEMPLATED_MARKER_FREE_DEFINITION_NAME
+    } else {
+        "helm-marker-free"
+    };
     Value::Object(serde_json::Map::from_iter([(
         "anyOf".to_owned(),
         Value::Array(vec![
@@ -470,6 +474,8 @@ pub(crate) fn serialized_yaml_provider_preimage(schema: Value, templated: bool) 
         ]),
     )]))
 }
+
+pub(crate) const TEMPLATED_MARKER_FREE_DEFINITION_NAME: &str = "helm-template-marker-free";
 
 pub(crate) const NO_TEMPLATE_ACTIONS_DEFINITION_NAME: &str = "helm-no-template-actions";
 pub(crate) const YAML_FLOW_STABLE_DEFINITION_NAME: &str = "helm-yaml-flow-stable";
@@ -529,7 +535,7 @@ pub(crate) fn serialized_definitions<'a>(
     let mut needed = [false; 4];
     for schema in schemas {
         for (required, name) in needed.iter_mut().zip([
-            "Q",
+            TEMPLATED_MARKER_FREE_DEFINITION_NAME,
             "helm-marker-free",
             YAML_FLOW_STABLE_DEFINITION_NAME,
             NO_TEMPLATE_ACTIONS_DEFINITION_NAME,
@@ -544,7 +550,7 @@ pub(crate) fn serialized_definitions<'a>(
     }
     let mut definitions = std::collections::BTreeMap::new();
     for (required, (name, templated)) in needed.into_iter().zip([
-        ("Q", true),
+        (TEMPLATED_MARKER_FREE_DEFINITION_NAME, true),
         ("helm-marker-free", false),
         (YAML_FLOW_STABLE_DEFINITION_NAME, false),
         (NO_TEMPLATE_ACTIONS_DEFINITION_NAME, false),

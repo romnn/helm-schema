@@ -1,6 +1,6 @@
 use std::collections::BTreeSet;
 
-use helm_schema_ast::{DefineIndex, render_printf_string_sets};
+use helm_schema_ast::DefineIndex;
 use helm_schema_core::{Conjunction, Guard, GuardValue, Predicate, ValuesPath};
 use helm_schema_syntax::Span;
 use indoc::indoc;
@@ -575,22 +575,6 @@ fn quote_pipeline_erases_input_shape_without_typing() {
 fn local_fragment_variable_effects_include_shallow_source_paths() {
     let prefix = r#"{{ $_ := .Values.choose }}{{ $nodeSelector := .Values.nodeSelector }}{{ if eq (randAlphaNum 1) "a" }}{{ $nodeSelector = .Values.global.nodeSelector }}{{ end }}"#;
     sim_assert_eq!(have: observe(prefix, "$nodeSelector").paths(), want: paths(&["global.nodeSelector", "nodeSelector"]));
-}
-
-#[test]
-fn printf_exact_rendering_only_accepts_supported_string_formats() {
-    let values = [BTreeSet::from(["x".to_string()])];
-
-    sim_assert_eq!(
-        have: render_printf_string_sets("prefix-%s-%%", &values),
-        want: Some(BTreeSet::from(["prefix-x-%".to_string()]))
-    );
-    sim_assert_eq!(have: render_printf_string_sets("%d", &values), want: None);
-    sim_assert_eq!(
-        have: render_printf_string_sets("literal", &[BTreeSet::from(["unused".to_string()])]),
-        want: None
-    );
-    sim_assert_eq!(have: render_printf_string_sets("%s-%s", &values), want: None);
 }
 
 #[test]

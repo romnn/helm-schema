@@ -26,7 +26,55 @@ const RENDER: &str = indoc! {r#"
     {{- end -}}
 "#};
 
+// Negating a Boolean test and swapping its eager, read-only alternatives preserves selection.
+// This independent helper is the full-schema oracle; no analyzed output supplies its facts.
+const REFERENCE_RENDER: &str = indoc! {r#"
+    {{- define "common.tplvalues.render" -}}
+    {{- $value := not (typeIs "string" .value) | ternary (.value | toYaml) .value }}
+    {{- if contains "{{" (toJson .value) }}
+      {{- if .scope }}
+          {{- tpl (cat "{{- with $.RelativeScope -}}" $value "{{- end }}") (merge (dict "RelativeScope" .scope) .context) }}
+      {{- else }}
+        {{- tpl $value .context }}
+      {{- end }}
+    {{- else }}
+        {{- $value }}
+    {{- end }}
+    {{- end -}}
+"#};
+
+struct RenderCase<'a> {
+    template: &'a str,
+    values: &'a str,
+    provider_enabled: bool,
+    helper: &'a str,
+}
+
 fn generate(template: &str, values: &str, provider_enabled: bool) -> eyre::Result<Value> {
+    generate_case(&RenderCase {
+        template,
+        values,
+        provider_enabled,
+        helper: RENDER,
+    })
+}
+
+fn reference_schema(template: &str, values: &str, provider_enabled: bool) -> eyre::Result<Value> {
+    generate_case(&RenderCase {
+        template,
+        values,
+        provider_enabled,
+        helper: REFERENCE_RENDER,
+    })
+}
+
+fn generate_case(case: &RenderCase<'_>) -> eyre::Result<Value> {
+    let RenderCase {
+        template,
+        values,
+        provider_enabled,
+        helper,
+    } = *case;
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
@@ -38,7 +86,7 @@ fn generate(template: &str, values: &str, provider_enabled: bool) -> eyre::Resul
     )?;
     test_util::write(&chart_dir.join("values.yaml")?, values)?;
     test_util::write(&chart_dir.join("templates/resource.yaml")?, template)?;
-    test_util::write(&chart_dir.join("templates/_helpers.tpl")?, RENDER)?;
+    test_util::write(&chart_dir.join("templates/_helpers.tpl")?, helper)?;
     let bundle = test_util::workspace_testdata().join("provider-bundle");
     let session = AnalysisSession::new(GenerateOptions {
         chart_dir,
@@ -61,22 +109,36 @@ fn generate(template: &str, values: &str, provider_enabled: bool) -> eyre::Resul
             ..Default::default()
         },
     });
-    Ok(session.emit(EmitRequest {
+    let schema = session.emit(EmitRequest {
         reference_policy: ReferencePolicy::SelfContained,
         output: OutputPipelineOptions {
             strip_descriptions: true,
             minimize: false,
             definition_names: helm_schema::output::DefinitionNames::Source,
         },
-    })?)
+    })?;
+    Ok(schema)
+}
+
+fn assert_render_controls(
+    actual: &Value,
+    expected: &Value,
+    cases: &[(Value, bool)],
+) -> eyre::Result<()> {
+    for (label, schema) in [("analyzed", actual), ("reference", expected)] {
+        let validator = jsonschema::validator_for(schema)?;
+        for (document, accepted) in cases {
+            sim_assert_eq!(have: validator.is_valid(document), want: *accepted, "{label}: {document}");
+        }
+    }
+    Ok(())
 }
 
 #[test]
 fn redis_affinity_survives_common_tplvalues_render() -> eyre::Result<()> {
     let _guard = test_util::builder().with_tracing(false).build()?;
     // Freeze unrelated Redis gates; retain the affinity truthiness bypass and helper call.
-    let have = generate(
-        indoc! {r#"
+    let template = indoc! {r#"
             apiVersion: apps/v1
             kind: StatefulSet
             metadata:
@@ -97,14 +159,30 @@ fn redis_affinity_survives_common_tplvalues_render() -> eyre::Result<()> {
                   containers:
                     - name: redis
                       image: redis
-        "#},
-        "replica: {}\n",
-        true,
+        "#};
+    let have = generate(template, "replica: {}\n", true)?;
+    let want = reference_schema(template, "replica: {}\n", true)?;
+    assert_render_controls(
+        &have,
+        &want,
+        &[
+            (serde_json::json!({"replica": {}}), true),
+            (serde_json::json!({"replica": {"affinity": false}}), true),
+            (
+                serde_json::json!({"replica": {"affinity": {"nodeAffinity": {}}}}),
+                true,
+            ),
+            (
+                serde_json::json!({"replica": {"affinity": {"nodeAffinity": true}}}),
+                false,
+            ),
+            (
+                serde_json::json!({"replica": {"affinity": "{{ dict | toYaml }}"}}),
+                true,
+            ),
+        ],
     )?;
-    // The complete provider object arm must survive alongside falsey and runtime text arms.
-    let want: Value = serde_json::from_str(include_str!(
-        "fixtures/serialized_output/redis-affinity.json"
-    ))?;
+    // Compare every provider field and lexical clause across the independent selection law.
     sim_assert_eq!(have: have, want: want);
     Ok(())
 }
@@ -200,16 +278,38 @@ fn redis_common_annotations_records_helm_decode_failure() -> eyre::Result<()> {
         data:
           redis.conf: ""
     "#};
-    let want: Value = serde_json::from_str(include_str!(
-        "fixtures/serialized_output/redis-annotations.json"
-    ))?;
+    let want = reference_schema(template, "commonAnnotations: null\n", true)?;
     // Helm decodes metadata even when Kubernetes provider validation is disabled.
-    // Evaluate both modes before asserting so the red run records independent failure coverage.
+    // Check both modes because Helm metadata decoding applies without a provider.
     let without_provider = generate(template, "commonAnnotations: null\n", false)?;
     let with_provider = generate(template, "commonAnnotations: null\n", true)?;
-    let without_provider_want: Value = serde_json::from_str(include_str!(
-        "fixtures/serialized_output/redis-annotations-disabled.json"
-    ))?;
+    let without_provider_want = reference_schema(template, "commonAnnotations: null\n", false)?;
+    for (actual, expected) in [
+        (&without_provider, &without_provider_want),
+        (&with_provider, &want),
+    ] {
+        assert_render_controls(
+            actual,
+            expected,
+            &[
+                (serde_json::json!({}), true),
+                (serde_json::json!({"commonAnnotations": false}), true),
+                (
+                    serde_json::json!({"commonAnnotations": {"team": "ops"}}),
+                    true,
+                ),
+                (
+                    serde_json::json!({"commonAnnotations": {"team": []}}),
+                    false,
+                ),
+                (serde_json::json!({"commonAnnotations": true}), false),
+                (
+                    serde_json::json!({"commonAnnotations": "{{ dict | toYaml }}"}),
+                    true,
+                ),
+            ],
+        )?;
+    }
     sim_assert_eq!(have: [&without_provider, &with_provider], want: [&without_provider_want, &want]);
     Ok(())
 }

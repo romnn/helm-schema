@@ -18,7 +18,8 @@ use helm_schema_syntax::{
     ScalarStyle, Skeleton, SkeletonSegment, Span, YamlNodeKind, YamlOwnership,
 };
 
-use super::quoted::{self, LexicalState};
+use super::quoted::{self, LexicalState, States};
+use super::relationship::TextFormat;
 use super::{
     Coverage, Datum, Exit, FileOutput, Flow, FrozenTest, FrozenValue, Leaf, ObservationId,
     OutputNode, TextBuffer, TextPart, ValueNode,
@@ -27,8 +28,6 @@ use super::{
 // Helm 4.2.3 SplitManifests uses Go's ASCII Perl whitespace class.
 static SPLITTER: std::sync::LazyLock<Result<regex::Regex, regex::Error>> =
     std::sync::LazyLock::new(|| regex::Regex::new(r"(?:^|[ \t\r\n\x0c]*\n)---[ \t\r\n\x0c]*"));
-
-type States = BTreeMap<LexicalState, Predicate>;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct SerializerSpelling {
@@ -526,7 +525,7 @@ impl OutputPlacement {
             layouts: Vec::new(),
             unknown: Vec::new(),
             remaining: limit,
-            lexical: LexicalTransfers::new(input_paths),
+            lexical: LexicalTransfers::new(input_paths, input_objects),
             input_objects,
             root_condition: condition.clone(),
             output,
@@ -2427,21 +2426,33 @@ fn stripped_skeleton(skeleton: &Skeleton, removed: &[Span]) -> Skeleton {
     }
 }
 
+#[derive(Clone, PartialEq, Eq, Hash)]
+struct BufferContext {
+    graph: *const TextBuffer,
+    state: LexicalState,
+    transforms: Vec<super::relationship::TextTransform>,
+}
+
 struct LexicalTransfers<'a> {
     values: AHashMap<(*const super::HeapVersion, *const ValueNode, LexicalState), States>,
-    buffers: AHashMap<(*const TextBuffer, LexicalState), States>,
+    buffers: AHashMap<BufferContext, States>,
     remaining: usize,
     input_paths: &'a super::input_paths::InputPaths,
+    input_objects: &'a BTreeMap<ValuesPath, super::InputBacking>,
     map_depth: usize,
 }
 
 impl<'a> LexicalTransfers<'a> {
-    fn new(input_paths: &'a super::input_paths::InputPaths) -> Self {
+    fn new(
+        input_paths: &'a super::input_paths::InputPaths,
+        input_objects: &'a BTreeMap<ValuesPath, super::InputBacking>,
+    ) -> Self {
         Self {
             values: AHashMap::new(),
             buffers: AHashMap::new(),
             remaining: 4096,
             input_paths,
+            input_objects,
             map_depth: 0,
         }
     }
@@ -2462,8 +2473,16 @@ impl<'a> LexicalTransfers<'a> {
         let initial = BTreeMap::from([(state, Predicate::True)]);
         let result = if state.is_absorbing() {
             initial
+        } else if let Some(helm_schema_core::GuardValue::String(text)) = value.literal() {
+            quoted::literal(initial, text, memo)
+        } else if let Some(derivation) = value.value.operation_preimage() {
+            self.derived(derivation, state, memo)
         } else if let Some(path) = value.identity() {
-            quoted::formatted_input(initial, path, memo)
+            if value.go_type() == super::kinds::GoType::String {
+                quoted::input(initial, path, memo)
+            } else {
+                quoted::formatted_input(initial, path, value.go_type(), memo)
+            }
         } else if let Some(text) = value.exact_text() {
             quoted::literal(initial, &text, memo)
         } else {
@@ -2475,10 +2494,7 @@ impl<'a> LexicalTransfers<'a> {
                 ValueNode::Select { decision, yes, no } => {
                     let branches = [yes, no].map(|branch| {
                         self.value(
-                            &FrozenValue {
-                                heap: Rc::clone(&value.heap),
-                                value: branch.clone(),
-                            },
+                            &FrozenValue::at(Rc::clone(&value.heap), branch.clone()),
                             state,
                             memo,
                         )
@@ -2520,6 +2536,150 @@ impl<'a> LexicalTransfers<'a> {
         };
         self.values.insert(key, result.clone());
         result
+    }
+
+    fn derived(
+        &mut self,
+        derivation: &super::relationship::Derivation,
+        state: LexicalState,
+        memo: &PredicateMemo,
+    ) -> States {
+        match &derivation.operation {
+            super::relationship::ValueOperation::Text(transform) => self.transformed(
+                &derivation.source,
+                state,
+                std::slice::from_ref(transform),
+                memo,
+            ),
+            super::relationship::ValueOperation::Format(TextFormat::Value | TextFormat::String) => {
+                self.stringified(&derivation.source, state, memo)
+            }
+            super::relationship::ValueOperation::Decode(_)
+            | super::relationship::ValueOperation::Capability {
+                guard: _,
+                decision: _,
+            }
+            | super::relationship::ValueOperation::Trim
+            | super::relationship::ValueOperation::Numeric(_)
+            | super::relationship::ValueOperation::Descriptor { kind_only: _ }
+            | super::relationship::ValueOperation::Member(_)
+            | super::relationship::ValueOperation::Copy
+            | super::relationship::ValueOperation::Omit(_)
+            | super::relationship::ValueOperation::Pick(_)
+            | super::relationship::ValueOperation::Merge { overwrite: _ } => States::new(),
+        }
+    }
+
+    fn stringified(
+        &mut self,
+        source: &FrozenValue,
+        state: LexicalState,
+        memo: &PredicateMemo,
+    ) -> States {
+        if let ValueNode::Select { decision, yes, no } = source.value.node.as_ref() {
+            if self.remaining == 0 {
+                return States::new();
+            }
+            self.remaining -= 1;
+            let branches = [yes, no].map(|branch| {
+                self.stringified(
+                    &FrozenValue::at(Rc::clone(&source.heap), branch.clone()),
+                    state,
+                    memo,
+                )
+            });
+            return Self::choice(decision, branches, memo);
+        }
+        let path = source.identity();
+        if let Some(path) = path
+            && matches!(
+                source.go_type(),
+                super::kinds::GoType::Map
+                    | super::kinds::GoType::Slice
+                    | super::kinds::GoType::Unknown
+            )
+        {
+            let mut query = super::relationship::RelationshipQuery::new(
+                self.input_objects,
+                self.remaining.min(1024),
+            );
+            let unchanged = query.original_unchanged(path, &source.heap);
+            self.remaining = self.remaining.saturating_sub(query.work());
+            if !unchanged {
+                return States::new();
+            }
+        }
+        let mut states = self.value(source, state, memo);
+        // Sprig prints nil as <nil>, outside the raw-emission alphabet.
+        if let Some(path) = path {
+            let nil = super::kinds::input_nil_predicate(path);
+            for condition in states.values_mut() {
+                *condition = memo.normalize(Predicate::all(vec![
+                    condition.clone(),
+                    nil.clone().negated(),
+                ]));
+            }
+        }
+        states
+    }
+
+    fn transformed(
+        &mut self,
+        value: &FrozenValue,
+        state: LexicalState,
+        transforms: &[super::relationship::TextTransform],
+        memo: &PredicateMemo,
+    ) -> States {
+        if transforms.len() > 32 || self.remaining == 0 {
+            return States::new();
+        }
+        self.remaining -= 1;
+        let prefix = super::text_actions::prefix(value, transforms, &mut self.remaining);
+        let proved = quoted::literal(BTreeMap::from([(state, Predicate::True)]), &prefix, memo);
+        if proved.keys().any(|state| state.is_absorbing()) {
+            return proved;
+        }
+        if let Some(text) = value.exact_text() {
+            let transformed = quoted::mapped_text(&text, transforms);
+            return transformed.map_or_else(States::new, |text| {
+                quoted::literal(BTreeMap::from([(state, Predicate::True)]), &text, memo)
+            });
+        }
+        if let Some(path) = value.identity() {
+            return quoted::transformed_input(state, path, transforms, memo);
+        }
+        if let Some(derivation) = value.value.operation_preimage() {
+            if let super::relationship::ValueOperation::Text(transform) = &derivation.operation {
+                let mut composed = vec![transform.clone()];
+                composed.extend_from_slice(transforms);
+                return self.transformed(&derivation.source, state, &composed, memo);
+            }
+            return States::new();
+        }
+        match value.value.node.as_ref() {
+            ValueNode::Select { decision, yes, no } => {
+                let branches = [yes, no].map(|branch| {
+                    self.transformed(
+                        &FrozenValue::at(Rc::clone(&value.heap), branch.clone()),
+                        state,
+                        transforms,
+                        memo,
+                    )
+                });
+                Self::choice(decision, branches, memo)
+            }
+            ValueNode::Leaf(Leaf {
+                datum: Datum::Text(text),
+                origin: _,
+            }) => match text.term() {
+                super::text::TextTerm::Capture {
+                    graph,
+                    strip_marker: false,
+                } => self.transfer_buffer(graph, state, transforms, memo),
+                _ => States::new(),
+            },
+            ValueNode::Leaf(_) => States::new(),
+        }
     }
 
     fn map(
@@ -2576,22 +2736,8 @@ impl<'a> LexicalTransfers<'a> {
                 &format!("{}{key}:", if emitted { " " } else { "" }),
                 memo,
             );
-            let child = FrozenValue {
-                heap: Rc::clone(&value.heap),
-                value: child.clone(),
-            };
-            let mut next = States::new();
-            for (state, prefix) in states {
-                for (end, condition) in self.value(&child, state, memo) {
-                    quoted::merge(
-                        &mut next,
-                        end,
-                        Predicate::all(vec![prefix.clone(), condition]),
-                        memo,
-                    );
-                }
-            }
-            states = next;
+            let child = FrozenValue::at(Rc::clone(&value.heap), child.clone());
+            states = quoted::compose(states, |start| self.value(&child, start, memo), memo);
             emitted = true;
         }
         let result = quoted::literal(states, "]", memo);
@@ -2666,20 +2812,8 @@ impl<'a> LexicalTransfers<'a> {
                 }
             },
             super::text::TextTerm::Quote { value } => {
-                use super::kinds::GoType;
                 // Sprig skips nil interfaces; typed nil maps and slices still print.
-                let nil = match value.go_type() {
-                    GoType::Nil => Some(Predicate::True),
-                    GoType::Unknown => value.identity().map(super::kinds::input_nil_predicate),
-                    GoType::Bool
-                    | GoType::String
-                    | GoType::Int
-                    | GoType::Int64
-                    | GoType::Uint64
-                    | GoType::Float64
-                    | GoType::Map
-                    | GoType::Slice => Some(Predicate::False),
-                };
+                let nil = super::text::quote_nil_condition(value);
                 let mut result = States::new();
                 if let Some(nil) = nil {
                     quoted::merge(&mut result, state, nil.clone(), memo);
@@ -2695,20 +2829,29 @@ impl<'a> LexicalTransfers<'a> {
                 newline,
             } => {
                 let prefix = super::text::indent("", *width, *newline);
-                let mut result = States::new();
-                for (state, condition) in quoted::literal(initial, &prefix, memo) {
-                    for (end, guard) in self.value(value, state, memo) {
+                let states = quoted::literal(initial, &prefix, memo);
+                quoted::compose(states, |start| self.value(value, start, memo), memo)
+            }
+            super::text::TextTerm::Tpl { source, result } => {
+                let mut outcomes = self.value(result, state, memo);
+                let action_free = super::text_actions::action_free(
+                    source,
+                    self.input_objects,
+                    memo,
+                    &mut self.remaining,
+                );
+                if action_free != Predicate::False {
+                    for (end, condition) in self.value(source, state, memo) {
                         quoted::merge(
-                            &mut result,
+                            &mut outcomes,
                             end,
-                            Predicate::all(vec![condition.clone(), guard]),
+                            Predicate::all(vec![action_free.clone(), condition]),
                             memo,
                         );
                     }
                 }
-                result
+                outcomes
             }
-            super::text::TextTerm::Tpl { source: _, result } => self.value(result, state, memo),
             super::text::TextTerm::Yaml { value, pretty: _ }
             | super::text::TextTerm::Json {
                 value,
@@ -2730,7 +2873,7 @@ impl<'a> LexicalTransfers<'a> {
         let [yes, no] = branches;
         let mut result = States::new();
         match coverage {
-            Coverage::Exact
+            Coverage::Exact | Coverage::CertifiedPartial
                 if !when_true.contains_approximation() && !when_false.contains_approximation() =>
             {
                 for (branch, guard) in [(yes, when_true), (no, when_false)] {
@@ -2744,7 +2887,7 @@ impl<'a> LexicalTransfers<'a> {
                     }
                 }
             }
-            Coverage::Exact | Coverage::Partial => {
+            Coverage::Exact | Coverage::Partial | Coverage::CertifiedPartial => {
                 // A shared transition is proved independently of the unknown branch outcome.
                 for (end, condition) in yes {
                     if let Some(other) = no.get(&end) {
@@ -2864,23 +3007,29 @@ impl<'a> LexicalTransfers<'a> {
         let Some(node) = term.node() else {
             return States::new();
         };
-        let mut result = States::new();
-        for (state, condition) in states {
-            let ends = self.part(node.content(), state, memo);
-            for (end, guard) in ends {
-                quoted::merge(
-                    &mut result,
-                    end,
-                    Predicate::all(vec![condition.clone(), guard]),
-                    memo,
-                );
-            }
-        }
-        result
+        quoted::compose(
+            states,
+            |start| self.part(node.content(), start, &[], memo),
+            memo,
+        )
     }
 
     fn buffer(&mut self, buffer: &TextBuffer, state: LexicalState, memo: &PredicateMemo) -> States {
-        let key = (std::ptr::from_ref(buffer), state);
+        self.transfer_buffer(buffer, state, &[], memo)
+    }
+
+    fn transfer_buffer(
+        &mut self,
+        buffer: &TextBuffer,
+        state: LexicalState,
+        transforms: &[super::relationship::TextTransform],
+        memo: &PredicateMemo,
+    ) -> States {
+        let key = BufferContext {
+            graph: std::ptr::from_ref(buffer),
+            state,
+            transforms: transforms.to_vec(),
+        };
         if let Some(result) = self.buffers.get(&key) {
             return result.clone();
         }
@@ -2891,35 +3040,48 @@ impl<'a> LexicalTransfers<'a> {
                 break;
             }
             self.remaining -= 1;
-            let mut next = States::new();
-            for (state, condition) in states {
-                for (end, guard) in self.part(node.content(), state, memo) {
-                    quoted::merge(
-                        &mut next,
-                        end,
-                        Predicate::all(vec![condition.clone(), guard]),
-                        memo,
-                    );
-                }
-            }
-            states = next;
+            states = quoted::compose(
+                states,
+                |start| self.part(node.content(), start, transforms, memo),
+                memo,
+            );
         }
-        self.buffers.insert(key, states.clone());
+        if self.remaining > 0 {
+            self.buffers.insert(key, states.clone());
+        }
         states
     }
 
-    fn part(&mut self, part: &TextPart, state: LexicalState, memo: &PredicateMemo) -> States {
+    fn part(
+        &mut self,
+        part: &TextPart,
+        state: LexicalState,
+        transforms: &[super::relationship::TextTransform],
+        memo: &PredicateMemo,
+    ) -> States {
         if state.is_absorbing() {
             return BTreeMap::from([(state, Predicate::True)]);
         }
         match part {
-            TextPart::Frozen(value) => self.value(value, state, memo),
+            TextPart::Frozen(value) => {
+                if transforms.is_empty() {
+                    self.value(value, state, memo)
+                } else {
+                    self.transformed(value, state, transforms, memo)
+                }
+            }
             TextPart::Bytes(text) => {
-                quoted::literal(BTreeMap::from([(state, Predicate::True)]), text, memo)
+                if transforms.is_empty() {
+                    return quoted::literal(BTreeMap::from([(state, Predicate::True)]), text, memo);
+                }
+                quoted::mapped_text(text, transforms).map_or_else(States::new, |text| {
+                    quoted::literal(BTreeMap::from([(state, Predicate::True)]), &text, memo)
+                })
             }
             TextPart::Unknown(_) => States::new(),
             TextPart::Select { decision, yes, no } => {
-                let branches = [yes, no].map(|branch| self.buffer(branch, state, memo));
+                let branches =
+                    [yes, no].map(|branch| self.transfer_buffer(branch, state, transforms, memo));
                 Self::choice(decision, branches, memo)
             }
         }
@@ -3073,7 +3235,11 @@ fn token_preservation(
 ) -> Predicate {
     let mut preserved = vec![states.remove(&closed).unwrap_or(Predicate::False)];
     if style == ScalarStyle::Plain {
-        for end in [LexicalState::Closed, LexicalState::PlainStart] {
+        for end in [
+            LexicalState::Closed,
+            LexicalState::PlainStart,
+            LexicalState::PlainColon,
+        ] {
             preserved.push(states.remove(&end).unwrap_or(Predicate::False));
         }
     }
@@ -3158,10 +3324,7 @@ fn indented_value(
         ValueNode::Select { decision, yes, no } => {
             let branches = [yes, no].map(|branch| {
                 indented_value(
-                    &FrozenValue {
-                        heap: Rc::clone(&value.heap),
-                        value: branch.clone(),
-                    },
+                    &FrozenValue::at(Rc::clone(&value.heap), branch.clone()),
                     required,
                     memo,
                     remaining,
@@ -3412,6 +3575,18 @@ fn invalid_states(
             .remove(&LexicalState::Invalid)
             .unwrap_or(Predicate::False),
     ];
+    if !node.key
+        && matches!(
+            block_parent(owned, node),
+            Some(YamlNodeKind::Pair | YamlNodeKind::Item)
+        )
+    {
+        failures.push(
+            states
+                .remove(&LexicalState::DirectiveInvalid)
+                .unwrap_or(Predicate::False),
+        );
+    }
     if !node.key && block_parent(owned, node) == Some(YamlNodeKind::Pair) {
         for state in [LexicalState::BlockInvalid, LexicalState::ClosedCollection] {
             failures.push(states.remove(&state).unwrap_or(Predicate::False));

@@ -635,6 +635,7 @@ impl<'a> Projection<'a, '_> {
                             None,
                             std::iter::empty(),
                         );
+                        row.text_preimage = if whole { policy.text_preimage } else { None };
                         row.stringified = true;
                         row.digest = policy.digest;
                         row.nil_omitting = policy.nil_omitting;

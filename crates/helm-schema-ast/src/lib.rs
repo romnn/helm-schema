@@ -19,17 +19,14 @@ pub use expr::{
 };
 pub(crate) use helm_schema_syntax::structural_mapping_colon;
 pub use helm_schema_syntax::{parse_yaml_key, unquote_yaml_scalar};
-pub use printf_eval::{
-    literal_printf_format, render_printf_scalar_values, render_printf_string_sets,
-    token_initial_printf_string_argument,
-};
+pub use printf_eval::{PrintfPart, PrintfVerb, parse_supported_printf_format};
 pub use range_structure::{
     range_destructured_key_variable, range_destructured_value_variable,
     range_has_destructured_variable_definition, range_header_from_source, range_uses_assignment,
     range_variable_name_expr,
 };
 pub use resource_span::{KindBranchSource, ResourceSpan};
-pub use semver_constraint::{semver_constraint_match_pattern, semver_constraint_matches_version};
+pub use semver_constraint::semver_constraint_matches_version;
 pub use template_action::contains_template_action;
 pub use tree_sitter_utils::{children_with_field, parse_expr_text, parse_go_template};
 pub use values_comments::extract_values_yaml_descriptions;

@@ -129,6 +129,24 @@ impl Value {
     }
 }
 
+/// Sprig omits nil interfaces, while typed nil maps and slices still print.
+pub(super) fn quote_nil_condition(value: &FrozenValue) -> Option<helm_schema_core::Predicate> {
+    use super::kinds::GoType;
+    use helm_schema_core::Predicate;
+    match value.go_type() {
+        GoType::Nil => Some(Predicate::True),
+        GoType::Unknown => value.identity().map(super::kinds::input_nil_predicate),
+        GoType::Bool
+        | GoType::String
+        | GoType::Int
+        | GoType::Int64
+        | GoType::Uint64
+        | GoType::Float64
+        | GoType::Map
+        | GoType::Slice => Some(Predicate::False),
+    }
+}
+
 pub(super) fn capture(graph: &TextBuffer, strip_marker: bool) -> Value {
     let inputs = graph.inputs();
     if let Some(text) = graph.exact_text() {
@@ -192,7 +210,7 @@ fn opaque(graph: &TextBuffer) -> bool {
     }
 }
 
-enum Unresolved {
+pub(super) enum Unresolved {
     Choice(Rc<super::FrozenTest>),
     Unknown,
     Exhausted,
@@ -605,7 +623,7 @@ fn value_text(
     }
 }
 
-fn buffer_text(
+pub(super) fn buffer_text(
     buffer: &TextBuffer,
     outcome: &Outcome<'_>,
     remaining: &mut usize,
@@ -641,6 +659,14 @@ fn choice(decision: &Rc<super::FrozenTest>, yes: Value, no: Value) -> Value {
             no,
         }),
     }
+}
+
+pub(super) fn bounded_replace(text: &str, from: &str, to: &str, limit: usize) -> Option<String> {
+    let occurrences = text.matches(from).count();
+    let removed = occurrences.checked_mul(from.len())?;
+    let added = occurrences.checked_mul(to.len())?;
+    let length = text.len().checked_sub(removed)?.checked_add(added)?;
+    (length <= limit).then(|| text.replace(from, to))
 }
 
 pub(super) fn indent(text: &str, width: usize, newline: bool) -> String {

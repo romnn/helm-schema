@@ -17,6 +17,7 @@ mod provider_origin;
 mod provider_schema_fragment;
 mod provider_schema_use;
 mod schema_provider;
+mod text_preimage;
 mod types;
 mod value_path;
 mod value_pattern;
@@ -51,6 +52,7 @@ pub use provider_schema_fragment::{
 };
 pub use provider_schema_use::ProviderSchemaUse;
 pub use schema_provider::ResourceSchemaOracle;
+pub use text_preimage::{RegularLanguage, RegularTransition, TextPreimage, regex_character_class};
 pub use types::{KindBranch, PlainScalarPlacement, ResourceRef, ValueKind, YamlPath};
 pub use value_path::{
     Segment, ValuesPath, append_each_member_value_path, append_value_path, join_encoded_value_path,

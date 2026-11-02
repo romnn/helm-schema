@@ -28,9 +28,33 @@ fn default_retains_an_explicit_unknown_primary() -> eyre::Result<()> {
         .into_iter()
         .filter_map(|alternative| alternative.value().literal().cloned())
         .collect();
-    sim_assert_eq!(have: literals, want: BTreeSet::from([GuardValue::string("fallback")]));
+    sim_assert_eq!(have: literals, want: BTreeSet::from([GuardValue::string("[]"), GuardValue::string("fallback")]));
     sim_assert_eq!(have: site.value().literal(), want: None);
-    sim_assert_eq!(have: site.projected_scalar(), want: None);
+    assert!(
+        site.value()
+            .alternatives()
+            .iter()
+            .any(|arm| arm.value().literal().is_none()),
+        "the formatted primary lost its unknown coverage"
+    );
+    let projected = site
+        .projected_scalar()
+        .ok_or_eyre("known formatter arms missing")?;
+    let known = projected
+        .content()
+        .ok_or_eyre("known formatter contents missing")?
+        .arms()
+        .filter_map(|(_, content)| match content {
+            crate::value::scalar_value::ScalarContent::Literal(value) => Some(value.clone()),
+            crate::value::scalar_value::ScalarContent::Identity(_)
+            | crate::value::scalar_value::ScalarContent::StringDomain {
+                pattern: _,
+                min_bytes: _,
+                max_bytes: _,
+            } => None,
+        })
+        .collect::<BTreeSet<_>>();
+    sim_assert_eq!(have: known, want: literals);
     Ok(())
 }
 

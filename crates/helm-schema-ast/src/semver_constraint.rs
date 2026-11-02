@@ -1,28 +1,16 @@
-//! Exact lexical encodings of Sprig `semverCompare` comparator constraints.
-//!
-//! A bounded comparator constraint (`<3.0.0`, `>=1.8`) partitions version
-//! strings into "guard holds" and "guard does not hold". Both sides are
-//! regular: a version is `v?MAJOR(.MINOR(.PATCH)?)?` with numeric components
-//! (leading zeros tolerated by Masterminds' loose parser), missing components
-//! read as zero, and build metadata ignored, so a numeric comparison against
-//! a literal bound lowers to a finite alternation over digit prefixes. The
-//! encoding here is exact — it matches precisely the versions the comparator
-//! accepts — which lets condition lowering treat the derived pattern as a
-//! structural guard rather than a heuristic.
-
-use std::fmt::Write as _;
+//! Concrete Sprig semantic-version comparison through one parsed numeric transfer.
 
 use nom::Parser as _;
 use nom::branch::alt;
 use nom::bytes::complete::{tag, take_while1};
 use nom::character::complete::{char, digit1, space0};
 use nom::combinator::{all_consuming, map_res, opt, recognize, value};
-use nom::multi::many0;
+use nom::multi::{many0, separated_list1};
 use nom::sequence::{delimited, pair, preceded};
 use semver::{Version, VersionReq};
 
 /// The comparison operator of a single bounded comparator constraint.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 enum ComparisonOp {
     Eq,
     Ne,
@@ -32,115 +20,152 @@ enum ComparisonOp {
     Ge,
 }
 
-/// Lowers a `semverCompare` constraint to a regex matching exactly the
-/// version strings that satisfy it.
-///
-/// Returns `None` for constraint shapes outside the supported subset: a
-/// single `<`/`<=`/`>`/`>=` comparator against a plain numeric bound, an
-/// exact three-component tilde range, plus the two prerelease-FLOOR idioms
-/// charts use to opt prereleases in:
-/// `>=X-0` (every version whose core satisfies `>= X`, prereleases
-/// included — no prerelease identifier sorts below `0`) and `<X-D` with a
-/// single-digit prerelease `D` (every version whose core satisfies `< X`,
-/// prereleases included, plus the prereleases of `X` itself whose first
-/// identifier is a numeric below `D` — longer numerics and alphanumerics
-/// sort above any single digit). Other prerelease bounds, wildcards,
-/// ranges, and comparator lists change Masterminds' matching rules and
-/// abstain rather than risk an inexact encoding. Without a prerelease
-/// suffix the produced pattern never matches prerelease versions,
-/// mirroring Masterminds' bare-comparator rule.
-#[must_use]
-pub fn semver_constraint_match_pattern(constraint: &str) -> Option<String> {
-    let text = constraint.trim();
-    if let Some(version) = text.strip_prefix('~') {
-        return tilde_patch_match_pattern(version.trim());
+#[derive(Clone)]
+struct NumericVersion<'a> {
+    core: [&'a str; 3],
+    written: usize,
+    prerelease: Option<&'a str>,
+    build: Option<&'a str>,
+}
+
+impl NumericVersion<'_> {
+    fn compare_core(&self, other: &Self) -> std::cmp::Ordering {
+        self.core
+            .iter()
+            .zip(other.core)
+            .map(|(left, right)| decimal_order(left, right))
+            .find(|order| !order.is_eq())
+            .unwrap_or(std::cmp::Ordering::Equal)
     }
-    let (op, rest) = if let Some(rest) = text.strip_prefix(">=") {
-        (ComparisonOp::Ge, rest)
-    } else if let Some(rest) = text.strip_prefix("<=") {
-        (ComparisonOp::Le, rest)
-    } else if let Some(rest) = text.strip_prefix('>') {
-        (ComparisonOp::Gt, rest)
-    } else {
-        (ComparisonOp::Lt, text.strip_prefix('<')?)
-    };
-    let version = rest.trim();
-    let version = version.strip_prefix('v').unwrap_or(version);
-    if version.contains('+') {
-        return None;
-    }
-    let (core, prerelease) = match version.split_once('-') {
-        Some((core, prerelease)) => (core, Some(prerelease)),
-        None => (version, None),
-    };
-    let parts: Vec<&str> = core.split('.').collect();
+}
+
+fn decimal_order(left: &str, right: &str) -> std::cmp::Ordering {
+    let left = left.trim_start_matches('0');
+    let right = right.trim_start_matches('0');
+    left.len().cmp(&right.len()).then_with(|| left.cmp(right))
+}
+
+fn numeric_version(input: &str) -> nom::IResult<&str, NumericVersion<'_>> {
+    let (input, (_, parts, prerelease, build)) = (
+        opt(char('v')),
+        separated_list1(char('.'), digit1),
+        opt(preceded(char('-'), semver_identifiers)),
+        opt(preceded(char('+'), semver_identifiers)),
+    )
+        .parse(input)?;
     if parts.len() > 3 {
-        return None;
+        return Err(nom::Err::Error(nom::error::Error::new(
+            input,
+            nom::error::ErrorKind::Count,
+        )));
     }
-    let mut bound = [0u64; 3];
-    for (position, part) in parts.iter().enumerate() {
-        if part.is_empty() || !part.bytes().all(|byte| byte.is_ascii_digit()) {
-            return None;
-        }
-        *bound.get_mut(position)? = part.parse().ok()?;
+    let mut core = ["0"; 3];
+    for (slot, part) in core.iter_mut().zip(&parts) {
+        *slot = part;
     }
-    let body = match prerelease {
-        None => {
-            let alternatives = core_alternatives(op, bound);
-            if alternatives.is_empty() {
-                return None;
-            }
-            alternatives.join("|")
-        }
-        Some(prerelease) => prerelease_floor_body(op, bound, prerelease)?,
-    };
-    Some(format!(
-        "^v?(?:{body})(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    Ok((
+        input,
+        NumericVersion {
+            core,
+            written: parts.len(),
+            prerelease,
+            build,
+        },
     ))
 }
 
-/// `~MAJOR.MINOR.PATCH` fixes the first two components and admits every
-/// patch at or above the written lower bound. Missing version components
-/// still read as zero, so the one- and two-component spellings participate
-/// only when the omitted lower-bound components are zero.
-fn tilde_patch_match_pattern(version: &str) -> Option<String> {
-    let version = version.strip_prefix('v').unwrap_or(version);
-    if version.contains(['-', '+']) {
-        return None;
+enum NumericConstraint<'a> {
+    Compare {
+        op: ComparisonOp,
+        bound: NumericVersion<'a>,
+    },
+    Tilde {
+        bound: NumericVersion<'a>,
+    },
+}
+
+impl<'a> NumericConstraint<'a> {
+    fn parse(input: &'a str) -> Option<Self> {
+        let operator = alt((
+            value(Some(ComparisonOp::Ge), tag(">=")),
+            value(Some(ComparisonOp::Le), tag("<=")),
+            value(Some(ComparisonOp::Gt), tag(">")),
+            value(Some(ComparisonOp::Lt), tag("<")),
+            value(None, tag("~")),
+        ));
+        let (_, (op, bound)) = all_consuming((operator, preceded(space0, numeric_version)))
+            .parse(input.trim())
+            .ok()?;
+        let constraint = match op {
+            Some(op) => Self::Compare { op, bound },
+            None => Self::Tilde { bound },
+        };
+        let bound = match &constraint {
+            Self::Compare { op: _, bound } | Self::Tilde { bound } => bound,
+        };
+        if bound.build.is_some() || bound.core.iter().any(|part| part.parse::<u64>().is_err()) {
+            return None;
+        }
+        let supported = match &constraint {
+            Self::Tilde { bound } => bound.written == 3 && bound.prerelease.is_none(),
+            Self::Compare { op, bound } => {
+                let floor = match bound.prerelease {
+                    None => true,
+                    Some("0") if *op == ComparisonOp::Ge => true,
+                    Some(pre) if *op == ComparisonOp::Lt => {
+                        pre.len() == 1 && pre.bytes().all(|byte| byte.is_ascii_digit())
+                    }
+                    Some(_) => false,
+                };
+                floor
+                    && !(*op == ComparisonOp::Lt
+                        && bound
+                            .core
+                            .iter()
+                            .all(|part| part.bytes().all(|byte| byte == b'0'))
+                        && bound.prerelease.is_none_or(|pre| pre == "0"))
+            }
+        };
+        supported.then_some(constraint)
     }
-    let parts: Vec<&str> = version.split('.').collect();
-    let [major, minor, patch] = parts.as_slice() else {
-        return None;
-    };
-    if parts
-        .iter()
-        .any(|part| part.is_empty() || !part.bytes().all(|byte| byte.is_ascii_digit()))
-    {
-        return None;
+
+    fn matches(&self, version: &NumericVersion<'_>) -> bool {
+        match self {
+            Self::Tilde { bound } => {
+                let [major, minor, patch] = version.core;
+                let [bound_major, bound_minor, bound_patch] = bound.core;
+                version.prerelease.is_none()
+                    && decimal_order(major, bound_major).is_eq()
+                    && decimal_order(minor, bound_minor).is_eq()
+                    && !decimal_order(patch, bound_patch).is_lt()
+            }
+            Self::Compare { op, bound } => {
+                let order = version.compare_core(bound);
+                if let Some(pre) = bound.prerelease {
+                    if *op == ComparisonOp::Ge {
+                        return !order.is_lt();
+                    }
+                    let first = version.prerelease.and_then(|pre| pre.split('.').next());
+                    return order.is_lt()
+                        || order.is_eq()
+                            && first.is_some_and(|first| {
+                                first.len() == 1
+                                    && first.bytes().all(|byte| byte.is_ascii_digit())
+                                    && first < pre
+                            });
+                }
+                version.prerelease.is_none()
+                    && match op {
+                        ComparisonOp::Eq => order.is_eq(),
+                        ComparisonOp::Ne => !order.is_eq(),
+                        ComparisonOp::Lt => order.is_lt(),
+                        ComparisonOp::Le => !order.is_gt(),
+                        ComparisonOp::Gt => order.is_gt(),
+                        ComparisonOp::Ge => !order.is_lt(),
+                    }
+            }
+        }
     }
-    let bound = [
-        major.parse::<u64>().ok()?,
-        minor.parse::<u64>().ok()?,
-        patch.parse::<u64>().ok()?,
-    ];
-    let major = decimal_eq_pattern(bound[0]);
-    let minor = decimal_eq_pattern(bound[1]);
-    let patch = format!(
-        "(?:{}|{})",
-        decimal_eq_pattern(bound[2]),
-        decimal_gt_pattern(bound[2])
-    );
-    let mut cores = vec![format!("{major}\\.{minor}\\.{patch}")];
-    if bound[2] == 0 {
-        cores.push(format!("{major}\\.{minor}"));
-    }
-    if bound[1] == 0 && bound[2] == 0 {
-        cores.push(major);
-    }
-    Some(format!(
-        "^v?(?:{})(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$",
-        cores.join("|")
-    ))
 }
 
 /// Evaluates a supported Helm semantic-version constraint against a concrete
@@ -153,8 +178,12 @@ fn tilde_patch_match_pattern(version: &str) -> Option<String> {
 /// strings. Unsupported constraint syntax returns `None`.
 #[must_use]
 pub fn semver_constraint_matches_version(constraint: &str, version: &str) -> Option<bool> {
-    if let Some(pattern) = semver_constraint_match_pattern(constraint) {
-        return Some(regex::Regex::new(&pattern).ok()?.is_match(version));
+    if let Some(constraint) = NumericConstraint::parse(constraint) {
+        return Some(
+            all_consuming(numeric_version)
+                .parse(version)
+                .is_ok_and(|(_, version)| constraint.matches(&version)),
+        );
     }
     if let Ok((_, (op, bound))) =
         all_consuming(delimited(space0, concrete_comparator, space0)).parse(constraint)
@@ -245,223 +274,6 @@ fn semver_identifier(input: &str) -> nom::IResult<&str, &str> {
     take_while1(|character: char| character.is_ascii_alphanumeric() || character == '-')(input)
 }
 
-/// One semver prerelease tail (`-alpha.1`): a dash followed by dot-separated
-/// alphanumeric identifiers.
-const PRERELEASE_TAIL: &str = "-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*";
-
-/// The alternation body for the prerelease-floor comparators (see
-/// [`semver_constraint_match_pattern`]).
-fn prerelease_floor_body(op: ComparisonOp, bound: [u64; 3], prerelease: &str) -> Option<String> {
-    match op {
-        // `>= X-0`: the core decides alone — every prerelease of a
-        // satisfying core (X itself included) sorts at or above `X-0`.
-        ComparisonOp::Ge if prerelease == "0" => {
-            let alternatives = core_alternatives(ComparisonOp::Ge, bound);
-            if alternatives.is_empty() {
-                return None;
-            }
-            Some(format!(
-                "(?:{})(?:{PRERELEASE_TAIL})?",
-                alternatives.join("|")
-            ))
-        }
-        // `< X-D` (single digit D): cores below X with any prerelease,
-        // plus X's own prereleases whose FIRST identifier is a numeric
-        // below D. A multi-digit numeric is at least ten and an
-        // alphanumeric identifier sorts above every numeric, so "one
-        // digit in [0, D)" is the exact first-identifier language; any
-        // continuation after a decided first identifier stays below.
-        ComparisonOp::Lt
-            if prerelease.len() == 1 && prerelease.bytes().all(|byte| byte.is_ascii_digit()) =>
-        {
-            let alternatives = core_alternatives(ComparisonOp::Lt, bound);
-            if alternatives.is_empty() && prerelease == "0" {
-                return None;
-            }
-            let mut body = if alternatives.is_empty() {
-                Vec::new()
-            } else {
-                vec![format!(
-                    "(?:{})(?:{PRERELEASE_TAIL})?",
-                    alternatives.join("|")
-                )]
-            };
-            if let Some(limit) = prerelease.parse::<u32>().ok().filter(|limit| *limit > 0) {
-                for core in equal_cores(bound) {
-                    body.push(format!(
-                        "{core}-{}(?:\\.[0-9A-Za-z-]+)*",
-                        digit_span(0, limit - 1)
-                    ));
-                }
-            }
-            if body.is_empty() {
-                return None;
-            }
-            Some(body.join("|"))
-        }
-        _ => None,
-    }
-}
-
-/// The written core forms whose numeric value equals `bound` (missing
-/// components read as zero).
-fn equal_cores(bound: [u64; 3]) -> Vec<String> {
-    let mut cores = Vec::new();
-    for written in 1..=3usize {
-        let (written_components, omitted_components) = bound.split_at(written);
-        if omitted_components.iter().all(|component| *component == 0) {
-            let components: Vec<String> = written_components
-                .iter()
-                .copied()
-                .map(decimal_eq_pattern)
-                .collect();
-            cores.push(components.join("\\."));
-        }
-    }
-    cores
-}
-
-/// Version-core alternations satisfying `value OP bound`.
-///
-/// A core writes one to three components; missing components read as zero.
-/// The comparison decomposes into "the first differing component decides"
-/// cases plus, for inclusive operators, full equality. A case constraining a
-/// component the core does not write survives only when zero already
-/// satisfies it, which makes those cases statically decidable here.
-fn core_alternatives(op: ComparisonOp, bound: [u64; 3]) -> Vec<String> {
-    let decided_less = matches!(op, ComparisonOp::Lt | ComparisonOp::Le);
-    let inclusive = matches!(op, ComparisonOp::Le | ComparisonOp::Ge);
-    let mut alternatives = Vec::new();
-    for written in 1..=3usize {
-        for decisive in 0..3usize {
-            if let Some(core) = first_difference_core(bound, written, decisive, decided_less) {
-                alternatives.push(core);
-            }
-        }
-        let (written_components, omitted_components) = bound.split_at(written);
-        if inclusive && omitted_components.iter().all(|component| *component == 0) {
-            let components: Vec<String> = written_components
-                .iter()
-                .copied()
-                .map(decimal_eq_pattern)
-                .collect();
-            alternatives.push(components.join("\\."));
-        }
-    }
-    alternatives
-}
-
-/// The core alternation where components before `decisive` equal the bound
-/// and the `decisive` component decides the comparison, or `None` when the
-/// case is impossible (an unwritten component is zero and cannot exceed the
-/// bound, and nothing is below zero).
-fn first_difference_core(
-    bound: [u64; 3],
-    written: usize,
-    decisive: usize,
-    decided_less: bool,
-) -> Option<String> {
-    // Unwritten components read as zero: equality demands a zero bound, a
-    // decisive "less" demands a positive bound, and a decisive "greater" is
-    // impossible.
-    for (position, component) in bound.iter().enumerate().skip(written) {
-        match position.cmp(&decisive) {
-            std::cmp::Ordering::Less if *component != 0 => return None,
-            std::cmp::Ordering::Equal if !(decided_less && *component > 0) => return None,
-            _ => {}
-        }
-    }
-    let mut components = Vec::new();
-    for (position, component) in bound.iter().enumerate().take(written) {
-        let pattern = match position.cmp(&decisive) {
-            std::cmp::Ordering::Less => decimal_eq_pattern(*component),
-            std::cmp::Ordering::Equal if decided_less => decimal_lt_pattern(*component)?,
-            std::cmp::Ordering::Equal => decimal_gt_pattern(*component),
-            std::cmp::Ordering::Greater => "[0-9]+".to_string(),
-        };
-        components.push(pattern);
-    }
-    Some(components.join("\\."))
-}
-
-/// A single digit, or a character class when the endpoints differ.
-fn digit_span(low: u32, high: u32) -> String {
-    if low == high {
-        low.to_string()
-    } else {
-        format!("[{low}-{high}]")
-    }
-}
-
-/// Decimal strings (leading zeros tolerated) whose numeric value equals
-/// `bound`.
-fn decimal_eq_pattern(bound: u64) -> String {
-    format!("0*{bound}")
-}
-
-/// Decimal strings (leading zeros tolerated) whose numeric value is below
-/// `bound`; `None` when nothing is (the bound is zero).
-fn decimal_lt_pattern(bound: u64) -> Option<String> {
-    if bound == 0 {
-        return None;
-    }
-    let digits = bound_digits(bound);
-    let count = digits.len();
-    let mut alternatives = Vec::new();
-    if count == 1 {
-        alternatives.push(digit_span(0, digits.first()?.saturating_sub(1)));
-    } else {
-        // Fewer significant digits than the bound is always below it; equal
-        // length splits on the first digit that drops below the bound's.
-        alternatives.push("[0-9]".to_string());
-        for length in 2..count {
-            alternatives.push(format!("[1-9][0-9]{{{}}}", length - 1));
-        }
-        for (split, digit) in digits.iter().copied().enumerate() {
-            let low = u32::from(split == 0);
-            if digit <= low {
-                continue;
-            }
-            let mut pattern: String = digits.iter().take(split).map(ToString::to_string).collect();
-            pattern.push_str(&digit_span(low, digit - 1));
-            let remaining = count - split - 1;
-            if remaining > 0 {
-                let _ = write!(pattern, "[0-9]{{{remaining}}}");
-            }
-            alternatives.push(pattern);
-        }
-    }
-    Some(format!("0*(?:{})", alternatives.join("|")))
-}
-
-/// Decimal strings (leading zeros tolerated) whose numeric value is above
-/// `bound`.
-fn decimal_gt_pattern(bound: u64) -> String {
-    let digits = bound_digits(bound);
-    let count = digits.len();
-    // More significant digits than the bound is always above it; equal
-    // length splits on the first digit that rises above the bound's.
-    let mut alternatives = vec![format!("[1-9][0-9]{{{count},}}")];
-    for (split, digit) in digits.iter().copied().enumerate() {
-        let low = digit.saturating_add(1).max(u32::from(split == 0));
-        if low > 9 {
-            continue;
-        }
-        let mut pattern: String = digits.iter().take(split).map(ToString::to_string).collect();
-        pattern.push_str(&digit_span(low, 9));
-        let remaining = count - split - 1;
-        if remaining > 0 {
-            let _ = write!(pattern, "[0-9]{{{remaining}}}");
-        }
-        alternatives.push(pattern);
-    }
-    format!("0*(?:{})", alternatives.join("|"))
-}
-
-fn bound_digits(bound: u64) -> Vec<u32> {
-    bound
-        .to_string()
-        .chars()
-        .filter_map(|digit| digit.to_digit(10))
-        .collect()
-}
+#[cfg(test)]
+#[path = "tests/semver_numeric.rs"]
+mod tests;

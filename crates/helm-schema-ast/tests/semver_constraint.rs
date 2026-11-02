@@ -1,7 +1,6 @@
 //! Semantic-version constraint lowering regressions.
 
-use color_eyre::eyre::{self, OptionExt as _};
-use helm_schema_ast::{semver_constraint_match_pattern, semver_constraint_matches_version};
+use helm_schema_ast::semver_constraint_matches_version;
 use test_util::prelude::sim_assert_eq;
 
 #[derive(Clone, Copy)]
@@ -114,63 +113,18 @@ fn encoded_comparators_match_reference_semantics() {
         ("<0.10.0", Op::Lt, (0, 10, 0)),
     ];
     for (constraint, op, bound) in cases {
-        let pattern = semver_constraint_match_pattern(constraint)
-            .unwrap_or_else(|| panic!("constraint {constraint:?} must encode"));
-        let regex = regex::Regex::new(&pattern)
-            .unwrap_or_else(|error| panic!("pattern {pattern:?} must compile: {error}"));
         for version in candidate_versions() {
             sim_assert_eq!(
-                have: regex.is_match(&version),
-                want: reference_matches(op, bound, &version),
-                "constraint={constraint} version={version} pattern={pattern}"
+                have: semver_constraint_matches_version(constraint, &version),
+                want: Some(reference_matches(op, bound, &version)),
+                "constraint={constraint} version={version}"
             );
         }
     }
 }
 
-/// Constraint shapes beyond one bare numeric comparator (or the two
-/// supported prerelease-floor idioms) change Masterminds' matching rules
-/// (general prerelease bounds, ranges, wildcards) and must abstain instead
-/// of guessing.
 #[test]
-fn unsupported_constraint_shapes_abstain() {
-    let unsupported = [
-        "",
-        "*",
-        "1.2.3",
-        "=1.2.3",
-        "!=1.2.3",
-        "~1.2",
-        "^1.2",
-        ">1.33-0",
-        "<=1.33-0",
-        ">=1.33-1",
-        ">=1.33-alpha",
-        "<1.33-10",
-        "<1.33-alpha",
-        "<0.0.0-0",
-        ">=1.2 <2.0",
-        ">=1.2, <2",
-        ">=1.2 || >=3",
-        "<3.0.0.0",
-        "<18446744073709551616.0.0",
-        "<x.y.z",
-        "<1.2.x",
-        "<0.0.0",
-    ];
-    for constraint in unsupported {
-        assert!(
-            semver_constraint_match_pattern(constraint).is_none(),
-            "constraint {constraint:?} must abstain"
-        );
-    }
-}
-
-#[test]
-fn exact_three_component_tilde_range_matches_patch_updates() -> eyre::Result<()> {
-    let pattern =
-        semver_constraint_match_pattern("~3.0.0").ok_or_eyre("exact tilde range must encode")?;
-    let regex = regex::Regex::new(&pattern)?;
+fn exact_three_component_tilde_range_matches_patch_updates() {
     for (version, want) in [
         ("3", true),
         ("3.0", true),
@@ -184,12 +138,11 @@ fn exact_three_component_tilde_range_matches_patch_updates() -> eyre::Result<()>
         ("junk", false),
     ] {
         sim_assert_eq!(
-            have: regex.is_match(version),
-            want: want,
-            "version={version} pattern={pattern}"
+            have: semver_constraint_matches_version("~3.0.0", version),
+            want: Some(want),
+            "version={version}"
         );
     }
-    Ok(())
 }
 
 #[test]
@@ -247,7 +200,7 @@ fn concrete_prerelease_comparators_include_other_version_cores() {
     }
 
     // Stable bounds still exclude prereleases, and loose version spellings
-    // retain their existing exact pattern evaluation.
+    // retain their exact numeric comparison.
     for (constraint, version, want) in [
         (">=1.0.0", "1.1.0-alpha", false),
         ("<1.0.0", "0.9.0-alpha", false),
@@ -360,15 +313,11 @@ fn prerelease_floor_constraints_match_the_semver_compare_language() {
         ),
     ];
     for (constraint, rows) in cases {
-        let pattern = semver_constraint_match_pattern(constraint)
-            .unwrap_or_else(|| panic!("constraint {constraint:?} must encode"));
-        let regex = regex::Regex::new(&pattern)
-            .unwrap_or_else(|error| panic!("pattern {pattern:?} must compile: {error}"));
         for (version, want) in *rows {
             sim_assert_eq!(
-                have: regex.is_match(version),
-                want: *want,
-                "constraint={constraint} version={version} pattern={pattern}"
+                have: semver_constraint_matches_version(constraint, version),
+                want: Some(*want),
+                "constraint={constraint} version={version}"
             );
         }
     }

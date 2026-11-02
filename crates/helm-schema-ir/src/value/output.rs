@@ -268,7 +268,7 @@ impl TextQuery {
                 TextPart::Bytes(_) | TextPart::Frozen(_) => Some(super::guard::RuntimeGuard::False),
                 TextPart::Unknown(_) => Some(super::guard::RuntimeGuard::True),
                 TextPart::Select { decision, yes, no } => {
-                    if decision.coverage == super::Coverage::Partial
+                    if decision.coverage != super::Coverage::Exact
                         && decision
                             .runtime
                             .as_ref()
@@ -308,7 +308,7 @@ impl TextQuery {
             TextPart::Bytes(_) | TextPart::Frozen(_) => false,
             TextPart::Unknown(_) => true,
             TextPart::Select { decision, yes, no } => {
-                decision.coverage == super::Coverage::Partial
+                decision.coverage != super::Coverage::Exact
                     || self.can_be_widened(yes)
                     || self.can_be_widened(no)
             }
@@ -342,7 +342,7 @@ impl TextQuery {
                 if let Some(taken) = active.implies_test(decision) {
                     self.is_widened_under(if taken { yes } else { no }, active, arena)
                 } else {
-                    decision.coverage == super::Coverage::Partial
+                    decision.coverage != super::Coverage::Exact
                         || [(yes, true), (no, false)]
                             .into_iter()
                             .any(|(branch, taken)| {
@@ -1880,7 +1880,7 @@ pub(super) fn flow_may_continue(flow: &Flow, active: &[super::DecisionEdge]) -> 
     !matches!(flow, Flow::Abort(_))
         || active
             .iter()
-            .any(|edge| edge.test.coverage == super::Coverage::Partial)
+            .any(|edge| edge.test.coverage != super::Coverage::Exact)
 }
 
 impl FrozenValue {

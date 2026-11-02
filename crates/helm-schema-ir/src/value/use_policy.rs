@@ -1,7 +1,7 @@
 //! Destination-facing interpretation of a frozen input relationship.
 
 use super::TextBuffer;
-use super::relationship::{Decoder, Operation, Preimage, Relationship};
+use super::relationship::{Decoder, Preimage, Relationship, TextFormat, ValueOperation};
 use super::text::TextTerm;
 use helm_schema_core::{Guard, Predicate, ValuePattern, ValuesPath};
 use std::borrow::Cow;
@@ -19,6 +19,7 @@ pub(crate) struct RelationshipUse<'a> {
     pub(crate) stringified: bool,
     pub(crate) nil_omitting: bool,
     pub(crate) digest: bool,
+    pub(crate) text_preimage: Option<helm_schema_core::TextPreimage>,
     pub(crate) capture: Option<(&'a Rc<TextBuffer>, &'a super::FrozenValue)>,
 }
 struct Transfer<'a> {
@@ -26,6 +27,8 @@ struct Transfer<'a> {
     decoder: Option<Decoder>,
     serialized: bool,
     trim: bool,
+    capture_bound: bool,
+    text_opaque: bool,
 }
 
 impl<'a> Relationship<'a> {
@@ -52,10 +55,13 @@ impl<'a> Relationship<'a> {
                 nil_omitting: false,
                 digest: false,
                 capture: None,
+                text_preimage: None,
             },
             decoder: None,
             serialized: false,
             trim: false,
+            capture_bound: false,
+            text_opaque: false,
         };
         for step in preimage {
             match step {
@@ -71,8 +77,13 @@ impl<'a> Relationship<'a> {
             decoder,
             serialized: _,
             trim,
+            capture_bound,
+            text_opaque: _,
         } = transfer;
-        if decoder.is_some() || trim || capture.is_some() && result.capture.is_none() {
+        if decoder.is_some()
+            || trim
+            || capture.is_some() && result.capture.is_none() && !capture_bound
+        {
             return None;
         }
         if result.strip_marker {
@@ -85,27 +96,62 @@ impl<'a> Relationship<'a> {
 }
 
 impl<'a> Transfer<'a> {
-    fn operation(&mut self, operation: &Operation) -> Option<()> {
+    fn operation(&mut self, operation: &ValueOperation) -> Option<()> {
         match operation {
-            Operation::Decode(value) if self.decoder.is_none() => self.decoder = Some(*value),
-            Operation::Copy | Operation::Omit(_) | Operation::Pick(_) | Operation::Member(_) => {}
-            Operation::Stringify => {
+            ValueOperation::Decode(value) if self.decoder.is_none() => {
+                self.opaque_text();
+                self.decoder = Some(*value);
+            }
+            ValueOperation::Copy
+            | ValueOperation::Omit(_)
+            | ValueOperation::Pick(_)
+            | ValueOperation::Member(_) => {}
+            ValueOperation::Format(TextFormat::Value | TextFormat::String) => {
                 if self.serialized && self.decoder.is_none() {
                     return None;
                 }
                 self.result.stringified = true;
                 self.result.kind = crate::ValueKind::Serialized;
             }
-            Operation::Numeric(_) | Operation::Descriptor { kind_only: _ } => {
+            ValueOperation::Numeric(_) | ValueOperation::Descriptor { kind_only: _ } => {
+                self.opaque_text();
                 self.result.kind = crate::ValueKind::Serialized;
             }
-            Operation::Trim => self.trim = true,
-            Operation::Decode(_) | Operation::Merge { overwrite: _ } => return None,
+            ValueOperation::Text(transform) => {
+                self.result.stringified = true;
+                self.compose_text(transform.preimage()?)?;
+            }
+            ValueOperation::Trim => self.trim = true,
+            ValueOperation::Capability {
+                guard: _,
+                decision: _,
+            }
+            | ValueOperation::Decode(_)
+            | ValueOperation::Merge { overwrite: _ } => {
+                return None;
+            }
         }
         Some(())
     }
 
+    fn compose_text(&mut self, inner: helm_schema_core::TextPreimage) -> Option<()> {
+        if self.text_opaque {
+            return Some(());
+        }
+        self.result.text_preimage = Some(match self.result.text_preimage.take() {
+            Some(outer) => inner.then(&outer)?,
+            None => inner,
+        });
+        Some(())
+    }
+
+    fn opaque_text(&mut self) {
+        self.result.text_preimage = None;
+        self.text_opaque = true;
+    }
+
     fn serializer(&mut self, value: &super::FrozenValue, json: Option<bool>) -> Option<()> {
+        self.opaque_text();
         if let Some(decoder) = self.decoder.take() {
             let matching = match decoder {
                 Decoder::YamlMap | Decoder::YamlSequence => json.is_none(),
@@ -161,21 +207,33 @@ impl<'a> Transfer<'a> {
                     self.serialized = false;
                     self.trim = false;
                 } else if self.decoder.is_none() {
+                    if !self.capture_bound
+                        && let Some(value) = capture
+                        && let Some(relation) = capture_preimage(graph, value, &mut 128)
+                    {
+                        self.compose_text(relation)?;
+                        self.capture_bound = true;
+                    }
                     if self.serialized {
                         return None;
                     }
                     self.result.stringified = true;
                 }
             }
-            TextTerm::Quote { value: _ } => {
+            TextTerm::Quote { value } => {
+                self.opaque_text();
                 self.result.kind = crate::ValueKind::Serialized;
                 self.result.stringified = true;
-                self.result.nil_omitting = true;
+                self.result.nil_omitting =
+                    super::text::quote_nil_condition(value) != Some(Predicate::False);
             }
             TextTerm::Encoded {
                 value: _,
                 alphabet: _,
-            } => self.result.digest = true,
+            } => {
+                self.opaque_text();
+                self.result.digest = true;
+            }
             TextTerm::Resolved {
                 term: _,
                 literal: _,
@@ -269,4 +327,62 @@ fn decoded_shape(
         })),
         _ => None,
     }
+}
+
+fn capture_preimage(
+    graph: &TextBuffer,
+    source: &super::FrozenValue,
+    remaining: &mut usize,
+) -> Option<helm_schema_core::TextPreimage> {
+    let mut relation = helm_schema_core::TextPreimage::default();
+    let mut found = false;
+    for node in &graph.parts {
+        *remaining = remaining.checked_sub(1)?;
+        let part = match node.content() {
+            super::TextPart::Bytes(bytes) => Some(bytes.clone()),
+            super::TextPart::Frozen(value) => {
+                if std::ptr::eq(value, source) {
+                    if found {
+                        return None;
+                    }
+                    found = true;
+                    continue;
+                }
+                if let super::ValueNode::Leaf(super::Leaf {
+                    datum: super::Datum::Text(text),
+                    origin: _,
+                }) = value.value.node.as_ref()
+                    && let TextTerm::Capture {
+                        graph,
+                        strip_marker: false,
+                    } = text.term()
+                    && let Some(inner) = capture_preimage(graph, source, remaining)
+                {
+                    if found {
+                        return None;
+                    }
+                    relation.before.push_str(&inner.before);
+                    relation.after.push_str(&inner.after);
+                    found = true;
+                    continue;
+                }
+                value.exact_text()
+            }
+            super::TextPart::Unknown(_)
+            | super::TextPart::Select {
+                decision: _,
+                yes: _,
+                no: _,
+            } => None,
+        }?;
+        if relation.before.len() + relation.after.len() + part.len() > 4096 {
+            return None;
+        }
+        if found {
+            relation.after.push_str(&part);
+        } else {
+            relation.before.push_str(&part);
+        }
+    }
+    found.then_some(relation)
 }

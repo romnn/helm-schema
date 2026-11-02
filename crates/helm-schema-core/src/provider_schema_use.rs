@@ -19,6 +19,8 @@ pub struct ProviderSchemaUse {
     pub strip_marker: bool,
     /// Positive placement certificate scoped to this provider occurrence.
     pub plain_scalar_placement: PlainScalarPlacement,
+    /// Executed text relation from this input to the complete scalar spelling.
+    pub text_preimage: Option<crate::TextPreimage>,
     /// Resource whose schema owns the slot.
     pub resource: ResourceRef,
     /// Whether the value is the collection directly ranged by the template.

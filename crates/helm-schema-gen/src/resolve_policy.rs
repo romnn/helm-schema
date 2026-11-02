@@ -192,6 +192,7 @@ pub(crate) enum ValuePathSchemaInputs {
 pub(crate) struct ProviderValueUsePolicy {
     kind: ValueKind,
     strip_marker: bool,
+    text_preimage: Option<helm_schema_core::TextPreimage>,
     stringified: bool,
     plain_scalar_placement: helm_schema_core::PlainScalarPlacement,
     is_self_range_collection: bool,
@@ -212,6 +213,7 @@ impl ProviderValueUsePolicy {
         Self {
             kind,
             strip_marker: false,
+            text_preimage: None,
             stringified,
             plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
             is_self_range_collection,
@@ -219,6 +221,14 @@ impl ProviderValueUsePolicy {
             split_segment,
             omitted_members,
         }
+    }
+
+    pub(crate) fn with_text_preimage(
+        mut self,
+        preimage: Option<helm_schema_core::TextPreimage>,
+    ) -> Self {
+        self.text_preimage = preimage;
+        self
     }
 
     pub(crate) fn with_strip_marker(mut self, strip_marker: bool) -> Self {
@@ -240,6 +250,11 @@ impl ResolvePolicy {
         schema: &Value,
         policy: &ProviderValueUsePolicy,
     ) -> Option<Value> {
+        if let Some(preimage) = &policy.text_preimage {
+            let spelling =
+                plain_scalar_provider_preimage(schema.clone(), policy.plain_scalar_placement);
+            return Some(preimage.schema_preimage(&spelling));
+        }
         match policy.kind {
             ValueKind::GoFormattedMap | ValueKind::GoFormattedSequence => Some(
                 go_format::top_type_preimage(schema, policy.kind, policy.plain_scalar_placement),

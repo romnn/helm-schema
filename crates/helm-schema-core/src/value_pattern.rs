@@ -11,6 +11,8 @@ use crate::CollectionQuantifier;
 pub enum ValuePattern {
     /// Every JSON value.
     Any,
+    /// A null, Boolean, or number.
+    Scalar,
     /// No string or mapping key contains a template action opener or Helm's removed marker.
     TemplateFree,
     /// No string or mapping key contains a template action opener.
@@ -33,6 +35,15 @@ pub enum ValuePattern {
         /// Pattern for remaining items; `None` forbids additional items.
         items: Option<Box<Self>>,
     },
+    /// An object whose property names and values match their respective patterns.
+    Object {
+        /// Pattern applied to every property name as a string.
+        keys: Box<Self>,
+        /// Pattern applied to every property value.
+        values: Box<Self>,
+    },
+    /// The enclosed pattern does not match.
+    Not(Box<Self>),
     /// Every alternative matches; an empty list matches every JSON value.
     AllOf(Vec<Self>),
     /// An array has at least one matching item; an empty array does not match.
@@ -50,6 +61,10 @@ impl ValuePattern {
     pub fn matches(&self, value: &Value) -> Option<bool> {
         match self {
             Self::Any => Some(true),
+            Self::Scalar => Some(matches!(
+                value,
+                Value::Null | Value::Bool(_) | Value::Number(_)
+            )),
             Self::TemplateFree => Some(serialized_text_unchanged(value, true)),
             Self::TemplateActionFree => {
                 Some(serialized_texts_match(value, |text| !text.contains("{{")))
@@ -102,6 +117,23 @@ impl ValuePattern {
                 | Value::String(_)
                 | Value::Object(_) => Some(false),
             },
+            Self::Object { keys, values } => match value {
+                Value::Object(fields) => quantify(
+                    CollectionQuantifier::All,
+                    fields.iter().flat_map(|(key, value)| {
+                        [
+                            keys.matches(&Value::String(key.clone())),
+                            values.matches(value),
+                        ]
+                    }),
+                ),
+                Value::Null
+                | Value::Bool(_)
+                | Value::Number(_)
+                | Value::String(_)
+                | Value::Array(_) => Some(false),
+            },
+            Self::Not(pattern) => pattern.matches(value).map(|matched| !matched),
             Self::AllOf(patterns) => quantify(
                 CollectionQuantifier::All,
                 patterns.iter().map(|pattern| pattern.matches(value)),

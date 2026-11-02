@@ -168,6 +168,7 @@ fn insert_candidate(
         use_.omitted_members.clone(),
     )
     .with_plain_scalar_placement(use_.plain_scalar_placement)
+    .with_text_preimage(use_.text_preimage.clone())
     .with_strip_marker(use_.strip_marker);
     let key = CandidateKey {
         resource: use_.resource.clone(),

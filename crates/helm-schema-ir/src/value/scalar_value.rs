@@ -11,6 +11,12 @@ use helm_schema_core::PredicateMemo;
 pub(crate) enum ScalarContent {
     /// A concrete Go-template scalar.
     Literal(helm_schema_core::GuardValue),
+    /// A string restricted by a full-match language and byte-length bounds.
+    StringDomain {
+        pattern: &'static str,
+        min_bytes: usize,
+        max_bytes: usize,
+    },
     /// A raw values-path identity before template rendering.
     Identity(helm_schema_core::ValuesPath),
 }
