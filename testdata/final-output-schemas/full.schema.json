@@ -302,10 +302,10 @@
     "constrains/requiredText+requiredText=''+requiredText=null+version@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1requiredText=''"
+          "$ref": "#/$defs/constrains~1version"
         },
         {
-          "$ref": "#/$defs/constrains~1version"
+          "$ref": "#/$defs/constrains~1requiredText=''"
         },
         {
           "$ref": "#/$defs/constrains~1requiredText"
@@ -503,6 +503,12 @@
     },
     {
       "if": {
+        "$ref": "#/$defs/constrains~1requiredText+requiredText=''+requiredText=null+version@3"
+      },
+      "then": false
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -610,12 +616,6 @@
           ]
         }
       }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1requiredText+requiredText=''+requiredText=null+version@3"
-      },
-      "then": false
     },
     {
       "if": {

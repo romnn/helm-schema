@@ -147,85 +147,84 @@
             "alternatives": [
               [
                 {
-                  "alternatives": [
-                    [
-                      {
-                        "path": "nameOverride",
-                        "type": "truthy"
-                      },
-                      {
-                        "path": "ingress.enabled",
-                        "type": "not"
-                      }
-                    ],
-                    [
-                      {
-                        "path": "nameOverride",
-                        "type": "not"
-                      },
-                      {
-                        "alternatives": [
-                          [
-                            {
-                              "path": "fullnameOverride",
-                              "type": "not"
-                            }
-                          ],
-                          [
-                            {
-                              "path": "ingress.enabled",
-                              "type": "not"
-                            }
-                          ],
-                          [
-                            {
-                              "path": "fullnameOverride",
-                              "schema_type": "string",
-                              "type": "type_is"
-                            }
-                          ]
-                        ],
-                        "type": "any_of"
-                      }
-                    ]
-                  ],
-                  "type": "any_of"
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "ingress.enabled",
+                  "type": "truthy"
                 },
                 {
                   "path": "nameOverride",
-                  "schema_type": "string",
-                  "type": "not_type_is"
-                }
-              ],
-              [
+                  "type": "truthy"
+                },
                 {
-                  "alternatives": [
-                    [
-                      {
-                        "path": "fullnameOverride",
-                        "type": "not"
-                      }
-                    ],
-                    [
-                      {
-                        "path": "ingress.enabled",
-                        "type": "not"
-                      }
-                    ],
-                    [
-                      {
-                        "path": "fullnameOverride",
-                        "schema_type": "string",
-                        "type": "type_is"
-                      }
-                    ]
-                  ],
-                  "type": "any_of"
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
                 },
                 {
                   "path": "nameOverride",
                   "schema_type": "string",
                   "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "ingress.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "ingress.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "ingress.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "ingress.enabled",
+                  "type": "not"
                 }
               ]
             ],

@@ -1,67 +1,408 @@
 {
   "$defs": {
     "constrains/additionalAnnotations": {
-      "not": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1additionalAnnotations@3"
+      "allOf": [
+        {
+          "properties": {
+            "additionalAnnotations": {
+              "type": "object"
+            }
           },
-          {
-            "properties": {
-              "additionalAnnotations": {
-                "type": "null"
-              }
-            },
-            "required": [
-              "additionalAnnotations"
-            ],
-            "type": "object"
-          }
-        ]
-      }
+          "required": [
+            "additionalAnnotations"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "additionalAnnotations": {
+              "minProperties": 1,
+              "type": "object"
+            }
+          },
+          "required": [
+            "additionalAnnotations"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/additionalAnnotations+additionalAnnotations:helm-marker-free+1more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+1more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations=null@2"
+        }
+      ]
+    },
+    "constrains/additionalAnnotations+additionalAnnotations:helm-marker-free+1more/:helm-marker-free": {
+      "$ref": "#/$defs/helm-marker-free"
+    },
+    "constrains/additionalAnnotations+additionalAnnotations:helm-marker-free+1more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations@3"
+        },
+        {
+          "properties": {
+            "additionalAnnotations": {
+              "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+1more~1:helm-marker-free"
+            }
+          },
+          "required": [
+            "additionalAnnotations"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations=null"
+        }
+      ]
+    },
+    "constrains/additionalAnnotations+additionalAnnotations:helm-marker-free+7more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+7more@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+certificates.certManager.enabled:t+webhooks@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations:t+certificates.certManager.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations:t"
+        }
+      ]
+    },
+    "constrains/additionalAnnotations+additionalAnnotations:helm-marker-free+7more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+7more@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations:t+certificates.certManager.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+certificates.certManager.enabled:t+webhooks"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations:t"
+        }
+      ]
+    },
+    "constrains/additionalAnnotations+additionalAnnotations:helm-marker-free+7more@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+1more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations:t+additionalLabels:t+certificates.certManager.enabled:t+3more@5"
+        }
+      ]
+    },
+    "constrains/additionalAnnotations+additionalAnnotations:helm-marker-free+7more@4": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations:t+additionalLabels:t+certificates.certManager.enabled:t+3more@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+1more@2"
+        }
+      ]
+    },
+    "constrains/additionalAnnotations+additionalAnnotations:helm-marker-free+7more@5": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+7more@3"
+        }
+      ]
+    },
+    "constrains/additionalAnnotations+additionalAnnotations:helm-marker-free+7more@6": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+7more@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+1more"
+        }
+      ]
+    },
+    "constrains/additionalAnnotations+additionalAnnotations:t+additionalAnnotations=null+23more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels+additionalLabels:helm-marker-free+additionalLabels:t+2more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+certificates.certManager+customManagedBy+customManagedBy:t+6more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.failurePolicy@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.name@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+certificates.certManager.enabled:t+webhooks+webhooks.name"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+7more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+certificates.certManager+customManagedBy+customManagedBy:t+11more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+7more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.timeoutSeconds+1more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.timeoutSeconds+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks.enabled:t+webhooks.timeoutSeconds+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.failurePolicy"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.name"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+certificates.certManager+customManagedBy+customManagedBy:t+11more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+certificates.certManager+webhooks+webhooks.enabled:t+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+certificates.certManager+customManagedBy+customManagedBy:t+6more"
+        }
+      ]
     },
     "constrains/additionalAnnotations+additionalAnnotations=null": {
-      "not": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1additionalAnnotations@3"
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations@3"
+        },
+        {
+          "properties": {
+            "additionalAnnotations": {
+              "type": "null"
+            }
           },
-          {
-            "properties": {
-              "additionalAnnotations": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "additionalAnnotations"
-            ],
-            "type": "object"
-          }
+          "required": [
+            "additionalAnnotations"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "additionalAnnotations": {
+              "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations=null~1object,null"
+            }
+          },
+          "required": [
+            "additionalAnnotations"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations=null"
+        }
+      ]
+    },
+    "constrains/additionalAnnotations+additionalAnnotations=null/object,null": {
+      "additionalProperties": {
+        "type": [
+          "string",
+          "null"
         ]
+      },
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "constrains/additionalAnnotations+additionalAnnotations=null@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations=null"
       }
+    },
+    "constrains/additionalAnnotations:t": {
+      "properties": {
+        "additionalAnnotations": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "additionalAnnotations"
+      ],
+      "type": "object"
+    },
+    "constrains/additionalAnnotations:t+additionalLabels:t+certificates.certManager.enabled:t+3more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1certificates.certManager.generateCA:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations:t+certificates.certManager.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1certificates.certManager.issuer.generate:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t@4"
+        }
+      ]
+    },
+    "constrains/additionalAnnotations:t+additionalLabels:t+certificates.certManager.enabled:t+3more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1certificates.certManager.generateCA:t+certificates.certManager.issuer.generate:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1certificates.certManager.generateCA:t+certificates.certManager.issuer.generate:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations:t+certificates.certManager.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t@4"
+        }
+      ]
+    },
+    "constrains/additionalAnnotations:t+additionalLabels:t+certificates.certManager.enabled:t+3more@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1certificates.certManager.generateCA:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations:t+certificates.certManager.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1certificates.certManager.issuer.generate:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t@4"
+        }
+      ]
+    },
+    "constrains/additionalAnnotations:t+additionalLabels:t+certificates.certManager.enabled:t+3more@4": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1certificates.certManager.generateCA:t+certificates.certManager.issuer.generate:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1certificates.certManager.generateCA:t+certificates.certManager.issuer.generate:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations:t+certificates.certManager.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t@4"
+        }
+      ]
+    },
+    "constrains/additionalAnnotations:t+additionalLabels:t+certificates.certManager.enabled:t+3more@5": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations:t+additionalLabels:t+certificates.certManager.enabled:t+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations:t+additionalLabels:t+certificates.certManager.enabled:t+3more@2"
+        }
+      ]
+    },
+    "constrains/additionalAnnotations:t+additionalLabels:t+certificates.certManager.enabled:t+3more@6": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations:t+additionalLabels:t+certificates.certManager.enabled:t+3more@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations:t+additionalLabels:t+certificates.certManager.enabled:t+3more@3"
+        }
+      ]
+    },
+    "constrains/additionalAnnotations:t+certificates.certManager.enabled:t": {
+      "$ref": "#/$defs/constrains~1additionalAnnotations:t+certificates.certManager.enabled:t@2"
+    },
+    "constrains/additionalAnnotations:t+certificates.certManager.enabled:t@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations:t"
+        }
+      ]
+    },
+    "constrains/additionalAnnotations=null": {
+      "properties": {
+        "additionalAnnotations": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "additionalAnnotations"
+      ],
+      "type": "object"
     },
     "constrains/additionalAnnotations@2": {
       "not": {
-        "properties": {
-          "additionalAnnotations": {
-            "additionalProperties": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "type": [
-              "object",
-              "null"
-            ]
-          }
-        },
-        "required": [
-          "additionalAnnotations"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/constrains~1additionalAnnotations"
       }
     },
     "constrains/additionalAnnotations@3": {
@@ -75,12 +416,708 @@
         "type": "object"
       }
     },
+    "constrains/additionalLabels": {
+      "allOf": [
+        {
+          "properties": {
+            "additionalLabels": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "additionalLabels"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "additionalLabels": {
+              "minProperties": 1,
+              "type": "object"
+            }
+          },
+          "required": [
+            "additionalLabels"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/additionalLabels+additionalLabels:helm-marker-free+additionalLabels:t+2more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels+additionalLabels:helm-marker-free+additionalLabels=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t@5"
+        }
+      ]
+    },
+    "constrains/additionalLabels+additionalLabels:helm-marker-free+additionalLabels:t+2more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels+additionalLabels:helm-marker-free+additionalLabels:t+2more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t@5"
+        }
+      ]
+    },
+    "constrains/additionalLabels+additionalLabels:helm-marker-free+additionalLabels:t+2more@3": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels+additionalLabels:helm-marker-free+additionalLabels:t+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels+additionalLabels:helm-marker-free+additionalLabels=null"
+        }
+      ]
+    },
+    "constrains/additionalLabels+additionalLabels:helm-marker-free+additionalLabels=null": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels+additionalLabels:helm-marker-free+additionalLabels=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels+additionalLabels=null@2"
+        }
+      ]
+    },
+    "constrains/additionalLabels+additionalLabels:helm-marker-free+additionalLabels=null@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels@3"
+        },
+        {
+          "properties": {
+            "additionalLabels": {
+              "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+1more~1:helm-marker-free"
+            }
+          },
+          "required": [
+            "additionalLabels"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels=null"
+        }
+      ]
+    },
+    "constrains/additionalLabels+additionalLabels=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "additionalLabels": {
+              "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations=null~1object,null"
+            }
+          },
+          "required": [
+            "additionalLabels"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "additionalLabels": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "additionalLabels"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels=null"
+        }
+      ]
+    },
+    "constrains/additionalLabels+additionalLabels=null@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1additionalLabels+additionalLabels=null"
+      }
+    },
     "constrains/additionalLabels:t": {
+      "$ref": "#/$defs/constrains~1additionalLabels:t@4"
+    },
+    "constrains/additionalLabels:t+certificates.certManager+customManagedBy+customManagedBy:t+11more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1operator+operator.name@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+certificates.certManager.enabled:t+webhooks@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.name+webhooks.name=false+2more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+customManagedBy+customManagedBy:t+customManagedBy=false+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t"
+        }
+      ]
+    },
+    "constrains/additionalLabels:t+certificates.certManager+customManagedBy+customManagedBy:t+11more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.name+webhooks.name=false+2more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator+operator.name@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+customManagedBy+customManagedBy:t+customManagedBy=false+3more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+certificates.certManager.enabled:t+webhooks"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t@5"
+        }
+      ]
+    },
+    "constrains/additionalLabels:t+certificates.certManager+customManagedBy+customManagedBy:t+6more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy:t@8"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+certificates.certManager.enabled:t+webhooks@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.name+webhooks.name=false+2more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t"
+        }
+      ]
+    },
+    "constrains/additionalLabels:t+certificates.certManager+customManagedBy+customManagedBy:t+6more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy:t@8"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.name+webhooks.name=false+2more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+certificates.certManager.enabled:t+webhooks"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t@5"
+        }
+      ]
+    },
+    "constrains/additionalLabels:t+certificates.certManager+webhooks+webhooks.enabled:t+1more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.name"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+certificates.certManager.enabled:t+webhooks@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t"
+        }
+      ]
+    },
+    "constrains/additionalLabels:t+certificates.certManager.enabled:t+webhooks": {
+      "$ref": "#/$defs/constrains~1additionalLabels:t+certificates.certManager.enabled:t+webhooks@3"
+    },
+    "constrains/additionalLabels:t+certificates.certManager.enabled:t+webhooks+webhooks.name": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.name"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+certificates.certManager.enabled:t+webhooks"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t@5"
+        }
+      ]
+    },
+    "constrains/additionalLabels:t+certificates.certManager.enabled:t+webhooks@2": {
+      "$ref": "#/$defs/constrains~1additionalLabels:t+certificates.certManager.enabled:t+webhooks@4"
+    },
+    "constrains/additionalLabels:t+certificates.certManager.enabled:t+webhooks@3": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t"
+        }
+      ]
+    },
+    "constrains/additionalLabels:t+certificates.certManager.enabled:t+webhooks@4": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t@5"
+        }
+      ]
+    },
+    "constrains/additionalLabels:t+customManagedBy+customManagedBy:t+customManagedBy=false+3more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy:t+customManagedBy=false+customManagedBy=true@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy:t+customManagedBy=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks.enabled:t@6"
+        }
+      ]
+    },
+    "constrains/additionalLabels:t+customManagedBy+customManagedBy:t+customManagedBy=false+3more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy:t+customManagedBy=false+customManagedBy=true"
+        },
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy:t+customManagedBy=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks.enabled:t@8"
+        }
+      ]
+    },
+    "constrains/additionalLabels:t+customManagedBy+customManagedBy:t+customManagedBy=false+3more@3": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks.enabled:t@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy:t+customManagedBy=false+customManagedBy=true@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy:t+customManagedBy=null@2"
+        }
+      ]
+    },
+    "constrains/additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.failurePolicy": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.failurePolicy@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t"
+        }
+      ]
+    },
+    "constrains/additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.failurePolicy@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.failurePolicy@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t@5"
+        }
+      ]
+    },
+    "constrains/additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.name": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.name"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t"
+        }
+      ]
+    },
+    "constrains/additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.name+webhooks.name=false+2more": {
+      "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.name+webhooks.name=false+2more@4"
+    },
+    "constrains/additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.name+webhooks.name=false+2more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.name@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks.enabled:t@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.name@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.name=false"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.name@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.name=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.name@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.name@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.name@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.name=true"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.name"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.name@4"
+        }
+      ]
+    },
+    "constrains/additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.name+webhooks.name=false+2more@3": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.name@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks.enabled:t@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.name@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.name=false"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.name@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.name=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.name@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.name@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.name@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.name=true"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.name"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.name@4"
+        }
+      ]
+    },
+    "constrains/additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.name+webhooks.name=false+2more@4": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1webhooks.name@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.name=false"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.name@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.name=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.name@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.name@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.name@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.name@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks.enabled:t@8"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.name=true"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.name"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.name@4"
+        }
+      ]
+    },
+    "constrains/additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.name@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.name"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t@5"
+        }
+      ]
+    },
+    "constrains/additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.timeoutSeconds+1more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.timeoutSeconds+webhooks.timeoutSeconds:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t@5"
+        }
+      ]
+    },
+    "constrains/additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.timeoutSeconds+1more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.timeoutSeconds+webhooks.timeoutSeconds:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t"
+        }
+      ]
+    },
+    "constrains/additionalLabels:t+webhooks.enabled:t": {
+      "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks.enabled:t@5"
+    },
+    "constrains/additionalLabels:t+webhooks.enabled:t+webhooks.timeoutSeconds+1more": {
+      "allOf": [
+        {
+          "properties": {
+            "webhooks": {
+              "properties": {
+                "timeoutSeconds": {
+                  "pattern": "^(?:(?:[\\x20])*[\\x5b])$",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "timeoutSeconds"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "webhooks"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.timeoutSeconds:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t"
+        }
+      ]
+    },
+    "constrains/additionalLabels:t+webhooks.enabled:t@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t@2"
+        }
+      ]
+    },
+    "constrains/additionalLabels:t+webhooks.enabled:t@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t"
+        }
+      ]
+    },
+    "constrains/additionalLabels:t+webhooks.enabled:t@4": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t@5"
+        }
+      ]
+    },
+    "constrains/additionalLabels:t+webhooks.enabled:t@5": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1webhooks.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t"
+        }
+      ]
+    },
+    "constrains/additionalLabels:t+webhooks.enabled:t@6": {
+      "not": {
+        "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks.enabled:t@2"
+      }
+    },
+    "constrains/additionalLabels:t+webhooks.enabled:t@7": {
+      "not": {
+        "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks.enabled:t@4"
+      }
+    },
+    "constrains/additionalLabels:t+webhooks.enabled:t@8": {
+      "not": {
+        "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks.enabled:t@3"
+      }
+    },
+    "constrains/additionalLabels:t@2": {
+      "$ref": "#/$defs/constrains~1additionalLabels:t@3"
+    },
+    "constrains/additionalLabels:t@3": {
+      "not": {
+        "$ref": "#/$defs/constrains~1additionalLabels:t@5"
+      }
+    },
+    "constrains/additionalLabels:t@4": {
+      "not": {
+        "$ref": "#/$defs/constrains~1additionalLabels:t@5"
+      }
+    },
+    "constrains/additionalLabels:t@5": {
+      "properties": {
+        "additionalLabels": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "additionalLabels"
+      ],
+      "type": "object"
+    },
+    "constrains/additionalLabels=null": {
+      "properties": {
+        "additionalLabels": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "additionalLabels"
+      ],
+      "type": "object"
+    },
+    "constrains/additionalLabels@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1additionalLabels"
+      }
+    },
+    "constrains/additionalLabels@3": {
       "not": {
         "properties": {
-          "additionalLabels": {
-            "$ref": "#/$defs/t"
-          }
+          "additionalLabels": {}
         },
         "required": [
           "additionalLabels"
@@ -89,7 +1126,7 @@
       }
     },
     "constrains/certificates.certManager.enabled:t": {
-      "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t@2"
+      "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t@3"
     },
     "constrains/certificates.certManager.enabled:t@2": {
       "not": {
@@ -121,39 +1158,1305 @@
       "type": "object"
     },
     "constrains/certificates.certManager.generateCA:t": {
-      "$ref": "#/$defs/constrains~1certificates.certManager.generateCA:t@3"
+      "not": {
+        "$ref": "#/$defs/constrains~1certificates.certManager.generateCA:t@3"
+      }
+    },
+    "constrains/certificates.certManager.generateCA:t+certificates.certManager.issuer.generate:t": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1certificates.certManager.generateCA:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1certificates.certManager.issuer.generate:t@2"
+        }
+      ]
+    },
+    "constrains/certificates.certManager.generateCA:t+certificates.certManager.issuer.generate:t@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1certificates.certManager.issuer.generate:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1certificates.certManager.generateCA:t@3"
+        }
+      ]
+    },
+    "constrains/certificates.certManager.generateCA:t+certificates.certManager.issuer.generate:t@3": {
+      "not": {
+        "$ref": "#/$defs/constrains~1certificates.certManager.generateCA:t+certificates.certManager.issuer.generate:t"
+      }
     },
     "constrains/certificates.certManager.generateCA:t@2": {
-      "$ref": "#/$defs/constrains~1certificates.certManager.generateCA:t@3"
+      "not": {
+        "$ref": "#/$defs/constrains~1certificates.certManager.generateCA:t@3"
+      }
     },
     "constrains/certificates.certManager.generateCA:t@3": {
+      "properties": {
+        "certificates": {
+          "properties": {
+            "certManager": {
+              "properties": {
+                "generateCA": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "generateCA"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "certManager"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "certificates"
+      ],
+      "type": "object"
+    },
+    "constrains/certificates.certManager.issuer.generate:t": {
       "not": {
-        "properties": {
-          "certificates": {
-            "properties": {
-              "certManager": {
-                "properties": {
-                  "generateCA": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "generateCA"
-                ],
-                "type": "object"
+        "$ref": "#/$defs/constrains~1certificates.certManager.issuer.generate:t@2"
+      }
+    },
+    "constrains/certificates.certManager.issuer.generate:t@2": {
+      "properties": {
+        "certificates": {
+          "properties": {
+            "certManager": {
+              "properties": {
+                "issuer": {
+                  "properties": {
+                    "generate": {
+                      "$ref": "#/$defs/t"
+                    }
+                  },
+                  "required": [
+                    "generate"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "issuer"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "certManager"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "certificates"
+      ],
+      "type": "object"
+    },
+    "constrains/customManagedBy": {
+      "$ref": "#/$defs/constrains~1customManagedBy@4"
+    },
+    "constrains/customManagedBy+customManagedBy:t": {
+      "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy:t@7"
+    },
+    "constrains/customManagedBy+customManagedBy:t+customManagedBy=false+customManagedBy=true": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy=false+customManagedBy=true"
+        },
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy:t"
+        }
+      ]
+    },
+    "constrains/customManagedBy+customManagedBy:t+customManagedBy=false+customManagedBy=true@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy=false+customManagedBy=true@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy:t"
+        }
+      ]
+    },
+    "constrains/customManagedBy+customManagedBy:t+customManagedBy=null": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy:t"
+        }
+      ]
+    },
+    "constrains/customManagedBy+customManagedBy:t+customManagedBy=null@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy:t"
+        }
+      ]
+    },
+    "constrains/customManagedBy+customManagedBy:t/string;pattern-x20-x2e": {
+      "pattern": "^(?:(?:[\\x20])*[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*)$",
+      "type": "string"
+    },
+    "constrains/customManagedBy+customManagedBy:t@2": {
+      "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy:t@7"
+    },
+    "constrains/customManagedBy+customManagedBy:t@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy:t"
+        }
+      ]
+    },
+    "constrains/customManagedBy+customManagedBy:t@4": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy:t"
+        }
+      ]
+    },
+    "constrains/customManagedBy+customManagedBy:t@5": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy@8"
+        },
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy:t"
+        }
+      ]
+    },
+    "constrains/customManagedBy+customManagedBy:t@6": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy:t"
+        }
+      ]
+    },
+    "constrains/customManagedBy+customManagedBy:t@7": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy:t"
+        },
+        {
+          "properties": {
+            "customManagedBy": {
+              "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy:t~1string;pattern-x20-x2e"
+            }
+          },
+          "required": [
+            "customManagedBy"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/customManagedBy+customManagedBy:t@8": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy:t@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy:t@5"
+        }
+      ]
+    },
+    "constrains/customManagedBy+customManagedBy=false+customManagedBy=true": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy@15"
+        },
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy=false"
+        },
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy@14"
+        },
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy=true"
+        },
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy@12"
+        }
+      ]
+    },
+    "constrains/customManagedBy+customManagedBy=false+customManagedBy=true@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy"
+        },
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy@15"
+        },
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy=false"
+        },
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy@14"
+        },
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy=true"
+        },
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy@12"
+        }
+      ]
+    },
+    "constrains/customManagedBy+customManagedBy=null": {
+      "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy=null@3"
+    },
+    "constrains/customManagedBy+customManagedBy=null@2": {
+      "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy=null@3"
+    },
+    "constrains/customManagedBy+customManagedBy=null@3": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy@11"
+        },
+        {
+          "properties": {
+            "customManagedBy": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "customManagedBy"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "customManagedBy": {
+              "pattern": "^(?:(?:[\\x20])*)$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "customManagedBy"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "customManagedBy": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "customManagedBy"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/customManagedBy/allOf/array+not/array": {
+      "allOf": [
+        {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1allOf~1array+not~1array@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1null,boolean,number"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1array@3"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1allOf~1not~1object+object@7"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1object@5"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x20-x2d@2"
               }
-            },
-            "required": [
-              "certManager"
-            ],
-            "type": "object"
+            ]
+          },
+          "type": "array"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/constrains~1customManagedBy~1array"
+          }
+        }
+      ]
+    },
+    "constrains/customManagedBy/allOf/array+not/array@2": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/$defs/constrains~1customManagedBy~1array@3"
           }
         },
+        {
+          "items": {
+            "anyOf": [
+              false,
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1null,boolean,number"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x20-x2d@2"
+              }
+            ]
+          },
+          "type": "array"
+        }
+      ]
+    },
+    "constrains/customManagedBy/allOf/array+not/array@3": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/$defs/constrains~1customManagedBy~1array"
+          }
+        },
+        {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1null,boolean,number"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1array@3"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1allOf~1not~1object+object@6"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x20-x2d@3"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1object@5"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x20-x2d@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1allOf~1array+not~1array@4"
+              }
+            ]
+          },
+          "type": "array"
+        }
+      ]
+    },
+    "constrains/customManagedBy/allOf/array+not/array@4": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/$defs/constrains~1customManagedBy~1array@3"
+          }
+        },
+        {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1null,boolean,number"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x20-x2d@3"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x20-x2d@2"
+              }
+            ]
+          },
+          "type": "array"
+        }
+      ]
+    },
+    "constrains/customManagedBy/allOf/not/object+object": {
+      "allOf": [
+        {
+          "additionalProperties": {
+            "anyOf": [
+              false,
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1null,boolean,number"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x3a@2"
+              }
+            ]
+          },
+          "propertyNames": {
+            "$ref": "#/$defs/constrains~1customManagedBy~1anyOf~1string;pattern-x20-x2d@2"
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/constrains~1customManagedBy~1object@4"
+          }
+        }
+      ]
+    },
+    "constrains/customManagedBy/allOf/not/object+object@2": {
+      "allOf": [
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1null,boolean,number"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1array@3"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x3a-x2d"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1allOf~1not~1object+object@6"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1object@5"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x3a"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1allOf~1array+not~1array@4"
+              }
+            ]
+          },
+          "propertyNames": {
+            "$ref": "#/$defs/constrains~1customManagedBy~1anyOf~1string;pattern-x20-x2d"
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/constrains~1customManagedBy~1object@2"
+          }
+        }
+      ]
+    },
+    "constrains/customManagedBy/allOf/not/object+object@3": {
+      "allOf": [
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1allOf~1array+not~1array@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1null,boolean,number"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1array@3"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x3a-x2d"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1allOf~1not~1object+object@7"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1object@5"
+              }
+            ]
+          },
+          "propertyNames": {
+            "$ref": "#/$defs/constrains~1customManagedBy~1anyOf~1string;pattern-x20-x2d@2"
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/constrains~1customManagedBy~1object@2"
+          }
+        }
+      ]
+    },
+    "constrains/customManagedBy/allOf/not/object+object@4": {
+      "allOf": [
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1object"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1array@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1null,boolean,number"
+              },
+              {
+                "allOf": [
+                  {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/$defs/constrains~1customManagedBy~1array"
+                        },
+                        {
+                          "$ref": "#/$defs/constrains~1customManagedBy~1null,boolean,number"
+                        },
+                        {
+                          "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x20-x2d@3"
+                        },
+                        {
+                          "$ref": "#/$defs/constrains~1customManagedBy~1allOf~1not~1object+object@2"
+                        },
+                        {
+                          "$ref": "#/$defs/constrains~1customManagedBy~1allOf~1array+not~1array@3"
+                        },
+                        {
+                          "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x20-x2d@2"
+                        },
+                        {
+                          "$ref": "#/$defs/constrains~1customManagedBy~1object@2"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/constrains~1customManagedBy~1array@2"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x3a-x2d"
+              },
+              {
+                "allOf": [
+                  {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/$defs/constrains~1customManagedBy~1array"
+                        },
+                        {
+                          "$ref": "#/$defs/constrains~1customManagedBy~1null,boolean,number"
+                        },
+                        {
+                          "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x3a-x2d"
+                        },
+                        {
+                          "$ref": "#/$defs/constrains~1customManagedBy~1allOf~1not~1object+object@2"
+                        },
+                        {
+                          "$ref": "#/$defs/constrains~1customManagedBy~1allOf~1array+not~1array@3"
+                        },
+                        {
+                          "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x3a"
+                        },
+                        {
+                          "$ref": "#/$defs/constrains~1customManagedBy~1object@2"
+                        }
+                      ]
+                    },
+                    "propertyNames": {
+                      "$ref": "#/$defs/constrains~1customManagedBy~1anyOf~1string;pattern-x20-x2d"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/constrains~1customManagedBy~1object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x3a"
+              }
+            ]
+          },
+          "propertyNames": {
+            "$ref": "#/$defs/constrains~1customManagedBy~1anyOf~1string;pattern-x20-x2d"
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/constrains~1customManagedBy~1object@3"
+          }
+        }
+      ]
+    },
+    "constrains/customManagedBy/allOf/not/object+object@5": {
+      "allOf": [
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1object"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1array@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1null,boolean,number"
+              },
+              {
+                "allOf": [
+                  {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/$defs/constrains~1customManagedBy~1allOf~1not~1object+object@3"
+                        },
+                        {
+                          "$ref": "#/$defs/constrains~1customManagedBy~1array"
+                        },
+                        {
+                          "$ref": "#/$defs/constrains~1customManagedBy~1null,boolean,number"
+                        },
+                        {
+                          "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x20-x2d@2"
+                        },
+                        {
+                          "$ref": "#/$defs/constrains~1customManagedBy~1object@2"
+                        },
+                        {
+                          "$ref": "#/$defs/constrains~1customManagedBy~1allOf~1array+not~1array"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/constrains~1customManagedBy~1array@2"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x3a-x2d"
+              },
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/constrains~1customManagedBy~1object"
+                    }
+                  },
+                  {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/$defs/constrains~1customManagedBy~1allOf~1not~1object+object@3"
+                        },
+                        {
+                          "$ref": "#/$defs/constrains~1customManagedBy~1array"
+                        },
+                        {
+                          "$ref": "#/$defs/constrains~1customManagedBy~1null,boolean,number"
+                        },
+                        {
+                          "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x3a-x2d"
+                        },
+                        {
+                          "$ref": "#/$defs/constrains~1customManagedBy~1object@2"
+                        },
+                        {
+                          "$ref": "#/$defs/constrains~1customManagedBy~1allOf~1array+not~1array"
+                        }
+                      ]
+                    },
+                    "propertyNames": {
+                      "$ref": "#/$defs/constrains~1customManagedBy~1anyOf~1string;pattern-x20-x2d@2"
+                    },
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "propertyNames": {
+            "$ref": "#/$defs/constrains~1customManagedBy~1anyOf~1string;pattern-x20-x2d@2"
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/constrains~1customManagedBy~1object@3"
+          }
+        }
+      ]
+    },
+    "constrains/customManagedBy/allOf/not/object+object@6": {
+      "allOf": [
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1null,boolean,number"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x3a-x2d"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x3a"
+              }
+            ]
+          },
+          "propertyNames": {
+            "$ref": "#/$defs/constrains~1customManagedBy~1anyOf~1string;pattern-x20-x2d"
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/constrains~1customManagedBy~1object@5"
+          }
+        }
+      ]
+    },
+    "constrains/customManagedBy/allOf/not/object+object@7": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/$defs/constrains~1customManagedBy~1object@5"
+          }
+        },
+        {
+          "additionalProperties": {
+            "anyOf": [
+              false,
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1null,boolean,number"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x3a-x2d"
+              }
+            ]
+          },
+          "propertyNames": {
+            "$ref": "#/$defs/constrains~1customManagedBy~1anyOf~1string;pattern-x20-x2d@2"
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/customManagedBy/allOf/not/object+object@8": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/$defs/constrains~1customManagedBy~1object@4"
+          }
+        },
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1null,boolean,number"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x3a@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x3a"
+              }
+            ]
+          },
+          "propertyNames": {
+            "$ref": "#/$defs/constrains~1customManagedBy~1anyOf~1string;pattern-x20-x2d"
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/customManagedBy/anyOf/string;pattern-x20-x2d": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x20-x2d@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x20-x2d"
+        }
+      ]
+    },
+    "constrains/customManagedBy/anyOf/string;pattern-x20-x2d@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x20-x2d"
+        }
+      ]
+    },
+    "constrains/customManagedBy/array": {
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1customManagedBy~1null,boolean,number"
+          },
+          {
+            "$ref": "#/$defs/constrains~1customManagedBy~1array@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1customManagedBy~1object@5"
+          },
+          {
+            "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x20-x2d@2"
+          }
+        ]
+      },
+      "type": "array"
+    },
+    "constrains/customManagedBy/array@2": {
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1customManagedBy~1array"
+          },
+          {
+            "$ref": "#/$defs/constrains~1customManagedBy~1null,boolean,number"
+          },
+          {
+            "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x20-x2d@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1customManagedBy~1object@2"
+          }
+        ]
+      },
+      "type": "array"
+    },
+    "constrains/customManagedBy/array@3": {
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1customManagedBy~1null,boolean,number"
+          },
+          {
+            "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x20-x2d@2"
+          }
+        ]
+      },
+      "type": "array"
+    },
+    "constrains/customManagedBy/null,boolean,number": {
+      "type": [
+        "null",
+        "boolean",
+        "number"
+      ]
+    },
+    "constrains/customManagedBy/object": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1customManagedBy~1array"
+          },
+          {
+            "$ref": "#/$defs/constrains~1customManagedBy~1null,boolean,number"
+          },
+          {
+            "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x3a-x2d"
+          },
+          {
+            "$ref": "#/$defs/constrains~1customManagedBy~1object@2"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x20-x2d"
+      },
+      "type": "object"
+    },
+    "constrains/customManagedBy/object@2": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1customManagedBy~1null,boolean,number"
+          },
+          {
+            "$ref": "#/$defs/constrains~1customManagedBy~1array@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x3a-x2d"
+          },
+          {
+            "$ref": "#/$defs/constrains~1customManagedBy~1object@5"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x20-x2d"
+      },
+      "type": "object"
+    },
+    "constrains/customManagedBy/object@3": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1customManagedBy~1object"
+          },
+          {
+            "$ref": "#/$defs/constrains~1customManagedBy~1array@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1customManagedBy~1null,boolean,number"
+          },
+          {
+            "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x3a-x2d"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x20-x2d"
+      },
+      "type": "object"
+    },
+    "constrains/customManagedBy/object@4": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1customManagedBy~1null,boolean,number"
+          },
+          {
+            "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x3a@2"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x20-x2d"
+      },
+      "type": "object"
+    },
+    "constrains/customManagedBy/object@5": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1customManagedBy~1null,boolean,number"
+          },
+          {
+            "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x3a-x2d"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x20-x2d"
+      },
+      "type": "object"
+    },
+    "constrains/customManagedBy/string;pattern-x20-x25": {
+      "pattern": "^(?:(?:[\\x20])*[\\x25][\\x21](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+      "type": "string"
+    },
+    "constrains/customManagedBy/string;pattern-x20-x2d": {
+      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*))$",
+      "type": "string"
+    },
+    "constrains/customManagedBy/string;pattern-x20-x2d@2": {
+      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
+      "type": "string"
+    },
+    "constrains/customManagedBy/string;pattern-x20-x2d@3": {
+      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+      "type": "string"
+    },
+    "constrains/customManagedBy/string;pattern-x20-x2e": {
+      "pattern": "^(?:(?:[\\x20])*[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
+      "type": "string"
+    },
+    "constrains/customManagedBy/string;pattern-x20-x2e@2": {
+      "pattern": "^(?:(?:[\\x20])*[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+      "type": "string"
+    },
+    "constrains/customManagedBy/string;pattern-x20-x5b": {
+      "pattern": "^(?:(?:[\\x20])*[\\x5b][\\x5d](?:[\\x09\\x20])*[\\x21-\\x22\\x24-\\x2b\\x2d-\\x39\\x3b\\x3d-\\x5c\\x5e-\\x7c\\x7e](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+      "type": "string"
+    },
+    "constrains/customManagedBy/string;pattern-x3a": {
+      "pattern": "^(?:(?:(?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*))$",
+      "type": "string"
+    },
+    "constrains/customManagedBy/string;pattern-x3a-x2d": {
+      "pattern": "^(?:(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
+      "type": "string"
+    },
+    "constrains/customManagedBy/string;pattern-x3a@2": {
+      "pattern": "^(?:(?:(?:[\\x3a])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*)))$",
+      "type": "string"
+    },
+    "constrains/customManagedBy:t": {
+      "properties": {
+        "customManagedBy": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "customManagedBy"
+      ],
+      "type": "object"
+    },
+    "constrains/customManagedBy=false": {
+      "properties": {
+        "customManagedBy": {
+          "enum": [
+            false
+          ]
+        }
+      },
+      "required": [
+        "customManagedBy"
+      ],
+      "type": "object"
+    },
+    "constrains/customManagedBy=true": {
+      "properties": {
+        "customManagedBy": {
+          "enum": [
+            true
+          ]
+        }
+      },
+      "required": [
+        "customManagedBy"
+      ],
+      "type": "object"
+    },
+    "constrains/customManagedBy@10": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy@11"
+        },
+        {
+          "properties": {
+            "customManagedBy": {
+              "maxItems": 1,
+              "maxProperties": 1
+            }
+          },
+          "required": [
+            "customManagedBy"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/customManagedBy@11": {
+      "not": {
+        "properties": {
+          "customManagedBy": {}
+        },
         "required": [
-          "certificates"
+          "customManagedBy"
         ],
         "type": "object"
       }
+    },
+    "constrains/customManagedBy@12": {
+      "properties": {
+        "customManagedBy": {
+          "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x20-x2e"
+        }
+      },
+      "required": [
+        "customManagedBy"
+      ],
+      "type": "object"
+    },
+    "constrains/customManagedBy@13": {
+      "properties": {
+        "customManagedBy": {
+          "$ref": "#/$defs/constrains~1customManagedBy~1allOf~1not~1object+object@5"
+        }
+      },
+      "required": [
+        "customManagedBy"
+      ],
+      "type": "object"
+    },
+    "constrains/customManagedBy@14": {
+      "properties": {
+        "customManagedBy": {
+          "$ref": "#/$defs/constrains~1customManagedBy~1object@3"
+        }
+      },
+      "required": [
+        "customManagedBy"
+      ],
+      "type": "object"
+    },
+    "constrains/customManagedBy@15": {
+      "properties": {
+        "customManagedBy": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "customManagedBy"
+      ],
+      "type": "object"
+    },
+    "constrains/customManagedBy@2": {
+      "$ref": "#/$defs/constrains~1customManagedBy@4"
+    },
+    "constrains/customManagedBy@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy@10"
+        },
+        {
+          "properties": {
+            "customManagedBy": {
+              "$ref": "#/$defs/constrains~1customManagedBy~1allOf~1not~1object+object"
+            }
+          },
+          "required": [
+            "customManagedBy"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/customManagedBy@4": {
+      "allOf": [
+        {
+          "properties": {
+            "customManagedBy": {
+              "$ref": "#/$defs/constrains~1customManagedBy~1object@4"
+            }
+          },
+          "required": [
+            "customManagedBy"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy@10"
+        }
+      ]
+    },
+    "constrains/customManagedBy@5": {
+      "allOf": [
+        {
+          "properties": {
+            "customManagedBy": {
+              "$ref": "#/$defs/constrains~1customManagedBy~1allOf~1not~1object+object@8"
+            }
+          },
+          "required": [
+            "customManagedBy"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy@10"
+        }
+      ]
+    },
+    "constrains/customManagedBy@6": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy@13"
+        },
+        {
+          "properties": {
+            "customManagedBy": {
+              "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x20-x25"
+            }
+          },
+          "required": [
+            "customManagedBy"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/customManagedBy@7": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy@13"
+        }
+      ]
+    },
+    "constrains/customManagedBy@8": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy@3"
+        },
+        {
+          "properties": {
+            "customManagedBy": {
+              "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x20-x5b"
+            }
+          },
+          "required": [
+            "customManagedBy"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy@13"
+        }
+      ]
+    },
+    "constrains/customManagedBy@9": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1customManagedBy@5"
+        },
+        {
+          "properties": {
+            "customManagedBy": {
+              "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x20-x2e@2"
+            }
+          },
+          "required": [
+            "customManagedBy"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "customManagedBy": {
+              "$ref": "#/$defs/constrains~1customManagedBy~1allOf~1not~1object+object@4"
+            }
+          },
+          "required": [
+            "customManagedBy"
+          ],
+          "type": "object"
+        }
+      ]
     },
     "constrains/enabled:t": {
       "properties": {
@@ -166,10 +2469,256 @@
       ],
       "type": "object"
     },
+    "constrains/name": {
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/constrains~1customManagedBy~1allOf~1not~1object+object@4"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "constrains/name@10": {
+      "properties": {
+        "name": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "constrains/name@2": {
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x20-x5b"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "constrains/name@3": {
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x20-x2e@2"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "constrains/name@4": {
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x20-x25"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "constrains/name@5": {
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/constrains~1customManagedBy~1allOf~1not~1object+object@5"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "constrains/name@6": {
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/constrains~1customManagedBy~1allOf~1not~1object+object@8"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "constrains/name@7": {
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/constrains~1customManagedBy~1allOf~1not~1object+object"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "constrains/name@8": {
+      "properties": {
+        "name": {
+          "maxItems": 1,
+          "maxProperties": 1
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "constrains/name@9": {
+      "properties": {
+        "name": {
+          "type": "array"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "constrains/operator+operator.name": {
+      "allOf": [
+        {
+          "properties": {
+            "operator": {
+              "$ref": "#/$defs/constrains~1name@7"
+            }
+          },
+          "required": [
+            "operator"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator+operator.name@4"
+        }
+      ]
+    },
+    "constrains/operator+operator.name@2": {
+      "allOf": [
+        {
+          "properties": {
+            "operator": {
+              "$ref": "#/$defs/constrains~1name@6"
+            }
+          },
+          "required": [
+            "operator"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator+operator.name@4"
+        }
+      ]
+    },
+    "constrains/operator+operator.name@3": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1operator+operator.name"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator+operator.name@2"
+        },
+        {
+          "properties": {
+            "operator": {
+              "$ref": "#/$defs/constrains~1name@4"
+            }
+          },
+          "required": [
+            "operator"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "operator": {
+              "$ref": "#/$defs/constrains~1name@5"
+            }
+          },
+          "required": [
+            "operator"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "operator": {
+              "$ref": "#/$defs/constrains~1name@3"
+            }
+          },
+          "required": [
+            "operator"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "operator": {
+              "$ref": "#/$defs/constrains~1name"
+            }
+          },
+          "required": [
+            "operator"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "operator": {
+              "$ref": "#/$defs/constrains~1name@2"
+            }
+          },
+          "required": [
+            "operator"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/operator+operator.name@4": {
+      "anyOf": [
+        {
+          "properties": {
+            "operator": {
+              "$ref": "#/$defs/constrains~1name@8"
+            }
+          },
+          "required": [
+            "operator"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "operator": {
+                "properties": {
+                  "name": {}
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "operator"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
     "constrains/prometheus.webhooks.enabled:t": {
       "properties": {
         "prometheus": {
-          "$ref": "#/$defs/constrains~1webhooks.enabled:t"
+          "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
         }
       },
       "required": [
@@ -186,10 +2735,871 @@
       ],
       "type": "object"
     },
+    "constrains/webhooks+webhooks.failurePolicy": {
+      "allOf": [
+        {
+          "properties": {
+            "webhooks": {
+              "properties": {
+                "failurePolicy": {
+                  "$ref": "#/$defs/constrains~1customManagedBy~1allOf~1not~1object+object"
+                }
+              },
+              "required": [
+                "failurePolicy"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "webhooks"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.failurePolicy@4"
+        }
+      ]
+    },
+    "constrains/webhooks+webhooks.failurePolicy@2": {
+      "allOf": [
+        {
+          "properties": {
+            "webhooks": {
+              "properties": {
+                "failurePolicy": {
+                  "$ref": "#/$defs/constrains~1customManagedBy~1allOf~1not~1object+object@8"
+                }
+              },
+              "required": [
+                "failurePolicy"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "webhooks"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.failurePolicy@4"
+        }
+      ]
+    },
+    "constrains/webhooks+webhooks.failurePolicy@3": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.failurePolicy@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.failurePolicy"
+        },
+        {
+          "properties": {
+            "webhooks": {
+              "properties": {
+                "failurePolicy": {
+                  "$ref": "#/$defs/constrains~1customManagedBy~1allOf~1not~1object+object@4"
+                }
+              },
+              "required": [
+                "failurePolicy"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "webhooks"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "webhooks": {
+              "properties": {
+                "failurePolicy": {
+                  "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x20-x5b"
+                }
+              },
+              "required": [
+                "failurePolicy"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "webhooks"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "webhooks": {
+              "properties": {
+                "failurePolicy": {
+                  "$ref": "#/$defs/constrains~1customManagedBy~1allOf~1not~1object+object@5"
+                }
+              },
+              "required": [
+                "failurePolicy"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "webhooks"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "webhooks": {
+              "properties": {
+                "failurePolicy": {
+                  "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x20-x25"
+                }
+              },
+              "required": [
+                "failurePolicy"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "webhooks"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "webhooks": {
+              "properties": {
+                "failurePolicy": {
+                  "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x20-x2e@2"
+                }
+              },
+              "required": [
+                "failurePolicy"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "webhooks"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/webhooks+webhooks.failurePolicy@4": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "webhooks": {
+                "properties": {
+                  "failurePolicy": {}
+                },
+                "required": [
+                  "failurePolicy"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "webhooks"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "webhooks": {
+              "properties": {
+                "failurePolicy": {
+                  "maxItems": 1,
+                  "maxProperties": 1
+                }
+              },
+              "required": [
+                "failurePolicy"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "webhooks"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/webhooks+webhooks.name": {
+      "$ref": "#/$defs/constrains~1webhooks+webhooks.name@7"
+    },
+    "constrains/webhooks+webhooks.name@2": {
+      "$ref": "#/$defs/constrains~1webhooks+webhooks.name@6"
+    },
+    "constrains/webhooks+webhooks.name@3": {
+      "$ref": "#/$defs/constrains~1webhooks+webhooks.name@6"
+    },
+    "constrains/webhooks+webhooks.name@4": {
+      "allOf": [
+        {
+          "properties": {
+            "webhooks": {
+              "$ref": "#/$defs/constrains~1name@7"
+            }
+          },
+          "required": [
+            "webhooks"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.name@8"
+        }
+      ]
+    },
+    "constrains/webhooks+webhooks.name@5": {
+      "allOf": [
+        {
+          "properties": {
+            "webhooks": {
+              "$ref": "#/$defs/constrains~1name@6"
+            }
+          },
+          "required": [
+            "webhooks"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.name@8"
+        }
+      ]
+    },
+    "constrains/webhooks+webhooks.name@6": {
+      "allOf": [
+        {
+          "properties": {
+            "webhooks": {
+              "properties": {
+                "name": {
+                  "$ref": "#/$defs/constrains~1customManagedBy~1object@4"
+                }
+              },
+              "required": [
+                "name"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "webhooks"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.name@8"
+        }
+      ]
+    },
+    "constrains/webhooks+webhooks.name@7": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.name@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.name@4"
+        },
+        {
+          "properties": {
+            "webhooks": {
+              "$ref": "#/$defs/constrains~1name@4"
+            }
+          },
+          "required": [
+            "webhooks"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "webhooks": {
+              "$ref": "#/$defs/constrains~1name"
+            }
+          },
+          "required": [
+            "webhooks"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "webhooks": {
+              "$ref": "#/$defs/constrains~1name@3"
+            }
+          },
+          "required": [
+            "webhooks"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "webhooks": {
+              "$ref": "#/$defs/constrains~1name@5"
+            }
+          },
+          "required": [
+            "webhooks"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "webhooks": {
+              "$ref": "#/$defs/constrains~1name@2"
+            }
+          },
+          "required": [
+            "webhooks"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/webhooks+webhooks.name@8": {
+      "anyOf": [
+        {
+          "properties": {
+            "webhooks": {
+              "$ref": "#/$defs/constrains~1name@8"
+            }
+          },
+          "required": [
+            "webhooks"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.name"
+        }
+      ]
+    },
+    "constrains/webhooks+webhooks.timeoutSeconds": {
+      "allOf": [
+        {
+          "properties": {
+            "webhooks": {
+              "properties": {
+                "timeoutSeconds": {
+                  "$ref": "#/$defs/constrains~1customManagedBy~1allOf~1not~1object+object"
+                }
+              },
+              "required": [
+                "timeoutSeconds"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "webhooks"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.timeoutSeconds@7"
+        }
+      ]
+    },
+    "constrains/webhooks+webhooks.timeoutSeconds+webhooks.timeoutSeconds:t": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.timeoutSeconds@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.timeoutSeconds:t"
+        }
+      ]
+    },
+    "constrains/webhooks+webhooks.timeoutSeconds+webhooks.timeoutSeconds:t@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.timeoutSeconds@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.timeoutSeconds:t"
+        }
+      ]
+    },
+    "constrains/webhooks+webhooks.timeoutSeconds+webhooks.timeoutSeconds:t@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.timeoutSeconds@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.timeoutSeconds:t"
+        }
+      ]
+    },
+    "constrains/webhooks+webhooks.timeoutSeconds+webhooks.timeoutSeconds:t@4": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.timeoutSeconds@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.timeoutSeconds:t"
+        }
+      ]
+    },
+    "constrains/webhooks+webhooks.timeoutSeconds+webhooks.timeoutSeconds:t@5": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.timeoutSeconds+webhooks.timeoutSeconds:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.timeoutSeconds+webhooks.timeoutSeconds:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.timeoutSeconds+webhooks.timeoutSeconds:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.timeoutSeconds+webhooks.timeoutSeconds:t"
+        }
+      ]
+    },
+    "constrains/webhooks+webhooks.timeoutSeconds@2": {
+      "allOf": [
+        {
+          "properties": {
+            "webhooks": {
+              "properties": {
+                "timeoutSeconds": {
+                  "$ref": "#/$defs/constrains~1customManagedBy~1allOf~1not~1object+object@8"
+                }
+              },
+              "required": [
+                "timeoutSeconds"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "webhooks"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.timeoutSeconds@7"
+        }
+      ]
+    },
+    "constrains/webhooks+webhooks.timeoutSeconds@3": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.timeoutSeconds"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.timeoutSeconds"
+        }
+      ]
+    },
+    "constrains/webhooks+webhooks.timeoutSeconds@4": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.timeoutSeconds"
+        },
+        {
+          "properties": {
+            "webhooks": {
+              "properties": {
+                "timeoutSeconds": {
+                  "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x20-x25"
+                }
+              },
+              "required": [
+                "timeoutSeconds"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "webhooks"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.timeoutSeconds"
+        }
+      ]
+    },
+    "constrains/webhooks+webhooks.timeoutSeconds@5": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.timeoutSeconds"
+        },
+        {
+          "properties": {
+            "webhooks": {
+              "properties": {
+                "timeoutSeconds": {
+                  "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x20-x5b"
+                }
+              },
+              "required": [
+                "timeoutSeconds"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "webhooks"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks.timeoutSeconds"
+        }
+      ]
+    },
+    "constrains/webhooks+webhooks.timeoutSeconds@6": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.timeoutSeconds@2"
+        },
+        {
+          "properties": {
+            "webhooks": {
+              "properties": {
+                "timeoutSeconds": {
+                  "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x20-x2e@2"
+                }
+              },
+              "required": [
+                "timeoutSeconds"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "webhooks"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "webhooks": {
+              "properties": {
+                "timeoutSeconds": {
+                  "$ref": "#/$defs/constrains~1customManagedBy~1allOf~1not~1object+object@4"
+                }
+              },
+              "required": [
+                "timeoutSeconds"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "webhooks"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/webhooks+webhooks.timeoutSeconds@7": {
+      "anyOf": [
+        {
+          "properties": {
+            "webhooks": {
+              "properties": {
+                "timeoutSeconds": {
+                  "maxItems": 1,
+                  "maxProperties": 1
+                }
+              },
+              "required": [
+                "timeoutSeconds"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "webhooks"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "webhooks": {
+                "properties": {
+                  "timeoutSeconds": {}
+                },
+                "required": [
+                  "timeoutSeconds"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "webhooks"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
     "constrains/webhooks.enabled:t": {
+      "$ref": "#/$defs/constrains~1webhooks.enabled:t@2"
+    },
+    "constrains/webhooks.enabled:t@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+      }
+    },
+    "constrains/webhooks.enabled:t@3": {
       "properties": {
         "webhooks": {
           "$ref": "#/$defs/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "webhooks"
+      ],
+      "type": "object"
+    },
+    "constrains/webhooks.name": {
+      "not": {
+        "properties": {
+          "webhooks": {
+            "properties": {
+              "name": {}
+            },
+            "required": [
+              "name"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "webhooks"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/webhooks.name=false": {
+      "properties": {
+        "webhooks": {
+          "properties": {
+            "name": {
+              "enum": [
+                false
+              ]
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "webhooks"
+      ],
+      "type": "object"
+    },
+    "constrains/webhooks.name=null": {
+      "properties": {
+        "webhooks": {
+          "properties": {
+            "name": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "webhooks"
+      ],
+      "type": "object"
+    },
+    "constrains/webhooks.name=true": {
+      "properties": {
+        "webhooks": {
+          "properties": {
+            "name": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "webhooks"
+      ],
+      "type": "object"
+    },
+    "constrains/webhooks.name@2": {
+      "properties": {
+        "webhooks": {
+          "properties": {
+            "name": {
+              "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy:t~1string;pattern-x20-x2e"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "webhooks"
+      ],
+      "type": "object"
+    },
+    "constrains/webhooks.name@3": {
+      "properties": {
+        "webhooks": {
+          "properties": {
+            "name": {
+              "$ref": "#/$defs/constrains~1customManagedBy~1string;pattern-x20-x2e"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "webhooks"
+      ],
+      "type": "object"
+    },
+    "constrains/webhooks.name@4": {
+      "properties": {
+        "webhooks": {
+          "properties": {
+            "name": {
+              "$ref": "#/$defs/constrains~1customManagedBy~1object@3"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "webhooks"
+      ],
+      "type": "object"
+    },
+    "constrains/webhooks.name@5": {
+      "properties": {
+        "webhooks": {
+          "properties": {
+            "name": {
+              "pattern": "^(?:(?:[\\x20])*)$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "webhooks"
+      ],
+      "type": "object"
+    },
+    "constrains/webhooks.name@6": {
+      "properties": {
+        "webhooks": {
+          "properties": {
+            "name": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "webhooks"
+      ],
+      "type": "object"
+    },
+    "constrains/webhooks.name@7": {
+      "properties": {
+        "webhooks": {
+          "properties": {
+            "name": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "webhooks"
+      ],
+      "type": "object"
+    },
+    "constrains/webhooks.timeoutSeconds": {
+      "properties": {
+        "webhooks": {
+          "properties": {
+            "timeoutSeconds": {
+              "$ref": "#/$defs/constrains~1customManagedBy~1allOf~1not~1object+object@5"
+            }
+          },
+          "required": [
+            "timeoutSeconds"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "webhooks"
+      ],
+      "type": "object"
+    },
+    "constrains/webhooks.timeoutSeconds:t": {
+      "properties": {
+        "webhooks": {
+          "properties": {
+            "timeoutSeconds": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "timeoutSeconds"
+          ],
+          "type": "object"
         }
       },
       "required": [
@@ -214,7 +3624,7 @@
       "anyOf": [
         {
           "additionalProperties": {
-            "$ref": "#/$defs/helm-marker-free~1:helm-marker-free"
+            "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+1more~1:helm-marker-free"
           },
           "propertyNames": {
             "not": {
@@ -224,15 +3634,11 @@
           "type": "object"
         },
         {
-          "type": [
-            "null",
-            "boolean",
-            "number"
-          ]
+          "$ref": "#/$defs/constrains~1customManagedBy~1null,boolean,number"
         },
         {
           "items": {
-            "$ref": "#/$defs/helm-marker-free~1:helm-marker-free"
+            "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+1more~1:helm-marker-free"
           },
           "type": "array"
         },
@@ -243,9 +3649,6 @@
           "type": "string"
         }
       ]
-    },
-    "helm-marker-free/:helm-marker-free": {
-      "$ref": "#/$defs/helm-marker-free"
     },
     "t": {
       "anyOf": [
@@ -272,19 +3675,99 @@
         }
       ]
     },
-    "values/anyOf/null,boolean,number+string": {
-      "anyOf": [
-        {
-          "type": [
-            "null",
-            "boolean",
-            "number"
-          ]
+    "values/array": {
+      "items": {
+        "anyOf": [
+          {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/constrains~1customManagedBy~1null,boolean,number"
+                },
+                {
+                  "$ref": "#/$defs/values~1string@4"
+                }
+              ]
+            },
+            "propertyNames": {
+              "$ref": "#/$defs/values~1string@4"
+            },
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/constrains~1customManagedBy~1null,boolean,number"
+          },
+          {
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/constrains~1customManagedBy~1null,boolean,number"
+                },
+                {
+                  "$ref": "#/$defs/values~1string@4"
+                }
+              ]
+            },
+            "type": "array"
+          },
+          {
+            "$ref": "#/$defs/values~1string@4"
+          }
+        ]
+      },
+      "type": "array"
+    },
+    "values/object": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "maxItems": 0,
+            "type": "array"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/$defs/values~1string"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "maxProperties": 0,
+            "type": "object"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/values~1string"
+      },
+      "type": "object"
+    },
+    "values/object@2": {
+      "additionalProperties": {
+        "not": {
+          "pattern": "[^A-Za-z0-9_.$/+: \t-]"
         },
-        {
-          "$ref": "#/$defs/values~1string@2"
-        }
-      ]
+        "pattern": "^[A-Za-z0-9_.$/+-]+:[ \t]+[A-Za-z0-9_.$/+-]+$",
+        "type": "string"
+      },
+      "maxProperties": 1,
+      "minProperties": 1,
+      "propertyNames": {
+        "minLength": 1,
+        "not": {
+          "pattern": "[^A-Za-z0-9_.$/+-]"
+        },
+        "type": "string"
+      },
+      "type": "object"
     },
     "values/string": {
       "allOf": [
@@ -306,7 +3789,99 @@
       ],
       "type": "string"
     },
+    "values/string;pattern-a-za-z0-9-t": {
+      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "values/string;pattern-null-null-null": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "values/string;pattern-r-n": {
+      "not": {
+        "pattern": "^[A-Za-z]+\\n[A-Za-z]+$"
+      },
+      "pattern": "[\\r\\n]",
+      "type": "string"
+    },
+    "values/string;pattern-t": {
+      "pattern": "^[ \\t]*(#.*)?$",
+      "type": "string"
+    },
     "values/string@2": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^(null|Null|NULL)[ \\t]+#"
+          }
+        },
+        {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "values/string@3": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^[-?:]([ \\t]|$)"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[!&*#{}\\[\\],|>@`%]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(|~|null|Null|NULL)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "values/string@4": {
       "not": {
         "pattern": "[^A-Za-z0-9_./+-]"
       },
@@ -318,7 +3893,7 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/constrains~1webhooks.enabled:t"
+        "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
       },
       "then": {
         "allOf": [
@@ -378,9 +3953,72 @@
     },
     {
       "if": {
+        "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:t+additionalAnnotations=null+23more"
+      },
+      "then": false
+    },
+    {
+      "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1webhooks.enabled:t"
+            "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1additionalLabels:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.name+webhooks.name=false+2more"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "customManagedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/values~1string;pattern-r-n"
+              },
+              {
+                "$ref": "#/$defs/values~1string@2"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              {
+                "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+              },
+              {
+                "$ref": "#/$defs/values~1object"
+              },
+              {
+                "$ref": "#/$defs/values~1string;pattern-t"
+              },
+              {
+                "$ref": "#/$defs/values~1string;pattern-null-null-null"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/$defs/values~1string@3"
+              }
+            ],
+            "description": "When specified, each rendered resource will have `app.kubernetes.io/managed-by: ${this}` label on it. Useful, when using only helm template with some other solution."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
           },
           {
             "anyOf": [
@@ -418,7 +4056,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1webhooks.enabled:t"
+            "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
           },
           {
             "anyOf": [
@@ -470,6 +4108,66 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1additionalLabels:t+customManagedBy+customManagedBy:t+customManagedBy=false+3more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1additionalLabels:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.name+webhooks.name=false+2more"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "operator": {
+            "additionalProperties": {},
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/values~1string;pattern-r-n"
+                  },
+                  {
+                    "$ref": "#/$defs/values~1string@2"
+                  },
+                  {
+                    "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+                  },
+                  {
+                    "$ref": "#/$defs/values~1object"
+                  },
+                  {
+                    "$ref": "#/$defs/values~1string;pattern-t"
+                  },
+                  {
+                    "$ref": "#/$defs/values~1string;pattern-null-null-null"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/$defs/values~1string@3"
+                  }
+                ],
+                "description": "Name of the KEDA operator"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "not": {
@@ -487,7 +4185,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1webhooks.enabled:t"
+            "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
           },
           {
             "anyOf": [
@@ -525,13 +4223,62 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1webhooks.enabled:t"
+            "properties": {
+              "customManagedBy": {
+                "type": "array"
+              }
+            },
+            "required": [
+              "customManagedBy"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
           },
           {
             "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t"
           },
           {
-            "$ref": "#/$defs/constrains~1additionalLabels:t"
+            "$ref": "#/$defs/constrains~1additionalLabels:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.name+webhooks.name=false+2more"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "customManagedBy": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/values~1array"
+                }
+              }
+            ],
+            "description": "When specified, each rendered resource will have `app.kubernetes.io/managed-by: ${this}` label on it. Useful, when using only helm template with some other solution."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1additionalLabels:t@2"
           }
         ]
       },
@@ -544,132 +4291,28 @@
               "name": {
                 "anyOf": [
                   {
-                    "not": {
-                      "pattern": "^[A-Za-z]+\\n[A-Za-z]+$"
-                    },
-                    "pattern": "[\\r\\n]",
-                    "type": "string"
+                    "$ref": "#/$defs/values~1string;pattern-r-n"
                   },
                   {
-                    "allOf": [
-                      {
-                        "not": {
-                          "pattern": "^(null|Null|NULL)[ \\t]+#"
-                        }
-                      },
-                      {
-                        "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-                        }
-                      }
-                    ],
-                    "type": "string"
+                    "$ref": "#/$defs/values~1string@2"
                   },
                   {
-                    "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-                    "type": "string"
+                    "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
                   },
                   {
-                    "additionalProperties": {
-                      "anyOf": [
-                        {
-                          "maxItems": 0,
-                          "type": "array"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "$ref": "#/$defs/values~1string"
-                        },
-                        {
-                          "type": "number"
-                        },
-                        {
-                          "type": "null"
-                        },
-                        {
-                          "type": "boolean"
-                        },
-                        {
-                          "maxProperties": 0,
-                          "type": "object"
-                        }
-                      ]
-                    },
-                    "propertyNames": {
-                      "$ref": "#/$defs/values~1string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/values~1object"
                   },
                   {
-                    "pattern": "^[ \\t]*(#.*)?$",
-                    "type": "string"
+                    "$ref": "#/$defs/values~1string;pattern-t"
                   },
                   {
-                    "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-                    "type": "string"
+                    "$ref": "#/$defs/values~1string;pattern-null-null-null"
                   },
                   {
                     "type": "null"
                   },
                   {
-                    "allOf": [
-                      {
-                        "not": {
-                          "pattern": "^[-?:]([ \\t]|$)"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[ \\t]#"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(|~|null|Null|NULL)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": ":[ \\t]|:$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[\\r\\n]"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                        }
-                      }
-                    ],
-                    "type": "string"
+                    "$ref": "#/$defs/values~1string@3"
                   }
                 ],
                 "description": "Name of the KEDA admission webhooks"
@@ -683,7 +4326,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1webhooks.enabled:t"
+            "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
           },
           {
             "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t"
@@ -715,7 +4358,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/helm-marker-free~1:helm-marker-free"
+                  "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+1more~1:helm-marker-free"
                 }
               }
             ],
@@ -728,7 +4371,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1webhooks.enabled:t"
+            "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
           },
           {
             "$ref": "#/$defs/constrains~1certificates.certManager.generateCA:t"
@@ -762,7 +4405,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1webhooks.enabled:t"
+            "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
           },
           {
             "$ref": "#/$defs/constrains~1prometheus.webhooks.enabled:t"
@@ -794,26 +4437,18 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1webhooks.enabled:t"
+            "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
           },
           {
             "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t"
           },
           {
-            "$ref": "#/$defs/constrains~1additionalLabels:t"
+            "$ref": "#/$defs/constrains~1additionalLabels:t@2"
           },
           {
             "properties": {
               "webhooks": {
-                "properties": {
-                  "name": {
-                    "type": "array"
-                  }
-                },
-                "required": [
-                  "name"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/constrains~1name@9"
               }
             },
             "required": [
@@ -832,36 +4467,7 @@
               "name": {
                 "description": "Name of the KEDA admission webhooks",
                 "not": {
-                  "items": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {
-                          "$ref": "#/$defs/values~1anyOf~1null,boolean,number+string"
-                        },
-                        "propertyNames": {
-                          "$ref": "#/$defs/values~1string@2"
-                        },
-                        "type": "object"
-                      },
-                      {
-                        "type": [
-                          "null",
-                          "boolean",
-                          "number"
-                        ]
-                      },
-                      {
-                        "items": {
-                          "$ref": "#/$defs/values~1anyOf~1null,boolean,number+string"
-                        },
-                        "type": "array"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1string@2"
-                      }
-                    ]
-                  },
-                  "type": "array"
+                  "$ref": "#/$defs/values~1array"
                 }
               }
             }
@@ -873,26 +4479,18 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1webhooks.enabled:t"
+            "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
           },
           {
             "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t"
           },
           {
-            "$ref": "#/$defs/constrains~1additionalLabels:t"
+            "$ref": "#/$defs/constrains~1additionalLabels:t@2"
           },
           {
             "properties": {
               "webhooks": {
-                "properties": {
-                  "name": {
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "name"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/constrains~1name@10"
               }
             },
             "required": [
@@ -911,23 +4509,7 @@
               "name": {
                 "description": "Name of the KEDA admission webhooks",
                 "not": {
-                  "additionalProperties": {
-                    "not": {
-                      "pattern": "[^A-Za-z0-9_.$/+: \t-]"
-                    },
-                    "pattern": "^[A-Za-z0-9_.$/+-]+:[ \t]+[A-Za-z0-9_.$/+-]+$",
-                    "type": "string"
-                  },
-                  "maxProperties": 1,
-                  "minProperties": 1,
-                  "propertyNames": {
-                    "minLength": 1,
-                    "not": {
-                      "pattern": "[^A-Za-z0-9_.$/+-]"
-                    },
-                    "type": "string"
-                  },
-                  "type": "object"
+                  "$ref": "#/$defs/values~1object@2"
                 }
               }
             }
@@ -939,83 +4521,7 @@
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "properties": {
-                  "certificates": {
-                    "properties": {
-                      "certManager": {
-                        "properties": {
-                          "issuer": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "issuer"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "certManager"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "certificates"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "certificates": {
-                      "properties": {
-                        "certManager": {
-                          "properties": {
-                            "issuer": {}
-                          },
-                          "required": [
-                            "issuer"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "certManager"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "certificates"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhooks.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1certificates.certManager.generateCA:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t@4"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1webhooks.enabled:t"
+            "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
           },
           {
             "anyOf": [
@@ -1048,6 +4554,54 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1additionalLabels:t+customManagedBy+customManagedBy:t+customManagedBy=false+3more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+          },
+          {
+            "properties": {
+              "operator": {
+                "$ref": "#/$defs/constrains~1name@9"
+              }
+            },
+            "required": [
+              "operator"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1additionalLabels:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.name+webhooks.name=false+2more"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "operator": {
+            "additionalProperties": {},
+            "properties": {
+              "name": {
+                "description": "Name of the KEDA operator",
+                "not": {
+                  "$ref": "#/$defs/values~1array"
+                }
+              }
+            }
+          }
+        }
+      }
     },
     {
       "if": {
@@ -1113,7 +4667,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/constrains~1webhooks.enabled:t"
+            "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
           },
           {
             "$ref": "#/$defs/constrains~1prometheus.webhooks.enabled:t"
@@ -1126,7 +4680,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1webhooks.enabled:t"
+            "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
           },
           {
             "anyOf": [
@@ -1164,41 +4718,170 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1webhooks.enabled:t"
+            "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
           },
           {
             "properties": {
-              "additionalAnnotations": {
-                "$ref": "#/$defs/helm-marker-free~1:helm-marker-free"
+              "customManagedBy": {
+                "type": "object"
               }
             },
             "required": [
-              "additionalAnnotations"
+              "customManagedBy"
             ],
             "type": "object"
           },
           {
-            "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t@3"
+            "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t"
           },
           {
-            "$ref": "#/$defs/constrains~1additionalAnnotations@2"
+            "$ref": "#/$defs/constrains~1additionalLabels:t@2"
           },
           {
-            "$ref": "#/$defs/constrains~1additionalAnnotations"
-          },
-          {
-            "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations=null"
-          },
+            "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.name+webhooks.name=false+2more"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "customManagedBy": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/values~1object@2"
+                }
+              }
+            ],
+            "description": "When specified, each rendered resource will have `app.kubernetes.io/managed-by: ${this}` label on it. Useful, when using only helm template with some other solution."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
           {
             "properties": {
-              "additionalAnnotations": {
-                "$ref": "#/$defs/t"
+              "operator": {
+                "$ref": "#/$defs/constrains~1name@10"
               }
             },
             "required": [
-              "additionalAnnotations"
+              "operator"
             ],
             "type": "object"
+          },
+          {
+            "$ref": "#/$defs/constrains~1additionalLabels:t+customManagedBy+customManagedBy:t+customManagedBy=false+3more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1additionalLabels:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.name+webhooks.name=false+2more"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "operator": {
+            "additionalProperties": {},
+            "properties": {
+              "name": {
+                "description": "Name of the KEDA operator",
+                "not": {
+                  "$ref": "#/$defs/values~1object@2"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1certificates.certManager.generateCA:t@2"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "certificates": {
+                    "properties": {
+                      "certManager": {
+                        "properties": {
+                          "issuer": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "issuer"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "certManager"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "certificates"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "certificates": {
+                      "properties": {
+                        "certManager": {
+                          "properties": {
+                            "issuer": {}
+                          },
+                          "required": [
+                            "issuer"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "certManager"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "certificates"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t@4"
           }
         ]
       },

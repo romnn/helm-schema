@@ -3,6 +3,15 @@
     "constrains/auth+auth.token+auth.token.enabled+auth.token.enabled=null+11more": {
       "allOf": [
         {
+          "$ref": "#/$defs/constrains~1auth.token.type=jwt@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride+namespaceOverride:t"
+        },
+        {
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
         },
         {
@@ -12,26 +21,26 @@
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1namespaceOverride+namespaceOverride:t"
+          "$ref": "#/$defs/constrains~1auth.token+auth.token.privateKey.existingSecret:t+auth.token.type+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null"
         },
         {
-          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t"
-        },
-        {
           "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled=true+auth.token.type+auth.token.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled=true+auth.token.privateKey.existingSecret:t+3more"
         }
       ]
     },
     "constrains/auth+auth.token+auth.token.enabled+auth.token.enabled=null+11more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1namespaceOverride+namespaceOverride:t@3"
+          "$ref": "#/$defs/constrains~1auth.token.type=jwt@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true@4"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
@@ -40,23 +49,26 @@
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
         },
         {
+          "$ref": "#/$defs/constrains~1namespaceOverride+namespaceOverride:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token+auth.token.privateKey.existingSecret:t+auth.token.type+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t@2"
+        },
+        {
           "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null"
         },
         {
-          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t"
-        },
-        {
           "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled=true+auth.token.type+auth.token.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled=true+auth.token.privateKey.existingSecret:t+3more"
         }
       ]
     },
     "constrains/auth+auth.token+auth.token.enabled+auth.token.enabled=null+11more@3": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled=true+auth.token.privateKey.existingSecret:t+9more@2"
+          "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled=true+auth.token.privateKey.existingSecret:t+9more"
         },
         {
           "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null@2"
@@ -69,22 +81,22 @@
     "constrains/auth+auth.token+auth.token.enabled+auth.token.enabled=null+11more@4": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1auth+auth.token+auth.token.enabled+auth.token.enabled=null+8more"
+          "$ref": "#/$defs/constrains~1auth+auth.token+auth.token.enabled+auth.token.enabled=null+7more"
         },
         {
-          "$ref": "#/$defs/constrains~1auth+auth.token+auth.token.enabled+auth.token.enabled=null+11more"
+          "$ref": "#/$defs/constrains~1auth+auth.token+auth.token.enabled+auth.token.enabled=null+8more"
         },
         {
           "$ref": "#/$defs/constrains~1auth+auth.token+auth.token.enabled+auth.token.enabled=null+11more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null@6"
+          "$ref": "#/$defs/constrains~1auth+auth.token+auth.token.enabled+auth.token.enabled=null+11more"
         },
         {
           "$ref": "#/$defs/constrains~1auth+auth.token+auth.token.enabled+auth.token.enabled=null+3more"
         },
         {
-          "$ref": "#/$defs/constrains~1auth+auth.token+auth.token.enabled+auth.token.enabled=null+7more"
+          "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null@5"
         }
       ]
     },
@@ -125,7 +137,13 @@
     "constrains/auth+auth.token+auth.token.enabled+auth.token.enabled=null+5more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled=true+auth.token.privateKey.existingSecret:t+3more@5"
+          "$ref": "#/$defs/constrains~1auth.token.type=jwt@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token+auth.token.privateKey.existingSecret:t+auth.token.type+1more@5"
         },
         {
           "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null@2"
@@ -148,44 +166,56 @@
     "constrains/auth+auth.token+auth.token.enabled+auth.token.enabled=null+7more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
+          "$ref": "#/$defs/constrains~1auth.token.type=jwt@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token+auth.token.privateKey.existingSecret:t+auth.token.type+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null"
         },
         {
-          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t"
-        },
-        {
           "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled=true+auth.token.type+auth.token.type=null"
         },
         {
-          "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled=true+auth.token.privateKey.existingSecret:t+3more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
         }
       ]
     },
     "constrains/auth+auth.token+auth.token.enabled+auth.token.enabled=null+8more": {
       "allOf": [
         {
+          "$ref": "#/$defs/constrains~1auth.token.type=jwt@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+        },
+        {
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token+auth.token.privateKey.existingSecret:t+auth.token.type+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null"
         },
         {
-          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        },
-        {
           "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled=true+auth.token.type+auth.token.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled=true+auth.token.privateKey.existingSecret:t+3more"
         }
       ]
     },
@@ -218,18 +248,15 @@
       ]
     },
     "constrains/auth.token+auth.token.enabled+auth.token.enabled=null": {
-      "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null@4"
-    },
-    "constrains/auth.token+auth.token.enabled+auth.token.enabled=null@2": {
       "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null@3"
     },
+    "constrains/auth.token+auth.token.enabled+auth.token.enabled=null@2": {
+      "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null@4"
+    },
     "constrains/auth.token+auth.token.enabled+auth.token.enabled=null@3": {
-      "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null@5"
+      "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null@4"
     },
     "constrains/auth.token+auth.token.enabled+auth.token.enabled=null@4": {
-      "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null@5"
-    },
-    "constrains/auth.token+auth.token.enabled+auth.token.enabled=null@5": {
       "anyOf": [
         {
           "not": {
@@ -292,15 +319,12 @@
         }
       ]
     },
-    "constrains/auth.token+auth.token.enabled+auth.token.enabled=null@6": {
+    "constrains/auth.token+auth.token.enabled+auth.token.enabled=null@5": {
       "not": {
         "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null@2"
       }
     },
     "constrains/auth.token+auth.token.enabled=true+auth.token.privateKey.existingSecret:t+3more": {
-      "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled=true+auth.token.privateKey.existingSecret:t+3more@6"
-    },
-    "constrains/auth.token+auth.token.enabled=true+auth.token.privateKey.existingSecret:t+3more@2": {
       "allOf": [
         {
           "$ref": "#/$defs/constrains~1auth.token.type=jwt@3"
@@ -309,155 +333,74 @@
           "$ref": "#/$defs/constrains~1auth.token.enabled=true@4"
         },
         {
-          "$ref": "#/$defs/constrains~1auth.token+auth.token.type+auth.token.type=null@4"
+          "$ref": "#/$defs/constrains~1auth.token.type+auth.token.type=null"
         },
         {
-          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t@4"
-        }
-      ]
-    },
-    "constrains/auth.token+auth.token.enabled=true+auth.token.privateKey.existingSecret:t+3more@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1auth.token.type=jwt@3"
+          "$ref": "#/$defs/constrains~1auth.token.type+auth.token.type=null@2"
         },
         {
-          "$ref": "#/$defs/constrains~1auth.token.enabled=true@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1auth.token+auth.token.type+auth.token.type=null@5"
-        }
-      ]
-    },
-    "constrains/auth.token+auth.token.enabled=true+auth.token.privateKey.existingSecret:t+3more@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1auth.token.type"
-        },
-        {
-          "$ref": "#/$defs/constrains~1auth.token.type=jwt"
-        },
-        {
-          "$ref": "#/$defs/constrains~1auth.token.type=null"
+          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t@5"
         },
         {
           "$ref": "#/$defs/constrains~1auth.token.type@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1auth.token.enabled=true"
-        }
-      ]
-    },
-    "constrains/auth.token+auth.token.enabled=true+auth.token.privateKey.existingSecret:t+3more@5": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1auth.token.enabled=true+auth.token.privateKey.existingSecret:t+1more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled=true+auth.token.privateKey.existingSecret:t+3more@3"
-        }
-      ]
-    },
-    "constrains/auth.token+auth.token.enabled=true+auth.token.privateKey.existingSecret:t+3more@6": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled=true+auth.token.privateKey.existingSecret:t+3more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1auth.token.enabled=true+auth.token.privateKey.existingSecret:t+1more"
-        }
-      ]
-    },
-    "constrains/auth.token+auth.token.enabled=true+auth.token.privateKey.existingSecret:t+4more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1auth.token.enabled=true+auth.token.privateKey.existingSecret:t+1more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled=true+auth.token.privateKey.existingSecret:t+3more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
-        }
-      ]
-    },
-    "constrains/auth.token+auth.token.enabled=true+auth.token.privateKey.existingSecret:t+8more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1auth.token.enabled=true+auth.token.privateKey.existingSecret:t+4more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled=true+auth.token.privateKey.existingSecret:t+3more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1auth.token.enabled=true+auth.token.privateKey.existingSecret:t+5more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1auth.token.enabled=true+auth.token.privateKey.existingSecret:t+4more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1auth.token.enabled=true+auth.token.privateKey.existingSecret:t+4more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@2"
-        }
-      ]
-    },
-    "constrains/auth.token+auth.token.enabled=true+auth.token.privateKey.existingSecret:t+8more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1auth.token.enabled=true+auth.token.privateKey.existingSecret:t+4more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled=true+auth.token.privateKey.existingSecret:t+3more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1auth.token.enabled=true+auth.token.privateKey.existingSecret:t+5more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1auth.token.enabled=true+auth.token.privateKey.existingSecret:t+4more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1auth.token.enabled=true+auth.token.privateKey.existingSecret:t+4more@2"
-        }
-      ]
-    },
-    "constrains/auth.token+auth.token.enabled=true+auth.token.privateKey.existingSecret:t+8more@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled=true+auth.token.privateKey.existingSecret:t+8more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled=true+auth.token.privateKey.existingSecret:t+4more"
         }
       ]
     },
     "constrains/auth.token+auth.token.enabled=true+auth.token.privateKey.existingSecret:t+9more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled=true+auth.token.privateKey.existingSecret:t+8more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        }
-      ]
-    },
-    "constrains/auth.token+auth.token.enabled=true+auth.token.privateKey.existingSecret:t+9more@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled=true+auth.token.privateKey.existingSecret:t+9more"
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true+auth.token.privateKey.existingSecret:t+3more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled=true+auth.token.privateKey.existingSecret:t+8more"
+          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t+fullnameOverride:t+nameOverride:t+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true+auth.token.privateKey.existingSecret:t+5more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true+auth.token.privateKey.existingSecret:t+4more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true+auth.token.privateKey.existingSecret:t+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true+auth.token.privateKey.existingSecret:t+2more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true+auth.token.privateKey.existingSecret:t+6more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true+auth.token.privateKey.existingSecret:t+5more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true+auth.token.privateKey.existingSecret:t+auth.token.type+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token+auth.token.enabled=true+auth.token.privateKey.existingSecret:t+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true+auth.token.privateKey.existingSecret:t+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true+auth.token.privateKey.existingSecret:t+1more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true+auth.token.privateKey.existingSecret:t+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true+auth.token.privateKey.existingSecret:t+5more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true+auth.token.privateKey.existingSecret:t+6more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true+auth.token.privateKey.existingSecret:t+6more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true+auth.token.privateKey.existingSecret:t+7more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true+auth.token.privateKey.existingSecret:t"
         }
       ]
     },
@@ -496,6 +439,49 @@
         }
       ]
     },
+    "constrains/auth.token+auth.token.privateKey.existingSecret:t+auth.token.type+1more": {
+      "$ref": "#/$defs/constrains~1auth.token+auth.token.privateKey.existingSecret:t+auth.token.type+1more@4"
+    },
+    "constrains/auth.token+auth.token.privateKey.existingSecret:t+auth.token.type+1more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1auth.token+auth.token.type+auth.token.type=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t@5"
+        }
+      ]
+    },
+    "constrains/auth.token+auth.token.privateKey.existingSecret:t+auth.token.type+1more@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token+auth.token.type+auth.token.type=null@5"
+        }
+      ]
+    },
+    "constrains/auth.token+auth.token.privateKey.existingSecret:t+auth.token.type+1more@4": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1auth.token+auth.token.privateKey.existingSecret:t+auth.token.type+1more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t@2"
+        }
+      ]
+    },
+    "constrains/auth.token+auth.token.privateKey.existingSecret:t+auth.token.type+1more@5": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1auth.token+auth.token.privateKey.existingSecret:t+auth.token.type+1more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t"
+        }
+      ]
+    },
     "constrains/auth.token+auth.token.type+auth.token.type=null": {
       "$ref": "#/$defs/constrains~1auth.token+auth.token.type+auth.token.type=null@3"
     },
@@ -528,133 +514,347 @@
     "constrains/auth.token.enabled=true": {
       "$ref": "#/$defs/constrains~1auth.token.enabled=true@2"
     },
-    "constrains/auth.token.enabled=true+auth.token.privateKey.existingSecret:t+1more": {
+    "constrains/auth.token.enabled=true+auth.token.privateKey.existingSecret:t": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1auth.token.type=jwt@3"
+          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t@5"
         },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true"
+        }
+      ]
+    },
+    "constrains/auth.token.enabled=true+auth.token.privateKey.existingSecret:t+1more": {
+      "allOf": [
         {
           "$ref": "#/$defs/constrains~1auth.token.enabled=true@4"
         },
         {
-          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t"
+          "$ref": "#/$defs/constrains~1auth.token.type=jwt"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t@5"
         }
       ]
     },
     "constrains/auth.token.enabled=true+auth.token.privateKey.existingSecret:t+1more@2": {
       "allOf": [
         {
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        }
+      ]
+    },
+    "constrains/auth.token.enabled=true+auth.token.privateKey.existingSecret:t+2more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.type=jwt"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        }
+      ]
+    },
+    "constrains/auth.token.enabled=true+auth.token.privateKey.existingSecret:t+2more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t"
+        }
+      ]
+    },
+    "constrains/auth.token.enabled=true+auth.token.privateKey.existingSecret:t+3more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.type=jwt"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t"
+        }
+      ]
+    },
+    "constrains/auth.token.enabled=true+auth.token.privateKey.existingSecret:t+3more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t"
+        }
+      ]
+    },
+    "constrains/auth.token.enabled=true+auth.token.privateKey.existingSecret:t+4more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.type=jwt"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t"
+        }
+      ]
+    },
+    "constrains/auth.token.enabled=true+auth.token.privateKey.existingSecret:t+5more": {
+      "allOf": [
+        {
           "$ref": "#/$defs/constrains~1auth.token.type=jwt@3"
         },
         {
           "$ref": "#/$defs/constrains~1auth.token.enabled=true@4"
         },
         {
-          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t@3"
-        }
-      ]
-    },
-    "constrains/auth.token.enabled=true+auth.token.privateKey.existingSecret:t+1more@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1auth.token.type=jwt"
-        },
-        {
-          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1auth.token.enabled=true"
-        }
-      ]
-    },
-    "constrains/auth.token.enabled=true+auth.token.privateKey.existingSecret:t+4more": {
-      "anyOf": [
-        {
           "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1auth.token.type=jwt"
+          "$ref": "#/$defs/constrains~1namespaceOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t@4"
+          "$ref": "#/$defs/constrains~1fullnameOverride@2"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride"
+          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t"
         },
         {
-          "$ref": "#/$defs/constrains~1auth.token.enabled=true"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
         }
       ]
     },
-    "constrains/auth.token.enabled=true+auth.token.privateKey.existingSecret:t+4more@2": {
-      "anyOf": [
+    "constrains/auth.token.enabled=true+auth.token.privateKey.existingSecret:t+5more@2": {
+      "allOf": [
         {
-          "$ref": "#/$defs/constrains~1auth.token.type=jwt"
+          "$ref": "#/$defs/constrains~1auth.token.type=jwt@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true@4"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t@4"
+          "$ref": "#/$defs/constrains~1namespaceOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
+          "$ref": "#/$defs/constrains~1nameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1auth.token.enabled=true"
+          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t"
         }
       ]
     },
-    "constrains/auth.token.enabled=true+auth.token.privateKey.existingSecret:t+4more@3": {
-      "anyOf": [
+    "constrains/auth.token.enabled=true+auth.token.privateKey.existingSecret:t+5more@3": {
+      "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
+          "$ref": "#/$defs/constrains~1auth.token.type=jwt@3"
         },
         {
-          "$ref": "#/$defs/constrains~1auth.token.type=jwt"
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true@4"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1auth.token.enabled=true"
-        }
-      ]
-    },
-    "constrains/auth.token.enabled=true+auth.token.privateKey.existingSecret:t+5more": {
-      "anyOf": [
-        {
           "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1auth.token.type=jwt"
+          "$ref": "#/$defs/constrains~1namespaceOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1namespaceOverride:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
+          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t"
+        }
+      ]
+    },
+    "constrains/auth.token.enabled=true+auth.token.privateKey.existingSecret:t+6more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1auth.token.type=jwt@3"
         },
         {
-          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t@4"
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@2"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1auth.token.enabled=true"
+          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        }
+      ]
+    },
+    "constrains/auth.token.enabled=true+auth.token.privateKey.existingSecret:t+6more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1auth.token.type=jwt@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        }
+      ]
+    },
+    "constrains/auth.token.enabled=true+auth.token.privateKey.existingSecret:t+6more@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1auth.token.type=jwt@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t"
+        }
+      ]
+    },
+    "constrains/auth.token.enabled=true+auth.token.privateKey.existingSecret:t+7more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1auth.token.type=jwt@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        }
+      ]
+    },
+    "constrains/auth.token.enabled=true+auth.token.privateKey.existingSecret:t+auth.token.type+2more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1auth.token.type=jwt@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.enabled=true@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.type+auth.token.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t@5"
+        },
+        {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1auth.token.type"
+            },
+            {
+              "$ref": "#/$defs/constrains~1auth.token.type=null"
+            }
+          ]
         }
       ]
     },
@@ -688,19 +888,38 @@
       "type": "object"
     },
     "constrains/auth.token.privateKey.existingSecret:t": {
-      "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t@2"
+      "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t@3"
+    },
+    "constrains/auth.token.privateKey.existingSecret:t+fullnameOverride:t+nameOverride:t+1more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t"
+        }
+      ]
     },
     "constrains/auth.token.privateKey.existingSecret:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t@4"
-      }
+      "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t@4"
     },
     "constrains/auth.token.privateKey.existingSecret:t@3": {
       "not": {
-        "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t@4"
+        "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t@5"
       }
     },
     "constrains/auth.token.privateKey.existingSecret:t@4": {
+      "not": {
+        "$ref": "#/$defs/constrains~1auth.token.privateKey.existingSecret:t@5"
+      }
+    },
+    "constrains/auth.token.privateKey.existingSecret:t@5": {
       "properties": {
         "auth": {
           "properties": {
@@ -744,6 +963,30 @@
           "auth"
         ],
         "type": "object"
+      }
+    },
+    "constrains/auth.token.type+auth.token.type=null": {
+      "not": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1auth.token.type"
+          },
+          {
+            "$ref": "#/$defs/constrains~1auth.token.type=null"
+          }
+        ]
+      }
+    },
+    "constrains/auth.token.type+auth.token.type=null@2": {
+      "not": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1auth.token.type"
+          },
+          {
+            "$ref": "#/$defs/constrains~1auth.token.type=null"
+          }
+        ]
       }
     },
     "constrains/auth.token.type=jwt": {
@@ -884,13 +1127,19 @@
     "constrains/enabled+enabled=null+enabled=true+privateKey.existingSecret:t+type+type=jwt+1more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1enabled=true+privateKey.existingSecret:t+type+type=jwt+type=null@2"
+          "$ref": "#/$defs/constrains~1privateKey.existingSecret:t+type+type=null@2"
         },
         {
           "$ref": "#/$defs/constrains~1enabled=true+type+type=null"
         },
         {
           "$ref": "#/$defs/constrains~1enabled+enabled=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1type=jwt"
+        },
+        {
+          "$ref": "#/$defs/constrains~1enabled=true@2"
         }
       ]
     },
@@ -938,45 +1187,6 @@
         "$ref": "#/$defs/constrains~1enabled=true@2"
       }
     },
-    "constrains/enabled=true+privateKey.existingSecret:t+type+type=jwt+type=null": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1type+type=null@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1type=jwt"
-        },
-        {
-          "$ref": "#/$defs/constrains~1enabled=true@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1privateKey.existingSecret:t@2"
-        }
-      ]
-    },
-    "constrains/enabled=true+privateKey.existingSecret:t+type+type=jwt+type=null@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1enabled=true+privateKey.existingSecret:t+type+type=jwt+type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1enabled=true+privateKey.existingSecret:t+type=jwt"
-        }
-      ]
-    },
-    "constrains/enabled=true+privateKey.existingSecret:t+type=jwt": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1privateKey.existingSecret:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1type=jwt"
-        },
-        {
-          "$ref": "#/$defs/constrains~1enabled=true@2"
-        }
-      ]
-    },
     "constrains/enabled=true+type+type=null": {
       "anyOf": [
         {
@@ -1017,23 +1227,21 @@
     },
     "constrains/fullnameOverride": {
       "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@3"
+        "$ref": "#/$defs/constrains~1fullnameOverride@2"
       }
     },
     "constrains/fullnameOverride+fullnameOverride:t": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
+          "$ref": "#/$defs/constrains~1fullnameOverride@2"
         }
       ]
     },
     "constrains/fullnameOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      }
+      "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
     },
     "constrains/fullnameOverride:t+nameOverride+nameOverride:t": {
       "anyOf": [
@@ -1044,16 +1252,21 @@
           "$ref": "#/$defs/constrains~1nameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
         }
       ]
     },
     "constrains/fullnameOverride:t@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
       }
     },
     "constrains/fullnameOverride:t@3": {
+      "not": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+      }
+    },
+    "constrains/fullnameOverride:t@4": {
       "properties": {
         "fullnameOverride": {
           "$ref": "#/$defs/t"
@@ -1065,11 +1278,6 @@
       "type": "object"
     },
     "constrains/fullnameOverride@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@3"
-      }
-    },
-    "constrains/fullnameOverride@3": {
       "properties": {
         "fullnameOverride": {
           "type": "string"
@@ -1131,17 +1339,23 @@
       "type": "object"
     },
     "constrains/namespaceOverride": {
-      "not": {
-        "$ref": "#/$defs/constrains~1namespaceOverride@2"
-      }
+      "properties": {
+        "namespaceOverride": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "namespaceOverride"
+      ],
+      "type": "object"
     },
     "constrains/namespaceOverride+namespaceOverride:t": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@2"
+          "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1namespaceOverride@2"
+          "$ref": "#/$defs/constrains~1namespaceOverride"
         }
       ]
     },
@@ -1151,7 +1365,7 @@
           "$ref": "#/$defs/constrains~1namespaceOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1namespaceOverride@2"
+          "$ref": "#/$defs/constrains~1namespaceOverride"
         }
       ]
     },
@@ -1161,30 +1375,22 @@
       }
     },
     "constrains/namespaceOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
-      }
+      "$ref": "#/$defs/constrains~1namespaceOverride:t@2"
     },
     "constrains/namespaceOverride:t@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
+        "$ref": "#/$defs/constrains~1namespaceOverride:t@4"
       }
     },
     "constrains/namespaceOverride:t@3": {
+      "not": {
+        "$ref": "#/$defs/constrains~1namespaceOverride:t@4"
+      }
+    },
+    "constrains/namespaceOverride:t@4": {
       "properties": {
         "namespaceOverride": {
           "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "namespaceOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/namespaceOverride@2": {
-      "properties": {
-        "namespaceOverride": {
-          "type": "string"
         }
       },
       "required": [
@@ -1196,6 +1402,26 @@
       "not": {
         "$ref": "#/$defs/constrains~1privateKey.existingSecret:t@2"
       }
+    },
+    "constrains/privateKey.existingSecret:t+type+type=null": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1type+type=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1privateKey.existingSecret:t@2"
+        }
+      ]
+    },
+    "constrains/privateKey.existingSecret:t+type+type=null@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1privateKey.existingSecret:t+type+type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1privateKey.existingSecret:t"
+        }
+      ]
     },
     "constrains/privateKey.existingSecret:t@2": {
       "properties": {
@@ -1392,12 +1618,6 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1auth+auth=null"
-      },
-      "then": false
-    },
-    {
-      "if": {
         "$ref": "#/$defs/constrains~1auth+auth.token+auth.token.enabled+auth.token.enabled=null+5more@2"
       },
       "then": {
@@ -1421,6 +1641,12 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1auth+auth=null"
+      },
+      "then": false
     }
   ],
   "properties": {
@@ -1496,6 +1722,19 @@
           "description": "Authentication token\nref: https://etcd.io/docs/latest/learning/design-auth-v3/#two-types-of-tokens-simple-and-jwt",
           "properties": {
             "enabled": {
+              "anyOf": [
+                {
+                  "enum": [
+                    true
+                  ]
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "boolean"
+                }
+              ],
               "description": "Enables token authentication"
             },
             "privateKey": {
@@ -1508,6 +1747,19 @@
               }
             },
             "type": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "jwt"
+                  ]
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ],
               "description": "Authentication token type. Allowed values: 'simple' or 'jwt'\nref: https://etcd.io/docs/latest/op-guide/configuration/#--auth-token"
             }
           },
