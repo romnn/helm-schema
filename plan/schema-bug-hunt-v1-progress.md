@@ -9816,4 +9816,26 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
     - EFFECTS1 exports v3 and then builds Stage 0 in round8-r3b-effects1/s2-stage0 (from d69c2e10).
     - E0 (unsound X1/X2 diagnostics over frozen cell sets) runs in integ3/target/e0 and decides L's position and S4's position.
 - 23:45 (Nov 2) — **Line commits stay as they are (user left it to the orchestrator; orchestrator decision: no squash).** 73d9537e and 50f0d186 do not build on their own, but every lane (S1, Stage 0, E0, F2a) references d69c2e10. A squash would rewrite the hashes they and the ledger cite. The non-building range 1a2a7b47..50f0d186 is recorded here for bisection.
-Next: S1 hand-back (F1 under the review's rules); E0 decides L/S4 placement; Stage 0 from EFFECTS1; integrate UNITREC2 onto d69c2e10.
+- 00:51 (Nov 3) — **R3b: Stage 0 lands on the line (50dd69bc). E0/E0b show identity alone closes almost nothing on the big charts, and challenge #3 re-aims the plan at corpus-wide classes: abort lowering and placement first, Stage 1 deferred.**
+  - E0 (round8/designs/decltype/e0/): unsound no-invalidation variants close 14 saved FA documents on the eight big charts and reopen 5. Cilium has zero invalidations and still closes 0 of 1,949. Eligible tpl is 0.21%.
+  - E0b:
+    - pg-ha's 27× under X1 comes from 6.17M satisfiable proofs at value specialization, 99.6% Unknown and never memoized.
+    - About 95% of unresolved tpl is a tpl → tpl cascade from bitnami `_tplvalues.tpl:19`.
+    - Cilium and datadog open FA are about 1/3 demands recorded but not exported and about 2/3 missing placement/provider constraints.
+  - UNITREC2 exported HELD: 2,254 FA closed and 61 units fixed, but KPS 2.55×, +5,535 LOC, and 139 new FA. A decomposition is running.
+  - Stage 0 (S2 representation at byte parity) landed on r3b/construction as 50dd69bc, cut from +1,706 to +593 LOC. Gates: 205 fixtures byte-identical, index census 45,380 versions 0 mismatches, certificate census 0 misses, KPS 0.967×, fmt/lint/lint:fc 0, units 0 new.
+  - Challenge #3 (round8/designs/challenge/first-principles-2026-11-03.md), ADJUST. The big eight hold 12.5% of preview-4 FA. Classes:
+    - member host and presence: 39%;
+    - Kubernetes placement/provider: 33%, independent of identity;
+    - defaults that abort Helm: 12.9% from 3 facts. Loki alone is 10,656 cells; the line's loki schema has no bucketNames, against 17 mentions on main.
+    - The bitnami tplvalues family holds 30.7%.
+  - Orchestrator decisions:
+    - Stage 1 is deferred in favour of write-free identity proofs.
+    - The abort-lowering lane (ABORT1: `has`, required/fail preimages, tpl over action-free text) starts.
+    - Placement gets two lanes after the census.
+    - E2 runs corpus-wide after S1.
+    - Every slice is gated on a corpus-wide replay by class.
+    - A pending-deletion ledger lives at round8/pending-deletions.md.
+    - New estimate: Nov 24 to Dec 1 at the earliest.
+  - Running: S1, L (guard proof memoization), the placement census, ABORT1, the UNITREC2 decomposition.
+Next: S1 and L hand-backs; placement census ranks P1–P3 for two lanes; ABORT1; the user decides the KPS anchor question.
