@@ -9788,4 +9788,31 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
     - F2a, counters that classify invalidations by cause on the big charts (prediction: at least 80% are eligible tpl sites, reach-only effects or merge escapes);
     - a Codex design review of v2.
     - UNITREC2 and EFFECTS1 keep running and rebase onto d69c2e10 when final.
-Next: S1 hand-back (F1 decides); fold the v2 review into S1 via steer; F2a decides S2's identity mechanism; integrate UNITREC2, then EFFECTS1, onto d69c2e10.
+- 21:28 (Nov 2) — **R3b: two Codex reviews reshape the identity plan. F2a refutes the S2 assumption, S2 v2 makes the release session and bounded effects one landing, and EFFECTS1 v3 is ported in components instead of integrated.**
+  - Review of declared-type plan v2 (round8/designs/decltype/review-v2-codex.md): PROCEED-WITH-CHANGES. Items 1–6 were steered into S1:
+    - range keeps the nonpositive-count lane (surveyor `accounts=0` and `-1` render);
+    - placement keeps decode(render) explicit;
+    - the recorder keeps the runtime decision graph, and the fold key includes the transform chain;
+    - an explicit Known/KnownAny/Opaque consumption record;
+    - deletion per mechanism under ADR 0071 (the brief's "reopened ≤ closures" allowance was wrong: gains do not pay for losses);
+    - one bounded BDD fold with a certified-sufficient fallback, and exact atom encodings.
+    - S1 now keeps the HOSTS classifier, inheritance, declared objectness and the preserve-default repairs until each has replacement coverage.
+  - F2a (round8/designs/decltype/f2a/): on the six strict-T-clean charts, eligible tpl, reach-only and merge escape are 14.5% of invalidation events (at most 70%). The prediction of ≥80% is refuted.
+    - Uncertified loop footprints are 29.7%: write_footprint certifies the whole program, not the loop.
+    - Ineligible or unresolved tpl is 37%, largely a cascade from earlier havoc.
+    - Foreign-unit writes are not imported at all.
+    - Eight uninstrumented controls are byte-identical.
+  - S2 identity design v1 (Opus): one heap-derived may-write fact (Reach/Coverage/InputWrites). Its Codex review (review-s2-codex.md, 29 executed Helm 4.2.3 probes) found 12 problems:
+    - reach must be a closure at the current heap version;
+    - tpl strips `<no value>`, which can synthesize `{{`;
+    - the loop needs a real post-fixpoint;
+    - bounded effects are unsound without cross-unit state, and globals are shallow-copied per map-valued entry;
+    - get/index/pluck/dig/lists/root rebinding alias;
+    - a static certificate must parse literal tpl;
+    - EFFECTS1 closed 10 argo-cd FA (v1 had said 0).
+  - S2 design v2 (s2-identity-design-v2.md) accepts all 12 after re-running the probes. Order: E0 → Stage 0 (representation at byte parity) → [L: lazy liveness] → Stage 1 (release session plus every bounded non-tpl effect, as one landing) → [L] → Stage 3 (strict T). About +1,500 ± 400 LOC.
+  - Orchestrator decisions:
+    - EFFECTS1 v3 (213 laws green, 0 new unit failures, +5.8k LOC) is not integrated as a tree. About 1,480 LOC ports into Stages 0 and 1.
+    - EFFECTS1 exports v3 and then builds Stage 0 in round8-r3b-effects1/s2-stage0 (from d69c2e10).
+    - E0 (unsound X1/X2 diagnostics over frozen cell sets) runs in integ3/target/e0 and decides L's position and S4's position.
+Next: S1 hand-back (F1 under the review's rules); E0 decides L/S4 placement; Stage 0 from EFFECTS1; integrate UNITREC2 onto d69c2e10.
