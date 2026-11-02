@@ -7,6 +7,9 @@ use std::sync::Arc;
 
 use crate::{Guard, GuardValue, ValuesPath};
 
+// Small unfolded formulas bound direct walks without a visited-set allocation.
+pub(crate) const DIRECT_WALK_NODES: usize = 32;
+
 /// How an inexact predicate participates in later semantic projection.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ApproximationRole {
@@ -85,6 +88,18 @@ enum PredicateNodeKind {
     Or(Vec<Predicate>),
 }
 
+pub(crate) fn guard_syntax_size(guard: &Guard) -> usize {
+    match guard {
+        Guard::Or { paths } => paths.len().saturating_add(1),
+        Guard::AnyOf { alternatives } => alternatives.iter().fold(1_usize, |size, guards| {
+            guards.iter().fold(size.saturating_add(1), |size, guard| {
+                size.saturating_add(guard_syntax_size(guard))
+            })
+        }),
+        _ => 1,
+    }
+}
+
 impl PredicateNode {
     fn new(kind: PredicateNodeKind) -> Self {
         let mut hasher = DefaultHasher::new();
@@ -106,7 +121,7 @@ impl PredicateNode {
             } => sound_subset
                 .as_ref()
                 .map_or(1, |subset| subset.syntax_size().saturating_add(1)),
-            PredicateNodeKind::Guard(_) => 1,
+            PredicateNodeKind::Guard(guard) => guard_syntax_size(guard),
             PredicateNodeKind::Not(predicate) => predicate.syntax_size().saturating_add(1),
             PredicateNodeKind::And(predicates) | PredicateNodeKind::Or(predicates) => {
                 predicates.iter().fold(1_usize, |size, predicate| {
@@ -164,14 +179,6 @@ fn hash_predicate_node(kind: &PredicateNodeKind, hasher: &mut DefaultHasher) {
         }
     }
 }
-
-impl PartialEq for PredicateNode {
-    fn eq(&self, other: &Self) -> bool {
-        self.structural_hash == other.structural_hash && self.kind == other.kind
-    }
-}
-
-impl Eq for PredicateNode {}
 
 impl Predicate {
     /// Formula that holds for every input.
@@ -263,6 +270,14 @@ impl Predicate {
         Self(PredicateStorage::Shared(Arc::new(PredicateNode::new(kind))))
     }
 
+    pub(crate) fn node_id(&self) -> usize {
+        match &self.0 {
+            PredicateStorage::True => 0,
+            PredicateStorage::False => 1,
+            PredicateStorage::Shared(node) => Arc::as_ptr(node) as usize,
+        }
+    }
+
     fn structural_hash(&self) -> u64 {
         match &self.0 {
             PredicateStorage::True => 0,
@@ -303,15 +318,94 @@ impl fmt::Debug for Predicate {
 
 impl PartialEq for Predicate {
     fn eq(&self, other: &Self) -> bool {
-        match (&self.0, &other.0) {
+        let (left, right) = match (&self.0, &other.0) {
             (PredicateStorage::True, PredicateStorage::True)
-            | (PredicateStorage::False, PredicateStorage::False) => true,
-            (PredicateStorage::Shared(left), PredicateStorage::Shared(right)) => {
-                Arc::ptr_eq(left, right) || left == right
-            }
-            _ => false,
+            | (PredicateStorage::False, PredicateStorage::False) => return true,
+            (PredicateStorage::Shared(left), PredicateStorage::Shared(right)) => (left, right),
+            _ => return false,
+        };
+        if Arc::ptr_eq(left, right) {
+            return true;
         }
+        if left.structural_hash != right.structural_hash {
+            return false;
+        }
+        // Short unfolded trees cost less to compare directly than to memoize.
+        if left.syntax_size <= DIRECT_WALK_NODES {
+            return left.kind == right.kind;
+        }
+        let mut visited = ahash::AHashSet::new();
+        let mut pending = vec![PredicatePair {
+            left: self,
+            right: other,
+        }];
+        while let Some(PredicatePair { left, right }) = pending.pop() {
+            if left.node_id() == right.node_id() {
+                continue;
+            }
+            if left.structural_hash() != right.structural_hash() {
+                return false;
+            }
+            if !visited.insert(NodePair {
+                left: left.node_id(),
+                right: right.node_id(),
+            }) {
+                continue;
+            }
+            match (left.kind(), right.kind()) {
+                (PredicateKind::Guard(left), PredicateKind::Guard(right)) if left == right => {}
+                (PredicateKind::True, PredicateKind::True)
+                | (PredicateKind::False, PredicateKind::False)
+                | (PredicateKind::Not(_), PredicateKind::Not(_))
+                | (PredicateKind::And(_), PredicateKind::And(_))
+                | (PredicateKind::Or(_), PredicateKind::Or(_)) => {}
+                (
+                    PredicateKind::Approximate {
+                        marker: left_marker,
+                        paths: left_paths,
+                        role: left_role,
+                        sound_subset: _,
+                    },
+                    PredicateKind::Approximate {
+                        marker: right_marker,
+                        paths: right_paths,
+                        role: right_role,
+                        sound_subset: _,
+                    },
+                ) if left_marker == right_marker
+                    && left_paths == right_paths
+                    && left_role == right_role => {}
+                _ => return false,
+            }
+            let (left, right) = (left.children(), right.children());
+            if left.len() != right.len() {
+                return false;
+            }
+            pending.extend(
+                left.iter()
+                    .zip(right)
+                    .map(|(left, right)| PredicatePair { left, right }),
+            );
+        }
+        true
     }
+}
+
+struct PredicatePair<'a> {
+    left: &'a Predicate,
+    right: &'a Predicate,
+}
+
+#[derive(PartialEq, Eq, Hash)]
+struct NodePair {
+    left: usize,
+    right: usize,
+}
+
+#[derive(PartialEq, Eq, Hash)]
+struct PathWalkKey {
+    node: usize,
+    optional: bool,
 }
 
 impl Eq for Predicate {}
@@ -392,12 +486,23 @@ impl Conjunction {
     /// Builds a canonical conjunction from predicate parts.
     #[must_use]
     pub fn new(predicates: impl IntoIterator<Item = Predicate>) -> Self {
-        fn append(predicate: Predicate, out: &mut Vec<Predicate>) {
+        fn append(
+            predicate: Predicate,
+            out: &mut Vec<Predicate>,
+            visited: &mut ahash::AHashMap<usize, Predicate>,
+        ) {
             match predicate.kind() {
                 PredicateKind::True => {}
                 PredicateKind::And(items) => {
+                    if predicate.syntax_size() > DIRECT_WALK_NODES
+                        && visited
+                            .insert(predicate.node_id(), predicate.clone())
+                            .is_some()
+                    {
+                        return;
+                    }
                     for item in items.iter().cloned() {
-                        append(item, out);
+                        append(item, out, visited);
                     }
                 }
                 _ => out.push(predicate),
@@ -405,8 +510,10 @@ impl Conjunction {
         }
 
         let mut canonical = Vec::new();
+        // Retain nodes from lazy iterators so visited addresses cannot be reused.
+        let mut visited = ahash::AHashMap::new();
         for predicate in predicates {
-            append(predicate, &mut canonical);
+            append(predicate, &mut canonical, &mut visited);
         }
         canonical.sort();
         canonical.dedup();
@@ -715,16 +822,74 @@ impl Predicate {
         }
     }
 
+    pub(crate) fn children(&self) -> &[Self] {
+        match self.kind() {
+            PredicateKind::Approximate {
+                marker: _,
+                paths: _,
+                role: _,
+                sound_subset,
+            } => sound_subset.map_or(&[], std::slice::from_ref),
+            PredicateKind::Not(inner) => std::slice::from_ref(inner),
+            PredicateKind::And(parts) | PredicateKind::Or(parts) => parts,
+            PredicateKind::True | PredicateKind::False | PredicateKind::Guard(_) => &[],
+        }
+    }
+
+    /// Counts distinct shared nodes and owned guard nodes, stopping after `limit` nodes.
+    ///
+    /// Returns `None` when the DAG exceeds the limit, including approximation subsets.
+    #[must_use]
+    pub fn dag_size(&self, limit: usize) -> Option<usize> {
+        let mut visited = ahash::AHashSet::new();
+        let mut pending = vec![self];
+        let mut size = 0_usize;
+        while let Some(predicate) = pending.pop() {
+            if !visited.insert(predicate.node_id()) {
+                continue;
+            }
+            size = size.saturating_add(match predicate.kind() {
+                PredicateKind::Guard(_) => predicate.syntax_size(),
+                _ => 1,
+            });
+            if size > limit {
+                return None;
+            }
+            pending.extend(predicate.children());
+        }
+        Some(size)
+    }
+
+    /// Estimates node work using cached syntax size or a bounded DAG walk.
+    ///
+    /// The cached count certifies small inputs without allocating a visited set.
+    #[must_use]
+    pub fn node_work(&self, limit: usize) -> Option<usize> {
+        if self.syntax_size() <= limit {
+            Some(self.syntax_size())
+        } else {
+            self.dag_size(limit)
+        }
+    }
+
     /// Returns every values path referenced by the formula.
     #[must_use]
     pub fn value_paths(&self) -> BTreeSet<ValuesPath> {
         let mut paths = BTreeSet::new();
-        self.collect_value_paths(&mut paths, &mut ahash::AHashSet::new());
+        self.collect_paths(false, &mut paths, &mut ahash::AHashSet::new());
         paths
     }
 
     /// Expands header predicates into the context-selection facts active in their bodies.
+    #[must_use]
     pub fn with_context_predicates(self) -> Vec<Self> {
+        self.context_predicates(&mut ahash::AHashSet::new())
+    }
+
+    fn context_predicates(self, visited: &mut ahash::AHashSet<usize>) -> Vec<Self> {
+        if self.syntax_size() > DIRECT_WALK_NODES && !visited.insert(self.node_id()) {
+            return Vec::new();
+        }
         match self.kind() {
             PredicateKind::True => Vec::new(),
             PredicateKind::False => vec![Self::False],
@@ -765,7 +930,7 @@ impl Predicate {
             PredicateKind::And(predicates) => predicates
                 .iter()
                 .cloned()
-                .flat_map(Self::with_context_predicates)
+                .flat_map(|predicate| predicate.context_predicates(visited))
                 .collect(),
             PredicateKind::Guard(Guard::Truthy { path }) => {
                 vec![Self::from(Guard::With { path: path.clone() })]
@@ -813,104 +978,81 @@ impl Predicate {
     #[must_use]
     pub fn conditionally_optional_paths(&self) -> BTreeSet<ValuesPath> {
         let mut paths = BTreeSet::new();
-        self.collect_conditionally_optional_paths(&mut paths);
+        self.collect_paths(true, &mut paths, &mut ahash::AHashSet::new());
         paths
     }
 
     /// Projects this formula exactly into the contract guard vocabulary.
-    /// `None` means some predicate node has no exact guard spelling.
+    /// `None` means exact guard spelling is unavailable within the output work bound.
     #[must_use]
     pub fn contract_guards(&self) -> Option<Vec<Guard>> {
-        flatten_contract_guards(self, false)
+        match self.project_contract_guards() {
+            ContractGuards::Exact(guards) => Some(guards),
+            ContractGuards::Unavailable | ContractGuards::Exhausted => None,
+        }
     }
 
-    fn collect_value_paths(
+    fn project_contract_guards(&self) -> ContractGuards {
+        let normalized;
+        let predicate = if self.syntax_size() > MAX_CONTRACT_GUARDS {
+            let Some(result) = crate::PredicateMemo::new()
+                .normalize_bounded(self.clone(), &mut { MAX_CONTRACT_GUARDS * 4 })
+            else {
+                return ContractGuards::Exhausted;
+            };
+            normalized = result;
+            &normalized
+        } else {
+            self
+        };
+        if predicate.syntax_size() > MAX_CONTRACT_GUARDS {
+            return ContractGuards::Exhausted;
+        }
+        match flatten_contract_guards(predicate, false) {
+            Some(guards) => ContractGuards::Exact(guards),
+            None => ContractGuards::Unavailable,
+        }
+    }
+
+    fn collect_paths(
         &self,
+        optional: bool,
         out: &mut BTreeSet<ValuesPath>,
-        visited: &mut ahash::AHashSet<*const PredicateNode>,
+        visited: &mut ahash::AHashSet<PathWalkKey>,
     ) {
-        if let PredicateStorage::Shared(node) = &self.0
-            && !visited.insert(Arc::as_ptr(node))
+        if self.syntax_size() > DIRECT_WALK_NODES
+            && !visited.insert(PathWalkKey {
+                node: self.node_id(),
+                optional,
+            })
         {
             return;
         }
         match self.kind() {
             PredicateKind::True | PredicateKind::False => {}
-            PredicateKind::Approximate { paths, .. } => out.extend(paths.iter().cloned()),
+            PredicateKind::Approximate { paths, .. } => {
+                if !optional {
+                    out.extend(paths.iter().cloned());
+                }
+            }
             PredicateKind::Guard(guard) => {
-                for path in guard.value_paths() {
-                    out.insert(path);
+                if !optional || matches!(guard, Guard::NotEq { .. } | Guard::Absent { .. }) {
+                    out.extend(guard.value_paths());
                 }
             }
-            PredicateKind::Not(inner) => inner.collect_value_paths(out, visited),
-            PredicateKind::And(predicates) | PredicateKind::Or(predicates) => {
-                for predicate in predicates {
-                    predicate.collect_value_paths(out, visited);
-                }
-            }
-        }
-    }
-
-    fn collect_conditionally_optional_paths(&self, out: &mut BTreeSet<ValuesPath>) {
-        match self.kind() {
-            PredicateKind::Guard(Guard::NotEq { path, .. } | Guard::Absent { path }) => {
-                out.insert(path.clone());
-            }
-            PredicateKind::Not(inner) => match inner.kind() {
-                PredicateKind::Guard(Guard::Truthy { path }) => {
+            PredicateKind::Not(inner) => {
+                if optional && let PredicateKind::Guard(Guard::Truthy { path }) = inner.kind() {
                     out.insert(path.clone());
-                }
-                _ => inner.collect_conditionally_optional_paths(out),
-            },
-            PredicateKind::Or(predicates) => {
-                for predicate in predicates {
-                    out.extend(predicate.value_paths());
+                } else {
+                    inner.collect_paths(optional, out, visited);
                 }
             }
-            PredicateKind::And(predicates) => {
-                for predicate in predicates {
-                    predicate.collect_conditionally_optional_paths(out);
+            PredicateKind::And(parts) | PredicateKind::Or(parts) => {
+                let optional = optional && matches!(self.kind(), PredicateKind::And(_));
+                for part in parts {
+                    part.collect_paths(optional, out, visited);
                 }
             }
-            PredicateKind::True
-            | PredicateKind::False
-            | PredicateKind::Approximate { .. }
-            | PredicateKind::Guard(
-                Guard::Truthy { .. }
-                | Guard::Eq { .. }
-                | Guard::MatchesPattern { .. }
-                | Guard::MatchesValue {
-                    path: _,
-                    pattern: _,
-                }
-                | Guard::NotMatchesPattern { .. }
-                | Guard::RangeKeyPrefix { .. }
-                | Guard::RangeKeyEquals { .. }
-                | Guard::RangeKeyMatches { .. }
-                | Guard::Range { .. }
-                | Guard::With { .. }
-                | Guard::Default { .. }
-                | Guard::TypeIs { .. }
-                | Guard::NotTypeIs { .. }
-                | Guard::Not { .. }
-                | Guard::Or { .. }
-                | Guard::AnyOf { .. }
-                | Guard::IntGt { .. }
-                | Guard::IntLt { .. }
-                | Guard::AtMostOneMember { .. }
-                | Guard::MinMembers { .. }
-                | Guard::HasKey { .. }
-                | Guard::NotHasKey { .. }
-                | Guard::ContainsEquals { .. }
-                | Guard::ContainsMemberEquals { .. }
-                | Guard::ContainsTruthyMember { .. }
-                | Guard::CollectionPattern {
-                    path: _,
-                    domain: _,
-                    quantifier: _,
-                    pattern: _,
-                },
-            ) => {}
         }
     }
 
@@ -919,7 +1061,17 @@ impl Predicate {
     pub fn contract_guard_stack(predicates: &[Self]) -> Vec<Guard> {
         let mut guards = Vec::new();
         for predicate in predicates {
-            if let Some(projected) = predicate.contract_guards() {
+            let projected = match predicate.project_contract_guards() {
+                ContractGuards::Exact(projected) => Some(projected),
+                ContractGuards::Unavailable => None,
+                // A failed export cannot activate a conditionally observed fact everywhere.
+                ContractGuards::Exhausted => {
+                    return vec![Guard::AnyOf {
+                        alternatives: Vec::new(),
+                    }];
+                }
+            };
+            if let Some(projected) = projected {
                 for guard in projected {
                     if !guards.contains(&guard) {
                         guards.push(guard);
@@ -936,6 +1088,27 @@ impl Predicate {
     where
         F: FnMut(ValuesPath) -> ValuesPath,
     {
+        self.map_paths(map, &mut None)
+    }
+
+    /// Rewrites paths once per shared node for a deterministic path mapping.
+    ///
+    /// Unlike [`Self::map_value_paths`], repeated occurrences do not repeat callbacks.
+    #[must_use]
+    pub fn map_value_paths_shared<F>(self, map: &mut F) -> Self
+    where
+        F: FnMut(ValuesPath) -> ValuesPath,
+    {
+        self.map_paths(map, &mut Some(ahash::AHashMap::new()))
+    }
+
+    fn map_paths<F>(&self, map: &mut F, cache: &mut Option<ahash::AHashMap<usize, Self>>) -> Self
+    where
+        F: FnMut(ValuesPath) -> ValuesPath,
+    {
+        if let Some(mapped) = cache.as_ref().and_then(|cache| cache.get(&self.node_id())) {
+            return mapped.clone();
+        }
         let mapped = match self.kind() {
             PredicateKind::True => Self::True,
             PredicateKind::False => Self::False,
@@ -948,26 +1121,32 @@ impl Predicate {
                 marker.to_owned(),
                 paths.iter().cloned().map(&mut *map).collect(),
                 role,
-                sound_subset.map(|predicate| Box::new(predicate.clone().map_value_paths(map))),
+                sound_subset.map(|predicate| Box::new(predicate.map_paths(map, cache))),
             ),
             PredicateKind::Guard(guard) => Self::Guard(guard.clone().map_value_paths(map)),
-            PredicateKind::Not(inner) => Self::Not(Box::new(inner.clone().map_value_paths(map))),
+            PredicateKind::Not(inner) => Self::Not(Box::new(inner.map_paths(map, cache))),
             PredicateKind::And(predicates) => Self::And(
                 predicates
                     .iter()
-                    .cloned()
-                    .map(|predicate| predicate.map_value_paths(map))
+                    .map(|predicate| predicate.map_paths(map, cache))
                     .collect(),
             ),
             PredicateKind::Or(predicates) => Self::Or(
                 predicates
                     .iter()
-                    .cloned()
-                    .map(|predicate| predicate.map_value_paths(map))
+                    .map(|predicate| predicate.map_paths(map, cache))
                     .collect(),
             ),
         };
-        if mapped == self { self } else { mapped }
+        let mapped = if mapped == *self {
+            self.clone()
+        } else {
+            mapped
+        };
+        if let Some(cache) = cache {
+            cache.insert(self.node_id(), mapped.clone());
+        }
+        mapped
     }
 
     fn truthy_values_path(path: ValuesPath) -> Self {
@@ -975,6 +1154,15 @@ impl Predicate {
     }
 }
 
+const MAX_CONTRACT_GUARDS: usize = 4_096;
+
+enum ContractGuards {
+    Exact(Vec<Guard>),
+    Unavailable,
+    Exhausted,
+}
+
+// The caller certifies the unfolded output size before this recursive export.
 fn flatten_contract_guards(predicate: &Predicate, negated: bool) -> Option<Vec<Guard>> {
     match (predicate.kind(), negated) {
         (PredicateKind::True, false) => Some(Vec::new()),
@@ -1005,7 +1193,6 @@ fn flatten_contract_guards(predicate: &Predicate, negated: bool) -> Option<Vec<G
         }
     }
 }
-
 fn negated_guard(guard: &Guard) -> Option<Guard> {
     match guard {
         Guard::Truthy { path } | Guard::With { path } => Some(Guard::Not { path: path.clone() }),

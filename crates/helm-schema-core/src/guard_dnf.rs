@@ -4,7 +4,7 @@ use std::sync::Arc;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::guard_algebra::minimize_disjunction_by;
-use crate::{ConditionalGuard, Guard, Predicate, PredicateKind};
+use crate::{ConditionalGuard, Conjunction, Guard, Predicate, PredicateKind};
 
 /// Disjunction of conjunctions of typed predicates.
 ///
@@ -190,13 +190,34 @@ impl GuardDnf {
     where
         F: FnMut(crate::ValuesPath) -> crate::ValuesPath,
     {
+        self.map_paths(map, false);
+    }
+
+    /// Rewrites paths with a deterministic mapping, visiting shared predicate nodes once.
+    pub fn map_value_paths_shared<F>(&mut self, map: &mut F)
+    where
+        F: FnMut(crate::ValuesPath) -> crate::ValuesPath,
+    {
+        self.map_paths(map, true);
+    }
+
+    fn map_paths<F>(&mut self, map: &mut F, shared: bool)
+    where
+        F: FnMut(crate::ValuesPath) -> crate::ValuesPath,
+    {
         *self = Self::from_disjunction(
             Arc::unwrap_or_clone(std::mem::take(&mut self.0))
                 .into_iter()
                 .map(|conjunction| {
                     conjunction
                         .into_iter()
-                        .map(|predicate| predicate.map_value_paths(map))
+                        .map(|predicate| {
+                            if shared {
+                                predicate.map_value_paths_shared(map)
+                            } else {
+                                predicate.map_value_paths(map)
+                            }
+                        })
                         .collect::<Vec<_>>()
                 }),
         );
@@ -248,33 +269,20 @@ impl<'de> Deserialize<'de> for GuardDnf {
 fn normalize_conjunction(
     predicates: impl IntoIterator<Item = Predicate>,
 ) -> Option<Vec<Predicate>> {
-    fn push(predicate: Predicate, normalized: &mut BTreeSet<Predicate>) -> bool {
-        match predicate.kind() {
-            PredicateKind::True => true,
-            PredicateKind::False => false,
-            PredicateKind::And(predicates) => predicates
-                .iter()
-                .cloned()
-                .all(|predicate| push(predicate, normalized)),
-            PredicateKind::Or(predicates) if disjunction_is_tautology(predicates) => true,
-            _ => {
-                if normalized
-                    .iter()
-                    .any(|other| predicates_are_contradictory(&predicate, other))
-                {
-                    return false;
-                }
-                normalized.insert(predicate);
-                true
-            }
-        }
-    }
-
     let mut normalized = BTreeSet::new();
-    for predicate in predicates {
-        if !push(predicate, &mut normalized) {
+    for predicate in Conjunction::new(predicates).into_vec() {
+        match predicate.kind() {
+            PredicateKind::False => return None,
+            PredicateKind::Or(predicates) if disjunction_is_tautology(predicates) => continue,
+            _ => {}
+        }
+        if normalized
+            .iter()
+            .any(|other| predicates_are_contradictory(&predicate, other))
+        {
             return None;
         }
+        normalized.insert(predicate);
     }
     let absorbed_disjunctions = normalized
         .iter()

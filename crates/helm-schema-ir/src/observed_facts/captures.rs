@@ -271,6 +271,13 @@ impl CaptureKind {
     where
         F: FnMut(ValuesPath) -> ValuesPath,
     {
+        self.map_paths(map, false);
+    }
+
+    pub(super) fn map_paths<F>(&mut self, map: &mut F, shared: bool)
+    where
+        F: FnMut(ValuesPath) -> ValuesPath,
+    {
         match self {
             Self::Fail | Self::MemberAccess { .. } => {}
             Self::RangeKeyStrings { paths }
@@ -298,7 +305,13 @@ impl CaptureKind {
                 *selection = selection
                     .iter()
                     .cloned()
-                    .map(|predicate| predicate.map_value_paths(map))
+                    .map(|predicate| {
+                        if shared {
+                            predicate.map_value_paths_shared(map)
+                        } else {
+                            predicate.map_value_paths(map)
+                        }
+                    })
                     .collect();
             }
             Self::RangeSelection { path, chain, .. } => {

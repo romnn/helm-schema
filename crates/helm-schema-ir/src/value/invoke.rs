@@ -815,20 +815,20 @@ fn finish_value_plan(plan: ValuePlan, state: State) -> Vec<Exit> {
         normal: success,
         failures,
     } = plan;
-    let known = state.heap.arena.runtime_path(&state.active);
-    if success
-        .constant_outcome()
-        .or_else(|| known.implies_test(&success))
-        == Some(true)
-    {
+    let known = std::cell::OnceCell::new();
+    let outcome = |test: &super::FrozenTest| {
+        test.constant_outcome().or_else(|| {
+            known
+                .get_or_init(|| state.heap.arena.runtime_path(&state.active))
+                .implies_test(test)
+        })
+    };
+    if outcome(&success) == Some(true) {
         return normal(state, value);
     }
     if failures.len() == 1
         && let Some((&reason, failed)) = failures.first_key_value()
-        && failed
-            .constant_outcome()
-            .or_else(|| known.implies_test(failed))
-            == Some(true)
+        && outcome(failed) == Some(true)
     {
         return vec![Exit {
             state,
@@ -1301,10 +1301,13 @@ fn compare_pair_inner(
         .heap
         .arena
         .decision(accepted.clone(), accepted.negated(), Coverage::Exact);
-    let known = state.heap.arena.runtime_path(&state.active);
-    let outcome = decision
-        .constant_outcome()
-        .or_else(|| known.implies_test(&decision));
+    let outcome = decision.constant_outcome().or_else(|| {
+        state
+            .heap
+            .arena
+            .runtime_path(&state.active)
+            .implies_test(&decision)
+    });
     let mut exits = Vec::new();
     let depth = state.active.len();
     for taken in [true, false] {
@@ -2088,3 +2091,7 @@ impl CompletedExecution {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "../tests/runtime_value_plan.rs"]
+mod tests;

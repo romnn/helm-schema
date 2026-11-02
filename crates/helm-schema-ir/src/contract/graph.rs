@@ -244,6 +244,21 @@ impl ContractIr {
     where
         F: FnMut(helm_schema_core::ValuesPath) -> helm_schema_core::ValuesPath,
     {
+        self.map_paths(&mut map, false);
+    }
+
+    /// Rewrites paths with a deterministic mapping, visiting shared predicate nodes once.
+    pub fn map_value_paths_shared<F>(&mut self, mut map: F)
+    where
+        F: FnMut(helm_schema_core::ValuesPath) -> helm_schema_core::ValuesPath,
+    {
+        self.map_paths(&mut map, true);
+    }
+
+    fn map_paths<F>(&mut self, map: &mut F, shared: bool)
+    where
+        F: FnMut(helm_schema_core::ValuesPath) -> helm_schema_core::ValuesPath,
+    {
         let Self {
             uses,
             dependency_uses,
@@ -253,7 +268,11 @@ impl ContractIr {
             dependency_values_roots,
         } = self;
         for contract_use in uses.iter_mut().chain(dependency_uses) {
-            contract_use.map_value_paths(&mut map);
+            if shared {
+                contract_use.map_value_paths_shared(&mut *map);
+            } else {
+                contract_use.map_value_paths(&mut *map);
+            }
         }
         *dependency_values_roots = std::mem::take(dependency_values_roots)
             .into_iter()
@@ -265,14 +284,14 @@ impl ContractIr {
                     .map(|guards| {
                         guards
                             .into_iter()
-                            .map(|guard| guard.map_value_paths(&mut map))
+                            .map(|guard| guard.map_value_paths(&mut *map))
                             .collect()
                     })
                     .collect(),
                 ..root
             })
             .collect();
-        observed_facts.map_value_paths(&mut map);
+        observed_facts.map_value_paths(&mut *map, shared);
         *values_program_wrappers = std::mem::take(values_program_wrappers)
             .into_iter()
             .map(|wrapper| helm_schema_core::ValuesProgramWrapper {
@@ -283,7 +302,7 @@ impl ContractIr {
             .collect();
         *values_program_wrapper_exclusions = std::mem::take(values_program_wrapper_exclusions)
             .into_iter()
-            .map(&mut map)
+            .map(&mut *map)
             .collect();
     }
 
@@ -453,7 +472,7 @@ fn project_global_uses(uses: &mut Vec<ContractUse>, global_sources: &[String]) {
                     .chain(selection_relative.iter().cloned()),
             );
             let mut selected_use = dependency_use.clone();
-            selected_use.map_value_paths(&mut |path| {
+            selected_use.map_value_paths_shared(&mut |path| {
                 replace_value_path_prefix(path, dependency_global, global_source)
             });
             selected_use.condition =
@@ -587,7 +606,7 @@ fn project_global_fail_captures(
                         .conjunction
                         .into_iter()
                         .map(|predicate| {
-                            predicate.map_value_paths(&mut |path| {
+                            predicate.map_value_paths_shared(&mut |path| {
                                 replace_value_path_prefix(path, dependency_global, global_source)
                             })
                         })
@@ -618,7 +637,7 @@ fn project_global_fail_captures(
                 .conjunction
                 .into_iter()
                 .map(|predicate| {
-                    predicate.map_value_paths(&mut |path| {
+                    predicate.map_value_paths_shared(&mut |path| {
                         replace_value_path_prefix(path, dependency_global, global_source)
                     })
                 })

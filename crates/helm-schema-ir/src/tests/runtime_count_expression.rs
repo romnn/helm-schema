@@ -318,7 +318,7 @@ fn collect_guard_scratch(arena: &Arena, phase: &str) {
 }
 
 #[test]
-fn threshold_memo_releases_replaced_results_and_dropped_count_graphs() -> eyre::Result<()> {
+fn threshold_memo_does_not_retain_derived_guards() -> eyre::Result<()> {
     let arena = Arena::default();
     let [a, b] = ["a", "b"].map(|path| {
         let condition = Predicate::truthy_path(path);
@@ -350,7 +350,12 @@ fn threshold_memo_releases_replaced_results_and_dropped_count_graphs() -> eyre::
     let cached = Rc::downgrade(node);
     drop(result);
     collect_guard_scratch(&arena, "retain");
-    assert!(cached.upgrade().is_some());
+    assert!(cached.upgrade().is_none());
+    let recomputed = precise(CountThreshold::default().below(&outer, 1, &arena))?;
+    sim_assert_eq!(
+        have: arena.budget_test(recomputed).when_true.clone().normalize_boolean(),
+        want: Predicate::all(vec![Predicate::truthy_path("a"), Predicate::truthy_path("b")]).normalize_boolean()
+    );
     let increment = CountExpression::increment(&outer);
     precise(CountThreshold::default().below(&increment, 2, &arena))?;
     assert!(increment.threshold.borrow().is_none());
@@ -378,23 +383,129 @@ fn cancelling_thresholds_remain_exact_and_release_internal_memo_results() -> eyr
             &CountExpression::constant(1),
             &CountExpression::constant(0),
         );
-        let root = CountExpression::selected(condition, &child, &CountExpression::constant(1));
+        let root =
+            CountExpression::selected(condition.clone(), &child, &CountExpression::constant(1));
         // The inner threshold is large, but the outer correlated choice cancels it completely.
         sim_assert_eq!(have: precise(CountThreshold::default().below(&root, 1, &arena))?, want: RuntimeGuard::False);
         let retained = child.threshold.borrow();
         let result = retained
             .as_ref()
             .ok_or_eyre("inner threshold memo missing")?;
-        let RuntimeGuard::Branch(node) = &result.guard else {
+        let guard = result
+            .guard
+            .upgrade()
+            .ok_or_eyre("inner threshold guard missing")?;
+        let RuntimeGuard::Branch(node) = &guard else {
             eyre::bail!("inner threshold graph missing");
         };
         let weak = Rc::downgrade(node);
+        drop(guard);
         drop(retained);
-        drop(root);
-        drop(child);
+        // A cancelled query must release its derived guards while the count DAG stays live.
         collect_guard_scratch(&arena, "cancel");
         assert!(weak.upgrade().is_none());
+        let recomputed = precise(CountThreshold::default().below(&child, 1, &arena))?;
+        sim_assert_eq!(have: arena.union_runtime_guards(&recomputed, &condition), want: RuntimeGuard::True);
+        sim_assert_eq!(have: arena.intersect_runtime_guards(&recomputed, &condition), want: RuntimeGuard::False);
+        sim_assert_eq!(have: precise(CountThreshold::default().below(&root, 1, &arena))?, want: RuntimeGuard::False);
     }
+    Ok(())
+}
+
+#[test]
+fn saturated_increments_release_the_count_history() {
+    let arena = Arena::default();
+    let predicate = Predicate::truthy_path("saturation");
+    let condition = arena.runtime_path(&[DecisionEdge {
+        test: arena.decision(predicate.clone(), predicate.negated(), Coverage::Exact),
+        taken: true,
+    }]);
+    let source = CountExpression::selected(
+        condition,
+        &CountExpression::constant(128),
+        &CountExpression::constant(129),
+    );
+    let history = Rc::downgrade(&source);
+    let incremented = CountExpression::increment(&source);
+    drop(source);
+    assert!(history.upgrade().is_none());
+    sim_assert_eq!(have: incremented.minimum, want: 129);
+    sim_assert_eq!(have: incremented.maximum, want: 129);
+}
+
+#[test]
+fn unreachable_counts_release_history_before_certification() {
+    let arena = Arena::default();
+    let predicate = Predicate::truthy_path("unreachable");
+    let condition = arena.runtime_path(&[DecisionEdge {
+        test: arena.decision(predicate.clone(), predicate.negated(), Coverage::Exact),
+        taken: true,
+    }]);
+    let mut expression = CountExpression::constant(0);
+    for index in 0..4200 {
+        expression = CountExpression::selected(
+            condition.clone(),
+            &expression,
+            &CountExpression::constant(index % 2),
+        );
+    }
+    let history = Rc::downgrade(&expression);
+    let counts = BranchCounts::with_state(CountState::Exact(expression), RuntimeGuard::False);
+    assert!(counts.is_empty());
+    assert!(!counts.is_exhausted());
+    assert!(history.upgrade().is_none());
+}
+
+#[test]
+fn count_storage_has_a_structural_bound_below_the_event_limit() {
+    let arena = Arena::default();
+    let choices = ["left", "right"].map(|path| {
+        let predicate = Predicate::truthy_path(path);
+        arena.decision(predicate.clone(), predicate.negated(), Coverage::Exact)
+    });
+    let mut count = BranchCounts::constant_on(0, RuntimeGuard::True);
+    for index in 0..4200 {
+        let [left, right] = &choices;
+        let decision = if index % 2 == 0 { left } else { right };
+        count = BranchCounts::selected(
+            decision,
+            &count,
+            &BranchCounts::constant_on(index % 2, RuntimeGuard::True),
+            &arena,
+        );
+    }
+    // Every execution emits at most one event; only retained structure exhausts here.
+    assert!(count.is_exhausted());
+    assert!(count.overflow(&arena).is_err());
+}
+
+#[test]
+fn unrestricted_reservations_release_obsolete_count_domains() -> eyre::Result<()> {
+    let state = State::new(Value::nil());
+    let arena = Rc::clone(&state.heap.arena);
+    let [left, right] = ["left", "right"].map(|path| {
+        let predicate = Predicate::truthy_path(path);
+        let test = arena.decision(predicate.clone(), predicate.negated(), Coverage::Exact);
+        arena.runtime_path(&[DecisionEdge { test, taken: true }])
+    });
+    let domain = arena.intersect_runtime_guards(&left, &right);
+    let RuntimeGuard::Branch(node) = &domain else {
+        eyre::bail!("compound count domain missing");
+    };
+    let obsolete = Rc::downgrade(node);
+    let counts = BranchCounts::constant_on(0, domain);
+    let (slots, rejected) = precise(state.reserve_count(&counts, 0))?;
+    assert!(!rejected);
+    drop(counts);
+
+    // An unrestricted record needs its ambient path, not an obsolete counter snapshot.
+    collect_guard_scratch(&arena, "unrestricted");
+    assert!(obsolete.upgrade().is_none());
+    let slot = slots
+        .first()
+        .ok_or_eyre("unrestricted reservation missing")?;
+    sim_assert_eq!(have: slot.condition.predicate(), want: Predicate::True);
+    assert!(slot.condition.exact());
     Ok(())
 }
 
@@ -520,7 +631,7 @@ fn bounded_partial_projection_keeps_the_ambient_restriction() -> eyre::Result<()
     let mut state = State::new(Value::nil());
     let arena = Rc::clone(&state.heap.arena);
     let large = Predicate::all(
-        (0..300)
+        (0..5000)
             .map(|index| Predicate::truthy_path(format!("part{index}")))
             .collect(),
     );
@@ -568,5 +679,101 @@ impl BranchCounts {
         arena: &Arena,
     ) -> Result<RuntimeGuard, crate::value::BoundReason> {
         self.below_with(threshold, arena, &mut CountThreshold::default())
+    }
+}
+
+#[test]
+fn exhausted_counts_do_not_force_the_active_runtime_guard() {
+    let mut state = State::new(Value::nil());
+    state.active = Rc::new(
+        (0..64)
+            .map(|index| {
+                let predicate = Predicate::truthy_path(format!("active{index}"));
+                DecisionEdge {
+                    test: state.heap.arena.decision(
+                        predicate.clone(),
+                        predicate.negated(),
+                        Coverage::Exact,
+                    ),
+                    taken: true,
+                }
+            })
+            .collect(),
+    );
+    state.observation_count.exhaust();
+    state.invocation_count.exhaust();
+    let before = state.heap.arena.created_runtime_nodes();
+    assert!(!state.invocations_complete());
+    assert!(state.reserve_observation().is_empty());
+    assert!(state.reserve_invocation().is_empty());
+    assert!(state.output_widened);
+    assert!(!state.invocation_records_complete);
+    sim_assert_eq!(have: state.heap.arena.created_runtime_nodes(), want: before);
+}
+
+#[test]
+fn retained_work_certificates_charge_cached_graphs_and_increment_history() -> eyre::Result<()> {
+    let state = State::new(Value::nil());
+    let predicate = Predicate::truthy_path("choice");
+    let test = state
+        .heap
+        .arena
+        .decision(predicate.clone(), predicate.negated(), Coverage::Exact);
+    let condition = state
+        .heap
+        .arena
+        .runtime_path(&[DecisionEdge { test, taken: true }]);
+    let expression = CountExpression::selected(
+        condition,
+        &CountExpression::constant(0),
+        &CountExpression::constant(1),
+    );
+    precise(CountThreshold::default().retain(&expression))?;
+    let work = expression
+        .retained_work
+        .get()
+        .ok_or_eyre("certificate missing")?;
+    sim_assert_eq!(have: work.count_nodes, want: 3);
+    sim_assert_eq!(have: work.guard_nodes, want: 1);
+    let incremented = CountExpression::increment(&expression);
+    let inherited = incremented
+        .retained_work
+        .get()
+        .ok_or_eyre("increment certificate missing")?;
+    sim_assert_eq!(have: inherited.count_nodes, want: 4);
+    sim_assert_eq!(have: inherited.guard_nodes, want: 1);
+    assert!(CountThreshold::new(3, 1).retain(&incremented).is_err());
+    assert!(CountThreshold::new(4, 0).retain(&incremented).is_err());
+    precise(CountThreshold::new(4, 1).retain(&incremented))?;
+    Ok(())
+}
+
+#[test]
+fn sealed_files_release_counters_and_preserve_invocation_completeness() {
+    use crate::analysis_db::IrAnalysisDb;
+    use helm_schema_ast::DefineIndex;
+
+    for count in [2, 130] {
+        let db = IrAnalysisDb::new(&DefineIndex::new());
+        let source =
+            r#"{{ define "x" }}x{{ end }}"#.to_owned() + &r#"{{ include "x" . }}"#.repeat(count);
+        crate::value::session::execute_files(
+            vec![db.parsed_source(&source, None, "gotpl")],
+            &db,
+            |_, execution| {
+                assert!(!execution.exits.is_empty());
+                for exit in execution.exits {
+                    let state = exit.state;
+                    sim_assert_eq!(have: state.invocations_complete(), want: count < 128);
+                    for counts in [
+                        state.observation_count,
+                        state.invocation_count,
+                        state.output.counts,
+                    ] {
+                        assert!(counts.definitely_below(1));
+                    }
+                }
+            },
+        );
     }
 }

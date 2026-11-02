@@ -51,7 +51,7 @@ pub(crate) fn collect_manifest_contract_for_chart(
                 contains_template_action(source)?,
             )
         };
-        manifest_contract.map_value_paths(|path| {
+        manifest_contract.map_value_paths_shared(|path| {
             helm_schema_core::ValuesPath::parse(&chart::scope_values_path(
                 &path.encode(),
                 &chart.values_prefix,

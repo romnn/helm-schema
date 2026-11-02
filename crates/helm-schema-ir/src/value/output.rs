@@ -3,7 +3,7 @@ use super::{Datum, Exit, Flow, FrozenValue, Leaf, ObjectData, Value, ValueNode};
 use super::{
     DocumentExecution, ExecutedSite, ExecutedText, ObservationId, OutputNode, TextBuffer, TextPart,
 };
-use ahash::AHashMap;
+use ahash::{AHashMap, AHashSet};
 use helm_schema_core::{GuardValue, Predicate, PredicateMemo};
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -279,18 +279,11 @@ impl TextQuery {
                         self.widening_domain(yes, arena)
                             .zip(self.widening_domain(no, arena))
                             .map(|(yes, no)| {
-                                let mut result = super::guard::RuntimeGuard::False;
-                                for (branch, taken) in [(yes, true), (no, false)] {
-                                    let selected = arena.runtime_path(&[super::DecisionEdge {
-                                        test: std::rc::Rc::clone(decision),
-                                        taken,
-                                    }]);
-                                    result = arena.union_runtime_guards(
-                                        &result,
-                                        &arena.intersect_runtime_guards(&branch, &selected),
-                                    );
-                                }
-                                result
+                                let selected = arena.runtime_path(&[super::DecisionEdge {
+                                    test: std::rc::Rc::clone(decision),
+                                    taken: true,
+                                }]);
+                                arena.select_runtime_guard(&selected, &yes, &no)
                             })
                     }
                 }
@@ -298,7 +291,7 @@ impl TextQuery {
             domain = domain
                 .zip(widened)
                 .map(|(domain, widened)| arena.union_runtime_guards(&domain, &widened));
-            if domain.is_none() {
+            if domain.is_none() || domain == Some(super::guard::RuntimeGuard::True) {
                 break;
             }
         }
@@ -336,9 +329,7 @@ impl TextQuery {
         // Derive an exact domain once per shared buffer before restricting it to this execution.
         // Carrying each path into the graph would enumerate independent output choices.
         if let Some(domain) = self.widening_domain(buffer, arena) {
-            return !arena
-                .intersect_runtime_guards(active, &domain)
-                .is_impossible();
+            return active.overlaps(&domain);
         }
         let key = (std::ptr::from_ref(buffer), active.id());
         if let Some(result) = self.widened.get(&key) {
@@ -706,14 +697,21 @@ fn collect_scalar_projection(
 #[derive(Debug)]
 struct CountThresholdResult {
     threshold: usize,
-    guard: super::guard::RuntimeGuard,
+    guard: super::guard::CachedGuard,
+}
+
+// Immutable graph certificates replay work charges without retaining guard nodes.
+#[derive(Clone, Copy, Debug)]
+struct RetainedWork {
+    count_nodes: usize,
+    guard_nodes: usize,
 }
 
 #[derive(Debug)]
 struct CountExpression {
-    // A select retains only its latest exact threshold, until its count graph dies.
-    // Increment nodes forward queries without keeping another strong guard owner.
+    // Derived answers must not keep obsolete decision graphs alive through count history.
     threshold: std::cell::RefCell<Option<CountThresholdResult>>,
+    retained_work: std::cell::Cell<Option<RetainedWork>>,
     minimum: usize,
     maximum: usize,
     kind: CountExpressionKind,
@@ -738,18 +736,27 @@ impl CountExpression {
             maximum: count,
             kind: CountExpressionKind::Constant(count),
             threshold: std::cell::RefCell::default(),
+            retained_work: std::cell::Cell::default(),
         })
     }
 
     fn increment(source: &std::rc::Rc<Self>) -> std::rc::Rc<Self> {
-        if source.minimum == source.maximum {
-            return Self::constant(source.minimum.saturating_add(1));
+        let minimum = source.minimum.saturating_add(1).min(129);
+        let maximum = source.maximum.saturating_add(1).min(129);
+        if minimum == maximum {
+            return Self::constant(minimum);
         }
         std::rc::Rc::new(Self {
-            minimum: source.minimum.saturating_add(1).min(129),
-            maximum: source.maximum.saturating_add(1).min(129),
+            minimum,
+            maximum,
             kind: CountExpressionKind::Increment(std::rc::Rc::clone(source)),
             threshold: std::cell::RefCell::default(),
+            retained_work: std::cell::Cell::new(source.retained_work.get().map(|work| {
+                RetainedWork {
+                    count_nodes: work.count_nodes.saturating_add(1),
+                    guard_nodes: work.guard_nodes,
+                }
+            })),
         })
     }
 
@@ -771,6 +778,7 @@ impl CountExpression {
             minimum: yes.minimum.min(no.minimum),
             maximum: yes.maximum.max(no.maximum),
             threshold: std::cell::RefCell::default(),
+            retained_work: std::cell::Cell::default(),
             kind: CountExpressionKind::Select {
                 condition,
                 yes: std::rc::Rc::clone(yes),
@@ -799,6 +807,77 @@ impl CountThreshold {
             remaining: nodes,
             guards: super::guard::GuardWorkBudget::new(guards),
         }
+    }
+
+    fn finish(&mut self, state: CountState, domain: super::guard::RuntimeGuard) -> BranchCounts {
+        if domain.is_impossible() && !matches!(state, CountState::Exhausted) {
+            return BranchCounts {
+                state: std::cell::RefCell::new(CountState::Empty),
+                domain,
+            };
+        }
+        let retained = match &state {
+            CountState::Empty => Ok(()),
+            CountState::Exact(expression) => self.retain(expression),
+            CountState::Exhausted => Err(super::BoundReason::BudgetNodes),
+        };
+        if retained
+            .and_then(|()| self.guards.include([&domain]))
+            .is_ok()
+        {
+            BranchCounts {
+                state: std::cell::RefCell::new(state),
+                domain,
+            }
+        } else {
+            if !matches!(state, CountState::Exhausted) {
+                tracing::debug!(reason = ?super::BoundReason::BudgetNodes, "widen stored count graph");
+            }
+            BranchCounts {
+                state: std::cell::RefCell::new(CountState::Exhausted),
+                domain: super::guard::RuntimeGuard::True,
+            }
+        }
+    }
+
+    fn retain(&mut self, expression: &CountExpression) -> Result<(), super::BoundReason> {
+        if matches!(&expression.kind, CountExpressionKind::Constant(_)) {
+            return Ok(());
+        }
+        if let Some(work) = expression.retained_work.get() {
+            let Some(remaining) = self.remaining.checked_sub(work.count_nodes) else {
+                self.remaining = 0;
+                return Err(super::BoundReason::BudgetNodes);
+            };
+            self.remaining = remaining;
+            return self.guards.consume(work.guard_nodes);
+        }
+        let mut pending = vec![expression];
+        let mut visited = AHashSet::new();
+        let mut guards = Vec::new();
+        while let Some(expression) = pending.pop() {
+            if !visited.insert(std::ptr::from_ref(expression)) {
+                continue;
+            }
+            self.remaining = self
+                .remaining
+                .checked_sub(1)
+                .ok_or(super::BoundReason::BudgetNodes)?;
+            match &expression.kind {
+                CountExpressionKind::Constant(_) => {}
+                CountExpressionKind::Increment(source) => pending.push(source),
+                CountExpressionKind::Select { condition, yes, no } => {
+                    guards.push(condition);
+                    pending.extend([yes.as_ref(), no.as_ref()]);
+                }
+            }
+        }
+        let guard_nodes = self.guards.include(guards)?;
+        expression.retained_work.set(Some(RetainedWork {
+            count_nodes: visited.len(),
+            guard_nodes,
+        }));
+        Ok(())
     }
 
     fn select(
@@ -836,8 +915,9 @@ impl CountThreshold {
             .borrow()
             .as_ref()
             .filter(|result| result.threshold == threshold)
-            .map(|result| result.guard.clone());
+            .and_then(|result| result.guard.upgrade());
         if let Some(result) = cached {
+            self.guards.include([&result])?;
             self.results.insert(key, result.clone());
             return Ok(result);
         }
@@ -853,6 +933,7 @@ impl CountThreshold {
                 self.below(source, threshold.saturating_sub(1), arena)?
             }
             CountExpressionKind::Select { condition, yes, no } => {
+                self.guards.include([condition])?;
                 let yes = self.below(yes, threshold, arena)?;
                 let no = self.below(no, threshold, arena)?;
                 self.select(condition, &yes, &no, arena)?
@@ -868,7 +949,7 @@ impl CountThreshold {
         ) {
             *expression.threshold.borrow_mut() = Some(CountThresholdResult {
                 threshold,
-                guard: result.clone(),
+                guard: super::guard::CachedGuard::new(&result),
             });
         }
         self.results.insert(key, result.clone());
@@ -901,10 +982,7 @@ impl BranchCounts {
         Self::with_state(CountState::Empty, super::guard::RuntimeGuard::False)
     }
     fn with_state(state: CountState, domain: super::guard::RuntimeGuard) -> Self {
-        Self {
-            state: std::cell::RefCell::new(state),
-            domain,
-        }
+        CountThreshold::default().finish(state, domain)
     }
     fn constant_on(count: usize, domain: super::guard::RuntimeGuard) -> Self {
         if domain.is_impossible() {
@@ -949,10 +1027,12 @@ impl BranchCounts {
             test: std::rc::Rc::clone(decision),
             taken: true,
         }]);
-        let domain = CountThreshold::default().select(&condition, &yes.domain, &no.domain, arena);
-        let Ok(domain) = domain else {
-            return Self::with_state(CountState::Exhausted, super::guard::RuntimeGuard::True);
-        };
+        if condition.is_impossible() {
+            return no.clone();
+        }
+        if condition == super::guard::RuntimeGuard::True {
+            return yes.clone();
+        }
         let state = match (&*yes.state.borrow(), &*no.state.borrow()) {
             (
                 CountState::Exhausted,
@@ -962,7 +1042,7 @@ impl BranchCounts {
                 CountState::Exhausted
             }
             (CountState::Exact(yes), CountState::Exact(no)) => {
-                CountState::Exact(CountExpression::selected(condition, yes, no))
+                CountState::Exact(CountExpression::selected(condition.clone(), yes, no))
             }
             (CountState::Exact(value), CountState::Empty)
             | (CountState::Empty, CountState::Exact(value)) => {
@@ -970,13 +1050,25 @@ impl BranchCounts {
             }
             (CountState::Empty, CountState::Empty) => CountState::Empty,
         };
-        Self::with_state(state, domain)
+        let mut query = CountThreshold::default();
+        if matches!(state, CountState::Exhausted) {
+            return query.finish(state, super::guard::RuntimeGuard::True);
+        }
+        match query.select(&condition, &yes.domain, &no.domain, arena) {
+            Ok(domain) => query.finish(state, domain),
+            Err(_) => query.finish(CountState::Exhausted, super::guard::RuntimeGuard::True),
+        }
     }
 
     fn increment(&mut self) {
-        let state = self.state.get_mut();
-        if let CountState::Exact(source) = state {
-            *source = CountExpression::increment(source);
+        let CountState::Exact(source) = self.state.get_mut() else {
+            return;
+        };
+        let next = CountExpression::increment(source);
+        if CountThreshold::default().retain(&next).is_ok() {
+            *self.state.get_mut() = CountState::Exact(next);
+        } else {
+            self.exhaust();
         }
     }
 
@@ -1032,16 +1124,18 @@ impl BranchCounts {
             return;
         }
         // On this live domain only count 129 overflowed; the complementary arm is at most 128.
-        *source = std::rc::Rc::new(CountExpression {
+        let next = std::rc::Rc::new(CountExpression {
             minimum: source.minimum.min(1),
             maximum: 128,
             threshold: std::cell::RefCell::default(),
+            retained_work: std::cell::Cell::default(),
             kind: CountExpressionKind::Select {
                 condition: overflow,
                 yes: CountExpression::constant(1),
                 no: std::rc::Rc::clone(source),
             },
         });
+        *self = CountThreshold::default().finish(CountState::Exact(next), self.domain.clone());
     }
 
     pub(super) fn overflow_under(
@@ -1069,7 +1163,8 @@ impl BranchCounts {
         if self.is_exhausted() {
             return self.clone();
         }
-        let domain = CountThreshold::default().select(
+        let mut query = CountThreshold::default();
+        let domain = query.select(
             active,
             &self.domain,
             &super::guard::RuntimeGuard::False,
@@ -1077,8 +1172,9 @@ impl BranchCounts {
         );
         match domain {
             Ok(domain) if domain.is_impossible() => Self::empty(),
-            Ok(domain) => Self::with_state(self.state.borrow().clone(), domain),
-            Err(_) => Self::with_state(CountState::Exhausted, self.domain.clone()),
+            Ok(domain) if domain == self.domain => self.clone(),
+            Ok(domain) => query.finish(self.state.borrow().clone(), domain),
+            Err(_) => query.finish(CountState::Exhausted, super::guard::RuntimeGuard::True),
         }
     }
 }
@@ -1178,7 +1274,8 @@ impl super::State {
             vec![BudgetSlot {
                 condition: RuntimeCondition {
                     arena: std::rc::Rc::clone(&self.heap.arena),
-                    admitted: count.domain.clone(),
+                    // Unrestricted records need the frozen ambient path, not a counter snapshot.
+                    admitted: super::guard::RuntimeGuard::True,
                     ambient: std::rc::Rc::clone(&self.active),
                     admission: Admission::All,
                 },
@@ -1228,6 +1325,10 @@ impl super::State {
         ))
     }
     fn reserve_observation(&mut self) -> Vec<BudgetSlot> {
+        if self.observation_count.is_exhausted() {
+            self.output_widened = true;
+            return Vec::new();
+        }
         self.observation_count = self.observation_count.restrict(
             &self.heap.arena.runtime_path(&self.active),
             &self.heap.arena,
@@ -1246,6 +1347,7 @@ impl super::State {
     }
     pub(super) fn invocations_complete(&self) -> bool {
         self.invocation_records_complete
+            && !self.invocation_count.is_exhausted()
             && !self.invocation_count.overflow_under(
                 &self.heap.arena.runtime_path(&self.active),
                 &self.heap.arena,
@@ -1253,6 +1355,10 @@ impl super::State {
     }
 
     pub(super) fn reserve_invocation(&mut self) -> Vec<BudgetSlot> {
+        if self.invocation_count.is_exhausted() {
+            self.invocation_records_complete = false;
+            return Vec::new();
+        }
         self.invocation_count = self.invocation_count.restrict(
             &self.heap.arena.runtime_path(&self.active),
             &self.heap.arena,
@@ -1324,10 +1430,12 @@ impl super::State {
                 .collect(),
             part: TextPart::Bytes(bytes.to_owned()),
         });
-        if self.output.is_widened_under(
-            &self.heap.arena.runtime_path(&self.active),
-            &self.heap.arena,
-        ) {
+        if !self.output_widened
+            && self.output.is_widened_under(
+                &self.heap.arena.runtime_path(&self.active),
+                &self.heap.arena,
+            )
+        {
             self.output_widened = true;
         }
         for slot in slots {
@@ -1376,10 +1484,12 @@ impl super::State {
                 part: TextPart::Frozen(value.clone()),
             });
         }
-        if self.output.is_widened_under(
-            &self.heap.arena.runtime_path(&self.active),
-            &self.heap.arena,
-        ) {
+        if !self.output_widened
+            && self.output.is_widened_under(
+                &self.heap.arena.runtime_path(&self.active),
+                &self.heap.arena,
+            )
+        {
             self.output_widened = true;
         }
         for slot in slots {

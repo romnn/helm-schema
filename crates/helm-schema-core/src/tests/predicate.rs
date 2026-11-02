@@ -20,6 +20,52 @@ fn shares_allocation(left: &Predicate, right: &Predicate) -> bool {
 }
 
 #[test]
+fn equality_of_independently_shared_dags_visits_node_pairs_once() {
+    let build = || {
+        let mut predicate = Predicate::truthy_path("leaf");
+        for level in 0..40 {
+            predicate = if level % 2 == 0 {
+                Predicate::And(vec![predicate.clone(), predicate])
+            } else {
+                Predicate::Or(vec![predicate.clone(), predicate])
+            };
+        }
+        predicate
+    };
+    sim_assert_eq!(have: build(), want: build());
+}
+
+#[test]
+fn shared_path_mapping_and_contract_export_do_not_unfold_the_dag() {
+    let mut predicate = Predicate::truthy_path("leaf");
+    for level in 0..40 {
+        predicate = if level % 2 == 0 {
+            Predicate::And(vec![predicate.clone(), predicate])
+        } else {
+            Predicate::Or(vec![predicate.clone(), predicate])
+        };
+    }
+    let mut visits = 0;
+    let mapped = predicate.map_value_paths_shared(&mut |_| {
+        visits += 1;
+        path("mapped")
+    });
+    sim_assert_eq!(have: visits, want: 1);
+    sim_assert_eq!(have: mapped.contract_guards(), want: Some(vec![Guard::Truthy { path: path("mapped") }]));
+}
+
+#[test]
+fn exhausted_contract_export_cannot_activate_a_fact_unconditionally() {
+    let predicate = Predicate::And(
+        (0..5000)
+            .map(|index| Predicate::truthy_path(format!("key{index}")))
+            .collect(),
+    );
+    sim_assert_eq!(have: predicate.contract_guards(), want: None);
+    sim_assert_eq!(have: Predicate::contract_guard_stack(&[predicate]), want: vec![Guard::AnyOf { alternatives: Vec::new() }]);
+}
+
+#[test]
 fn identity_path_mapping_preserves_shared_predicate_storage() {
     // The syntax has 4,096 leaf occurrences but only one new node per level.
     let mut predicate = Predicate::truthy_path("leaf");

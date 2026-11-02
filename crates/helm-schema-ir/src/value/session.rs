@@ -148,7 +148,7 @@ fn execute_file(
             exits.extend(execute_lookup(lookup, &occurrence, &mut programs, db));
         }
     }
-    let exits = exits.finish();
+    let mut exits = exits.finish();
     *states = exits
         .iter()
         .filter_map(|exit| match exit.flow {
@@ -160,6 +160,14 @@ fn execute_file(
             Flow::Abort(_) | Flow::Break(_) | Flow::Continue(_) => None,
         })
         .collect();
+    // Sealing needs completeness and recorded evidence, not execution counters.
+    for exit in &mut exits {
+        let state = &mut exit.state;
+        state.invocation_records_complete = state.invocations_complete();
+        state.observation_count = super::output::BranchCounts::default();
+        state.invocation_count = super::output::BranchCounts::default();
+        state.output.counts = super::output::BranchCounts::default();
+    }
     FileExecution {
         exits,
         output,

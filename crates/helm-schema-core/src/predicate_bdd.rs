@@ -1,13 +1,14 @@
 use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet};
 
-use ahash::AHashMap;
+use ahash::{AHashMap, AHashSet};
 
 use crate::{Guard, GuardDnf, Predicate, PredicateKind};
 
 const FALSE: usize = 0;
 const TRUE: usize = 1;
 const MAX_BDD_NODES: usize = 4_096;
+const MAX_BDD_WORK: usize = 16_384;
 const MAX_NORMAL_FORM_PATHS: usize = 256;
 const MAX_NORMAL_FORM_LITERALS: usize = 8_192;
 
@@ -38,9 +39,53 @@ impl PredicateMemo {
             return cached;
         }
         let key = predicate.clone();
-        let normalized = normalize_with_memo(predicate, Some(self));
+        let normalized = normalize_with_memo(predicate, self);
         self.normalized.borrow_mut().insert(key, normalized.clone());
         normalized
+    }
+
+    /// Normalizes within a shared work allowance, returning `None` on exhaustion.
+    ///
+    /// Input DAG nodes and Boolean apply steps consume the allowance before work begins.
+    #[tracing::instrument(skip_all)]
+    #[must_use]
+    pub fn normalize_bounded(
+        &self,
+        predicate: Predicate,
+        remaining: &mut usize,
+    ) -> Option<Predicate> {
+        let Some(size) = predicate.node_work(*remaining) else {
+            *remaining = 0;
+            tracing::debug!("widen exhausted predicate traversal");
+            return None;
+        };
+        *remaining -= size;
+        let predicate = if predicate.contains_approximation() {
+            predicate
+        } else {
+            simplify_structure(predicate, self)
+        };
+        if normalization_leaf(&predicate) {
+            return Some(predicate);
+        }
+        if let Some(cached) = self.normal_forms.borrow().get(&predicate).cloned() {
+            let Some(size) = cached.node_work(*remaining) else {
+                *remaining = 0;
+                return None;
+            };
+            *remaining -= size;
+            return Some(cached);
+        }
+        let result = normalize_literal_conjunction(&predicate)
+            .or_else(|| normalize_simplified_with_work(predicate.clone(), remaining));
+        if result.is_none() {
+            tracing::debug!("widen exhausted predicate normalization");
+        }
+        let result = result?;
+        self.normal_forms
+            .borrow_mut()
+            .insert(predicate, result.clone());
+        Some(result)
     }
 
     /// Whether normalization can leave this predicate potentially true.
@@ -59,7 +104,7 @@ impl PredicateMemo {
             return *cached;
         }
         let key = predicate.clone();
-        let simplified = simplify_structure(predicate, Some(self));
+        let simplified = simplify_structure(predicate, self);
         if normalization_leaf(&simplified) {
             let feasible = simplified != Predicate::False;
             self.feasibility.borrow_mut().insert(key, feasible);
@@ -149,17 +194,10 @@ fn structural_leaf(predicate: &Predicate) -> bool {
 
 // An atomic guard already costs one syntax node; its normal forms cannot improve it.
 fn normalization_leaf(predicate: &Predicate) -> bool {
-    match predicate.kind() {
-        PredicateKind::True
-        | PredicateKind::False
-        | PredicateKind::Approximate {
-            marker: _,
-            paths: _,
-            role: _,
-            sound_subset: _,
-        } => true,
-        PredicateKind::Guard(guard) => is_atomic_guard(guard),
-        PredicateKind::Not(_) | PredicateKind::And(_) | PredicateKind::Or(_) => false,
+    if let PredicateKind::Guard(guard) = predicate.kind() {
+        is_atomic_guard(guard)
+    } else {
+        structural_leaf(predicate)
     }
 }
 
@@ -242,32 +280,12 @@ fn normalize_literal_conjunction(predicate: &Predicate) -> Option<Predicate> {
     let mut literals = BTreeMap::new();
     let mut contradictory = false;
     for part in parts {
-        let (guard, negated) = match part.kind() {
-            PredicateKind::Guard(guard) => (guard, false),
-            PredicateKind::Not(inner) => match inner.kind() {
-                PredicateKind::Guard(guard) => (guard, true),
-                PredicateKind::True
-                | PredicateKind::False
-                | PredicateKind::Approximate {
-                    marker: _,
-                    paths: _,
-                    role: _,
-                    sound_subset: _,
-                }
-                | PredicateKind::Not(_)
-                | PredicateKind::And(_)
-                | PredicateKind::Or(_) => return None,
-            },
-            PredicateKind::True
-            | PredicateKind::False
-            | PredicateKind::Approximate {
-                marker: _,
-                paths: _,
-                role: _,
-                sound_subset: _,
-            }
-            | PredicateKind::And(_)
-            | PredicateKind::Or(_) => return None,
+        let (literal, negated) = match part.kind() {
+            PredicateKind::Not(inner) => (inner, true),
+            _ => (part, false),
+        };
+        let PredicateKind::Guard(guard) = literal.kind() else {
+            return None;
         };
         if !is_atomic_guard(guard) {
             return None;
@@ -314,22 +332,22 @@ struct PredicateBdd<'a> {
     unique_nodes: AHashMap<BddNode, usize>,
     apply_cache: AHashMap<(BooleanOp, usize, usize), usize>,
     negation_cache: AHashMap<usize, usize>,
+    built: AHashMap<usize, usize>,
+    remaining_work: usize,
+    memoize_walks: bool,
 }
 
 pub(crate) fn normalize(predicate: Predicate) -> Predicate {
-    normalize_with_memo(predicate, None)
+    normalize_with_memo(predicate, &PredicateMemo::new())
 }
 
 #[cfg(test)]
 fn normalize_uncached(predicate: Predicate) -> Predicate {
-    normalize_with_memo(predicate, None)
+    normalize_with_memo(predicate, &PredicateMemo::new())
 }
 
-fn normalize_with_memo(predicate: Predicate, memo: Option<&PredicateMemo>) -> Predicate {
+fn normalize_with_memo(predicate: Predicate, memo: &PredicateMemo) -> Predicate {
     let predicate = simplify_structure(predicate, memo);
-    let Some(memo) = memo else {
-        return normalize_simplified(predicate);
-    };
     if normalization_leaf(&predicate) {
         return predicate;
     }
@@ -347,18 +365,37 @@ fn normalize_with_memo(predicate: Predicate, memo: Option<&PredicateMemo>) -> Pr
 
 #[tracing::instrument(skip_all)]
 fn normalize_simplified(predicate: Predicate) -> Predicate {
+    let mut remaining = MAX_BDD_WORK;
+    normalize_simplified_with_work(predicate.clone(), &mut remaining).unwrap_or(predicate)
+}
+
+fn normalize_simplified_with_work(
+    predicate: Predicate,
+    remaining: &mut usize,
+) -> Option<Predicate> {
     if predicate.contains_approximation() {
-        return predicate;
+        return Some(predicate);
     }
-    let Some(mut bdd) = PredicateBdd::for_predicate(&predicate) else {
-        return predicate;
-    };
-    let Some(root) = bdd.build(&predicate) else {
-        return predicate;
-    };
-    let true_paths = bdd.paths_to(root, TRUE);
-    let false_paths = bdd.paths_to(root, FALSE);
+    let mut bdd = PredicateBdd::for_predicate(&predicate)?;
+    bdd.remaining_work = *remaining;
+    let root = bdd.build(&predicate);
+    *remaining = bdd.remaining_work;
+    let root = root?;
+    let true_paths = bdd.paths_to_with_work(root, TRUE, remaining);
+    let false_paths = bdd.paths_to_with_work(root, FALSE, remaining);
     drop(bdd);
+    if *remaining == 0 {
+        return None;
+    }
+    // Normal-form conversion normalizes its emitted literals as new input.
+    for paths in [&true_paths, &false_paths].into_iter().flatten() {
+        let cost = paths.iter().map(|path| path.len() + 1).sum::<usize>();
+        let Some(next) = remaining.checked_sub(cost) else {
+            *remaining = 0;
+            return None;
+        };
+        *remaining = next;
+    }
     let mut candidates = vec![predicate];
     if let Some(paths) = true_paths {
         candidates.push(predicate_from_dnf(&GuardDnf::from_disjunction(paths)));
@@ -366,16 +403,15 @@ fn normalize_simplified(predicate: Predicate) -> Predicate {
     if let Some(paths) = false_paths {
         candidates.push(predicate_from_false_paths(paths));
     }
-    candidates
-        .into_iter()
-        .min_by_key(|candidate| (candidate.syntax_size(), candidate.clone()))
-        .unwrap_or(Predicate::False)
+    Some(
+        candidates
+            .into_iter()
+            .min_by_key(|candidate| (candidate.syntax_size(), candidate.clone()))
+            .unwrap_or(Predicate::False),
+    )
 }
 
-fn simplify_structure(predicate: Predicate, memo: Option<&PredicateMemo>) -> Predicate {
-    let Some(memo) = memo else {
-        return simplify_structure_uncached(predicate, None);
-    };
+fn simplify_structure(predicate: Predicate, memo: &PredicateMemo) -> Predicate {
     if structural_leaf(&predicate) {
         return predicate;
     }
@@ -383,7 +419,7 @@ fn simplify_structure(predicate: Predicate, memo: Option<&PredicateMemo>) -> Pre
         return cached;
     }
     let key = predicate.clone();
-    let simplified = simplify_structure_uncached(predicate, Some(memo));
+    let simplified = simplify_structure_uncached(predicate, memo);
     let mut cache = memo.simplified.borrow_mut();
     cache.insert(key, simplified.clone());
     // Removing approximate factors leaves the exact entailment antecedent unchanged.
@@ -394,7 +430,7 @@ fn simplify_structure(predicate: Predicate, memo: Option<&PredicateMemo>) -> Pre
 }
 
 #[tracing::instrument(skip_all)]
-fn simplify_structure_uncached(predicate: Predicate, memo: Option<&PredicateMemo>) -> Predicate {
+fn simplify_structure_uncached(predicate: Predicate, memo: &PredicateMemo) -> Predicate {
     let simplified = match predicate.kind() {
         PredicateKind::Not(inner) => {
             let inner = simplify_structure(inner.clone(), memo);
@@ -439,10 +475,7 @@ fn simplify_structure_uncached(predicate: Predicate, memo: Option<&PredicateMemo
                 // The subset implies the opaque runtime condition. When the
                 // other exact conjuncts already imply that subset, the
                 // runtime condition is known true and contributes nothing.
-                !memo.map_or_else(
-                    || exact_implies_uncached(&exact, sound_subset),
-                    |memo| memo.exactly_implies(&exact, sound_subset),
-                )
+                !memo.exactly_implies(&exact, sound_subset)
             });
             match factors.len() {
                 0 => Predicate::True,
@@ -509,8 +542,10 @@ fn memo_sizes(memo: &PredicateMemo) -> (usize, usize) {
 
 impl<'a> PredicateBdd<'a> {
     fn for_predicate(predicate: &'a Predicate) -> Option<Self> {
+        predicate.node_work(MAX_BDD_WORK)?;
         let mut atoms = BTreeSet::new();
-        collect_atoms(predicate, &mut atoms)?;
+        let memoize_walks = predicate.syntax_size() > crate::predicate::DIRECT_WALK_NODES;
+        collect_atoms(predicate, &mut atoms, &mut AHashSet::new(), memoize_walks)?;
         let atoms = atoms.into_iter().collect::<Vec<_>>();
         let atom_indices = atoms
             .iter()
@@ -525,10 +560,27 @@ impl<'a> PredicateBdd<'a> {
             unique_nodes: AHashMap::new(),
             apply_cache: AHashMap::new(),
             negation_cache: AHashMap::new(),
+            built: AHashMap::new(),
+            remaining_work: MAX_BDD_WORK,
+            memoize_walks,
         })
     }
 
     fn build(&mut self, predicate: &'a Predicate) -> Option<usize> {
+        if self.memoize_walks
+            && let Some(result) = self.built.get(&predicate.node_id())
+        {
+            return Some(*result);
+        }
+        self.remaining_work = self.remaining_work.checked_sub(1)?;
+        let result = self.build_uncached(predicate)?;
+        if self.memoize_walks {
+            self.built.insert(predicate.node_id(), result);
+        }
+        Some(result)
+    }
+
+    fn build_uncached(&mut self, predicate: &'a Predicate) -> Option<usize> {
         match predicate.kind() {
             PredicateKind::True => Some(TRUE),
             PredicateKind::False => Some(FALSE),
@@ -567,6 +619,7 @@ impl<'a> PredicateBdd<'a> {
     }
 
     fn apply(&mut self, op: BooleanOp, mut left: usize, mut right: usize) -> Option<usize> {
+        self.remaining_work = self.remaining_work.checked_sub(1)?;
         if left > right {
             std::mem::swap(&mut left, &mut right);
         }
@@ -598,6 +651,7 @@ impl<'a> PredicateBdd<'a> {
     }
 
     fn negated(&mut self, node: usize) -> Option<usize> {
+        self.remaining_work = self.remaining_work.checked_sub(1)?;
         match node {
             FALSE => return Some(TRUE),
             TRUE => return Some(FALSE),
@@ -655,18 +709,38 @@ impl<'a> PredicateBdd<'a> {
     }
 
     fn paths_to(&self, root: usize, target: usize) -> Option<Vec<Vec<Predicate>>> {
+        self.paths_to_with_work(root, target, &mut { MAX_BDD_WORK })
+    }
+
+    fn paths_to_with_work(
+        &self,
+        root: usize,
+        target: usize,
+        remaining: &mut usize,
+    ) -> Option<Vec<Vec<Predicate>>> {
         let mut paths = Vec::new();
         let mut current = Vec::new();
         let mut literal_count = 0;
-        self.collect_paths(root, target, &mut current, &mut paths, &mut literal_count)?;
+        self.collect_paths(
+            root,
+            target,
+            &mut current,
+            &mut paths,
+            &mut literal_count,
+            remaining,
+        )?;
         Some(paths)
     }
 
     fn first_true_path(&self, mut node: usize) -> Option<Vec<Predicate>> {
         let mut path = Vec::new();
+        let mut remaining = MAX_BDD_WORK;
         while node != TRUE {
             let current = self.node(node)?;
-            let atom = Predicate::from(self.atoms.get(current.variable)?.to_guard());
+            let atom = self
+                .atoms
+                .get(current.variable)?
+                .predicate_with_work(&mut remaining)?;
             if current.when_false == FALSE {
                 path.push(atom);
                 node = current.when_true;
@@ -685,7 +759,14 @@ impl<'a> PredicateBdd<'a> {
         current: &mut Vec<Predicate>,
         paths: &mut Vec<Vec<Predicate>>,
         literal_count: &mut usize,
+        remaining: &mut usize,
     ) -> Option<()> {
+        let cost = if node == target { current.len() + 1 } else { 1 };
+        let Some(next) = remaining.checked_sub(cost) else {
+            *remaining = 0;
+            return None;
+        };
+        *remaining = next;
         if node == target {
             if paths.len() >= MAX_NORMAL_FORM_PATHS
                 || *literal_count + current.len() > MAX_NORMAL_FORM_LITERALS
@@ -700,33 +781,58 @@ impl<'a> PredicateBdd<'a> {
             return Some(());
         }
         let node = self.node(node)?;
-        let atom = Predicate::from(self.atoms.get(node.variable)?.to_guard());
+        let atom = self
+            .atoms
+            .get(node.variable)?
+            .predicate_with_work(remaining)?;
         current.push(atom.negated());
-        self.collect_paths(node.when_false, target, current, paths, literal_count)?;
+        self.collect_paths(
+            node.when_false,
+            target,
+            current,
+            paths,
+            literal_count,
+            remaining,
+        )?;
         current.pop();
         current.push(atom);
-        self.collect_paths(node.when_true, target, current, paths, literal_count)?;
+        self.collect_paths(
+            node.when_true,
+            target,
+            current,
+            paths,
+            literal_count,
+            remaining,
+        )?;
         current.pop();
         Some(())
     }
 }
 
-fn collect_atoms<'a>(predicate: &'a Predicate, atoms: &mut BTreeSet<GuardAtom<'a>>) -> Option<()> {
+fn collect_atoms<'a>(
+    predicate: &'a Predicate,
+    atoms: &mut BTreeSet<GuardAtom<'a>>,
+    visited: &mut AHashSet<usize>,
+    memoize_walks: bool,
+) -> Option<()> {
+    if memoize_walks && !visited.insert(predicate.node_id()) {
+        return Some(());
+    }
     match predicate.kind() {
-        PredicateKind::True | PredicateKind::False => Some(()),
+        PredicateKind::Approximate { .. } => return None,
         PredicateKind::Guard(guard) => {
             atoms.insert(GuardAtom::new(guard));
-            Some(())
         }
-        PredicateKind::Not(inner) => collect_atoms(inner, atoms),
-        PredicateKind::And(predicates) | PredicateKind::Or(predicates) => {
-            for predicate in predicates {
-                collect_atoms(predicate, atoms)?;
-            }
-            Some(())
-        }
-        PredicateKind::Approximate { .. } => None,
+        PredicateKind::True
+        | PredicateKind::False
+        | PredicateKind::Not(_)
+        | PredicateKind::And(_)
+        | PredicateKind::Or(_) => {}
     }
+    for child in predicate.children() {
+        collect_atoms(child, atoms, visited, memoize_walks)?;
+    }
+    Some(())
 }
 
 #[derive(Clone, Copy)]
@@ -738,6 +844,19 @@ enum GuardAtom<'a> {
 }
 
 impl<'a> GuardAtom<'a> {
+    fn predicate_with_work(self, remaining: &mut usize) -> Option<Predicate> {
+        let cost = match self {
+            Self::Other(guard) => crate::predicate::guard_syntax_size(guard),
+            _ => 1,
+        };
+        let Some(next) = remaining.checked_sub(cost) else {
+            *remaining = 0;
+            return None;
+        };
+        *remaining = next;
+        Some(Predicate::from(self.to_guard()))
+    }
+
     fn new(guard: &'a Guard) -> Self {
         match guard {
             Guard::Truthy { path } => Self::Truthy(path, true),

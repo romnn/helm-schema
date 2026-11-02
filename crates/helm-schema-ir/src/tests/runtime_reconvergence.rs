@@ -9,16 +9,24 @@ use test_util::prelude::sim_assert_eq;
 
 use crate::analysis_db::IrAnalysisDb;
 use crate::symbolic::SymbolicTemplate;
+use crate::value::guard::RuntimeGuard;
 use crate::value::{
     Coverage, DecisionEdge, Exit, Field, Flow, Normal, Remainder, State, Value, ValueNode,
     execute_documents,
 };
 
 #[test]
-fn exact_guard_projection_stays_exact_across_normalization_limits() {
+fn runtime_guard_stays_exact_across_projection_limits() {
     let initial = State::new(Value::nil());
     let arena = &initial.heap.arena;
-    let mut union = arena.decision(Predicate::False, Predicate::True, Coverage::Exact);
+    // Exceed the output certificate even when normalization retains more exact formulas.
+    let ambient = Predicate::all(
+        (0..5000)
+            .map(|index| Predicate::truthy_path(format!("ambient{index}")))
+            .collect(),
+    );
+    let mut union = arena.decision(ambient.clone(), ambient.negated(), Coverage::Exact);
+    let mut widened = false;
     for index in 0..160 {
         let condition = Predicate::from(helm_schema_core::Guard::Eq {
             path: helm_schema_core::ValuesPath::parse("branch"),
@@ -35,13 +43,20 @@ fn exact_guard_projection_stays_exact_across_normalization_limits() {
                 taken: true,
             }],
         );
-        sim_assert_eq!(have: union.coverage, want: Coverage::Exact);
+        widened |= union.coverage == Coverage::Partial;
+        assert!(
+            union
+                .runtime
+                .as_ref()
+                .is_some_and(RuntimeGuard::is_input_exact)
+        );
         let selected = arena.runtime_path(&[DecisionEdge {
             test: atom,
             taken: true,
         }]);
         sim_assert_eq!(have: selected.implies_test(&union), want: Some(true));
     }
+    assert!(widened, "the fixture must exhaust exported projection work");
 }
 
 #[test]

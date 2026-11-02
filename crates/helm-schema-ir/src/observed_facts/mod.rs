@@ -15,12 +15,16 @@ pub(crate) struct ObservedResource {
 }
 
 impl ObservedResource {
-    fn map_value_paths(&mut self, map: &mut impl FnMut(ValuesPath) -> ValuesPath) {
+    fn map_value_paths(&mut self, map: &mut impl FnMut(ValuesPath) -> ValuesPath, shared: bool) {
         let Self {
             condition,
             resource,
         } = self;
-        *condition = condition.clone().map_value_paths(map);
+        *condition = if shared {
+            condition.clone().map_value_paths_shared(map)
+        } else {
+            condition.clone().map_value_paths(map)
+        };
         let helm_schema_core::ResourceRef {
             api_version: _,
             kind: _,
@@ -31,7 +35,11 @@ impl ObservedResource {
             kind_selector,
         } = resource;
         for helm_schema_core::KindBranch { predicate, kind: _ } in kind_branches {
-            *predicate = predicate.clone().map_value_paths(map);
+            *predicate = if shared {
+                predicate.clone().map_value_paths_shared(map)
+            } else {
+                predicate.clone().map_value_paths(map)
+            };
         }
         if let Some(path) = kind_selector {
             *path = map(path.clone());
@@ -151,7 +159,7 @@ impl ObservedFacts {
         self
     }
 
-    pub(crate) fn map_value_paths<F>(&mut self, map: &mut F)
+    pub(crate) fn map_value_paths<F>(&mut self, map: &mut F, shared: bool)
     where
         F: FnMut(ValuesPath) -> ValuesPath,
     {
@@ -171,7 +179,7 @@ impl ObservedFacts {
         *resources = std::mem::take(resources)
             .into_iter()
             .map(|mut resource| {
-                resource.map_value_paths(map);
+                resource.map_value_paths(map, shared);
                 resource
             })
             .collect();
@@ -237,10 +245,16 @@ impl ObservedFacts {
                 capture.conjunction = capture
                     .conjunction
                     .into_iter()
-                    .map(|predicate| predicate.map_value_paths(map))
+                    .map(|predicate| {
+                        if shared {
+                            predicate.map_value_paths_shared(map)
+                        } else {
+                            predicate.map_value_paths(map)
+                        }
+                    })
                     .collect();
                 capture.ranged.map_value_paths(map);
-                capture.kind.map_value_paths(map);
+                capture.kind.map_paths(map, shared);
                 capture
             })
             .collect();

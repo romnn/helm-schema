@@ -337,6 +337,21 @@ impl ContractUse {
     where
         F: FnMut(ValuesPath) -> ValuesPath,
     {
+        self.map_paths(map, false);
+    }
+
+    /// Rewrites paths with a deterministic mapping, visiting shared predicate nodes once.
+    pub fn map_value_paths_shared<F>(&mut self, map: &mut F)
+    where
+        F: FnMut(ValuesPath) -> ValuesPath,
+    {
+        self.map_paths(map, true);
+    }
+
+    fn map_paths<F>(&mut self, map: &mut F, shared: bool)
+    where
+        F: FnMut(ValuesPath) -> ValuesPath,
+    {
         let Self {
             source_expr,
             path: _,
@@ -357,7 +372,11 @@ impl ContractUse {
             merge_operand: _,
         } = self;
         *source_expr = map(source_expr.clone());
-        condition.map_value_paths(map);
+        if shared {
+            condition.map_value_paths_shared(map);
+        } else {
+            condition.map_value_paths(map);
+        }
         if let Some(merge) = merge_layers {
             for layer in &mut merge.layers {
                 layer.path = map(layer.path.clone());

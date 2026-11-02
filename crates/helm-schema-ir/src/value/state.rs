@@ -240,8 +240,8 @@ impl State {
             Rc::make_mut(&mut active).push(DecisionEdge { test, taken });
         }
         let mut output = self.output.clone();
-        output.restrict_budget(&self.heap.arena.runtime_path(&active), &self.heap.arena);
         let runtime = self.heap.arena.runtime_path(&active);
+        output.restrict_budget(&runtime, &self.heap.arena);
         let output_widened = self.output_widened
             && (output.is_widened_under(&runtime, &self.heap.arena)
                 || self

@@ -1,5 +1,6 @@
 use std::collections::BTreeSet;
 
+use color_eyre::eyre::{self, OptionExt as _};
 use test_util::prelude::sim_assert_eq;
 
 use super::{
@@ -15,6 +16,77 @@ fn guard(index: usize) -> Predicate {
     Predicate::from(Guard::Truthy {
         path: ValuesPath::from_segments([format!("value-{index}")]),
     })
+}
+
+#[test]
+fn shared_predicate_dag_normalizes_without_unfolding_occurrences() -> eyre::Result<()> {
+    let leaf = guard(0);
+    let mut predicate = leaf.clone();
+    // Forty shared levels represent over a trillion unfolded occurrences.
+    for level in 0..40 {
+        predicate = if level % 2 == 0 {
+            Predicate::And(vec![predicate.clone(), predicate])
+        } else {
+            Predicate::Or(vec![predicate.clone(), predicate])
+        };
+    }
+    assert!(predicate.syntax_size() > 1_000_000_000_000);
+    sim_assert_eq!(have: predicate.dag_size(40), want: None);
+    sim_assert_eq!(have: predicate.dag_size(41), want: Some(41));
+    let mut bdd = PredicateBdd::for_predicate(&predicate).ok_or_eyre("exact DAG has one atom")?;
+    sim_assert_eq!(have: bdd.build(&predicate), want: Some(2));
+    sim_assert_eq!(have: bdd.built.len(), want: 41);
+    let mut remaining = 256;
+    sim_assert_eq!(have: PredicateMemo::new().normalize_bounded(predicate.clone(), &mut remaining), want: Some(leaf.clone()));
+    sim_assert_eq!(have: predicate.normalize_boolean(), want: leaf);
+    Ok(())
+}
+
+#[test]
+fn owned_compound_guard_payloads_consume_the_input_allowance() {
+    let predicate = Predicate::Guard(Guard::AnyOf {
+        alternatives: vec![
+            (0..5000)
+                .map(|index| Guard::Truthy {
+                    path: ValuesPath::from_segments([format!("key{index}")]),
+                })
+                .collect(),
+        ],
+    });
+    sim_assert_eq!(have: predicate.dag_size(32), want: None);
+    let mut remaining = 32;
+    sim_assert_eq!(have: PredicateMemo::new().normalize_bounded(predicate, &mut remaining), want: None);
+    sim_assert_eq!(have: remaining, want: 0);
+}
+
+#[test]
+fn path_extraction_charges_before_copying_a_completed_path() -> eyre::Result<()> {
+    let predicate = Predicate::And(vec![guard(0), guard(1)]);
+    let mut bdd =
+        PredicateBdd::for_predicate(&predicate).ok_or_eyre("exact conjunction has a BDD")?;
+    let root = bdd.build(&predicate).ok_or_eyre("small conjunction fits")?;
+    let mut remaining = 2;
+    sim_assert_eq!(have: bdd.paths_to_with_work(root, TRUE, &mut remaining), want: None);
+    sim_assert_eq!(have: remaining, want: 0);
+    Ok(())
+}
+
+#[test]
+fn exhausted_normalization_abstains_without_poisoning_a_later_proof() {
+    let memo = PredicateMemo::new();
+    let first = guard(0);
+    let second = guard(1);
+    let predicate = Predicate::Or(vec![
+        Predicate::And(vec![first.clone(), second.clone()]),
+        Predicate::And(vec![first.clone(), second.negated()]),
+    ]);
+    for allowance in [0, 6] {
+        let mut remaining = allowance;
+        sim_assert_eq!(have: memo.normalize_bounded(predicate.clone(), &mut remaining), want: None);
+    }
+    let mut remaining = 256;
+    sim_assert_eq!(have: memo.normalize_bounded(predicate, &mut remaining), want: Some(first));
+    assert!(remaining < 256);
 }
 
 fn generated_predicates() -> Vec<Predicate> {
@@ -340,12 +412,12 @@ fn check_structural_fixed_points() {
         ]);
     }
     for predicate in predicates {
-        let simplified = simplify_structure(predicate.clone(), None);
-        sim_assert_eq!(have: simplify_structure(simplified.clone(), None), want: simplified.clone());
+        let simplified = simplify_structure(predicate.clone(), &PredicateMemo::new());
+        sim_assert_eq!(have: simplify_structure(simplified.clone(), &PredicateMemo::new()), want: simplified.clone());
         let memo = PredicateMemo::new();
-        sim_assert_eq!(have: simplify_structure(predicate, Some(&memo)), want: simplified.clone());
+        sim_assert_eq!(have: simplify_structure(predicate, &memo), want: simplified.clone());
         let populated = memo.simplified.borrow().len();
-        sim_assert_eq!(have: simplify_structure(simplified.clone(), Some(&memo)), want: simplified);
+        sim_assert_eq!(have: simplify_structure(simplified.clone(), &memo), want: simplified);
         sim_assert_eq!(have: memo.simplified.borrow().len(), want: populated);
     }
 }
@@ -504,11 +576,17 @@ fn same_compound_storage(left: &Predicate, right: &Predicate) -> bool {
 
 #[test]
 fn structural_simplification_retains_unchanged_boolean_dag_storage() {
-    let shared = simplify_structure(Predicate::Or(vec![guard(1), guard(0).negated()]), None);
+    let shared = simplify_structure(
+        Predicate::Or(vec![guard(1), guard(0).negated()]),
+        &PredicateMemo::new(),
+    );
     let negated = Predicate::Not(Box::new(shared.clone()));
-    let root = simplify_structure(Predicate::And(vec![shared.clone(), negated.clone()]), None);
+    let root = simplify_structure(
+        Predicate::And(vec![shared.clone(), negated.clone()]),
+        &PredicateMemo::new(),
+    );
     for predicate in [shared, negated, root] {
-        let simplified = simplify_structure(predicate.clone(), None);
+        let simplified = simplify_structure(predicate.clone(), &PredicateMemo::new());
         sim_assert_eq!(have: simplified.clone(), want: predicate.clone());
         sim_assert_eq!(have: same_compound_storage(&predicate, &simplified), want: true);
     }
@@ -517,12 +595,15 @@ fn structural_simplification_retains_unchanged_boolean_dag_storage() {
 
 #[test]
 fn structural_simplification_changes_only_the_required_branch() {
-    let shared = simplify_structure(Predicate::Or(vec![guard(0), guard(1)]), None);
+    let shared = simplify_structure(
+        Predicate::Or(vec![guard(0), guard(1)]),
+        &PredicateMemo::new(),
+    );
     let changed = Predicate::And(vec![
         Predicate::True,
         Predicate::Not(Box::new(Predicate::Not(Box::new(shared.clone())))),
     ]);
-    let simplified = simplify_structure(changed, None);
+    let simplified = simplify_structure(changed, &PredicateMemo::new());
     sim_assert_eq!(have: simplified.clone(), want: shared.clone());
     sim_assert_eq!(have: same_compound_storage(&shared, &simplified), want: true);
 
