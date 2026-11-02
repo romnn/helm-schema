@@ -9737,4 +9737,24 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
     - Part A (static MayWrite census) runs before further simplification; Part B (superadditivity of the combined lanes plus havoc-off) runs in CEILING2.
     - One shared KPS harness, round8/kps-bench.py.
     - Corrected merge rule: gate-clean lanes (0 new FR or FA, 0 new unit failures, KPS within the gate) integrate onto the line promptly. The first integration is G + TEXT + UNITREC2.
-Next: Part A and Part B decide whether static input immutability becomes the heap core; integrate G + TEXT4 + UNITREC2 onto r3b/construction with one clean dump and the unit differential; then unpark C06b on the integrated base.
+- 17:05 (Nov 2) — **R3b: the line moves for the first time in two days (slice G + TEXT, 0 new failures anywhere); the big-chart ceiling shows the declared-type rule, not the heap, is the main lever; user keeps ADR 0043 `assert`, narrowed.**
+  - Line r3b/construction: a4afcaa6 → 1a2a7b47 (slice G), ab74d944 (TEXT), 9d0c72d7 (92 fixtures adopted byte-for-byte from the verified integration dump). Integration was done in round8-r3b-integ2.
+    - Gates: units 0 new / 30 fixed; integration 169 → 168, 0 new (5 merge-introduced failures fixed first); 17 FA closed, 0 new FA or FR; KPS 1.03× on the shared harness; lint and lint:fc 0.
+  - CEILING2 (big charts, with G):
+    - Havoc off alone (H) closes almost nothing.
+    - H plus the HOSTS classifier revert (H0) closes 40.0% but rejects 2 Helm-valid vault controls.
+    - The revert alone (R) closes 16.2% at base CPU but rejects 15 Helm-valid controls. R and H0 overlap only 1,296 cells, so identity and declared types are superadditive.
+    - Part B (the lanes combined with havoc off) is not superadditive (0.87×); havoc off costs up to 326× CPU.
+  - Declared-type design (round8/designs/decltype/declared-type-qualification.md):
+    - A declared default never constrains on its own; every constraint comes from an executed requirement under its own guard.
+    - E0: 97.9% of 6,448 map-declared Helm-abort FA abort on a member access, so the declared map type stood in for a missing receiver requirement.
+    - Deletes the HOSTS classifier, declared-type inheritance and the preserve-default repairs (about −1k LOC).
+    - E1, a falsifier that composes host-requirement sidecars on the G and H trees, is running.
+  - User decision (Nov 2): ADR 0043 keeps `--declared-types=assert` as default, narrowed:
+    - only at the key itself, under the guard of its own executed consumption;
+    - only where that consumption's domain is recorded as opaque or unknown;
+    - never for objects, never inherited.
+    - F80/F43 stay strict. The ADR text is updated with the slice that implements it.
+  - EMIT2 (test-observation adapters, generator fixes, dependency globals, oncall API availability; 15 fixed, 0 new, +141 LOC, KPS 0.98×) is integrating onto 9d0c72d7.
+  - The user disabled Spotlight on T7 after a system-wide I/O stall (11:40–12:50) took down two runs; all runs were resumed.
+Next: E1 decides declared-type slice 1 (unified requirement recorder, environment-projected guards, deletion of HOSTS, inheritance and declared objectness); integrate EMIT2, then UNITREC2 and EFFECTS1 (rebased on 9d0c72d7); Part A census, then the static-immutability decision.
