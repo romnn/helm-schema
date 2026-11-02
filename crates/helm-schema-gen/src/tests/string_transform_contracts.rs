@@ -286,7 +286,6 @@ fn dependency_global_render_uses_follow_the_parent_key_with_a_child_fallback() -
           "type": "object"
         }
     "##})?;
-    sim_assert_eq!(have: schema, want: expected);
 
     assert!(schema_accepts_instance(
         &schema,
@@ -309,6 +308,7 @@ fn dependency_global_render_uses_follow_the_parent_key_with_a_child_fallback() -
             "metrics": { "global": { "imageRegistry": "registry.child" } }
         })
     ));
+    sim_assert_eq!(have: schema, want: expected);
     Ok(())
 }
 

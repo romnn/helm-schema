@@ -59,19 +59,27 @@ fn self_guarded_tplvalues_render_object_union_keeps_exact_empty_object_placehold
         ValuesSchemaInput::new(&schema_signals, &provider())
             .with_values_documents(&prepared_values_documents(Some(values_yaml))),
     );
-    let data_source = schema
-        .pointer("/properties/persistence/properties/dataSource")
-        .expect("persistence.dataSource present");
-
-    schema_variant_matching(data_source, |variant| {
-        variant.get("type").and_then(Value::as_str) == Some("object")
-            && variant.get("maxProperties").and_then(Value::as_u64) == Some(0)
-    })
-    .unwrap_or_else(|| {
-        panic!(
-            "exact empty object placeholder variant missing from helper-rendered object union: {data_source}",
-        )
-    });
+    // The declared empty object skips the body. Nonempty objects reach the
+    // destination's TypedLocalObjectReference contract, which requires string
+    // kind and name fields; an open off-state must not bypass that contract.
+    for (data_source, accepts) in [
+        (serde_json::json!({}), true),
+        (
+            serde_json::json!({"kind": "VolumeSnapshot", "name": "snap"}),
+            true,
+        ),
+        (serde_json::json!({"kind": "VolumeSnapshot"}), false),
+        (serde_json::json!({"name": "snap"}), false),
+        (serde_json::json!({"kind": 1, "name": "snap"}), false),
+        (serde_json::json!({"other": 1}), false),
+        (
+            serde_json::json!([{"kind": "VolumeSnapshot", "name": "snap"}]),
+            false,
+        ),
+    ] {
+        let document = serde_json::json!({"persistence": {"dataSource": data_source}});
+        sim_assert_eq!(have: schema_accepts_instance(&schema, &document), want: accepts, "document={document}; schema={schema}");
+    }
 }
 
 #[test]

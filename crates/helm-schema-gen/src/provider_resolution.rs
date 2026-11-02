@@ -16,6 +16,7 @@ use crate::schema_model::type_schema;
 
 pub(crate) struct ProviderSchemaResolutions {
     by_use: BTreeMap<ProviderSchemaUse, ProviderSchemaResolution>,
+    pub(crate) unavailable_resources: Vec<Vec<helm_schema_core::ConditionalGuard>>,
 }
 
 struct ProviderSchemaResolution {
@@ -94,16 +95,12 @@ impl ProviderSchemaResolutions {
                 }
             }
         }
-        let queried = by_use
-            .keys()
-            .map(|use_| &use_.resource)
-            .collect::<BTreeSet<_>>();
-        for resource in contract_schema_signals.observed_resources() {
-            if !queried.contains(resource) {
-                provider.observe_resource(resource);
-            }
+        let unavailable_resources =
+            unavailable_resource_activations(contract_schema_signals, &by_use, provider);
+        Self {
+            by_use,
+            unavailable_resources,
         }
-        Self { by_use }
     }
 
     pub(crate) fn fragment_for_use(
@@ -135,6 +132,37 @@ impl ProviderSchemaResolutions {
             })
         })
     }
+}
+
+fn unavailable_resource_activations(
+    signals: &ContractSchemaSignals,
+    by_use: &BTreeMap<ProviderSchemaUse, ProviderSchemaResolution>,
+    provider: &dyn ResourceSchemaOracle,
+) -> Vec<Vec<helm_schema_core::ConditionalGuard>> {
+    let mut queried = by_use
+        .keys()
+        .map(|use_| &use_.resource)
+        .collect::<BTreeSet<_>>();
+    let mut availability = BTreeMap::new();
+    let mut unavailable_resources = BTreeSet::new();
+    for helm_schema_core::ResourceObservation {
+        resource,
+        activation,
+    } in signals.observed_resources()
+    {
+        if queried.insert(resource) {
+            provider.observe_resource(resource);
+        }
+        if let Some(guards) = activation {
+            let served = availability
+                .entry(resource)
+                .or_insert_with(|| provider.resource_is_served(resource));
+            if *served == Some(false) {
+                unavailable_resources.insert(guards.clone());
+            }
+        }
+    }
+    unavailable_resources.into_iter().collect()
 }
 
 fn insert_resolution(

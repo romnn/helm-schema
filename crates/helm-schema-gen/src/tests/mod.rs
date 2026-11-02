@@ -70,6 +70,7 @@ mod range_contracts;
 mod range_key_contracts;
 mod requirement_domain;
 mod resolve_policy;
+mod resource_availability;
 mod schema_node;
 mod serialized_descendant_contracts;
 mod shape_alternatives;

@@ -12,8 +12,9 @@ fn outputs(source: &str) -> eyre::Result<BTreeSet<(Predicate, String)>> {
     let defines = DefineIndex::new();
     let db = IrAnalysisDb::new(&defines);
     crate::value::tests::execute_document(source, None, &db)
-        .text()
-        .map(|(condition, text)| Ok((condition, text.exact_text().ok_or_eyre("unknown output")?)))
+        .executed_outputs()
+        .into_iter()
+        .map(|output| Ok((output.condition, output.text.ok_or_eyre("unknown output")?)))
         .collect()
 }
 

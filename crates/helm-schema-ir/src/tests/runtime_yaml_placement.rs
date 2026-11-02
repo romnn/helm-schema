@@ -692,7 +692,13 @@ fn an_unknown_body_keeps_resource_diagnostics_without_inventing_placed_fields() 
         .generate_contract_ir(source)
         .finalize();
     sim_assert_eq!(have: contract.schema_signals().observed_resources(), want: &BTreeSet::from([
-        helm_schema_core::ResourceRef::concrete("autoscaling/v2beta1".to_owned(), "HorizontalPodAutoscaler".to_owned())
+        helm_schema_core::ResourceObservation {
+            resource: helm_schema_core::ResourceRef::concrete("autoscaling/v2beta1".to_owned(), "HorizontalPodAutoscaler".to_owned()),
+            activation: Some(vec![helm_schema_core::ConditionalGuard::TypeIs {
+                path: ValuesPath::parse("name"),
+                schema_type: "string".to_owned(),
+            }]),
+        }
     ]));
     assert!(contract.uses().iter().all(|use_| use_.resource.is_none()));
     let dormant = format!("{{{{ if false }}}}{source}{{{{ end }}}}");

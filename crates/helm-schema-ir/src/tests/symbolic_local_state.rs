@@ -33,8 +33,9 @@ fn inputs(source: &str) -> BTreeSet<ValuesPath> {
 
 fn outputs(source: &str) -> BTreeSet<(Predicate, Option<String>)> {
     execute(source)
-        .text()
-        .map(|(condition, text)| (condition, text.exact_text()))
+        .executed_outputs()
+        .into_iter()
+        .map(|output| (output.condition, output.text))
         .collect()
 }
 
@@ -315,15 +316,16 @@ fn branch_join_intersects_chart_value_defaults() -> eyre::Result<()> {
     "#};
     let execution = execute(source);
     let output = execution
-        .text()
+        .executed_outputs()
+        .into_iter()
         .next()
-        .ok_or_eyre("missing default output")?
-        .1;
-    sim_assert_eq!(have: output.exact_text(), want: Some("before".to_string()));
+        .ok_or_eyre("missing default output")?;
+    sim_assert_eq!(have: output.text, want: Some("before".to_string()));
     assert!(
         execution
-            .text()
-            .all(|(_, text)| text.exact_text().as_deref() == Some("before"))
+            .executed_outputs()
+            .into_iter()
+            .all(|output| output.text.as_deref() == Some("before"))
     );
     Ok(())
 }

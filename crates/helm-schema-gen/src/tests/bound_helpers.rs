@@ -452,6 +452,16 @@ fn template_call_stringifies_the_helper_value_before_provider_projection() {
             "a safely formatted mapping",
         ),
         (serde_json::json!("custom"), true, "an ordinary string"),
+        (
+            serde_json::json!("safe\n  namespace: ns"),
+            true,
+            "a valid sibling field",
+        ),
+        (
+            serde_json::json!("Alpha\nBeta"),
+            false,
+            "an invalid unindented line",
+        ),
         (serde_json::json!(7), false, "a numeric YAML token"),
         (serde_json::json!(["custom"]), false, "a flow sequence"),
         (serde_json::json!(null), true, "the helper's falsy fallback"),
@@ -503,6 +513,11 @@ fn template_call_stringifies_the_helper_value_before_provider_projection() {
                         },
                         crate::resolve_policy::plain_scalar_safe_comment_string_schema(),
                         { "not": { "$ref": "#/$defs/t" } },
+                        {
+                            "type": "string",
+                            "pattern": "[\\r\\n]",
+                            "not": {"pattern": "^[A-Za-z]+\\n[A-Za-z]+$"}
+                        },
                     ]
                 }),
             )]),

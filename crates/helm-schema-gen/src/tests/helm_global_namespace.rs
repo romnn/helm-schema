@@ -525,7 +525,7 @@ fn root_and_alias_local_global_members_are_both_admitted() {
         "#},
         "",
     );
-    sim_assert_eq!(have: &schema, want: &serde_json::json!({
+    let expected_schema = serde_json::json!({
         "$defs": {
             "t": {
                 "anyOf": [
@@ -910,7 +910,7 @@ fn root_and_alias_local_global_members_are_both_admitted() {
             }
         },
         "type": "object"
-    }));
+    });
     let verdicts = [
         serde_json::json!({
             "global": { "imageRegistry": "x", "other": 1 },
@@ -929,4 +929,5 @@ fn root_and_alias_local_global_members_are_both_admitted() {
     .map(|instance| schema_accepts_instance(&schema, instance))
     .collect::<Vec<_>>();
     sim_assert_eq!(have: verdicts, want: vec![true, true, false]);
+    sim_assert_eq!(have: &schema, want: &expected_schema);
 }

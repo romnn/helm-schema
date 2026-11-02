@@ -322,6 +322,7 @@ impl LoweredEmissionPlan {
         let terminal_schemas = contract_schema_signals
             .terminal_clauses()
             .iter()
+            .chain(&provider_resolutions.unavailable_resources)
             .map(|guards| LoweredConjunct::terminal(guards.clone()))
             .collect::<Vec<_>>();
         let support = EmissionSupportPlan::build(

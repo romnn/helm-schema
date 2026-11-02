@@ -70,8 +70,12 @@ fn default_type_truth_handles_null_and_truthy_nonstring_primaries() -> eyre::Res
         let db = IrAnalysisDb::new(&defines);
         let source = format!("{{{{ {source} }}}}");
         let execution = crate::value::tests::execute_document(&source, None, &db);
-        let (_, output) = execution.text().next().ok_or_eyre("missing type output")?;
-        sim_assert_eq!(have: output.exact_text(), want: Some(expected.to_string()), "source={source}");
+        let output = execution
+            .executed_outputs()
+            .into_iter()
+            .next()
+            .ok_or_eyre("missing type output")?;
+        sim_assert_eq!(have: output.text, want: Some(expected.to_string()), "source={source}");
     }
     Ok(())
 }
@@ -92,9 +96,10 @@ fn default_type_truth_tracks_the_selected_dynamic_value() {
         }),
     ]));
     let selected = execution
-        .text()
-        .filter_map(|(condition, text)| {
-            (text.exact_text().as_deref() == Some("selected")).then_some(condition)
+        .executed_outputs()
+        .into_iter()
+        .filter_map(|output| {
+            (output.text.as_deref() == Some("selected")).then_some(output.condition)
         })
         .collect::<Vec<_>>();
     sim_assert_eq!(have: Predicate::Or(selected).normalize_boolean(), want: predicate);

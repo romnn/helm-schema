@@ -97,15 +97,40 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
             }
         }
     }
-    finish_schema_signals(paths, terminal_clauses, predicate_memo).with_observed_resources(
-        observed_facts
-            .resources
-            .iter()
-            .filter(|observation| {
-                predicate_memo.normalize(observation.condition.clone())
-                    != helm_schema_core::Predicate::False
+    finish_schema_signals(paths, terminal_clauses, predicate_memo)
+        .with_resource_observations(resource_observations(observed_facts, predicate_memo))
+}
+
+fn resource_observations<'a>(
+    observed_facts: &'a ObservedFacts,
+    predicate_memo: &'a helm_schema_core::PredicateMemo,
+) -> impl Iterator<Item = helm_schema_core::ResourceObservation> + 'a {
+    observed_facts.resources.iter().filter_map(
+        |crate::observed_facts::ObservedResource {
+             condition,
+             resource,
+         }| {
+            let condition = predicate_memo.normalize(condition.clone());
+            if condition == helm_schema_core::Predicate::False {
+                return None;
+            }
+            let activation = if condition == helm_schema_core::Predicate::True {
+                Some(Vec::new())
+            } else if condition.contains_approximation()
+                || condition.value_paths().iter().any(|path| {
+                    path.segments()
+                        .any(helm_schema_core::Segment::is_each_member)
+                })
+            {
+                None
+            } else {
+                super::terminal_clause_guard(&condition).map(|guard| vec![guard])
+            };
+            Some(helm_schema_core::ResourceObservation {
+                resource: resource.clone(),
+                activation,
             })
-            .map(|observation| observation.resource.clone()),
+        },
     )
 }
 

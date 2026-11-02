@@ -171,7 +171,7 @@ fn every_discovered_chart_instance_reserves_global() -> eyre::Result<()> {
 )]
 fn a_nested_global_consumer_follows_the_helm_matrix() -> eyre::Result<()> {
     let schema = generated_schema(witness_parent(true)?)?;
-    sim_assert_eq!(have: &schema, want: &json!({
+    let expected_schema = json!({
         "$defs": {
             "t": {
                 "anyOf": [
@@ -1322,7 +1322,7 @@ fn a_nested_global_consumer_follows_the_helm_matrix() -> eyre::Result<()> {
             }
         },
         "type": "object"
-    }));
+    });
     let validator = jsonschema::validator_for(&schema)?;
     let injected = |global: serde_json::Value| {
         json!({
@@ -1391,6 +1391,7 @@ fn a_nested_global_consumer_follows_the_helm_matrix() -> eyre::Result<()> {
         .map(|(label, _, renders)| (*label, *renders))
         .collect::<Vec<_>>();
     sim_assert_eq!(have: have, want: want);
+    sim_assert_eq!(have: &schema, want: &expected_schema);
     Ok(())
 }
 

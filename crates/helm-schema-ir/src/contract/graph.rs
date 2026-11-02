@@ -317,6 +317,36 @@ impl ContractIr {
         project_global_uses(&mut self.dependency_uses, &global_sources);
         project_global_fail_captures(&mut self.observed_facts.captures, &global_sources);
         project_global_range_modes(&mut self.observed_facts.range_modes, &global_sources);
+        self.observed_facts.resources = std::mem::take(&mut self.observed_facts.resources)
+            .into_iter()
+            .map(
+                |crate::observed_facts::ObservedResource {
+                     condition,
+                     resource,
+                 }| {
+                    let condition = project_global_failure_predicate(
+                        &condition,
+                        &global_sources,
+                        &mut 4096,
+                        true,
+                    )
+                    .unwrap_or_else(|| {
+                        helm_schema_core::Predicate::approximate(
+                            "dependency resource activation",
+                            condition
+                                .value_paths()
+                                .into_iter()
+                                .map(|path| path.encode())
+                                .collect(),
+                        )
+                    });
+                    crate::observed_facts::ObservedResource {
+                        condition,
+                        resource,
+                    }
+                },
+            )
+            .collect();
     }
 
     /// Add declared input-type hints for values paths without projecting them

@@ -1,3 +1,4 @@
+use color_eyre::eyre::{self, OptionExt as _};
 use indoc::{formatdoc, indoc};
 use test_util::prelude::sim_assert_eq;
 
@@ -8,7 +9,7 @@ use super::*;
     clippy::too_many_lines,
     reason = "the complete fixture scenario is clearest as one contiguous test"
 )]
-fn grouped_selector_receiver_is_optional_but_present_scalars_fail() {
+fn grouped_selector_receiver_is_optional_but_present_scalars_fail() -> eyre::Result<()> {
     let src = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
@@ -173,10 +174,44 @@ fn grouped_selector_receiver_is_optional_but_present_scalars_fail() {
             "present scalar grouped receivers and missing strict receivers fail: instance={instance}; schema={schema}"
         );
     }
-    sim_assert_eq!(
-        have: &schema,
-        want: &expected_values_schema(properties, all_of, true)
+    let mut expected = expected_values_schema(properties, all_of, true);
+    let grouped_absent = grouped_receiver_present
+        .get("not")
+        .ok_or_eyre("missing grouped receiver absence condition")?
+        .clone();
+    let receiver_absent = expected
+        .pointer("/properties/strict/allOf/0/if/allOf/1")
+        .ok_or_eyre("missing strict receiver absence condition")?
+        .clone();
+    let definitions = expected
+        .get_mut("$defs")
+        .and_then(Value::as_object_mut)
+        .ok_or_eyre("missing expected definitions")?;
+    // Both nil proofs share the same encoding. Duplicating their disjunction
+    // is idempotent, and the local absence/complement rejection is inert.
+    definitions.insert(
+        "helm-condition-0".to_owned(),
+        serde_json::json!({"anyOf": [grouped_absent.clone(), grouped_absent]}),
     );
+    definitions.insert(
+        "helm-condition-1".to_owned(),
+        serde_json::json!({"not": {"$ref": "#/$defs/helm-condition-0"}}),
+    );
+    definitions.insert(
+        "helm-condition-2".to_owned(),
+        serde_json::json!({"anyOf": [receiver_absent.clone(), receiver_absent.clone()]}),
+    );
+    definitions.insert(
+        "helm-condition-3".to_owned(),
+        serde_json::json!({"not": {"$ref": "#/$defs/helm-condition-2"}}),
+    );
+    expected["allOf"][0]["if"] = serde_json::json!({"$ref": "#/$defs/helm-condition-1"});
+    expected["properties"]["grouped"]["allOf"] = serde_json::json!([{
+        "if": {"allOf": [receiver_absent, {"$ref": "#/$defs/helm-condition-3"}]},
+        "then": false,
+    }]);
+    sim_assert_eq!(have: &schema, want: &expected);
+    Ok(())
 }
 
 /// A `hasKey` guard on the rendered leaf is already enforced by property

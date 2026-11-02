@@ -11,6 +11,7 @@ use crate::cache::{
 use crate::diagnostic::DiagnosticSink;
 use crate::fetch::{HttpFetcher, UreqFetcher};
 use crate::filename::candidate_filenames_for_resource;
+use crate::group_version::GroupVersion;
 use crate::lookup::source_bundle::{SourceBundleNode, bundle_source_definition};
 use crate::lookup::{
     K8sSchemaProvider, ProviderLookupResult, ProviderOrigin, ProviderSchemaFragment,
@@ -380,6 +381,38 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
         out.sort();
         out.dedup();
         out
+    }
+
+    #[tracing::instrument(skip_all)]
+    fn resource_is_served_at_primary_version(&self, resource: &ResourceRef) -> Option<bool> {
+        let ResourceRef {
+            api_version,
+            kind,
+            kind_candidates,
+            api_version_candidates,
+            api_version_branches,
+            kind_branches,
+            kind_selector,
+        } = resource;
+        if api_version.is_empty()
+            || kind.is_empty()
+            || !api_version_candidates.is_empty()
+            || !kind_candidates.is_empty()
+            || !api_version_branches.is_empty()
+            || !kind_branches.is_empty()
+            || kind_selector.is_some()
+        {
+            return None;
+        }
+        // The catalog omits the API extension server's CRD definitions.
+        // Its missing documents cannot establish that those APIs are unserved.
+        if GroupVersion::parse(api_version)?.group == "apiextensions.k8s.io" {
+            return None;
+        }
+        self.capability_has_query_at_primary_version(&ApiPresenceQuery::Resource {
+            api_version: api_version.clone(),
+            kind: kind.clone(),
+        })
     }
 
     /// Authoritative answer to `.Capabilities.APIVersions.Has "api"`

@@ -89,4 +89,12 @@ pub trait K8sSchemaProvider: Send + Sync + std::fmt::Debug {
     fn capability_has_query_at_primary_version(&self, _query: &ApiPresenceQuery) -> Option<bool> {
         None
     }
+
+    /// Whether this provider proves a resource is served by its primary target.
+    ///
+    /// A catalog can answer only within its API coverage. Missing schema documents
+    /// outside that coverage cannot establish absence from the server.
+    fn resource_is_served_at_primary_version(&self, _resource: &ResourceRef) -> Option<bool> {
+        None
+    }
 }

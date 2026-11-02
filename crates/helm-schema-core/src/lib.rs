@@ -29,7 +29,7 @@ pub use contract_signals::{
     ConditionalPathOverlay, ContractPathSchemaEvidence, ContractRequirednessEvidence,
     ContractRequirementImplication, ContractRequirementTarget, ContractSchemaSignals,
     ContractValuePathFacts, FailValueRequirement, GuardedValuesDefaultSource, MetadataFieldKind,
-    RangeDomain, ValuesDefaultSource, ValuesProgramWrapper,
+    RangeDomain, ResourceObservation, ValuesDefaultSource, ValuesProgramWrapper,
 };
 pub use contract_use::{
     ContractUse, MergeLayer, MergeLayerTransform, MergeLayersUse, SplitSegmentUse,

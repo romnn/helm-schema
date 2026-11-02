@@ -1113,6 +1113,16 @@ impl ContractPathSchemaEvidence {
     }
 }
 
+/// A resource header observed in executed output, independently of value slots.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ResourceObservation {
+    /// The resource identity recovered from the executed YAML placement.
+    pub resource: crate::ResourceRef,
+    /// A sufficient condition for emission; an empty conjunction is unconditional.
+    /// `None` retains diagnostic evidence without asserting activation.
+    pub activation: Option<Vec<ConditionalGuard>>,
+}
+
 /// Contract-derived facts consumed by core values-schema generation.
 ///
 /// This is the typed boundary between static template interpretation and JSON
@@ -1121,7 +1131,7 @@ impl ContractPathSchemaEvidence {
 /// re-reading raw contract claims.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct ContractSchemaSignals {
-    observed_resources: BTreeSet<crate::ResourceRef>,
+    observed_resources: BTreeSet<ResourceObservation>,
     schema_evidence_by_value_path: BTreeMap<crate::ValuesPath, ContractPathSchemaEvidence>,
     referenced_value_paths: BTreeSet<crate::ValuesPath>,
     pruned_parent_value_paths: BTreeSet<crate::ValuesPath>,
@@ -1225,13 +1235,27 @@ impl ContractSchemaSignals {
         mut self,
         resources: impl IntoIterator<Item = crate::ResourceRef>,
     ) -> Self {
+        self.observed_resources
+            .extend(resources.into_iter().map(|resource| ResourceObservation {
+                resource,
+                activation: None,
+            }));
+        self
+    }
+
+    /// Attaches executed resource observations with their sufficient activation guards.
+    #[must_use]
+    pub fn with_resource_observations(
+        mut self,
+        resources: impl IntoIterator<Item = ResourceObservation>,
+    ) -> Self {
         self.observed_resources.extend(resources);
         self
     }
 
-    /// Resource observations that imply no constraint on an input value.
+    /// Resource observations, including diagnostic-only headers without activation proofs.
     #[must_use]
-    pub fn observed_resources(&self) -> &BTreeSet<crate::ResourceRef> {
+    pub fn observed_resources(&self) -> &BTreeSet<ResourceObservation> {
         &self.observed_resources
     }
 

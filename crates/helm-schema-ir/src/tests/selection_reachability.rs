@@ -6,6 +6,7 @@ use helm_schema_core::{Predicate, ValuesPath};
 use test_util::prelude::sim_assert_eq;
 
 use crate::analysis_db::IrAnalysisDb;
+use crate::value::ExecutedText;
 
 fn execute(source: &str) -> crate::value::DocumentExecution {
     let defines = DefineIndex::new();
@@ -16,10 +17,9 @@ fn execute(source: &str) -> crate::value::DocumentExecution {
 fn selected_condition(execution: &crate::value::DocumentExecution) -> Predicate {
     Predicate::Or(
         execution
-            .text()
-            .filter_map(|(condition, text)| {
-                (text.exact_text().as_deref() == Some("selected")).then_some(condition)
-            })
+            .text_sites()
+            .filter(|site| site.bytes() == "selected")
+            .map(ExecutedText::condition)
             .collect(),
     )
     .normalize_boolean()
@@ -99,8 +99,9 @@ fn condition_polarities_preserve_independent_partial_proofs() {
 fn complete_subset_claim_requires_a_total_disjoint_partition() {
     let execution = execute("{{ if .Values.selected }}selected{{ else }}fallback{{ end }}");
     let states = execution
-        .text()
-        .map(|(condition, _)| condition)
+        .executed_outputs()
+        .into_iter()
+        .map(|output| output.condition)
         .collect::<Vec<_>>();
     sim_assert_eq!(have: Predicate::Or(states.clone()).normalize_boolean(), want: Predicate::True);
     sim_assert_eq!(have: Predicate::all(states).normalize_boolean(), want: Predicate::False);
@@ -193,10 +194,11 @@ fn dead_output_selection_retains_eager_effects() -> eyre::Result<()> {
     let execution = execute(
         r#"{{- $state := dict -}}{{- default (set $state "fallback" true) "selected" -}}{{- $state.fallback -}}"#,
     );
-    let (_, output) = execution
-        .text()
+    let output = execution
+        .executed_outputs()
+        .into_iter()
         .next()
         .ok_or_eyre("missing eager-effect witness")?;
-    sim_assert_eq!(have: output.exact_text(), want: Some("selectedtrue".to_string()));
+    sim_assert_eq!(have: output.text, want: Some("selectedtrue".to_string()));
     Ok(())
 }

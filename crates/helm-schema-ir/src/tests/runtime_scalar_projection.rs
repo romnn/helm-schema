@@ -29,10 +29,7 @@ impl crate::value::DocumentExecution {
                 if condition != Predicate::False {
                     outputs.push(ExecutedOutput {
                         condition,
-                        text: alternative
-                            .coverage_exact()
-                            .then(|| alternative.value().exact_text())
-                            .flatten(),
+                        text: alternative.value().exact_text(),
                     });
                 }
             }

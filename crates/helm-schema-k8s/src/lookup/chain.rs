@@ -326,6 +326,13 @@ impl Chain {
 
 impl ResourceSchemaOracle for Chain {
     #[tracing::instrument(skip_all)]
+    fn resource_is_served(&self, resource: &ResourceRef) -> Option<bool> {
+        self.providers
+            .iter()
+            .find_map(|provider| provider.resource_is_served_at_primary_version(resource))
+    }
+
+    #[tracing::instrument(skip_all)]
     fn observe_resource(&self, resource: &ResourceRef) {
         drop(if needs_inference(resource) {
             self.schema_fragment_for_resource_needing_inference(resource, &YamlPath::default())
