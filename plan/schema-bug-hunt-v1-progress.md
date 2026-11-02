@@ -9815,4 +9815,5 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
     - EFFECTS1 v3 (213 laws green, 0 new unit failures, +5.8k LOC) is not integrated as a tree. About 1,480 LOC ports into Stages 0 and 1.
     - EFFECTS1 exports v3 and then builds Stage 0 in round8-r3b-effects1/s2-stage0 (from d69c2e10).
     - E0 (unsound X1/X2 diagnostics over frozen cell sets) runs in integ3/target/e0 and decides L's position and S4's position.
+- 23:45 (Nov 2) — **Line commits stay as they are (user left it to the orchestrator; orchestrator decision: no squash).** 73d9537e and 50f0d186 do not build on their own, but every lane (S1, Stage 0, E0, F2a) references d69c2e10. A squash would rewrite the hashes they and the ledger cite. The non-building range 1a2a7b47..50f0d186 is recorded here for bisection.
 Next: S1 hand-back (F1 under the review's rules); E0 decides L/S4 placement; Stage 0 from EFFECTS1; integrate UNITREC2 onto d69c2e10.
