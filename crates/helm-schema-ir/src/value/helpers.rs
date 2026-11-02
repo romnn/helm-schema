@@ -199,12 +199,17 @@ impl Executor<'_> {
                 state.mark_invocation_incomplete();
                 let read_only_inputs = match &target {
                     HelperTarget::Program(program) => program.syntax().is_some_and(|syntax| {
-                        super::write_footprint::local_targets(
+                        let targets = super::write_footprint::local_targets(
                             program.source(),
                             syntax,
                             &state.namespace,
-                        )
-                        .is_some()
+                        );
+                        super::stage0_diagnostics::certificate(
+                            program.source(),
+                            &state.namespace,
+                            targets.as_ref(),
+                        );
+                        targets.is_some()
                     }),
                     HelperTarget::Abort(_) | HelperTarget::Unknown => false,
                 };

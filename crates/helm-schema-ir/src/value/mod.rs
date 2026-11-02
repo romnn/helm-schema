@@ -12,6 +12,7 @@ mod helpers;
 mod history;
 mod hosts;
 mod input_paths;
+mod input_writes;
 mod invoke;
 mod json_query;
 pub(crate) mod kinds;
@@ -26,12 +27,19 @@ pub(crate) mod scalar_value;
 mod session;
 mod shape_summary;
 mod site_index;
+#[cfg(test)]
+#[path = "../tests/runtime_stage0_census.rs"]
+mod stage0_census;
+mod stage0_diagnostics;
 mod state;
 mod text;
 mod text_actions;
 mod text_prefix;
 pub(crate) mod use_policy;
 mod window_exits;
+#[cfg(test)]
+#[path = "../tests/runtime_write_certificate.rs"]
+mod write_certificate;
 mod write_footprint;
 pub(crate) mod yaml;
 pub(crate) use session::project_documents;
@@ -315,9 +323,9 @@ enum MapType {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-enum AliasSet {
-    Known(Rc<BTreeSet<ObjectId>>),
-    RenderGraph,
+enum Reach {
+    Bounded(Rc<BTreeSet<ObjectId>>),
+    Top,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -406,13 +414,15 @@ struct HeapVersion {
 #[derive(Debug)]
 enum HeapNode {
     Empty,
-    Input {
+    Registration {
         parent: Rc<HeapVersion>,
+        paths: Rc<input_paths::InputPaths>,
     },
     Install {
         parent: Rc<HeapVersion>,
         object: ObjectId,
         storage: Rc<ObjectVersion>,
+        kind: InstallKind,
     },
     Write {
         parent: Rc<HeapVersion>,
@@ -428,7 +438,7 @@ enum HeapNode {
     },
     UnknownWrite {
         parent: Rc<HeapVersion>,
-        objects: AliasSet,
+        objects: Reach,
         inputs: Rc<BTreeSet<ValuesPath>>,
     },
     Join {
@@ -436,6 +446,12 @@ enum HeapNode {
         yes: Rc<HeapVersion>,
         no: Rc<HeapVersion>,
     },
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum InstallKind {
+    Baseline,
+    Mutation,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -459,7 +475,7 @@ enum ObjectData {
     },
     Strings(Vec<Value>),
     Opaque {
-        reachable: AliasSet,
+        reachable: Reach,
     },
     Widened {
         inputs: Rc<BTreeSet<ValuesPath>>,
@@ -752,7 +768,7 @@ struct Origin {
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct UnknownValue {
     types: TypeCoverage,
-    aliases: AliasSet,
+    aliases: Reach,
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum TypeCoverage {

@@ -11,35 +11,57 @@ enum Changes {
     Objects {
         first: u64,
         last: u64,
+        inputs: bool,
     },
     All,
 }
 
 impl Changes {
-    fn object(object: &ObjectId) -> Self {
+    fn object(object: &ObjectId, inputs: bool) -> Self {
         Self::Objects {
             first: object.ordinal,
             last: object.ordinal,
+            inputs,
         }
     }
 
     fn union(self, other: Self) -> Self {
         match (self, other) {
-            (Self::All, Self::Empty | Self::Objects { first: _, last: _ } | Self::All)
-            | (Self::Empty | Self::Objects { first: _, last: _ }, Self::All) => Self::All,
+            (
+                Self::All,
+                Self::Empty
+                | Self::Objects {
+                    first: _,
+                    last: _,
+                    inputs: _,
+                }
+                | Self::All,
+            )
+            | (
+                Self::Empty
+                | Self::Objects {
+                    first: _,
+                    last: _,
+                    inputs: _,
+                },
+                Self::All,
+            ) => Self::All,
             (Self::Empty, other) | (other, Self::Empty) => other,
             (
                 Self::Objects {
                     first: yes_first,
                     last: yes_last,
+                    inputs: yes_inputs,
                 },
                 Self::Objects {
                     first: no_first,
                     last: no_last,
+                    inputs: no_inputs,
                 },
             ) => Self::Objects {
                 first: yes_first.min(no_first),
                 last: yes_last.max(no_last),
+                inputs: yes_inputs || no_inputs,
             },
         }
     }
@@ -47,7 +69,11 @@ impl Changes {
     fn contains(self, object: &ObjectId) -> bool {
         match self {
             Self::Empty => false,
-            Self::Objects { first, last } => (first..=last).contains(&object.ordinal),
+            Self::Objects {
+                first,
+                last,
+                inputs: _,
+            } => (first..=last).contains(&object.ordinal),
             Self::All => true,
         }
     }
@@ -55,6 +81,7 @@ impl Changes {
 
 #[derive(Clone, Debug, Default)]
 pub(super) struct HeapIndex {
+    pub(super) input_writes: super::input_writes::InputWrites,
     depth: usize,
     parent: Option<Rc<HeapVersion>>,
     jump: Option<Rc<HeapVersion>>,
@@ -63,14 +90,16 @@ pub(super) struct HeapIndex {
 }
 
 impl HeapIndex {
-    pub(super) fn for_node(node: &HeapNode) -> Self {
+    pub(super) fn for_node(node: &HeapNode, paths: &super::input_paths::InputPaths) -> Self {
+        let input_writes = super::input_writes::InputWrites::for_node(node, paths);
         let (parent, changes) = match node {
             HeapNode::Empty => return Self::default(),
-            HeapNode::Input { parent } => (Rc::clone(parent), Changes::Empty),
+            HeapNode::Registration { parent, paths: _ } => (Rc::clone(parent), Changes::Empty),
             HeapNode::Install {
                 parent,
                 object,
                 storage: _,
+                kind: _,
             }
             | HeapNode::Write {
                 parent,
@@ -83,7 +112,22 @@ impl HeapIndex {
                 object,
                 index: _,
                 value: _,
-            } => (Rc::clone(parent), Changes::object(object)),
+            } => (
+                Rc::clone(parent),
+                Changes::object(
+                    object,
+                    paths.contains_key(object)
+                        && !matches!(
+                            node,
+                            HeapNode::Install {
+                                kind: super::InstallKind::Baseline,
+                                parent: _,
+                                object: _,
+                                storage: _
+                            }
+                        ),
+                ),
+            ),
             HeapNode::UnknownWrite {
                 parent,
                 objects: _,
@@ -96,6 +140,7 @@ impl HeapIndex {
             } => {
                 let Some((parent, changes)) = common_prefix(yes, no) else {
                     return Self {
+                        input_writes,
                         changes: Changes::All,
                         jump_changes: Changes::All,
                         ..Self::default()
@@ -117,6 +162,7 @@ impl HeapIndex {
                 .union(first.index.jump_changes);
         }
         Self {
+            input_writes,
             depth,
             parent: Some(parent),
             jump: Some(jump),
@@ -136,6 +182,18 @@ impl HeapIndex {
             self.parent.as_ref()
         } else {
             None
+        }
+    }
+
+    pub(super) fn changes_inputs(&self) -> bool {
+        match self.changes {
+            Changes::Empty => false,
+            Changes::Objects {
+                first: _,
+                last: _,
+                inputs,
+            } => inputs,
+            Changes::All => true,
         }
     }
 

@@ -2448,7 +2448,7 @@ mod conditional_input_backing_laws {
             node: Rc::new(ValueNode::Leaf(Leaf {
                 datum: Datum::Unknown(UnknownValue {
                     types: TypeCoverage::Map(MapType::Interface),
-                    aliases: crate::value::AliasSet::RenderGraph,
+                    aliases: crate::value::Reach::Top,
                 }),
                 origin: origin.clone(),
             })),

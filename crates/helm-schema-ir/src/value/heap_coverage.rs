@@ -9,7 +9,7 @@ use helm_schema_core::{Predicate, ValuesPath};
 
 use super::heap_query::QueryBudget;
 use super::{
-    AliasSet, HeapNode, HeapVersion, Multiplicity, ObjectData, ObjectId, ObjectVersion, Remainder,
+    HeapNode, HeapVersion, Multiplicity, ObjectData, ObjectId, ObjectVersion, Reach, Remainder,
     SnapshotId,
 };
 
@@ -737,6 +737,7 @@ impl CoverageProjection {
                 parent: _,
                 object: _,
                 storage,
+                kind: _,
             } => self.data_contribution(Some(storage), object, budget)?,
             HeapNode::WriteSlot {
                 parent: _,
@@ -748,7 +749,10 @@ impl CoverageProjection {
                 storage: StorageCoverage::Other,
             },
             HeapNode::Empty
-            | HeapNode::Input { parent: _ }
+            | HeapNode::Registration {
+                parent: _,
+                paths: _,
+            }
             | HeapNode::Write {
                 parent: _,
                 object: _,
@@ -1046,7 +1050,7 @@ impl CoverageProjection {
         &mut self,
         node: Link,
         version: &HeapVersion,
-        objects: &AliasSet,
+        objects: &Reach,
         inputs: &Rc<BTreeSet<ValuesPath>>,
         budget: &mut QueryBudget,
     ) -> Option<Link> {
@@ -1063,8 +1067,8 @@ impl CoverageProjection {
                 storage: _,
             } => {
                 let affected = match objects {
-                    AliasSet::Known(objects) => objects.contains(object),
-                    AliasSet::RenderGraph => true,
+                    Reach::Bounded(objects) => objects.contains(object),
+                    Reach::Top => true,
                 };
                 if !affected {
                     return Some(Some(node));
@@ -1116,11 +1120,15 @@ impl CoverageProjection {
     ) -> Option<CoverageView> {
         match &version.node {
             HeapNode::Empty => Some(CoverageView::default()),
-            HeapNode::Input { parent: _ } => Some(parent),
+            HeapNode::Registration {
+                parent: _,
+                paths: _,
+            } => Some(parent),
             HeapNode::Install {
                 parent: _,
                 object,
                 storage: _,
+                kind: _,
             }
             | HeapNode::Write {
                 parent: _,
@@ -1179,11 +1187,12 @@ impl CoverageProjection {
                     }
                     match &version.node {
                         HeapNode::Empty => Some(CoverageView::default()),
-                        HeapNode::Input { parent }
+                        HeapNode::Registration { parent, paths: _ }
                         | HeapNode::Install {
                             parent,
                             object: _,
                             storage: _,
+                            kind: _,
                         }
                         | HeapNode::Write {
                             parent,

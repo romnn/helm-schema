@@ -5,7 +5,7 @@ use base64::Engine as _;
 use helm_schema_core::GuardValue;
 
 use super::{
-    AliasSet, Callee, Datum, Field, Invocation, Leaf, MapType, ObjectData, Origin, Remainder,
+    Callee, Datum, Field, Invocation, Leaf, MapType, ObjectData, Origin, Reach, Remainder,
     ScalarType, State, TypeCoverage, UnknownValue, Value, ValueNode,
 };
 use crate::function_semantics::{Method, MethodReceiver};
@@ -215,7 +215,7 @@ fn unknown_map(
         node: Rc::new(ValueNode::Leaf(Leaf {
             datum: Datum::Unknown(UnknownValue {
                 types: TypeCoverage::Map(view),
-                aliases: AliasSet::RenderGraph,
+                aliases: Reach::Top,
             }),
             origin: Origin {
                 derivation: None,
@@ -229,7 +229,7 @@ fn unknown_map(
 fn readonly_unknown(types: TypeCoverage) -> Value {
     Value::leaf(Datum::Unknown(UnknownValue {
         types,
-        aliases: AliasSet::Known(Rc::new(BTreeSet::new())),
+        aliases: Reach::Bounded(Rc::new(BTreeSet::new())),
     }))
 }
 

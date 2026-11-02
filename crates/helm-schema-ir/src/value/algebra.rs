@@ -2,9 +2,7 @@ use std::rc::Rc;
 
 use helm_schema_core::{GuardValue, Predicate};
 
-use super::{
-    AliasSet, Arena, Coverage, Datum, Field, FrozenTest, Leaf, ScalarType, Value, ValueNode,
-};
+use super::{Arena, Coverage, Datum, Field, FrozenTest, Leaf, Reach, ScalarType, Value, ValueNode};
 use crate::value::scalar_value::ScalarContent;
 
 impl FrozenTest {
@@ -46,7 +44,7 @@ impl Value {
     pub(super) fn unknown() -> Self {
         Self::leaf(Datum::Unknown(super::UnknownValue {
             types: super::TypeCoverage::Unresolved,
-            aliases: AliasSet::RenderGraph,
+            aliases: Reach::Top,
         }))
     }
 

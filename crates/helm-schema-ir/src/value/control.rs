@@ -517,6 +517,11 @@ impl Executor<'_> {
         }
         let local_targets =
             super::write_footprint::local_targets(program.source, program.syntax, &state.namespace);
+        super::stage0_diagnostics::certificate(
+            program.source,
+            &state.namespace,
+            local_targets.as_ref(),
+        );
         let mut exits = Vec::new();
         let mut state = if nonempty {
             state.clone()

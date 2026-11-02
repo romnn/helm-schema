@@ -17,34 +17,123 @@ pub(super) struct InputPaths {
 
 #[derive(Debug)]
 enum Node {
-    Leaf { object: ObjectId, path: ValuesPath },
-    Branch { left: Link, right: Link },
+    Leaf {
+        object: ObjectId,
+        paths: Vec<ValuesPath>,
+    },
+    Branch {
+        left: Link,
+        right: Link,
+    },
 }
 
 impl InputPaths {
+    pub(super) fn added_paths(&self, previous: &Self) -> Vec<(ObjectId, ValuesPath)> {
+        let mut old = previous.root.clone();
+        let mut height = previous.height;
+        while height > self.height {
+            old = match old.as_deref() {
+                Some(Node::Branch { left, right: _ }) => left.clone(),
+                Some(Node::Leaf {
+                    object: _,
+                    paths: _,
+                })
+                | None => None,
+            };
+            height -= 1;
+        }
+        while height < self.height {
+            old = Some(Rc::new(Node::Branch {
+                left: old,
+                right: None,
+            }));
+            height += 1;
+        }
+        let mut added = Vec::new();
+        let mut pending = vec![(self.root.as_ref(), old.as_ref())];
+        while let Some((current, previous)) = pending.pop() {
+            let Some(current) = current else {
+                continue;
+            };
+            if previous.is_some_and(|previous| Rc::ptr_eq(current, previous)) {
+                continue;
+            }
+            match current.as_ref() {
+                Node::Leaf { object, paths } => {
+                    let previous_paths = match previous.map(Rc::as_ref) {
+                        Some(Node::Leaf {
+                            object: target,
+                            paths,
+                        }) if target == object => paths.as_slice(),
+                        Some(
+                            Node::Leaf {
+                                object: _,
+                                paths: _,
+                            }
+                            | Node::Branch { left: _, right: _ },
+                        )
+                        | None => &[],
+                    };
+                    for path in paths {
+                        if !previous_paths.contains(path) {
+                            added.push((object.clone(), path.clone()));
+                        }
+                    }
+                }
+                Node::Branch { left, right } => {
+                    let (previous_left, previous_right) = match previous.map(Rc::as_ref) {
+                        Some(Node::Branch { left, right }) => (left.as_ref(), right.as_ref()),
+                        Some(Node::Leaf {
+                            object: _,
+                            paths: _,
+                        })
+                        | None => (None, None),
+                    };
+                    pending.push((right.as_ref(), previous_right));
+                    pending.push((left.as_ref(), previous_left));
+                }
+            }
+        }
+        added
+    }
+
     pub(super) fn id(&self) -> u64 {
         self.generation
     }
 
     pub(super) fn get(&self, object: &ObjectId) -> Option<&ValuesPath> {
+        self.original_paths(object).last()
+    }
+
+    /// Returns every original path, ordered by its most recent registration.
+    pub(super) fn original_paths(&self, object: &ObjectId) -> &[ValuesPath] {
         if object.ordinal.bit_width() > self.height {
-            return None;
+            return &[];
         }
-        let mut node = self.root.as_deref()?;
+        let Some(mut node) = self.root.as_deref() else {
+            return &[];
+        };
         let mut height = self.height;
         loop {
             match node {
                 Node::Leaf {
                     object: target,
-                    path,
-                } => return (target == object).then_some(path),
+                    paths,
+                } => return if target == object { paths } else { &[] },
                 Node::Branch { left, right } => {
-                    height = height.checked_sub(1)?;
-                    node = if object.ordinal & (1 << height) == 0 {
-                        left.as_deref()?
-                    } else {
-                        right.as_deref()?
+                    let Some(next) = height.checked_sub(1) else {
+                        return &[];
                     };
+                    height = next;
+                    let child = if object.ordinal & (1 << height) == 0 {
+                        left.as_deref()
+                    } else {
+                        right.as_deref()
+                    };
+                    let Some(child) = child else {
+                        return &[];
+                    };
+                    node = child;
                 }
             }
         }
@@ -116,8 +205,11 @@ impl InputPaths {
             }
             self.height += 1;
         }
+        let mut paths = self.original_paths(&object).to_vec();
+        paths.retain(|known| known != &path);
+        paths.push(path);
         let ordinal = object.ordinal;
-        let leaf = Rc::new(Node::Leaf { object, path });
+        let leaf = Rc::new(Node::Leaf { object, paths });
         self.root = Some(insert(self.root.as_ref(), leaf, ordinal, self.height));
     }
 }
@@ -128,7 +220,11 @@ fn insert(node: Option<&Rc<Node>>, leaf: Rc<Node>, ordinal: u64, height: u32) ->
     }
     let (left, right) = match node.map(Rc::as_ref) {
         Some(Node::Branch { left, right }) => (left.clone(), right.clone()),
-        Some(Node::Leaf { object: _, path: _ }) | None => (None, None),
+        Some(Node::Leaf {
+            object: _,
+            paths: _,
+        })
+        | None => (None, None),
     };
     let next = height - 1;
     if ordinal & (1 << next) == 0 {
@@ -143,3 +239,7 @@ fn insert(node: Option<&Rc<Node>>, leaf: Rc<Node>, ordinal: u64, height: u32) ->
         })
     }
 }
+
+#[cfg(test)]
+#[path = "../tests/runtime_input_paths.rs"]
+mod tests;

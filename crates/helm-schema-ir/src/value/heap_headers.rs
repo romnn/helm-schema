@@ -92,6 +92,7 @@ impl AllocationIndex {
                 parent,
                 object,
                 storage,
+                kind: _,
             } => {
                 let ObjectVersion {
                     revision: _,
@@ -119,7 +120,7 @@ impl AllocationIndex {
                 }
                 index
             }
-            HeapNode::Input { parent }
+            HeapNode::Registration { parent, paths: _ }
             | HeapNode::Write {
                 parent,
                 object: _,

@@ -8,7 +8,7 @@ use test_util::prelude::sim_assert_eq;
 use crate::value::RawFormatInput;
 
 use crate::value::{
-    AliasSet, Coverage, Datum, Field, Leaf, MapType, ObjectId, Origin, State, TypeCoverage,
+    Coverage, Datum, Field, Leaf, MapType, ObjectId, Origin, Reach, State, TypeCoverage,
     UnknownValue, Value, ValueNode,
 };
 
@@ -34,7 +34,7 @@ fn materialize(state: &mut State, path: &str) -> eyre::Result<ObjectId> {
         node: Rc::new(ValueNode::Leaf(Leaf {
             datum: Datum::Unknown(UnknownValue {
                 types: TypeCoverage::Map(MapType::Interface),
-                aliases: AliasSet::RenderGraph,
+                aliases: Reach::Top,
             }),
             origin: Origin {
                 derivation: None,

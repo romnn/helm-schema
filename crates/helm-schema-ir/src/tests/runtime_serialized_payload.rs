@@ -911,7 +911,7 @@ fn modified_descendant_members_are_not_claimed_unchanged() -> eyre::Result<()> {
     use crate::value::relationship::RelationshipQuery;
     use crate::value::text::TextTerm;
     use crate::value::{
-        AliasSet, Datum, Field, Leaf, MapType, Origin, State, TypeCoverage, UnknownValue, Value,
+        Datum, Field, Leaf, MapType, Origin, Reach, State, TypeCoverage, UnknownValue, Value,
         ValueNode,
     };
     use std::rc::Rc;
@@ -927,7 +927,7 @@ fn modified_descendant_members_are_not_claimed_unchanged() -> eyre::Result<()> {
         node: Rc::new(ValueNode::Leaf(Leaf {
             datum: Datum::Unknown(UnknownValue {
                 types: TypeCoverage::Map(MapType::Interface),
-                aliases: AliasSet::RenderGraph,
+                aliases: Reach::Top,
             }),
             origin: Origin {
                 derivation: None,

@@ -466,7 +466,7 @@ pub(super) fn refined_parameter(value: &super::Value, expected: GoType) -> super
                 | GoType::Float64
                 | GoType::Unknown => TypeCoverage::Unresolved,
             },
-            aliases: super::AliasSet::RenderGraph,
+            aliases: super::Reach::Top,
         })
     };
     Value {

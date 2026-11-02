@@ -2498,13 +2498,13 @@ pub(super) fn widen_operands(arguments: &[Value], state: &mut State) {
                 }
                 ObjectData::Strings(slots) => pending.extend(slots.iter().cloned()),
                 ObjectData::Opaque { reachable } => match reachable {
-                    super::AliasSet::Known(ids) => pending.extend(ids.iter().map(|id| {
+                    super::Reach::Bounded(ids) => pending.extend(ids.iter().map(|id| {
                         Value::leaf(Datum::Map {
                             view: MapType::Interface,
                             target: Some(id.clone()),
                         })
                     })),
-                    super::AliasSet::RenderGraph => {
+                    super::Reach::Top => {
                         invalidate(state);
                         return;
                     }
@@ -2583,7 +2583,7 @@ fn unknown_decoded(
     }
     let region = state.heap.allocate(
         ObjectData::Opaque {
-            reachable: super::AliasSet::Known(Rc::new(BTreeSet::new())),
+            reachable: super::Reach::Bounded(Rc::new(BTreeSet::new())),
         },
         super::Multiplicity::Singleton,
     );
@@ -2595,7 +2595,7 @@ fn unknown_decoded(
                 } else {
                     super::TypeCoverage::Unresolved
                 },
-                aliases: super::AliasSet::Known(Rc::new(BTreeSet::from([region]))),
+                aliases: super::Reach::Bounded(Rc::new(BTreeSet::from([region]))),
             }),
             origin: super::Origin {
                 derivation: None,
@@ -3027,8 +3027,8 @@ fn mutation_targets(
                     .flat_map(|items| items.iter().cloned()),
             ),
             Datum::Unknown(unknown) => match &unknown.aliases {
-                super::AliasSet::Known(ids) => targets.extend(ids.iter().cloned()),
-                super::AliasSet::RenderGraph => {
+                super::Reach::Bounded(ids) => targets.extend(ids.iter().cloned()),
+                super::Reach::Top => {
                     return true;
                 }
             },

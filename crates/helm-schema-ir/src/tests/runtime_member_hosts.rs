@@ -338,7 +338,7 @@ fn receiver_materialization_preserves_the_same_member_obligation() -> eyre::Resu
         node: std::rc::Rc::new(super::ValueNode::Leaf(super::Leaf {
             datum: super::Datum::Unknown(super::UnknownValue {
                 types: super::TypeCoverage::Map(super::MapType::Interface),
-                aliases: super::AliasSet::RenderGraph,
+                aliases: super::Reach::Top,
             }),
             origin: super::Origin {
                 derivation: None,

@@ -111,7 +111,7 @@ impl Value {
             node: Rc::new(ValueNode::Leaf(Leaf {
                 datum: Datum::Unknown(super::UnknownValue {
                     types: super::TypeCoverage::Unresolved,
-                    aliases: super::AliasSet::RenderGraph,
+                    aliases: super::Reach::Top,
                 }),
                 origin: super::Origin {
                     derivation: None,
@@ -259,7 +259,7 @@ impl Value {
             node: Rc::new(ValueNode::Leaf(Leaf {
                 datum: Datum::Unknown(super::UnknownValue {
                     types: super::TypeCoverage::Unresolved,
-                    aliases: super::AliasSet::RenderGraph,
+                    aliases: super::Reach::Top,
                 }),
                 origin: super::Origin {
                     derivation: None,
@@ -891,7 +891,7 @@ impl State {
                     },
                     None => Datum::Unknown(super::UnknownValue {
                         types: super::TypeCoverage::Map(super::MapType::Interface),
-                        aliases: super::AliasSet::RenderGraph,
+                        aliases: super::Reach::Top,
                     }),
                 },
                 "Table" | "Encode" => return Value::influenced(influences),
@@ -1242,7 +1242,7 @@ impl State {
                     .map(|backing| backing.object.clone());
                 if let Some(id) = existing {
                     if !self.heap.version.has_allocated_object(&id) {
-                        self.heap.install(
+                        self.heap.register_storage(
                             id.clone(),
                             super::ObjectVersion {
                                 revision: self.heap.arena.snapshot(),
@@ -1564,7 +1564,7 @@ impl FrozenValue {
             },
             ObjectData::Strings(slots) if slots.is_empty() => Some((None, 2)),
             ObjectData::Opaque {
-                reachable: super::AliasSet::Known(objects),
+                reachable: super::Reach::Bounded(objects),
             } if objects.is_empty() => Some((None, 2)),
             ObjectData::Widened { inputs } => Some((Some(inputs), inputs.len().saturating_add(2))),
             ObjectData::Map {
@@ -2194,15 +2194,15 @@ fn field_presence_value(field: Field, unknown: &Value) -> Value {
 }
 
 fn extend_aliases(
-    aliases: &super::AliasSet,
+    aliases: &super::Reach,
     heap: &super::HeapVersion,
     objects: &mut Vec<super::ObjectId>,
     expanded_render_graph: &mut bool,
     budget: &mut super::heap_query::QueryBudget,
 ) {
     match aliases {
-        super::AliasSet::Known(ids) => objects.extend(ids.iter().cloned()),
-        super::AliasSet::RenderGraph => {
+        super::Reach::Bounded(ids) => objects.extend(ids.iter().cloned()),
+        super::Reach::Top => {
             if !*expanded_render_graph {
                 *expanded_render_graph = true;
                 if let Some(ids) = heap.query_object_ids(budget) {

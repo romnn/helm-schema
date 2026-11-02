@@ -64,6 +64,16 @@ impl Arena {
 }
 
 impl Namespace {
+    pub(super) fn same_source_names(&self, source: &str) -> Vec<&str> {
+        if self.unknown_sources {
+            return Vec::new();
+        }
+        self.definitions
+            .iter()
+            .filter_map(|(name, program)| (program.source() == source).then_some(name.as_str()))
+            .collect()
+    }
+
     pub(super) fn program_source(&self, name: &str) -> Option<&str> {
         (!self.unknown_sources)
             .then(|| self.definitions.get(name))

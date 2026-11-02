@@ -7,7 +7,7 @@ use ahash::AHashMap;
 use helm_schema_core::ValuesPath;
 
 use super::heap_query::ObjectQueryKey;
-use super::{AliasSet, Multiplicity, ObjectData, ObjectVersion, Remainder, SnapshotId, ValueNode};
+use super::{Multiplicity, ObjectData, ObjectVersion, Reach, Remainder, SnapshotId, ValueNode};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub(super) struct InputQueryKey {
@@ -207,7 +207,7 @@ struct CacheStats {
 }
 
 impl Drop for CacheStats {
-    #[tracing::instrument(skip_all, target = "helm_schema_ir::value::heap_cache::summary", fields(hits = self.hits, misses = self.misses, insertions = self.insertions, evictions = self.evictions, declined = self.declined, object_bytes = std::mem::size_of::<ObjectVersion>(), alias_bytes = std::mem::size_of::<AliasSet>()))]
+    #[tracing::instrument(skip_all, target = "helm_schema_ir::value::heap_cache::summary", fields(hits = self.hits, misses = self.misses, insertions = self.insertions, evictions = self.evictions, declined = self.declined, object_bytes = std::mem::size_of::<ObjectVersion>(), alias_bytes = std::mem::size_of::<Reach>()))]
     fn drop(&mut self) {}
 }
 
@@ -356,10 +356,10 @@ fn storage_weight(answer: Option<&Rc<ObjectVersion>>) -> usize {
         } => fields.len() + 1,
         ObjectData::Strings(slots) => slots.len() + 1,
         ObjectData::Opaque {
-            reachable: AliasSet::Known(objects),
+            reachable: Reach::Bounded(objects),
         } => objects.len() + 1,
         ObjectData::Opaque {
-            reachable: AliasSet::RenderGraph,
+            reachable: Reach::Top,
         }
         | ObjectData::Widened { inputs: _ } => 1,
     }

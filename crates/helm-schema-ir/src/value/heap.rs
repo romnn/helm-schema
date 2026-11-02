@@ -11,6 +11,44 @@ use super::{
     Multiplicity, ObjectData, ObjectId, ObjectVersion, Remainder, SnapshotId, Value, ValueNode,
 };
 
+impl HeapNode {
+    pub(super) fn parents(&self) -> impl Iterator<Item = &Rc<HeapVersion>> {
+        let (first, second) = match self {
+            Self::Empty => (None, None),
+            Self::Registration { parent, paths: _ }
+            | Self::Install {
+                parent,
+                object: _,
+                storage: _,
+                kind: _,
+            }
+            | Self::Write {
+                parent,
+                object: _,
+                key: _,
+                field: _,
+            }
+            | Self::WriteSlot {
+                parent,
+                object: _,
+                index: _,
+                value: _,
+            }
+            | Self::UnknownWrite {
+                parent,
+                objects: _,
+                inputs: _,
+            } => (Some(parent), None),
+            Self::Join {
+                decision: _,
+                yes,
+                no,
+            } => (Some(yes), Some(no)),
+        };
+        first.into_iter().chain(second)
+    }
+}
+
 impl Arena {
     pub(super) fn object(&self) -> ObjectId {
         let ordinal = self.next_object.get();
@@ -45,7 +83,7 @@ impl Heap {
         });
         let id = arena.snapshot();
         let input_paths = Rc::clone(&arena.input_paths.borrow());
-        Self {
+        let heap = Self {
             version: Rc::new(HeapVersion {
                 id,
                 allocations: super::heap_headers::AllocationIndex::default(),
@@ -56,7 +94,9 @@ impl Heap {
                 borrowed_objects: super::heap_query::BorrowedObjects::default(),
             }),
             arena,
-        }
+        };
+        super::stage0_diagnostics::heap(&heap.version);
+        heap
     }
 
     #[tracing::instrument(skip_all)]
@@ -123,7 +163,13 @@ impl Heap {
             {
                 inputs.extend(old.iter().cloned());
             }
-            self.install(
+            let kind = if self.version.has_allocated_object(&id) {
+                super::InstallKind::Mutation
+            } else {
+                super::InstallKind::Baseline
+            };
+            self.install_with_kind(
+                kind,
                 id.clone(),
                 ObjectVersion {
                     revision: self.arena.snapshot(),
@@ -136,7 +182,13 @@ impl Heap {
             return id;
         }
         let id = occurrence.cloned().unwrap_or_else(|| self.arena.object());
-        self.install(
+        let kind = if existing {
+            super::InstallKind::Mutation
+        } else {
+            super::InstallKind::Baseline
+        };
+        self.install_with_kind(
+            kind,
             id.clone(),
             ObjectVersion {
                 revision: self.arena.snapshot(),
@@ -164,7 +216,7 @@ impl Heap {
     fn advance(&mut self, node: HeapNode) {
         let id = self.arena.snapshot();
         let allocations = super::heap_headers::AllocationIndex::for_node(&node);
-        let index = super::heap_index::HeapIndex::for_node(&node);
+        let index = super::heap_index::HeapIndex::for_node(&node, &self.arena.input_paths.borrow());
         self.version = Rc::new(HeapVersion {
             id,
             allocations,
@@ -174,6 +226,7 @@ impl Heap {
             index,
             borrowed_objects: super::heap_query::BorrowedObjects::default(),
         });
+        super::stage0_diagnostics::heap(&self.version);
     }
 
     pub(super) fn register_input(&mut self, object: ObjectId, path: ValuesPath) {
@@ -194,12 +247,13 @@ impl Heap {
         if Rc::ptr_eq(&paths, &self.version.input_paths) {
             return Rc::clone(&self.version);
         }
-        let node = HeapNode::Input {
+        let node = HeapNode::Registration {
             parent: Rc::clone(&self.version),
+            paths: Rc::clone(&paths),
         };
         let id = self.arena.snapshot();
-        let index = super::heap_index::HeapIndex::for_node(&node);
-        Rc::new(HeapVersion {
+        let index = super::heap_index::HeapIndex::for_node(&node, &paths);
+        let version = Rc::new(HeapVersion {
             id,
             allocations: self.version.allocations.clone(),
             arena: Rc::downgrade(&self.arena),
@@ -207,14 +261,25 @@ impl Heap {
             node,
             index,
             borrowed_objects: super::heap_query::BorrowedObjects::default(),
-        })
+        });
+        super::stage0_diagnostics::heap(&version);
+        version
     }
 
     pub(super) fn install(&mut self, id: ObjectId, object: ObjectVersion) {
+        self.install_with_kind(super::InstallKind::Mutation, id, object);
+    }
+
+    pub(super) fn register_storage(&mut self, id: ObjectId, object: ObjectVersion) {
+        self.install_with_kind(super::InstallKind::Baseline, id, object);
+    }
+
+    fn install_with_kind(&mut self, kind: super::InstallKind, id: ObjectId, object: ObjectVersion) {
         self.advance(HeapNode::Install {
             parent: Rc::clone(&self.version),
             object: id,
             storage: Rc::new(object),
+            kind,
         });
     }
 
@@ -284,7 +349,7 @@ impl Heap {
     }
 
     pub(super) fn unknown_write(&mut self, inputs: Rc<BTreeSet<ValuesPath>>) {
-        let objects = super::AliasSet::RenderGraph;
+        let objects = super::Reach::Top;
         self.advance(HeapNode::UnknownWrite {
             parent: Rc::clone(&self.version),
             objects,
@@ -300,7 +365,7 @@ impl Heap {
         } else {
             Rc::clone(self.arena.empty_snapshot.get_or_init(|| {
                 let id = self.arena.snapshot();
-                Rc::new(HeapVersion {
+                let version = Rc::new(HeapVersion {
                     id,
                     allocations: super::heap_headers::AllocationIndex::default(),
                     arena: Rc::downgrade(&self.arena),
@@ -308,7 +373,9 @@ impl Heap {
                     node: HeapNode::Empty,
                     index: super::heap_index::HeapIndex::default(),
                     borrowed_objects: super::heap_query::BorrowedObjects::default(),
-                })
+                });
+                super::stage0_diagnostics::heap(&version);
+                version
             }))
         };
         FrozenValue::at(heap, value)
@@ -361,8 +428,8 @@ impl Value {
                         }
                     }
                     Datum::Unknown(super::UnknownValue { types: _, aliases }) => match aliases {
-                        super::AliasSet::Known(objects) if objects.is_empty() => {}
-                        super::AliasSet::Known(_) | super::AliasSet::RenderGraph => return true,
+                        super::Reach::Bounded(objects) if objects.is_empty() => {}
+                        super::Reach::Bounded(_) | super::Reach::Top => return true,
                     },
                     Datum::Map {
                         view: _,
@@ -596,16 +663,11 @@ pub(super) fn join_data(
         (ObjectData::Opaque { reachable: yes }, ObjectData::Opaque { reachable: no }) => {
             Ok(ObjectData::Opaque {
                 reachable: match (yes, no) {
-                    (super::AliasSet::Known(yes), super::AliasSet::Known(no)) => {
-                        super::AliasSet::Known(Rc::new(yes.union(no).cloned().collect()))
+                    (super::Reach::Bounded(yes), super::Reach::Bounded(no)) => {
+                        super::Reach::Bounded(Rc::new(yes.union(no).cloned().collect()))
                     }
-                    (
-                        super::AliasSet::RenderGraph,
-                        super::AliasSet::Known(_) | super::AliasSet::RenderGraph,
-                    )
-                    | (super::AliasSet::Known(_), super::AliasSet::RenderGraph) => {
-                        super::AliasSet::RenderGraph
-                    }
+                    (super::Reach::Top, super::Reach::Bounded(_) | super::Reach::Top)
+                    | (super::Reach::Bounded(_), super::Reach::Top) => super::Reach::Top,
                 },
             })
         }

@@ -586,7 +586,7 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
         }
         if let Datum::Unknown(super::UnknownValue {
             types: _,
-            aliases: super::AliasSet::Known(objects),
+            aliases: super::Reach::Bounded(objects),
         }) = datum
         {
             for object in objects.iter() {

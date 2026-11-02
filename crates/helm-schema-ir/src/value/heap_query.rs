@@ -277,6 +277,7 @@ impl HeapVersion {
             parent: _,
             object: target,
             storage,
+            kind: _,
         } = &version.node
             && target == object
         {
@@ -307,11 +308,6 @@ impl HeapVersion {
             return Some(self.exhausted_object());
         }
         match &version.node {
-            HeapNode::Install {
-                parent: _,
-                object: target,
-                storage,
-            } if target == object => return Some(Rc::clone(storage)),
             HeapNode::UnknownWrite {
                 parent: _,
                 objects,
@@ -324,11 +320,15 @@ impl HeapVersion {
                 return Some(answer);
             }
             HeapNode::Empty
-            | HeapNode::Input { parent: _ }
+            | HeapNode::Registration {
+                parent: _,
+                paths: _,
+            }
             | HeapNode::Install {
                 parent: _,
                 object: _,
                 storage: _,
+                kind: _,
             }
             | HeapNode::UnknownWrite {
                 parent: _,
@@ -431,6 +431,7 @@ impl HeapVersion {
                         parent: _,
                         object: target,
                         storage,
+                        kind: _,
                     } = &version.node
                         && target == object
                     {
@@ -514,11 +515,12 @@ impl HeapVersion {
     ) -> Option<Rc<ObjectVersion>> {
         match &version.node {
             HeapNode::Empty => None,
-            HeapNode::Input { parent }
+            HeapNode::Registration { parent, paths: _ }
             | HeapNode::Install {
                 parent,
                 object: _,
                 storage: _,
+                kind: _,
             } => answer(answers, parent),
             HeapNode::UnknownWrite {
                 parent,
@@ -767,14 +769,16 @@ fn schedule_object<'version>(
             parent: _,
             object: target,
             storage,
+            kind: _,
         } if target == object => {
             answers.insert(version.id.ordinal, Some(Rc::clone(storage)));
         }
-        HeapNode::Input { parent }
+        HeapNode::Registration { parent, paths: _ }
         | HeapNode::Install {
             parent,
             object: _,
             storage: _,
+            kind: _,
         }
         | HeapNode::Write {
             parent,
@@ -810,11 +814,16 @@ fn schedule_object<'version>(
 
 fn changes_object(node: &HeapNode, object: &ObjectId) -> bool {
     match node {
-        HeapNode::Empty | HeapNode::Input { parent: _ } => false,
+        HeapNode::Empty
+        | HeapNode::Registration {
+            parent: _,
+            paths: _,
+        } => false,
         HeapNode::Install {
             parent: _,
             object: target,
             storage: _,
+            kind: _,
         }
         | HeapNode::Write {
             parent: _,
@@ -858,10 +867,10 @@ fn answer(answers: &ObjectAnswers, version: &HeapVersion) -> Option<Rc<ObjectVer
     answers.get(version.id.ordinal).cloned().flatten()
 }
 
-fn aliases_contain(aliases: &super::AliasSet, object: &ObjectId) -> bool {
+fn aliases_contain(aliases: &super::Reach, object: &ObjectId) -> bool {
     match aliases {
-        super::AliasSet::Known(objects) => objects.contains(object),
-        super::AliasSet::RenderGraph => true,
+        super::Reach::Bounded(objects) => objects.contains(object),
+        super::Reach::Top => true,
     }
 }
 
@@ -873,10 +882,10 @@ fn copy_work(data: &ObjectData) -> usize {
         } => fields.len() + 1,
         ObjectData::Strings(slots) => slots.len() + 1,
         ObjectData::Opaque {
-            reachable: super::AliasSet::Known(objects),
+            reachable: super::Reach::Bounded(objects),
         } => objects.len() + 1,
         ObjectData::Opaque {
-            reachable: super::AliasSet::RenderGraph,
+            reachable: super::Reach::Top,
         }
         | ObjectData::Widened { inputs: _ } => 1,
     }
@@ -961,11 +970,12 @@ impl Drop for HeapVersion {
 fn detach(node: HeapNode, pending: &mut Vec<Rc<HeapVersion>>) {
     match node {
         HeapNode::Empty => {}
-        HeapNode::Input { parent }
+        HeapNode::Registration { parent, paths: _ }
         | HeapNode::Install {
             parent,
             object: _,
             storage: _,
+            kind: _,
         }
         | HeapNode::Write {
             parent,

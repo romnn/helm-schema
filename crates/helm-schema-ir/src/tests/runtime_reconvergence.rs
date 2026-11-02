@@ -337,7 +337,7 @@ struct StorageGrowth {
 }
 
 fn storage_growth(version: &crate::value::HeapVersion) -> StorageGrowth {
-    use crate::value::{AliasSet, HeapNode, ObjectData};
+    use crate::value::{HeapNode, ObjectData, Reach};
     let mut pending = vec![version];
     let mut nodes = std::collections::BTreeSet::new();
     let mut objects = std::collections::BTreeSet::new();
@@ -349,11 +349,12 @@ fn storage_growth(version: &crate::value::HeapVersion) -> StorageGrowth {
         }
         match &version.node {
             HeapNode::Empty => {}
-            HeapNode::Input { parent } => pending.push(parent),
+            HeapNode::Registration { parent, paths: _ } => pending.push(parent),
             HeapNode::Install {
                 parent,
                 object: _,
                 storage,
+                kind: _,
             } => {
                 pending.push(parent);
                 if !objects.insert(Rc::as_ptr(storage)) {
@@ -398,8 +399,8 @@ fn storage_growth(version: &crate::value::HeapVersion) -> StorageGrowth {
                     payload += known.len();
                 }
                 payload += match objects {
-                    AliasSet::Known(objects) => objects.len(),
-                    AliasSet::RenderGraph => 1,
+                    Reach::Bounded(objects) => objects.len(),
+                    Reach::Top => 1,
                 };
             }
             HeapNode::Join {
@@ -730,8 +731,8 @@ fn unrelated_history_does_not_spend_a_members_query_budget() -> eyre::Result<()>
 fn allocation_counts_do_not_mistake_an_implicit_input_view_for_installed_storage()
 -> eyre::Result<()> {
     use crate::value::{
-        AliasSet, Datum, Leaf, MapType, Multiplicity, ObjectData, ObjectVersion, Origin,
-        TypeCoverage, UnknownValue,
+        Datum, Leaf, MapType, Multiplicity, ObjectData, ObjectVersion, Origin, Reach, TypeCoverage,
+        UnknownValue,
     };
     let mut state = State::new(Value::nil());
     state
@@ -741,7 +742,7 @@ fn allocation_counts_do_not_mistake_an_implicit_input_view_for_installed_storage
         node: Rc::new(ValueNode::Leaf(Leaf {
             datum: Datum::Unknown(UnknownValue {
                 types: TypeCoverage::Map(MapType::Interface),
-                aliases: AliasSet::RenderGraph,
+                aliases: Reach::Top,
             }),
             origin: Origin {
                 derivation: None,
@@ -921,7 +922,7 @@ fn joined_frozen_yaml_can_query_another_join_without_reentering_the_union_cache(
 fn seeded_object_inputs_follow_unknown_aliases_and_cycles_without_a_live_arena() -> eyre::Result<()>
 {
     use crate::value::heap_query::QueryBudget;
-    use crate::value::{AliasSet, Datum, FrozenValue, TypeCoverage, UnknownValue};
+    use crate::value::{Datum, FrozenValue, Reach, TypeCoverage, UnknownValue};
     use helm_schema_core::ValuesPath;
     use std::collections::BTreeSet;
 
@@ -948,7 +949,7 @@ fn seeded_object_inputs_follow_unknown_aliases_and_cycles_without_a_live_arena()
         "alias",
         Field::Present(Value::leaf(Datum::Unknown(UnknownValue {
             types: TypeCoverage::Unresolved,
-            aliases: AliasSet::Known(Rc::new(BTreeSet::from([child_id]))),
+            aliases: Reach::Bounded(Rc::new(BTreeSet::from([child_id]))),
         }))),
     );
     let storage = state
@@ -1007,7 +1008,7 @@ fn an_absent_join_arm_does_not_spend_the_other_arms_query_budget() -> eyre::Resu
 fn provenance_memo_separates_snapshots_and_alias_modes_and_never_caches_exhaustion()
 -> eyre::Result<()> {
     use crate::value::heap_query::QueryBudget;
-    use crate::value::{AliasSet, Datum, TypeCoverage, UnknownValue};
+    use crate::value::{Datum, Reach, TypeCoverage, UnknownValue};
     use helm_schema_core::ValuesPath;
     use std::collections::BTreeSet;
 
@@ -1029,7 +1030,7 @@ fn provenance_memo_separates_snapshots_and_alias_modes_and_never_caches_exhausti
         "alias",
         Field::Present(Value::leaf(Datum::Unknown(UnknownValue {
             types: TypeCoverage::Unresolved,
-            aliases: AliasSet::Known(Rc::new(BTreeSet::from([child_id.clone()]))),
+            aliases: Reach::Bounded(Rc::new(BTreeSet::from([child_id.clone()]))),
         }))),
     );
     let old = state.heap.freeze(&root);
@@ -1065,7 +1066,7 @@ fn terminal_object_provenance_keeps_exact_work_and_does_not_invent_input_identit
     use helm_schema_core::ValuesPath;
 
     use crate::value::heap_query::QueryBudget;
-    use crate::value::{AliasSet, FrozenValue, Multiplicity, ObjectData};
+    use crate::value::{FrozenValue, Multiplicity, ObjectData, Reach};
 
     struct Case {
         data: ObjectData,
@@ -1102,7 +1103,7 @@ fn terminal_object_provenance_keeps_exact_work_and_does_not_invent_input_identit
         },
         Case {
             data: ObjectData::Opaque {
-                reachable: AliasSet::Known(Rc::new(BTreeSet::new())),
+                reachable: Reach::Bounded(Rc::new(BTreeSet::new())),
             },
             inputs: BTreeSet::new(),
             work: 2,
