@@ -9713,4 +9713,28 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Orchestrator decision: values-supplied `tpl` text follows ADR 0002 strictly. Constraints that need "no template action" go under one shared root-level condition, never a per-site guard and never an unrecorded assumption.
   - Process corrections: no merge without corpus movement; ablate the ceiling before building; FR reaches 0 at landing without relaxing the generator early.
   - Running: CEILING (havoc-off ablation on 10 charts, with and without the HOSTS classifier revert), HEAP3 effect inventory, FRFIX, HOSTSFA, UNITREC (re-classify the line's unit failures).
-Next: CEILING hand-back → if at least about 40% of the 10 charts' FA close with under 1% new FR, build effect slice 1 (static summaries and alias-bounded unknown storage) as the heap core; if under 10%, the heap is not the main cause and the plan is re-derived.
+- 09:53 (Nov 2) — **R3b: the effect slices produce the first corpus movement (3,680 FA closed, zero new FA or FR), but at 2× KPS and +5.9k LOC; a second first-principles challenge redirects to static input immutability and integrating gate-clean lanes onto the line.**
+  - The host hung at about 06:50 Nov 1 and was hard-reset by the user (memory exhaustion; 18 GiB shared by four lanes). New mandatory memory cap for every heavy delegate command: round8/memcap.sh with an out-of-sandbox watchdog that kills the group above the cap and enforces a 15% free-memory floor.
+    - All runs resumed in-session; about four hours lost.
+    - About 140 GB of stale build caches and approved superseded evidence were deleted.
+  - CEILING (havoc off, 6 of 10 charts measured): 22% of their FA close, 35% with the HOSTS classifier reverted. Redis, postgresql-ha, argo-cd and datadog were censored by guard blowup.
+  - Effect design v2: answers all 16 findings of a Codex design review. Reviews of the parked batch: TPLFREE, HOSTSFA, FRFIX and UNITREC are all merge-with-changes.
+  - Slice G (bounded guards): ceiling KPS completes (66 CPU-s); own KPS 7% faster; 0 new unit failures; 0 flips in 43,592 replayed documents; +877 LOC.
+  - Effects slice 1 combined with G:
+    - Globals 9,324 → 4,511, plus 689 bounded-root havocs. 3,680 of 97,969 FA closed with zero new FA or FR (keda, kubeshark, nginx-ingress, flux2, alertmanager, zabbix, metallb).
+    - 0 closed on redis, postgresql-ha, datadog, vault, airflow and cilium.
+    - KPS +105%, +5,921 LOC. An Opus architecture review found about 1,500–1,800 LOC of layering and two soundness gaps (S1, S2), now fixed red-first.
+  - TEXT (TPLFREE plus text transforms, printf and capability hosts): 28 unit failures fixed, 0 new; 12 FA closed; KPS 0.855×; +2,066 LOC.
+    - Orchestrator ruling (ADR 0051): two goldens contradicted Helm 4.2.3 and were corrected to Helm.
+  - UNITREC classified the line's 305 unit failures: 222 missing mechanisms, 38 heap, 34 wrong expectations, 11 generator.
+    - Its collection domain (UNITREC2, with G and HOSTSFA absorbed) closed 3,239 FA without touching the heap.
+    - It also caught and is repairing 266 self-introduced false rejections in dormant branches.
+  - First-principles challenge #2 (round8/designs/challenge/first-principles-2026-11-02.md): REDIRECT.
+    - Decide `.Values` immutability statically: a read is the input term unless its path is in a render-wide MayWrite set from the effect summaries. That ceiling-like state becomes the base every lane builds on.
+    - The heap is a minority of the FA; the C06b provider and placement class is the largest and has been parked since Oct 30.
+    - Process failures: the line idled for about 46 hours while lanes forked; "no merge without corpus movement" deadlocks cells that need several mechanisms at once; KPS numbers were not comparable across lanes.
+  - Orchestrator decisions:
+    - Part A (static MayWrite census) runs before further simplification; Part B (superadditivity of the combined lanes plus havoc-off) runs in CEILING2.
+    - One shared KPS harness, round8/kps-bench.py.
+    - Corrected merge rule: gate-clean lanes (0 new FR or FA, 0 new unit failures, KPS within the gate) integrate onto the line promptly. The first integration is G + TEXT + UNITREC2.
+Next: Part A and Part B decide whether static input immutability becomes the heap core; integrate G + TEXT4 + UNITREC2 onto r3b/construction with one clean dump and the unit differential; then unpark C06b on the integrated base.
