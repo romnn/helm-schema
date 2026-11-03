@@ -9838,4 +9838,5 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
     - A pending-deletion ledger lives at round8/pending-deletions.md.
     - New estimate: Nov 24 to Dec 1 at the earliest.
   - Running: S1, L (guard proof memoization), the placement census, ABORT1, the UNITREC2 decomposition.
+- 00:58 (Nov 3) — **User decision: the CPU budget for semantic R3b slices is main's CPU per chart.** Slices that change schema output may cost up to main's CPU on each chart, and the stress set (postgresql-ha, airflow, falco, signoz, kube-prometheus-stack) must not grow superlinearly. Refactor and byte-parity slices keep 1.10× of the line head.
 Next: S1 and L hand-backs; placement census ranks P1–P3 for two lanes; ABORT1; the user decides the KPS anchor question.
