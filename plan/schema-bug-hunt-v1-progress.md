@@ -9839,4 +9839,21 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
     - New estimate: Nov 24 to Dec 1 at the earliest.
   - Running: S1, L (guard proof memoization), the placement census, ABORT1, the UNITREC2 decomposition.
 - 00:58 (Nov 3) — **User decision: the CPU budget for semantic R3b slices is main's CPU per chart.** Slices that change schema output may cost up to main's CPU on each chart, and the stress set (postgresql-ha, airflow, falco, signoz, kube-prometheus-stack) must not grow superlinearly. Refactor and byte-parity slices keep 1.10× of the line head.
-Next: S1 and L hand-backs; placement census ranks P1–P3 for two lanes; ABORT1; the user decides the KPS anchor question.
+- 14:40 (Nov 3) — **R3b: L and S1 land on the line (r3b/construction 936b946c, ba71bb70, 4176d923). The census and E2a re-establish the heap as the largest corpus-wide class, and three identity/abort lanes plus a line perf lane run.**
+  - L (936b946c): Exhausted and Unknown guard proofs memoized by the full semantic key. 0 production LOC; 205 fixtures byte-identical; units 0 new; KPS 1.017×; pg-ha stress 5.98× less CPU.
+  - S1 (ba71bb70 source plus inventory, 4176d923 153 fixtures; integrated in round8-r3b-decl1/integ4).
+    - What it adds: one consumption recorder with runtime decision graphs and Known/KnownAny/Opaque domains, an exact BDD export fold, and the narrowed ADR 0043.
+    - Gates: corpus replay 778 FA closed, 0 new FA/FR; units and integration 0 new (2 fixed each); fmt/lint/lint:fc 0; CPU against the line −15.9% to +5.5%.
+    - +2,256 LOC. Deletions are deferred per mechanism (round8/pending-deletions.md).
+    - The whole tracked tree was compared with integ4: identical.
+  - Placement census (round8/designs/placement/placement-census.md, 97,400 open documents) by exclusive target-documents:
+    - A (demand not exported) 18,630;
+    - B (localized placement) 1,273;
+    - C (heap, upper bound) 23,340;
+    - D 55,556.
+  - CENSUS2: D's unlocalized lineage (38,209) is heap invalidation (76/78 sampled paths recover origin with havoc off). The unobserved Helm demand is mostly the loki bucketNames program (8,272).
+  - E2a (corpus-wide ceilings): X1 closes 7,177, X2 8,666, H ≥17,413 (about 18%). The unsound variants also reject 399/533/630 Helm-valid documents, which are real writes.
+  - User decision (Nov 3): semantic slices are bounded by main's CPU per chart. The line itself exceeds main on falco (8.5×), pg-ha (1.9×), cilium (1.6×) and redis (1.24×); a LINEPERF lane owns that gap.
+  - User prompt, "run those tpls": the exact-tpl lane TPLT starts (T arm, structural action-freedom over serialized maps, the bitnami cascade).
+  - Running: ABORT1, TPLT, WFREE (bounded effects without the release session), LINEPERF, and the UNITREC2 decomposition. The first three were steered to rebase onto 4176d923.
+Next: ABORT1, TPLT and WFREE hand back rebased onto 4176d923; LINEPERF closes the per-chart gap to main; then E2 (S1 plus identity) and the deletion slice.
