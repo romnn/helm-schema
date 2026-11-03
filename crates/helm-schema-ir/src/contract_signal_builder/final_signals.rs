@@ -103,7 +103,8 @@ fn kind_selector_path(
                     collect(guard, kinds, out);
                 }
             }
-            ConditionalGuard::Truthy { .. }
+            ConditionalGuard::Decision(_)
+            | ConditionalGuard::Truthy { .. }
             | ConditionalGuard::With { .. }
             | ConditionalGuard::Eq { .. }
             | ConditionalGuard::NotEq { .. }
@@ -143,9 +144,15 @@ fn kind_selector_path(
 pub(super) fn finish_schema_signals(
     mut paths: BTreeMap<ValuesPath, ContractPathAccumulator>,
     mut terminal_clauses: Vec<Vec<ConditionalGuard>>,
+    consumptions: &[crate::value::FrozenConsumption],
     predicate_memo: &helm_schema_core::PredicateMemo,
 ) -> ContractSchemaSignals {
     record_member_access_implications(&mut paths, &mut terminal_clauses);
+    super::executed_requirements::record_executed_requirements(
+        &mut paths,
+        &mut terminal_clauses,
+        consumptions,
+    );
     let referenced_paths = paths
         .iter()
         .filter_map(|(path, acc)| acc.referenced.then_some(path.clone()))
@@ -300,6 +307,7 @@ impl ContractPathAccumulator {
             mut has_unconditional_overlay_peer,
             saw_unsupported_overlay,
             mut requirement_implications,
+            opaque_consumption_guards,
             member_access_conditions: _,
         } = self;
         let overlay_type_hints: BTreeSet<String> = type_hints
@@ -494,6 +502,7 @@ impl ContractPathAccumulator {
             requiredness,
             conditional_overlays,
             requirement_implications,
+            opaque_consumption_guards,
         }
     }
 }

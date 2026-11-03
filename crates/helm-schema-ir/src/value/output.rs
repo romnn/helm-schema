@@ -452,6 +452,7 @@ impl ExecutedSite {
             source_path,
             condition,
             value,
+            consumption_binder,
             plain_scalar_placement,
             rendered,
         } = self;
@@ -464,6 +465,7 @@ impl ExecutedSite {
             source_path: other_source,
             condition: other_condition,
             value: other_value,
+            consumption_binder: other_binder,
             plain_scalar_placement: other_plain_scalar_placement,
             rendered: other_rendered,
         } = other;
@@ -475,6 +477,7 @@ impl ExecutedSite {
             && plain_scalar_placement == other_plain_scalar_placement
             && same_frozen_value(value, other_value)
             && rendered == other_rendered
+            && consumption_binder == other_binder
             && condition == other_condition
             && self.coverage_exact() == other.coverage_exact()
     }
@@ -1218,6 +1221,47 @@ impl PartialEq for RuntimeCondition {
 impl Eq for RuntimeCondition {}
 
 impl RuntimeCondition {
+    pub(super) fn at_requirement(state: &super::State) -> Self {
+        Self {
+            arena: std::rc::Rc::clone(&state.heap.arena),
+            admitted: super::guard::RuntimeGuard::True,
+            ambient: std::rc::Rc::clone(&state.active),
+            admission: Admission::All,
+        }
+    }
+
+    pub(super) fn selected_requirement_guard(
+        &self,
+        selected: &[super::DecisionEdge],
+        live: &Predicate,
+    ) -> Option<super::guard::RuntimeGuard> {
+        if live.contains_approximation() {
+            return None;
+        }
+        let mut active = self.ambient.as_ref().clone();
+        active.extend_from_slice(selected);
+        if live != &Predicate::True {
+            active.push(super::DecisionEdge {
+                test: self.arena.decision(
+                    live.clone(),
+                    live.clone().negated(),
+                    super::Coverage::Exact,
+                ),
+                taken: true,
+            });
+        }
+        let guard = self.arena.runtime_path(&active);
+        Some(self.arena.intersect_runtime_guards(&guard, &self.admitted))
+    }
+
+    pub(super) fn requirement_identity(&self) -> super::consumption::RequirementScope {
+        self.arena.requirement_identity.clone()
+    }
+
+    pub(super) fn requirement_scope(&self) -> String {
+        self.arena.requirement_scope.borrow().clone()
+    }
+
     pub(super) fn shares_ambient(&self, active: &std::rc::Rc<Vec<super::DecisionEdge>>) -> bool {
         std::rc::Rc::ptr_eq(&self.ambient, active)
     }
@@ -1505,6 +1549,7 @@ impl super::State {
                 source_path: source_path.map(str::to_owned),
                 condition: slot.condition,
                 value: value.clone(),
+                consumption_binder: self.loops.clone(),
                 plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
                 rendered,
             });
@@ -1681,6 +1726,16 @@ impl DocumentExecution {
             observed_facts: crate::observed_facts::ObservedFacts::default(),
             placement,
         };
+        let mut requirement_work = 262_144;
+        let mut requirement_guards = AHashMap::new();
+        execution.observed_facts.consumptions = execution
+            .exits
+            .iter()
+            .flat_map(|exit| exit.state.consumptions.iter())
+            .filter_map(|consumption| {
+                consumption.freeze(&mut requirement_work, &mut requirement_guards)
+            })
+            .collect();
         let observed_type_failures = execution.capture_read_facts();
         let aborted = execution.abort_predicate();
         let aborted = execution.exits.first().map_or(aborted.clone(), |exit| {

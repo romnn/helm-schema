@@ -165,11 +165,21 @@ pub(super) fn validate_parameter(
     form: super::ArgumentForm,
 ) -> Vec<super::Exit> {
     if expected == Some(GoType::Map) {
-        state.record_member_host(
+        state.record_requirement(
             &value,
             &Predicate::True,
-            super::query::MemberAccess::MapArgument {
+            super::query::RequirementKind::MapArgument {
                 allows_nil: form != super::ArgumentForm::DirectLookup,
+            },
+        );
+    }
+    if let Some(kind) = expected.filter(|kind| *kind != GoType::Map) {
+        state.record_requirement(
+            &value,
+            &Predicate::True,
+            super::query::RequirementKind::StrictArgument {
+                kind,
+                allows_nil: kind == GoType::Slice && form != super::ArgumentForm::DirectLookup,
             },
         );
     }

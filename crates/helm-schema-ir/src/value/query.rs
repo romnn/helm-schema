@@ -51,10 +51,22 @@ impl super::Arena {
 }
 
 #[derive(Clone, Copy)]
-pub(super) enum MemberAccess {
+pub(super) enum RequirementKind {
     Selector,
     StringIndex,
-    MapArgument { allows_nil: bool },
+    MapArgument {
+        allows_nil: bool,
+    },
+    Range {
+        allow_integer: bool,
+    },
+    StrictArgument {
+        kind: super::kinds::GoType,
+        allows_nil: bool,
+    },
+    KnownAny,
+    OpaqueBlockText,
+    ComparisonFailure,
 }
 
 struct KnownInputObject {
@@ -642,32 +654,48 @@ impl State {
         evaluated_member_entry(self, value, &mut remaining)
     }
 
-    pub(super) fn record_member_host(
+    pub(super) fn record_requirement(
         &mut self,
         value: &Value,
         live: &Predicate,
-        operation: MemberAccess,
+        operation: RequirementKind,
     ) {
-        let exact = self
-            .active
-            .iter()
-            .all(|edge| edge.test.coverage == Coverage::Exact);
-        if !exact && matches!(operation, MemberAccess::MapArgument { .. }) {
+        let frozen = self.heap.freeze(value);
+        let condition = super::output::RuntimeCondition::at_requirement(self);
+        let binder = self.loops.clone();
+        self.record_frozen_requirement(&frozen, live, operation, &condition, &binder);
+    }
+
+    pub(super) fn record_opaque_site(&mut self, site: &super::ExecutedSite) {
+        self.record_frozen_requirement(
+            &site.value,
+            &Predicate::True,
+            RequirementKind::OpaqueBlockText,
+            &site.condition,
+            &site.consumption_binder,
+        );
+    }
+
+    fn record_frozen_requirement(
+        &mut self,
+        frozen: &FrozenValue,
+        live: &Predicate,
+        operation: RequirementKind,
+        condition: &super::output::RuntimeCondition,
+        binder: &[super::LoopId],
+    ) {
+        if matches!(operation, RequirementKind::ComparisonFailure) {
+            self.record_consumption(
+                ValuesPath::default(),
+                super::ConsumptionDomain::KnownFailure,
+                &[],
+                live,
+                condition,
+                binder,
+            );
             return;
         }
-        let frozen = self.heap.freeze(value);
-        let ambient = if exact {
-            self.path_predicate()
-        } else {
-            Predicate::all(vec![
-                self.path_predicate(),
-                Predicate::approximate(
-                    "member access execution",
-                    value.inputs().iter().map(ValuesPath::encode).collect(),
-                ),
-            ])
-        };
-        let mut pending = vec![(&frozen.value, Predicate::True)];
+        let mut pending = vec![(&frozen.value, Vec::<super::DecisionEdge>::new())];
         let mut remaining = super::MAX_SCALAR_DISPATCH_STATES;
         while let Some((value, selected)) = pending.pop() {
             if remaining == 0 {
@@ -676,33 +704,34 @@ impl State {
             remaining -= 1;
             match value.node.as_ref() {
                 ValueNode::Select { decision, yes, no } => {
-                    if decision.coverage != Coverage::Exact {
-                        continue;
-                    }
-                    pending.push((
-                        yes,
-                        Predicate::all(vec![selected.clone(), decision.when_true.clone()]),
-                    ));
-                    pending.push((
-                        no,
-                        Predicate::all(vec![selected, decision.when_false.clone()]),
-                    ));
+                    let mut yes_path = selected.clone();
+                    yes_path.push(super::DecisionEdge {
+                        test: Rc::clone(decision),
+                        taken: true,
+                    });
+                    let mut no_path = selected;
+                    no_path.push(super::DecisionEdge {
+                        test: Rc::clone(decision),
+                        taken: false,
+                    });
+                    pending.push((yes, yes_path));
+                    pending.push((no, no_path));
                 }
                 ValueNode::Leaf(Leaf { datum, origin }) => {
-                    let Some(source_path) =
-                        self.member_host_path(&frozen, datum, origin, operation)
+                    let Some(source_path) = self.member_host_path(frozen, datum, origin, operation)
                     else {
                         continue;
                     };
                     let path = &source_path;
                     let member = path.item_parent().is_some();
-                    let strict_member_field =
-                        matches!(operation, MemberAccess::MapArgument { allows_nil: false })
-                            && path
-                                .segments()
-                                .filter(|segment| segment.is_each_member())
-                                .count()
-                                == 1;
+                    let strict_member_field = matches!(
+                        operation,
+                        RequirementKind::MapArgument { allows_nil: false }
+                    ) && path
+                        .segments()
+                        .filter(|segment| segment.is_each_member())
+                        .count()
+                        == 1;
                     if path.segments().next().is_none()
                         || (!member
                             && !strict_member_field
@@ -710,7 +739,7 @@ impl State {
                     {
                         continue;
                     }
-                    if !known_nonmap_receiver(datum)
+                    if matches!(operation, RequirementKind::Selector | RequirementKind::StringIndex | RequirementKind::MapArgument { .. }) && !known_nonmap_receiver(datum)
                         && self
                             .heap
                             .arena
@@ -724,20 +753,91 @@ impl State {
                                     ObjectData::Map {
                                         fields,
                                         remainder: super::Remainder::Input
-                                    } if fields.is_empty() || matches!(operation, MemberAccess::MapArgument { .. })
+                                    } if fields.is_empty() || matches!(operation, RequirementKind::MapArgument { .. })
                                 )
                             })
                     {
                         continue;
                     }
-                    self.record_host_path(
-                        path,
-                        operation,
-                        Predicate::all(vec![ambient.clone(), live.clone(), selected]),
+                    let Some(domain) = requirement_domain(operation, member) else {
+                        continue;
+                    };
+                    self.record_member_compatibility(path, &selected, operation, live);
+                    self.record_consumption(
+                        path.clone(),
+                        domain,
+                        &selected,
+                        live,
+                        condition,
+                        binder,
                     );
                 }
             }
         }
+    }
+
+    fn record_member_compatibility(
+        &mut self,
+        path: &ValuesPath,
+        selected: &[super::DecisionEdge],
+        operation: RequirementKind,
+        live: &Predicate,
+    ) {
+        let coverage = match operation {
+            RequirementKind::Selector | RequirementKind::StringIndex => {
+                super::ReadCoverage::MemberHost { allows_nil: false }
+            }
+            RequirementKind::MapArgument { allows_nil } => super::ReadCoverage::MapArgument {
+                allows_nil: allows_nil && path.item_parent().is_none(),
+            },
+            RequirementKind::Range { .. }
+            | RequirementKind::StrictArgument { .. }
+            | RequirementKind::KnownAny
+            | RequirementKind::OpaqueBlockText
+            | RequirementKind::ComparisonFailure => return,
+        };
+        let exact = self
+            .active
+            .iter()
+            .all(|edge| edge.test.coverage == Coverage::Exact);
+        if (!exact && matches!(operation, RequirementKind::MapArgument { .. }))
+            || selected
+                .iter()
+                .any(|edge| edge.test.coverage != Coverage::Exact)
+        {
+            return;
+        }
+        let mut conjuncts = vec![self.path_predicate(), live.clone()];
+        if !exact {
+            conjuncts.push(Predicate::approximate(
+                "member access execution",
+                std::iter::once(path.encode()).collect(),
+            ));
+        }
+        conjuncts.extend(selected.iter().map(|edge| {
+            if edge.taken {
+                edge.test.when_true.clone()
+            } else {
+                edge.test.when_false.clone()
+            }
+        }));
+        let condition = self
+            .heap
+            .arena
+            .predicate_memo
+            .normalize(Predicate::all(conjuncts));
+        if condition == Predicate::False
+            || (condition.contains_approximation()
+                && matches!(operation, RequirementKind::MapArgument { .. }))
+        {
+            return;
+        }
+        // Retain the existing coalescing and host-ownership projection until its replacement passes parity.
+        self.reads.insert(super::RuntimeRead {
+            coverage,
+            path: path.clone(),
+            condition,
+        });
     }
 
     fn member_host_path(
@@ -745,7 +845,7 @@ impl State {
         frozen: &FrozenValue,
         datum: &Datum,
         origin: &super::Origin,
-        operation: MemberAccess,
+        operation: RequirementKind,
     ) -> Option<ValuesPath> {
         if let Some(path) = &origin.identity {
             return Some(path.clone());
@@ -760,7 +860,7 @@ impl State {
         self.input_map_path(
             frozen,
             id,
-            matches!(operation, MemberAccess::MapArgument { .. }),
+            matches!(operation, RequirementKind::MapArgument { .. }),
         )
     }
 
@@ -780,35 +880,6 @@ impl State {
             return None;
         }
         self.heap.arena.input_paths.borrow().get(id).cloned()
-    }
-
-    fn record_host_path(
-        &mut self,
-        path: &ValuesPath,
-        operation: MemberAccess,
-        condition: Predicate,
-    ) {
-        let condition = self.heap.arena.predicate_memo.normalize(condition);
-        if condition == Predicate::False
-            || condition.contains_approximation()
-                && matches!(operation, MemberAccess::MapArgument { .. })
-        {
-            return;
-        }
-        let member = path.item_parent().is_some();
-        let coverage = match operation {
-            MemberAccess::MapArgument { allows_nil } => super::ReadCoverage::MapArgument {
-                allows_nil: allows_nil && !member,
-            },
-            MemberAccess::Selector | MemberAccess::StringIndex => {
-                super::ReadCoverage::MemberHost { allows_nil: false }
-            }
-        };
-        self.reads.insert(super::RuntimeRead {
-            coverage,
-            path: path.clone(),
-            condition,
-        });
     }
 
     pub(super) fn selector_field(&mut self, value: &Value, key: &str) -> Value {
@@ -2545,4 +2616,66 @@ fn selector_entry_domain(value: &Value, remaining: &mut usize) -> Option<Predica
             })
         }
     }
+}
+
+fn requirement_domain(kind: RequirementKind, member: bool) -> Option<super::ConsumptionDomain> {
+    use helm_schema_core::FailValueRequirement;
+    let (preimage, requires_presence) = match kind {
+        RequirementKind::Selector
+        | RequirementKind::StringIndex
+        | RequirementKind::MapArgument { .. } => {
+            let allows_nil =
+                matches!(kind, RequirementKind::MapArgument { allows_nil: true }) && !member;
+            (
+                FailValueRequirement::MemberHost {
+                    handled_kinds: if allows_nil {
+                        vec!["null".to_owned()]
+                    } else {
+                        Vec::new()
+                    },
+                    complete_domain: true,
+                },
+                !allows_nil,
+            )
+        }
+        RequirementKind::Range { allow_integer } => {
+            (FailValueRequirement::Iterable { allow_integer }, false)
+        }
+        RequirementKind::StrictArgument { kind, allows_nil } => {
+            let schema_type = match kind {
+                super::kinds::GoType::String => "string",
+                super::kinds::GoType::Bool => "boolean",
+                super::kinds::GoType::Slice => "array",
+                super::kinds::GoType::Map => "object",
+                super::kinds::GoType::Int
+                | super::kinds::GoType::Int64
+                | super::kinds::GoType::Uint64 => "integer",
+                super::kinds::GoType::Float64 => "number",
+                super::kinds::GoType::Nil => "null",
+                super::kinds::GoType::Unknown => return None,
+            };
+            let allows_nil = allows_nil && !member;
+            let required = FailValueRequirement::SchemaTypeEvenNull(schema_type.to_owned());
+            let preimage = if allows_nil {
+                FailValueRequirement::AnyOf(vec![
+                    vec![required],
+                    vec![FailValueRequirement::SchemaTypeEvenNull("null".to_owned())],
+                ])
+            } else {
+                required
+            };
+            (preimage, !allows_nil)
+        }
+        RequirementKind::KnownAny => return Some(super::ConsumptionDomain::KnownAny),
+        RequirementKind::OpaqueBlockText => {
+            return Some(super::ConsumptionDomain::Opaque {
+                reason: "executed block scalar text".to_owned(),
+            });
+        }
+        RequirementKind::ComparisonFailure => return Some(super::ConsumptionDomain::KnownFailure),
+    };
+    Some(super::ConsumptionDomain::Known {
+        preimage,
+        requires_presence,
+    })
 }

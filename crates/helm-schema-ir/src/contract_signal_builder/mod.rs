@@ -12,6 +12,7 @@ use helm_schema_core::{
 
 mod conditional_overlays;
 mod contract_rows;
+mod executed_requirements;
 mod final_signals;
 mod input_channels;
 mod requirements;

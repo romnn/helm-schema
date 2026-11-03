@@ -150,6 +150,8 @@ pub enum ConditionalGuard {
         /// Inclusive minimum number of members.
         bound: i64,
     },
+    /// A shared values-decidable decision graph exported from executed requirements.
+    Decision(Arc<crate::RequirementGuard>),
     /// Logical negation of a guard.
     Not(Arc<ConditionalGuard>),
     /// Conjunction of every enclosed guard.
@@ -159,6 +161,97 @@ pub enum ConditionalGuard {
 }
 
 impl ConditionalGuard {
+    /// Whether this atom has an exact encoding over coalesced values in both polarities.
+    #[must_use]
+    pub fn is_exact_requirement_atom(&self) -> bool {
+        self.exact_requirement_encoding_cost().is_some()
+    }
+
+    /// Charges an exact atom's bounded encoding before copying it into a coverage proof.
+    pub fn charge_requirement_inventory(&self, remaining: &mut usize) -> Option<()> {
+        *remaining = remaining.checked_sub(1)?;
+        let cost = self.exact_requirement_encoding_cost()?;
+        *remaining = remaining.checked_sub(cost.div_ceil(16))?;
+        Some(())
+    }
+
+    pub(crate) fn exact_requirement_encoding_cost(&self) -> Option<usize> {
+        self.exact_requirement_encoding_cost_at_depth(64)
+    }
+
+    fn exact_requirement_encoding_cost_at_depth(&self, depth: usize) -> Option<usize> {
+        let depth = depth.checked_sub(1)?;
+        let (path, payload) = match self {
+            Self::Truthy { path } | Self::With { path } => (path, 0),
+            Self::Absent { path } if path.segments().next().is_some() => (path, 0),
+            Self::TypeIs { path, schema_type }
+                if matches!(
+                    schema_type.as_str(),
+                    "null" | "boolean" | "integer" | "number" | "string" | "array" | "object"
+                ) =>
+            {
+                (path, schema_type.len())
+            }
+            Self::HasKey { path, key } => (path, key.len()),
+            Self::Eq { path, value } | Self::NotEq { path, value } => {
+                let size = match value {
+                    GuardValue::String(value) => value.len(),
+                    GuardValue::Float(value) => {
+                        if value.len() > 64 {
+                            return None;
+                        }
+                        if !value.parse::<f64>().ok()?.is_finite() {
+                            return None;
+                        }
+                        value.len()
+                    }
+                    GuardValue::Null | GuardValue::Bool(_) | GuardValue::Int(_) => 32,
+                };
+                (path, size)
+            }
+            Self::Not(inner) => {
+                return inner
+                    .exact_requirement_encoding_cost_at_depth(depth)?
+                    .checked_add(64)
+                    .filter(|cost| *cost <= 8192);
+            }
+            Self::AllOf(parts) | Self::AnyOf(parts) => {
+                if parts.len() > 64 {
+                    return None;
+                }
+                let cost = parts.iter().try_fold(128_usize, |cost, part| {
+                    cost.checked_add(part.exact_requirement_encoding_cost_at_depth(depth)?)
+                })?;
+                return (cost <= 8192).then_some(cost);
+            }
+            Self::Absent { .. }
+            | Self::TypeIs { .. }
+            | Self::Decision(_)
+            | Self::MatchesPattern { .. }
+            | Self::MatchesValue { .. }
+            | Self::CollectionPattern { .. }
+            | Self::IntGt { .. }
+            | Self::IntLt { .. }
+            | Self::ContainsMemberEquals { .. }
+            | Self::ContainsTruthyMember { .. }
+            | Self::ContainsEquals { .. }
+            | Self::AtMostOneMember { .. }
+            | Self::MinMembers { .. } => return None,
+        };
+        let mut cost = 256_usize.checked_add(payload.checked_mul(8)?)?;
+        for (depth, segment) in path.segments().enumerate() {
+            if depth >= 64 {
+                return None;
+            }
+            let literal = segment.literal()?;
+            cost = cost.checked_add(96 + literal.len().checked_mul(12)?)?;
+            if cost > 8192 {
+                return None;
+            }
+        }
+        Some(cost)
+    }
+
     fn conjunction(guards: &[Guard]) -> Result<Self, ()> {
         guards
             .iter()
@@ -192,7 +285,8 @@ impl ConditionalGuard {
                     *nested = Arc::new(canonical);
                 }
             }
-            Self::Truthy { .. }
+            Self::Decision(_)
+            | Self::Truthy { .. }
             | Self::With { .. }
             | Self::Eq { .. }
             | Self::NotEq { .. }
@@ -223,17 +317,35 @@ impl ConditionalGuard {
     /// Reports whether this guard tests the target's own Helm truthiness.
     #[must_use]
     pub fn is_self_truthy_for(&self, target: &ValuesPath) -> bool {
-        matches!(
-            self,
-            Self::Truthy { path } | Self::With { path }
-                if path == target
-        )
+        match self {
+            Self::Truthy { path } | Self::With { path } => path == target,
+            Self::Decision(graph) => {
+                graph.excludes_atom_value(
+                    &Self::Truthy {
+                        path: target.clone(),
+                    },
+                    false,
+                ) || graph.excludes_atom_value(
+                    &Self::With {
+                        path: target.clone(),
+                    },
+                    false,
+                )
+            }
+            _ => false,
+        }
     }
 
     /// Reports whether this guard can hold only while the target path exists.
     #[must_use]
     pub fn is_self_presence_for(&self, target: &ValuesPath) -> bool {
         match self {
+            Self::Decision(graph) => graph.excludes_atom_value(
+                &Self::Absent {
+                    path: target.clone(),
+                },
+                true,
+            ),
             Self::Not(inner) => {
                 matches!(inner.as_ref(), Self::Absent { path } if path == target)
             }
@@ -335,6 +447,7 @@ impl ConditionalGuard {
                 path: path.clone(),
                 bound: *bound,
             }),
+            Self::Decision(graph) => graph.predicate(),
             Self::Not(inner) => inner.shared_predicate(projected).negated(),
             Self::AllOf(guards) => Predicate::all(
                 guards
@@ -557,6 +670,9 @@ impl ConditionalGuard {
                 path: map(path),
                 bound,
             },
+            Self::Decision(graph) => {
+                Self::Decision(Arc::new(Arc::unwrap_or_clone(graph).map_value_paths(map)))
+            }
             Self::Not(inner) => Self::Not(Arc::new(inner.as_ref().clone().map_value_paths(map))),
             Self::AllOf(guards) => Self::AllOf(
                 guards
@@ -611,6 +727,7 @@ impl ConditionalGuard {
             | Self::MinMembers { path, .. } => {
                 paths.insert(path.clone());
             }
+            Self::Decision(graph) => paths.extend(graph.value_paths()),
             Self::Not(inner) => inner.collect_value_paths(paths, visited),
             Self::AllOf(guards) | Self::AnyOf(guards) => {
                 for guard in guards.iter() {
@@ -709,6 +826,7 @@ impl ConditionalOverlayEvidence {
             requiredness: ContractRequirednessEvidence::default(),
             conditional_overlays: Vec::new(),
             requirement_implications: Vec::new(),
+            opaque_consumption_guards: None,
         }
     }
 }
@@ -785,6 +903,9 @@ pub struct ContractPathSchemaEvidence {
     /// proves the same rendering requirement, so lowering must not let weaker
     /// evidence suppress them.
     pub requirement_implications: Vec<ContractRequirementImplication>,
+    /// Positive opaque consumptions at this exact input path. An empty
+    /// recorded set means export exhausted its budget and asserts no policy.
+    pub opaque_consumption_guards: Option<Vec<Vec<ConditionalGuard>>>,
 }
 
 /// A chart-authored values-program wrapper convention: within `scope_path`

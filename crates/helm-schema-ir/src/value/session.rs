@@ -77,6 +77,13 @@ pub(super) fn execute_files(
         return;
     }
     let mut state = initial_state(db);
+    if let Some(source) = sources.first() {
+        state
+            .heap
+            .arena
+            .requirement_scope
+            .replace(source.name.clone());
+    }
     let file_catalogs = super::hosts::file_catalogs(db, &mut state);
     let root = state.read_root().cloned().unwrap_or_else(Value::unknown);
     let mut seen = BTreeSet::new();
@@ -278,6 +285,7 @@ pub(super) fn clear_file(state: &mut State) {
     state.sites.clear();
     state.text_sites.clear();
     state.reads.clear();
+    state.consumptions.clear();
     state.invocations.clear();
     state.invocation_records_complete = true;
     state.calls.clear();

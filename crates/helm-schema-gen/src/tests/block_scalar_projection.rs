@@ -60,6 +60,7 @@ fn block_scalar_parts_do_not_project_input_shapes() {
         want: serde_json::json!({
             "$schema": "http://json-schema.org/draft-07/schema#",
             "additionalProperties": false,
+            "allOf": [{"additionalProperties": {}, "properties": {"enabled": {"type": "boolean"}}}],
             "properties": {
                 "global": {},
                 "enabled": {},
@@ -142,8 +143,8 @@ fn helper_yaml_rendered_inside_block_scalar_does_not_project_payload_shape() {
                     }
                 }
             }),
-            true,
-            "the helper serializes both leaves into block text",
+            false,
+            "the opaque raw leaf keeps its own declared scalar policy",
         ),
     ] {
         assert!(
@@ -159,6 +160,11 @@ fn helper_yaml_rendered_inside_block_scalar_does_not_project_payload_shape() {
         // The navigated hosts' presence claims; the object typing itself
         // folded into the base below.
         "allOf": [
+            {"additionalProperties": {}, "properties": {"presets": {
+                "additionalProperties": {}, "properties": {"clusterMetrics": {
+                    "additionalProperties": {}, "properties": {"collectionInterval": {"type": "string"}}
+                }}
+            }}},
             navigated_host_clause(&["presets"]),
             navigated_host_missing_ancestor_clause(&["presets", "clusterMetrics"]),
         ],

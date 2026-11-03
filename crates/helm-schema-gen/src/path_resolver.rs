@@ -179,6 +179,23 @@ fn unobserved_parent_in_unknown_region(
     false
 }
 
+pub(crate) fn opaque_scalar_default_is_replaced(
+    path: &ValuesPath,
+    evidence: &ContractPathSchemaEvidence,
+    declared_shape: Option<&Value>,
+) -> bool {
+    // List items, object admissions and bound member defaults need their own replacements.
+    evidence
+        .opaque_consumption_guards
+        .as_ref()
+        .is_some_and(|guards| !guards.is_empty())
+        && path.segments().all(|segment| segment.literal().is_some())
+        && declared_shape
+            .and_then(|shape| shape.get("type"))
+            .and_then(Value::as_str)
+            .is_some_and(|kind| matches!(kind, "boolean" | "integer" | "number" | "string"))
+}
+
 fn resolve_path_evidence(
     value_path: &ValuesPath,
     evidence: &ContractPathSchemaEvidence,
@@ -195,6 +212,15 @@ fn resolve_path_evidence(
     let used_as_pathless_fragment = evidence.facts.used_as_pathless_fragment;
     let accepted_dependency_values_root_fragment =
         evidence.facts.accepted_dependency_values_root_fragment;
+    let declared_types = if opaque_scalar_default_is_replaced(
+        value_path,
+        evidence,
+        values_yaml_info.map(|info| &info.schema),
+    ) {
+        DeclaredTypes::Annotate
+    } else {
+        declared_types
+    };
     let (policy_inputs, provider_schema_candidate) = build_path_schema_inputs(
         value_path,
         evidence,

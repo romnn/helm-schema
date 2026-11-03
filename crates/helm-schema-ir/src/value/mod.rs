@@ -1,5 +1,10 @@
 mod algebra;
+mod consumption;
 mod control;
+pub(crate) use consumption::{
+    Consumption, ConsumptionDomain, ConsumptionKey, FrozenConsumption, RequirementIdentities,
+    collect_requirement_atoms, map_consumption_paths,
+};
 mod eval;
 mod guard;
 mod heap;
@@ -392,6 +397,8 @@ struct Arena {
     input_paths: RefCell<Rc<input_paths::InputPaths>>,
     /// The analysis's Boolean normalization cache; results equal uncached normalization.
     predicate_memo: Rc<helm_schema_core::PredicateMemo>,
+    requirement_scope: RefCell<String>,
+    requirement_identity: consumption::RequirementScope,
     exported_paths: RefCell<AHashMap<*const Vec<DecisionEdge>, query::PathPredicateCache>>,
 }
 
@@ -531,6 +538,7 @@ pub(crate) struct State {
     sites: history::History<ExecutedSite>,
     text_sites: history::History<ExecutedText>,
     reads: read_set::ReadSet,
+    consumptions: history::History<Consumption>,
     calls: Vec<CallKey>,
     program: u64,
     namespace: Rc<namespace::Namespace>,
@@ -559,7 +567,7 @@ enum FrameBoundary {
     Lexical,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 struct LoopId {
     call: u64,
     ordinal: u64,
@@ -717,6 +725,7 @@ pub(crate) struct ExecutedSite {
     source_path: Option<String>,
     condition: output::RuntimeCondition,
     value: FrozenValue,
+    consumption_binder: Vec<LoopId>,
     plain_scalar_placement: helm_schema_core::PlainScalarPlacement,
     rendered: bool,
 }

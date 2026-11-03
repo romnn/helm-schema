@@ -36,6 +36,7 @@ fn fixture(prefix: &str, suffix: &str) -> Fixture {
         coverage_exact: true,
         rendered_unchanged: true,
         plain_scalar_placement: PlainScalarPlacement::Unknown,
+        consumption_binder: Vec::new(),
         ordinal: 0,
         span: Span::new(0, 1),
         source_path: None,

@@ -30,6 +30,7 @@ pub(super) struct ContractPathAccumulator {
     pub(super) has_unconditional_overlay_peer: bool,
     pub(super) saw_unsupported_overlay: bool,
     pub(super) requirement_implications: Vec<ContractRequirementImplication>,
+    pub(super) opaque_consumption_guards: Option<Vec<Vec<ConditionalGuard>>>,
     pub(super) member_access_conditions: MemberAccessConditions,
 }
 

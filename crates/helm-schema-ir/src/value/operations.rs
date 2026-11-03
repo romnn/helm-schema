@@ -42,6 +42,18 @@ pub(super) fn transfer(
 
 fn transfer_known(input: TransferInput<'_>, state: &mut State) -> Result<Value, TransferDemand> {
     let function = input.function;
+    if matches!(
+        function,
+        "quote" | "squote" | "toString" | "toYaml" | "toJson" | "toPrettyJson" | "toRawJson"
+    ) {
+        for argument in input.arguments {
+            state.record_requirement(
+                argument,
+                &super::Predicate::True,
+                super::query::RequirementKind::KnownAny,
+            );
+        }
+    }
     match crate::function_semantics::function_semantics(function).behavior {
         crate::function_semantics::OutputBehavior::Encoded(alphabet) => {
             return Ok(Value::frozen_text(
@@ -159,10 +171,10 @@ fn transfer_dig(input: TransferInput<'_>, state: &mut State) -> Result<Value, Tr
         {
             return Err(TransferDemand::Choice(Rc::clone(decision)));
         }
-        state.record_member_host(
+        state.record_requirement(
             &value,
             &super::Predicate::True,
-            super::query::MemberAccess::MapArgument { allows_nil: false },
+            super::query::RequirementKind::MapArgument { allows_nil: false },
         );
         match state.heap.freeze(&value).go_type() {
             super::kinds::GoType::Map => {}
@@ -369,10 +381,10 @@ fn transfer_index(input: TransferInput<'_>, state: &mut State) -> Result<Value, 
     for key in arguments.iter().skip(1) {
         value = match key.constant() {
             Some(GuardValue::String(key)) => {
-                state.record_member_host(
+                state.record_requirement(
                     &value,
                     &super::Predicate::True,
-                    super::query::MemberAccess::StringIndex,
+                    super::query::RequirementKind::StringIndex,
                 );
                 match state.heap.freeze(&value).go_type() {
                     super::kinds::GoType::Map | super::kinds::GoType::Unknown => {}

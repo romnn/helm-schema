@@ -16,6 +16,7 @@ mod provenance;
 mod provider_origin;
 mod provider_schema_fragment;
 mod provider_schema_use;
+mod requirement_guard;
 mod schema_provider;
 mod text_preimage;
 mod types;
@@ -51,6 +52,9 @@ pub use provider_schema_fragment::{
     ProviderSchemaFragment, ProviderSchemaSource, ProviderSourceFragment,
 };
 pub use provider_schema_use::ProviderSchemaUse;
+pub use requirement_guard::{
+    RequirementAtom, RequirementChoice, RequirementDecision, RequirementGuard, RequirementNode,
+};
 pub use schema_provider::ResourceSchemaOracle;
 pub use text_preimage::{RegularLanguage, RegularTransition, TextPreimage, regex_character_class};
 pub use types::{KindBranch, PlainScalarPlacement, ResourceRef, ValueKind, YamlPath};
@@ -59,3 +63,5 @@ pub use value_path::{
     join_value_path, split_value_path,
 };
 pub use value_pattern::ValuePattern;
+
+pub use predicate_bdd::RequirementBdd;

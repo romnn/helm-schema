@@ -1107,3 +1107,40 @@ fn current_value_absence_remains_exact_in_both_polarities() -> eyre::Result<()> 
     }
     Ok(())
 }
+
+#[test]
+fn requirement_decisions_test_coalesced_empty_maps_exactly() -> eyre::Result<()> {
+    let atom = helm_schema_core::RequirementAtom::Value(Guard::Truthy {
+        path: ValuesPath::parse("feature"),
+    });
+    let atoms = vec![atom.clone()];
+    let mut work = 16_384;
+    let mut bdd = helm_schema_core::RequirementBdd::new(&atoms, &mut work)
+        .ok_or_eyre("BDD inventory exhausted")?;
+    let root = bdd.atom(&atom).ok_or_eyre("BDD atom exhausted")?;
+    let guard = bdd.finish(root).ok_or_eyre("BDD export exhausted")?;
+    let defaults = serde_yaml::from_str("feature: {enabled: true}")?;
+    let absent = serde_yaml::Value::Null;
+    let dependency_roots = BTreeSet::new();
+    let absence = AbsenceDefaults {
+        runtime_defaults: &absent,
+        dependency_refill: &absent,
+        dependency_roots: &dependency_roots,
+    };
+    let mut cache = ConditionFragmentCache::new();
+    let clauses = cache.clauses(&[guard], &[], &defaults, absence, ConditionPolarity::Widen);
+    let truthy = json!({"anyOf": [{"const": true}, {"type": "number", "not": {"const": 0}}, {"type": "string", "minLength": 1}, {"type": "array", "minItems": 1}, {"type": "object", "minProperties": 1}]});
+    cache.definitions.insert("t".to_owned(), truthy.clone());
+    let schema = json!({"$schema": "http://json-schema.org/draft-07/schema#", "$defs": cache.definitions, "allOf": clauses.into_iter().map(crate::schema_node::SchemaNode::into_value).collect::<Vec<_>>()});
+    sim_assert_eq!(have: &schema, want: &json!({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "$defs": {"t": truthy, "helm-condition-0": {"if": {"type": "object", "properties": {"feature": {"$ref": "#/$defs/t"}}, "required": ["feature"]}, "then": true, "else": false}},
+        "allOf": [{"$ref": "#/$defs/helm-condition-0"}]
+    }));
+    let validator = jsonschema::validator_for(&schema)?;
+    for feature in [json!({}), json!([]), json!(false), json!(0), json!("")] {
+        assert!(!validator.is_valid(&json!({"feature": feature})));
+    }
+    assert!(validator.is_valid(&json!({"feature": {"enabled": true}})));
+    Ok(())
+}

@@ -1,3 +1,4 @@
+use color_eyre::eyre::{self, OptionExt as _};
 use test_util::prelude::sim_assert_eq;
 
 use super::*;
@@ -96,118 +97,123 @@ fn unconsumed_global_is_reserved_without_shape_at_the_root() {
     clippy::too_many_lines,
     reason = "the complete fixture scenario is clearest as one contiguous test"
 )]
-fn consumed_global_member_keeps_its_contract_and_admits_shared_members() {
+fn consumed_global_member_keeps_its_contract_and_admits_shared_members() -> eyre::Result<()> {
     let schema = schema_for_values_yaml(parse_ir(REGISTRY_CONSUMER), Some(DECLARED_GLOBAL));
-    sim_assert_eq!(have: &schema, want: &serde_json::json!({
-        "$defs": {
-            "helm-condition-0": {
-                "not": {
-                    "properties": {
-                        "imageRegistry": {
-                            "type": "string"
-                        }
-                    },
-                    "required": [
-                        "imageRegistry"
-                    ],
-                    "type": "object"
-                }
-            },
-            "t": {
-                "anyOf": [
-                    {
-                        "const": true
-                    },
-                    {
-                        "not": {
-                            "const": 0
+    let expected = executed_registry_expected(
+        serde_json::json!({
+            "$defs": {
+                "helm-condition-0": {
+                    "not": {
+                        "properties": {
+                            "imageRegistry": {
+                                "type": "string"
+                            }
                         },
-                        "type": "number"
-                    },
-                    {
-                        "minLength": 1,
-                        "type": "string"
-                    },
-                    {
-                        "minItems": 1,
-                        "type": "array"
-                    },
-                    {
-                        "minProperties": 1,
+                        "required": [
+                            "imageRegistry"
+                        ],
                         "type": "object"
                     }
-                ]
-            }
-        },
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "additionalProperties": false,
-        "allOf": [
-            {
-                "if": {
+                },
+                "t": {
                     "anyOf": [
                         {
+                            "const": true
+                        },
+                        {
                             "not": {
+                                "const": 0
+                            },
+                            "type": "number"
+                        },
+                        {
+                            "minLength": 1,
+                            "type": "string"
+                        },
+                        {
+                            "minItems": 1,
+                            "type": "array"
+                        },
+                        {
+                            "minProperties": 1,
+                            "type": "object"
+                        }
+                    ]
+                }
+            },
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "allOf": [
+                {
+                    "if": {
+                        "anyOf": [
+                            {
+                                "not": {
+                                    "properties": {
+                                        "global": {}
+                                    },
+                                    "required": [
+                                        "global"
+                                    ],
+                                    "type": "object"
+                                }
+                            },
+                            {
                                 "properties": {
-                                    "global": {}
+                                    "global": {
+                                        "enum": [
+                                            null
+                                        ]
+                                    }
                                 },
                                 "required": [
                                     "global"
                                 ],
                                 "type": "object"
                             }
-                        },
+                        ]
+                    },
+                    "then": false
+                }
+            ],
+            "properties": {
+                "global": {
+                    "additionalProperties": {},
+                    "allOf": [
                         {
-                            "properties": {
-                                "global": {
-                                    "enum": [
-                                        null
-                                    ]
-                                }
-                            },
-                            "required": [
-                                "global"
-                            ],
-                            "type": "object"
-                        }
-                    ]
-                },
-                "then": false
-            }
-        ],
-        "properties": {
-            "global": {
-                "additionalProperties": {},
-                "allOf": [
-                    {
-                        "if": {
-                            "allOf": [
-                                {
-                                    "properties": {
-                                        "imageRegistry": {
-                                            "$ref": "#/$defs/t"
-                                        }
+                            "if": {
+                                "allOf": [
+                                    {
+                                        "properties": {
+                                            "imageRegistry": {
+                                                "$ref": "#/$defs/t"
+                                            }
+                                        },
+                                        "required": [
+                                            "imageRegistry"
+                                        ],
+                                        "type": "object"
                                     },
-                                    "required": [
-                                        "imageRegistry"
-                                    ],
-                                    "type": "object"
-                                },
-                                {
-                                    "$ref": "#/$defs/helm-condition-0"
-                                }
-                            ]
-                        },
-                        "then": false
-                    }
-                ],
-                "properties": {
-                    "imageRegistry": {}
-                },
-                "type": "object"
-            }
-        },
-        "type": "object"
-    }));
+                                    {
+                                        "$ref": "#/$defs/helm-condition-0"
+                                    }
+                                ]
+                            },
+                            "then": false
+                        }
+                    ],
+                    "properties": {
+                        "imageRegistry": {}
+                    },
+                    "type": "object"
+                }
+            },
+            "type": "object"
+        }),
+        "imageRegistry",
+        false,
+    )?;
+    sim_assert_eq!(have: &schema, want: &expected);
     let verdicts = [
         serde_json::json!({ "global": { "imageRegistry": "x" } }),
         serde_json::json!({ "global": { "imageRegistry": "x", "other": 1, "pullSecrets": "s" } }),
@@ -218,6 +224,7 @@ fn consumed_global_member_keeps_its_contract_and_admits_shared_members() {
     .map(|instance| schema_accepts_instance(&schema, instance))
     .collect::<Vec<_>>();
     sim_assert_eq!(have: verdicts, want: vec![true, true, false, false]);
+    Ok(())
 }
 
 #[test]
@@ -225,119 +232,125 @@ fn consumed_global_member_keeps_its_contract_and_admits_shared_members() {
     clippy::too_many_lines,
     reason = "the complete fixture scenario is clearest as one contiguous test"
 )]
-fn guarded_global_reads_keep_their_guards() {
+fn guarded_global_reads_keep_their_guards() -> eyre::Result<()> {
     let schema = schema_for_values_yaml(parse_ir(GUARDED_CONSUMER), None);
-    sim_assert_eq!(have: schema, want: serde_json::json!({
-        "$defs": {
-            "helm-condition-0": {
-                "not": {
-                    "properties": {
-                        "imageRegistry": {
-                            "type": "string"
-                        }
-                    },
-                    "required": [
-                        "imageRegistry"
-                    ],
-                    "type": "object"
-                }
-            },
-            "t": {
-                "anyOf": [
-                    {
-                        "const": true
-                    },
-                    {
-                        "not": {
-                            "const": 0
+    let expected = executed_registry_expected(
+        serde_json::json!({
+            "$defs": {
+                "helm-condition-0": {
+                    "not": {
+                        "properties": {
+                            "imageRegistry": {
+                                "type": "string"
+                            }
                         },
-                        "type": "number"
-                    },
-                    {
-                        "minLength": 1,
-                        "type": "string"
-                    },
-                    {
-                        "minItems": 1,
-                        "type": "array"
-                    },
-                    {
-                        "minProperties": 1,
+                        "required": [
+                            "imageRegistry"
+                        ],
                         "type": "object"
                     }
-                ]
-            }
-        },
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "additionalProperties": false,
-        "allOf": [
-            {
-                "if": {
+                },
+                "t": {
                     "anyOf": [
                         {
+                            "const": true
+                        },
+                        {
                             "not": {
+                                "const": 0
+                            },
+                            "type": "number"
+                        },
+                        {
+                            "minLength": 1,
+                            "type": "string"
+                        },
+                        {
+                            "minItems": 1,
+                            "type": "array"
+                        },
+                        {
+                            "minProperties": 1,
+                            "type": "object"
+                        }
+                    ]
+                }
+            },
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "allOf": [
+                {
+                    "if": {
+                        "anyOf": [
+                            {
+                                "not": {
+                                    "properties": {
+                                        "global": {}
+                                    },
+                                    "required": [
+                                        "global"
+                                    ],
+                                    "type": "object"
+                                }
+                            },
+                            {
                                 "properties": {
-                                    "global": {}
+                                    "global": {
+                                        "enum": [
+                                            null
+                                        ]
+                                    }
                                 },
                                 "required": [
                                     "global"
                                 ],
                                 "type": "object"
                             }
-                        },
+                        ]
+                    },
+                    "then": false
+                }
+            ],
+            "properties": {
+                "global": {
+                    "additionalProperties": {},
+                    "allOf": [
                         {
-                            "properties": {
-                                "global": {
-                                    "enum": [
-                                        null
-                                    ]
-                                }
-                            },
-                            "required": [
-                                "global"
-                            ],
-                            "type": "object"
-                        }
-                    ]
-                },
-                "then": false
-            }
-        ],
-        "properties": {
-            "global": {
-                "additionalProperties": {},
-                "allOf": [
-                    {
-                        "if": {
-                            "allOf": [
-                                {
-                                    "properties": {
-                                        "enabled": {
-                                            "$ref": "#/$defs/t"
-                                        }
+                            "if": {
+                                "allOf": [
+                                    {
+                                        "properties": {
+                                            "enabled": {
+                                                "$ref": "#/$defs/t"
+                                            }
+                                        },
+                                        "required": [
+                                            "enabled"
+                                        ],
+                                        "type": "object"
                                     },
-                                    "required": [
-                                        "enabled"
-                                    ],
-                                    "type": "object"
-                                },
-                                {
-                                    "$ref": "#/$defs/helm-condition-0"
-                                }
-                            ]
-                        },
-                        "then": false
-                    }
-                ],
-                "properties": {
-                    "enabled": {},
-                    "imageRegistry": {}
-                },
-                "type": "object"
-            }
-        },
-        "type": "object"
-    }));
+                                    {
+                                        "$ref": "#/$defs/helm-condition-0"
+                                    }
+                                ]
+                            },
+                            "then": false
+                        }
+                    ],
+                    "properties": {
+                        "enabled": {},
+                        "imageRegistry": {}
+                    },
+                    "type": "object"
+                }
+            },
+            "type": "object"
+        }),
+        "enabled",
+        true,
+    )?;
+    sim_assert_eq!(have: &schema, want: &expected);
+    Ok(())
 }
 
 /// Helm injects `global` into every dependency instance, whatever its
@@ -930,4 +943,71 @@ fn root_and_alias_local_global_members_are_both_admitted() {
     .collect::<Vec<_>>();
     sim_assert_eq!(have: verdicts, want: vec![true, true, false]);
     sim_assert_eq!(have: &schema, want: &expected_schema);
+}
+
+fn executed_registry_expected(
+    mut expected: Value,
+    key: &str,
+    presence: bool,
+) -> eyre::Result<Value> {
+    rename_registry_condition(&mut expected);
+    let object = expected
+        .as_object_mut()
+        .ok_or_eyre("expected schema object")?;
+    let definitions = object
+        .get_mut("$defs")
+        .and_then(Value::as_object_mut)
+        .ok_or_eyre("expected definitions")?;
+    let old = definitions
+        .remove("helm-condition-0")
+        .ok_or_eyre("expected legacy condition")?;
+    definitions.insert("helm-condition-1".to_owned(), old);
+    definitions.insert("helm-condition-0".to_owned(), serde_json::json!({
+        "if": {"type": "object", "properties": {"global": {"type": "object", "properties": {(key): {"$ref": "#/$defs/t"}}, "required": [key]}}, "required": ["global"]},
+        "then": true, "else": false
+    }));
+    if presence {
+        definitions.insert("helm-condition-2".to_owned(), serde_json::json!({
+            "if": {"type": "object", "properties": {"enabled": {"$ref": "#/$defs/t"}}, "required": ["enabled"]}, "then": true, "else": false
+        }));
+    }
+    object.get_mut("allOf").and_then(Value::as_array_mut).ok_or_eyre("expected root conjuncts")?.insert(0, serde_json::json!({
+        "if": {"$ref": "#/$defs/helm-condition-0"},
+        "then": {"additionalProperties": {}, "properties": {"global": {"additionalProperties": {}, "properties": {"imageRegistry": {"type": "string"}}}}}
+    }));
+    if presence {
+        let global = object
+            .get_mut("properties")
+            .and_then(|value| value.get_mut("global"))
+            .and_then(|value| value.get_mut("allOf"))
+            .and_then(Value::as_array_mut)
+            .ok_or_eyre("expected global conjuncts")?;
+        global.push(serde_json::json!({"if": {"allOf": [
+            {"anyOf": [
+                {"not": {"type": "object", "properties": {"imageRegistry": {}}, "required": ["imageRegistry"]}},
+                {"type": "object", "properties": {"imageRegistry": {"enum": [null]}}, "required": ["imageRegistry"]}
+            ]}, {"$ref": "#/$defs/helm-condition-2"}
+        ]}, "then": false}));
+    }
+    Ok(expected)
+}
+
+fn rename_registry_condition(value: &mut Value) {
+    match value {
+        Value::Object(object) => {
+            for (key, value) in object {
+                if key == "$ref" && value.as_str() == Some("#/$defs/helm-condition-0") {
+                    *value = Value::String("#/$defs/helm-condition-1".to_owned());
+                } else {
+                    rename_registry_condition(value);
+                }
+            }
+        }
+        Value::Array(array) => {
+            for value in array {
+                rename_registry_condition(value);
+            }
+        }
+        Value::Null | Value::Bool(_) | Value::Number(_) | Value::String(_) => {}
+    }
 }

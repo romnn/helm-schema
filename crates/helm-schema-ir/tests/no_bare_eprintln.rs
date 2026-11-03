@@ -16,6 +16,9 @@ fn walk_rs_files(dir: &Path, out: &mut Vec<std::path::PathBuf>) {
     };
     for entry in entries.flatten() {
         let path = entry.path();
+        if path.file_name().is_some_and(|name| name == "tests") {
+            continue;
+        }
         if path.is_dir() {
             walk_rs_files(&path, out);
         } else if path.extension().and_then(|s| s.to_str()) == Some("rs") {

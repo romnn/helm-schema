@@ -108,6 +108,7 @@ fn site(state: &State, value: &Value) -> ExecutedSite {
         source_path: None,
         condition: Predicate::True.into(),
         value: state.heap.freeze(value),
+        consumption_binder: Vec::new(),
         plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
         rendered: true,
     }

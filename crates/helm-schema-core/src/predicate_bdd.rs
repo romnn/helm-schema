@@ -299,10 +299,14 @@ fn normalize_literal_conjunction(predicate: &Predicate) -> Option<Predicate> {
     if contradictory {
         return Some(Predicate::False);
     }
-    let condition = GuardDnf::from_conjunction(literals.into_iter().map(|(atom, positive)| {
-        let literal = Predicate::from(atom.to_guard());
-        if positive { literal } else { literal.negated() }
-    }));
+    let literals = literals
+        .into_iter()
+        .map(|(atom, positive)| {
+            let literal = Predicate::from(atom.to_guard()?);
+            Some(if positive { literal } else { literal.negated() })
+        })
+        .collect::<Option<Vec<_>>>()?;
+    let condition = GuardDnf::from_conjunction(literals);
     let normalized = predicate_from_dnf(&condition);
     Some(
         [predicate.clone(), normalized]
@@ -335,6 +339,7 @@ struct PredicateBdd<'a> {
     built: AHashMap<usize, usize>,
     remaining_work: usize,
     memoize_walks: bool,
+    charge_allocations: bool,
 }
 
 pub(crate) fn normalize(predicate: Predicate) -> Predicate {
@@ -563,6 +568,7 @@ impl<'a> PredicateBdd<'a> {
             built: AHashMap::new(),
             remaining_work: MAX_BDD_WORK,
             memoize_walks,
+            charge_allocations: false,
         })
     }
 
@@ -683,6 +689,9 @@ impl<'a> PredicateBdd<'a> {
         }
         if self.nodes.len() >= MAX_BDD_NODES {
             return None;
+        }
+        if self.charge_allocations {
+            self.remaining_work = self.remaining_work.checked_sub(1)?;
         }
         let id = self.nodes.len() + 2;
         self.nodes.push(node);
@@ -841,6 +850,7 @@ enum GuardAtom<'a> {
     Eq(&'a crate::ValuesPath, &'a crate::GuardValue, bool),
     TypeIs(&'a crate::ValuesPath, &'a str, bool),
     Other(&'a Guard),
+    Choice(&'a crate::RequirementChoice),
 }
 
 impl<'a> GuardAtom<'a> {
@@ -854,7 +864,7 @@ impl<'a> GuardAtom<'a> {
             return None;
         };
         *remaining = next;
-        Some(Predicate::from(self.to_guard()))
+        Some(Predicate::from(self.to_guard()?))
     }
 
     fn new(guard: &'a Guard) -> Self {
@@ -874,12 +884,12 @@ impl<'a> GuardAtom<'a> {
             Self::Truthy(_, positive) | Self::Eq(_, _, positive) | Self::TypeIs(_, _, positive) => {
                 positive
             }
-            Self::Other(_) => true,
+            Self::Other(_) | Self::Choice(_) => true,
         }
     }
 
-    fn to_guard(self) -> Guard {
-        match self {
+    fn to_guard(self) -> Option<Guard> {
+        Some(match self {
             Self::Truthy(path, _) => Guard::Truthy { path: path.clone() },
             Self::Eq(path, value, _) => Guard::Eq {
                 path: path.clone(),
@@ -890,7 +900,8 @@ impl<'a> GuardAtom<'a> {
                 schema_type: schema_type.to_string(),
             },
             Self::Other(guard) => guard.clone(),
-        }
+            Self::Choice(_) => return None,
+        })
     }
 
     fn rank(self) -> u8 {
@@ -899,6 +910,7 @@ impl<'a> GuardAtom<'a> {
             Self::Eq(_, _, _) => 2,
             Self::TypeIs(_, _, _) => 15,
             Self::Other(guard) => guard_rank(guard),
+            Self::Choice(_) => u8::MAX,
         }
     }
 }
@@ -935,6 +947,7 @@ impl Ord for GuardAtom<'_> {
                     .cmp(right_path)
                     .then_with(|| left_type.cmp(right_type)),
                 (Self::Other(left), Self::Other(right)) => left.cmp(right),
+                (Self::Choice(left), Self::Choice(right)) => left.cmp(right),
                 _ => std::cmp::Ordering::Equal,
             })
     }
@@ -1025,3 +1038,258 @@ fn predicate_from_false_paths(paths: Vec<Vec<Predicate>>) -> Predicate {
 #[cfg(test)]
 #[path = "tests/predicate_bdd.rs"]
 mod tests;
+
+impl PredicateBdd<'_> {
+    fn project_unresolved(
+        &mut self,
+        root: usize,
+        memo: &mut AHashMap<usize, usize>,
+    ) -> Option<usize> {
+        if root <= TRUE {
+            return Some(root);
+        }
+        if let Some(projected) = memo.get(&root) {
+            return Some(*projected);
+        }
+        self.remaining_work = self.remaining_work.checked_sub(1)?;
+        let node = self.node(root)?;
+        let yes = self.project_unresolved(node.when_true, memo)?;
+        let no = self.project_unresolved(node.when_false, memo)?;
+        let atom = self.atoms.get(node.variable).copied()?;
+        let known = atom
+            .to_guard()
+            .and_then(|guard| crate::ConditionalGuard::try_from(&guard).ok())
+            .filter(crate::ConditionalGuard::is_exact_requirement_atom)
+            .filter(|guard| {
+                guard
+                    .value_paths()
+                    .iter()
+                    .all(|path| path.segments().all(|segment| segment.literal().is_some()))
+            });
+        let projected = if known.is_some() {
+            self.make_node(node.variable, no, yes)?
+        } else {
+            self.apply(BooleanOp::And, no, yes)?
+        };
+        memo.insert(root, projected);
+        Some(projected)
+    }
+
+    fn export_decisions(
+        &mut self,
+        root: usize,
+        decisions: &mut Vec<crate::RequirementDecision>,
+        memo: &mut AHashMap<usize, usize>,
+    ) -> Option<usize> {
+        if root <= TRUE {
+            return Some(root);
+        }
+        if let Some(exported) = memo.get(&root) {
+            return Some(*exported);
+        }
+        self.remaining_work = self.remaining_work.checked_sub(1)?;
+        let node = self.node(root)?;
+        let when_true = self.export_decisions(node.when_true, decisions, memo)?;
+        let when_false = self.export_decisions(node.when_false, decisions, memo)?;
+        let test =
+            crate::ConditionalGuard::try_from(&self.atoms.get(node.variable)?.to_guard()?).ok()?;
+        let id = decisions.len() + 2;
+        decisions.push(crate::RequirementDecision {
+            test,
+            when_true,
+            when_false,
+        });
+        memo.insert(root, id);
+        Some(id)
+    }
+}
+
+/// A bounded ordered BDD imported directly from runtime requirement guards.
+pub struct RequirementBdd<'input, 'budget> {
+    bdd: PredicateBdd<'input>,
+    remaining: &'budget mut usize,
+    initial_work: usize,
+}
+
+impl<'input, 'budget> RequirementBdd<'input, 'budget> {
+    /// Maximum charged work for one requirement cone, including its atom inventory.
+    pub const WORK_BUDGET: usize = 65_536;
+
+    /// Creates a requirement cone after charging its atom inventory.
+    #[must_use]
+    pub fn new(
+        atoms: &'input [crate::RequirementAtom],
+        remaining: &'budget mut usize,
+    ) -> Option<Self> {
+        let cost = atoms
+            .len()
+            .saturating_mul(2 + atoms.len().max(1).ilog2() as usize);
+        let mut allowance = (*remaining).min(Self::WORK_BUDGET);
+        let Some(next) = allowance.checked_sub(cost) else {
+            *remaining = 0;
+            return None;
+        };
+        let before = allowance;
+        allowance = next;
+        let inventory = atoms.iter().try_for_each(|atom| {
+            atom.charge_inventory(&mut allowance, 2 + atoms.len().max(1).ilog2() as usize)
+        });
+        *remaining = remaining.saturating_sub(before - allowance);
+        inventory?;
+        let atoms: BTreeSet<_> = atoms
+            .iter()
+            .map(|atom| match atom {
+                crate::RequirementAtom::Value(guard) => GuardAtom::new(guard),
+                crate::RequirementAtom::Choice(choice) => GuardAtom::Choice(choice),
+            })
+            .collect();
+        let atoms: Vec<_> = atoms.into_iter().collect();
+        let atom_indices = atoms
+            .iter()
+            .copied()
+            .enumerate()
+            .map(|(index, atom)| (atom, index))
+            .collect();
+        let initial_work = allowance;
+        Some(Self {
+            bdd: PredicateBdd {
+                atoms,
+                atom_indices,
+                nodes: Vec::new(),
+                unique_nodes: AHashMap::new(),
+                apply_cache: AHashMap::new(),
+                negation_cache: AHashMap::new(),
+                built: AHashMap::new(),
+                remaining_work: initial_work,
+                memoize_walks: true,
+                charge_allocations: true,
+            },
+            remaining,
+            initial_work,
+        })
+    }
+
+    /// Imports an exact predicate; unknown-control markers cannot be imported here.
+    pub fn predicate(&mut self, predicate: &'input Predicate) -> Option<crate::RequirementNode> {
+        self.bdd.build(predicate).map(crate::RequirementNode)
+    }
+
+    /// Charges one runtime graph visit before importing its contents.
+    pub fn charge_visit(&mut self) -> Option<()> {
+        self.bdd.remaining_work = self.bdd.remaining_work.checked_sub(1)?;
+        Some(())
+    }
+
+    /// Imports an inventoried atom without creating an intermediate predicate.
+    pub fn atom(&mut self, atom: &crate::RequirementAtom) -> Option<crate::RequirementNode> {
+        self.charge_visit()?;
+        let atom = match atom {
+            crate::RequirementAtom::Value(guard) => GuardAtom::new(guard),
+            crate::RequirementAtom::Choice(choice) => GuardAtom::Choice(choice),
+        };
+        let variable = *self.bdd.atom_indices.get(&atom)?;
+        let node = self.bdd.make_node(variable, FALSE, TRUE)?;
+        let node = if atom.is_positive() {
+            node
+        } else {
+            self.bdd.negated(node)?
+        };
+        Some(crate::RequirementNode(node))
+    }
+
+    /// Imports one unresolved runtime decision by identity.
+    pub fn choice(&mut self, choice: &crate::RequirementChoice) -> Option<crate::RequirementNode> {
+        self.bdd.remaining_work = self.bdd.remaining_work.checked_sub(1)?;
+        let variable = *self.bdd.atom_indices.get(&GuardAtom::Choice(choice))?;
+        self.bdd
+            .make_node(variable, FALSE, TRUE)
+            .map(crate::RequirementNode)
+    }
+
+    /// The constant false guard.
+    #[must_use]
+    pub fn never() -> crate::RequirementNode {
+        crate::RequirementNode(FALSE)
+    }
+
+    /// The constant true guard.
+    #[must_use]
+    pub fn always() -> crate::RequirementNode {
+        crate::RequirementNode(TRUE)
+    }
+
+    /// Whether reduction proved this node false.
+    #[must_use]
+    pub fn is_never(node: crate::RequirementNode) -> bool {
+        let crate::RequirementNode(node) = node;
+        node == FALSE
+    }
+
+    /// Conjoins two nodes in this requirement cone.
+    pub fn and(
+        &mut self,
+        left: crate::RequirementNode,
+        right: crate::RequirementNode,
+    ) -> Option<crate::RequirementNode> {
+        let crate::RequirementNode(left) = left;
+        let crate::RequirementNode(right) = right;
+        self.bdd
+            .apply(BooleanOp::And, left, right)
+            .map(crate::RequirementNode)
+    }
+
+    /// Unions two occurrences of the same input preimage.
+    pub fn or(
+        &mut self,
+        left: crate::RequirementNode,
+        right: crate::RequirementNode,
+    ) -> Option<crate::RequirementNode> {
+        let crate::RequirementNode(left) = left;
+        let crate::RequirementNode(right) = right;
+        self.bdd
+            .apply(BooleanOp::Or, left, right)
+            .map(crate::RequirementNode)
+    }
+
+    /// Complements a node before universal projection.
+    pub fn not(&mut self, node: crate::RequirementNode) -> Option<crate::RequirementNode> {
+        let crate::RequirementNode(node) = node;
+        self.bdd.negated(node).map(crate::RequirementNode)
+    }
+
+    /// Universally eliminates unresolved tests in this same bounded cone.
+    pub fn project(&mut self, node: crate::RequirementNode) -> Option<crate::RequirementNode> {
+        let crate::RequirementNode(node) = node;
+        self.bdd
+            .project_unresolved(node, &mut AHashMap::new())
+            .map(crate::RequirementNode)
+    }
+
+    /// Projects unresolved atoms universally and exports only exact atom decisions.
+    #[must_use]
+    pub fn finish(mut self, root: crate::RequirementNode) -> Option<crate::ConditionalGuard> {
+        let crate::RequirementNode(root) = root;
+        let projected = self.bdd.project_unresolved(root, &mut AHashMap::new())?;
+        let mut graph = crate::RequirementGuard {
+            decisions: Vec::new(),
+            root: FALSE,
+            projection_exact: root == projected,
+        };
+        let root = projected;
+        graph.root = self
+            .bdd
+            .export_decisions(root, &mut graph.decisions, &mut AHashMap::new())?;
+        graph.check_export_budget(&mut self.bdd.remaining_work)?;
+        Some(crate::ConditionalGuard::Decision(std::sync::Arc::new(
+            graph,
+        )))
+    }
+}
+
+impl Drop for RequirementBdd<'_, '_> {
+    fn drop(&mut self) {
+        *self.remaining = self
+            .remaining
+            .saturating_sub(self.initial_work.saturating_sub(self.bdd.remaining_work));
+    }
+}

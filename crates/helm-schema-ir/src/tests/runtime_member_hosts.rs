@@ -350,10 +350,10 @@ fn receiver_materialization_preserves_the_same_member_obligation() -> eyre::Resu
     state
         .map_target(&typed)
         .ok_or_eyre("receiver backing missing")?;
-    state.record_member_host(
+    state.record_requirement(
         &Value::input(path.clone()),
         &Predicate::True,
-        super::query::MemberAccess::Selector,
+        super::query::RequirementKind::Selector,
     );
     let execution = super::DocumentExecution::new(
         super::eval::normal(state, Value::nil()),
@@ -364,4 +364,21 @@ fn receiver_materialization_preserves_the_same_member_obligation() -> eyre::Resu
         want: BTreeSet::from([HostObservation { path, condition: Predicate::True }])
     );
     Ok(())
+}
+
+#[test]
+fn inexact_map_consumptions_are_retained_for_export_projection() {
+    let mut state = State::new(Value::nil());
+    let decision = state.heap.arena.decision(
+        Predicate::approximate("unknown environment", BTreeSet::new()),
+        Predicate::approximate("unknown environment", BTreeSet::new()).negated(),
+        super::Coverage::Partial,
+    );
+    state = state.fork(decision, true);
+    state.record_requirement(
+        &Value::input(ValuesPath::parse("probe")),
+        &Predicate::True,
+        super::query::RequirementKind::MapArgument { allows_nil: false },
+    );
+    sim_assert_eq!(have: state.consumptions.iter().filter(|consumption| consumption.path == ValuesPath::parse("probe")).count(), want: 1);
 }

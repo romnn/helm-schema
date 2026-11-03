@@ -554,9 +554,9 @@ fn borrowed_atoms_canonicalize_negative_guards_without_cloning_keys() {
     sim_assert_eq!(have: bdd.atoms.len(), want: 1);
     sim_assert_eq!(
         have: bdd.atoms[0].to_guard(),
-        want: Guard::Truthy {
+        want: Some(Guard::Truthy {
             path: ValuesPath::from_segments(["selected"]),
-        }
+        })
     );
     sim_assert_eq!(have: bdd.build(&positive), want: Some(2));
     sim_assert_eq!(have: bdd.build(&negative), want: Some(3));
@@ -624,4 +624,223 @@ fn structural_simplification_changes_only_the_required_branch() {
         }
     }
     check_literal_conjunctions();
+}
+
+#[test]
+fn requirement_fold_projects_after_combining_occurrences() -> eyre::Result<()> {
+    let choice = crate::RequirementChoice {
+        scope: "chart".to_owned(),
+        decision: 17,
+    };
+    let atoms = vec![
+        crate::RequirementAtom::Choice(choice.clone()),
+        crate::RequirementAtom::Value(Guard::Truthy {
+            path: ValuesPath::parse("enabled"),
+        }),
+    ];
+    let mut work = 16_384;
+    let mut bdd =
+        crate::RequirementBdd::new(&atoms, &mut work).ok_or_eyre("inventory exhausted")?;
+    let unknown = bdd.choice(&choice).ok_or_eyre("choice exhausted")?;
+    let enabled = bdd
+        .atom(atoms.get(1).ok_or_eyre("enabled atom missing")?)
+        .ok_or_eyre("value atom exhausted")?;
+    let yes = bdd.and(unknown, enabled).ok_or_eyre("true arm exhausted")?;
+    let not_unknown = bdd.not(unknown).ok_or_eyre("complement exhausted")?;
+    let no = bdd
+        .and(not_unknown, enabled)
+        .ok_or_eyre("false arm exhausted")?;
+    let root = bdd.or(yes, no).ok_or_eyre("aggregation exhausted")?;
+    let projected = bdd
+        .finish(root)
+        .ok_or_eyre("projection exhausted")?
+        .predicate()
+        .normalize_boolean();
+    sim_assert_eq!(have: projected, want: Predicate::truthy_path("enabled"));
+    Ok(())
+}
+
+#[test]
+fn requirement_fold_exhaustion_omits_a_positive_obligation() -> eyre::Result<()> {
+    let atoms = vec![crate::RequirementAtom::Value(Guard::Truthy {
+        path: ValuesPath::parse("enabled"),
+    })];
+    for allowance in [0, 1, 2] {
+        let mut work = allowance;
+        let projected = crate::RequirementBdd::new(&atoms, &mut work).and_then(|mut bdd| {
+            let root = bdd.atom(atoms.first()?)?;
+            bdd.finish(root)
+        });
+        sim_assert_eq!(have: projected, want: None);
+    }
+    let mut work = 16_384;
+    let mut bdd =
+        crate::RequirementBdd::new(&atoms, &mut work).ok_or_eyre("inventory exhausted")?;
+    let root = bdd
+        .atom(atoms.first().ok_or_eyre("positive atom missing")?)
+        .ok_or_eyre("atom exhausted")?;
+    let projected = bdd
+        .finish(root)
+        .ok_or_eyre("positive projection exhausted")?;
+    sim_assert_eq!(have: projected.predicate().normalize_boolean(), want: Predicate::truthy_path("enabled"));
+    Ok(())
+}
+
+#[test]
+fn requirement_fold_never_correlates_distinct_unknown_choices() -> eyre::Result<()> {
+    for (scope, decision) in [("chart", 18), ("dependency", 17)] {
+        let first = crate::RequirementChoice {
+            scope: "chart".to_owned(),
+            decision: 17,
+        };
+        let second = crate::RequirementChoice {
+            scope: scope.to_owned(),
+            decision,
+        };
+        let atoms = vec![
+            crate::RequirementAtom::Choice(first.clone()),
+            crate::RequirementAtom::Choice(second.clone()),
+        ];
+        let mut work = 16_384;
+        let mut bdd =
+            crate::RequirementBdd::new(&atoms, &mut work).ok_or_eyre("inventory exhausted")?;
+        let yes = bdd.choice(&first).ok_or_eyre("first choice exhausted")?;
+        let no = bdd.choice(&second).ok_or_eyre("second choice exhausted")?;
+        let no = bdd.not(no).ok_or_eyre("complement exhausted")?;
+        let root = bdd.or(yes, no).ok_or_eyre("aggregation exhausted")?;
+        let projected = bdd.finish(root).ok_or_eyre("projection exhausted")?;
+        sim_assert_eq!(have: projected.predicate().normalize_boolean(), want: Predicate::False);
+    }
+    Ok(())
+}
+
+#[test]
+fn requirement_fold_eliminates_atoms_without_exact_encodings() -> eyre::Result<()> {
+    for guard in [
+        Guard::IntGt {
+            path: ValuesPath::parse("count"),
+            bound: 0,
+        },
+        Guard::Range {
+            path: ValuesPath::parse("count"),
+        },
+    ] {
+        let atoms = vec![crate::RequirementAtom::Value(guard)];
+        let mut work = 16_384;
+        let mut bdd =
+            crate::RequirementBdd::new(&atoms, &mut work).ok_or_eyre("inventory exhausted")?;
+        let root = bdd
+            .atom(atoms.first().ok_or_eyre("atom missing")?)
+            .ok_or_eyre("atom exhausted")?;
+        let projected = bdd.finish(root).ok_or_eyre("projection exhausted")?;
+        sim_assert_eq!(have: projected.predicate().normalize_boolean(), want: Predicate::False);
+    }
+    Ok(())
+}
+
+#[test]
+fn requirement_export_depth_and_bytes_have_positive_caps() {
+    let mut graph = crate::RequirementGuard {
+        decisions: Vec::new(),
+        root: 1,
+        projection_exact: true,
+    };
+    for index in 0..129 {
+        graph.decisions.push(crate::RequirementDecision {
+            test: crate::ConditionalGuard::Truthy {
+                path: ValuesPath::parse(&format!("flag{index}")),
+            },
+            when_true: graph.root,
+            when_false: 0,
+        });
+        graph.root = graph.decisions.len() + 1;
+    }
+    let mut work = 16_384;
+    sim_assert_eq!(have: graph.check_export_budget(&mut work), want: None);
+    graph.decisions.truncate(1);
+    graph.root = 2;
+    let mut work = 16_384;
+    sim_assert_eq!(have: graph.check_export_budget(&mut work), want: Some(()));
+    graph.decisions.clear();
+    graph.root = 1;
+    for index in 0..100 {
+        graph.decisions.push(crate::RequirementDecision {
+            test: crate::ConditionalGuard::Eq {
+                path: ValuesPath::parse(&format!("flag{index}")),
+                value: crate::GuardValue::String("x".repeat(500)),
+            },
+            when_true: 1,
+            when_false: 0,
+        });
+    }
+    let mut work = 16_384;
+    sim_assert_eq!(have: graph.check_export_budget(&mut work), want: None);
+}
+
+#[test]
+fn requirement_inventory_bounds_payloads_and_empty_root_paths() {
+    let atom = crate::RequirementAtom::Value(Guard::Eq {
+        path: ValuesPath::parse("mode"),
+        value: crate::GuardValue::String("x".repeat(8193)),
+    });
+    let mut work = 16_384;
+    assert!(crate::RequirementBdd::new(&[atom], &mut work).is_none());
+    assert!(work < 16_384);
+    let atom = crate::RequirementAtom::Value(Guard::Or {
+        paths: vec![ValuesPath::default(); 1000],
+    });
+    let mut work = 10;
+    sim_assert_eq!(have: atom.charge_inventory(&mut work, 1), want: None);
+    let mut work = 2000;
+    sim_assert_eq!(have: atom.charge_inventory(&mut work, 1), want: Some(()));
+    assert!(work < 1000);
+}
+
+#[test]
+fn requirement_fold_closes_complementary_opaque_cones_beyond_the_dnf_cap() -> eyre::Result<()> {
+    let choices = (0..10)
+        .map(|decision| crate::RequirementChoice {
+            scope: "chart".to_owned(),
+            decision,
+        })
+        .collect::<Vec<_>>();
+    let enabled = crate::RequirementAtom::Value(Guard::Truthy {
+        path: ValuesPath::parse("enabled"),
+    });
+    let atoms = std::iter::once(enabled.clone())
+        .chain(choices.iter().cloned().map(crate::RequirementAtom::Choice))
+        .collect::<Vec<_>>();
+    let mut work = 16_384;
+    let mut bdd =
+        crate::RequirementBdd::new(&atoms, &mut work).ok_or_eyre("inventory exhausted")?;
+    let mut parity = crate::RequirementBdd::never();
+    for choice in &choices {
+        let choice = bdd.choice(choice).ok_or_eyre("choice exhausted")?;
+        let not_choice = bdd.not(choice).ok_or_eyre("choice complement exhausted")?;
+        let not_parity = bdd.not(parity).ok_or_eyre("parity complement exhausted")?;
+        let odd = bdd
+            .and(not_parity, choice)
+            .ok_or_eyre("odd arm exhausted")?;
+        let even = bdd
+            .and(parity, not_choice)
+            .ok_or_eyre("even arm exhausted")?;
+        parity = bdd.or(odd, even).ok_or_eyre("parity exhausted")?;
+    }
+    let enabled = bdd.atom(&enabled).ok_or_eyre("enabled atom exhausted")?;
+    let yes = bdd
+        .and(parity, enabled)
+        .ok_or_eyre("first occurrence exhausted")?;
+    let crate::RequirementNode(yes_index) = yes;
+    assert!(
+        bdd.bdd.paths_to(yes_index, TRUE).is_none(),
+        "the old bounded DNF cannot enumerate this positive cone"
+    );
+    let opposite = bdd.not(parity).ok_or_eyre("complement exhausted")?;
+    let no = bdd
+        .and(opposite, enabled)
+        .ok_or_eyre("second occurrence exhausted")?;
+    let root = bdd.or(yes, no).ok_or_eyre("aggregation exhausted")?;
+    let projected = bdd.finish(root).ok_or_eyre("projection exhausted")?;
+    sim_assert_eq!(have: projected.predicate().normalize_boolean(), want: Predicate::truthy_path("enabled"));
+    Ok(())
 }

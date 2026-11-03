@@ -110,6 +110,7 @@ pub(crate) struct ObservedFacts {
     pub(crate) activated_values_root_overlays: BTreeSet<ActivatedValuesRootOverlay>,
     pub(crate) values_root_helper_includes: BTreeSet<String>,
     pub(crate) captures: BTreeSet<FailCapture>,
+    pub(crate) consumptions: Vec<crate::value::FrozenConsumption>,
 }
 
 impl ObservedFacts {
@@ -175,7 +176,9 @@ impl ObservedFacts {
             activated_values_root_overlays,
             values_root_helper_includes: _,
             captures,
+            consumptions,
         } = self;
+        crate::value::map_consumption_paths(consumptions, map, shared);
         *resources = std::mem::take(resources)
             .into_iter()
             .map(|mut resource| {
@@ -273,7 +276,9 @@ impl ObservedFacts {
             activated_values_root_overlays,
             values_root_helper_includes,
             captures,
+            consumptions,
         } = other;
+        self.consumptions.extend(consumptions.iter().cloned());
         self.resources.extend(resources.iter().cloned());
         for (grade, paths) in type_hints {
             for (path, hints) in paths {

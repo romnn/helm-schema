@@ -27,6 +27,45 @@ use crate::schema_node::SchemaNode;
 use crate::schema_tree::SchemaDocument;
 use crate::values_yaml::yaml_value_at_values_path;
 
+fn append_opaque_policy(
+    conditionals: &mut Vec<LoweredConjunct>,
+    path: &ValuesPath,
+    guard_sets: &[Vec<ConditionalGuard>],
+    values: &YamlValue,
+) {
+    if path.segments().any(|segment| segment.literal().is_none()) {
+        return;
+    }
+    let Some(value) = yaml_value_at_values_path(values, path) else {
+        return;
+    };
+    let schema_type = match value {
+        YamlValue::Bool(_) => "boolean",
+        YamlValue::Number(number) if number.is_i64() || number.is_u64() => "integer",
+        YamlValue::Number(_) => "number",
+        YamlValue::String(_) => "string",
+        YamlValue::Sequence(_) => "array",
+        YamlValue::Null | YamlValue::Mapping(_) | YamlValue::Tagged(_) => return,
+    };
+    for guards in guard_sets {
+        conditionals.push(LoweredConjunct::schema(
+            EmissionOrigin::Overlay,
+            ConditionalFlavor::Ordinary,
+            path.clone(),
+            Vec::new(),
+            path.segments()
+                .map(helm_schema_core::Segment::encode_component)
+                .collect(),
+            guards.clone(),
+            Vec::new(),
+            SchemaNode::from_value(crate::schema_model::type_schema(schema_type)),
+            None,
+            ConditionalBaseEffect::None,
+            false,
+        ));
+    }
+}
+
 /// How a lowered conditional conjunct participates in base ownership.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -274,6 +313,25 @@ pub(crate) fn collect_conditional_schemas(
         let Some(resolved_target) = resolved_by_path.get(target_value_path) else {
             continue;
         };
+        if declared_types == crate::DeclaredTypes::Assert
+            && let Some(guard_sets) = &evidence.opaque_consumption_guards
+        {
+            append_opaque_policy(
+                &mut conditionals,
+                target_value_path,
+                guard_sets,
+                values_yaml_doc,
+            );
+        }
+        let declared_types = if crate::path_resolver::opaque_scalar_default_is_replaced(
+            target_value_path,
+            evidence,
+            Some(&resolved_target.values_yaml_schema),
+        ) {
+            crate::DeclaredTypes::Annotate
+        } else {
+            declared_types
+        };
         let has_unconditional_self_presence_contract = evidence
             .conditional_overlays
             .iter()
@@ -326,9 +384,12 @@ pub(crate) fn collect_conditional_schemas(
                 }))
         {
             if is_bare_iterable_implication(implication)
+                && let [helm_schema_core::FailValueRequirement::Iterable { allow_integer }] =
+                    implication.requirements.as_slice()
                 && member_implication_covers_range_domain(
                     &evidence.requirement_implications,
                     &implication.outer_guards,
+                    *allow_integer,
                 )
             {
                 continue;
@@ -574,6 +635,7 @@ pub(crate) fn collect_conditional_schemas(
                 && member_implication_covers_range_domain(
                     &evidence.requirement_implications,
                     &overlay.guards,
+                    true,
                 );
             if member_implication_owns_range_domain {
                 // The requirement implication already carries the branch's
@@ -773,7 +835,8 @@ fn positive_self_type(guard: &ConditionalGuard, target: &ValuesPath) -> bool {
         ConditionalGuard::AllOf(guards) => {
             guards.iter().any(|guard| positive_self_type(guard, target))
         }
-        ConditionalGuard::Truthy { path: _ }
+        ConditionalGuard::Decision(_)
+        | ConditionalGuard::Truthy { path: _ }
         | ConditionalGuard::With { path: _ }
         | ConditionalGuard::Eq { path: _, value: _ }
         | ConditionalGuard::NotEq { path: _, value: _ }
@@ -824,7 +887,8 @@ fn type_guard_implies_schema(
         ConditionalGuard::AnyOf(guards) => guards
             .iter()
             .all(|guard| type_guard_implies_schema(guard, target, schema)),
-        ConditionalGuard::Truthy { path: _ }
+        ConditionalGuard::Decision(_)
+        | ConditionalGuard::Truthy { path: _ }
         | ConditionalGuard::With { path: _ }
         | ConditionalGuard::Eq { path: _, value: _ }
         | ConditionalGuard::NotEq { path: _, value: _ }

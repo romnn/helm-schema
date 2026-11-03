@@ -36,8 +36,8 @@ pub enum RootPolicy {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum DeclaredTypes {
-    /// A declared default asserts its scalar type, container kind, and item
-    /// shapes where no other evidence governs the path.
+    /// A declared scalar or list type applies at its own executed opaque
+    /// consumption, without object typing or descendant inheritance.
     #[default]
     Assert,
     /// A declared default documents its property names and value, but

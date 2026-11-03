@@ -1677,3 +1677,80 @@ impl Arena {
 #[cfg(test)]
 #[path = "../tests/runtime_budget_work.rs"]
 mod tests;
+
+impl RuntimeGuard {
+    pub(super) fn freeze_requirement(
+        &self,
+        scope: &super::consumption::RequirementScope,
+        remaining: &mut usize,
+        memo: &mut AHashMap<
+            (bool, u64),
+            std::sync::Arc<super::consumption::FrozenRequirementGuard>,
+        >,
+    ) -> Option<std::sync::Arc<super::consumption::FrozenRequirementGuard>> {
+        self.freeze_requirement_at_depth(scope, remaining, memo, 128)
+    }
+
+    fn freeze_requirement_at_depth(
+        &self,
+        scope: &super::consumption::RequirementScope,
+        remaining: &mut usize,
+        memo: &mut AHashMap<
+            (bool, u64),
+            std::sync::Arc<super::consumption::FrozenRequirementGuard>,
+        >,
+        depth: usize,
+    ) -> Option<std::sync::Arc<super::consumption::FrozenRequirementGuard>> {
+        use super::consumption::FrozenRequirementGuard;
+        let depth = depth.checked_sub(1)?;
+        *remaining = remaining.checked_sub(1)?;
+        let frozen = match self {
+            Self::False => std::sync::Arc::new(FrozenRequirementGuard::False),
+            Self::True => std::sync::Arc::new(FrozenRequirementGuard::True),
+            Self::Branch(node) => {
+                if let Some(frozen) = memo.get(&(true, node.id)) {
+                    frozen.check_depth(depth, remaining)?;
+                    return Some(std::sync::Arc::clone(frozen));
+                }
+                let test = if let Some(test) = memo.get(&(false, node.test.id)) {
+                    test.check_depth(depth, remaining)?;
+                    std::sync::Arc::clone(test)
+                } else {
+                    let test = if let Some(runtime) = &node.test.runtime {
+                        runtime.freeze_requirement_at_depth(scope, remaining, memo, depth)?
+                    } else if node.test.coverage == Coverage::Exact {
+                        let cost = node.test.when_true.node_work(*remaining)?;
+                        *remaining = remaining.checked_sub(cost)?;
+                        if node.test.when_true.contains_approximation() {
+                            return None;
+                        }
+                        std::sync::Arc::new(FrozenRequirementGuard::Predicate(
+                            node.test.when_true.clone(),
+                        ))
+                    } else {
+                        std::sync::Arc::new(FrozenRequirementGuard::Choice(
+                            super::consumption::FrozenChoice {
+                                scope: scope.clone(),
+                                decision: node.test.id,
+                            },
+                        ))
+                    };
+                    memo.insert((false, node.test.id), std::sync::Arc::clone(&test));
+                    test
+                };
+                let frozen = std::sync::Arc::new(FrozenRequirementGuard::Select {
+                    test,
+                    yes: node
+                        .yes
+                        .freeze_requirement_at_depth(scope, remaining, memo, depth)?,
+                    no: node
+                        .no
+                        .freeze_requirement_at_depth(scope, remaining, memo, depth)?,
+                });
+                memo.insert((true, node.id), std::sync::Arc::clone(&frozen));
+                frozen
+            }
+        };
+        Some(frozen)
+    }
+}

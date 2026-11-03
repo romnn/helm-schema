@@ -147,7 +147,8 @@ pub(super) fn implication_guards_supported(
                     || path == target_value_path
                     || resolved_by_path.contains_key(path)
             }
-            ConditionalGuard::Eq { .. }
+            ConditionalGuard::Decision(_)
+            | ConditionalGuard::Eq { .. }
             | ConditionalGuard::NotEq { .. }
             | ConditionalGuard::Absent { .. }
             | ConditionalGuard::TypeIs { .. }
@@ -199,7 +200,8 @@ fn guards_supported_with_self_path(
                     || yaml_value_at_values_path(values_yaml_doc, path).is_some()
                     || resolved_by_path.contains_key(path)
             }
-            ConditionalGuard::Eq { .. }
+            ConditionalGuard::Decision(_)
+            | ConditionalGuard::Eq { .. }
             | ConditionalGuard::NotEq { .. }
             | ConditionalGuard::Absent { .. }
             | ConditionalGuard::TypeIs { .. }
@@ -612,7 +614,8 @@ fn guard_holds_vacuously(guard: &ConditionalGuard) -> bool {
         | ConditionalGuard::ContainsEquals { .. }
         | ConditionalGuard::MinMembers { .. } => false,
         ConditionalGuard::Eq { value, .. } => matches!(value, GuardValue::Null),
-        ConditionalGuard::NotEq { .. }
+        ConditionalGuard::Decision(_)
+        | ConditionalGuard::NotEq { .. }
         | ConditionalGuard::Absent { .. }
         | ConditionalGuard::AtMostOneMember { .. }
         | ConditionalGuard::Not(_) => true,

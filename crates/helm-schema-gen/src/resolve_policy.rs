@@ -357,7 +357,8 @@ impl ResolvePolicy {
                     _ => None,
                 }
             }
-            ConditionalGuard::Truthy { .. }
+            ConditionalGuard::Decision(_)
+            | ConditionalGuard::Truthy { .. }
             | ConditionalGuard::With { .. }
             | ConditionalGuard::Eq { .. }
             | ConditionalGuard::NotEq { .. }
@@ -1284,7 +1285,8 @@ fn collect_positive_self_types(
                 collect_positive_self_types(guard, target_value_path, negated, out);
             }
         }
-        helm_schema_core::ConditionalGuard::Truthy { .. }
+        helm_schema_core::ConditionalGuard::Decision(_)
+        | helm_schema_core::ConditionalGuard::Truthy { .. }
         | helm_schema_core::ConditionalGuard::With { .. }
         | helm_schema_core::ConditionalGuard::IntGt { .. }
         | helm_schema_core::ConditionalGuard::IntLt { .. }

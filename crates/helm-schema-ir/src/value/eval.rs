@@ -282,7 +282,7 @@ impl Executor<'_> {
                 site,
             );
         }
-        state.record_member_host(&value, live, super::query::MemberAccess::Selector);
+        state.record_requirement(&value, live, super::query::RequirementKind::Selector);
         match actual {
             super::kinds::GoType::Map | super::kinds::GoType::Unknown => {
                 let value = state.selector_field(&value, key);

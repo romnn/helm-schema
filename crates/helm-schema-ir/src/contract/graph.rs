@@ -124,6 +124,9 @@ impl ContractIr {
     /// an already-scoped batch of claims, such as dependency `condition:` /
     /// `tags:` liveness from `Chart.yaml`.
     pub fn append_guards_to_all_uses(&mut self, guards: &[Guard]) {
+        for consumption in &mut self.observed_facts.consumptions {
+            consumption.append_activation(guards);
+        }
         self.observed_facts.resources = std::mem::take(&mut self.observed_facts.resources)
             .into_iter()
             .map(|mut observation| {
@@ -313,6 +316,12 @@ impl ContractIr {
             return;
         }
         let global_sources = dependency_global_sources(prefix);
+        if let Some(namespace) = global_sources.last() {
+            let namespace = helm_schema_core::ValuesPath::parse(namespace);
+            self.observed_facts
+                .consumptions
+                .retain(|consumption| !consumption.touches_global_namespace(&namespace));
+        }
         project_global_uses(&mut self.uses, &global_sources);
         project_global_uses(&mut self.dependency_uses, &global_sources);
         project_global_fail_captures(&mut self.observed_facts.captures, &global_sources);

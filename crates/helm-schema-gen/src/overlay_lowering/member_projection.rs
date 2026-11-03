@@ -557,15 +557,39 @@ pub(super) fn is_bare_iterable_implication(
 pub(super) fn member_implication_covers_range_domain(
     implications: &[helm_schema_core::ContractRequirementImplication],
     guards: &[ConditionalGuard],
+    allow_integer: bool,
 ) -> bool {
     implications.iter().any(|implication| {
-        implication.outer_guards == guards
-            && matches!(
-                &implication.target,
-                helm_schema_core::ContractRequirementTarget::Members { .. }
-                    | helm_schema_core::ContractRequirementTarget::MembersExceptKeys { .. }
-                    | helm_schema_core::ContractRequirementTarget::MembersWhereEquals { .. }
-            )
+        use helm_schema_core::ContractRequirementTarget;
+        if implication.outer_guards != guards {
+            return false;
+        }
+        match &implication.target {
+            ContractRequirementTarget::Members {
+                allow_integer: member_allow_integer,
+            }
+            | ContractRequirementTarget::MembersExceptKeys {
+                keys: _,
+                allow_integer: member_allow_integer,
+            } => !*member_allow_integer || allow_integer,
+            ContractRequirementTarget::MembersWhereEquals {
+                guard_path: _,
+                value: _,
+                target_path: _,
+            } => true,
+            ContractRequirementTarget::Value
+            | ContractRequirementTarget::Keys
+            | ContractRequirementTarget::MembersMatchingPrefix { prefix: _ }
+            | ContractRequirementTarget::MembersAt {
+                target_path: _,
+                allow_integer: _,
+            }
+            | ContractRequirementTarget::MembersAtWhereTruthy {
+                guard_path: _,
+                target_path: _,
+                allow_integer: _,
+            } => false,
+        }
     })
 }
 

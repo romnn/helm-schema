@@ -1,8 +1,12 @@
 //! Preserve the complete executed abort formula through contract projection.
 
-use color_eyre::eyre;
+use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_ast::DefineIndex;
-use helm_schema_core::{ConditionalGuard, ContractSchemaSignals, ValuesPath};
+use helm_schema_core::{
+    ConditionalGuard, ContractRequirementImplication, ContractRequirementTarget,
+    ContractSchemaSignals, FailValueRequirement, Guard, RequirementAtom, RequirementBdd,
+    ValuesPath,
+};
 use helm_schema_gen::{ValuesSchemaInput, generate_values_schema};
 use helm_schema_ir::SymbolicIrContext;
 use helm_schema_k8s::Chain;
@@ -77,7 +81,7 @@ fn observed_schema(case: &Case) -> Value {
     schema_for_signals(&signals)
 }
 
-fn expected_schema(case: &Case) -> Value {
+fn expected_schema(case: &Case) -> eyre::Result<Value> {
     let context = SymbolicIrContext::new(&DefineIndex::new());
     let reads = if case.outer_gate {
         "{{ $_ := .Values.choose }}{{ $_ := .Values.outer }}"
@@ -137,18 +141,52 @@ fn expected_schema(case: &Case) -> Value {
     ConditionalGuard::canonicalize_conjunction(&mut clause);
     // The expectation supplies the complete positive failure formula directly,
     // independently of the capture-to-requirement conversion under test.
-    let expected = ContractSchemaSignals::new(
-        references.schema_evidence_by_value_path().clone(),
-        vec![clause],
-    );
-    schema_for_signals(&expected)
+    let mut evidence = references.schema_evidence_by_value_path().clone();
+    let guards = if case.outer_gate {
+        let atom = RequirementAtom::Value(Guard::Truthy {
+            path: ValuesPath::parse("outer"),
+        });
+        let mut remaining = RequirementBdd::WORK_BUDGET;
+        let mut bdd = RequirementBdd::new(std::slice::from_ref(&atom), &mut remaining)
+            .ok_or_eyre("expected outer guard exceeds its budget")?;
+        let root = bdd
+            .atom(&atom)
+            .ok_or_eyre("expected outer atom is missing")?;
+        vec![
+            bdd.finish(root)
+                .ok_or_eyre("expected outer guard cannot export")?,
+        ]
+    } else {
+        Vec::new()
+    };
+    evidence
+        .entry(ValuesPath::parse("choose"))
+        .or_default()
+        .requirement_implications
+        .push(ContractRequirementImplication::new(
+            guards.clone(),
+            ContractRequirementTarget::Value,
+            vec![FailValueRequirement::SchemaTypeEvenNull(
+                "boolean".to_owned(),
+            )],
+        ));
+    let mut absent = guards;
+    absent.push(ConditionalGuard::Absent {
+        path: ValuesPath::parse("choose"),
+    });
+    ConditionalGuard::canonicalize_conjunction(&mut absent);
+    let mut terminal = vec![clause, absent];
+    terminal.sort();
+    let expected = ContractSchemaSignals::new(evidence, terminal);
+    Ok(schema_for_signals(&expected))
 }
 
 #[test]
-fn selected_abort_projection_matches_the_complete_terminal_schema() {
+fn selected_abort_projection_matches_the_complete_terminal_schema() -> eyre::Result<()> {
     for case in cases() {
-        sim_assert_eq!(have: observed_schema(&case), want: expected_schema(&case), "{}", case.name);
+        sim_assert_eq!(have: observed_schema(&case), want: expected_schema(&case)?, "{}", case.name);
     }
+    Ok(())
 }
 
 #[test]

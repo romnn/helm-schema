@@ -581,6 +581,47 @@ impl OutputPlacement {
         ]))
     }
 
+    fn opaque_block_text(&self, site: &super::ExecutedSite, memo: &PredicateMemo) -> bool {
+        let condition = site.condition();
+        if !memo.exactly_implies(&condition, &self.unknown.negated()) {
+            return false;
+        }
+        let id = ObservationId {
+            program: site.program,
+            ordinal: site.ordinal,
+            span: site.span,
+        };
+        let mut found = false;
+        for layout in &self.layouts {
+            if memo.exactly_implies(&condition, &layout.condition.negated()) {
+                continue;
+            }
+            for document in &layout.documents {
+                let owned = &document.ownership;
+                for segment in &owned.skeleton.segments {
+                    if !segment.placeholder
+                        || !layout
+                            .terms
+                            .get(segment.piece)
+                            .and_then(NodeRef::node)
+                            .is_some_and(|node| node.occurrences.contains(&id))
+                    {
+                        continue;
+                    }
+                    if !owned.nodes.iter().any(|node| {
+                        node.kind == YamlNodeKind::BlockScalar
+                            && node.span.start <= segment.range.start
+                            && segment.range.end <= node.span.end
+                    }) {
+                        return false;
+                    }
+                    found = true;
+                }
+            }
+        }
+        found
+    }
+
     fn plain_placement(
         &self,
         site: &super::ExecutedSite,
@@ -762,6 +803,21 @@ impl FilePlacement {
                 {
                     site.rendered_unchanged = false;
                 }
+            }
+            let opaque_sites = state
+                .sites
+                .iter()
+                .filter(|site| {
+                    !state.output_widened
+                        && site.rendered
+                        && site.rendered_unchanged
+                        && site.coverage_exact()
+                        && placement.opaque_block_text(site, &state.heap.arena.predicate_memo)
+                })
+                .cloned()
+                .collect::<Vec<_>>();
+            for site in opaque_sites {
+                state.record_opaque_site(&site);
             }
             for site in &mut state.sites {
                 let id = ObservationId {

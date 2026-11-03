@@ -22,6 +22,8 @@ use crate::values_yaml::yaml_value_at_values_path as yaml_value_at_path;
 pub(crate) enum ConditionPolarity {
     Widen,
     Narrow,
+    /// Every decision test is exact in both polarities.
+    Exact,
 }
 
 impl ConditionPolarity {
@@ -29,6 +31,7 @@ impl ConditionPolarity {
         match self {
             Self::Widen => Self::Narrow,
             Self::Narrow => Self::Widen,
+            Self::Exact => Self::Exact,
         }
     }
 }
@@ -569,7 +572,50 @@ fn build_single_condition_fragment(
             }
             Some(negated)
         }
+        ConditionalGuard::Decision(graph) => {
+            if !cache.shared && !graph.decisions().is_empty() {
+                return None;
+            }
+            let mut nodes = vec![
+                SchemaNode::foreign(Value::Bool(false)),
+                SchemaNode::foreign(Value::Bool(true)),
+            ];
+            for helm_schema_core::RequirementDecision {
+                test,
+                when_true,
+                when_false,
+            } in graph.decisions()
+            {
+                if !test.is_exact_requirement_atom() {
+                    return None;
+                }
+                let test = cache.fragment(
+                    test,
+                    ancestor_segments,
+                    values_yaml_doc,
+                    absence,
+                    ConditionPolarity::Exact,
+                )?;
+                let yes = nodes.get(*when_true)?.clone().into_value();
+                let no = nodes.get(*when_false)?.clone().into_value();
+                let body = serde_json::json!({ "if": test.into_value(), "then": yes, "else": no });
+                let mut ordinal = cache.definitions.len();
+                let name = loop {
+                    let name = format!("helm-condition-{ordinal}");
+                    if cache.reserved.insert(name.clone()) {
+                        break name;
+                    }
+                    ordinal += 1;
+                };
+                cache.definitions.insert(name.clone(), body);
+                nodes.push(SchemaNode::foreign(serde_json::json!({ "$ref": helm_schema_json_schema_walk::definition_reference(&name) })));
+            }
+            nodes.get(graph.root()).cloned()
+        }
         ConditionalGuard::AllOf(guards) => {
+            if guards.is_empty() && polarity == ConditionPolarity::Exact {
+                return Some(SchemaNode::foreign(Value::Bool(true)));
+            }
             let clauses = cache.clauses(
                 guards,
                 ancestor_segments,
@@ -580,6 +626,9 @@ fn build_single_condition_fragment(
             (!clauses.is_empty()).then(|| SchemaNode::all_of(clauses))
         }
         ConditionalGuard::AnyOf(guards) => {
+            if guards.is_empty() && polarity == ConditionPolarity::Exact {
+                return Some(SchemaNode::foreign(Value::Bool(false)));
+            }
             let clauses = cache.clauses(
                 guards,
                 ancestor_segments,
@@ -604,6 +653,10 @@ pub(crate) fn guard_encodes_fully(
     absence: AbsenceDefaults<'_>,
 ) -> bool {
     match guard {
+        ConditionalGuard::Decision(graph) => graph.decisions().iter().all(|node| {
+            node.test.is_exact_requirement_atom()
+                && guard_encodes_fully(&node.test, ancestor_segments, values_yaml_doc, absence)
+        }),
         ConditionalGuard::Not(inner) => {
             guard_encodes_fully(inner, ancestor_segments, values_yaml_doc, absence)
         }
@@ -1229,6 +1282,22 @@ fn quantify_members(
     }
 }
 
+fn evaluate_requirement_guard(
+    graph: &helm_schema_core::RequirementGuard,
+    values_yaml_doc: &YamlValue,
+) -> Option<bool> {
+    let mut current = graph.root();
+    while current > 1 {
+        let node = graph.decisions().get(current.checked_sub(2)?)?;
+        current = if evaluate_guard_on_values(&node.test, values_yaml_doc)? {
+            node.when_true
+        } else {
+            node.when_false
+        };
+    }
+    Some(current == 1)
+}
+
 fn evaluate_guard_on_values(guard: &ConditionalGuard, values_yaml_doc: &YamlValue) -> Option<bool> {
     match guard {
         ConditionalGuard::Truthy { path } | ConditionalGuard::With { path } => {
@@ -1317,6 +1386,7 @@ fn evaluate_guard_on_values(guard: &ConditionalGuard, values_yaml_doc: &YamlValu
         ConditionalGuard::Not(inner) => {
             evaluate_guard_on_values(inner, values_yaml_doc).map(|v| !v)
         }
+        ConditionalGuard::Decision(graph) => evaluate_requirement_guard(graph, values_yaml_doc),
         ConditionalGuard::AllOf(guards) => evaluate_guard_set_on_values(guards, values_yaml_doc),
         ConditionalGuard::AnyOf(guards) => guards
             .iter()

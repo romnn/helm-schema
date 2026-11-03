@@ -97,8 +97,13 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
             }
         }
     }
-    finish_schema_signals(paths, terminal_clauses, predicate_memo)
-        .with_resource_observations(resource_observations(observed_facts, predicate_memo))
+    finish_schema_signals(
+        paths,
+        terminal_clauses,
+        &observed_facts.consumptions,
+        predicate_memo,
+    )
+    .with_resource_observations(resource_observations(observed_facts, predicate_memo))
 }
 
 fn resource_observations<'a>(

@@ -2506,27 +2506,50 @@ fn expected_range_members(
         {"type": "null"}
     ]});
     let body = json!({"additionalProperties": {}, "properties": {host: collection}});
+    let member_domain = json!({"additionalProperties": {}, "properties": {host: {
+        "anyOf": [
+            {"additionalProperties": member.clone(), "type": "object"},
+            {"items": member, "type": "array"},
+            {"maximum": 0, "type": "integer"},
+            {"type": "null"}
+        ]
+    }}});
     let object = schema
         .as_object_mut()
         .ok_or_eyre("expected object schema")?;
     let all_of = if guarded {
+        let constraint = format!("constrains/{host}:t");
+        let choice = format!("when/{host}:t/then/any/else/fail");
+        let constraint_ref = format!("#/$defs/{}", constraint.replace('/', "~1"));
+        let choice_ref = format!("#/$defs/{}", choice.replace('/', "~1"));
         object.insert(
             "$defs".to_owned(),
-            json!({"t": {"anyOf": [
-                {"minProperties": 1, "type": "object"},
-                {"not": {"const": 0}, "type": "number"},
-                {"minLength": 1, "type": "string"},
-                {"minItems": 1, "type": "array"},
-                {"const": true}
-            ]}}),
+            json!({
+                "t": {"anyOf": [
+                    {"minProperties": 1, "type": "object"},
+                    {"not": {"const": 0}, "type": "number"},
+                    {"minLength": 1, "type": "string"},
+                    {"minItems": 1, "type": "array"},
+                    {"const": true}
+                ]},
+                (constraint): {
+                    "properties": {host: {"$ref": "#/$defs/t"}},
+                    "required": [host], "type": "object"
+                },
+                (choice): {"else": false, "if": {"$ref": constraint_ref}, "then": true}
+            }),
         );
-        json!([{"if": {
-            "properties": {host: {"$ref": "#/$defs/t"}},
-            "required": [host],
-            "type": "object"
-        }, "then": body}])
-    } else {
+        json!([
+            {"if": {"$ref": choice_ref}, "then": {"allOf": [
+                member_domain,
+                {"additionalProperties": {}, "properties": {host: {"type": ["array", "null", "object"]}}}
+            ]}},
+            {"if": {"$ref": constraint_ref}, "then": body}
+        ])
+    } else if allows_nil {
         json!([body])
+    } else {
+        json!([body, member_domain])
     };
     object.insert("allOf".to_owned(), all_of);
     Ok(schema)

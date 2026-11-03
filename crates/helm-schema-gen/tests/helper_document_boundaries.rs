@@ -91,6 +91,10 @@ fn recursive_helper_preserves_guarded_worker_fields() -> eyre::Result<()> {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
         "properties": {"global": {}, "workers": {}},
+        "allOf": [{
+            "additionalProperties": {},
+            "properties": {"workers": {"type": ["array", "null", "object"]}}
+        }],
         "type": "object"
     });
     sim_assert_eq!(have: have, want: want);
@@ -116,6 +120,10 @@ fn recursive_helper_preserves_formatted_worker_fields() -> eyre::Result<()> {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
         "properties": {"global": {}, "workers": {}},
+        "allOf": [{
+            "additionalProperties": {},
+            "properties": {"workers": {"type": ["array", "null", "object"]}}
+        }],
         "type": "object"
     });
     sim_assert_eq!(have: have, want: want);

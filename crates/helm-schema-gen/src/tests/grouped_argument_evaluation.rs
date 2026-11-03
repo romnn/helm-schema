@@ -1899,6 +1899,10 @@ fn normalize_selected_string_rejection(schema: &mut Value) -> eyre::Result<()> {
             "properties": { "b": { "type": "string" } },
             "required": ["b"], "type": "object",
         }),
+        serde_json::json!({"type": "object", "properties": {"a": {}}, "required": ["a"]}),
+        serde_json::json!({"type": "object", "properties": {"a": {"enum": [null]}}, "required": ["a"]}),
+        serde_json::json!({"type": "object", "properties": {"b": {}}, "required": ["b"]}),
+        serde_json::json!({"type": "object", "properties": {"b": {"enum": [null]}}, "required": ["b"]}),
     ];
     let Some(clauses) = schema.get_mut("allOf").and_then(Value::as_array_mut) else {
         return Ok(());
@@ -1910,9 +1914,11 @@ fn normalize_selected_string_rejection(schema: &mut Value) -> eyre::Result<()> {
         let condition = clause
             .get_mut("if")
             .ok_or_eyre("rejection clause has no condition")?;
-        // Exhaust all valuations of these three exact atoms; other schema content stays intact.
+        // Missing, null, string and other values exhaust these atoms' realizable classes.
         let mut alternatives = Vec::new();
-        for assignment in 0_u8..8 {
+        for assignment in
+            (0_u8..128).filter(|assignment| selected_string_assignment_is_realizable(*assignment))
+        {
             if selected_string_rejection_truth(condition, &atoms, assignment)? {
                 let terms: Vec<_> = atoms
                     .iter()
@@ -1933,17 +1939,49 @@ fn normalize_selected_string_rejection(schema: &mut Value) -> eyre::Result<()> {
     Ok(())
 }
 
+fn selected_string_assignment_is_realizable(assignment: u8) -> bool {
+    let string_a = assignment & 2 != 0;
+    let string_b = assignment & 4 != 0;
+    let present_a = assignment & 8 != 0;
+    let null_a = assignment & 16 != 0;
+    let present_b = assignment & 32 != 0;
+    let null_b = assignment & 64 != 0;
+    (present_a || (!string_a && !null_a))
+        && !(string_a && null_a)
+        && (present_b || (!string_b && !null_b))
+        && !(string_b && null_b)
+}
+
 fn selected_string_rejection_truth(
     formula: &Value,
-    atoms: &[Value; 3],
+    atoms: &[Value],
     assignment: u8,
 ) -> eyre::Result<bool> {
     if let Some(index) = atoms.iter().position(|atom| atom == formula) {
         return Ok(assignment & (1 << index) != 0);
     }
+    if let Some(value) = formula.as_bool() {
+        return Ok(value);
+    }
     let object = formula
         .as_object()
         .ok_or_eyre("non-object rejection formula")?;
+    if let Some(test) = object.get("if") {
+        eyre::ensure!(
+            object
+                .keys()
+                .all(|key| matches!(key.as_str(), "if" | "then" | "else")),
+            "unknown decision siblings: {formula}"
+        );
+        let branch = if selected_string_rejection_truth(test, atoms, assignment)? {
+            "then"
+        } else {
+            "else"
+        };
+        return object.get(branch).map_or(Ok(true), |branch| {
+            selected_string_rejection_truth(branch, atoms, assignment)
+        });
+    }
     if object.len() != 1 {
         eyre::bail!("unrecognized selected-string rejection atom: {formula}");
     }
@@ -1990,11 +2028,10 @@ fn conditional_local_trim_affix_uses_proven_leaves() {
         metadata:
           name: test
         data:
-          subject: {{ trim .Values.subject | quote }}
           {{- if .Values.useB }}
-          affix: {{ trim .Values.b | quote }}
+          rendered: {{ trimPrefix .Values.b .Values.subject | quote }}
           {{- else }}
-          affix: {{ trim .Values.a | quote }}
+          rendered: {{ trimPrefix .Values.a .Values.subject | quote }}
           {{- end }}
     "};
     let schema = schema_for(parse_ir(src));
@@ -2792,6 +2829,7 @@ fn symbolic_range_keeps_named_root_reads_without_inferring_their_shape() {
     let expected = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
+        "allOf": [{"additionalProperties": {}, "properties": {"items": {"type": ["array", "integer", "null", "object"]}}}],
         "properties": { "global": {}, "items": {}, "stop": {} },
         "type": "object",
     });

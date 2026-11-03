@@ -375,6 +375,13 @@ impl Executor<'_> {
                 results.push(exit);
                 continue;
             };
+            exit.state.record_requirement(
+                &value.value,
+                &Predicate::True,
+                super::query::RequirementKind::Range {
+                    allow_integer: bindings.key.is_none(),
+                },
+            );
             exit.state.record_container_read(&value.value);
             exit.state
                 .observe(opener.span, program.path, &value.value, false);

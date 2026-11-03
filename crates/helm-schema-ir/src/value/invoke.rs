@@ -897,6 +897,11 @@ fn comparison_invocation(mut state: State, arguments: &[Value], negated: bool) -
         let value = unknown_comparison_arguments(&state, &arguments);
         return normal(state, value);
     };
+    state.record_requirement(
+        &Value::nil(),
+        &accepted.clone().negated(),
+        super::query::RequirementKind::ComparisonFailure,
+    );
     if accepted == Predicate::False {
         return super::kinds::validate_type_predicate(state, Value::nil(), accepted);
     }

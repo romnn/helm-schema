@@ -16,14 +16,22 @@ flip law, or withdraw it at opaque-text sinks.
 
 ## Decision
 
-- Declared-shape typing is retained by default (`--declared-types=assert`):
-  a declared default asserts its scalar type, container kind, and item
-  shapes where no other evidence governs the path. This is an authoring
-  assertion, not a recovered constraint.
+- `--declared-types=assert` remains the default. A declared scalar or list
+  type applies only at that exact input path, under the execution guard of
+  its own positively recorded opaque consumption. It never supplies object
+  typing or inherited descendant constraints. This is an authoring assertion,
+  not a recovered constraint.
+- Known consumption domains govern their own input preimages. A known-total
+  formatter such as `quote` is `KnownAny`, not opaque. An absent observation,
+  lost input identity, or exhausted analysis budget supplies no policy evidence.
+- Each legacy declaration producer remains until its replacement passes ADR 0071's
+  deletion gate. Acceptance repairs and independent consumer intersections are separate obligations;
+  they cannot be removed merely because a new host requirement exists.
 - `--declared-types=annotate` keeps the default as documentation (property
   names, descriptions, `default`) and lets only template and resource
   evidence constrain the value.
-- No chart-name or witness-specific exemptions.
+- No chart-name or witness-specific exemptions. F80/F43 remain strict under
+  their own opaque text consumption guards.
 
 ## Consequences
 
